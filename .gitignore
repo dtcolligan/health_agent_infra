@@ -1,8 +1,33 @@
-data/
+# Runtime data (top-level only — not ml/data/)
+/data/
+
+# Python
 .venv/
 __pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Jupyter
 .ipynb_checkpoints/
-*.csv
-*.json
-*.jsonl
+
+# OS / editor
 .DS_Store
+.Rhistory
+*.swp
+*.swo
+*~
+
+# Secrets
+.env
+
+# Claude Code
+.claude/
+
+# SQLite
+*.db
+
+# Generated outputs (source code is tracked, outputs aren't)
+ml/data/synthetic_training.csv
+ml/data/usda_raw_pull.json
+dashboard/dashboard_data.json

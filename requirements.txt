@@ -1,0 +1,12 @@
+# Existing dependencies
+pandas>=2.0
+numpy>=2.0
+garminconnect>=0.2.38
+
+# Health Logger
+anthropic>=0.45.0
+python-dotenv>=1.0.0
+
+# Web UI
+flask>=3.0
+flask-login>=0.6

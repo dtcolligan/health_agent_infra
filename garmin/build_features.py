@@ -9,7 +9,8 @@ import os
 import pandas as pd
 import numpy as np
 
-DATA_DIR = "data"
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR = os.path.join(PROJECT_ROOT, "data", "garmin")
 CLEAN_PATH = os.path.join(DATA_DIR, "clean", "daily_hybrid.csv")
 ACTIVITIES_PATH = os.path.join(DATA_DIR, "activities.csv")
 OUT_DIR = os.path.join(DATA_DIR, "model")

@@ -7,7 +7,8 @@ from datetime import date, timedelta
 import pandas as pd
 from garminconnect import Garmin
 
-DATA_DIR = "data"
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR = os.path.join(PROJECT_ROOT, "data", "garmin")
 RAW_DIR = os.path.join(DATA_DIR, "raw_daily_json")
 LOG_PATH = os.path.join(DATA_DIR, "pull_log.jsonl")
 

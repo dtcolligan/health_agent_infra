@@ -12,7 +12,8 @@ import glob
 import pandas as pd
 import numpy as np
 
-DATA_DIR = "data"
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR = os.path.join(PROJECT_ROOT, "data", "garmin")
 RAW_DIR = os.path.join(DATA_DIR, "raw_daily_json")
 OUT_DIR = os.path.join(DATA_DIR, "clean")
 os.makedirs(OUT_DIR, exist_ok=True)

@@ -1,0 +1,42 @@
+{
+  "baseline": {
+    "mae_grams": 32.739465875370925,
+    "median_ae_grams": 10.0,
+    "mape": 18.964402324648713,
+    "accuracy_at_20pct": 72.10682492581603,
+    "accuracy_at_30pct": 81.00890207715133,
+    "n": 337
+  },
+  "gbm_train": {
+    "mae_grams": 14.570677286557999,
+    "median_ae_grams": 6.376669028475931,
+    "mape": 13.435118335132675,
+    "accuracy_at_20pct": 77.70228536133416,
+    "accuracy_at_30pct": 87.83199505867819,
+    "n": 1619
+  },
+  "gbm_val": {
+    "mae_grams": 26.337708180570147,
+    "median_ae_grams": 11.761040436243928,
+    "mape": 21.009205269825287,
+    "accuracy_at_20pct": 65.03496503496503,
+    "accuracy_at_30pct": 80.41958041958041,
+    "n": 286
+  },
+  "gbm_test": {
+    "mae_grams": 23.003686999103355,
+    "median_ae_grams": 10.82333360346533,
+    "mape": 18.2547690901567,
+    "accuracy_at_20pct": 69.43620178041543,
+    "accuracy_at_30pct": 80.41543026706232,
+    "n": 337
+  },
+  "hybrid_test": {
+    "mae_grams": 21.38364729372865,
+    "median_ae_grams": 8.529174617200908,
+    "mape": 17.122771348368683,
+    "accuracy_at_20pct": 70.32640949554896,
+    "accuracy_at_30pct": 81.30563798219585,
+    "n": 337
+  }
+}
