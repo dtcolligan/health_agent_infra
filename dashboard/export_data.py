@@ -22,6 +22,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 OUTPUT_PATH = BASE_DIR / "dashboard" / "dashboard_data.json"
 
+from garmin.readiness import build_all_readiness
+
 
 def _read_csv(path: Path) -> list[dict]:
     """Read a CSV file into a list of dicts, converting numeric strings."""
@@ -134,10 +136,12 @@ def export():
         })
 
     bot_data = _read_bot_db()
+    readiness = build_all_readiness()
 
     data = {
         "generated_at": __import__("datetime").datetime.now().isoformat(),
         "garmin_daily": garmin_daily,
+        "readiness": readiness,
         "activities": trimmed_activities,
         "nutrition": bot_data["daily_summaries"],
         "meal_items": bot_data["meal_items"],

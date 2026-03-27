@@ -10,6 +10,7 @@ import os
 from flask import Flask, request, jsonify, send_from_directory
 
 from bot.config import get_user_date, DB_PATH
+from garmin.readiness import get_readiness_for_date
 from bot.parser import parse_health_message
 from bot.db import (
     init_db, save_message, update_message_json, save_entries,
@@ -148,6 +149,18 @@ def gym_history():
     """Get recent gym stats for chart."""
     days = get_exercise_history(limit=14)
     return jsonify({"days": days})
+
+
+@app.route("/api/readiness/today")
+def readiness_today():
+    """Get latest readiness assessment from engineered Garmin features."""
+    return jsonify(get_readiness_for_date())
+
+
+@app.route("/api/readiness/<date_for>")
+def readiness_for_date(date_for: str):
+    """Get readiness assessment for a specific date."""
+    return jsonify(get_readiness_for_date(date_for))
 
 
 @app.route("/api/undo", methods=["POST"])
