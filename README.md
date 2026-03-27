@@ -1,166 +1,152 @@
 # Health Lab
 
-A personal health tracking platform that combines Garmin wearable data with an ML-powered food logging system. The food logger accepts natural language input and estimates calories and macronutrients using locally-trained models grounded in USDA nutritional data -- no external LLM calls at inference time.
+Health Lab is a personal health analytics platform that combines Garmin wearable data, food logging, and lightweight ML models into one system for tracking recovery, nutrition, and day-to-day health trends.
 
-Built as an applied ML and data engineering portfolio project.
+Built as an applied ML + data engineering portfolio project.
+
+## Highlights
+
+- Built an end-to-end health tracking system combining **Garmin biometrics**, **nutrition logging**, and **interactive dashboards**
+- Trained a **portion-estimation model** to convert natural-language food logs into gram estimates
+- Grounded nutrition estimates in **deterministic USDA lookups**, avoiding LLM hallucinated macros at inference time
+- Built a **Python + Flask + SQLite** application with a web UI, ML pipeline, and Garmin ingestion flow
+- Engineered a personal system that connects **data collection, modelling, storage, and presentation**
+
+## What the system does
+
+Health Lab has two main parts:
+
+1. **Food logging pipeline**
+   - Parses food descriptions into structured items
+   - Estimates portion size in grams with a trained model
+   - Maps foods to USDA references
+   - Computes calories and macros via deterministic lookup
+
+2. **Garmin health pipeline**
+   - Pulls wearable data from Garmin
+   - Cleans and flattens daily metrics
+   - Builds engineered features for analysis
+   - Exports data into dashboards and analysis workflows
+
+Together, these create a personal health data stack for analysing recovery, nutrition, and behavioural trends.
 
 ## Architecture
 
-```
+```text
 User input (text)
        |
        v
 +------------------------+      +--------------------+
 |  Claude API (parsing)  | ---> |  Text Parser       |
-|  Identifies food items |      |  Splits into items  |
-|  + portion descriptions|      |  + portions         |
+|  Identifies food items |      |  Splits into items |
+|  + portion descriptions|      |  + portions        |
 +------------------------+      +--------+-----------+
                                          |
                                          v
                                 +--------+-----------+
-                                |  Food Matcher       |
-                                |  Fuzzy match to     |
-                                |  USDA reference DB  |
+                                |  Food Matcher      |
+                                |  Fuzzy match to    |
+                                |  USDA reference DB |
                                 +--------+-----------+
                                          |
                                          v
                                 +--------+-----------+
-                                |  Portion Estimator  |
-                                |  GBM model (21g MAE)|
-                                |  description -> g   |
+                                | Portion Estimator  |
+                                | GBM model          |
                                 +--------+-----------+
                                          |
                                          v
                                 +--------+-----------+
-                                |  Nutrition Lookup   |
-                                |  grams x per_100g   |
-                                |  -> kcal, P, C, F   |
+                                | Nutrition Lookup   |
+                                | deterministic USDA |
                                 +--------+-----------+
                                          |
                                          v
                                    SQLite + Web UI
 ```
 
-The ML model's only job is estimating portion size in grams. All nutritional values (calories, protein, carbs, fat per 100g) come from USDA FoodData Central and are deterministic lookups. Same input always produces the same output.
-
-## Tech Stack
+## Tech stack
 
 | Component | Technology | Notes |
 |---|---|---|
 | Backend | Python, Flask | REST API serving the web UI |
-| ML (portion estimation) | scikit-learn HistGradientBoostingRegressor | 14 engineered features, 2242 training examples |
-| NLP (parsing) | Anthropic Claude API (tool use) | Structured extraction via function calling |
-| Nutrition data | USDA FoodData Central | 126 foods with per-100g macros |
-| Database | SQLite | Single-user, WAL mode |
-| Frontend | Vanilla JS, Chart.js | Mobile-first responsive UI |
-| Garmin pipeline | garminconnect (Python) | Daily metrics, activities, sleep, HRV |
-| Data analysis | pandas, NumPy, Jupyter | EDA notebooks for Garmin and ML data |
+| ML | scikit-learn HistGradientBoostingRegressor | Portion-size estimation |
+| Parsing | Anthropic Claude API | Structured food extraction |
+| Nutrition data | USDA FoodData Central | Deterministic calorie/macronutrient lookup |
+| Database | SQLite | Single-user local persistence |
+| Frontend | Vanilla JS, Chart.js | Mobile-first UI |
+| Garmin ingestion | Python + garminconnect | Daily metrics, activities, sleep, HRV |
+| Analysis | pandas, NumPy, Jupyter | EDA and model evaluation |
 
-## Project Structure
+## Project structure
 
-```
+```text
 .
-├── bot/                    # Core backend logic
-│   ├── config.py           #   Environment config, day boundary logic
-│   ├── db.py               #   SQLite schema, data access layer
-│   ├── parser.py           #   Claude API integration, ML refinement
-│   ├── formatter.py        #   Response formatting
-│   └── service.py          #   Business logic layer
-│
-├── ml/                     # ML pipeline (portion estimation)
-│   ├── model.py            #   RuleBaseline, GBM, HybridModel + training
-│   ├── features.py         #   14-feature extraction from descriptions
-│   ├── portion_estimator.py#   Full grams -> macros pipeline
-│   ├── evaluate.py         #   Permutation importance, per-type breakdown
-│   ├── data/
-│   │   ├── foods_reference.csv   # 126 foods, USDA sourced
-│   │   ├── synthetic_gen.py      # Training data generator
-│   │   ├── build_foods_db.py     # USDA DB builder
-│   │   └── pull_usda.py          # USDA FoodData Central API
-│   └── models/
-│       └── gbm_portion.pkl       # Trained model artifact
-│
-├── web/                    # Flask web application
-│   ├── app.py              #   Routes and API endpoints
-│   └── static/
-│       └── index.html      #   Single-page app (mobile-first)
-│
-├── garmin/                 # Garmin data pipeline
-│   ├── pull_garmin.py      #   Pull daily metrics + activities
-│   ├── clean_garmin.py     #   Extract flat daily features from raw JSON
-│   └── build_features.py   #   ML-ready feature engineering
-│
-├── dashboard/              # Health dashboard
-│   ├── dashboard.html      #   Standalone HTML dashboard
-│   └── export_data.py      #   SQLite + CSV -> dashboard JSON
-│
-├── notebooks/              # Exploratory analysis
-│   ├── eda_notebook.ipynb          # Garmin data EDA
-│   ├── analysis_01_baseline.ipynb  # Baseline health metrics analysis
-│   ├── ml_01_eda.ipynb             # ML training data exploration
-│   └── ml_02_model_eval.ipynb      # Model evaluation and comparison
-│
-├── data/                   # Runtime data (git-ignored)
-│   ├── health_log.db       #   SQLite database
-│   └── garmin/             #   Raw + clean Garmin data
-│
-├── requirements.txt
-├── .env.example
-└── health-logger-project-brief.md
+├── bot/            # Backend logic and business layer
+├── ml/             # Portion-estimation model and data pipeline
+├── web/            # Flask app + frontend
+├── garmin/         # Garmin ingestion and feature engineering
+├── dashboard/      # Dashboard export and standalone dashboard files
+├── notebooks/      # Exploratory and evaluation notebooks
+└── data/           # Runtime data (git-ignored)
 ```
 
-## Component Status
+## Quickstart
 
-| Component | Status | Description |
-|---|---|---|
-| Portion estimator (ML) | Working | Hybrid model: 21g MAE, 70% accuracy within 20% of true weight |
-| Food reference DB | Working (126 foods) | USDA-sourced per-100g macros. Expansion to 1000+ foods planned |
-| Web UI | Working | Mobile-first Flask app with Chart.js charts, daily/weekly views |
-| Garmin data pipeline | Working | 60-day daily pulls: sleep, HRV, stress, body battery, activities |
-| Dashboard | Working | HTML dashboard with Garmin + nutrition data overlay |
-| SQLite data layer | Working | Multi-user schema, WAL mode, audit trail |
-| Text parser (NLP) | Planned | Splits full messages into individual food items. Currently handled by Claude API |
-| Food matcher (embeddings) | Planned | Sentence-transformer similarity matching to USDA DB |
+### Requirements
 
-## ML Model Performance
+- Python 3.10+
+- `pip`
+- Anthropic API key for parsing
+- Garmin credentials if using the Garmin ingestion pipeline
 
-Portion estimation evaluated on a held-out test set (n=337):
-
-| Model | MAE | MAPE | Accuracy (within 20%) |
-|---|---|---|---|
-| Rule baseline | 32.7g | 19.0% | 72.1% |
-| GBM (HistGBR) | 23.0g | 18.3% | 69.4% |
-| Hybrid (rules + GBM) | 21.4g | 17.1% | 70.3% |
-
-The hybrid model routes metric descriptions (e.g. "200g chicken") through rules and everything else through the gradient boosted model. Mean calorie error: 28 kcal.
-
-## Setup
+### Install
 
 ```bash
-# Clone and set up environment
-git clone git@github.com:dtcolligan/garmin_lab.git
-cd garmin_lab
-python -m venv .venv
-source .venv/bin/activate
 pip install -r requirements.txt
-
-# Configure environment
-cp .env.example .env
-# Edit .env and add your ANTHROPIC_API_KEY
-
-# Initialize database and start the web app
-python -m bot.main
-python -m web.app
-# Open http://localhost:5001
 ```
 
-## Key Design Decisions
+### Run the web app
 
-1. **No LLM at inference for nutrition**: The ML pipeline runs locally with trained models. Claude is used only for parsing natural language into structured data, not for estimating calories.
-2. **USDA-grounded nutrition**: Macro values come from USDA FoodData Central, not model predictions. The model predicts *what* and *how much* -- nutrition per 100g is a deterministic lookup.
-3. **Hybrid ML pipeline**: Each stage (parsing, matching, portion estimation) is a separate module. Easier to debug, evaluate, and improve individually.
-4. **Accuracy vs friction tradeoff**: Accept +/-15-20% calorie estimation error in exchange for zero-friction natural language input.
+```bash
+python web/app.py
+```
 
-## License
+### Run the Garmin pipeline
 
-This project is not currently licensed for reuse.
+```bash
+python garmin/pull_garmin.py
+python garmin/clean_garmin.py
+python garmin/build_features.py
+```
+
+## Current capabilities
+
+### Shipped
+- Food logging with structured parsing
+- Portion estimation model
+- USDA-based calorie and macro lookup
+- SQLite-backed storage
+- Web UI for logging and viewing data
+- Garmin ingestion and feature-building pipeline
+- Dashboard export flow
+
+### Experimental / analysis-facing
+- Exploratory notebooks for health and ML analysis
+- Iteration on feature engineering and model evaluation
+- Ongoing refinement of the health analytics layer
+
+## Why this project is interesting
+
+This repo is not just a notebook or toy model. It demonstrates:
+- applied machine learning in a real use case
+- data engineering across multiple sources
+- product thinking around a usable health tool
+- system design from ingestion to UI
+
+## Next steps
+
+- Improve the dashboard and daily readiness views
+- Expand the health analytics layer using engineered Garmin features
+- Improve food logging UX and input flexibility
+- Tighten deployment/dev setup for easier reproducibility
