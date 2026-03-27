@@ -1,7 +1,8 @@
-"""Daily readiness and recovery scoring from Garmin feature data."""
+"""Daily readiness and recovery scoring from Garmin feature data plus local health logs."""
 
 from __future__ import annotations
 
+import sqlite3
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +21,7 @@ from .recommendations import get_recommendation_text
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 FEATURES_PATH = PROJECT_ROOT / "data" / "garmin" / "model" / "daily_features.csv"
+DB_PATH = PROJECT_ROOT / "data" / "health_log.db"
 
 
 def _safe_float(value: Any) -> float | None:
@@ -40,6 +42,44 @@ def _driver(signal: str, direction: str, note: str, points: int) -> dict:
     }
 
 
+def _load_bot_context() -> pd.DataFrame:
+    if not DB_PATH.exists():
+        return pd.DataFrame()
+
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+
+    daily = pd.read_sql_query(
+        "SELECT date_for, total_calories, total_protein_g, total_carbs_g, total_fat_g, exercise_min FROM daily_summary ORDER BY date_for",
+        conn,
+    )
+
+    subjective = pd.read_sql_query(
+        "SELECT date_for, metric, value FROM subjective ORDER BY date_for",
+        conn,
+    )
+    conn.close()
+
+    if daily.empty:
+        return pd.DataFrame()
+
+    daily["date"] = pd.to_datetime(daily["date_for"], errors="coerce")
+    daily = daily.drop(columns=["date_for"])
+
+    if not subjective.empty:
+        subjective["date"] = pd.to_datetime(subjective["date_for"], errors="coerce")
+        piv = subjective.pivot_table(index="date", columns="metric", values="value", aggfunc="mean").reset_index()
+        piv.columns.name = None
+        daily = daily.merge(piv, on="date", how="left")
+
+    if "total_calories" in daily.columns:
+        daily["total_calories_3d_mean"] = daily["total_calories"].rolling(3, min_periods=1).mean()
+    if "total_protein_g" in daily.columns:
+        daily["total_protein_g_3d_mean"] = daily["total_protein_g"].rolling(3, min_periods=1).mean()
+
+    return daily
+
+
 def score_readiness_row(row: pd.Series) -> dict:
     score = 70
     drivers: list[dict] = []
@@ -54,6 +94,13 @@ def score_readiness_row(row: pd.Series) -> dict:
     recovery_hrs = _safe_float(row.get("tr_recovery_time_hrs"))
     acute_load = _safe_float(row.get("tr_acute_load"))
     training_readiness = _safe_float(row.get("training_readiness_score"))
+    total_calories = _safe_float(row.get("total_calories"))
+    calories_3d_mean = _safe_float(row.get("total_calories_3d_mean"))
+    protein = _safe_float(row.get("total_protein_g"))
+    exercise_min = _safe_float(row.get("exercise_min"))
+    energy = _safe_float(row.get("energy"))
+    mood = _safe_float(row.get("mood"))
+    soreness = _safe_float(row.get("soreness"))
 
     if sleep_hrs is not None:
         if sleep_hrs >= SLEEP_THRESHOLDS["good_hours"]:
@@ -127,6 +174,43 @@ def score_readiness_row(row: pd.Series) -> dict:
             score -= 8
             drivers.append(_driver("training_readiness_score", "negative", f"Garmin readiness low ({training_readiness:.0f})", -8))
 
+    if total_calories is not None and calories_3d_mean is not None and calories_3d_mean > 0:
+        ratio = total_calories / calories_3d_mean
+        if ratio < 0.7:
+            score -= 6
+            drivers.append(_driver("total_calories", "negative", "Calories materially below recent intake", -6))
+        elif ratio > 0.9:
+            score += 2
+            drivers.append(_driver("total_calories", "positive", "Calories roughly in line with recent intake", 2))
+
+    if protein is not None:
+        if protein >= 120:
+            score += 4
+            drivers.append(_driver("total_protein_g", "positive", f"Protein intake solid ({protein:.0f}g)", 4))
+        elif protein < 80:
+            score -= 4
+            drivers.append(_driver("total_protein_g", "negative", f"Protein intake low ({protein:.0f}g)", -4))
+
+    if exercise_min is not None and exercise_min >= 90:
+        score -= 3
+        drivers.append(_driver("exercise_min", "negative", f"High logged exercise duration ({exercise_min:.0f} min)", -3))
+
+    if energy is not None:
+        if energy >= 8:
+            score += 4
+            drivers.append(_driver("energy", "positive", f"Self-reported energy strong ({energy:.1f}/10)", 4))
+        elif energy <= 4:
+            score -= 6
+            drivers.append(_driver("energy", "negative", f"Self-reported energy low ({energy:.1f}/10)", -6))
+
+    if mood is not None and mood <= 4:
+        score -= 3
+        drivers.append(_driver("mood", "negative", f"Mood lower than usual ({mood:.1f}/10)", -3))
+
+    if soreness is not None and soreness >= 7:
+        score -= 5
+        drivers.append(_driver("soreness", "negative", f"Soreness elevated ({soreness:.1f}/10)", -5))
+
     score = max(0, min(100, int(round(score))))
 
     if score >= READINESS_LABELS["green"]["min_score"]:
@@ -136,11 +220,8 @@ def score_readiness_row(row: pd.Series) -> dict:
     else:
         label_info = READINESS_LABELS["red"]
 
-    top_drivers = sorted(drivers, key=lambda d: abs(d["points"]), reverse=True)[:4]
-    if top_drivers:
-        reason_summary = "; ".join(d["note"] for d in top_drivers)
-    else:
-        reason_summary = "Insufficient data for strong readiness drivers."
+    top_drivers = sorted(drivers, key=lambda d: abs(d["points"]), reverse=True)[:5]
+    reason_summary = "; ".join(d["note"] for d in top_drivers) if top_drivers else "Insufficient data for strong readiness drivers."
 
     return {
         "date": str(pd.to_datetime(row.get("date")).date()) if row.get("date") is not None else None,
@@ -156,6 +237,9 @@ def score_readiness_row(row: pd.Series) -> dict:
 def load_features_df(path: Path = FEATURES_PATH) -> pd.DataFrame:
     df = pd.read_csv(path)
     df["date"] = pd.to_datetime(df["date"], errors="coerce")
+    bot = _load_bot_context()
+    if not bot.empty:
+        df = df.merge(bot, on="date", how="left")
     return df.sort_values("date").reset_index(drop=True)
 
 

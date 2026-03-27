@@ -129,7 +129,7 @@ python garmin/build_features.py
 - SQLite-backed storage
 - Web UI for logging and viewing data
 - Garmin ingestion and feature-building pipeline
-- Daily readiness / recovery scoring from engineered Garmin features
+- Daily readiness / recovery scoring from engineered Garmin features, nutrition logs, and training context
 - Dashboard export flow
 
 ### Experimental / analysis-facing
@@ -149,6 +149,6 @@ This repo is not just a notebook or toy model. It demonstrates:
 
 - Improve the dashboard and daily readiness views
 - Expand the health analytics layer using engineered Garmin features
-- Add richer coaching logic on top of readiness scoring
+- Add richer coaching logic on top of readiness scoring and subjective recovery signals
 - Improve food logging UX and input flexibility
 - Tighten deployment/dev setup for easier reproducibility
