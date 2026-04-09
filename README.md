@@ -127,9 +127,12 @@ python garmin/build_features.py
 Offline export path:
 
 ```bash
-python garmin/import_export.py /path/to/garmin-export.zip
-python garmin/analyze_export.py
+python3 garmin/import_export.py /path/to/garmin-export.zip
+python3 garmin/analyze_export.py
+python3 web/app.py
 ```
+
+Then open `http://localhost:5001/garmin-export` for the first bounded visual + interpretation layer over the normalized export outputs.
 
 The offline path writes derived runtime outputs under `data/garmin/export/` and keeps raw personal export contents out of tracked files.
 
@@ -164,7 +167,8 @@ This repo is not just a notebook or toy model. It demonstrates:
 ## Current proof-first Garmin surfaces
 
 - `garmin/import_export.py` normalizes a bounded Garmin GDPR export into runtime datasets
-- `garmin/analyze_export.py` creates the first bounded analysis artifact from those normalized outputs
+- `garmin/analyze_export.py` creates a summary, recent trend payload, and conservative interpretation layer from those normalized outputs
+- `/garmin-export` renders a product-facing recovery + running overview directly from the local runtime artifacts
 - `docs/offline_garmin_export_adapter.md` documents the supported offline ingest path and its limits
 
 ## Next steps

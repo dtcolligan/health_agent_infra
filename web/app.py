@@ -7,11 +7,13 @@ Run with: python -m web.app
 
 import json
 import os
+from pathlib import Path
 from flask import Flask, request, jsonify, send_from_directory
 
 from bot.config import get_user_date, DB_PATH
 from garmin.readiness import get_readiness_for_date
 from garmin.coaching import get_daily_coaching_summary
+from garmin.analyze_export import build_summary
 from bot.parser import parse_health_message
 from bot.db import (
     init_db, save_message, update_message_json, save_entries,
@@ -23,6 +25,8 @@ from bot.db import (
 )
 
 app = Flask(__name__, static_folder="static")
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+GARMIN_EXPORT_DIR = PROJECT_ROOT / "data" / "garmin" / "export"
 
 
 def _build_day_response(date_for: str, confirmation=None) -> dict:
@@ -70,11 +74,28 @@ def dashboard():
     return send_from_directory(dashboard_dir, "dashboard.html")
 
 
+@app.route("/garmin-export")
+def garmin_export_dashboard():
+    dashboard_dir = os.path.join(os.path.dirname(__file__), "..", "dashboard")
+    return send_from_directory(dashboard_dir, "garmin_export.html")
+
+
 @app.route("/dashboard_data.json")
 @app.route("/dashboard/dashboard_data.json")
 def dashboard_data():
     dashboard_dir = os.path.join(os.path.dirname(__file__), "..", "dashboard")
     return send_from_directory(dashboard_dir, "dashboard_data.json")
+
+
+@app.route("/api/garmin/export-overview")
+def garmin_export_overview():
+    if not GARMIN_EXPORT_DIR.exists():
+        return jsonify({"status": "missing", "message": "Normalized Garmin export outputs were not found."}), 404
+
+    try:
+        return jsonify({"status": "ok", "summary": build_summary(GARMIN_EXPORT_DIR)})
+    except FileNotFoundError as exc:
+        return jsonify({"status": "missing", "message": f"Required export artifact missing: {exc}"}), 404
 
 
 # --- API routes ---

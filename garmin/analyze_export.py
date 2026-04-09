@@ -6,6 +6,14 @@ from pathlib import Path
 
 import pandas as pd
 
+READINESS_SCORE_MAP = {
+    "VERY_LOW": 1,
+    "LOW": 2,
+    "MODERATE": 3,
+    "HIGH": 4,
+    "PRIMED": 5,
+}
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_EXPORT_DIR = PROJECT_ROOT / "data" / "garmin" / "export"
 DEFAULT_REPORT_PATH = DEFAULT_EXPORT_DIR / "first_analysis_report.md"
@@ -44,6 +52,102 @@ def safe_int(value) -> int | None:
         return None
 
 
+def _delta(current, previous):
+    current = safe_float(current)
+    previous = safe_float(previous)
+    if current is None or previous is None:
+        return None
+    return round(current - previous, 2)
+
+
+def _classify_snapshot(latest_day: dict, recent_7_day_averages: dict) -> dict:
+    readiness = (latest_day.get("training_readiness_level") or "UNKNOWN").upper()
+    sleep_score = latest_day.get("sleep_score_overall")
+    body_battery = latest_day.get("body_battery")
+    steps = latest_day.get("steps")
+    rolling_steps = recent_7_day_averages.get("steps")
+    training_status = latest_day.get("training_status")
+
+    positives = []
+    cautions = []
+
+    if sleep_score is not None and sleep_score >= 80:
+        positives.append("sleep score is in a solid range")
+    elif sleep_score is not None and sleep_score < 70:
+        cautions.append("sleep score is soft enough to avoid calling this a hard-push day")
+
+    if body_battery is not None and body_battery >= 60:
+        positives.append("body battery suggests good available energy")
+    elif body_battery is not None and body_battery < 40:
+        cautions.append("body battery is subdued, so recovery may still be incomplete")
+
+    if steps is not None and rolling_steps is not None and steps >= rolling_steps:
+        positives.append("movement stayed at or above the recent weekly baseline")
+
+    if training_status and str(training_status).upper() == "PRODUCTIVE":
+        positives.append("Garmin marks the broader block as productive")
+
+    if readiness in {"VERY_LOW", "LOW"}:
+        cautions.append("training readiness is low, so intensity should stay conservative")
+
+    if readiness in {"HIGH", "PRIMED"} and sleep_score is not None and sleep_score >= 80:
+        label = "build-ready"
+        headline = "Recovery looks supportive for normal training, with no obvious red flags in the latest snapshot."
+    elif readiness in {"VERY_LOW", "LOW"}:
+        label = "absorb-and-maintain"
+        headline = "The latest day reads more like an absorb-the-work snapshot than a signal to push harder."
+    else:
+        label = "steady"
+        headline = "The latest day looks broadly steady, with enough support for normal training if effort stays sensible."
+
+    return {
+        "label": label,
+        "headline": headline,
+        "positives": positives,
+        "cautions": cautions,
+        "disclaimer": "Conservative interpretation only, this is a descriptive training cue rather than medical advice.",
+    }
+
+
+def _build_visual_payload(daily: pd.DataFrame, running: pd.DataFrame) -> dict:
+    ordered_daily = daily.sort_values("date").copy()
+    ordered_daily["training_readiness_score"] = ordered_daily["training_readiness_level"].map(READINESS_SCORE_MAP)
+
+    daily_points = []
+    for _, row in ordered_daily.tail(21).iterrows():
+        if pd.isna(row.get("date")):
+            continue
+        daily_points.append({
+            "date": row["date"].strftime("%Y-%m-%d"),
+            "steps": safe_int(row.get("steps")),
+            "sleep_score": safe_int(row.get("sleep_score_overall")),
+            "body_battery": safe_int(row.get("body_battery")),
+            "resting_hr": safe_int(row.get("resting_hr")),
+            "hrv": safe_int(row.get("health_hrv_value")),
+            "readiness_level": row.get("training_readiness_level"),
+            "readiness_score": safe_int(row.get("training_readiness_score")),
+        })
+
+    running_points = []
+    if not running.empty:
+        ordered_runs = running.sort_values("start_time_local").copy()
+        for _, row in ordered_runs.tail(12).iterrows():
+            if pd.isna(row.get("start_time_local")):
+                continue
+            running_points.append({
+                "date": row["start_time_local"].strftime("%Y-%m-%d"),
+                "distance_km": round(float(row["distance_m"]) / 1000, 2) if pd.notna(row.get("distance_m")) else None,
+                "duration_min": round(float(row["duration_sec"]) / 60, 1) if pd.notna(row.get("duration_sec")) else None,
+                "avg_hr": safe_int(row.get("avg_hr")),
+                "training_load": safe_float(row.get("activity_training_load")),
+            })
+
+    return {
+        "daily_points": daily_points,
+        "running_points": running_points,
+    }
+
+
 def build_summary(export_dir: Path) -> dict:
     daily = load_csv(export_dir / "daily_summary_export.csv")
     activities = load_csv(export_dir / "activities_export.csv")
@@ -60,8 +164,10 @@ def build_summary(export_dir: Path) -> dict:
     running = activities[activities["sport_type"].fillna("").str.upper() == "RUNNING"].copy()
 
     best_run = None
+    latest_run = None
     if not running.empty:
         best_run_row = running.sort_values("distance_m", ascending=False).iloc[0]
+        latest_run_row = running.sort_values("start_time_local").iloc[-1]
         best_run = {
             "date": best_run_row["start_time_local"].strftime("%Y-%m-%d") if pd.notna(best_run_row["start_time_local"]) else None,
             "distance_km": round(float(best_run_row["distance_m"]) / 1000, 2) if pd.notna(best_run_row["distance_m"]) else None,
@@ -69,9 +175,18 @@ def build_summary(export_dir: Path) -> dict:
             "avg_hr": safe_int(best_run_row.get("avg_hr")),
             "training_load": safe_float(best_run_row.get("activity_training_load")),
         }
+        latest_run = {
+            "date": latest_run_row["start_time_local"].strftime("%Y-%m-%d") if pd.notna(latest_run_row["start_time_local"]) else None,
+            "distance_km": round(float(latest_run_row["distance_m"]) / 1000, 2) if pd.notna(latest_run_row["distance_m"]) else None,
+            "duration_min": round(float(latest_run_row["duration_sec"]) / 60, 1) if pd.notna(latest_run_row["duration_sec"]) else None,
+            "avg_hr": safe_int(latest_run_row.get("avg_hr")),
+            "training_load": safe_float(latest_run_row.get("activity_training_load")),
+        }
 
-    latest = daily.sort_values("date").iloc[-1]
-    recent7 = daily.sort_values("date").tail(7)
+    ordered_daily = daily.sort_values("date")
+    latest = ordered_daily.iloc[-1]
+    recent7 = ordered_daily.tail(7)
+    previous7 = ordered_daily.tail(14).head(7)
 
     summary = {
         "date_range": {
@@ -101,11 +216,18 @@ def build_summary(export_dir: Path) -> dict:
             "body_battery": safe_int(recent7["body_battery"].mean()),
             "acute_load": safe_float(recent7["acute_load"].mean()),
         },
+        "recent_7_day_vs_previous_7_day": {
+            "steps_delta": _delta(recent7["steps"].mean(), previous7["steps"].mean()),
+            "sleep_score_delta": _delta(recent7["sleep_score_overall"].mean(), previous7["sleep_score_overall"].mean()),
+            "resting_hr_delta": _delta(recent7["resting_hr"].mean(), previous7["resting_hr"].mean()),
+            "body_battery_delta": _delta(recent7["body_battery"].mean(), previous7["body_battery"].mean()),
+        },
         "activity_summary": {
             "total_activities": len(activities),
             "total_running_distance_km": round(running["distance_m"].fillna(0).sum() / 1000, 2),
             "avg_running_distance_km": round(running["distance_m"].fillna(0).mean() / 1000, 2) if len(running) else None,
             "best_run": best_run,
+            "latest_run": latest_run,
         },
         "signals": {
             "sleep_score_days_present": int(daily["sleep_score_overall"].notna().sum()),
@@ -114,6 +236,8 @@ def build_summary(export_dir: Path) -> dict:
             "hydration_events_with_estimated_sweat_loss": int(hydration["estimated_sweat_loss_ml"].fillna(0).gt(0).sum()),
         },
     }
+    summary["interpretation"] = _classify_snapshot(summary["latest_day"], summary["recent_7_day_averages"])
+    summary["visuals"] = _build_visual_payload(daily, running)
     return summary
 
 
@@ -146,11 +270,25 @@ Internal runtime artifact generated from normalized Garmin export outputs.
 - body battery: {summary['recent_7_day_averages']['body_battery']}
 - acute load: {summary['recent_7_day_averages']['acute_load']}
 
+## Week-over-week change
+- steps delta vs prior 7 days: {summary['recent_7_day_vs_previous_7_day']['steps_delta']}
+- sleep score delta vs prior 7 days: {summary['recent_7_day_vs_previous_7_day']['sleep_score_delta']}
+- resting HR delta vs prior 7 days: {summary['recent_7_day_vs_previous_7_day']['resting_hr_delta']}
+- body battery delta vs prior 7 days: {summary['recent_7_day_vs_previous_7_day']['body_battery_delta']}
+
 ## Activity summary
 - total activities: {summary['activity_summary']['total_activities']}
 - total running distance: {summary['activity_summary']['total_running_distance_km']} km
 - average running distance: {summary['activity_summary']['avg_running_distance_km']} km
 - best run: {br.get('date')} | {br.get('distance_km')} km | {br.get('duration_min')} min | avg HR {br.get('avg_hr')} | load {br.get('training_load')}
+- latest run: {summary['activity_summary']['latest_run'].get('date') if summary['activity_summary'].get('latest_run') else None} | {summary['activity_summary']['latest_run'].get('distance_km') if summary['activity_summary'].get('latest_run') else None} km | {summary['activity_summary']['latest_run'].get('duration_min') if summary['activity_summary'].get('latest_run') else None} min
+
+## Interpretation
+- label: {summary['interpretation']['label']}
+- headline: {summary['interpretation']['headline']}
+- positives: {', '.join(summary['interpretation']['positives']) or 'none'}
+- cautions: {', '.join(summary['interpretation']['cautions']) or 'none'}
+- note: {summary['interpretation']['disclaimer']}
 
 ## Signal availability
 - sleep-score days present: {summary['signals']['sleep_score_days_present']}

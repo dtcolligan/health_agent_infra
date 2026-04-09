@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Garmin Export Overview</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f5f7fb;
+    --card: #ffffff;
+    --text: #172033;
+    --muted: #667085;
+    --border: #e6eaf2;
+    --accent: #3b82f6;
+    --green: #16a34a;
+    --amber: #d97706;
+    --red: #dc2626;
+    --shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; }
+  .back-link { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+  h1 { margin: 12px 0 6px; font-size: 2rem; }
+  .subtitle { color: var(--muted); margin: 0 0 24px; }
+  .grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: var(--shadow);
+  }
+  .metric-label { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .metric-value { font-size: 2rem; font-weight: 750; margin-top: 4px; }
+  .metric-foot { color: var(--muted); margin-top: 4px; font-size: 0.92rem; }
+  .hero { display: grid; grid-template-columns: 1.2fr 1fr; gap: 18px; margin-bottom: 18px; }
+  .badge { display: inline-block; padding: 6px 10px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; text-transform: capitalize; }
+  .badge.build-ready { background: rgba(22,163,74,0.12); color: var(--green); }
+  .badge.steady { background: rgba(59,130,246,0.12); color: var(--accent); }
+  .badge.absorb-and-maintain { background: rgba(217,119,6,0.14); color: var(--amber); }
+  .headline { font-size: 1.15rem; line-height: 1.45; margin: 12px 0; }
+  .bullets { margin: 12px 0 0; padding-left: 18px; color: var(--text); }
+  .bullets li { margin-bottom: 8px; }
+  .mini-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin-top: 12px; }
+  .mini { padding: 12px; border-radius: 14px; background: #f8fafc; border: 1px solid var(--border); }
+  .section-title { margin: 30px 0 12px; font-size: 1rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .chart-card { min-height: 320px; }
+  .chart-wrap { position: relative; height: 240px; }
+  .small { font-size: 0.88rem; color: var(--muted); }
+  .empty { color: var(--muted); font-style: italic; }
+  @media (max-width: 860px) { .hero { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a href="/" class="back-link">&larr; Back to logger</a>
+  <h1>Garmin Export Overview</h1>
+  <p class="subtitle" id="subtitle">Loading normalized Garmin export summary...</p>
+
+  <div class="hero">
+    <div class="card" id="interpretation-card">
+      <div class="metric-label">Latest interpretation</div>
+      <div id="interpretation-body" class="empty">Waiting for export summary...</div>
+    </div>
+    <div class="card">
+      <div class="metric-label">Why this view exists</div>
+      <p class="headline">A first product-facing layer over the normalized Garmin export, turning raw rows into a readable training and recovery snapshot.</p>
+      <p class="small">This page reads runtime artifacts only. No raw export data is committed into the repo.</p>
+      <div class="mini-grid" id="coverage-grid"></div>
+    </div>
+  </div>
+
+  <div class="grid" id="kpi-grid"></div>
+
+  <div class="section-title">Recent trends</div>
+  <div class="grid">
+    <div class="card chart-card"><div class="metric-label">Sleep, battery, readiness</div><div class="chart-wrap"><canvas id="recoveryChart"></canvas></div></div>
+    <div class="card chart-card"><div class="metric-label">Steps and resting HR</div><div class="chart-wrap"><canvas id="activityChart"></canvas></div></div>
+  </div>
+
+  <div class="section-title">Running signals</div>
+  <div class="grid">
+    <div class="card chart-card"><div class="metric-label">Recent runs</div><div class="chart-wrap"><canvas id="runningChart"></canvas></div></div>
+    <div class="card" id="run-summary-card"></div>
+  </div>
+</div>
+
+<script>
+let charts = [];
+
+function destroyCharts() {
+  charts.forEach((chart) => chart.destroy());
+  charts = [];
+}
+
+function fmtDelta(value, invert = false) {
+  if (value === null || value === undefined || Number.isNaN(value)) return 'No prior comparison';
+  const sign = value > 0 ? '+' : '';
+  const tone = value === 0 ? 'steady' : ((invert ? value < 0 : value > 0) ? 'improving' : 'softer');
+  return `${sign}${value} vs prior 7 days, ${tone}`;
+}
+
+function metricCard(label, value, foot) {
+  return `<div class="card"><div class="metric-label">${label}</div><div class="metric-value">${value ?? '—'}</div><div class="metric-foot">${foot || ''}</div></div>`;
+}
+
+function render(summary) {
+  const latest = summary.latest_day || {};
+  const avg7 = summary.recent_7_day_averages || {};
+  const delta = summary.recent_7_day_vs_previous_7_day || {};
+  const interpretation = summary.interpretation || {};
+  const visuals = summary.visuals || {};
+  const bestRun = summary.activity_summary?.best_run || {};
+  const latestRun = summary.activity_summary?.latest_run || {};
+
+  document.getElementById('subtitle').textContent = `${summary.date_range.start} to ${summary.date_range.end} • ${summary.date_range.days} days of normalized export coverage`;
+
+  document.getElementById('interpretation-body').innerHTML = `
+    <span class="badge ${interpretation.label || 'steady'}">${interpretation.label || 'steady'}</span>
+    <p class="headline">${interpretation.headline || 'No interpretation available yet.'}</p>
+    <div class="mini-grid">
+      <div class="mini"><div class="metric-label">Latest day</div><div><strong>${latest.date || '—'}</strong><br>${latest.training_readiness_level || 'Unknown'} readiness, sleep ${latest.sleep_score_overall ?? '—'}, battery ${latest.body_battery ?? '—'}</div></div>
+      <div class="mini"><div class="metric-label">Weekly baseline</div><div><strong>${avg7.steps ?? '—'}</strong> avg steps<br><strong>${avg7.sleep_score_overall ?? '—'}</strong> avg sleep score</div></div>
+    </div>
+    <ul class="bullets">
+      ${(interpretation.positives || []).map(item => `<li>${item}</li>`).join('')}
+      ${(interpretation.cautions || []).map(item => `<li>${item}</li>`).join('')}
+    </ul>
+    <p class="small">${interpretation.disclaimer || ''}</p>
+  `;
+
+  document.getElementById('coverage-grid').innerHTML = [
+    ['Daily rows', summary.coverage?.daily_rows],
+    ['Activities', summary.coverage?.activity_rows],
+    ['Running', summary.coverage?.running_activity_rows],
+    ['HRV days', summary.signals?.hrv_days_present]
+  ].map(([label, value]) => `<div class="mini"><div class="metric-label">${label}</div><div class="metric-value" style="font-size:1.35rem;">${value ?? '—'}</div></div>`).join('');
+
+  document.getElementById('kpi-grid').innerHTML = [
+    metricCard('Latest steps', latest.steps?.toLocaleString(), fmtDelta(delta.steps_delta)),
+    metricCard('Latest sleep score', latest.sleep_score_overall, fmtDelta(delta.sleep_score_delta)),
+    metricCard('Latest body battery', latest.body_battery, fmtDelta(delta.body_battery_delta)),
+    metricCard('7-day resting HR', avg7.resting_hr, fmtDelta(delta.resting_hr_delta, true)),
+  ].join('');
+
+  document.getElementById('run-summary-card').innerHTML = `
+    <div class="metric-label">Running interpretation</div>
+    <p class="headline">The export already supports a usable running block view, with recency and best-effort context rather than just activity rows.</p>
+    <div class="mini-grid">
+      <div class="mini"><div class="metric-label">Latest run</div><div><strong>${latestRun.distance_km ?? '—'} km</strong><br>${latestRun.date || '—'} • ${latestRun.duration_min ?? '—'} min</div></div>
+      <div class="mini"><div class="metric-label">Best run in export</div><div><strong>${bestRun.distance_km ?? '—'} km</strong><br>${bestRun.date || '—'} • load ${bestRun.training_load ?? '—'}</div></div>
+      <div class="mini"><div class="metric-label">Total running distance</div><div><strong>${summary.activity_summary?.total_running_distance_km ?? '—'} km</strong><br>${summary.activity_summary?.total_activities ?? '—'} tracked activities</div></div>
+    </div>
+  `;
+
+  destroyCharts();
+
+  const dailyPoints = visuals.daily_points || [];
+  const runPoints = visuals.running_points || [];
+
+  charts.push(new Chart(document.getElementById('recoveryChart'), {
+    type: 'line',
+    data: {
+      labels: dailyPoints.map(p => p.date),
+      datasets: [
+        { label: 'Sleep score', data: dailyPoints.map(p => p.sleep_score), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.12)', tension: 0.35 },
+        { label: 'Body battery', data: dailyPoints.map(p => p.body_battery), borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.12)', tension: 0.35 },
+        { label: 'Readiness score', data: dailyPoints.map(p => p.readiness_score), borderColor: '#d97706', backgroundColor: 'rgba(217,119,6,0.12)', tension: 0.35 }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+  }));
+
+  charts.push(new Chart(document.getElementById('activityChart'), {
+    data: {
+      labels: dailyPoints.map(p => p.date),
+      datasets: [
+        { type: 'bar', label: 'Steps', data: dailyPoints.map(p => p.steps), backgroundColor: 'rgba(59,130,246,0.22)', borderColor: '#3b82f6' },
+        { type: 'line', label: 'Resting HR', data: dailyPoints.map(p => p.resting_hr), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.12)', yAxisID: 'y1', tension: 0.35 }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true }, y1: { position: 'right', beginAtZero: false, grid: { drawOnChartArea: false } } } }
+  }));
+
+  charts.push(new Chart(document.getElementById('runningChart'), {
+    data: {
+      labels: runPoints.map(p => p.date),
+      datasets: [
+        { type: 'bar', label: 'Distance (km)', data: runPoints.map(p => p.distance_km), backgroundColor: 'rgba(22,163,74,0.25)', borderColor: '#16a34a' },
+        { type: 'line', label: 'Training load', data: runPoints.map(p => p.training_load), borderColor: '#7c3aed', backgroundColor: 'rgba(124,58,237,0.12)', yAxisID: 'y1', tension: 0.35 }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true }, y1: { position: 'right', beginAtZero: true, grid: { drawOnChartArea: false } } } }
+  }));
+}
+
+fetch('/api/garmin/export-overview')
+  .then(async (res) => {
+    const payload = await res.json();
+    if (!res.ok || payload.status !== 'ok') throw new Error(payload.message || 'Unable to load Garmin export overview');
+    render(payload.summary);
+  })
+  .catch((error) => {
+    document.getElementById('subtitle').textContent = error.message;
+    document.getElementById('interpretation-body').textContent = 'Run the offline export path and analysis first, then refresh this page.';
+  });
+</script>
+</body>
+</html>
