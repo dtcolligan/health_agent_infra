@@ -7,6 +7,7 @@ Built as an applied ML + data engineering portfolio project.
 ## Highlights
 
 - Built an end-to-end health tracking system combining **Garmin biometrics**, **nutrition logging**, and **interactive dashboards**
+- Added a **bounded offline Garmin GDPR export adapter**, so the project can produce usable datasets without depending on fragile live login flows
 - Trained a **portion-estimation model** to convert natural-language food logs into gram estimates
 - Grounded nutrition estimates in **deterministic USDA lookups**, avoiding LLM hallucinated macros at inference time
 - Built a **Python + Flask + SQLite** application with a web UI, ML pipeline, and Garmin ingestion flow
@@ -23,7 +24,8 @@ Health Lab has two main parts:
    - Computes calories and macros via deterministic lookup
 
 2. **Garmin health pipeline**
-   - Pulls wearable data from Garmin
+   - Pulls wearable data from Garmin when live access is available
+   - Ingests Garmin GDPR export zips offline when live access is unreliable
    - Cleans and flattens daily metrics
    - Builds engineered features for analysis
    - Exports data into dashboards and analysis workflows
@@ -114,11 +116,22 @@ python web/app.py
 
 ### Run the Garmin pipeline
 
+Live pull path:
+
 ```bash
 python garmin/pull_garmin.py
 python garmin/clean_garmin.py
 python garmin/build_features.py
 ```
+
+Offline export path:
+
+```bash
+python garmin/import_export.py /path/to/garmin-export.zip
+python garmin/analyze_export.py
+```
+
+The offline path writes derived runtime outputs under `data/garmin/export/` and keeps raw personal export contents out of tracked files.
 
 ## Current capabilities
 
@@ -129,6 +142,8 @@ python garmin/build_features.py
 - SQLite-backed storage
 - Web UI for logging and viewing data
 - Garmin ingestion and feature-building pipeline
+- Offline Garmin export normalization path for messy GDPR exports
+- First bounded runtime analysis artifact from normalized export outputs
 - Daily readiness / recovery scoring from engineered Garmin features, nutrition logs, and training context
 - Dashboard export flow
 
@@ -144,11 +159,19 @@ This repo is not just a notebook or toy model. It demonstrates:
 - data engineering across multiple sources
 - product thinking around a usable health tool
 - system design from ingestion to UI
+- proof-first handling of messy real-world health exports instead of relying on perfect APIs
+
+## Current proof-first Garmin surfaces
+
+- `garmin/import_export.py` normalizes a bounded Garmin GDPR export into runtime datasets
+- `garmin/analyze_export.py` creates the first bounded analysis artifact from those normalized outputs
+- `docs/offline_garmin_export_adapter.md` documents the supported offline ingest path and its limits
 
 ## Next steps
 
 - Improve the dashboard and daily readiness views
 - Expand the health analytics layer using engineered Garmin features
+- Tighten the bridge between offline export outputs and the live-pull feature pipeline
 - Add richer coaching logic on top of readiness scoring and subjective recovery signals
 - Improve food logging UX and input flexibility
 - Tighten deployment/dev setup for easier reproducibility
