@@ -7,6 +7,14 @@ Status: first transformation plan
 
 Transform the current `garmin_lab` GitHub project into the broader `Health Lab` project.
 
+Execution locks from Dom:
+- this should become the new version of the existing `garmin_lab` repo, not a separate new repo
+- Health Lab can be public from the start
+- gym v1 should use manual structured logs inside Health Lab
+- nutrition v1 should start from the existing food pipeline and be improved/tailored as needed
+- build Health Lab first, then connect it to ClawSuite afterward
+- optimize in a balanced way, with priority on daily usefulness, then strong GitHub/readme/demo, then ML sophistication, then technical depth
+
 This is not a cosmetic rename only.
 The repo should be reshaped so the product identity, structure, ingestion model, and outputs all reflect a broader health system covering:
 - sleep
@@ -249,8 +257,9 @@ This gives the repo a real Health Lab center of gravity before deeper refactors.
 1. implement `health_model/` with the daily snapshot schema
 2. build a generator that maps current Garmin export outputs into that snapshot
 3. add a minimal manual gym-log input file format
-4. add nutrition-to-snapshot mapping
+4. add nutrition-to-snapshot mapping from the existing food pipeline
 5. emit one real daily snapshot artifact
+6. update README/docs enough that the repo already reads as Health Lab in direction, even before deeper structural refactors
 
 ## What not to do
 
