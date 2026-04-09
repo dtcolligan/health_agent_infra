@@ -44,6 +44,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--db-path", default=str(DEFAULT_DB_PATH))
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR))
     parser.add_argument("--date", help="Optional YYYY-MM-DD target date. Defaults to latest available date across inputs.")
+    parser.add_argument("--user-id", type=int, default=1, help="Intended nutrition user_id for SQLite nutrition loading. Defaults to 1.")
     return parser.parse_args()
 
 
@@ -88,9 +89,9 @@ def _sqlite_columns(conn: sqlite3.Connection, table_name: str) -> set[str]:
     return {row[1] for row in rows}
 
 
-def _build_top_meals_summary(conn: sqlite3.Connection, date_for: str) -> str | None:
+def _build_top_meals_summary(conn: sqlite3.Connection, user_id: int, date_for: str) -> str | None:
     meal_item_columns = _sqlite_columns(conn, "meal_items")
-    if not {"date_for", "item_name"}.issubset(meal_item_columns):
+    if not {"user_id", "date_for", "item_name"}.issubset(meal_item_columns):
         return None
 
     calories_expr = "COALESCE(SUM(calories), 0)" if "calories" in meal_item_columns else "0"
@@ -98,12 +99,12 @@ def _build_top_meals_summary(conn: sqlite3.Connection, date_for: str) -> str | N
         f"""
         SELECT item_name, {calories_expr} AS total_calories
         FROM meal_items
-        WHERE date_for = ?
+        WHERE user_id = ? AND date_for = ?
         GROUP BY item_name
         ORDER BY total_calories DESC, item_name ASC
         LIMIT 3
         """,
-        (date_for,),
+        (user_id, date_for),
     ).fetchall()
     if not rows:
         return None
@@ -139,7 +140,7 @@ def load_manual_gym(path: Path) -> tuple[dict[str, list[dict]], list[str]]:
     return sessions_by_date, dates
 
 
-def load_nutrition_rows(db_path: Path) -> tuple[dict[str, dict], list[str]]:
+def load_nutrition_rows(db_path: Path, user_id: int) -> tuple[dict[str, dict], list[str]]:
     if not db_path.exists():
         return {}, []
 
@@ -152,7 +153,7 @@ def load_nutrition_rows(db_path: Path) -> tuple[dict[str, dict], list[str]]:
 
         if "daily_summary" in tables:
             daily_summary_columns = _sqlite_columns(conn, "daily_summary")
-            if {"date_for", "total_calories", "total_protein_g", "total_carbs_g", "total_fat_g", "total_fiber_g", "meal_count"}.issubset(daily_summary_columns):
+            if {"user_id", "date_for", "total_calories", "total_protein_g", "total_carbs_g", "total_fat_g", "total_fiber_g", "meal_count"}.issubset(daily_summary_columns):
                 rows = conn.execute(
                     """
                     SELECT date_for,
@@ -163,14 +164,16 @@ def load_nutrition_rows(db_path: Path) -> tuple[dict[str, dict], list[str]]:
                            total_fiber_g,
                            meal_count
                     FROM daily_summary
+                    WHERE user_id = ?
                     ORDER BY date_for
-                    """
+                    """,
+                    (user_id,),
                 ).fetchall()
                 source_name = "health_log_sqlite_daily_summary"
 
         if not rows and "meal_items" in tables:
             meal_item_columns = _sqlite_columns(conn, "meal_items")
-            if {"date_for", "item_name"}.issubset(meal_item_columns):
+            if {"user_id", "date_for", "item_name"}.issubset(meal_item_columns):
                 calories_expr = "COALESCE(SUM(calories), 0)" if "calories" in meal_item_columns else "NULL"
                 protein_expr = "COALESCE(SUM(protein_g), 0)" if "protein_g" in meal_item_columns else "NULL"
                 carbs_expr = "COALESCE(SUM(carbs_g), 0)" if "carbs_g" in meal_item_columns else "NULL"
@@ -186,9 +189,11 @@ def load_nutrition_rows(db_path: Path) -> tuple[dict[str, dict], list[str]]:
                            {fiber_expr} AS total_fiber_g,
                            COUNT(*) AS meal_count
                     FROM meal_items
-                    GROUP BY date_for
+                    WHERE user_id = ?
+                    GROUP BY user_id, date_for
                     ORDER BY date_for
-                    """
+                    """,
+                    (user_id,),
                 ).fetchall()
                 source_name = "health_log_sqlite_meal_items"
     except sqlite3.Error:
@@ -202,7 +207,7 @@ def load_nutrition_rows(db_path: Path) -> tuple[dict[str, dict], list[str]]:
         if not date_for:
             continue
         payload = dict(row)
-        payload["top_meals_summary"] = _build_top_meals_summary(conn, date_for) if "meal_items" in tables else None
+        payload["top_meals_summary"] = _build_top_meals_summary(conn, user_id, date_for) if "meal_items" in tables else None
         payload["source"] = source_name
         mapped[date_for] = payload
         dates.append(date_for)
@@ -372,7 +377,7 @@ def _pick_target_date(daily: pd.DataFrame, gym_dates: list[str], nutrition_dates
     return max(dates)
 
 
-def generate_snapshot(export_dir: Path, gym_log_path: Path, db_path: Path, target_date: str | None = None) -> DailyHealthSnapshot:
+def generate_snapshot(export_dir: Path, gym_log_path: Path, db_path: Path, target_date: str | None = None, user_id: int = 1) -> DailyHealthSnapshot:
     daily = load_csv(export_dir / "daily_summary_export.csv")
     activities = load_csv(export_dir / "activities_export.csv")
     hydration = load_csv(export_dir / "hydration_events_export.csv") if (export_dir / "hydration_events_export.csv").exists() else pd.DataFrame()
@@ -381,7 +386,7 @@ def generate_snapshot(export_dir: Path, gym_log_path: Path, db_path: Path, targe
     activities["date"] = pd.to_datetime(activities["start_time_local"], errors="coerce").dt.strftime("%Y-%m-%d")
 
     gym_by_date, gym_dates = load_manual_gym(gym_log_path)
-    nutrition_rows, nutrition_dates = load_nutrition_rows(db_path)
+    nutrition_rows, nutrition_dates = load_nutrition_rows(db_path, user_id=user_id)
     date = _pick_target_date(daily, gym_dates, nutrition_dates, target_date)
 
     daily_rows = daily[daily["date"] == date]
@@ -474,6 +479,7 @@ def main() -> None:
         gym_log_path=Path(args.gym_log_path),
         db_path=Path(args.db_path),
         target_date=args.date,
+        user_id=args.user_id,
     )
     latest_path, dated_path = write_outputs(snapshot, Path(args.output_dir))
     print(f"wrote {latest_path}")
