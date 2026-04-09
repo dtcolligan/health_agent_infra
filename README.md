@@ -171,6 +171,27 @@ This repo is not just a notebook or toy model. It demonstrates:
 - `/garmin-export` renders a product-facing recovery + running overview directly from the local runtime artifacts
 - `docs/offline_garmin_export_adapter.md` documents the supported offline ingest path and its limits
 
+## Canonical Health Lab daily snapshot core
+
+The repo now includes a first bounded canonical snapshot layer under `health_model/`.
+
+Inputs:
+- Garmin export daily + activity runtime files under `data/garmin/export/`
+- manual gym logs in `data/health/manual_gym_sessions.json` using `health_model/manual_gym_sessions.example.json` as the v1 format reference
+- nutrition totals from `data/health_log.db` when that SQLite file exists
+
+Run:
+
+```bash
+python3 health_model/daily_snapshot.py
+```
+
+Outputs:
+- `data/health/daily_snapshot_latest.json`
+- `data/health/daily_snapshot_YYYY-MM-DD.json`
+
+This v1 snapshot keeps unsupported fields explicit as `null` and separates data-backed observations from generic guidance.
+
 ## Next steps
 
 - Improve the dashboard and daily readiness views
