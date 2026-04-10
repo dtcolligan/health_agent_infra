@@ -272,6 +272,52 @@ Each call returns machine-readable JSON with:
 
 The CLI fails closed with a non-zero exit code and the same JSON error envelope for invalid payloads, unsupported commands, parser-level argument or choice errors, and timestamp/date mismatches, and leaves the persisted bundle and generated artifacts unchanged on rejection.
 
+## End-to-end external agent write then read flow
+
+An external agent can now write through the submit CLI, then read back the exact scoped daily artifact through a separate read-only CLI without importing Python internals or guessing paths:
+
+```bash
+python3 -m health_model.agent_submit_cli hydration \
+  --bundle-path data/health/shared_input_bundle_2026-04-09.json \
+  --output-dir data/health \
+  --user-id user_1 \
+  --date 2026-04-09 \
+  --collected-at 2026-04-09T18:20:00+01:00 \
+  --ingested-at 2026-04-09T18:20:03+01:00 \
+  --raw-location healthlab://manual/hydration/2026-04-09/evening \
+  --confidence-score 0.98 \
+  --completeness-state complete \
+  --amount-ml 750 \
+  --beverage-type water
+```
+
+Then read the dated artifact:
+
+```bash
+python3 -m health_model.agent_context_cli get \
+  --artifact-path data/health/agent_readable_daily_context_2026-04-09.json \
+  --user-id user_1 \
+  --date 2026-04-09
+```
+
+Or read the latest scoped artifact:
+
+```bash
+python3 -m health_model.agent_context_cli get-latest \
+  --artifact-path data/health/agent_readable_daily_context_latest.json \
+  --user-id user_1
+```
+
+The read CLI returns a machine-readable JSON envelope with:
+
+- `ok`
+- `artifact_path`
+- `context`
+- `validation`
+- `error`
+
+It fails closed with a non-zero exit code and the same JSON envelope for missing files, invalid JSON, artifact type mismatch, and user/date scope mismatches.
+
 ## Voice-note intake proof
 
 The repo also includes a bounded voice-note intake path in `health_model/voice_note_intake.py`.
