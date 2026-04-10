@@ -31,7 +31,7 @@ The flagship loop is real, CLI-first, locally runnable, and backed by checked-in
 ## Repo-readiness audit note
 
 Unresolved truths that still matter:
-- the Git repo is still named `garmin_lab` while the stranger-facing product framing is `Health Lab`
+- Note: the repository directory is still named `garmin_lab` for historical reasons, while the current project framing is Health Lab.
 - older Garmin, dashboard, web, and adjacent project surfaces remain in-tree and can still distract from the flagship proof path
 - the cleanest public review path is the checked-in demo and proof bundles, not the whole repo
 - local runtime outputs under `data/` are not public-safe proof artifacts unless explicitly curated
@@ -42,4 +42,4 @@ Unresolved truths that still matter:
 - [x] `LICENSE`, `CONTRIBUTING.md`, and this `STATUS.md` exist
 - [x] Proof-facing wording stays within current repo reality
 - [x] Frozen flagship CLI smoke-test command is defined for CI
-- [ ] Repo naming and broader surface cleanup are still pending beyond this bounded slice
+- [ ] Any repo directory rename and broader legacy-root wording cleanup remain pending beyond this bounded slice

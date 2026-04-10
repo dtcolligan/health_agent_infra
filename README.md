@@ -2,6 +2,8 @@
 
 Health Lab is a local-first personal health lab for turning bounded daily inputs into machine-readable artifacts that another agent can inspect safely.
 
+Note: the repository directory is still named `garmin_lab` for historical reasons, while the current project framing is Health Lab.
+
 ## What works today
 
 The clearest shipped proof in this repo is a CLI-first loop:
@@ -46,7 +48,9 @@ The broader CLI walkthroughs later in this README remain useful runtime examples
 - Voice-note submission into a persisted bundle via `python3 -m health_model.agent_voice_note_cli submit`
 - Scoped context reads via `python3 -m health_model.agent_context_cli get`
 - Recommendation artifact creation via `python3 -m health_model.agent_recommendation_cli create`
-- Older Garmin, food logging, dashboard, and web-app surfaces elsewhere in the repo
+
+### Legacy and adjacent repo surfaces
+- Older Garmin, food logging, dashboard, and web-app surfaces remain in-tree as legacy or adjacent code, but they are not part of the current flagship proof path.
 
 ### Not yet
 - No claim of clinical-grade guidance, diagnosis, or monitoring
@@ -56,7 +60,7 @@ The broader CLI walkthroughs later in this README remain useful runtime examples
 
 ## Quick repo orientation
 
-The current flagship loop lives in `health_model/`. Older project surfaces for Garmin ingestion, dashboards, and the web app still exist in the repo, but they are not the cleanest stranger-safe proof path today.
+The current flagship loop lives in `health_model/`. Older project surfaces for Garmin ingestion, dashboards, and the web app still exist in the repo as legacy or adjacent code, but they are not part of the current flagship proof path.
 
 If you want the smallest trustworthy slice first, read `docs/health_lab_canonical_public_demo.md`, inspect `artifacts/public_demo/captured/`, then inspect the audited flagship proof bundle at `artifacts/flagship_loop_proof/2026-04-09/` or regenerate it with `python3 scripts/run_flagship_loop_proof_audit.py`.
 
