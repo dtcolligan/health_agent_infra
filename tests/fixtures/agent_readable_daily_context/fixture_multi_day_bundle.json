@@ -1,0 +1,374 @@
+{
+  "source_artifacts": [
+    {
+      "artifact_id": "artifact_wearable_20260409",
+      "user_id": "user_1",
+      "source_type": "wearable",
+      "source_name": "garmin_adapter_daily_export",
+      "collected_at": "2026-04-10T07:00:00Z",
+      "ingested_at": "2026-04-10T07:10:00Z",
+      "raw_location": "healthlab://wearable/daily/2026-04-09",
+      "raw_format": "json",
+      "parser_version": "garmin-export@0.1.0"
+    },
+    {
+      "artifact_id": "artifact_voice_20260409",
+      "user_id": "user_1",
+      "source_type": "voice_note",
+      "source_name": "daily_voice_note",
+      "collected_at": "2026-04-09T21:30:00Z",
+      "ingested_at": "2026-04-09T21:32:00Z",
+      "raw_location": "healthlab://voice/day/2026-04-09",
+      "raw_format": "m4a",
+      "transcript_ref": "healthlab://voice/day/2026-04-09/transcript",
+      "parser_version": "voice-extractor@0.1.0"
+    },
+    {
+      "artifact_id": "artifact_manual_20260409",
+      "user_id": "user_1",
+      "source_type": "manual",
+      "source_name": "manual_day_log",
+      "collected_at": "2026-04-09T20:45:00Z",
+      "ingested_at": "2026-04-09T20:46:00Z",
+      "raw_location": "healthlab://manual/day/2026-04-09",
+      "raw_format": "json",
+      "parser_version": "manual-form@0.1.0"
+    },
+    {
+      "artifact_id": "artifact_wearable_20260408",
+      "user_id": "user_1",
+      "source_type": "wearable",
+      "source_name": "garmin_adapter_daily_export",
+      "collected_at": "2026-04-09T07:00:00Z",
+      "ingested_at": "2026-04-09T07:10:00Z",
+      "raw_location": "healthlab://wearable/daily/2026-04-08",
+      "raw_format": "json",
+      "parser_version": "garmin-export@0.1.0"
+    },
+    {
+      "artifact_id": "artifact_voice_20260408",
+      "user_id": "user_1",
+      "source_type": "voice_note",
+      "source_name": "daily_voice_note",
+      "collected_at": "2026-04-08T21:15:00Z",
+      "ingested_at": "2026-04-08T21:17:00Z",
+      "raw_location": "healthlab://voice/day/2026-04-08",
+      "raw_format": "m4a",
+      "transcript_ref": "healthlab://voice/day/2026-04-08/transcript",
+      "parser_version": "voice-extractor@0.1.0"
+    },
+    {
+      "artifact_id": "artifact_manual_20260408",
+      "user_id": "user_1",
+      "source_type": "manual",
+      "source_name": "manual_day_log",
+      "collected_at": "2026-04-08T20:30:00Z",
+      "ingested_at": "2026-04-08T20:31:00Z",
+      "raw_location": "healthlab://manual/day/2026-04-08",
+      "raw_format": "json",
+      "parser_version": "manual-form@0.1.0"
+    }
+  ],
+  "input_events": [
+    {
+      "event_id": "event_sleep_start_20260409",
+      "user_id": "user_1",
+      "source_type": "wearable",
+      "source_name": "garmin_adapter_daily_export",
+      "capture_mode": "passive",
+      "domain": "sleep",
+      "metric_name": "sleep_start",
+      "value_type": "string",
+      "value_string": "2026-04-08T22:45:00+01:00",
+      "event_start_at": null,
+      "event_end_at": null,
+      "effective_date": "2026-04-09",
+      "ingested_at": "2026-04-10T07:10:00Z",
+      "confidence_label": "high",
+      "confidence_score": 0.96,
+      "missingness_state": "present",
+      "provenance": {
+        "artifact_id": "artifact_wearable_20260409",
+        "derivation_method": "wearable_normalization",
+        "supporting_refs": [],
+        "parser_version": "garmin-export@0.1.0",
+        "conflict_status": "none"
+      }
+    },
+    {
+      "event_id": "event_sleep_end_20260409",
+      "user_id": "user_1",
+      "source_type": "wearable",
+      "source_name": "garmin_adapter_daily_export",
+      "capture_mode": "passive",
+      "domain": "sleep",
+      "metric_name": "sleep_end",
+      "value_type": "string",
+      "value_string": "2026-04-09T06:55:00+01:00",
+      "event_start_at": null,
+      "event_end_at": null,
+      "effective_date": "2026-04-09",
+      "ingested_at": "2026-04-10T07:10:00Z",
+      "confidence_label": "high",
+      "confidence_score": 0.96,
+      "missingness_state": "present",
+      "provenance": {
+        "artifact_id": "artifact_wearable_20260409",
+        "derivation_method": "wearable_normalization",
+        "supporting_refs": [],
+        "parser_version": "garmin-export@0.1.0",
+        "conflict_status": "none"
+      }
+    },
+    {
+      "event_id": "event_sleep_duration_20260409",
+      "user_id": "user_1",
+      "source_type": "wearable",
+      "source_name": "garmin_adapter_daily_export",
+      "capture_mode": "passive",
+      "domain": "sleep",
+      "metric_name": "sleep_duration_minutes",
+      "value_type": "number",
+      "value_number": 490,
+      "unit": "minutes",
+      "event_start_at": null,
+      "event_end_at": null,
+      "effective_date": "2026-04-09",
+      "ingested_at": "2026-04-10T07:10:00Z",
+      "confidence_label": "high",
+      "confidence_score": 0.95,
+      "missingness_state": "present",
+      "provenance": {
+        "artifact_id": "artifact_wearable_20260409",
+        "derivation_method": "wearable_normalization",
+        "supporting_refs": [],
+        "parser_version": "garmin-export@0.1.0",
+        "conflict_status": "none"
+      }
+    },
+    {
+      "event_id": "event_steps_morning_20260409",
+      "user_id": "user_1",
+      "source_type": "wearable",
+      "source_name": "garmin_adapter_daily_export",
+      "capture_mode": "passive",
+      "domain": "running",
+      "metric_name": "steps_count",
+      "value_type": "number",
+      "value_number": 9600,
+      "unit": "count",
+      "event_start_at": null,
+      "event_end_at": null,
+      "effective_date": "2026-04-09",
+      "ingested_at": "2026-04-10T07:10:00Z",
+      "confidence_label": "high",
+      "confidence_score": 0.92,
+      "missingness_state": "present",
+      "provenance": {
+        "artifact_id": "artifact_wearable_20260409",
+        "derivation_method": "wearable_normalization",
+        "supporting_refs": [],
+        "parser_version": "garmin-export@0.1.0",
+        "conflict_status": "none"
+      }
+    },
+    {
+      "event_id": "event_steps_evening_20260409",
+      "user_id": "user_1",
+      "source_type": "wearable",
+      "source_name": "garmin_adapter_daily_export",
+      "capture_mode": "passive",
+      "domain": "running",
+      "metric_name": "steps_count",
+      "value_type": "number",
+      "value_number": 10450,
+      "unit": "count",
+      "event_start_at": null,
+      "event_end_at": null,
+      "effective_date": "2026-04-09",
+      "ingested_at": "2026-04-10T07:10:00Z",
+      "confidence_label": "high",
+      "confidence_score": 0.92,
+      "missingness_state": "present",
+      "provenance": {
+        "artifact_id": "artifact_wearable_20260409",
+        "derivation_method": "wearable_normalization",
+        "supporting_refs": [],
+        "parser_version": "garmin-export@0.1.0",
+        "conflict_status": "none"
+      }
+    },
+    {
+      "event_id": "event_active_minutes_20260409",
+      "user_id": "user_1",
+      "source_type": "wearable",
+      "source_name": "garmin_adapter_daily_export",
+      "capture_mode": "passive",
+      "domain": "running",
+      "metric_name": "active_minutes",
+      "value_type": "number",
+      "value_number": 68,
+      "unit": "minutes",
+      "event_start_at": null,
+      "event_end_at": null,
+      "effective_date": "2026-04-09",
+      "ingested_at": "2026-04-10T07:10:00Z",
+      "confidence_label": "high",
+      "confidence_score": 0.93,
+      "missingness_state": "present",
+      "provenance": {
+        "artifact_id": "artifact_wearable_20260409",
+        "derivation_method": "wearable_normalization",
+        "supporting_refs": [],
+        "parser_version": "garmin-export@0.1.0",
+        "conflict_status": "none"
+      }
+    },
+    {
+      "event_id": "event_run_duration_20260409",
+      "user_id": "user_1",
+      "source_type": "wearable",
+      "source_name": "garmin_adapter_daily_export",
+      "source_record_id": "run_session_20260409",
+      "capture_mode": "passive",
+      "domain": "running",
+      "metric_name": "run_duration_minutes",
+      "value_type": "number",
+      "value_number": 42,
+      "unit": "minutes",
+      "event_start_at": null,
+      "event_end_at": null,
+      "effective_date": "2026-04-09",
+      "ingested_at": "2026-04-10T07:10:00Z",
+      "confidence_label": "high",
+      "confidence_score": 0.94,
+      "missingness_state": "present",
+      "provenance": {
+        "artifact_id": "artifact_wearable_20260409",
+        "derivation_method": "wearable_normalization",
+        "supporting_refs": [],
+        "parser_version": "garmin-export@0.1.0",
+        "conflict_status": "none"
+      }
+    },
+    {
+      "event_id": "event_steps_20260408",
+      "user_id": "user_1",
+      "source_type": "wearable",
+      "source_name": "garmin_adapter_daily_export",
+      "capture_mode": "passive",
+      "domain": "running",
+      "metric_name": "steps_count",
+      "value_type": "number",
+      "value_number": 7000,
+      "unit": "count",
+      "event_start_at": null,
+      "event_end_at": null,
+      "effective_date": "2026-04-08",
+      "ingested_at": "2026-04-09T07:10:00Z",
+      "confidence_label": "high",
+      "confidence_score": 0.9,
+      "missingness_state": "present",
+      "provenance": {
+        "artifact_id": "artifact_wearable_20260408",
+        "derivation_method": "wearable_normalization",
+        "supporting_refs": [],
+        "parser_version": "garmin-export@0.1.0",
+        "conflict_status": "none"
+      }
+    }
+  ],
+  "subjective_daily_entries": [
+    {
+      "entry_id": "subjective_voice_20260409",
+      "user_id": "user_1",
+      "date": "2026-04-09",
+      "energy_self_rating": 2,
+      "stress_self_rating": 4,
+      "mood_self_rating": 3,
+      "illness_or_soreness_flag": true,
+      "free_text_summary": "Legs were sore after lifting and I felt flat by the afternoon.",
+      "extraction_status": "complete",
+      "source_artifact_ids": [
+        "artifact_voice_20260409"
+      ],
+      "confidence_label": "medium",
+      "confidence_score": 0.78
+    },
+    {
+      "entry_id": "subjective_voice_20260408",
+      "user_id": "user_1",
+      "date": "2026-04-08",
+      "energy_self_rating": 4,
+      "stress_self_rating": 2,
+      "mood_self_rating": 4,
+      "illness_or_soreness_flag": false,
+      "free_text_summary": "Felt normal.",
+      "extraction_status": "complete",
+      "source_artifact_ids": [
+        "artifact_voice_20260408"
+      ],
+      "confidence_label": "medium",
+      "confidence_score": 0.78
+    }
+  ],
+  "manual_log_entries": [
+    {
+      "entry_id": "manual_gym_session_20260409",
+      "user_id": "user_1",
+      "date": "2026-04-09",
+      "log_type": "gym_session",
+      "payload": {
+        "session_label": "Upper body"
+      },
+      "source_artifact_id": "artifact_manual_20260409",
+      "completeness_state": "complete",
+      "confidence_label": "high",
+      "confidence_score": 0.98
+    },
+    {
+      "entry_id": "manual_set_1_20260409",
+      "user_id": "user_1",
+      "date": "2026-04-09",
+      "log_type": "exercise_set",
+      "payload": {
+        "exercise_name": "Bench Press",
+        "set_index": 1,
+        "reps": 8,
+        "weight_kg": 80
+      },
+      "source_artifact_id": "artifact_manual_20260409",
+      "completeness_state": "complete",
+      "confidence_label": "high",
+      "confidence_score": 0.98
+    },
+    {
+      "entry_id": "manual_body_signal_20260409",
+      "user_id": "user_1",
+      "date": "2026-04-09",
+      "log_type": "body_signal",
+      "payload": {
+        "signal_type": "soreness",
+        "severity": 2
+      },
+      "source_artifact_id": "artifact_manual_20260409",
+      "completeness_state": "complete",
+      "confidence_label": "high",
+      "confidence_score": 0.97
+    },
+    {
+      "entry_id": "manual_body_signal_20260408",
+      "user_id": "user_1",
+      "date": "2026-04-08",
+      "log_type": "body_signal",
+      "payload": {
+        "signal_type": "soreness",
+        "severity": 1
+      },
+      "source_artifact_id": "artifact_manual_20260408",
+      "completeness_state": "complete",
+      "confidence_label": "high",
+      "confidence_score": 0.96
+    }
+  ]
+}

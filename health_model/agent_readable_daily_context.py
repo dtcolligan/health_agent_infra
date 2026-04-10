@@ -1,0 +1,214 @@
+from __future__ import annotations
+
+from dataclasses import asdict, is_dataclass
+from typing import Any, Iterable
+
+from health_model.semantic_summaries import (
+    ActivityTrainingSemanticSummary,
+    SleepSemanticSummary,
+    SubjectiveStateSemanticSummary,
+    WrappedField,
+    build_activity_training_semantic_summary,
+    build_sleep_semantic_summary,
+    build_subjective_state_semantic_summary,
+)
+
+
+def build_agent_readable_daily_context(bundle: dict[str, Any], user_id: str, date: str) -> dict[str, Any]:
+    sleep_summary = build_sleep_semantic_summary(bundle, user_id=user_id, date=date)
+    subjective_summary = build_subjective_state_semantic_summary(bundle, user_id=user_id, date=date)
+    activity_summary = build_activity_training_semantic_summary(bundle, user_id=user_id, date=date)
+    input_events = [
+        event
+        for event in bundle.get("input_events", [])
+        if event.get("user_id") == user_id and event.get("effective_date") == date
+    ]
+    subjective_entries = [
+        entry
+        for entry in bundle.get("subjective_daily_entries", [])
+        if entry.get("user_id") == user_id and entry.get("date") == date
+    ]
+    manual_log_entries = [
+        entry
+        for entry in bundle.get("manual_log_entries", [])
+        if entry.get("user_id") == user_id and entry.get("date") == date
+    ]
+
+    signals = [
+        *_sleep_signals(sleep_summary),
+        *_subjective_signals(subjective_summary),
+        *_activity_training_signals(activity_summary),
+    ]
+    important_gaps = _collect_gap_entries(
+        [
+            ("sleep", sleep_summary.important_gaps),
+            ("subjective_state", subjective_summary.important_gaps),
+            ("activity_training", activity_summary.important_gaps),
+        ]
+    )
+    conflicts = _collect_conflict_entries(
+        [
+            ("sleep", sleep_summary.conflicts),
+            ("subjective_state", subjective_summary.conflicts),
+            ("activity_training", activity_summary.conflicts),
+        ]
+    )
+
+    return {
+        "context_id": f"agent_context_{user_id}_{date}",
+        "artifact_type": "agent_readable_daily_context",
+        "user_id": user_id,
+        "date": date,
+        "generated_from": {
+            "source_artifact_ids": _source_artifact_ids_for_day(input_events, subjective_entries, manual_log_entries),
+            "input_event_ids": sorted(
+                event["event_id"]
+                for event in input_events
+            ),
+            "subjective_entry_ids": sorted(
+                entry["entry_id"]
+                for entry in subjective_entries
+            ),
+            "manual_log_entry_ids": sorted(
+                entry["entry_id"]
+                for entry in manual_log_entries
+            ),
+        },
+        "explicit_grounding": {
+            "signal_status_counts": {
+                "grounded": sum(1 for signal in signals if signal["status"] == "grounded"),
+                "inferred": sum(1 for signal in signals if signal["status"] == "inferred"),
+                "missing": sum(1 for signal in signals if signal["status"] == "missing"),
+                "conflicted": sum(1 for signal in signals if signal["status"] == "conflicted"),
+            },
+            "signals": signals,
+        },
+        "important_gaps": important_gaps,
+        "conflicts": conflicts,
+        "semantic_context": {
+            "sleep": sleep_summary.to_dict(),
+            "subjective_state": subjective_summary.to_dict(),
+            "activity_training": activity_summary.to_dict(),
+        },
+    }
+
+
+def _sleep_signals(summary: SleepSemanticSummary) -> list[dict[str, Any]]:
+    return [
+        _signal_entry("sleep", "primary_sleep_window", summary.primary_sleep_window),
+        _signal_entry("sleep", "total_sleep_duration_minutes", summary.total_sleep_duration_minutes),
+        _signal_entry("sleep", "subjective_sleep_quality", summary.subjective_sleep_quality),
+        _signal_entry("sleep", "sleep_timing_regularity_marker", summary.sleep_timing_regularity_marker),
+        _signal_entry("sleep", "sleep_disruption_markers", summary.sleep_disruption_markers),
+    ]
+
+
+def _subjective_signals(summary: SubjectiveStateSemanticSummary) -> list[dict[str, Any]]:
+    return [
+        _signal_entry("subjective_state", "energy", summary.energy),
+        _signal_entry("subjective_state", "stress", summary.stress),
+        _signal_entry("subjective_state", "mood", summary.mood),
+        _signal_entry("subjective_state", "perceived_recovery", summary.perceived_recovery),
+        _signal_entry("subjective_state", "soreness_or_illness", summary.soreness_or_illness),
+        _signal_entry("subjective_state", "free_text_human_summary", summary.free_text_human_summary),
+        _signal_entry("subjective_state", "unresolved_ambiguity_markers", summary.unresolved_ambiguity_markers),
+    ]
+
+
+def _activity_training_signals(summary: ActivityTrainingSemanticSummary) -> list[dict[str, Any]]:
+    return [
+        _signal_entry("activity_training", "passive_activity.steps_count", summary.passive_activity.steps_count),
+        _signal_entry("activity_training", "passive_activity.active_minutes", summary.passive_activity.active_minutes),
+        _signal_entry("activity_training", "passive_activity.active_energy_kcal", summary.passive_activity.active_energy_kcal),
+        _signal_entry("activity_training", "passive_activity.markers", summary.passive_activity.markers),
+        _signal_entry("activity_training", "intentional_training.run_session_count", summary.intentional_training.run_session_count),
+        _signal_entry(
+            "activity_training",
+            "intentional_training.run_total_duration_minutes",
+            summary.intentional_training.run_total_duration_minutes,
+        ),
+        _signal_entry("activity_training", "intentional_training.gym_session_count", summary.intentional_training.gym_session_count),
+        _signal_entry(
+            "activity_training",
+            "intentional_training.gym_exercise_set_count",
+            summary.intentional_training.gym_exercise_set_count,
+        ),
+        _signal_entry("activity_training", "training_load_estimate_band", summary.training_load_estimate_band),
+        _signal_entry("activity_training", "training_completion_markers", summary.training_completion_markers),
+        _signal_entry("activity_training", "soreness_or_strain_context", summary.soreness_or_strain_context),
+    ]
+
+
+def _signal_entry(domain: str, signal_key: str, field: WrappedField) -> dict[str, Any]:
+    return {
+        "domain": domain,
+        "signal_key": signal_key,
+        "status": field.status,
+        "value": _serialize(field.value),
+        "confidence_label": field.confidence_label,
+        "confidence_score": field.confidence_score,
+        "evidence_refs": list(field.evidence_refs),
+        "derivation_method": field.derivation_method,
+        "uncertainty_note": field.uncertainty_note,
+    }
+
+
+def _collect_gap_entries(domain_pairs: Iterable[tuple[str, list[Any]]]) -> list[dict[str, Any]]:
+    gaps: list[dict[str, Any]] = []
+    for domain, domain_gaps in domain_pairs:
+        for gap in domain_gaps:
+            gaps.append(
+                {
+                    "domain": domain,
+                    "code": gap.code,
+                    "detail": gap.detail,
+                    "evidence_refs": list(gap.evidence_refs),
+                }
+            )
+    return gaps
+
+
+def _collect_conflict_entries(domain_pairs: Iterable[tuple[str, list[Any]]]) -> list[dict[str, Any]]:
+    conflicts: list[dict[str, Any]] = []
+    for domain, domain_conflicts in domain_pairs:
+        for conflict in domain_conflicts:
+            conflicts.append(
+                {
+                    "domain": domain,
+                    "code": conflict.code,
+                    "detail": conflict.detail,
+                    "evidence_refs": list(conflict.evidence_refs),
+                }
+            )
+    return conflicts
+
+
+def _source_artifact_ids_for_day(
+    input_events: Iterable[dict[str, Any]],
+    subjective_entries: Iterable[dict[str, Any]],
+    manual_log_entries: Iterable[dict[str, Any]],
+) -> list[str]:
+    source_artifact_ids: set[str] = set()
+    for event in input_events:
+        artifact_id = event.get("provenance", {}).get("artifact_id")
+        if artifact_id:
+            source_artifact_ids.add(artifact_id)
+    for entry in subjective_entries:
+        for artifact_id in entry.get("source_artifact_ids", []):
+            if artifact_id:
+                source_artifact_ids.add(artifact_id)
+    for entry in manual_log_entries:
+        artifact_id = entry.get("source_artifact_id")
+        if artifact_id:
+            source_artifact_ids.add(artifact_id)
+    return sorted(source_artifact_ids)
+
+
+def _serialize(value: Any) -> Any:
+    if is_dataclass(value):
+        return {key: _serialize(inner) for key, inner in asdict(value).items()}
+    if isinstance(value, dict):
+        return {key: _serialize(inner) for key, inner in value.items()}
+    if isinstance(value, list):
+        return [_serialize(item) for item in value]
+    return value
