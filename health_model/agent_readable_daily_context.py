@@ -38,7 +38,7 @@ def build_agent_readable_daily_context(bundle: dict[str, Any], user_id: str, dat
         *_sleep_signals(sleep_summary),
         *_subjective_signals(subjective_summary),
         *_activity_training_signals(activity_summary),
-        *_manual_enrichment_signals(input_events, manual_log_entries),
+        *_manual_enrichment_signals(bundle.get("source_artifacts", []), input_events, manual_log_entries),
     ]
     important_gaps = _collect_gap_entries(
         [
@@ -141,6 +141,7 @@ def _activity_training_signals(summary: ActivityTrainingSemanticSummary) -> list
 
 
 def _manual_enrichment_signals(
+    source_artifacts: list[dict[str, Any]],
     input_events: list[dict[str, Any]],
     manual_log_entries: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
@@ -164,7 +165,7 @@ def _manual_enrichment_signals(
     if meal_entries:
         signals.append(_nutrition_signal(meal_entries))
     if hydration_entries or hydration_events:
-        signals.append(_hydration_signal(hydration_entries, hydration_events))
+        signals.append(_hydration_signal(source_artifacts, hydration_entries, hydration_events))
     return signals
 
 
@@ -275,37 +276,43 @@ def _nutrition_signal(meal_entries: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def _hydration_signal(
+    source_artifacts: list[dict[str, Any]],
     hydration_entries: list[dict[str, Any]],
     hydration_events: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    evidence_refs = sorted(
-        [entry["entry_id"] for entry in hydration_entries]
-        + [event["event_id"] for event in hydration_events]
+    canonical_entries, canonical_events = _dedup_hydration_submission_replays(
+        source_artifacts=source_artifacts,
+        hydration_entries=hydration_entries,
+        hydration_events=hydration_events,
     )
-    supporting_records: list[dict[str, Any]] = [*hydration_entries, *hydration_events]
+    evidence_refs = sorted(
+        [entry["entry_id"] for entry in canonical_entries]
+        + [event["event_id"] for event in canonical_events]
+    )
+    supporting_records: list[dict[str, Any]] = [*canonical_entries, *canonical_events]
     confidence_label, confidence_score = _conservative_confidence(supporting_records)
     beverage_types = sorted(
         {
             entry.get("payload", {}).get("beverage_type")
-            for entry in hydration_entries
+            for entry in canonical_entries
             if entry.get("payload", {}).get("beverage_type")
         }
     )
     total_amount_ml = sum(
         float(event["value_number"])
-        for event in hydration_events
+        for event in canonical_events
         if event.get("value_number") is not None
     )
     if total_amount_ml == 0:
         total_amount_ml = sum(
             float(entry.get("payload", {}).get("amount_ml", 0))
-            for entry in hydration_entries
+            for entry in canonical_entries
         )
     field = WrappedField(
         status="grounded",
         value={
             "total_amount_ml": total_amount_ml,
-            "log_count": len(hydration_entries),
+            "log_count": len(canonical_entries),
             "beverage_types": beverage_types,
         },
         confidence_label=confidence_label,
@@ -315,6 +322,122 @@ def _hydration_signal(
         uncertainty_note=None,
     )
     return _signal_entry("hydration", "hydration_intake_ml", field)
+
+
+def _dedup_hydration_submission_replays(
+    *,
+    source_artifacts: list[dict[str, Any]],
+    hydration_entries: list[dict[str, Any]],
+    hydration_events: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    artifact_by_id = {
+        artifact["artifact_id"]: artifact
+        for artifact in source_artifacts
+        if artifact.get("artifact_id")
+    }
+    entry_by_id = {
+        entry["entry_id"]: entry
+        for entry in hydration_entries
+        if entry.get("entry_id")
+    }
+    candidates: dict[tuple[Any, ...], dict[str, Any]] = {}
+
+    for entry in hydration_entries:
+        fingerprint = _hydration_submission_fingerprint(entry=entry, artifact=artifact_by_id.get(entry.get("source_artifact_id")))
+        candidate = candidates.setdefault(fingerprint, {})
+        candidate_entry = candidate.get("entry")
+        if candidate_entry is None or _hydration_entry_sort_key(entry, artifact_by_id) > _hydration_entry_sort_key(
+            candidate_entry,
+            artifact_by_id,
+        ):
+            candidate["entry"] = entry
+
+    for event in hydration_events:
+        entry = _hydration_event_manual_entry(event, entry_by_id)
+        artifact = artifact_by_id.get(event.get("provenance", {}).get("artifact_id"))
+        fingerprint = _hydration_submission_fingerprint(entry=entry, artifact=artifact, event=event)
+        candidate = candidates.setdefault(fingerprint, {})
+        candidate_event = candidate.get("event")
+        if candidate_event is None or _hydration_event_sort_key(event, artifact_by_id) > _hydration_event_sort_key(
+            candidate_event,
+            artifact_by_id,
+        ):
+            candidate["event"] = event
+        if entry is not None:
+            candidate_entry = candidate.get("entry")
+            if candidate_entry is None or _hydration_entry_sort_key(entry, artifact_by_id) > _hydration_entry_sort_key(
+                candidate_entry,
+                artifact_by_id,
+            ):
+                candidate["entry"] = entry
+
+    canonical_entries = [
+        candidate["entry"]
+        for _, candidate in sorted(candidates.items())
+        if candidate.get("entry") is not None
+    ]
+    canonical_events = [
+        candidate["event"]
+        for _, candidate in sorted(candidates.items())
+        if candidate.get("event") is not None
+    ]
+    return canonical_entries, canonical_events
+
+
+def _hydration_submission_fingerprint(
+    *,
+    entry: dict[str, Any] | None,
+    artifact: dict[str, Any] | None,
+    event: dict[str, Any] | None = None,
+) -> tuple[Any, ...]:
+    payload = entry.get("payload", {}) if entry is not None else {}
+    return (
+        entry.get("user_id") if entry is not None else event.get("user_id") if event is not None else None,
+        entry.get("date") if entry is not None else event.get("effective_date") if event is not None else None,
+        artifact.get("source_name") if artifact is not None else event.get("source_name") if event is not None else None,
+        artifact.get("raw_location") if artifact is not None else None,
+        payload.get("amount_ml") if entry is not None else event.get("value_number") if event is not None else None,
+        payload.get("beverage_type"),
+        payload.get("notes"),
+        entry.get("completeness_state") if entry is not None else None,
+    )
+
+
+def _hydration_event_manual_entry(
+    event: dict[str, Any],
+    entry_by_id: dict[str, dict[str, Any]],
+) -> dict[str, Any] | None:
+    for ref in event.get("provenance", {}).get("supporting_refs", []):
+        if not ref.startswith("manual_log_entry:"):
+            continue
+        entry = entry_by_id.get(ref.split(":", 1)[1])
+        if entry is not None:
+            return entry
+    return None
+
+
+def _hydration_entry_sort_key(
+    entry: dict[str, Any],
+    artifact_by_id: dict[str, dict[str, Any]],
+) -> tuple[str, str, str]:
+    artifact = artifact_by_id.get(entry.get("source_artifact_id"), {})
+    return (
+        str(artifact.get("ingested_at") or ""),
+        str(artifact.get("artifact_id") or ""),
+        str(entry.get("entry_id") or ""),
+    )
+
+
+def _hydration_event_sort_key(
+    event: dict[str, Any],
+    artifact_by_id: dict[str, dict[str, Any]],
+) -> tuple[str, str, str]:
+    artifact = artifact_by_id.get(event.get("provenance", {}).get("artifact_id"), {})
+    return (
+        str(event.get("ingested_at") or artifact.get("ingested_at") or ""),
+        str(artifact.get("artifact_id") or ""),
+        str(event.get("event_id") or ""),
+    )
 
 
 def _conservative_confidence(records: list[dict[str, Any]]) -> tuple[str, float]:

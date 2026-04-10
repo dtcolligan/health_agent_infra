@@ -225,6 +225,119 @@ class AgentInterfaceTest(unittest.TestCase):
             ],
         )
 
+    def test_duplicate_same_day_hydration_replay_does_not_inflate_daily_total(self) -> None:
+        bundle = json.loads((FIXTURE_DIR / "fixture_multi_day_bundle.json").read_text())
+
+        original = submit_hydration_log(
+            user_id="user_1",
+            date="2026-04-09",
+            amount_ml=750,
+            beverage_type="water",
+            completeness_state="complete",
+            collected_at="2026-04-09T18:20:00+01:00",
+            ingested_at="2026-04-09T18:20:03+01:00",
+            raw_location="healthlab://manual/hydration/2026-04-09/evening",
+            confidence_score=0.98,
+            notes="Evening refill after training.",
+        )
+        replay = submit_hydration_log(
+            user_id="user_1",
+            date="2026-04-09",
+            amount_ml=750,
+            beverage_type="water",
+            completeness_state="complete",
+            collected_at="2026-04-09T18:20:00+01:00",
+            ingested_at="2026-04-09T18:25:03+01:00",
+            raw_location="healthlab://manual/hydration/2026-04-09/evening",
+            confidence_score=0.98,
+            notes="Evening refill after training.",
+        )
+
+        for response in (original, replay):
+            self.assertTrue(response["ok"], msg=response)
+            self.assertTrue(response["validation"]["is_valid"], msg=response["validation"])
+
+        merged_bundle = merge_bundle_fragments(
+            bundle,
+            original["bundle_fragment"],
+            replay["bundle_fragment"],
+        )
+        context = build_daily_context(bundle=merged_bundle, user_id="user_1", date="2026-04-09")
+
+        hydration_signal = next(
+            signal
+            for signal in context["explicit_grounding"]["signals"]
+            if signal["domain"] == "hydration" and signal["signal_key"] == "hydration_intake_ml"
+        )
+
+        self.assertEqual(hydration_signal["status"], "grounded")
+        self.assertEqual(hydration_signal["value"]["total_amount_ml"], 750.0)
+        self.assertEqual(hydration_signal["value"]["log_count"], 1)
+        self.assertEqual(
+            hydration_signal["evidence_refs"],
+            [replay["derived_events"][0]["event_id"], replay["entry"]["entry_id"]],
+        )
+
+    def test_distinct_same_day_hydration_logs_still_sum_correctly(self) -> None:
+        bundle = json.loads((FIXTURE_DIR / "fixture_multi_day_bundle.json").read_text())
+
+        first = submit_hydration_log(
+            user_id="user_1",
+            date="2026-04-09",
+            amount_ml=500,
+            beverage_type="water",
+            completeness_state="complete",
+            collected_at="2026-04-09T09:00:00+01:00",
+            ingested_at="2026-04-09T09:00:03+01:00",
+            raw_location="healthlab://manual/hydration/2026-04-09/morning",
+            confidence_score=0.97,
+            notes="Morning bottle.",
+        )
+        second = submit_hydration_log(
+            user_id="user_1",
+            date="2026-04-09",
+            amount_ml=750,
+            beverage_type="water",
+            completeness_state="complete",
+            collected_at="2026-04-09T18:20:00+01:00",
+            ingested_at="2026-04-09T18:20:03+01:00",
+            raw_location="healthlab://manual/hydration/2026-04-09/evening",
+            confidence_score=0.98,
+            notes="Evening refill after training.",
+        )
+
+        for response in (first, second):
+            self.assertTrue(response["ok"], msg=response)
+            self.assertTrue(response["validation"]["is_valid"], msg=response["validation"])
+
+        merged_bundle = merge_bundle_fragments(
+            bundle,
+            first["bundle_fragment"],
+            second["bundle_fragment"],
+        )
+        context = build_daily_context(bundle=merged_bundle, user_id="user_1", date="2026-04-09")
+
+        hydration_signal = next(
+            signal
+            for signal in context["explicit_grounding"]["signals"]
+            if signal["domain"] == "hydration" and signal["signal_key"] == "hydration_intake_ml"
+        )
+
+        self.assertEqual(hydration_signal["status"], "grounded")
+        self.assertEqual(hydration_signal["value"]["total_amount_ml"], 1250.0)
+        self.assertEqual(hydration_signal["value"]["log_count"], 2)
+        self.assertEqual(
+            hydration_signal["evidence_refs"],
+            sorted(
+                [
+                    first["derived_events"][0]["event_id"],
+                    first["entry"]["entry_id"],
+                    second["derived_events"][0]["event_id"],
+                    second["entry"]["entry_id"],
+                ]
+            ),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
