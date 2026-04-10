@@ -14,7 +14,8 @@ That loop is implemented under `health_model/`, covered by CLI integration tests
 
 The canonical public demo surface for this slice is:
 - walkthrough doc: `docs/health_lab_canonical_public_demo.md`
-- checked-in proof bundle: `artifacts/public_demo/captured/`
+- checked-in public demo bundle: `artifacts/public_demo/captured/`
+- audited flagship proof bundle: `artifacts/flagship_loop_proof/2026-04-09/`
 
 The checked-in public demo bundle includes:
 - `artifacts/public_demo/captured/shared_input_bundle_2026-04-09.json`
@@ -57,7 +58,9 @@ The broader CLI walkthroughs later in this README remain useful runtime examples
 
 The current flagship loop lives in `health_model/`. Older project surfaces for Garmin ingestion, dashboards, and the web app still exist in the repo, but they are not the cleanest stranger-safe proof path today.
 
-If you want the smallest trustworthy slice first, run `python3 scripts/run_flagship_loop_proof_audit.py`, inspect `artifacts/flagship_loop_proof/2026-04-09/`, then use the broader CLI walkthroughs below as adjacent context.
+If you want the smallest trustworthy slice first, read `docs/health_lab_canonical_public_demo.md`, inspect `artifacts/public_demo/captured/`, then inspect the audited flagship proof bundle at `artifacts/flagship_loop_proof/2026-04-09/` or regenerate it with `python3 scripts/run_flagship_loop_proof_audit.py`.
+
+For repo-level trust and contribution boundaries, see `STATUS.md`, `CONTRIBUTING.md`, and `LICENSE` at the repo root.
 
 ## Canonical Health Lab daily snapshot core
 
