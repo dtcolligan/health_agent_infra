@@ -1,0 +1,32 @@
+{
+  "proof_type": "recommendation_rejection_non_mutation",
+  "context": "Captured proof that the fail-closed bad-evidence rejection did not mutate the successful recommendation artifact.",
+  "checked_files": {
+    "dated_recommendation": {
+      "path": "/Users/myapplemini01/Projects/garmin_lab/artifacts/public_demo/captured/agent_recommendation_2026-04-09.json",
+      "sha256": "fcfb076849a974539d65582d7f52a6ed1cd391f3365f9f23acc27637696c7d72"
+    },
+    "latest_recommendation": {
+      "path": "/Users/myapplemini01/Projects/garmin_lab/artifacts/public_demo/captured/agent_recommendation_latest.json",
+      "sha256": "fcfb076849a974539d65582d7f52a6ed1cd391f3365f9f23acc27637696c7d72"
+    },
+    "rejection_envelope": {
+      "path": "/Users/myapplemini01/Projects/garmin_lab/artifacts/public_demo/captured/recommendation_rejection_envelope_bad_evidence.json",
+      "sha256": "630af8e79135236003a327646ac5345ce87c7488fde9120edc5db83b23ceb05e"
+    }
+  },
+  "non_mutation_assertions": [
+    {
+      "assertion": "dated_and_latest_success_artifacts_match",
+      "result": true
+    },
+    {
+      "assertion": "rejection_produced_no_new_artifact_paths",
+      "result": true,
+      "evidence": {
+        "rejection_artifact_path": null,
+        "rejection_latest_artifact_path": null
+      }
+    }
+  ]
+}

@@ -56,4 +56,5 @@ Captured proof artifacts from this exact lineage:
 - success artifact: `artifacts/public_demo/captured/agent_recommendation_2026-04-09.json`
 - success envelope: `artifacts/public_demo/captured/recommendation_success_envelope.json`
 - rejection envelope: `artifacts/public_demo/captured/recommendation_rejection_envelope_bad_evidence.json`
+- explicit rejection non-mutation proof: `artifacts/public_demo/captured/recommendation_rejection_non_mutation_proof.json`
 - context artifact used by the frozen recommendation: `artifacts/public_demo/captured/agent_readable_daily_context_2026-04-09.json`

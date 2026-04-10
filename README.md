@@ -12,26 +12,23 @@ That loop is implemented under `health_model/`, covered by CLI integration tests
 
 ## Canonical sample demo path
 
-The approved evaluator-checkable proof for this slice is the frozen context-to-recommendation audit bundle under `artifacts/flagship_loop_proof/2026-04-09/`.
+The canonical public demo surface for this slice is:
+- walkthrough doc: `docs/health_lab_canonical_public_demo.md`
+- checked-in proof bundle: `artifacts/public_demo/captured/`
 
-Regenerate it from repo root with:
+The checked-in public demo bundle includes:
+- `artifacts/public_demo/captured/shared_input_bundle_2026-04-09.json`
+- `artifacts/public_demo/captured/agent_readable_daily_context_2026-04-09.json`
+- `artifacts/public_demo/captured/agent_readable_daily_context_latest.json`
+- `artifacts/public_demo/captured/agent_recommendation_2026-04-09.json`
+- `artifacts/public_demo/captured/agent_recommendation_latest.json`
+- `artifacts/public_demo/captured/recommendation_success_envelope.json`
+- `artifacts/public_demo/captured/recommendation_rejection_envelope_bad_evidence.json`
+- `artifacts/public_demo/captured/recommendation_rejection_non_mutation_proof.json`
 
-```bash
-python3 scripts/run_flagship_loop_proof_audit.py
-```
+Use the doc for the exact repo-root command lineage and inspect the captured bundle for the frozen public-safe proof, including explicit non-mutation evidence for the fail-closed rejection case.
 
-Frozen proof inputs:
-- context fixture: `tests/fixtures/agent_readable_daily_context/generated_fixture_day_context.json`
-- successful payload: `artifacts/flagship_loop_proof/payloads/recommendation_positive_payload_2026-04-09.json`
-- fail-closed payload: `artifacts/flagship_loop_proof/payloads/recommendation_negative_payload_2026-04-09.json`
-
-Checked-in proof outputs:
-- `artifacts/flagship_loop_proof/2026-04-09/agent_recommendation_2026-04-09.json`
-- `artifacts/flagship_loop_proof/2026-04-09/agent_recommendation_latest.json`
-- `artifacts/flagship_loop_proof/2026-04-09/negative_fail_closed_result.json`
-- `artifacts/flagship_loop_proof/2026-04-09/negative_artifact_state_preservation.json`
-
-The broader CLI walkthroughs later in this README remain useful runtime examples, but they are not the proof object for this audit slice.
+The broader CLI walkthroughs later in this README remain useful runtime examples, but they are not the canonical public demo proof object for this slice.
 
 ## Non-clinical and privacy boundaries
 
