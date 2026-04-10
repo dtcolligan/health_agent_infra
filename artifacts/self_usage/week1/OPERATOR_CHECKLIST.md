@@ -2,6 +2,22 @@
 
 This checklist is the day-flow for one honest same-day Health Lab self-usage run using current repo surfaces only.
 
+Preferred repo-root wrapper after the runtime files exist:
+```bash
+python3 scripts/run_self_usage_day.py \
+  --date "$DATE" \
+  --user-id "$USER_ID" \
+  --voice-note-payload-path "$PROOF_DIR/voice_note_payload.json" \
+  --recommendation-payload-path artifacts/self_usage/templates/recommendation_payload_example_2026-04-10.json \
+  --judgment-label useful \
+  --action-taken "Chose a lighter evening and skipped extra training load." \
+  --why "The recommendation matched the low-energy and soreness context and was specific enough to act on immediately." \
+  --caveat "No passive wearable or sleep-duration signals were present in this same-day proof run." \
+  --time-cost-note "About 10 minutes including one payload review." \
+  --friction-points "manual recommendation payload review" "proof copy now automated"
+```
+The runner keeps recommendation authorship explicit, validates evidence refs against the day context before acceptance, copies the proof bundle, and records compact friction/usefulness capture in `artifacts/self_usage/week1/YYYY-MM-DD/runner_capture_YYYY-MM-DD.json`.
+
 ## Fixed conventions
 - user_id: `user_dom`
 - runtime directory: `data/health/`

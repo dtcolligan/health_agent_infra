@@ -41,6 +41,26 @@ Use the one-command wrapper for a fresh disposable run, then inspect the capture
 
 The broader CLI walkthroughs later in this README remain useful runtime examples, but they are not the canonical public demo proof object for this slice.
 
+## Self-usage day runner
+
+For the bounded one-day self-usage validation path, run from repo root:
+
+```bash
+python3 scripts/run_self_usage_day.py \
+  --date 2026-04-10 \
+  --user-id user_dom \
+  --voice-note-payload-path artifacts/self_usage/week1/2026-04-10/voice_note_payload.json \
+  --recommendation-payload-path artifacts/self_usage/templates/recommendation_payload_example_2026-04-10.json \
+  --judgment-label useful \
+  --action-taken "Chose a lighter evening and skipped extra training load." \
+  --why "The recommendation matched the low-energy and soreness context and was specific enough to act on immediately." \
+  --caveat "No passive wearable or sleep-duration signals were present in this same-day proof run." \
+  --time-cost-note "About 10 minutes including one payload review." \
+  --friction-points "manual recommendation payload review" "proof copy now automated"
+```
+
+This wrapper stays thin on purpose. It does not generate recommendation content. It verifies repo-root preflight checks, reads the scoped context, validates that the recommendation artifact only references ids present in the day context, copies the proof bundle into `artifacts/self_usage/week1/YYYY-MM-DD/`, rewrites `judgment_log.csv`, and writes compact friction/usefulness capture to `runner_capture_YYYY-MM-DD.json`.
+
 ## Non-clinical and privacy boundaries
 
 - This is a personal software project, not a clinical product or medical device.
