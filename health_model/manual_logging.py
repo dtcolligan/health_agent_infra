@@ -201,14 +201,92 @@ def build_hydration_input_event(
         "confidence_label": manual_entry["confidence_label"],
         "confidence_score": manual_entry["confidence_score"],
         "missingness_state": MissingnessState.PRESENT.value,
-        "provenance": {
-            "artifact_id": artifact["artifact_id"],
-            "derivation_method": DerivationMethod.MANUAL_FORM_NORMALIZATION.value,
-            "supporting_refs": [f"manual_log_entry:{manual_entry['entry_id']}"],
-            "parser_version": artifact.get("parser_version"),
-            "conflict_status": ConflictStatus.NONE.value,
-        },
+        "provenance": _manual_entry_provenance(artifact, manual_entry),
     }
+
+
+def build_nutrition_input_events(
+    *,
+    event_id_prefix: str,
+    source_record_id: str,
+    manual_entry: dict[str, Any],
+    artifact: dict[str, Any],
+) -> list[dict[str, Any]]:
+    payload = manual_entry["payload"]
+    events = [
+        {
+            "event_id": f"{event_id_prefix}_meal_logged",
+            "user_id": manual_entry["user_id"],
+            "source_type": SourceType.MANUAL.value,
+            "source_name": artifact["source_name"],
+            "source_record_id": source_record_id,
+            "capture_mode": CaptureMode.DERIVED.value,
+            "domain": Domain.NUTRITION.value,
+            "metric_name": "meal_logged",
+            "value_type": ValueType.BOOLEAN.value,
+            "value_boolean": True,
+            "event_start_at": None,
+            "event_end_at": None,
+            "effective_date": manual_entry["date"],
+            "ingested_at": artifact["ingested_at"],
+            "confidence_label": manual_entry["confidence_label"],
+            "confidence_score": manual_entry["confidence_score"],
+            "missingness_state": MissingnessState.PRESENT.value,
+            "provenance": _manual_entry_provenance(artifact, manual_entry),
+        }
+    ]
+    estimated = payload.get("estimated")
+    events.append(
+        {
+            "event_id": f"{event_id_prefix}_meal_estimated_flag",
+            "user_id": manual_entry["user_id"],
+            "source_type": SourceType.MANUAL.value,
+            "source_name": artifact["source_name"],
+            "source_record_id": source_record_id,
+            "capture_mode": CaptureMode.DERIVED.value,
+            "domain": Domain.NUTRITION.value,
+            "metric_name": "meal_estimated_flag",
+            "value_type": ValueType.BOOLEAN.value,
+            "value_boolean": estimated if estimated is not None else None,
+            "event_start_at": None,
+            "event_end_at": None,
+            "effective_date": manual_entry["date"],
+            "ingested_at": artifact["ingested_at"],
+            "confidence_label": manual_entry["confidence_label"],
+            "confidence_score": manual_entry["confidence_score"],
+            "missingness_state": (
+                MissingnessState.PRESENT.value
+                if estimated is not None
+                else MissingnessState.MISSING_NOT_PROVIDED.value
+            ),
+            "provenance": _manual_entry_provenance(artifact, manual_entry),
+        }
+    )
+    meal_label = payload.get("meal_label")
+    if meal_label is not None:
+        events.append(
+            {
+                "event_id": f"{event_id_prefix}_meal_label",
+                "user_id": manual_entry["user_id"],
+                "source_type": SourceType.MANUAL.value,
+                "source_name": artifact["source_name"],
+                "source_record_id": source_record_id,
+                "capture_mode": CaptureMode.DERIVED.value,
+                "domain": Domain.NUTRITION.value,
+                "metric_name": "meal_label",
+                "value_type": ValueType.STRING.value,
+                "value_string": meal_label,
+                "event_start_at": None,
+                "event_end_at": None,
+                "effective_date": manual_entry["date"],
+                "ingested_at": artifact["ingested_at"],
+                "confidence_label": manual_entry["confidence_label"],
+                "confidence_score": manual_entry["confidence_score"],
+                "missingness_state": MissingnessState.PRESENT.value,
+                "provenance": _manual_entry_provenance(artifact, manual_entry),
+            }
+        )
+    return events
 
 
 def build_manual_logging_bundle(
@@ -222,6 +300,16 @@ def build_manual_logging_bundle(
         "input_events": [dict(event) for event in (input_events or [])],
         "subjective_daily_entries": [],
         "manual_log_entries": [_drop_none_values(entry) for entry in manual_log_entries],
+    }
+
+
+def _manual_entry_provenance(artifact: dict[str, Any], manual_entry: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "artifact_id": artifact["artifact_id"],
+        "derivation_method": DerivationMethod.MANUAL_FORM_NORMALIZATION.value,
+        "supporting_refs": [f"manual_log_entry:{manual_entry['entry_id']}"],
+        "parser_version": artifact.get("parser_version"),
+        "conflict_status": ConflictStatus.NONE.value,
     }
 
 

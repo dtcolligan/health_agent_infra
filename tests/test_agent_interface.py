@@ -52,6 +52,41 @@ class AgentInterfaceTest(unittest.TestCase):
         self.assertEqual(response["bundle_fragment"]["manual_log_entries"], [response["entry"]])
         self.assertEqual(response["bundle_fragment"]["input_events"], response["derived_events"])
 
+    def test_submit_nutrition_text_note_emits_canonical_fragment_with_linked_provenance(self) -> None:
+        response = submit_nutrition_text_note(
+            user_id="user_dom",
+            date="2026-04-10",
+            note_text="Greek yogurt, berries, and granola.",
+            meal_label="breakfast",
+            estimated=True,
+            completeness_state="complete",
+            collected_at="2026-04-10T08:31:00+01:00",
+            ingested_at="2026-04-10T08:31:04+01:00",
+            raw_location="healthlab://manual/nutrition/2026-04-10/breakfast",
+            confidence_score=0.99,
+        )
+
+        self.assertTrue(response["ok"])
+        self.assertTrue(response["validation"]["is_valid"])
+        self.assertIsNone(response["error"])
+        self.assertEqual(response["entry"]["source_artifact_id"], response["artifact"]["artifact_id"])
+        self.assertEqual(response["provenance"]["artifact_id"], response["artifact"]["artifact_id"])
+        self.assertEqual(response["provenance"]["entry_id"], response["entry"]["entry_id"])
+        self.assertEqual(response["provenance"]["event_id"], response["derived_events"][0]["event_id"])
+        self.assertEqual(response["provenance"]["event_ids"], [event["event_id"] for event in response["derived_events"]])
+        self.assertEqual(
+            [event["metric_name"] for event in response["derived_events"]],
+            ["meal_logged", "meal_estimated_flag", "meal_label"],
+        )
+        for event in response["derived_events"]:
+            self.assertEqual(
+                event["provenance"]["supporting_refs"],
+                [f"manual_log_entry:{response['entry']['entry_id']}"],
+            )
+            self.assertEqual(event["provenance"]["artifact_id"], response["artifact"]["artifact_id"])
+        self.assertEqual(response["bundle_fragment"]["manual_log_entries"], [response["entry"]])
+        self.assertEqual(response["bundle_fragment"]["input_events"], response["derived_events"])
+
     def test_submit_nutrition_text_note_fails_closed_on_invalid_bundle_fragment(self) -> None:
         response = submit_nutrition_text_note(
             user_id="user_dom",
@@ -215,7 +250,16 @@ class AgentInterfaceTest(unittest.TestCase):
             if signal["domain"] == "hydration" and signal["signal_key"] == "hydration_intake_ml"
         )
         self.assertEqual(nutrition_signal["status"], "grounded")
-        self.assertEqual(nutrition_signal["evidence_refs"], [same_day_meal["entry"]["entry_id"]])
+        self.assertEqual(
+            nutrition_signal["evidence_refs"],
+            sorted(
+                [same_day_meal["entry"]["entry_id"]]
+                + [event["event_id"] for event in same_day_meal["derived_events"]]
+            ),
+        )
+        self.assertEqual(nutrition_signal["value"]["meal_count"], 1)
+        self.assertEqual(nutrition_signal["value"]["meal_labels"], ["dinner"])
+        self.assertEqual(nutrition_signal["value"]["estimated_entry_count"], 1)
         self.assertEqual(hydration_signal["status"], "grounded")
         self.assertEqual(
             hydration_signal["evidence_refs"],

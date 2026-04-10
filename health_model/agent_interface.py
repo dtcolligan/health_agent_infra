@@ -10,6 +10,7 @@ from health_model.manual_logging import (
     build_hydration_manual_log_entry,
     build_manual_logging_bundle,
     build_manual_source_artifact,
+    build_nutrition_input_events,
     build_nutrition_text_note_manual_log_entry,
     build_simple_gym_set_manual_log_entry,
 )
@@ -46,6 +47,7 @@ class IntakeProvenance(TypedDict, total=False):
     artifact_id: str
     entry_id: str
     event_id: str
+    event_ids: list[str]
 
 
 class IntakeResponse(TypedDict, total=False):
@@ -124,15 +126,22 @@ def submit_nutrition_text_note(
         completeness_state=completeness_state,
         confidence_score=confidence_score,
     )
+    derived_events = build_nutrition_input_events(
+        event_id_prefix=_new_id("event"),
+        source_record_id=entry["entry_id"],
+        manual_entry=entry,
+        artifact=artifact,
+    )
     bundle_fragment = build_manual_logging_bundle(
         source_artifact=artifact,
         manual_log_entries=[entry],
+        input_events=derived_events,
     )
     return _finalize_intake_response(
         artifact=artifact,
         entry=entry,
         bundle_fragment=bundle_fragment,
-        derived_events=[],
+        derived_events=derived_events,
     )
 
 
@@ -339,6 +348,7 @@ def _provenance_payload(
     }
     if derived_events:
         provenance["event_id"] = derived_events[0]["event_id"]
+        provenance["event_ids"] = [event["event_id"] for event in derived_events]
     return provenance
 
 

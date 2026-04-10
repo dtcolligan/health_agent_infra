@@ -160,10 +160,16 @@ def _manual_enrichment_signals(
         for event in input_events
         if event.get("domain") == "hydration" and event.get("metric_name") == "hydration_amount_ml"
     ]
+    nutrition_events = [
+        event
+        for event in input_events
+        if event.get("domain") == "nutrition"
+        and event.get("metric_name") in {"meal_logged", "meal_estimated_flag", "meal_label"}
+    ]
 
     signals: list[dict[str, Any]] = []
-    if meal_entries:
-        signals.append(_nutrition_signal(meal_entries))
+    if meal_entries or nutrition_events:
+        signals.append(_nutrition_signal(meal_entries, nutrition_events))
     if hydration_entries or hydration_events:
         signals.append(_hydration_signal(source_artifacts, hydration_entries, hydration_events))
     return signals
@@ -234,14 +240,32 @@ def _source_artifact_ids_for_day(
     return sorted(source_artifact_ids)
 
 
-def _nutrition_signal(meal_entries: list[dict[str, Any]]) -> dict[str, Any]:
-    evidence_refs = sorted(entry["entry_id"] for entry in meal_entries)
-    confidence_label, confidence_score = _conservative_confidence(meal_entries)
+def _nutrition_signal(
+    meal_entries: list[dict[str, Any]],
+    nutrition_events: list[dict[str, Any]],
+) -> dict[str, Any]:
+    canonical_meal_events = [
+        event for event in nutrition_events if event.get("metric_name") == "meal_logged"
+    ]
+    estimated_events = [
+        event
+        for event in nutrition_events
+        if event.get("metric_name") == "meal_estimated_flag" and event.get("missingness_state") == "present"
+    ]
+    meal_label_events = [
+        event for event in nutrition_events if event.get("metric_name") == "meal_label"
+    ]
+    evidence_refs = sorted(
+        [entry["entry_id"] for entry in meal_entries]
+        + [event["event_id"] for event in nutrition_events]
+    )
+    supporting_records: list[dict[str, Any]] = [*meal_entries, *nutrition_events]
+    confidence_label, confidence_score = _conservative_confidence(supporting_records)
     meal_labels = sorted(
         {
-            entry.get("payload", {}).get("meal_label")
-            for entry in meal_entries
-            if entry.get("payload", {}).get("meal_label")
+            event.get("value_string")
+            for event in meal_label_events
+            if event.get("value_string")
         }
     )
     note_texts = [
@@ -251,13 +275,13 @@ def _nutrition_signal(meal_entries: list[dict[str, Any]]) -> dict[str, Any]:
     ]
     estimated_entry_count = sum(
         1
-        for entry in meal_entries
-        if entry.get("payload", {}).get("estimated") is True
+        for event in estimated_events
+        if event.get("value_boolean") is True
     )
     field = WrappedField(
         status="grounded",
         value={
-            "meal_count": len(meal_entries),
+            "meal_count": len(canonical_meal_events) or len(meal_entries),
             "meal_labels": meal_labels,
             "notes": note_texts,
             "estimated_entry_count": estimated_entry_count,
