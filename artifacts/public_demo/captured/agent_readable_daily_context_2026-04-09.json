@@ -1,0 +1,640 @@
+{
+  "artifact_type": "agent_readable_daily_context",
+  "conflicts": [],
+  "context_id": "agent_context_user_dom_2026-04-09",
+  "date": "2026-04-09",
+  "explicit_grounding": {
+    "signal_status_counts": {
+      "conflicted": 0,
+      "grounded": 9,
+      "inferred": 1,
+      "missing": 13
+    },
+    "signals": [
+      {
+        "confidence_label": "low",
+        "confidence_score": 0.0,
+        "derivation_method": "none",
+        "domain": "sleep",
+        "evidence_refs": [],
+        "signal_key": "primary_sleep_window",
+        "status": "missing",
+        "uncertainty_note": "No complete grounded sleep window was available.",
+        "value": null
+      },
+      {
+        "confidence_label": "low",
+        "confidence_score": 0.0,
+        "derivation_method": "none",
+        "domain": "sleep",
+        "evidence_refs": [],
+        "signal_key": "total_sleep_duration_minutes",
+        "status": "missing",
+        "uncertainty_note": "No reliable sleep duration evidence was available.",
+        "value": null
+      },
+      {
+        "confidence_label": "medium",
+        "confidence_score": 0.76,
+        "derivation_method": "none",
+        "domain": "sleep",
+        "evidence_refs": [
+          "subjective_01JQVOICESUBJ01"
+        ],
+        "signal_key": "subjective_sleep_quality",
+        "status": "grounded",
+        "uncertainty_note": null,
+        "value": 2
+      },
+      {
+        "confidence_label": "low",
+        "confidence_score": 0.0,
+        "derivation_method": "none",
+        "domain": "sleep",
+        "evidence_refs": [],
+        "signal_key": "sleep_timing_regularity_marker",
+        "status": "missing",
+        "uncertainty_note": "No grounded sleep timing regularity marker was available.",
+        "value": null
+      },
+      {
+        "confidence_label": "low",
+        "confidence_score": 0.0,
+        "derivation_method": "none",
+        "domain": "sleep",
+        "evidence_refs": [],
+        "signal_key": "sleep_disruption_markers",
+        "status": "missing",
+        "uncertainty_note": "No grounded sleep disruption evidence was available.",
+        "value": null
+      },
+      {
+        "confidence_label": "medium",
+        "confidence_score": 0.76,
+        "derivation_method": "none",
+        "domain": "subjective_state",
+        "evidence_refs": [
+          "subjective_01JQVOICESUBJ01"
+        ],
+        "signal_key": "energy",
+        "status": "grounded",
+        "uncertainty_note": null,
+        "value": 2
+      },
+      {
+        "confidence_label": "medium",
+        "confidence_score": 0.76,
+        "derivation_method": "none",
+        "domain": "subjective_state",
+        "evidence_refs": [
+          "subjective_01JQVOICESUBJ01"
+        ],
+        "signal_key": "stress",
+        "status": "grounded",
+        "uncertainty_note": null,
+        "value": 4
+      },
+      {
+        "confidence_label": "medium",
+        "confidence_score": 0.76,
+        "derivation_method": "none",
+        "domain": "subjective_state",
+        "evidence_refs": [
+          "subjective_01JQVOICESUBJ01"
+        ],
+        "signal_key": "mood",
+        "status": "grounded",
+        "uncertainty_note": null,
+        "value": 3
+      },
+      {
+        "confidence_label": "medium",
+        "confidence_score": 0.61,
+        "derivation_method": "band_estimation",
+        "domain": "subjective_state",
+        "evidence_refs": [
+          "subjective_01JQVOICESUBJ01"
+        ],
+        "signal_key": "perceived_recovery",
+        "status": "inferred",
+        "uncertainty_note": "Perceived recovery was inferred from subjective sleep quality and soreness signals because no direct recovery field exists in the canonical entry.",
+        "value": "strained"
+      },
+      {
+        "confidence_label": "medium",
+        "confidence_score": 0.76,
+        "derivation_method": "none",
+        "domain": "subjective_state",
+        "evidence_refs": [
+          "subjective_01JQVOICESUBJ01"
+        ],
+        "signal_key": "soreness_or_illness",
+        "status": "grounded",
+        "uncertainty_note": null,
+        "value": true
+      },
+      {
+        "confidence_label": "medium",
+        "confidence_score": 0.76,
+        "derivation_method": "none",
+        "domain": "subjective_state",
+        "evidence_refs": [
+          "subjective_01JQVOICESUBJ01"
+        ],
+        "signal_key": "free_text_human_summary",
+        "status": "grounded",
+        "uncertainty_note": null,
+        "value": "Felt flat, stressed from deadlines, legs sore after lifting, and sleep felt poor."
+      },
+      {
+        "confidence_label": "high",
+        "confidence_score": 0.95,
+        "derivation_method": "coverage_classification",
+        "domain": "subjective_state",
+        "evidence_refs": [
+          "subjective_01JQVOICESUBJ01"
+        ],
+        "signal_key": "unresolved_ambiguity_markers",
+        "status": "grounded",
+        "uncertainty_note": null,
+        "value": []
+      },
+      {
+        "confidence_label": "low",
+        "confidence_score": 0.0,
+        "derivation_method": "none",
+        "domain": "activity_training",
+        "evidence_refs": [],
+        "signal_key": "passive_activity.steps_count",
+        "status": "missing",
+        "uncertainty_note": "No grounded canonical event value was available.",
+        "value": null
+      },
+      {
+        "confidence_label": "low",
+        "confidence_score": 0.0,
+        "derivation_method": "none",
+        "domain": "activity_training",
+        "evidence_refs": [],
+        "signal_key": "passive_activity.active_minutes",
+        "status": "missing",
+        "uncertainty_note": "No grounded canonical event value was available.",
+        "value": null
+      },
+      {
+        "confidence_label": "low",
+        "confidence_score": 0.0,
+        "derivation_method": "none",
+        "domain": "activity_training",
+        "evidence_refs": [],
+        "signal_key": "passive_activity.active_energy_kcal",
+        "status": "missing",
+        "uncertainty_note": "No grounded canonical event value was available.",
+        "value": null
+      },
+      {
+        "confidence_label": "low",
+        "confidence_score": 0.0,
+        "derivation_method": "none",
+        "domain": "activity_training",
+        "evidence_refs": [],
+        "signal_key": "passive_activity.markers",
+        "status": "missing",
+        "uncertainty_note": "No passive activity totals were available.",
+        "value": null
+      },
+      {
+        "confidence_label": "low",
+        "confidence_score": 0.0,
+        "derivation_method": "none",
+        "domain": "activity_training",
+        "evidence_refs": [],
+        "signal_key": "intentional_training.run_session_count",
+        "status": "missing",
+        "uncertainty_note": "No run sessions were present.",
+        "value": null
+      },
+      {
+        "confidence_label": "low",
+        "confidence_score": 0.0,
+        "derivation_method": "none",
+        "domain": "activity_training",
+        "evidence_refs": [],
+        "signal_key": "intentional_training.run_total_duration_minutes",
+        "status": "missing",
+        "uncertainty_note": "No run duration events were present.",
+        "value": null
+      },
+      {
+        "confidence_label": "low",
+        "confidence_score": 0.0,
+        "derivation_method": "none",
+        "domain": "activity_training",
+        "evidence_refs": [],
+        "signal_key": "intentional_training.gym_session_count",
+        "status": "missing",
+        "uncertainty_note": "No manual gym sessions were logged.",
+        "value": null
+      },
+      {
+        "confidence_label": "low",
+        "confidence_score": 0.0,
+        "derivation_method": "none",
+        "domain": "activity_training",
+        "evidence_refs": [],
+        "signal_key": "intentional_training.gym_exercise_set_count",
+        "status": "missing",
+        "uncertainty_note": "No manual exercise sets were logged.",
+        "value": null
+      },
+      {
+        "confidence_label": "high",
+        "confidence_score": 0.95,
+        "derivation_method": "band_estimation",
+        "domain": "activity_training",
+        "evidence_refs": [],
+        "signal_key": "training_load_estimate_band",
+        "status": "grounded",
+        "uncertainty_note": "No intentional training evidence was present.",
+        "value": "none"
+      },
+      {
+        "confidence_label": "low",
+        "confidence_score": 0.0,
+        "derivation_method": "none",
+        "domain": "activity_training",
+        "evidence_refs": [],
+        "signal_key": "training_completion_markers",
+        "status": "missing",
+        "uncertainty_note": "No passive or intentional activity markers were available.",
+        "value": null
+      },
+      {
+        "confidence_label": "medium",
+        "confidence_score": 0.8,
+        "derivation_method": "contextual_risk_flag",
+        "domain": "activity_training",
+        "evidence_refs": [
+          "subjective_01JQVOICESUBJ01"
+        ],
+        "signal_key": "soreness_or_strain_context",
+        "status": "grounded",
+        "uncertainty_note": null,
+        "value": [
+          "reported_soreness_or_illness"
+        ]
+      }
+    ]
+  },
+  "generated_from": {
+    "input_event_ids": [
+      "event_01JQVOICECAF1",
+      "event_01JQVOICELEGS1"
+    ],
+    "manual_log_entry_ids": [],
+    "source_artifact_ids": [
+      "artifact_01JQVOICEINTAKE01"
+    ],
+    "subjective_entry_ids": [
+      "subjective_01JQVOICESUBJ01"
+    ]
+  },
+  "important_gaps": [
+    {
+      "code": "missing_sleep_window",
+      "detail": "No reliable primary sleep window was found.",
+      "domain": "sleep",
+      "evidence_refs": []
+    },
+    {
+      "code": "missing_sleep_duration",
+      "detail": "No reliable total sleep duration was found.",
+      "domain": "sleep",
+      "evidence_refs": []
+    },
+    {
+      "code": "missing_passive_activity",
+      "detail": "No passive activity totals were available for this day.",
+      "domain": "activity_training",
+      "evidence_refs": []
+    },
+    {
+      "code": "missing_intentional_training",
+      "detail": "No intentional training evidence was available for this day.",
+      "domain": "activity_training",
+      "evidence_refs": []
+    }
+  ],
+  "semantic_context": {
+    "activity_training": {
+      "conflicts": [],
+      "date": "2026-04-09",
+      "important_gaps": [
+        {
+          "code": "missing_passive_activity",
+          "detail": "No passive activity totals were available for this day.",
+          "evidence_refs": []
+        },
+        {
+          "code": "missing_intentional_training",
+          "detail": "No intentional training evidence was available for this day.",
+          "evidence_refs": []
+        }
+      ],
+      "intentional_training": {
+        "gym_exercise_set_count": {
+          "confidence_label": "low",
+          "confidence_score": 0.0,
+          "derivation_method": "none",
+          "evidence_refs": [],
+          "status": "missing",
+          "uncertainty_note": "No manual exercise sets were logged.",
+          "value": null
+        },
+        "gym_session_count": {
+          "confidence_label": "low",
+          "confidence_score": 0.0,
+          "derivation_method": "none",
+          "evidence_refs": [],
+          "status": "missing",
+          "uncertainty_note": "No manual gym sessions were logged.",
+          "value": null
+        },
+        "run_session_count": {
+          "confidence_label": "low",
+          "confidence_score": 0.0,
+          "derivation_method": "none",
+          "evidence_refs": [],
+          "status": "missing",
+          "uncertainty_note": "No run sessions were present.",
+          "value": null
+        },
+        "run_total_duration_minutes": {
+          "confidence_label": "low",
+          "confidence_score": 0.0,
+          "derivation_method": "none",
+          "evidence_refs": [],
+          "status": "missing",
+          "uncertainty_note": "No run duration events were present.",
+          "value": null
+        }
+      },
+      "next_action": null,
+      "passive_activity": {
+        "active_energy_kcal": {
+          "confidence_label": "low",
+          "confidence_score": 0.0,
+          "derivation_method": "none",
+          "evidence_refs": [],
+          "status": "missing",
+          "uncertainty_note": "No grounded canonical event value was available.",
+          "value": null
+        },
+        "active_minutes": {
+          "confidence_label": "low",
+          "confidence_score": 0.0,
+          "derivation_method": "none",
+          "evidence_refs": [],
+          "status": "missing",
+          "uncertainty_note": "No grounded canonical event value was available.",
+          "value": null
+        },
+        "markers": {
+          "confidence_label": "low",
+          "confidence_score": 0.0,
+          "derivation_method": "none",
+          "evidence_refs": [],
+          "status": "missing",
+          "uncertainty_note": "No passive activity totals were available.",
+          "value": null
+        },
+        "steps_count": {
+          "confidence_label": "low",
+          "confidence_score": 0.0,
+          "derivation_method": "none",
+          "evidence_refs": [],
+          "status": "missing",
+          "uncertainty_note": "No grounded canonical event value was available.",
+          "value": null
+        }
+      },
+      "soreness_or_strain_context": {
+        "confidence_label": "medium",
+        "confidence_score": 0.8,
+        "derivation_method": "contextual_risk_flag",
+        "evidence_refs": [
+          "subjective_01JQVOICESUBJ01"
+        ],
+        "status": "grounded",
+        "uncertainty_note": null,
+        "value": [
+          "reported_soreness_or_illness"
+        ]
+      },
+      "summary_confidence": {
+        "confidence_label": "high",
+        "confidence_score": 0.8,
+        "evidence_refs": [
+          "subjective_01JQVOICESUBJ01"
+        ],
+        "uncertainty_note": null
+      },
+      "summary_id": "summary_activity_training_2026-04-09",
+      "training_completion_markers": {
+        "confidence_label": "low",
+        "confidence_score": 0.0,
+        "derivation_method": "none",
+        "evidence_refs": [],
+        "status": "missing",
+        "uncertainty_note": "No passive or intentional activity markers were available.",
+        "value": null
+      },
+      "training_load_estimate_band": {
+        "confidence_label": "high",
+        "confidence_score": 0.95,
+        "derivation_method": "band_estimation",
+        "evidence_refs": [],
+        "status": "grounded",
+        "uncertainty_note": "No intentional training evidence was present.",
+        "value": "none"
+      },
+      "user_id": "user_dom"
+    },
+    "sleep": {
+      "conflicts": [],
+      "date": "2026-04-09",
+      "important_gaps": [
+        {
+          "code": "missing_sleep_window",
+          "detail": "No reliable primary sleep window was found.",
+          "evidence_refs": []
+        },
+        {
+          "code": "missing_sleep_duration",
+          "detail": "No reliable total sleep duration was found.",
+          "evidence_refs": []
+        }
+      ],
+      "next_action": null,
+      "primary_sleep_window": {
+        "confidence_label": "low",
+        "confidence_score": 0.0,
+        "derivation_method": "none",
+        "evidence_refs": [],
+        "status": "missing",
+        "uncertainty_note": "No complete grounded sleep window was available.",
+        "value": null
+      },
+      "sleep_disruption_markers": {
+        "confidence_label": "low",
+        "confidence_score": 0.0,
+        "derivation_method": "none",
+        "evidence_refs": [],
+        "status": "missing",
+        "uncertainty_note": "No grounded sleep disruption evidence was available.",
+        "value": null
+      },
+      "sleep_timing_regularity_marker": {
+        "confidence_label": "low",
+        "confidence_score": 0.0,
+        "derivation_method": "none",
+        "evidence_refs": [],
+        "status": "missing",
+        "uncertainty_note": "No grounded sleep timing regularity marker was available.",
+        "value": null
+      },
+      "subjective_sleep_quality": {
+        "confidence_label": "medium",
+        "confidence_score": 0.76,
+        "derivation_method": "none",
+        "evidence_refs": [
+          "subjective_01JQVOICESUBJ01"
+        ],
+        "status": "grounded",
+        "uncertainty_note": null,
+        "value": 2
+      },
+      "summary_confidence": {
+        "confidence_label": "medium",
+        "confidence_score": 0.76,
+        "evidence_refs": [
+          "subjective_01JQVOICESUBJ01"
+        ],
+        "uncertainty_note": null
+      },
+      "summary_id": "summary_sleep_2026-04-09",
+      "total_sleep_duration_minutes": {
+        "confidence_label": "low",
+        "confidence_score": 0.0,
+        "derivation_method": "none",
+        "evidence_refs": [],
+        "status": "missing",
+        "uncertainty_note": "No reliable sleep duration evidence was available.",
+        "value": null
+      },
+      "user_id": "user_dom"
+    },
+    "subjective_state": {
+      "conflicts": [],
+      "date": "2026-04-09",
+      "energy": {
+        "confidence_label": "medium",
+        "confidence_score": 0.76,
+        "derivation_method": "none",
+        "evidence_refs": [
+          "subjective_01JQVOICESUBJ01"
+        ],
+        "status": "grounded",
+        "uncertainty_note": null,
+        "value": 2
+      },
+      "extraction_confidence": {
+        "confidence_label": "medium",
+        "confidence_score": 0.76,
+        "evidence_refs": [
+          "subjective_01JQVOICESUBJ01"
+        ],
+        "uncertainty_note": null
+      },
+      "free_text_human_summary": {
+        "confidence_label": "medium",
+        "confidence_score": 0.76,
+        "derivation_method": "none",
+        "evidence_refs": [
+          "subjective_01JQVOICESUBJ01"
+        ],
+        "status": "grounded",
+        "uncertainty_note": null,
+        "value": "Felt flat, stressed from deadlines, legs sore after lifting, and sleep felt poor."
+      },
+      "important_gaps": [],
+      "mood": {
+        "confidence_label": "medium",
+        "confidence_score": 0.76,
+        "derivation_method": "none",
+        "evidence_refs": [
+          "subjective_01JQVOICESUBJ01"
+        ],
+        "status": "grounded",
+        "uncertainty_note": null,
+        "value": 3
+      },
+      "next_action": null,
+      "perceived_recovery": {
+        "confidence_label": "medium",
+        "confidence_score": 0.61,
+        "derivation_method": "band_estimation",
+        "evidence_refs": [
+          "subjective_01JQVOICESUBJ01"
+        ],
+        "status": "inferred",
+        "uncertainty_note": "Perceived recovery was inferred from subjective sleep quality and soreness signals because no direct recovery field exists in the canonical entry.",
+        "value": "strained"
+      },
+      "soreness_or_illness": {
+        "confidence_label": "medium",
+        "confidence_score": 0.76,
+        "derivation_method": "none",
+        "evidence_refs": [
+          "subjective_01JQVOICESUBJ01"
+        ],
+        "status": "grounded",
+        "uncertainty_note": null,
+        "value": true
+      },
+      "stress": {
+        "confidence_label": "medium",
+        "confidence_score": 0.76,
+        "derivation_method": "none",
+        "evidence_refs": [
+          "subjective_01JQVOICESUBJ01"
+        ],
+        "status": "grounded",
+        "uncertainty_note": null,
+        "value": 4
+      },
+      "summary_confidence": {
+        "confidence_label": "medium",
+        "confidence_score": 0.61,
+        "evidence_refs": [
+          "subjective_01JQVOICESUBJ01"
+        ],
+        "uncertainty_note": null
+      },
+      "summary_id": "summary_subjective_state_2026-04-09",
+      "unresolved_ambiguity_markers": {
+        "confidence_label": "high",
+        "confidence_score": 0.95,
+        "derivation_method": "coverage_classification",
+        "evidence_refs": [
+          "subjective_01JQVOICESUBJ01"
+        ],
+        "status": "grounded",
+        "uncertainty_note": null,
+        "value": []
+      },
+      "user_id": "user_dom"
+    }
+  },
+  "user_id": "user_dom"
+}

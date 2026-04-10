@@ -12,49 +12,32 @@ That loop is implemented under `health_model/`, covered by CLI integration tests
 
 ## Canonical sample demo path
 
-This repo's top-level demo uses tracked fixtures only.
+The approved evaluator-checkable proof for this slice is the frozen context-to-recommendation audit bundle under `artifacts/flagship_loop_proof/2026-04-09/`.
+
+Regenerate it from repo root with:
 
 ```bash
-python3 -m health_model.agent_contract_cli describe
-
-mkdir -p /tmp/health_lab_demo/data/health
-
-python3 -m health_model.agent_bundle_cli init \
-  --bundle-path /tmp/health_lab_demo/data/health/shared_input_bundle_2026-04-09.json \
-  --user-id user_dom \
-  --date 2026-04-09
-
-python3 -m health_model.agent_voice_note_cli submit \
-  --bundle-path /tmp/health_lab_demo/data/health/shared_input_bundle_2026-04-09.json \
-  --output-dir /tmp/health_lab_demo/data/health \
-  --user-id user_dom \
-  --date 2026-04-09 \
-  --payload-path /Users/myapplemini01/Projects/garmin_lab/tests/fixtures/voice_note_intake/daily_voice_note_input.json
-
-python3 -m health_model.agent_context_cli get \
-  --artifact-path /tmp/health_lab_demo/data/health/agent_readable_daily_context_2026-04-09.json \
-  --user-id user_dom \
-  --date 2026-04-09
-
-python3 -m health_model.agent_recommendation_cli create \
-  --output-dir /tmp/health_lab_demo/data/health \
-  --payload-json '{"user_id":"user_dom","date":"2026-04-09","context_artifact_path":"/tmp/health_lab_demo/data/health/agent_readable_daily_context_2026-04-09.json","context_artifact_id":"agent_context_user_dom_2026-04-09","recommendation_id":"rec_20260409_recovery_01","summary":"Keep training easy and prioritize recovery inputs today.","rationale":"The submitted voice note grounds low energy, soreness, and same-day training load, so the safe next step is a lighter day.","evidence_refs":["subjective_01JQVOICESUBJ01","event_01JQVOICELEGS1"],"confidence_score":0.82}'
+python3 scripts/run_flagship_loop_proof_audit.py
 ```
 
-Fixture source: `tests/fixtures/voice_note_intake/daily_voice_note_input.json`
+Frozen proof inputs:
+- context fixture: `tests/fixtures/agent_readable_daily_context/generated_fixture_day_context.json`
+- successful payload: `artifacts/flagship_loop_proof/payloads/recommendation_positive_payload_2026-04-09.json`
+- fail-closed payload: `artifacts/flagship_loop_proof/payloads/recommendation_negative_payload_2026-04-09.json`
 
-Generated demo artifacts:
-- `/tmp/health_lab_demo/data/health/shared_input_bundle_2026-04-09.json`
-- `/tmp/health_lab_demo/data/health/agent_readable_daily_context_2026-04-09.json`
-- `/tmp/health_lab_demo/data/health/agent_readable_daily_context_latest.json`
-- `/tmp/health_lab_demo/data/health/agent_recommendation_2026-04-09.json`
-- `/tmp/health_lab_demo/data/health/agent_recommendation_latest.json`
+Checked-in proof outputs:
+- `artifacts/flagship_loop_proof/2026-04-09/agent_recommendation_2026-04-09.json`
+- `artifacts/flagship_loop_proof/2026-04-09/agent_recommendation_latest.json`
+- `artifacts/flagship_loop_proof/2026-04-09/negative_fail_closed_result.json`
+- `artifacts/flagship_loop_proof/2026-04-09/negative_artifact_state_preservation.json`
+
+The broader CLI walkthroughs later in this README remain useful runtime examples, but they are not the proof object for this audit slice.
 
 ## Non-clinical and privacy boundaries
 
 - This is a personal software project, not a clinical product or medical device.
-- The sample demo above is fixture-backed and does not require private health data.
-- Runtime outputs belong under local `data/` paths or another local directory such as `/tmp/health_lab_demo/`; those files are not the public proof object.
+- The checked-in flagship proof bundle is fixture-backed and does not require private health data.
+- Runtime outputs belong under local `data/` paths or another local directory such as `/tmp/health_lab_demo/`; those files are disposable runtime outputs, not the public proof object.
 - The repo should be read as artifact-generation infrastructure, not diagnosis or treatment advice.
 
 ## Real now vs not yet
@@ -77,7 +60,7 @@ Generated demo artifacts:
 
 The current flagship loop lives in `health_model/`. Older project surfaces for Garmin ingestion, dashboards, and the web app still exist in the repo, but they are not the cleanest stranger-safe proof path today.
 
-If you want the smallest trustworthy slice first, run the fixture-backed CLI demo above, then inspect the generated JSON artifacts.
+If you want the smallest trustworthy slice first, run `python3 scripts/run_flagship_loop_proof_audit.py`, inspect `artifacts/flagship_loop_proof/2026-04-09/`, then use the broader CLI walkthroughs below as adjacent context.
 
 ## Canonical Health Lab daily snapshot core
 
