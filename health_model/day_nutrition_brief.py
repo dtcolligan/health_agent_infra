@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from health_model.retrieval_request_metadata import validate_and_echo_request_metadata
+
 from health_model.daily_snapshot import (
     DEFAULT_DB_PATH,
     DEFAULT_EXPORT_DIR,
@@ -119,8 +121,6 @@ def build_parser() -> argparse.ArgumentParser:
     retrieve_parser.add_argument("--date", required=True)
     retrieve_parser.add_argument("--request-id", required=True)
     retrieve_parser.add_argument("--requested-at", required=True)
-    retrieve_parser.add_argument("--timezone")
-    retrieve_parser.add_argument("--max-evidence-items", type=int)
     retrieve_parser.add_argument("--include-conflicts", choices=["true", "false"])
     retrieve_parser.add_argument("--include-missingness", choices=["true", "false"])
 
@@ -161,6 +161,27 @@ def run_command(args: argparse.Namespace) -> dict[str, Any] | dict[str, str]:
     if args.command != "retrieve-day-nutrition-brief":
         raise ValueError(f"Unsupported command: {args.command}")
 
+    request_validation, _request_echo = validate_and_echo_request_metadata(
+        request_id=args.request_id,
+        requested_at=args.requested_at,
+    )
+    if not request_validation["is_valid"]:
+        return {
+            "ok": False,
+            "artifact_path": args.artifact_path,
+            "retrieval": None,
+            "validation": request_validation,
+            "error": {
+                "code": request_validation["semantic_issues"][0]["code"],
+                "message": "Request metadata failed validation.",
+                "retryable": False,
+                "details": {
+                    "command": args.command,
+                    "request_echo": request_validation["request_echo"],
+                },
+            },
+        }
+
     path = Path(args.artifact_path)
     if not path.exists():
         return _validation_error(
@@ -169,6 +190,7 @@ def run_command(args: argparse.Namespace) -> dict[str, Any] | dict[str, str]:
             message="Artifact file does not exist.",
             semantic_issues=[_issue(code="artifact_not_found", message="Artifact file does not exist.", path="artifact_path")],
             details={"artifact_path": str(path), "user_id": args.user_id, "date": args.date},
+            request_echo=request_validation["request_echo"],
         )
 
     try:
@@ -180,6 +202,7 @@ def run_command(args: argparse.Namespace) -> dict[str, Any] | dict[str, str]:
             message="Artifact file is not valid JSON.",
             semantic_issues=[_issue(code="invalid_artifact_json", message=str(exc), path="artifact_path")],
             details={"artifact_path": str(path), "user_id": args.user_id, "date": args.date},
+            request_echo=request_validation["request_echo"],
         )
 
     semantic_issues = _artifact_semantic_issues(raw=raw, user_id=args.user_id, date=args.date)
@@ -190,6 +213,7 @@ def run_command(args: argparse.Namespace) -> dict[str, Any] | dict[str, str]:
             message="Artifact failed scope or type validation.",
             semantic_issues=semantic_issues,
             details={"artifact_path": str(path), "user_id": args.user_id, "date": args.date},
+            request_echo=request_validation["request_echo"],
         )
 
     evidence = {key: raw.get("nutrition", {}).get(key) for key in NUTRITION_EVIDENCE_KEYS}
@@ -208,7 +232,12 @@ def run_command(args: argparse.Namespace) -> dict[str, Any] | dict[str, str]:
             "conflicts": [],
             "unsupported_claims": unsupported_claims,
         },
-        "validation": {"is_valid": True, "schema_issues": [], "semantic_issues": []},
+        "validation": {
+            "is_valid": True,
+            "schema_issues": [],
+            "semantic_issues": [],
+            "request_echo": request_validation["request_echo"],
+        },
         "error": None,
     }
 
@@ -241,12 +270,18 @@ def _validation_error(
     message: str,
     semantic_issues: list[dict[str, str]],
     details: dict[str, Any],
+    request_echo: dict[str, Any],
 ) -> dict[str, Any]:
     return {
         "ok": False,
         "artifact_path": artifact_path,
         "retrieval": None,
-        "validation": {"is_valid": False, "schema_issues": [], "semantic_issues": semantic_issues},
+        "validation": {
+            "is_valid": False,
+            "schema_issues": [],
+            "semantic_issues": semantic_issues,
+            "request_echo": request_echo,
+        },
         "error": {
             "code": code,
             "message": message,

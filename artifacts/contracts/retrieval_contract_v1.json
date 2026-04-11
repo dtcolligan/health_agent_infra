@@ -415,32 +415,18 @@
           "type": "string"
         },
         {
-          "description": "Stable request identifier for proofability.",
+          "description": "Required non-empty request identifier. Daily retrieval ops validate it and echo it back under validation.request_echo.",
           "flag": "--request-id",
           "name": "request_id",
           "required": true,
           "type": "string"
         },
         {
-          "description": "ISO 8601 timestamp for when retrieval was requested.",
+          "description": "Required ISO 8601 timestamp with timezone information. Daily retrieval ops validate it and echo it back under validation.request_echo.",
           "flag": "--requested-at",
           "name": "requested_at",
           "required": true,
           "type": "datetime"
-        },
-        {
-          "description": "Optional timezone hint for interpreting requested scope.",
-          "flag": "--timezone",
-          "name": "timezone",
-          "required": false,
-          "type": "string"
-        },
-        {
-          "description": "Optional cap on returned evidence items.",
-          "flag": "--max-evidence-items",
-          "name": "max_evidence_items",
-          "required": false,
-          "type": "integer"
         },
         {
           "accepted_values": [
@@ -469,7 +455,7 @@
       "consumes": [
         "agent_readable_daily_context"
       ],
-      "description": "Return one scoped agent-readable daily context artifact as the v1 retrieval proof surface.",
+      "description": "Return one scoped agent-readable daily context artifact as the v1 retrieval proof surface, with request metadata validated and echoed under validation.request_echo.",
       "implementation_status": "proof_complete",
       "mode": "read",
       "module": "health_model.agent_context_cli",
@@ -502,32 +488,18 @@
           "type": "string"
         },
         {
-          "description": "Stable request identifier for proofability.",
+          "description": "Required non-empty request identifier. Daily retrieval ops validate it and echo it back under validation.request_echo.",
           "flag": "--request-id",
           "name": "request_id",
           "required": true,
           "type": "string"
         },
         {
-          "description": "ISO 8601 timestamp for when retrieval was requested.",
+          "description": "Required ISO 8601 timestamp with timezone information. Daily retrieval ops validate it and echo it back under validation.request_echo.",
           "flag": "--requested-at",
           "name": "requested_at",
           "required": true,
           "type": "datetime"
-        },
-        {
-          "description": "Optional timezone hint for interpreting requested scope.",
-          "flag": "--timezone",
-          "name": "timezone",
-          "required": false,
-          "type": "string"
-        },
-        {
-          "description": "Optional cap on returned evidence items.",
-          "flag": "--max-evidence-items",
-          "name": "max_evidence_items",
-          "required": false,
-          "type": "integer"
         },
         {
           "accepted_values": [
@@ -556,7 +528,7 @@
       "consumes": [
         "day_nutrition_brief"
       ],
-      "description": "Return one bounded day-scoped nutrition brief from an accepted nutrition brief artifact.",
+      "description": "Return one bounded day-scoped nutrition brief from an accepted nutrition brief artifact, with request metadata validated and echoed under validation.request_echo.",
       "implementation_status": "proof_complete",
       "mode": "read",
       "module": "health_model.day_nutrition_brief",
@@ -589,32 +561,18 @@
           "type": "string"
         },
         {
-          "description": "Stable request identifier for proofability.",
+          "description": "Required non-empty request identifier. Daily retrieval ops validate it and echo it back under validation.request_echo.",
           "flag": "--request-id",
           "name": "request_id",
           "required": true,
           "type": "string"
         },
         {
-          "description": "ISO 8601 timestamp for when retrieval was requested.",
+          "description": "Required ISO 8601 timestamp with timezone information. Daily retrieval ops validate it and echo it back under validation.request_echo.",
           "flag": "--requested-at",
           "name": "requested_at",
           "required": true,
           "type": "datetime"
-        },
-        {
-          "description": "Optional timezone hint for interpreting requested scope.",
-          "flag": "--timezone",
-          "name": "timezone",
-          "required": false,
-          "type": "string"
-        },
-        {
-          "description": "Optional cap on returned evidence items.",
-          "flag": "--max-evidence-items",
-          "name": "max_evidence_items",
-          "required": false,
-          "type": "integer"
         },
         {
           "accepted_values": [
@@ -643,7 +601,7 @@
       "consumes": [
         "agent_readable_daily_context"
       ],
-      "description": "Return one bounded one-day sleep evidence review from an accepted day-scoped context artifact.",
+      "description": "Return one bounded one-day sleep evidence review from an accepted day-scoped context artifact, with request metadata validated and echoed under validation.request_echo.",
       "implementation_status": "proof_complete",
       "mode": "read",
       "module": "health_model.agent_retrieval_cli",
@@ -683,14 +641,14 @@
           "type": "string"
         },
         {
-          "description": "Stable request identifier for proofability.",
+          "description": "Required non-empty request identifier. Daily retrieval ops validate it and echo it back under validation.request_echo.",
           "flag": "--request-id",
           "name": "request_id",
           "required": true,
           "type": "string"
         },
         {
-          "description": "ISO 8601 timestamp for when retrieval was requested.",
+          "description": "Required ISO 8601 timestamp with timezone information. Daily retrieval ops validate it and echo it back under validation.request_echo.",
           "flag": "--requested-at",
           "name": "requested_at",
           "required": true,

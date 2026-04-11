@@ -122,7 +122,8 @@ class AgentContractCliIntegrationTest(unittest.TestCase):
         self.assertEqual(retrieval_day_context["produces"], ["retrieval_response_envelope"])
         self.assertEqual(retrieval_args["artifact_path"]["flag"], "--artifact-path")
         self.assertEqual(retrieval_args["request_id"]["flag"], "--request-id")
-        self.assertFalse(retrieval_args["timezone"]["required"])
+        self.assertNotIn("timezone", retrieval_args)
+        self.assertNotIn("max_evidence_items", retrieval_args)
 
         sleep_review = contract["supported_operations"]["retrieve.sleep_review"]
         sleep_review_args = {arg["name"]: arg for arg in sleep_review["args"]}
@@ -131,6 +132,8 @@ class AgentContractCliIntegrationTest(unittest.TestCase):
         self.assertEqual(sleep_review["implementation_status"], "proof_complete")
         self.assertEqual(sleep_review["consumes"], ["agent_readable_daily_context"])
         self.assertEqual(sleep_review_args["artifact_path"]["flag"], "--artifact-path")
+        self.assertNotIn("timezone", sleep_review_args)
+        self.assertNotIn("max_evidence_items", sleep_review_args)
 
         day_nutrition_brief = contract["supported_operations"]["retrieve.day_nutrition_brief"]
         day_nutrition_args = {arg["name"]: arg for arg in day_nutrition_brief["args"]}
@@ -139,6 +142,8 @@ class AgentContractCliIntegrationTest(unittest.TestCase):
         self.assertEqual(day_nutrition_brief["implementation_status"], "proof_complete")
         self.assertEqual(day_nutrition_brief["consumes"], ["day_nutrition_brief"])
         self.assertEqual(day_nutrition_args["artifact_path"]["flag"], "--artifact-path")
+        self.assertNotIn("timezone", day_nutrition_args)
+        self.assertNotIn("max_evidence_items", day_nutrition_args)
 
         weekly_review = contract["supported_operations"]["retrieve.weekly_pattern_review"]
         weekly_args = {arg["name"]: arg for arg in weekly_review["args"]}
@@ -349,6 +354,16 @@ class AgentContractCliIntegrationTest(unittest.TestCase):
                 "conflicts": context["context"]["conflicts"],
                 "unsupported_claims": [],
             },
+            "validation": {
+                "is_valid": True,
+                "schema_issues": [],
+                "semantic_issues": [],
+                "request_echo": {
+                    "request_id": request_fixture["request_id"],
+                    "requested_at": request_fixture["requested_at"],
+                },
+            },
+            "error": None,
         }
 
         self.assertTrue(context["ok"], msg=context)

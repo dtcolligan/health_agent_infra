@@ -26,6 +26,7 @@ Machine-readable discovery is published by `python3 -m health_model.agent_contra
 - Current implementation status: proof-complete in v1.
 - Required scope: `user_id`, `date`, `artifact_path`, `request_id`, `requested_at`.
 - Semantics:
+  - validate `request_id` as a non-empty string and `requested_at` as an ISO 8601 datetime with timezone information, then echo both under `validation.request_echo`
   - fail closed if the artifact is missing, invalid JSON, wrong `artifact_type`, wrong `user_id`, or wrong `date`
   - preserve `generated_from`, `important_gaps`, and `conflicts` exactly
   - do not invent unsupported metrics
@@ -35,6 +36,7 @@ Machine-readable discovery is published by `python3 -m health_model.agent_contra
 - Current implementation status: proof-complete in v1.
 - Required scope: `user_id`, `date`, `artifact_path`, `request_id`, `requested_at`.
 - Semantics:
+  - validate `request_id` as a non-empty string and `requested_at` as an ISO 8601 datetime with timezone information, then echo both under `validation.request_echo`
   - fail closed if the artifact is missing, invalid JSON, wrong `artifact_type`, wrong `user_id`, or wrong `date`
   - explicit missingness, never fabricated zeros
   - no unsupported micronutrient or coaching claims
@@ -44,6 +46,7 @@ Machine-readable discovery is published by `python3 -m health_model.agent_contra
 - Current implementation status: proof-complete in v1.
 - Required scope: `user_id`, `date`, `artifact_path`, `request_id`, `requested_at`.
 - Semantics:
+  - validate `request_id` as a non-empty string and `requested_at` as an ISO 8601 datetime with timezone information, then echo both under `validation.request_echo`
   - review-only, not advisory
   - distinguish grounded, subjective-only, and missing sleep evidence
   - partial coverage is valid when scope matches but evidence is sparse
@@ -67,11 +70,13 @@ Required common retrieval fields:
 - scope selector: `date` or `start_date` plus `end_date`
 - locator: `artifact_path` or `memory_locator`
 
-Optional common retrieval fields:
-- `timezone`
-- `max_evidence_items`
+Optional retrieval fields for accepted daily retrieval ops:
 - `include_conflicts`
 - `include_missingness`
+
+Optional retrieval fields still used by discovery-visible weekly retrieval only:
+- `timezone`
+- `max_evidence_items`
 
 ## Missingness and conflict rules
 

@@ -1,7 +1,7 @@
 {
   "acceptance_checks": [
-    "discovery includes retrieve.day_context and adjacent retrieval operations",
-    "retrieve.day_context stays read-only and artifact-scoped",
+    "discovery includes retrieve.day_context and adjacent retrieval operations with no unsupported timezone or max_evidence_items args on accepted daily retrieval ops",
+    "retrieve.day_context stays read-only and artifact-scoped while validating and echoing request metadata",
     "success proof preserves generated_from, important_gaps, and conflicts",
     "wrong-scope request fails closed",
     "docs and machine contract state private memory is external to Health Lab"

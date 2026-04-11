@@ -1,7 +1,7 @@
 {
   "acceptance_checks": [
-    "discovery includes retrieve.day_nutrition_brief as an executable read op",
-    "retrieve.day_nutrition_brief stays read-only and artifact-scoped",
+    "discovery includes retrieve.day_nutrition_brief as an executable read op with no unsupported timezone or max_evidence_items args",
+    "retrieve.day_nutrition_brief stays read-only and artifact-scoped while validating and echoing request metadata",
     "success proof is grounded only in accepted day nutrition artifact fields",
     "wrong-date request fails closed in the retrieval wrapper envelope",
     "nutrition retrieval remains non-coaching and does not invent unsupported micronutrient claims"

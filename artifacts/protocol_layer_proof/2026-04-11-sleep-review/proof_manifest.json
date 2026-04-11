@@ -1,7 +1,7 @@
 {
   "acceptance_checks": [
-    "discovery includes retrieve.sleep_review as an executable read op",
-    "retrieve.sleep_review stays read-only and artifact-scoped",
+    "discovery includes retrieve.sleep_review as an executable read op with no unsupported timezone or max_evidence_items args",
+    "retrieve.sleep_review stays read-only and artifact-scoped while validating and echoing request metadata",
     "success proof preserves explicit missingness and generated_from provenance",
     "wrong-date request fails closed in the retrieval wrapper envelope",
     "sleep review remains review-only with no coaching or diagnostic claims"

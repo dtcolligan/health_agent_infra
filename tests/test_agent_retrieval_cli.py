@@ -39,6 +39,36 @@ class AgentRetrievalCliIntegrationTest(unittest.TestCase):
         self.assertTrue(result["ok"], msg=result)
         self.assertEqual(result, expected)
 
+    def test_sleep_review_fails_closed_on_invalid_requested_at_with_request_echo(self) -> None:
+        request_fixture = json.loads((RETRIEVAL_FIXTURE_DIR / "sleep_review_success_request.json").read_text())
+
+        result = self._run_cli(
+            [
+                "sleep-review",
+                "--artifact-path",
+                request_fixture["artifact_path"],
+                "--user-id",
+                request_fixture["user_id"],
+                "--date",
+                request_fixture["date"],
+                "--request-id",
+                request_fixture["request_id"],
+                "--requested-at",
+                "2026-04-11T09:10:00",
+            ],
+            expected_returncode=1,
+        )
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error"]["code"], "invalid_requested_at")
+        self.assertEqual(
+            result["validation"]["request_echo"],
+            {
+                "request_id": request_fixture["request_id"],
+                "requested_at": "2026-04-11T09:10:00",
+            },
+        )
+
     def test_sleep_review_fails_closed_on_wrong_date_with_retrieval_wrapper_envelope(self) -> None:
         request_fixture = json.loads((RETRIEVAL_FIXTURE_DIR / "sleep_review_success_request.json").read_text())
         expected = json.loads((RETRIEVAL_FIXTURE_DIR / "sleep_review_wrong_scope_response.json").read_text())

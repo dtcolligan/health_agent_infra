@@ -6,6 +6,7 @@ import sys
 from typing import Any
 
 from health_model import agent_context_cli
+from health_model.retrieval_request_metadata import validate_and_echo_request_metadata
 
 
 class CliParseError(ValueError):
@@ -36,8 +37,6 @@ def build_parser() -> argparse.ArgumentParser:
     sleep_review.add_argument("--date", required=True)
     sleep_review.add_argument("--request-id", required=True)
     sleep_review.add_argument("--requested-at", required=True)
-    sleep_review.add_argument("--timezone")
-    sleep_review.add_argument("--max-evidence-items", type=int)
     sleep_review.add_argument("--include-conflicts", choices=["true", "false"])
     sleep_review.add_argument("--include-missingness", choices=["true", "false"])
 
@@ -76,6 +75,27 @@ def run_command(args: argparse.Namespace) -> dict[str, Any]:
     if args.command != "sleep-review":
         raise ValueError(f"Unsupported command: {args.command}")
 
+    request_validation, _request_echo = validate_and_echo_request_metadata(
+        request_id=args.request_id,
+        requested_at=args.requested_at,
+    )
+    if not request_validation["is_valid"]:
+        return {
+            "ok": False,
+            "artifact_path": args.artifact_path,
+            "retrieval": None,
+            "validation": request_validation,
+            "error": {
+                "code": request_validation["semantic_issues"][0]["code"],
+                "message": "Request metadata failed validation.",
+                "retryable": False,
+                "details": {
+                    "command": args.command,
+                    "request_echo": request_validation["request_echo"],
+                },
+            },
+        }
+
     context_response = agent_context_cli.run_command(
         argparse.Namespace(
             command="get",
@@ -89,7 +109,10 @@ def run_command(args: argparse.Namespace) -> dict[str, Any]:
             "ok": False,
             "artifact_path": context_response.get("artifact_path"),
             "retrieval": None,
-            "validation": context_response["validation"],
+            "validation": {
+                **context_response["validation"],
+                "request_echo": request_validation["request_echo"],
+            },
             "error": context_response["error"],
         }
 
@@ -115,7 +138,10 @@ def run_command(args: argparse.Namespace) -> dict[str, Any]:
             "conflicts": conflicts,
             "unsupported_claims": [],
         },
-        "validation": context_response["validation"],
+        "validation": {
+            **context_response["validation"],
+            "request_echo": request_validation["request_echo"],
+        },
         "error": None,
     }
 

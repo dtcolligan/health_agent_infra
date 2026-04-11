@@ -42,6 +42,10 @@
   },
   "validation": {
     "is_valid": true,
+    "request_echo": {
+      "request_id": "req_day_context_smoke_2026_04_11",
+      "requested_at": "2026-04-11T08:55:00+01:00"
+    },
     "schema_issues": [],
     "semantic_issues": []
   }

@@ -149,6 +149,44 @@ class DayNutritionBriefTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, msg=result.stderr or result.stdout)
         self.assertEqual(json.loads(result.stdout), expected)
 
+    def test_retrieve_day_nutrition_brief_fails_closed_on_invalid_requested_at_with_request_echo(self) -> None:
+        request_fixture = json.loads((RETRIEVAL_FIXTURE_DIR / "day_nutrition_brief_success_request.json").read_text())
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "health_model.day_nutrition_brief",
+                "retrieve-day-nutrition-brief",
+                "--artifact-path",
+                request_fixture["artifact_path"],
+                "--user-id",
+                request_fixture["user_id"],
+                "--date",
+                request_fixture["date"],
+                "--request-id",
+                request_fixture["request_id"],
+                "--requested-at",
+                "2026-04-11T09:20:00",
+            ],
+            cwd=ROOT_DIR,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 1, msg=result.stderr or result.stdout)
+        payload = json.loads(result.stdout)
+        self.assertFalse(payload["ok"])
+        self.assertEqual(payload["error"]["code"], "invalid_requested_at")
+        self.assertEqual(
+            payload["validation"]["request_echo"],
+            {
+                "request_id": request_fixture["request_id"],
+                "requested_at": "2026-04-11T09:20:00",
+            },
+        )
+
     def test_retrieve_day_nutrition_brief_fails_closed_on_wrong_date(self) -> None:
         request_fixture = json.loads((RETRIEVAL_FIXTURE_DIR / "day_nutrition_brief_success_request.json").read_text())
         expected = json.loads((RETRIEVAL_FIXTURE_DIR / "day_nutrition_brief_wrong_scope_response.json").read_text())
