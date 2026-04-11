@@ -1,0 +1,28 @@
+{
+  "artifact_path": "/Users/myapplemini01/Projects/garmin_lab/artifacts/protocol_layer_proof/2026-04-11-recommendation-feedback/missing_recommendation_judgment_2026-04-10.json",
+  "error": {
+    "code": "artifact_not_found",
+    "details": {
+      "artifact_path": "/Users/myapplemini01/Projects/garmin_lab/artifacts/protocol_layer_proof/2026-04-11-recommendation-feedback/missing_recommendation_judgment_2026-04-10.json"
+    },
+    "message": "Artifact file does not exist.",
+    "retryable": false
+  },
+  "ok": false,
+  "retrieval": null,
+  "validation": {
+    "is_valid": false,
+    "request_echo": {
+      "request_id": "req_recommendation_feedback_missing_judgment_2026_04_11",
+      "requested_at": "2026-04-11T12:20:00+01:00"
+    },
+    "schema_issues": [],
+    "semantic_issues": [
+      {
+        "code": "artifact_not_found",
+        "message": "Artifact file does not exist.",
+        "path": "artifact_path"
+      }
+    ]
+  }
+}

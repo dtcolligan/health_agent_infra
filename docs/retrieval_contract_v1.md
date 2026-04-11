@@ -72,6 +72,17 @@ Machine-readable discovery is published by `python3 -m health_model.agent_contra
   - preserve the accepted judgment payload fields under `retrieval.evidence`, especially `judgment_id`, `judgment_label`, `action_taken`, `why`, `recommendation_artifact_path`, `recommendation_artifact_id`, and `recommendation_evidence_refs`
   - remain read-only and artifact-scoped with no new synthesis, coaching, or aggregation
 
+### `retrieve.recommendation_feedback`
+- Purpose: return one linked read-only feedback object built from one accepted `agent_recommendation` artifact and one same-day `recommendation_judgment` artifact.
+- Current implementation status: proof-complete in v1.
+- Required scope: `user_id`, `date`, `recommendation_artifact_path`, `judgment_artifact_path`, `request_id`, `requested_at`.
+- Semantics:
+  - validate `request_id` as a non-empty string and `requested_at` as an ISO 8601 datetime with timezone information, then echo both under `validation.request_echo`
+  - fail closed if either artifact is missing, invalid JSON, wrong `artifact_type`, wrong `user_id`, or wrong `date`
+  - fail closed if `judgment.recommendation_artifact_id` does not match `recommendation.recommendation_id`
+  - fail closed if `judgment.recommendation_artifact_path` does not resolve to the supplied recommendation artifact path
+  - return `retrieval.evidence.recommendation`, `retrieval.evidence.judgment`, and explicit linkage fields, with no new synthesis, coaching, or aggregation
+
 ### `retrieve.weekly_pattern_review`
 - Purpose: return a bounded seven-day pattern review over already accepted daily context artifacts.
 - Current implementation status: proof-complete in v1.
@@ -92,7 +103,7 @@ Required common retrieval fields:
 - `request_id`
 - `requested_at`
 - scope selector: `date` or `start_date` plus `end_date`
-- locator: `artifact_path` or `memory_locator`
+- locator: `artifact_path`, `recommendation_artifact_path` plus `judgment_artifact_path`, or `memory_locator`
 
 Optional retrieval fields for accepted daily retrieval ops:
 - `include_conflicts`
@@ -149,6 +160,7 @@ The frozen proof bundles for this slice live under:
 - `artifacts/protocol_layer_proof/2026-04-11-sleep-review/` for `retrieve.sleep_review`
 - `artifacts/protocol_layer_proof/2026-04-11-recommendation-retrieval/` for `retrieve.recommendation`
 - `artifacts/protocol_layer_proof/2026-04-11-recommendation-judgment-retrieval/` for `retrieve.recommendation_judgment`
+- `artifacts/protocol_layer_proof/2026-04-11-recommendation-feedback/` for `retrieve.recommendation_feedback`
 - `artifacts/protocol_layer_proof/2026-04-11-weekly-pattern-review/` for `retrieve.weekly_pattern_review`
 
 Each bundle includes:

@@ -5,6 +5,7 @@
     "retrieve.sleep_review",
     "retrieve.recommendation",
     "retrieve.recommendation_judgment",
+    "retrieve.recommendation_feedback",
     "retrieve.weekly_pattern_review"
   ]
 }

@@ -289,6 +289,187 @@ class AgentRetrievalCliIntegrationTest(unittest.TestCase):
         self.assertFalse(result["ok"])
         self.assertEqual(result, expected)
 
+    def test_recommendation_feedback_returns_success_envelope_grounded_in_linked_recommendation_and_judgment_artifacts(self) -> None:
+        request_fixture = json.loads((RETRIEVAL_FIXTURE_DIR / "recommendation_feedback_success_request.json").read_text())
+        expected = json.loads((RETRIEVAL_FIXTURE_DIR / "recommendation_feedback_success_response.json").read_text())
+
+        result = self._run_cli(
+            [
+                "recommendation-feedback",
+                "--recommendation-artifact-path",
+                request_fixture["recommendation_artifact_path"],
+                "--judgment-artifact-path",
+                request_fixture["judgment_artifact_path"],
+                "--user-id",
+                request_fixture["user_id"],
+                "--date",
+                request_fixture["date"],
+                "--request-id",
+                request_fixture["request_id"],
+                "--requested-at",
+                request_fixture["requested_at"],
+                "--include-conflicts",
+                request_fixture["include_conflicts"],
+                "--include-missingness",
+                request_fixture["include_missingness"],
+            ]
+        )
+
+        self.assertTrue(result["ok"], msg=result)
+        self.assertEqual(result, expected)
+
+    def test_recommendation_feedback_fails_closed_on_wrong_scope(self) -> None:
+        request_fixture = json.loads((RETRIEVAL_FIXTURE_DIR / "recommendation_feedback_success_request.json").read_text())
+        expected = json.loads((RETRIEVAL_FIXTURE_DIR / "recommendation_feedback_wrong_scope_response.json").read_text())
+
+        result = self._run_cli(
+            [
+                "recommendation-feedback",
+                "--recommendation-artifact-path",
+                str((REPO_ROOT / request_fixture["recommendation_artifact_path"]).resolve()),
+                "--judgment-artifact-path",
+                str((REPO_ROOT / request_fixture["judgment_artifact_path"]).resolve()),
+                "--user-id",
+                "user_other",
+                "--date",
+                request_fixture["date"],
+                "--request-id",
+                "req_recommendation_feedback_wrong_scope_2026_04_11",
+                "--requested-at",
+                request_fixture["requested_at"],
+            ],
+            expected_returncode=1,
+        )
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result, expected)
+
+    def test_recommendation_feedback_fails_closed_on_invalid_requested_at_with_request_echo(self) -> None:
+        request_fixture = json.loads((RETRIEVAL_FIXTURE_DIR / "recommendation_feedback_success_request.json").read_text())
+        expected = json.loads((RETRIEVAL_FIXTURE_DIR / "recommendation_feedback_invalid_request_metadata_response.json").read_text())
+
+        result = self._run_cli(
+            [
+                "recommendation-feedback",
+                "--recommendation-artifact-path",
+                str((REPO_ROOT / request_fixture["recommendation_artifact_path"]).resolve()),
+                "--judgment-artifact-path",
+                str((REPO_ROOT / request_fixture["judgment_artifact_path"]).resolve()),
+                "--user-id",
+                request_fixture["user_id"],
+                "--date",
+                request_fixture["date"],
+                "--request-id",
+                request_fixture["request_id"],
+                "--requested-at",
+                "2026-04-11T12:20:00",
+            ],
+            expected_returncode=1,
+        )
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result, expected)
+
+    def test_recommendation_feedback_fails_closed_on_missing_recommendation_artifact(self) -> None:
+        expected = json.loads((RETRIEVAL_FIXTURE_DIR / "recommendation_feedback_missing_recommendation_response.json").read_text())
+
+        result = self._run_cli(
+            [
+                "recommendation-feedback",
+                "--recommendation-artifact-path",
+                str((REPO_ROOT / "artifacts" / "protocol_layer_proof" / "2026-04-11-recommendation-feedback" / "missing_agent_recommendation_2026-04-10.json").resolve()),
+                "--judgment-artifact-path",
+                str((REPO_ROOT / "artifacts" / "protocol_layer_proof" / "2026-04-11-recommendation-feedback" / "recommendation_judgment_2026-04-10.json").resolve()),
+                "--user-id",
+                "user_dom",
+                "--date",
+                "2026-04-10",
+                "--request-id",
+                "req_recommendation_feedback_missing_recommendation_2026_04_11",
+                "--requested-at",
+                "2026-04-11T12:20:00+01:00",
+            ],
+            expected_returncode=1,
+        )
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result, expected)
+
+    def test_recommendation_feedback_fails_closed_on_missing_judgment_artifact(self) -> None:
+        expected = json.loads((RETRIEVAL_FIXTURE_DIR / "recommendation_feedback_missing_judgment_response.json").read_text())
+
+        result = self._run_cli(
+            [
+                "recommendation-feedback",
+                "--recommendation-artifact-path",
+                str((REPO_ROOT / "artifacts" / "protocol_layer_proof" / "2026-04-11-recommendation-feedback" / "agent_recommendation_2026-04-10.json").resolve()),
+                "--judgment-artifact-path",
+                str((REPO_ROOT / "artifacts" / "protocol_layer_proof" / "2026-04-11-recommendation-feedback" / "missing_recommendation_judgment_2026-04-10.json").resolve()),
+                "--user-id",
+                "user_dom",
+                "--date",
+                "2026-04-10",
+                "--request-id",
+                "req_recommendation_feedback_missing_judgment_2026_04_11",
+                "--requested-at",
+                "2026-04-11T12:20:00+01:00",
+            ],
+            expected_returncode=1,
+        )
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result, expected)
+
+    def test_recommendation_feedback_fails_closed_on_mismatched_recommendation_id_linkage(self) -> None:
+        expected = json.loads((RETRIEVAL_FIXTURE_DIR / "recommendation_feedback_mismatched_linkage_response.json").read_text())
+
+        result = self._run_cli(
+            [
+                "recommendation-feedback",
+                "--recommendation-artifact-path",
+                str((REPO_ROOT / "artifacts" / "protocol_layer_proof" / "2026-04-11-recommendation-feedback" / "agent_recommendation_2026-04-10.json").resolve()),
+                "--judgment-artifact-path",
+                str((REPO_ROOT / "artifacts" / "protocol_layer_proof" / "2026-04-11-recommendation-feedback" / "recommendation_judgment_mismatched_id_2026-04-10.json").resolve()),
+                "--user-id",
+                "user_dom",
+                "--date",
+                "2026-04-10",
+                "--request-id",
+                "req_recommendation_feedback_mismatched_linkage_2026_04_11",
+                "--requested-at",
+                "2026-04-11T12:20:00+01:00",
+            ],
+            expected_returncode=1,
+        )
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result, expected)
+
+    def test_recommendation_feedback_fails_closed_on_mismatched_recommendation_artifact_path_linkage(self) -> None:
+        expected = json.loads((RETRIEVAL_FIXTURE_DIR / "recommendation_feedback_mismatched_artifact_path_response.json").read_text())
+
+        result = self._run_cli(
+            [
+                "recommendation-feedback",
+                "--recommendation-artifact-path",
+                str((REPO_ROOT / "artifacts" / "protocol_layer_proof" / "2026-04-11-recommendation-feedback" / "agent_recommendation_2026-04-10.json").resolve()),
+                "--judgment-artifact-path",
+                str((REPO_ROOT / "artifacts" / "protocol_layer_proof" / "2026-04-11-recommendation-feedback" / "recommendation_judgment_mismatched_path_2026-04-10.json").resolve()),
+                "--user-id",
+                "user_dom",
+                "--date",
+                "2026-04-10",
+                "--request-id",
+                "req_recommendation_feedback_mismatched_artifact_path_2026_04_11",
+                "--requested-at",
+                "2026-04-11T12:20:00+01:00",
+            ],
+            expected_returncode=1,
+        )
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result, expected)
+
     def test_weekly_pattern_review_returns_success_envelope_grounded_in_accepted_daily_artifacts(self) -> None:
         request_fixture = json.loads((RETRIEVAL_FIXTURE_DIR / "weekly_pattern_review_success_request.json").read_text())
         expected = json.loads((RETRIEVAL_FIXTURE_DIR / "weekly_pattern_review_success_response.json").read_text())

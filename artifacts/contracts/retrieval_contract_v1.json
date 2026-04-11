@@ -55,6 +55,7 @@
         "retrieve.sleep_review",
         "retrieve.recommendation",
         "retrieve.recommendation_judgment",
+        "retrieve.recommendation_feedback",
         "retrieve.weekly_pattern_review"
       ],
       "submit_commands": [
@@ -90,6 +91,7 @@
       "include_conflicts",
       "include_missingness",
       "recommendation_artifact_path",
+      "judgment_artifact_path",
       "recommendation_artifact_id",
       "judgment_id",
       "judgment_label",
@@ -174,6 +176,7 @@
       "machine_contract": "artifacts/contracts/retrieval_contract_v1.json",
       "memory_write_human_contract": "docs/memory_write_contract_v1.md",
       "memory_write_machine_contract": "artifacts/contracts/memory_write_contract_v1.json",
+      "recommendation_feedback_retrieval_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-recommendation-feedback/",
       "recommendation_judgment_retrieval_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-recommendation-judgment-retrieval/",
       "recommendation_retrieval_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-recommendation-retrieval/",
       "sleep_review_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-sleep-review/",
@@ -673,6 +676,87 @@
           "agent_recommendation"
         ],
         "description": "Return one bounded recommendation artifact from an accepted agent_recommendation artifact, with request metadata validated and echoed under validation.request_echo.",
+        "implementation_status": "proof_complete",
+        "mode": "read",
+        "module": "health_model.agent_retrieval_cli",
+        "produces": [
+          "retrieval_response_envelope"
+        ],
+        "response_envelope": "retrieval"
+      },
+      "retrieve.recommendation_feedback": {
+        "args": [
+          {
+            "description": "Scoped Health Lab user identifier.",
+            "flag": "--user-id",
+            "name": "user_id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "ISO date for the requested daily scope, YYYY-MM-DD.",
+            "flag": "--date",
+            "name": "date",
+            "required": true,
+            "type": "date"
+          },
+          {
+            "description": "Path to one scoped read-only agent_recommendation artifact.",
+            "flag": "--recommendation-artifact-path",
+            "name": "recommendation_artifact_path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Path to one scoped read-only recommendation_judgment artifact.",
+            "flag": "--judgment-artifact-path",
+            "name": "judgment_artifact_path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Required non-empty request identifier. Daily retrieval ops validate it and echo it back under validation.request_echo.",
+            "flag": "--request-id",
+            "name": "request_id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Required ISO 8601 timestamp with timezone information. Daily retrieval ops validate it and echo it back under validation.request_echo.",
+            "flag": "--requested-at",
+            "name": "requested_at",
+            "required": true,
+            "type": "datetime"
+          },
+          {
+            "accepted_values": [
+              "true",
+              "false"
+            ],
+            "description": "Whether to include surfaced conflicts in the retrieval response.",
+            "flag": "--include-conflicts",
+            "name": "include_conflicts",
+            "required": false,
+            "type": "enum"
+          },
+          {
+            "accepted_values": [
+              "true",
+              "false"
+            ],
+            "description": "Whether to include explicit missingness notes in the retrieval response.",
+            "flag": "--include-missingness",
+            "name": "include_missingness",
+            "required": false,
+            "type": "enum"
+          }
+        ],
+        "command": "recommendation-feedback",
+        "consumes": [
+          "agent_recommendation",
+          "recommendation_judgment"
+        ],
+        "description": "Return one bounded recommendation plus same-day judgment pair, failing closed unless both artifacts validate and their id and path linkage match.",
         "implementation_status": "proof_complete",
         "mode": "read",
         "module": "health_model.agent_retrieval_cli",

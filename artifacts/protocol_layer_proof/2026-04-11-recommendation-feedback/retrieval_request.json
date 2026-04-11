@@ -1,0 +1,10 @@
+{
+  "date": "2026-04-10",
+  "include_conflicts": "true",
+  "include_missingness": "true",
+  "judgment_artifact_path": "artifacts/protocol_layer_proof/2026-04-11-recommendation-feedback/recommendation_judgment_2026-04-10.json",
+  "recommendation_artifact_path": "artifacts/protocol_layer_proof/2026-04-11-recommendation-feedback/agent_recommendation_2026-04-10.json",
+  "request_id": "req_recommendation_feedback_proof_2026_04_11",
+  "requested_at": "2026-04-11T12:20:00+01:00",
+  "user_id": "user_dom"
+}

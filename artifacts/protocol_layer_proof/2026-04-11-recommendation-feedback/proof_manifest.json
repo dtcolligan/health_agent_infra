@@ -1,0 +1,22 @@
+{
+  "date": "2026-04-11",
+  "inputs": [
+    "retrieval_request.json",
+    "agent_recommendation_2026-04-10.json",
+    "recommendation_judgment_2026-04-10.json"
+  ],
+  "outputs": [
+    "success_envelope.json",
+    "fail_wrong_scope_envelope.json",
+    "fail_invalid_request_metadata_envelope.json",
+    "fail_missing_recommendation_envelope.json",
+    "fail_missing_judgment_envelope.json",
+    "fail_mismatched_linkage_envelope.json",
+    "fail_mismatched_artifact_path_envelope.json"
+  ],
+  "slice": "retrieve.recommendation_feedback",
+  "smoke_checks": [
+    "python3 -m unittest tests.test_agent_retrieval_cli tests.test_agent_contract_cli",
+    "python3 -m health_model.agent_retrieval_cli recommendation-feedback --recommendation-artifact-path artifacts/protocol_layer_proof/2026-04-11-recommendation-feedback/agent_recommendation_2026-04-10.json --judgment-artifact-path artifacts/protocol_layer_proof/2026-04-11-recommendation-feedback/recommendation_judgment_2026-04-10.json --user-id user_dom --date 2026-04-10 --request-id req_recommendation_feedback_proof_2026_04_11 --requested-at 2026-04-11T12:20:00+01:00"
+  ]
+}
