@@ -1,0 +1,25 @@
+{
+  "artifact_path": null,
+  "error": {
+    "code": "resolution_window_artifact_not_found",
+    "details": {
+      "resolution_window_artifact_path": "/Users/myapplemini01/Projects/garmin_lab/artifacts/protocol_layer_proof/2026-04-11-recommendation-creation-with-resolution-window-grounding/missing_window.json"
+    },
+    "message": "Referenced resolution-window artifact file does not exist.",
+    "retryable": false
+  },
+  "latest_artifact_path": null,
+  "ok": false,
+  "recommendation": null,
+  "validation": {
+    "is_valid": false,
+    "schema_issues": [],
+    "semantic_issues": [
+      {
+        "code": "resolution_window_artifact_not_found",
+        "message": "Referenced resolution-window artifact file does not exist.",
+        "path": "resolution_window_artifact_path"
+      }
+    ]
+  }
+}

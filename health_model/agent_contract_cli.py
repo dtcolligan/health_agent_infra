@@ -625,7 +625,7 @@ def _contract_payload() -> dict[str, Any]:
                 "module": "health_model.agent_recommendation_cli",
                 "command": "create",
                 "mode": "write",
-                "description": "Write one validated day-scoped recommendation artifact grounded in one scoped daily context artifact.",
+                "description": "Write one validated day-scoped recommendation artifact grounded in one scoped daily context artifact plus one accepted seven-day recommendation-resolution-window retrieval envelope.",
                 "args": [
                     {
                         "name": "output_dir",
@@ -649,7 +649,7 @@ def _contract_payload() -> dict[str, Any]:
                         "description": "Path to one recommendation payload JSON file. Exactly one of --payload-json or --payload-path is required.",
                     },
                 ],
-                "consumes": ["agent_readable_daily_context"],
+                "consumes": ["agent_readable_daily_context", "recommendation_resolution_window_retrieval_envelope"],
                 "produces": ["agent_recommendation_dated", "agent_recommendation_latest"],
                 "payload_shape": {
                     "required_fields": [
@@ -657,13 +657,15 @@ def _contract_payload() -> dict[str, Any]:
                         "date",
                         "context_artifact_path",
                         "context_artifact_id",
+                        "resolution_window_artifact_path",
                         "recommendation_id",
                         "summary",
                         "rationale",
                         "evidence_refs",
                         "confidence_score",
+                        "policy_basis",
                     ],
-                    "notes": "All evidence_refs must already exist in the referenced agent_readable_daily_context and the payload user_id/date must match that context scope.",
+                    "notes": "All evidence_refs must already exist in the referenced agent_readable_daily_context. recommendation.create also requires one accepted seven-day retrieve.recommendation_resolution_window envelope and policy_basis refs that truthfully match that supplied window artifact.",
                 },
             },
             "writeback.recommendation_judgment": {
@@ -806,7 +808,7 @@ def _contract_payload() -> dict[str, Any]:
                         "{output_dir}/agent_recommendation_{date}.json",
                         "{output_dir}/agent_recommendation_latest.json",
                     ],
-                    "notes": "recommendation.create writes exactly one day-scoped recommendation artifact and fails closed on malformed payloads, scope mismatches, invalid context artifacts, or ungrounded evidence refs.",
+                    "notes": "recommendation.create writes exactly one day-scoped recommendation artifact and fails closed on malformed payloads, scope mismatches, invalid context artifacts, missing or invalid resolution-window artifacts, or ungrounded evidence refs. Produced artifacts preserve both same-day context linkage and explicit policy_basis grounding into the supplied resolution window.",
                 },
                 {
                     "artifact_type": "recommendation_judgment",
@@ -895,7 +897,8 @@ def _contract_payload() -> dict[str, Any]:
             "recommendation_judgment_retrieval_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-recommendation-judgment-retrieval/",
             "recommendation_feedback_retrieval_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-recommendation-feedback/",
             "recommendation_feedback_window_retrieval_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-recommendation-feedback-window/",
-    "recommendation_resolution_window_retrieval_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window/",
+            "recommendation_resolution_window_retrieval_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window/",
+            "recommendation_creation_with_resolution_window_grounding_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-recommendation-creation-with-resolution-window-grounding/",
         },
     }
 

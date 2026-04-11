@@ -232,7 +232,7 @@ class AgentContractCliIntegrationTest(unittest.TestCase):
         recommendation_args = {arg["name"]: arg for arg in recommendation_create["args"]}
         self.assertEqual(recommendation_create["module"], "health_model.agent_recommendation_cli")
         self.assertEqual(recommendation_create["command"], "create")
-        self.assertEqual(recommendation_create["consumes"], ["agent_readable_daily_context"])
+        self.assertEqual(recommendation_create["consumes"], ["agent_readable_daily_context", "recommendation_resolution_window_retrieval_envelope"])
         self.assertEqual(recommendation_create["produces"], ["agent_recommendation_dated", "agent_recommendation_latest"])
         self.assertEqual(
             recommendation_create["payload_shape"]["required_fields"],
@@ -241,11 +241,13 @@ class AgentContractCliIntegrationTest(unittest.TestCase):
                 "date",
                 "context_artifact_path",
                 "context_artifact_id",
+                "resolution_window_artifact_path",
                 "recommendation_id",
                 "summary",
                 "rationale",
                 "evidence_refs",
                 "confidence_score",
+                "policy_basis",
             ],
         )
         self.assertEqual(recommendation_args["payload_json"]["type"], "json_object")
@@ -293,6 +295,7 @@ class AgentContractCliIntegrationTest(unittest.TestCase):
         self.assertEqual(produced[2]["artifact_type"], "agent_recommendation")
         self.assertIn("{output_dir}/agent_recommendation_latest.json", produced[2]["paths"])
         self.assertIn("recommendation.create", produced[2]["notes"])
+        self.assertIn("policy_basis", produced[2]["notes"])
         self.assertEqual(produced[3]["artifact_type"], "recommendation_judgment")
         self.assertIn("{output_dir}/recommendation_judgment_latest.json", produced[3]["paths"])
         self.assertIn("writeback.recommendation_judgment", produced[3]["notes"])
@@ -348,6 +351,10 @@ class AgentContractCliIntegrationTest(unittest.TestCase):
         self.assertEqual(
             contract["proof_artifacts"]["recommendation_feedback_window_retrieval_proof_bundle"],
             "artifacts/protocol_layer_proof/2026-04-11-recommendation-feedback-window/",
+        )
+        self.assertEqual(
+            contract["proof_artifacts"]["recommendation_creation_with_resolution_window_grounding_proof_bundle"],
+            "artifacts/protocol_layer_proof/2026-04-11-recommendation-creation-with-resolution-window-grounding/",
         )
 
     def test_contract_describe_bootstrap_voice_note_submit_and_context_get_prove_external_agent_loop(self) -> None:

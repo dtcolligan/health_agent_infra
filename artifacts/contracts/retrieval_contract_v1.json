@@ -139,7 +139,7 @@
       },
       {
         "artifact_type": "agent_recommendation",
-        "notes": "recommendation.create writes exactly one day-scoped recommendation artifact and fails closed on malformed payloads, scope mismatches, invalid context artifacts, or ungrounded evidence refs.",
+        "notes": "recommendation.create writes exactly one day-scoped recommendation artifact and fails closed on malformed payloads, scope mismatches, invalid context artifacts, missing or invalid resolution-window artifacts, or ungrounded evidence refs. Produced artifacts preserve both same-day context linkage and explicit policy_basis grounding into the supplied resolution window.",
         "paths": [
           "{output_dir}/agent_recommendation_{date}.json",
           "{output_dir}/agent_recommendation_latest.json"
@@ -178,6 +178,7 @@
     "machine_contract": "artifacts/contracts/retrieval_contract_v1.json",
     "memory_write_human_contract": "docs/memory_write_contract_v1.md",
     "memory_write_machine_contract": "artifacts/contracts/memory_write_contract_v1.json",
+    "recommendation_creation_with_resolution_window_grounding_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-recommendation-creation-with-resolution-window-grounding/",
     "recommendation_feedback_retrieval_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-recommendation-feedback/",
     "recommendation_feedback_window_retrieval_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-recommendation-feedback-window/",
     "recommendation_judgment_retrieval_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-recommendation-judgment-retrieval/",
@@ -445,23 +446,26 @@
       ],
       "command": "create",
       "consumes": [
-        "agent_readable_daily_context"
+        "agent_readable_daily_context",
+        "recommendation_resolution_window_retrieval_envelope"
       ],
-      "description": "Write one validated day-scoped recommendation artifact grounded in one scoped daily context artifact.",
+      "description": "Write one validated day-scoped recommendation artifact grounded in one scoped daily context artifact plus one accepted seven-day recommendation-resolution-window retrieval envelope.",
       "mode": "write",
       "module": "health_model.agent_recommendation_cli",
       "payload_shape": {
-        "notes": "All evidence_refs must already exist in the referenced agent_readable_daily_context and the payload user_id/date must match that context scope.",
+        "notes": "All evidence_refs must already exist in the referenced agent_readable_daily_context. recommendation.create also requires one accepted seven-day retrieve.recommendation_resolution_window envelope and policy_basis refs that truthfully match that supplied window artifact.",
         "required_fields": [
           "user_id",
           "date",
           "context_artifact_path",
           "context_artifact_id",
+          "resolution_window_artifact_path",
           "recommendation_id",
           "summary",
           "rationale",
           "evidence_refs",
-          "confidence_score"
+          "confidence_score",
+          "policy_basis"
         ]
       },
       "produces": [

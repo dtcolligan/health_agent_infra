@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import sys
+from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -15,11 +16,13 @@ REQUIRED_PAYLOAD_FIELDS = {
     "date",
     "context_artifact_path",
     "context_artifact_id",
+    "resolution_window_artifact_path",
     "recommendation_id",
     "summary",
     "rationale",
     "evidence_refs",
     "confidence_score",
+    "policy_basis",
 }
 
 
@@ -113,7 +116,32 @@ def run_command(args: argparse.Namespace) -> dict[str, Any]:
             details={"context_artifact_path": str(context_path)},
         )
 
-    recommendation = _build_recommendation(payload=payload, context_path=context_path)
+    resolution_window_path = Path(str(payload["resolution_window_artifact_path"]))
+    resolution_window_result = _load_resolution_window_artifact(resolution_window_path=resolution_window_path)
+    if not resolution_window_result["ok"]:
+        return resolution_window_result
+
+    resolution_window = resolution_window_result["resolution_window"]
+    resolution_window_issues = _resolution_window_semantic_issues(
+        resolution_window=resolution_window,
+        payload=payload,
+        resolution_window_path=resolution_window_path,
+    )
+    if resolution_window_issues:
+        return _validation_error(
+            artifact_path=None,
+            latest_artifact_path=None,
+            code=resolution_window_issues[0]["code"],
+            message="Referenced resolution-window artifact failed validation.",
+            semantic_issues=resolution_window_issues,
+            details={"resolution_window_artifact_path": str(resolution_window_path)},
+        )
+
+    recommendation = _build_recommendation(
+        payload=payload,
+        context_path=context_path,
+        resolution_window_path=resolution_window_path,
+    )
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     dated_path = output_dir / f"{ARTIFACT_TYPE}_{payload['date']}.json"
@@ -193,6 +221,7 @@ def _payload_semantic_issues(payload: dict[str, Any]) -> list[dict[str, str]]:
         "date",
         "context_artifact_path",
         "context_artifact_id",
+        "resolution_window_artifact_path",
         "recommendation_id",
         "summary",
         "rationale",
@@ -275,6 +304,50 @@ def _load_context_artifact(*, context_path: Path) -> dict[str, Any]:
     return {"ok": True, "context": raw}
 
 
+def _load_resolution_window_artifact(*, resolution_window_path: Path) -> dict[str, Any]:
+    if not resolution_window_path.exists():
+        return _validation_error(
+            artifact_path=None,
+            latest_artifact_path=None,
+            code="resolution_window_artifact_not_found",
+            message="Referenced resolution-window artifact file does not exist.",
+            semantic_issues=[
+                _issue(
+                    code="resolution_window_artifact_not_found",
+                    message="Referenced resolution-window artifact file does not exist.",
+                    path="resolution_window_artifact_path",
+                )
+            ],
+            details={"resolution_window_artifact_path": str(resolution_window_path)},
+        )
+
+    try:
+        raw = json.loads(resolution_window_path.read_text())
+    except json.JSONDecodeError as exc:
+        return _validation_error(
+            artifact_path=None,
+            latest_artifact_path=None,
+            code="invalid_resolution_window_artifact",
+            message="Referenced resolution-window artifact is not valid JSON.",
+            semantic_issues=[_issue(code="invalid_resolution_window_artifact", message=str(exc), path="resolution_window_artifact_path")],
+            details={"resolution_window_artifact_path": str(resolution_window_path)},
+        )
+
+    if not isinstance(raw, dict):
+        return _validation_error(
+            artifact_path=None,
+            latest_artifact_path=None,
+            code="invalid_resolution_window_artifact",
+            message="Referenced resolution-window artifact JSON must be an object.",
+            semantic_issues=[
+                _issue(code="invalid_resolution_window_artifact", message="Referenced resolution-window artifact JSON must be an object.", path="$")
+            ],
+            details={"resolution_window_artifact_path": str(resolution_window_path)},
+        )
+
+    return {"ok": True, "resolution_window": raw}
+
+
 def _context_semantic_issues(*, context: dict[str, Any], payload: dict[str, Any], context_path: Path) -> list[dict[str, str]]:
     issues: list[dict[str, str]] = []
 
@@ -349,18 +422,103 @@ def _collect_context_evidence_refs(context: dict[str, Any]) -> set[str]:
     return refs
 
 
-def _build_recommendation(*, payload: dict[str, Any], context_path: Path) -> dict[str, Any]:
+def _resolution_window_semantic_issues(
+    *, resolution_window: dict[str, Any], payload: dict[str, Any], resolution_window_path: Path
+) -> list[dict[str, str]]:
+    issues: list[dict[str, str]] = []
+
+    if resolution_window.get("ok") is not True:
+        issues.append(_issue(code="invalid_resolution_window_artifact", message="Resolution-window artifact must be a successful retrieval envelope.", path="ok"))
+
+    retrieval = resolution_window.get("retrieval")
+    if not isinstance(retrieval, dict):
+        issues.append(_issue(code="invalid_resolution_window_artifact", message="Resolution-window artifact must include a retrieval object.", path="retrieval"))
+        return issues
+
+    if retrieval.get("operation") != "retrieve.recommendation_resolution_window":
+        issues.append(_issue(code="invalid_resolution_window_artifact", message="Resolution-window artifact must come from retrieve.recommendation_resolution_window.", path="retrieval.operation"))
+
+    scope = retrieval.get("scope")
+    if not isinstance(scope, dict):
+        issues.append(_issue(code="invalid_resolution_window_artifact", message="Resolution-window artifact must include a scope object.", path="retrieval.scope"))
+        return issues
+
+    if scope.get("user_id") != payload["user_id"]:
+        issues.append(_issue(code="resolution_window_user_mismatch", message="Resolution-window user_id does not match payload.", path="retrieval.scope.user_id"))
+
+    try:
+        start_date = date.fromisoformat(str(scope.get("start_date")))
+        end_date = date.fromisoformat(str(scope.get("end_date")))
+        payload_date = date.fromisoformat(str(payload["date"]))
+    except ValueError:
+        issues.append(_issue(code="invalid_resolution_window_artifact", message="Resolution-window scope dates must be valid ISO dates.", path="retrieval.scope"))
+        return issues
+
+    if (end_date - start_date).days != 6:
+        issues.append(_issue(code="invalid_resolution_window_artifact", message="Resolution-window scope must span exactly seven days.", path="retrieval.scope"))
+
+    if payload_date != end_date + timedelta(days=1):
+        issues.append(_issue(code="policy_basis_window_inconsistency", message="Recommendation date must be exactly one day after the supplied resolution-window end_date.", path="date"))
+
+    policy_basis = payload.get("policy_basis")
+    if not isinstance(policy_basis, dict):
+        issues.append(_issue(code="invalid_policy_basis", message="policy_basis must be an object.", path="policy_basis"))
+        return issues
+
+    required_policy_fields = {"window_dates_considered", "prior_recommendation_refs", "policy_note"}
+    for field in sorted(required_policy_fields - set(policy_basis.keys())):
+        issues.append(_issue(code="missing_policy_basis_field", message="Missing required policy_basis field.", path=f"policy_basis.{field}"))
+    if issues:
+        return issues
+
+    expected_dates = [start_date.isoformat(), end_date.isoformat()]
+    if policy_basis["window_dates_considered"] != expected_dates:
+        issues.append(_issue(code="policy_basis_window_inconsistency", message="policy_basis.window_dates_considered must match the supplied resolution-window scope.", path="policy_basis.window_dates_considered"))
+
+    if not isinstance(policy_basis["policy_note"], str) or not policy_basis["policy_note"].strip():
+        issues.append(_issue(code="invalid_policy_basis", message="policy_basis.policy_note must be a non-empty string.", path="policy_basis.policy_note"))
+
+    prior_refs = policy_basis["prior_recommendation_refs"]
+    if not isinstance(prior_refs, list) or not prior_refs:
+        issues.append(_issue(code="invalid_policy_basis", message="policy_basis.prior_recommendation_refs must be a non-empty array.", path="policy_basis.prior_recommendation_refs"))
+        return issues
+
+    per_recommendation = retrieval.get("evidence", {}).get("per_recommendation", [])
+    indexed = {entry.get("recommendation", {}).get("recommendation_id"): entry for entry in per_recommendation if isinstance(entry, dict)}
+    for index, ref in enumerate(prior_refs):
+        if not isinstance(ref, dict):
+            issues.append(_issue(code="invalid_policy_basis", message="Each prior recommendation ref must be an object.", path=f"policy_basis.prior_recommendation_refs[{index}]"))
+            continue
+        recommendation_id = ref.get("recommendation_id")
+        expected_entry = indexed.get(recommendation_id)
+        if expected_entry is None:
+            issues.append(_issue(code="uncited_window_reference", message="Cited prior recommendation is not present in the supplied resolution window.", path=f"policy_basis.prior_recommendation_refs[{index}].recommendation_id"))
+            continue
+        if ref.get("date") != expected_entry.get("date"):
+            issues.append(_issue(code="policy_basis_window_inconsistency", message="Cited prior recommendation date does not match the supplied resolution window.", path=f"policy_basis.prior_recommendation_refs[{index}].date"))
+        if ref.get("resolution_status") != expected_entry.get("resolution_status"):
+            issues.append(_issue(code="policy_basis_window_inconsistency", message="Cited prior recommendation resolution_status does not match the supplied resolution window.", path=f"policy_basis.prior_recommendation_refs[{index}].resolution_status"))
+
+    if str(resolution_window_path) != payload["resolution_window_artifact_path"]:
+        issues.append(_issue(code="resolution_window_artifact_path_mismatch", message="Payload resolution_window_artifact_path does not match the referenced file path.", path="resolution_window_artifact_path"))
+
+    return issues
+
+
+def _build_recommendation(*, payload: dict[str, Any], context_path: Path, resolution_window_path: Path) -> dict[str, Any]:
     return {
         "artifact_type": ARTIFACT_TYPE,
         "user_id": payload["user_id"],
         "date": payload["date"],
         "context_artifact_path": str(context_path),
         "context_artifact_id": payload["context_artifact_id"],
+        "resolution_window_artifact_path": str(resolution_window_path),
         "recommendation_id": payload["recommendation_id"],
         "summary": payload["summary"],
         "rationale": payload["rationale"],
         "evidence_refs": list(payload["evidence_refs"]),
         "confidence_score": float(payload["confidence_score"]),
+        "policy_basis": payload["policy_basis"],
     }
 
 
