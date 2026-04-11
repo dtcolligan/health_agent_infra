@@ -2,6 +2,7 @@
   "date": "2026-04-11",
   "inputs": [
     "writeback_recommendation_judgment_request.json",
+    "fail_mismatched_reference_request.json",
     "agent_readable_daily_context_2026-04-10.json",
     "agent_recommendation_2026-04-10.json"
   ],
@@ -9,6 +10,7 @@
     "success_envelope.json",
     "fail_wrong_scope_envelope.json",
     "fail_missing_artifact_envelope.json",
+    "fail_mismatched_reference_envelope.json",
     "non_mutation_proof.json"
   ],
   "slice": "writeback.recommendation_judgment",
