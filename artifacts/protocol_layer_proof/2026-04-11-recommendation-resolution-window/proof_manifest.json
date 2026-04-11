@@ -1,0 +1,29 @@
+{
+  "date": "2026-04-11",
+  "slice": "retrieve.recommendation_resolution_window",
+  "inputs": [
+    "retrieval_request.json",
+    "recommendation_resolution_window_memory.json",
+    "agent_recommendation_2026-04-04.json",
+    "recommendation_judgment_2026-04-04.json",
+    "agent_recommendation_2026-04-07.json",
+    "agent_recommendation_2026-04-10.json",
+    "recommendation_judgment_2026-04-10.json"
+  ],
+  "outputs": [
+    "success_envelope.json",
+    "fail_invalid_request_metadata_envelope.json",
+    "fail_wrong_scope_envelope.json",
+    "fail_range_limit_envelope.json",
+    "fail_unresolved_locator_envelope.json",
+    "fail_malformed_linkage_envelope.json",
+    "fail_malformed_entry_envelope.json"
+  ],
+  "smoke_checks": [
+    "python3 -m unittest tests.test_agent_retrieval_cli tests.test_agent_contract_cli",
+    "python3 -m health_model.agent_retrieval_cli recommendation-resolution-window --user-id user_dom --start-date 2026-04-04 --end-date 2026-04-10 --memory-locator artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window/recommendation_resolution_window_memory.json --request-id req_recommendation_resolution_window_proof_2026_04_11 --requested-at 2026-04-11T13:25:00+01:00 --include-conflicts false --include-missingness true",
+    "python3 -m health_model.agent_retrieval_cli recommendation-resolution-window --user-id user_dom --start-date 2026-04-04 --end-date 2026-04-10 --memory-locator /Users/myapplemini01/Projects/garmin_lab/artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window/recommendation_resolution_window_memory_malformed_linkage.json --request-id req_recommendation_resolution_window_malformed_linkage_2026_04_11 --requested-at 2026-04-11T13:25:00+01:00",
+    "python3 -m health_model.agent_retrieval_cli recommendation-resolution-window --user-id user_dom --start-date 2026-04-04 --end-date 2026-04-10 --memory-locator /Users/myapplemini01/Projects/garmin_lab/artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window/recommendation_resolution_window_memory_malformed_entry.json --request-id req_recommendation_resolution_window_malformed_entry_2026_04_11 --requested-at 2026-04-11T13:25:00+01:00",
+    "python3 -m health_model.agent_retrieval_cli recommendation-resolution-window --user-id user_dom --start-date 2026-04-01 --end-date 2026-04-10 --memory-locator artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window/recommendation_resolution_window_memory.json --request-id req_recommendation_resolution_window_range_limit_2026_04_11 --requested-at 2026-04-11T13:25:00+01:00"
+  ]
+}

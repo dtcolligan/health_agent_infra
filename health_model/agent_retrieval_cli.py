@@ -52,7 +52,8 @@ RECOMMENDATION_JUDGMENT_EVIDENCE_KEYS = [
 RECOMMENDATION_FEEDBACK_RECOMMENDATION_KEYS = RECOMMENDATION_EVIDENCE_KEYS
 RECOMMENDATION_FEEDBACK_JUDGMENT_KEYS = RECOMMENDATION_JUDGMENT_EVIDENCE_KEYS
 RECOMMENDATION_FEEDBACK_WINDOW_MEMORY_ARTIFACT_TYPE = "recommendation_feedback_window_memory"
-RECOMMENDATION_FEEDBACK_WINDOW_RANGE_LIMIT_DAYS = 7
+RECOMMENDATION_RESOLUTION_WINDOW_MEMORY_ARTIFACT_TYPE = "recommendation_resolution_window_memory"
+RECOMMENDATION_WINDOW_RANGE_LIMIT_DAYS = 7
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -108,6 +109,18 @@ def build_parser() -> argparse.ArgumentParser:
     recommendation_feedback_window.add_argument("--include-conflicts", choices=["true", "false"])
     recommendation_feedback_window.add_argument("--include-missingness", choices=["true", "false"])
 
+    recommendation_resolution_window = subparsers.add_parser("recommendation-resolution-window")
+    recommendation_resolution_window.add_argument("--user-id", required=True)
+    recommendation_resolution_window.add_argument("--start-date", required=True)
+    recommendation_resolution_window.add_argument("--end-date", required=True)
+    recommendation_resolution_window.add_argument("--memory-locator", required=True)
+    recommendation_resolution_window.add_argument("--request-id", required=True)
+    recommendation_resolution_window.add_argument("--requested-at", required=True)
+    recommendation_resolution_window.add_argument("--timezone")
+    recommendation_resolution_window.add_argument("--max-recommendation-items", type=int)
+    recommendation_resolution_window.add_argument("--include-conflicts", choices=["true", "false"])
+    recommendation_resolution_window.add_argument("--include-missingness", choices=["true", "false"])
+
     return parser
 
 
@@ -150,6 +163,8 @@ def run_command(args: argparse.Namespace) -> dict[str, Any]:
         return _run_recommendation_feedback(args)
     if args.command == "recommendation-feedback-window":
         return _run_recommendation_feedback_window(args)
+    if args.command == "recommendation-resolution-window":
+        return _run_recommendation_resolution_window(args)
     raise ValueError(f"Unsupported command: {args.command}")
 
 
@@ -775,6 +790,220 @@ def _run_recommendation_feedback_window(args: argparse.Namespace) -> dict[str, A
     }
 
 
+def _run_recommendation_resolution_window(args: argparse.Namespace) -> dict[str, Any]:
+    request_validation, _request_echo = validate_and_echo_request_metadata(
+        request_id=args.request_id,
+        requested_at=args.requested_at,
+    )
+    if not request_validation["is_valid"]:
+        return {
+            "ok": False,
+            "artifact_path": args.memory_locator,
+            "retrieval": None,
+            "validation": request_validation,
+            "error": {
+                "code": request_validation["semantic_issues"][0]["code"],
+                "message": "Request metadata failed validation.",
+                "retryable": False,
+                "details": {
+                    "command": args.command,
+                    "request_echo": request_validation["request_echo"],
+                },
+            },
+        }
+
+    range_validation = _validate_recommendation_feedback_window_scope(
+        user_id=args.user_id,
+        start_date=args.start_date,
+        end_date=args.end_date,
+        memory_locator=args.memory_locator,
+    )
+    if range_validation is not None:
+        return _recommendation_feedback_window_error(
+            memory_locator=args.memory_locator,
+            code=range_validation["semantic_issues"][0]["code"],
+            message="Recommendation resolution window scope failed validation.",
+            semantic_issues=range_validation["semantic_issues"],
+            request_validation=request_validation,
+            details=range_validation["details"],
+        )
+
+    locator_path = Path(args.memory_locator)
+    if not locator_path.exists():
+        return _recommendation_feedback_window_error(
+            memory_locator=args.memory_locator,
+            code="memory_locator_not_found",
+            message="memory_locator could not be resolved.",
+            semantic_issues=[_issue(code="memory_locator_not_found", message="memory_locator could not be resolved.", path="memory_locator")],
+            request_validation=request_validation,
+            details={"memory_locator": args.memory_locator},
+        )
+
+    try:
+        locator_payload = json.loads(locator_path.read_text())
+    except json.JSONDecodeError as exc:
+        return _recommendation_feedback_window_error(
+            memory_locator=args.memory_locator,
+            code="invalid_memory_locator_json",
+            message="memory_locator did not resolve to valid JSON.",
+            semantic_issues=[_issue(code="invalid_memory_locator_json", message=str(exc), path="memory_locator")],
+            request_validation=request_validation,
+            details={"memory_locator": args.memory_locator},
+        )
+
+    locator_issues = _recommendation_resolution_window_locator_issues(
+        payload=locator_payload,
+        user_id=args.user_id,
+        start_date=args.start_date,
+        end_date=args.end_date,
+    )
+    if locator_issues:
+        return _recommendation_feedback_window_error(
+            memory_locator=args.memory_locator,
+            code=locator_issues[0]["code"],
+            message="memory_locator failed bounded recommendation resolution window validation.",
+            semantic_issues=locator_issues,
+            request_validation=request_validation,
+            details={
+                "memory_locator": args.memory_locator,
+                "user_id": args.user_id,
+                "start_date": args.start_date,
+                "end_date": args.end_date,
+            },
+        )
+
+    recommendation_entries = locator_payload.get("accepted_recommendations", [])
+    expected_dates = agent_context_cli._expected_dates(args.start_date, args.end_date)
+    max_recommendation_items = args.max_recommendation_items if args.max_recommendation_items is not None and args.max_recommendation_items > 0 else None
+    include_missingness = args.include_missingness != "false"
+    resolution_items = []
+    generated_entries = []
+
+    for entry in sorted(recommendation_entries, key=lambda item: (item["date"], item.get("recommendation_artifact_path", ""))):
+        entry_issues = _recommendation_resolution_window_entry_issues(entry=entry)
+        if entry_issues:
+            return _recommendation_feedback_window_error(
+                memory_locator=args.memory_locator,
+                code=entry_issues[0]["code"],
+                message="memory_locator listed a malformed recommendation resolution entry.",
+                semantic_issues=entry_issues,
+                request_validation=request_validation,
+                details={"memory_locator": args.memory_locator, "recommendation_entry": entry},
+            )
+
+        recommendation_response = _read_recommendation_artifact(
+            path=Path(entry["recommendation_artifact_path"]),
+            user_id=args.user_id,
+            date=entry["date"],
+        )
+        if not recommendation_response["ok"]:
+            return _recommendation_feedback_window_error(
+                memory_locator=args.memory_locator,
+                code=recommendation_response["error"]["code"],
+                message="Accepted recommendation artifact failed validation.",
+                semantic_issues=recommendation_response["validation"]["semantic_issues"],
+                request_validation=request_validation,
+                details={"memory_locator": args.memory_locator, "recommendation_entry": entry},
+            )
+
+        item = {
+            "date": entry["date"],
+            "coverage_status": "present",
+            "resolution_status": "pending_judgment",
+            "recommendation": {
+                key: recommendation_response["artifact"][key]
+                for key in RECOMMENDATION_FEEDBACK_RECOMMENDATION_KEYS
+                if key in recommendation_response["artifact"]
+            },
+        }
+        generated_entry = {
+            "date": entry["date"],
+            "recommendation_artifact_path": recommendation_response["artifact_path"],
+        }
+
+        if entry.get("judgment_artifact_path"):
+            judgment_response = _read_recommendation_judgment_artifact(
+                path=Path(entry["judgment_artifact_path"]),
+                user_id=args.user_id,
+                date=entry["date"],
+            )
+            if not judgment_response["ok"]:
+                return _recommendation_feedback_window_error(
+                    memory_locator=args.memory_locator,
+                    code=judgment_response["error"]["code"],
+                    message="Accepted judgment artifact failed validation.",
+                    semantic_issues=judgment_response["validation"]["semantic_issues"],
+                    request_validation=request_validation,
+                    details={"memory_locator": args.memory_locator, "recommendation_entry": entry},
+                )
+            linkage_issues = _recommendation_feedback_linkage_issues(
+                recommendation=recommendation_response["artifact"],
+                judgment=judgment_response["artifact"],
+                supplied_recommendation_artifact_path=entry["recommendation_artifact_path"],
+            )
+            if linkage_issues:
+                return _recommendation_feedback_window_error(
+                    memory_locator=args.memory_locator,
+                    code=linkage_issues[0]["code"],
+                    message="Recommendation resolution window linkage validation failed.",
+                    semantic_issues=linkage_issues,
+                    request_validation=request_validation,
+                    details={"memory_locator": args.memory_locator, "recommendation_entry": entry},
+                )
+            item["resolution_status"] = "judged"
+            item["judgment"] = {key: judgment_response["artifact"][key] for key in RECOMMENDATION_FEEDBACK_JUDGMENT_KEYS if key in judgment_response["artifact"]}
+            item["linkage"] = {
+                "recommendation_artifact_id": recommendation_response["artifact"].get("recommendation_id"),
+                "judgment_recommendation_artifact_id": judgment_response["artifact"].get("recommendation_artifact_id"),
+                "judgment_recommendation_artifact_path": judgment_response["artifact"].get("recommendation_artifact_path"),
+                "supplied_recommendation_artifact_path": recommendation_response["artifact_path"],
+            }
+            generated_entry["judgment_artifact_path"] = judgment_response["artifact_path"]
+
+        resolution_items.append(item)
+        generated_entries.append(generated_entry)
+
+    if max_recommendation_items is not None:
+        resolution_items = resolution_items[:max_recommendation_items]
+        generated_entries = generated_entries[:max_recommendation_items]
+
+    dates_with_recommendations = {item["date"] for item in resolution_items}
+    no_recommendation_dates = [date for date in expected_dates if date not in dates_with_recommendations]
+    important_gaps = [{"date": date, "code": "no_recommendation"} for date in no_recommendation_dates] if include_missingness else []
+
+    return {
+        "ok": True,
+        "artifact_path": args.memory_locator,
+        "retrieval": {
+            "operation": "retrieve.recommendation_resolution_window",
+            "scope": {
+                "user_id": args.user_id,
+                "start_date": args.start_date,
+                "end_date": args.end_date,
+                "timezone": args.timezone,
+            },
+            "coverage_status": "present" if len(no_recommendation_dates) == 0 else "partial",
+            "generated_from": {
+                "memory_locator": args.memory_locator,
+                "accepted_recommendations": generated_entries,
+            },
+            "evidence": {
+                "days_requested": len(expected_dates),
+                "days_with_recommendations": len(dates_with_recommendations),
+                "recommendation_items": len(resolution_items),
+                "judged_items": sum(1 for item in resolution_items if item["resolution_status"] == "judged"),
+                "pending_judgment_items": sum(1 for item in resolution_items if item["resolution_status"] == "pending_judgment"),
+                "per_recommendation": resolution_items,
+            },
+            "important_gaps": important_gaps,
+            "conflicts": [],
+            "unsupported_claims": [],
+        },
+        "validation": request_validation,
+        "error": None,
+    }
+
+
 def _validate_recommendation_feedback_window_scope(*, user_id: str, start_date: str, end_date: str, memory_locator: str) -> dict[str, Any] | None:
     semantic_issues: list[dict[str, str]] = []
     parsed_start = agent_context_cli._parse_iso_date(start_date)
@@ -790,11 +1019,11 @@ def _validate_recommendation_feedback_window_scope(*, user_id: str, start_date: 
     if parsed_start is not None and parsed_end is not None:
         if parsed_end < parsed_start:
             semantic_issues.append(_issue(code="non_contiguous_range", message="end_date must be on or after start_date.", path="end_date"))
-        elif (parsed_end - parsed_start).days + 1 > RECOMMENDATION_FEEDBACK_WINDOW_RANGE_LIMIT_DAYS:
+        elif (parsed_end - parsed_start).days + 1 > RECOMMENDATION_WINDOW_RANGE_LIMIT_DAYS:
             semantic_issues.append(
                 _issue(
                     code="range_limit_exceeded",
-                    message=f"Recommendation feedback window retrieval is capped at {RECOMMENDATION_FEEDBACK_WINDOW_RANGE_LIMIT_DAYS} contiguous days.",
+                    message=f"Recommendation feedback window retrieval is capped at {RECOMMENDATION_WINDOW_RANGE_LIMIT_DAYS} contiguous days.",
                     path="end_date",
                 )
             )
@@ -809,6 +1038,51 @@ def _validate_recommendation_feedback_window_scope(*, user_id: str, start_date: 
             },
         }
     return None
+
+
+def _recommendation_resolution_window_locator_issues(*, payload: Any, user_id: str, start_date: str, end_date: str) -> list[dict[str, str]]:
+    if not isinstance(payload, dict):
+        return [_issue(code="invalid_memory_locator_payload", message="memory_locator payload must be an object.", path="$")]
+    issues = []
+    if payload.get("artifact_type") != RECOMMENDATION_RESOLUTION_WINDOW_MEMORY_ARTIFACT_TYPE:
+        issues.append(_issue(code="memory_locator_wrong_type", message=f"Expected artifact_type={RECOMMENDATION_RESOLUTION_WINDOW_MEMORY_ARTIFACT_TYPE}.", path="artifact_type"))
+    if payload.get("user_id") != user_id:
+        issues.append(_issue(code="memory_locator_wrong_scope", message="memory_locator user_id did not match request.", path="user_id"))
+    if payload.get("start_date") != start_date:
+        issues.append(_issue(code="memory_locator_wrong_scope", message="memory_locator start_date did not match request.", path="start_date"))
+    if payload.get("end_date") != end_date:
+        issues.append(_issue(code="memory_locator_wrong_scope", message="memory_locator end_date did not match request.", path="end_date"))
+    recommendation_entries = payload.get("accepted_recommendations")
+    if not isinstance(recommendation_entries, list):
+        issues.append(_issue(code="memory_locator_missing_recommendations", message="memory_locator must list accepted_recommendations.", path="accepted_recommendations"))
+        return issues
+    expected_dates = set(agent_context_cli._expected_dates(start_date, end_date))
+    seen_entries = set()
+    for index, entry in enumerate(recommendation_entries):
+        if not isinstance(entry, dict):
+            issues.append(_issue(code="malformed_recommendation_entry", message="Each accepted recommendation entry must be an object.", path=f"accepted_recommendations[{index}]"))
+            continue
+        entry_date = entry.get("date")
+        if entry_date not in expected_dates:
+            issues.append(_issue(code="memory_locator_wrong_scope", message="accepted recommendation date was outside request range.", path=f"accepted_recommendations[{index}].date"))
+        dedupe_key = (entry_date, entry.get("recommendation_artifact_path"))
+        if dedupe_key in seen_entries:
+            issues.append(_issue(code="duplicate_recommendation_entry", message="accepted recommendation entries must be unique by date and recommendation_artifact_path.", path=f"accepted_recommendations[{index}]"))
+        seen_entries.add(dedupe_key)
+    return issues
+
+
+def _recommendation_resolution_window_entry_issues(*, entry: Any) -> list[dict[str, str]]:
+    if not isinstance(entry, dict):
+        return [_issue(code="malformed_recommendation_entry", message="accepted recommendation entry must be an object.", path="accepted_recommendations")]
+    issues = []
+    if not isinstance(entry.get("date"), str) or agent_context_cli._parse_iso_date(entry["date"]) is None:
+        issues.append(_issue(code="malformed_recommendation_entry", message="accepted recommendation date must be YYYY-MM-DD.", path="date"))
+    if not isinstance(entry.get("recommendation_artifact_path"), str) or not entry.get("recommendation_artifact_path", "").strip():
+        issues.append(_issue(code="malformed_recommendation_entry", message="accepted recommendation entry must include recommendation_artifact_path.", path="recommendation_artifact_path"))
+    if "judgment_artifact_path" in entry and entry.get("judgment_artifact_path") is not None and (not isinstance(entry.get("judgment_artifact_path"), str) or not entry.get("judgment_artifact_path", "").strip()):
+        issues.append(_issue(code="malformed_recommendation_entry", message="judgment_artifact_path must be a non-empty string when present.", path="judgment_artifact_path"))
+    return issues
 
 
 def _recommendation_feedback_window_locator_issues(*, payload: Any, user_id: str, start_date: str, end_date: str) -> list[dict[str, str]]:

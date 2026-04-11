@@ -96,6 +96,20 @@ Machine-readable discovery is published by `python3 -m health_model.agent_contra
   - allow truthful partial coverage when some in-range dates legitimately have no linked pair listed in the locator
   - no scoring, ranking, recommendation rewriting, coaching logic, or analytics
 
+### `retrieve.recommendation_resolution_window`
+- Purpose: return a bounded seven-day read-only window of accepted recommendations listed by a scoped memory locator, separating judged recommendations, pending_judgment recommendations, and dates with no recommendation.
+- Current implementation status: proof-complete in v1.
+- Required scope: `user_id`, `start_date`, `end_date`, `memory_locator`, `request_id`, `requested_at`.
+- Optional scope: `timezone`, `max_recommendation_items`, `include_conflicts`, `include_missingness`.
+- Semantics:
+  - validate `request_id` as a non-empty string and `requested_at` as an ISO 8601 datetime with timezone information, then echo both under `validation.request_echo`
+  - fail closed if `start_date` or `end_date` is invalid, the inclusive range exceeds seven contiguous dates, or the bounded `memory_locator` fixture cannot be resolved
+  - aggregate only accepted recommendation artifacts listed by the bounded `memory_locator`
+  - if a locator entry includes a judgment artifact path, validate same-day scope plus id/path linkage exactly as in `retrieve.recommendation_feedback`
+  - return `resolution_status` as `judged` or `pending_judgment` per recommendation, and surface uncovered dates separately as `no_recommendation`
+  - fail closed if any listed recommendation entry is malformed, wrong-scope, missing, or claims a malformed linked judgment artifact
+  - no scoring, ranking, recommendation rewriting, coaching logic, or analytics
+
 ### `retrieve.weekly_pattern_review`
 - Purpose: return a bounded seven-day pattern review over already accepted daily context artifacts.
 - Current implementation status: proof-complete in v1.
@@ -121,6 +135,7 @@ Required common retrieval fields:
 Optional retrieval fields still used by bounded window retrieval ops:
 - `timezone`
 - `max_feedback_items`
+- `max_recommendation_items`
 
 
 Optional retrieval fields for accepted daily retrieval ops:
@@ -180,6 +195,7 @@ The frozen proof bundles for this slice live under:
 - `artifacts/protocol_layer_proof/2026-04-11-recommendation-judgment-retrieval/` for `retrieve.recommendation_judgment`
 - `artifacts/protocol_layer_proof/2026-04-11-recommendation-feedback/` for `retrieve.recommendation_feedback`
 - `artifacts/protocol_layer_proof/2026-04-11-recommendation-feedback-window/` for `retrieve.recommendation_feedback_window`
+- `artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window/` for `retrieve.recommendation_resolution_window`
 - `artifacts/protocol_layer_proof/2026-04-11-weekly-pattern-review/` for `retrieve.weekly_pattern_review`
 
 Each bundle includes:

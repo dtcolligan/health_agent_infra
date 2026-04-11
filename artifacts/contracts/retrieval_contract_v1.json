@@ -56,6 +56,7 @@
       "retrieve.recommendation_judgment",
       "retrieve.recommendation_feedback",
       "retrieve.recommendation_feedback_window",
+      "retrieve.recommendation_resolution_window",
       "retrieve.weekly_pattern_review"
     ],
     "submit_commands": [
@@ -88,6 +89,7 @@
     "requested_at",
     "timezone",
     "max_evidence_items",
+    "max_recommendation_items",
     "include_conflicts",
     "include_missingness",
     "recommendation_artifact_path",
@@ -179,6 +181,7 @@
     "recommendation_feedback_retrieval_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-recommendation-feedback/",
     "recommendation_feedback_window_retrieval_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-recommendation-feedback-window/",
     "recommendation_judgment_retrieval_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-recommendation-judgment-retrieval/",
+    "recommendation_resolution_window_retrieval_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window/",
     "recommendation_retrieval_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-recommendation-retrieval/",
     "sleep_review_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-sleep-review/",
     "weekly_pattern_review_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-weekly-pattern-review/"
@@ -934,6 +937,103 @@
       "produces": [
         "retrieval_response_envelope"
       ],
+      "response_envelope": "retrieval"
+    },
+    "retrieve.recommendation_resolution_window": {
+      "args": [
+        {
+          "description": "Scoped Health Lab user identifier.",
+          "flag": "--user-id",
+          "name": "user_id",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Inclusive ISO start date for range-scoped retrieval, YYYY-MM-DD.",
+          "flag": "--start-date",
+          "name": "start_date",
+          "required": true,
+          "type": "date"
+        },
+        {
+          "description": "Inclusive ISO end date for range-scoped retrieval, YYYY-MM-DD.",
+          "flag": "--end-date",
+          "name": "end_date",
+          "required": true,
+          "type": "date"
+        },
+        {
+          "description": "External user-owned memory reference or locator. Health Lab does not host the backing store.",
+          "flag": "--memory-locator",
+          "name": "memory_locator",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Required non-empty request identifier. Daily retrieval ops validate it and echo it back under validation.request_echo.",
+          "flag": "--request-id",
+          "name": "request_id",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Required ISO 8601 timestamp with timezone information. Daily retrieval ops validate it and echo it back under validation.request_echo.",
+          "flag": "--requested-at",
+          "name": "requested_at",
+          "required": true,
+          "type": "datetime"
+        },
+        {
+          "description": "Optional timezone hint for interpreting requested scope.",
+          "flag": "--timezone",
+          "name": "timezone",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Optional cap on returned recommendation resolution items after bounded locator validation.",
+          "flag": "--max-recommendation-items",
+          "name": "max_recommendation_items",
+          "required": false,
+          "type": "integer"
+        },
+        {
+          "accepted_values": [
+            "true",
+            "false"
+          ],
+          "description": "Whether to include surfaced conflicts in the retrieval response.",
+          "flag": "--include-conflicts",
+          "name": "include_conflicts",
+          "required": false,
+          "type": "enum"
+        },
+        {
+          "accepted_values": [
+            "true",
+            "false"
+          ],
+          "description": "Whether to include explicit missingness notes in the retrieval response.",
+          "flag": "--include-missingness",
+          "name": "include_missingness",
+          "required": false,
+          "type": "enum"
+        }
+      ],
+      "command": "recommendation-resolution-window",
+      "consumes": [
+        "user_owned_private_memory_locator",
+        "agent_recommendation",
+        "recommendation_judgment"
+      ],
+      "description": "Return one bounded seven-day window of accepted recommendations from a scoped memory locator fixture, separating judged items, pending_judgment items, and no-recommendation dates while failing closed on locator, scope, or linkage violations.",
+      "implementation_status": "proof_complete",
+      "mode": "read",
+      "module": "health_model.agent_retrieval_cli",
+      "produces": [
+        "retrieval_response_envelope"
+      ],
+      "range_limit_days": 7,
       "response_envelope": "retrieval"
     },
     "retrieve.sleep_review": {

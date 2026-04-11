@@ -43,6 +43,7 @@ class AgentContractCliIntegrationTest(unittest.TestCase):
                 "retrieve.recommendation_judgment",
                 "retrieve.recommendation_feedback",
                 "retrieve.recommendation_feedback_window",
+                "retrieve.recommendation_resolution_window",
                 "retrieve.weekly_pattern_review",
             ],
         )
@@ -193,6 +194,19 @@ class AgentContractCliIntegrationTest(unittest.TestCase):
         )
         self.assertEqual(recommendation_feedback_window_args["memory_locator"]["flag"], "--memory-locator")
         self.assertEqual(recommendation_feedback_window_args["max_feedback_items"]["flag"], "--max-feedback-items")
+
+        recommendation_resolution_window = contract["supported_operations"]["retrieve.recommendation_resolution_window"]
+        recommendation_resolution_window_args = {arg["name"]: arg for arg in recommendation_resolution_window["args"]}
+        self.assertEqual(recommendation_resolution_window["module"], "health_model.agent_retrieval_cli")
+        self.assertEqual(recommendation_resolution_window["command"], "recommendation-resolution-window")
+        self.assertEqual(recommendation_resolution_window["implementation_status"], "proof_complete")
+        self.assertEqual(recommendation_resolution_window["range_limit_days"], 7)
+        self.assertEqual(
+            recommendation_resolution_window["consumes"],
+            ["user_owned_private_memory_locator", "agent_recommendation", "recommendation_judgment"],
+        )
+        self.assertEqual(recommendation_resolution_window_args["memory_locator"]["flag"], "--memory-locator")
+        self.assertEqual(recommendation_resolution_window_args["max_recommendation_items"]["flag"], "--max-recommendation-items")
 
         day_nutrition_brief = contract["supported_operations"]["retrieve.day_nutrition_brief"]
         day_nutrition_args = {arg["name"]: arg for arg in day_nutrition_brief["args"]}

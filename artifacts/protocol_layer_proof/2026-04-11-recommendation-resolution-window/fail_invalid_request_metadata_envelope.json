@@ -1,0 +1,37 @@
+{
+  "artifact_path": null,
+  "error": {
+    "code": "cli_parse_error",
+    "details": {
+      "argv": [
+        "recommendation-resolution-window",
+        "--user-id",
+        "user_dom",
+        "--start-date",
+        "2026-04-04",
+        "--end-date",
+        "2026-04-10",
+        "--memory-locator",
+        "artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window/recommendation_resolution_window_memory.json",
+        "--request-id",
+        "req_recommendation_resolution_window_proof_2026_04_11",
+        "--requested-at",
+        "2026-04-11T13:25:00+01:00",
+        "--include-conflicts",
+        "false",
+        "--include-missingness",
+        "2026-04-11T13:25:00"
+      ],
+      "command": null
+    },
+    "message": "argument --include-missingness: invalid choice: '2026-04-11T13:25:00' (choose from 'true', 'false')",
+    "retryable": false
+  },
+  "ok": false,
+  "retrieval": null,
+  "validation": {
+    "is_valid": false,
+    "schema_issues": [],
+    "semantic_issues": []
+  }
+}

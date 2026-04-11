@@ -7,6 +7,7 @@
     "retrieve.recommendation_judgment",
     "retrieve.recommendation_feedback",
     "retrieve.recommendation_feedback_window",
+    "retrieve.recommendation_resolution_window",
     "retrieve.weekly_pattern_review"
   ]
 }

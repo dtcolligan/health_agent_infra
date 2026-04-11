@@ -601,6 +601,162 @@ class AgentRetrievalCliIntegrationTest(unittest.TestCase):
         self.assertFalse(result["ok"])
         self.assertEqual(result, expected)
 
+    def test_recommendation_resolution_window_returns_success_envelope_with_judged_pending_and_no_recommendation_states(self) -> None:
+        request_fixture = json.loads((RETRIEVAL_FIXTURE_DIR / "recommendation_resolution_window_success_request.json").read_text())
+        expected = json.loads((RETRIEVAL_FIXTURE_DIR / "recommendation_resolution_window_success_response.json").read_text())
+
+        result = self._run_cli(
+            [
+                "recommendation-resolution-window",
+                "--user-id",
+                request_fixture["user_id"],
+                "--start-date",
+                request_fixture["start_date"],
+                "--end-date",
+                request_fixture["end_date"],
+                "--memory-locator",
+                request_fixture["memory_locator"],
+                "--request-id",
+                request_fixture["request_id"],
+                "--requested-at",
+                request_fixture["requested_at"],
+                "--include-conflicts",
+                request_fixture["include_conflicts"],
+                "--include-missingness",
+                request_fixture["include_missingness"],
+            ]
+        )
+
+        self.assertTrue(result["ok"], msg=result)
+        self.assertEqual(result, expected)
+
+    def test_recommendation_resolution_window_fails_closed_on_wrong_scope(self) -> None:
+        request_fixture = json.loads((RETRIEVAL_FIXTURE_DIR / "recommendation_resolution_window_success_request.json").read_text())
+        expected = json.loads((RETRIEVAL_FIXTURE_DIR / "recommendation_resolution_window_wrong_scope_response.json").read_text())
+
+        result = self._run_cli(
+            [
+                "recommendation-resolution-window",
+                "--user-id",
+                "user_wrong",
+                "--start-date",
+                request_fixture["start_date"],
+                "--end-date",
+                request_fixture["end_date"],
+                "--memory-locator",
+                request_fixture["memory_locator"],
+                "--request-id",
+                "req_recommendation_resolution_window_wrong_scope_2026_04_11",
+                "--requested-at",
+                request_fixture["requested_at"],
+            ],
+            expected_returncode=1,
+        )
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result, expected)
+
+    def test_recommendation_resolution_window_fails_closed_on_range_limit(self) -> None:
+        request_fixture = json.loads((RETRIEVAL_FIXTURE_DIR / "recommendation_resolution_window_success_request.json").read_text())
+        expected = json.loads((RETRIEVAL_FIXTURE_DIR / "recommendation_resolution_window_range_limit_response.json").read_text())
+
+        result = self._run_cli(
+            [
+                "recommendation-resolution-window",
+                "--user-id",
+                request_fixture["user_id"],
+                "--start-date",
+                "2026-04-01",
+                "--end-date",
+                request_fixture["end_date"],
+                "--memory-locator",
+                request_fixture["memory_locator"],
+                "--request-id",
+                "req_recommendation_resolution_window_range_limit_2026_04_11",
+                "--requested-at",
+                request_fixture["requested_at"],
+            ],
+            expected_returncode=1,
+        )
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result, expected)
+
+    def test_recommendation_resolution_window_fails_closed_on_unresolved_locator(self) -> None:
+        expected = json.loads((RETRIEVAL_FIXTURE_DIR / "recommendation_resolution_window_unresolved_locator_response.json").read_text())
+
+        result = self._run_cli(
+            [
+                "recommendation-resolution-window",
+                "--user-id",
+                "user_dom",
+                "--start-date",
+                "2026-04-04",
+                "--end-date",
+                "2026-04-10",
+                "--memory-locator",
+                str((REPO_ROOT / "artifacts" / "protocol_layer_proof" / "2026-04-11-recommendation-resolution-window" / "missing_memory_locator.json").resolve()),
+                "--request-id",
+                "req_recommendation_resolution_window_unresolved_locator_2026_04_11",
+                "--requested-at",
+                "2026-04-11T13:25:00+01:00",
+            ],
+            expected_returncode=1,
+        )
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result, expected)
+
+    def test_recommendation_resolution_window_fails_closed_on_malformed_linkage(self) -> None:
+        expected = json.loads((RETRIEVAL_FIXTURE_DIR / "recommendation_resolution_window_malformed_linkage_response.json").read_text())
+
+        result = self._run_cli(
+            [
+                "recommendation-resolution-window",
+                "--user-id",
+                "user_dom",
+                "--start-date",
+                "2026-04-04",
+                "--end-date",
+                "2026-04-10",
+                "--memory-locator",
+                str((REPO_ROOT / "artifacts" / "protocol_layer_proof" / "2026-04-11-recommendation-resolution-window" / "recommendation_resolution_window_memory_malformed_linkage.json").resolve()),
+                "--request-id",
+                "req_recommendation_resolution_window_malformed_linkage_2026_04_11",
+                "--requested-at",
+                "2026-04-11T13:25:00+01:00",
+            ],
+            expected_returncode=1,
+        )
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result, expected)
+
+    def test_recommendation_resolution_window_fails_closed_on_malformed_entry(self) -> None:
+        expected = json.loads((RETRIEVAL_FIXTURE_DIR / "recommendation_resolution_window_malformed_entry_response.json").read_text())
+
+        result = self._run_cli(
+            [
+                "recommendation-resolution-window",
+                "--user-id",
+                "user_dom",
+                "--start-date",
+                "2026-04-04",
+                "--end-date",
+                "2026-04-10",
+                "--memory-locator",
+                str((REPO_ROOT / "artifacts" / "protocol_layer_proof" / "2026-04-11-recommendation-resolution-window" / "recommendation_resolution_window_memory_malformed_entry.json").resolve()),
+                "--request-id",
+                "req_recommendation_resolution_window_malformed_entry_2026_04_11",
+                "--requested-at",
+                "2026-04-11T13:25:00+01:00",
+            ],
+            expected_returncode=1,
+        )
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result, expected)
+
     def test_weekly_pattern_review_returns_success_envelope_grounded_in_accepted_daily_artifacts(self) -> None:
         request_fixture = json.loads((RETRIEVAL_FIXTURE_DIR / "weekly_pattern_review_success_request.json").read_text())
         expected = json.loads((RETRIEVAL_FIXTURE_DIR / "weekly_pattern_review_success_response.json").read_text())

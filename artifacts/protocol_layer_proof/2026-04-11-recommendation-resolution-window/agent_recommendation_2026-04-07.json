@@ -1,0 +1,14 @@
+{
+  "artifact_type": "agent_recommendation",
+  "confidence_score": 0.8,
+  "context_artifact_id": "agent_context_user_dom_2026-04-07",
+  "context_artifact_path": "data/health/agent_readable_daily_context_2026-04-07.json",
+  "date": "2026-04-07",
+  "evidence_refs": [
+    "evidence_20260407_01"
+  ],
+  "rationale": "Bounded proof recommendation for 2026-04-07.",
+  "recommendation_id": "rec_window_20260407_walk_01",
+  "summary": "Choose walking and mobility over intensity.",
+  "user_id": "user_dom"
+}
