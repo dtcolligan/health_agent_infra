@@ -147,7 +147,10 @@ class AgentContractCliIntegrationTest(unittest.TestCase):
 
         weekly_review = contract["supported_operations"]["retrieve.weekly_pattern_review"]
         weekly_args = {arg["name"]: arg for arg in weekly_review["args"]}
+        self.assertEqual(weekly_review["implementation_status"], "proof_complete")
         self.assertEqual(weekly_review["range_limit_days"], 7)
+        self.assertEqual(weekly_review["command"], "retrieve-weekly-pattern-review")
+        self.assertEqual(weekly_review["consumes"], ["user_owned_private_memory_locator", "agent_readable_daily_context"])
         self.assertEqual(weekly_args["start_date"]["flag"], "--start-date")
         self.assertEqual(weekly_args["end_date"]["flag"], "--end-date")
         self.assertEqual(weekly_args["memory_locator"]["flag"], "--memory-locator")
@@ -216,6 +219,10 @@ class AgentContractCliIntegrationTest(unittest.TestCase):
         )
         self.assertEqual(contract["proof_artifacts"]["human_contract"], "docs/retrieval_contract_v1.md")
         self.assertEqual(contract["proof_artifacts"]["machine_contract"], "artifacts/contracts/retrieval_contract_v1.json")
+        self.assertEqual(
+            contract["proof_artifacts"]["weekly_pattern_review_proof_bundle"],
+            "artifacts/protocol_layer_proof/2026-04-11-weekly-pattern-review/",
+        )
 
     def test_contract_describe_bootstrap_voice_note_submit_and_context_get_prove_external_agent_loop(self) -> None:
         contract_result = self._run_cli(["describe"])
@@ -318,6 +325,11 @@ class AgentContractCliIntegrationTest(unittest.TestCase):
         self.assertEqual(sleep_review["module"], "health_model.agent_retrieval_cli")
         self.assertEqual(sleep_review["command"], "sleep-review")
         self.assertEqual(sleep_review["implementation_status"], "proof_complete")
+
+        weekly_review = result["contract"]["supported_operations"]["retrieve.weekly_pattern_review"]
+        self.assertEqual(weekly_review["module"], "health_model.agent_context_cli")
+        self.assertEqual(weekly_review["command"], "retrieve-weekly-pattern-review")
+        self.assertEqual(weekly_review["implementation_status"], "proof_complete")
 
     def test_retrieve_day_context_contract_matches_current_repo_reality_and_fixture_shape(self) -> None:
         result = self._run_cli(["describe"])

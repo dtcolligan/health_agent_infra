@@ -53,13 +53,17 @@ Machine-readable discovery is published by `python3 -m health_model.agent_contra
   - fail closed if the artifact is missing, invalid JSON, wrong `artifact_type`, wrong `user_id`, or wrong `date`
 
 ### `retrieve.weekly_pattern_review`
-- Purpose: return a bounded seven-day pattern review over already accepted daily surfaces.
-- Current implementation status: discovery-visible, implementation-thin.
+- Purpose: return a bounded seven-day pattern review over already accepted daily context artifacts.
+- Current implementation status: proof-complete in v1.
 - Required scope: `user_id`, `start_date`, `end_date`, `memory_locator`, `request_id`, `requested_at`.
+- Optional scope: `timezone`, `max_evidence_items`, `include_conflicts`, `include_missingness`.
 - Semantics:
-  - capped to seven contiguous dates in v1
-  - aggregate only already-supported daily evidence
-  - no causal inference, diagnosis, or coaching logic
+  - validate `request_id` as a non-empty string and `requested_at` as an ISO 8601 datetime with timezone information, then echo both under `validation.request_echo`
+  - fail closed if `start_date` or `end_date` is invalid, the inclusive range exceeds seven contiguous dates, or the bounded `memory_locator` fixture cannot be resolved
+  - aggregate only accepted `agent_readable_daily_context` artifacts listed by the bounded `memory_locator`
+  - return per-day sleep evidence summaries, repeated important gaps, and surfaced conflicts only
+  - partial weekly coverage is valid when accepted daily artifacts are sparse but in scope
+  - no causal inference, diagnosis, coaching logic, or memory writes
 
 ## Accepted scope fields
 
@@ -74,7 +78,7 @@ Optional retrieval fields for accepted daily retrieval ops:
 - `include_conflicts`
 - `include_missingness`
 
-Optional retrieval fields still used by discovery-visible weekly retrieval only:
+Optional retrieval fields still used by weekly retrieval:
 - `timezone`
 - `max_evidence_items`
 
@@ -123,17 +127,18 @@ The frozen proof bundles for this slice live under:
 - `artifacts/protocol_layer_proof/2026-04-11/` for `retrieve.day_context`
 - `artifacts/protocol_layer_proof/2026-04-11-day-nutrition-brief/` for `retrieve.day_nutrition_brief`
 - `artifacts/protocol_layer_proof/2026-04-11-sleep-review/` for `retrieve.sleep_review`
+- `artifacts/protocol_layer_proof/2026-04-11-weekly-pattern-review/` for `retrieve.weekly_pattern_review`
 
 Each bundle includes:
 - retrieval request artifact
-- copied day-context artifact
+- copied accepted input artifacts for the bounded proof slice
 - success envelope
-- fail-closed wrong-scope envelope
+- fail-closed envelopes for the named scope or contract violations
 - proof manifest
 
 ## Explicit out-of-scope items for this slice
 
 - hosted retrieval service
-- weekly analytics implementation beyond thin discovery metadata
+- weekly analytics beyond the bounded accepted-daily-artifact review slice
 - memory-write contract work
 - embedded-coach framing

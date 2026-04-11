@@ -472,8 +472,8 @@ def _contract_payload() -> dict[str, Any]:
                 "module": "health_model.agent_context_cli",
                 "command": "retrieve-weekly-pattern-review",
                 "mode": "read",
-                "description": "Describe the bounded seven-day weekly pattern retrieval contract while keeping implementation intentionally thin in v1.",
-                "implementation_status": "discovery_visible_implementation_thin",
+                "description": "Return one bounded seven-day weekly pattern review aggregated only from accepted daily context artifacts listed by a bounded memory locator fixture, with request metadata validated and echoed under validation.request_echo.",
+                "implementation_status": "proof_complete",
                 "args": [
                     _shared_arg("user_id"),
                     _retrieval_arg("start_date"),
@@ -486,7 +486,7 @@ def _contract_payload() -> dict[str, Any]:
                     _retrieval_arg("include_conflicts"),
                     _retrieval_arg("include_missingness"),
                 ],
-                "consumes": ["user_owned_private_memory_locator"],
+                "consumes": ["user_owned_private_memory_locator", "agent_readable_daily_context"],
                 "produces": ["retrieval_response_envelope"],
                 "response_envelope": "retrieval",
                 "range_limit_days": 7,
@@ -661,6 +661,7 @@ def _contract_payload() -> dict[str, Any]:
             "day_context_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11/",
             "day_nutrition_brief_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-day-nutrition-brief/",
             "sleep_review_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-sleep-review/",
+            "weekly_pattern_review_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-weekly-pattern-review/",
         },
     }
 

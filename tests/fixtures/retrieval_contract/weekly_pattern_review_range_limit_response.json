@@ -1,0 +1,31 @@
+{
+  "artifact_path": "artifacts/protocol_layer_proof/2026-04-11-weekly-pattern-review/weekly_pattern_review_memory.json",
+  "error": {
+    "code": "range_limit_exceeded",
+    "details": {
+      "end_date": "2026-04-10",
+      "memory_locator": "artifacts/protocol_layer_proof/2026-04-11-weekly-pattern-review/weekly_pattern_review_memory.json",
+      "start_date": "2026-04-03",
+      "user_id": "user_weekly"
+    },
+    "message": "Weekly scope failed validation.",
+    "retryable": false
+  },
+  "ok": false,
+  "retrieval": null,
+  "validation": {
+    "is_valid": false,
+    "request_echo": {
+      "request_id": "req_weekly_pattern_review_range_limit_2026_04_11",
+      "requested_at": "2026-04-11T10:15:00+01:00"
+    },
+    "schema_issues": [],
+    "semantic_issues": [
+      {
+        "code": "range_limit_exceeded",
+        "message": "Weekly retrieval is capped at 7 contiguous days.",
+        "path": "end_date"
+      }
+    ]
+  }
+}

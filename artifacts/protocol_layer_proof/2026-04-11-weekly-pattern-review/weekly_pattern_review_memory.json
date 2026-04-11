@@ -1,0 +1,16 @@
+{
+  "accepted_daily_artifact_paths": [
+    "artifacts/protocol_layer_proof/2026-04-11-weekly-pattern-review/accepted_daily_artifacts/agent_readable_daily_context_2026-04-04.json",
+    "artifacts/protocol_layer_proof/2026-04-11-weekly-pattern-review/accepted_daily_artifacts/agent_readable_daily_context_2026-04-05.json",
+    "artifacts/protocol_layer_proof/2026-04-11-weekly-pattern-review/accepted_daily_artifacts/agent_readable_daily_context_2026-04-06.json",
+    "artifacts/protocol_layer_proof/2026-04-11-weekly-pattern-review/accepted_daily_artifacts/agent_readable_daily_context_2026-04-07.json",
+    "artifacts/protocol_layer_proof/2026-04-11-weekly-pattern-review/accepted_daily_artifacts/agent_readable_daily_context_2026-04-08.json",
+    "artifacts/protocol_layer_proof/2026-04-11-weekly-pattern-review/accepted_daily_artifacts/agent_readable_daily_context_2026-04-09.json",
+    "artifacts/protocol_layer_proof/2026-04-11-weekly-pattern-review/accepted_daily_artifacts/agent_readable_daily_context_2026-04-10.json"
+  ],
+  "artifact_type": "weekly_pattern_review_memory",
+  "end_date": "2026-04-10",
+  "operation": "retrieve.weekly_pattern_review",
+  "start_date": "2026-04-04",
+  "user_id": "user_weekly"
+}
