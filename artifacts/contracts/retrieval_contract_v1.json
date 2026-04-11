@@ -136,8 +136,10 @@
   },
   "proof_artifacts": {
     "day_context_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11/",
+    "day_nutrition_brief_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-day-nutrition-brief/",
     "human_contract": "docs/retrieval_contract_v1.md",
-    "machine_contract": "artifacts/contracts/retrieval_contract_v1.json"
+    "machine_contract": "artifacts/contracts/retrieval_contract_v1.json",
+    "sleep_review_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-sleep-review/"
   },
   "response_envelopes": {
     "bootstrap.init": {
@@ -493,9 +495,9 @@
           "type": "date"
         },
         {
-          "description": "External user-owned memory reference or locator. Health Lab does not host the backing store.",
-          "flag": "--memory-locator",
-          "name": "memory_locator",
+          "description": "Path to one scoped read-only artifact when retrieval is backed by a local artifact file.",
+          "flag": "--artifact-path",
+          "name": "artifact_path",
           "required": true,
           "type": "string"
         },
@@ -552,10 +554,10 @@
       ],
       "command": "retrieve-day-nutrition-brief",
       "consumes": [
-        "user_owned_private_memory_locator"
+        "day_nutrition_brief"
       ],
-      "description": "Describe the bounded day-scoped nutrition brief retrieval contract without introducing hosted retrieval.",
-      "implementation_status": "discovery_visible_implementation_thin",
+      "description": "Return one bounded day-scoped nutrition brief from an accepted nutrition brief artifact.",
+      "implementation_status": "proof_complete",
       "mode": "read",
       "module": "health_model.day_nutrition_brief",
       "produces": [

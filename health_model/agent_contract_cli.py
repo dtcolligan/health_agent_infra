@@ -436,12 +436,12 @@ def _contract_payload() -> dict[str, Any]:
                 "module": "health_model.day_nutrition_brief",
                 "command": "retrieve-day-nutrition-brief",
                 "mode": "read",
-                "description": "Describe the bounded day-scoped nutrition brief retrieval contract without introducing hosted retrieval.",
-                "implementation_status": "discovery_visible_implementation_thin",
+                "description": "Return one bounded day-scoped nutrition brief from an accepted nutrition brief artifact.",
+                "implementation_status": "proof_complete",
                 "args": [
                     _shared_arg("user_id"),
                     _shared_arg("date"),
-                    _retrieval_arg("memory_locator"),
+                    _retrieval_arg("artifact_path"),
                     _retrieval_arg("request_id"),
                     _retrieval_arg("requested_at"),
                     _retrieval_arg("timezone"),
@@ -449,7 +449,7 @@ def _contract_payload() -> dict[str, Any]:
                     _retrieval_arg("include_conflicts"),
                     _retrieval_arg("include_missingness"),
                 ],
-                "consumes": ["user_owned_private_memory_locator"],
+                "consumes": ["day_nutrition_brief"],
                 "produces": ["retrieval_response_envelope"],
                 "response_envelope": "retrieval",
             },
@@ -665,6 +665,8 @@ def _contract_payload() -> dict[str, Any]:
             "human_contract": "docs/retrieval_contract_v1.md",
             "machine_contract": "artifacts/contracts/retrieval_contract_v1.json",
             "day_context_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11/",
+            "day_nutrition_brief_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-day-nutrition-brief/",
+            "sleep_review_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-sleep-review/",
         },
     }
 

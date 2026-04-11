@@ -31,10 +31,11 @@ Machine-readable discovery is published by `python3 -m health_model.agent_contra
   - do not invent unsupported metrics
 
 ### `retrieve.day_nutrition_brief`
-- Purpose: return a bounded day-scoped nutrition brief from accepted daily surfaces.
-- Current implementation status: discovery-visible, implementation-thin.
-- Required scope: `user_id`, `date`, `memory_locator`, `request_id`, `requested_at`.
+- Purpose: return a bounded day-scoped nutrition brief from an accepted day nutrition brief artifact.
+- Current implementation status: proof-complete in v1.
+- Required scope: `user_id`, `date`, `artifact_path`, `request_id`, `requested_at`.
 - Semantics:
+  - fail closed if the artifact is missing, invalid JSON, wrong `artifact_type`, wrong `user_id`, or wrong `date`
   - explicit missingness, never fabricated zeros
   - no unsupported micronutrient or coaching claims
 
@@ -115,6 +116,7 @@ The `retrieval` object contains:
 
 The frozen proof bundles for this slice live under:
 - `artifacts/protocol_layer_proof/2026-04-11/` for `retrieve.day_context`
+- `artifacts/protocol_layer_proof/2026-04-11-day-nutrition-brief/` for `retrieve.day_nutrition_brief`
 - `artifacts/protocol_layer_proof/2026-04-11-sleep-review/` for `retrieve.sleep_review`
 
 Each bundle includes:

@@ -1,0 +1,26 @@
+{
+  "artifact_path": "/Users/myapplemini01/Projects/garmin_lab/data/health/day_nutrition_brief_2026-04-08.json",
+  "error": {
+    "code": "artifact_date_mismatch",
+    "details": {
+      "artifact_path": "/Users/myapplemini01/Projects/garmin_lab/data/health/day_nutrition_brief_2026-04-08.json",
+      "date": "2026-04-09",
+      "user_id": "1"
+    },
+    "message": "Artifact failed scope or type validation.",
+    "retryable": false
+  },
+  "ok": false,
+  "retrieval": null,
+  "validation": {
+    "is_valid": false,
+    "schema_issues": [],
+    "semantic_issues": [
+      {
+        "code": "artifact_date_mismatch",
+        "message": "Artifact date does not match request.",
+        "path": "date"
+      }
+    ]
+  }
+}

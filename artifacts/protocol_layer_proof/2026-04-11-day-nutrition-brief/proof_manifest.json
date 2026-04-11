@@ -1,0 +1,18 @@
+{
+  "acceptance_checks": [
+    "discovery includes retrieve.day_nutrition_brief as an executable read op",
+    "retrieve.day_nutrition_brief stays read-only and artifact-scoped",
+    "success proof is grounded only in accepted day nutrition artifact fields",
+    "wrong-date request fails closed in the retrieval wrapper envelope",
+    "nutrition retrieval remains non-coaching and does not invent unsupported micronutrient claims"
+  ],
+  "artifacts": [
+    "retrieve_day_nutrition_brief_request.json",
+    "day_nutrition_brief_2026-04-08.json",
+    "retrieve_day_nutrition_brief_success_envelope.json",
+    "retrieve_day_nutrition_brief_wrong_scope_envelope.json"
+  ],
+  "date": "2026-04-11",
+  "operation": "retrieve.day_nutrition_brief",
+  "proof_bundle_id": "health_lab_retrieval_contract_v1_day_nutrition_brief_proof_2026_04_11"
+}

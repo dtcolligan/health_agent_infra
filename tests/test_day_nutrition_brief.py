@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import sqlite3
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -11,6 +12,7 @@ from health_model.day_nutrition_brief import build_day_nutrition_brief
 
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
+RETRIEVAL_FIXTURE_DIR = ROOT_DIR / "tests" / "fixtures" / "retrieval_contract"
 
 
 class DayNutritionBriefTest(unittest.TestCase):
@@ -114,6 +116,68 @@ class DayNutritionBriefTest(unittest.TestCase):
             self.assertIsNone(brief["nutrition"]["calories_kcal"])
             self.assertIsNone(brief["nutrition"]["protein_g"])
             self.assertIn("does not guess", brief["coverage_note"])
+
+    def test_retrieve_day_nutrition_brief_returns_success_envelope_grounded_in_day_artifact(self) -> None:
+        request_fixture = json.loads((RETRIEVAL_FIXTURE_DIR / "day_nutrition_brief_success_request.json").read_text())
+        expected = json.loads((RETRIEVAL_FIXTURE_DIR / "day_nutrition_brief_success_response.json").read_text())
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "health_model.day_nutrition_brief",
+                "retrieve-day-nutrition-brief",
+                "--artifact-path",
+                request_fixture["artifact_path"],
+                "--user-id",
+                request_fixture["user_id"],
+                "--date",
+                request_fixture["date"],
+                "--request-id",
+                request_fixture["request_id"],
+                "--requested-at",
+                request_fixture["requested_at"],
+                "--include-missingness",
+                "true",
+            ],
+            cwd=ROOT_DIR,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0, msg=result.stderr or result.stdout)
+        self.assertEqual(json.loads(result.stdout), expected)
+
+    def test_retrieve_day_nutrition_brief_fails_closed_on_wrong_date(self) -> None:
+        request_fixture = json.loads((RETRIEVAL_FIXTURE_DIR / "day_nutrition_brief_success_request.json").read_text())
+        expected = json.loads((RETRIEVAL_FIXTURE_DIR / "day_nutrition_brief_wrong_scope_response.json").read_text())
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "health_model.day_nutrition_brief",
+                "retrieve-day-nutrition-brief",
+                "--artifact-path",
+                str((ROOT_DIR / request_fixture["artifact_path"]).resolve()),
+                "--user-id",
+                request_fixture["user_id"],
+                "--date",
+                "2026-04-09",
+                "--request-id",
+                "req_day_nutrition_brief_wrong_date_2026_04_11",
+                "--requested-at",
+                request_fixture["requested_at"],
+            ],
+            cwd=ROOT_DIR,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 1, msg=result.stderr or result.stdout)
+        self.assertEqual(json.loads(result.stdout), expected)
 
     def test_cli_writes_dated_artifact_and_latest_pair(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

@@ -132,6 +132,14 @@ class AgentContractCliIntegrationTest(unittest.TestCase):
         self.assertEqual(sleep_review["consumes"], ["agent_readable_daily_context"])
         self.assertEqual(sleep_review_args["artifact_path"]["flag"], "--artifact-path")
 
+        day_nutrition_brief = contract["supported_operations"]["retrieve.day_nutrition_brief"]
+        day_nutrition_args = {arg["name"]: arg for arg in day_nutrition_brief["args"]}
+        self.assertEqual(day_nutrition_brief["module"], "health_model.day_nutrition_brief")
+        self.assertEqual(day_nutrition_brief["command"], "retrieve-day-nutrition-brief")
+        self.assertEqual(day_nutrition_brief["implementation_status"], "proof_complete")
+        self.assertEqual(day_nutrition_brief["consumes"], ["day_nutrition_brief"])
+        self.assertEqual(day_nutrition_args["artifact_path"]["flag"], "--artifact-path")
+
         weekly_review = contract["supported_operations"]["retrieve.weekly_pattern_review"]
         weekly_args = {arg["name"]: arg for arg in weekly_review["args"]}
         self.assertEqual(weekly_review["range_limit_days"], 7)
@@ -295,7 +303,10 @@ class AgentContractCliIntegrationTest(unittest.TestCase):
         self.assertEqual(day_context["mode"], "read")
 
         day_nutrition_brief = result["contract"]["supported_operations"]["retrieve.day_nutrition_brief"]
-        self.assertEqual(day_nutrition_brief["implementation_status"], "discovery_visible_implementation_thin")
+        self.assertEqual(day_nutrition_brief["module"], "health_model.day_nutrition_brief")
+        self.assertEqual(day_nutrition_brief["command"], "retrieve-day-nutrition-brief")
+        self.assertEqual(day_nutrition_brief["implementation_status"], "proof_complete")
+        self.assertEqual(day_nutrition_brief["consumes"], ["day_nutrition_brief"])
         self.assertEqual(day_nutrition_brief["response_envelope"], "retrieval")
 
         sleep_review = result["contract"]["supported_operations"]["retrieve.sleep_review"]
