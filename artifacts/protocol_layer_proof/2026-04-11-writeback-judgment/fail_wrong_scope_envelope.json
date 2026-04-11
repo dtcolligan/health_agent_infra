@@ -1,0 +1,29 @@
+{
+  "artifact_path": null,
+  "error": {
+    "code": "artifact_user_mismatch",
+    "details": {
+      "recommendation_artifact_path": "data/health/agent_recommendation_2026-04-10.json"
+    },
+    "message": "Referenced recommendation artifact failed validation.",
+    "retryable": false
+  },
+  "latest_artifact_path": null,
+  "ok": false,
+  "validation": {
+    "is_valid": false,
+    "request_echo": {
+      "request_id": "req_bad_scope_01",
+      "requested_at": "2026-04-10T20:14:00+01:00"
+    },
+    "schema_issues": [],
+    "semantic_issues": [
+      {
+        "code": "artifact_user_mismatch",
+        "message": "Recommendation user_id does not match payload.",
+        "path": "user_id"
+      }
+    ]
+  },
+  "writeback": null
+}

@@ -87,6 +87,7 @@ Treat this as a reference proof of agent-operated retrieval, synthesis handoff, 
 - Voice-note submission into a persisted bundle via `python3 -m health_model.agent_voice_note_cli submit`
 - Scoped context reads via `python3 -m health_model.agent_context_cli get`
 - Recommendation artifact creation via `python3 -m health_model.agent_recommendation_cli create`
+- Same-day recommendation judgment writeback via `python3 -m health_model.agent_memory_write_cli recommendation-judgment`
 
 ### Legacy and adjacent repo surfaces
 - Older Garmin, food logging, dashboard, and web-app surfaces remain in-tree as legacy or adjacent code, but they are not part of the current flagship proof path.
@@ -208,6 +209,16 @@ python3 -m health_model.agent_contract_cli describe
 ```
 
 This bounded flow proves an external agent can discover the contract, initialize a canonical empty shared-input bundle from zero local state, submit one same-day transcribed voice note, and read back the regenerated daily context using only CLI surfaces.
+
+The current thin writeback extension for this loop is one same-day recommendation judgment op only:
+
+```bash
+python3 -m health_model.agent_memory_write_cli recommendation-judgment \
+  --output-dir data/health \
+  --payload-path artifacts/protocol_layer_proof/2026-04-11-writeback-judgment/writeback_recommendation_judgment_request.json
+```
+
+This writes `recommendation_judgment_YYYY-MM-DD.json` plus the latest alias, validates the referenced recommendation artifact scope and id, and fails closed without mutating existing judgment artifacts on rejection.
 
 Each call returns machine-readable JSON with:
 

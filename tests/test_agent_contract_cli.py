@@ -44,6 +44,9 @@ class AgentContractCliIntegrationTest(unittest.TestCase):
         )
         self.assertEqual(contract["accepted_enums"]["recommendation_commands"], ["create"])
         self.assertEqual(contract["accepted_enums"]["recommendation_payload_inputs"], ["payload_json", "payload_path"])
+        self.assertEqual(contract["accepted_enums"]["writeback_operations"], ["writeback.recommendation_judgment"])
+        self.assertEqual(contract["accepted_enums"]["writeback_payload_inputs"], ["payload_json", "payload_path"])
+        self.assertEqual(contract["accepted_enums"]["judgment_labels"], ["useful", "obvious", "wrong", "ignored"])
         self.assertEqual(contract["accepted_enums"]["completeness_state"], ["partial", "complete", "corrected"])
         self.assertEqual(contract["accepted_enums"]["estimated"], ["true", "false"])
         self.assertEqual(contract["accepted_enums"]["retrieval_boolean_flags"], ["true", "false"])
@@ -73,6 +76,14 @@ class AgentContractCliIntegrationTest(unittest.TestCase):
         self.assertEqual(
             contract["path_conventions"]["latest_recommendation_artifact"],
             "{output_dir}/agent_recommendation_latest.json",
+        )
+        self.assertEqual(
+            contract["path_conventions"]["dated_recommendation_judgment_artifact"],
+            "{output_dir}/recommendation_judgment_{date}.json",
+        )
+        self.assertEqual(
+            contract["path_conventions"]["latest_recommendation_judgment_artifact"],
+            "{output_dir}/recommendation_judgment_latest.json",
         )
 
         bootstrap_init = contract["supported_operations"]["bootstrap.init"]
@@ -179,6 +190,34 @@ class AgentContractCliIntegrationTest(unittest.TestCase):
         self.assertFalse(recommendation_args["payload_json"]["required"])
         self.assertFalse(recommendation_args["payload_path"]["required"])
 
+        writeback_judgment = contract["supported_operations"]["writeback.recommendation_judgment"]
+        writeback_args = {arg["name"]: arg for arg in writeback_judgment["args"]}
+        self.assertEqual(writeback_judgment["module"], "health_model.agent_memory_write_cli")
+        self.assertEqual(writeback_judgment["command"], "recommendation-judgment")
+        self.assertEqual(writeback_judgment["implementation_status"], "proof_complete")
+        self.assertEqual(writeback_judgment["consumes"], ["agent_recommendation"])
+        self.assertEqual(writeback_judgment["produces"], ["recommendation_judgment_dated", "recommendation_judgment_latest"])
+        self.assertEqual(writeback_judgment["response_envelope"], "writeback")
+        self.assertEqual(writeback_args["payload_json"]["type"], "json_object")
+        self.assertFalse(writeback_args["payload_json"]["required"])
+        self.assertFalse(writeback_args["payload_path"]["required"])
+        self.assertEqual(
+            writeback_judgment["payload_shape"]["required_fields"],
+            [
+                "user_id",
+                "date",
+                "recommendation_artifact_path",
+                "recommendation_artifact_id",
+                "judgment_id",
+                "judgment_label",
+                "action_taken",
+                "why",
+                "written_at",
+                "request_id",
+                "requested_at",
+            ],
+        )
+
         consumed = contract["artifact_types"]["consumed"]
         self.assertEqual(consumed[2]["artifact_type"], "voice_note_submission_payload")
         self.assertIn("--payload-path", consumed[2]["shape"])
@@ -192,6 +231,9 @@ class AgentContractCliIntegrationTest(unittest.TestCase):
         self.assertEqual(produced[2]["artifact_type"], "agent_recommendation")
         self.assertIn("{output_dir}/agent_recommendation_latest.json", produced[2]["paths"])
         self.assertIn("recommendation.create", produced[2]["notes"])
+        self.assertEqual(produced[3]["artifact_type"], "recommendation_judgment")
+        self.assertIn("{output_dir}/recommendation_judgment_latest.json", produced[3]["paths"])
+        self.assertIn("writeback.recommendation_judgment", produced[3]["notes"])
         self.assertEqual(
             contract["response_envelopes"]["bootstrap.init"]["success_keys"],
             ["ok", "bundle_path", "bundle", "validation", "error"],
@@ -199,6 +241,10 @@ class AgentContractCliIntegrationTest(unittest.TestCase):
         self.assertEqual(
             contract["response_envelopes"]["recommendation.create"]["success_keys"],
             ["ok", "artifact_path", "latest_artifact_path", "recommendation", "validation", "error"],
+        )
+        self.assertEqual(
+            contract["response_envelopes"]["writeback"]["success_keys"],
+            ["ok", "artifact_path", "latest_artifact_path", "writeback", "validation", "error"],
         )
         self.assertEqual(
             contract["response_envelopes"]["retrieval"]["success_keys"],
@@ -219,6 +265,8 @@ class AgentContractCliIntegrationTest(unittest.TestCase):
         )
         self.assertEqual(contract["proof_artifacts"]["human_contract"], "docs/retrieval_contract_v1.md")
         self.assertEqual(contract["proof_artifacts"]["machine_contract"], "artifacts/contracts/retrieval_contract_v1.json")
+        self.assertEqual(contract["proof_artifacts"]["memory_write_human_contract"], "docs/memory_write_contract_v1.md")
+        self.assertEqual(contract["proof_artifacts"]["memory_write_machine_contract"], "artifacts/contracts/memory_write_contract_v1.json")
         self.assertEqual(
             contract["proof_artifacts"]["weekly_pattern_review_proof_bundle"],
             "artifacts/protocol_layer_proof/2026-04-11-weekly-pattern-review/",

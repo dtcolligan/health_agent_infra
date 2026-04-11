@@ -1,0 +1,173 @@
+{
+  "accepted_enums": {
+    "judgment_labels": [
+      "useful",
+      "obvious",
+      "wrong",
+      "ignored"
+    ],
+    "writeback_operations": [
+      "writeback.recommendation_judgment"
+    ],
+    "writeback_payload_inputs": [
+      "payload_json",
+      "payload_path"
+    ]
+  },
+  "accepted_scope_fields": [
+    "user_id",
+    "date",
+    "recommendation_artifact_path",
+    "recommendation_artifact_id",
+    "judgment_id",
+    "judgment_label",
+    "action_taken",
+    "why",
+    "written_at",
+    "request_id",
+    "requested_at"
+  ],
+  "architecture_boundary": {
+    "embedded_coach_claims": false,
+    "health_lab_role": "protocol_reference_layer_only",
+    "hosted_memory_claims": false,
+    "private_memory_layer": "external_to_health_lab"
+  },
+  "artifact_types": {
+    "consumed": [
+      {
+        "artifact_type": "agent_recommendation",
+        "shape": "read-only recommendation JSON consumed through recommendation_artifact_path"
+      }
+    ],
+    "produced": [
+      {
+        "artifact_type": "recommendation_judgment",
+        "notes": "writeback.recommendation_judgment writes exactly one same-day recommendation judgment artifact grounded in one recommendation artifact and fails closed on scope mismatch, missing recommendation artifacts, invalid labels, invalid timestamps, or mismatched recommendation ids.",
+        "paths": [
+          "{output_dir}/recommendation_judgment_{date}.json",
+          "{output_dir}/recommendation_judgment_latest.json"
+        ]
+      }
+    ]
+  },
+  "contract_id": "health_lab_agent_contract",
+  "contract_version": "2026-04-11",
+  "discovery": {
+    "cli_module": "health_model.agent_contract_cli",
+    "command": "describe",
+    "read_only": true
+  },
+  "path_conventions": {
+    "dated_recommendation_judgment_artifact": "{output_dir}/recommendation_judgment_{date}.json",
+    "latest_recommendation_judgment_artifact": "{output_dir}/recommendation_judgment_latest.json"
+  },
+  "proof_artifacts": {
+    "human_contract": "docs/memory_write_contract_v1.md",
+    "machine_contract": "artifacts/contracts/memory_write_contract_v1.json",
+    "writeback_recommendation_judgment_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-writeback-judgment/"
+  },
+  "response_envelopes": {
+    "writeback": {
+      "error_keys": [
+        "ok",
+        "artifact_path",
+        "latest_artifact_path",
+        "writeback",
+        "validation",
+        "error"
+      ],
+      "success_keys": [
+        "ok",
+        "artifact_path",
+        "latest_artifact_path",
+        "writeback",
+        "validation",
+        "error"
+      ],
+      "writeback_keys": [
+        "artifact_type",
+        "user_id",
+        "date",
+        "judgment_id",
+        "judgment_label",
+        "action_taken",
+        "why",
+        "written_at",
+        "request_id",
+        "requested_at",
+        "recommendation_artifact_path",
+        "recommendation_artifact_id",
+        "recommendation_evidence_refs"
+      ]
+    }
+  },
+  "supported_operations": {
+    "writeback.recommendation_judgment": {
+      "args": [
+        {
+          "description": "Directory where dated and latest recommendation judgment artifacts are written.",
+          "flag": "--output-dir",
+          "name": "output_dir",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Recommendation judgment payload JSON object string. Exactly one of --payload-json or --payload-path is required.",
+          "flag": "--payload-json",
+          "name": "payload_json",
+          "required": false,
+          "type": "json_object"
+        },
+        {
+          "description": "Path to one recommendation judgment payload JSON file. Exactly one of --payload-json or --payload-path is required.",
+          "flag": "--payload-path",
+          "name": "payload_path",
+          "required": false,
+          "type": "string"
+        }
+      ],
+      "command": "recommendation-judgment",
+      "consumes": [
+        "agent_recommendation"
+      ],
+      "description": "Write one validated same-day recommendation judgment artifact grounded in one scoped recommendation artifact.",
+      "implementation_status": "proof_complete",
+      "mode": "write",
+      "module": "health_model.agent_memory_write_cli",
+      "payload_shape": {
+        "accepted_judgment_labels": [
+          "useful",
+          "obvious",
+          "wrong",
+          "ignored"
+        ],
+        "notes": "The payload user_id/date must match the referenced recommendation artifact scope, request metadata must include timezone-aware requested_at, and failure must be non-mutating.",
+        "optional_fields": [
+          "caveat",
+          "time_cost_note",
+          "friction_points",
+          "gym_note"
+        ],
+        "required_fields": [
+          "user_id",
+          "date",
+          "recommendation_artifact_path",
+          "recommendation_artifact_id",
+          "judgment_id",
+          "judgment_label",
+          "action_taken",
+          "why",
+          "written_at",
+          "request_id",
+          "requested_at"
+        ]
+      },
+      "produces": [
+        "recommendation_judgment_dated",
+        "recommendation_judgment_latest"
+      ],
+      "response_envelope": "writeback"
+    }
+  }
+}

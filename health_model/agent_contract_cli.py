@@ -536,6 +536,57 @@ def _contract_payload() -> dict[str, Any]:
                     "notes": "All evidence_refs must already exist in the referenced agent_readable_daily_context and the payload user_id/date must match that context scope.",
                 },
             },
+            "writeback.recommendation_judgment": {
+                "module": "health_model.agent_memory_write_cli",
+                "command": "recommendation-judgment",
+                "mode": "write",
+                "description": "Write one validated same-day recommendation judgment artifact grounded in one scoped recommendation artifact.",
+                "implementation_status": "proof_complete",
+                "args": [
+                    {
+                        "name": "output_dir",
+                        "flag": "--output-dir",
+                        "type": "string",
+                        "required": True,
+                        "description": "Directory where dated and latest recommendation judgment artifacts are written.",
+                    },
+                    {
+                        "name": "payload_json",
+                        "flag": "--payload-json",
+                        "type": "json_object",
+                        "required": False,
+                        "description": "Recommendation judgment payload JSON object string. Exactly one of --payload-json or --payload-path is required.",
+                    },
+                    {
+                        "name": "payload_path",
+                        "flag": "--payload-path",
+                        "type": "string",
+                        "required": False,
+                        "description": "Path to one recommendation judgment payload JSON file. Exactly one of --payload-json or --payload-path is required.",
+                    },
+                ],
+                "consumes": ["agent_recommendation"],
+                "produces": ["recommendation_judgment_dated", "recommendation_judgment_latest"],
+                "payload_shape": {
+                    "required_fields": [
+                        "user_id",
+                        "date",
+                        "recommendation_artifact_path",
+                        "recommendation_artifact_id",
+                        "judgment_id",
+                        "judgment_label",
+                        "action_taken",
+                        "why",
+                        "written_at",
+                        "request_id",
+                        "requested_at"
+                    ],
+                    "optional_fields": ["caveat", "time_cost_note", "friction_points", "gym_note"],
+                    "accepted_judgment_labels": ["useful", "obvious", "wrong", "ignored"],
+                    "notes": "The payload user_id/date must match the referenced recommendation artifact scope, request metadata must include timezone-aware requested_at, and failure must be non-mutating.",
+                },
+                "response_envelope": "writeback",
+            },
         },
         "accepted_enums": {
             "bundle_commands": ["init"],
@@ -551,6 +602,9 @@ def _contract_payload() -> dict[str, Any]:
             ],
             "recommendation_commands": ["create"],
             "recommendation_payload_inputs": ["payload_json", "payload_path"],
+            "writeback_operations": ["writeback.recommendation_judgment"],
+            "writeback_payload_inputs": ["payload_json", "payload_path"],
+            "judgment_labels": ["useful", "obvious", "wrong", "ignored"],
             "contract_commands": ["describe"],
             "completeness_state": ["partial", "complete", "corrected"],
             "estimated": ["true", "false"],
@@ -571,6 +625,13 @@ def _contract_payload() -> dict[str, Any]:
             "max_evidence_items",
             "include_conflicts",
             "include_missingness",
+            "recommendation_artifact_path",
+            "recommendation_artifact_id",
+            "judgment_id",
+            "judgment_label",
+            "action_taken",
+            "why",
+            "written_at",
         ],
         "artifact_types": {
             "consumed": [
@@ -609,6 +670,14 @@ def _contract_payload() -> dict[str, Any]:
                         "{output_dir}/agent_recommendation_latest.json",
                     ],
                     "notes": "recommendation.create writes exactly one day-scoped recommendation artifact and fails closed on malformed payloads, scope mismatches, invalid context artifacts, or ungrounded evidence refs.",
+                },
+                {
+                    "artifact_type": "recommendation_judgment",
+                    "paths": [
+                        "{output_dir}/recommendation_judgment_{date}.json",
+                        "{output_dir}/recommendation_judgment_latest.json"
+                    ],
+                    "notes": "writeback.recommendation_judgment writes exactly one same-day recommendation judgment artifact grounded in one recommendation artifact and fails closed on scope mismatch, missing recommendation artifacts, invalid labels, invalid timestamps, or mismatched recommendation ids.",
                 }
             ],
         },
@@ -618,6 +687,8 @@ def _contract_payload() -> dict[str, Any]:
             "latest_context_artifact": "{output_dir}/agent_readable_daily_context_latest.json",
             "dated_recommendation_artifact": "{output_dir}/agent_recommendation_{date}.json",
             "latest_recommendation_artifact": "{output_dir}/agent_recommendation_latest.json",
+            "dated_recommendation_judgment_artifact": "{output_dir}/recommendation_judgment_{date}.json",
+            "latest_recommendation_judgment_artifact": "{output_dir}/recommendation_judgment_latest.json",
         },
         "response_envelopes": {
             "bootstrap.init": {
@@ -640,6 +711,25 @@ def _contract_payload() -> dict[str, Any]:
                 "success_keys": ["ok", "artifact_path", "latest_artifact_path", "recommendation", "validation", "error"],
                 "error_keys": ["ok", "artifact_path", "latest_artifact_path", "recommendation", "validation", "error"],
             },
+            "writeback": {
+                "success_keys": ["ok", "artifact_path", "latest_artifact_path", "writeback", "validation", "error"],
+                "error_keys": ["ok", "artifact_path", "latest_artifact_path", "writeback", "validation", "error"],
+                "writeback_keys": [
+                    "artifact_type",
+                    "user_id",
+                    "date",
+                    "judgment_id",
+                    "judgment_label",
+                    "action_taken",
+                    "why",
+                    "written_at",
+                    "request_id",
+                    "requested_at",
+                    "recommendation_artifact_path",
+                    "recommendation_artifact_id",
+                    "recommendation_evidence_refs"
+                ],
+            },
             "retrieval": {
                 "success_keys": ["ok", "artifact_path", "retrieval", "validation", "error"],
                 "error_keys": ["ok", "artifact_path", "retrieval", "validation", "error"],
@@ -658,6 +748,8 @@ def _contract_payload() -> dict[str, Any]:
         "proof_artifacts": {
             "human_contract": "docs/retrieval_contract_v1.md",
             "machine_contract": "artifacts/contracts/retrieval_contract_v1.json",
+            "memory_write_human_contract": "docs/memory_write_contract_v1.md",
+            "memory_write_machine_contract": "artifacts/contracts/memory_write_contract_v1.json",
             "day_context_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11/",
             "day_nutrition_brief_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-day-nutrition-brief/",
             "sleep_review_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-sleep-review/",

@@ -13,6 +13,8 @@ Canonical public-truth surfaces:
 
 The flagship loop is real, CLI-first, locally runnable, and backed by checked-in proof artifacts plus focused unittest coverage.
 
+The current bounded writeback proof slice is `writeback.recommendation_judgment`, frozen under `artifacts/protocol_layer_proof/2026-04-11-writeback-judgment/` with success, wrong-scope rejection, missing-artifact rejection, and non-mutation evidence.
+
 ## Architecture truth
 
 - Private memory layer: user-owned health memory lives outside this repo and outside Health Lab.
@@ -26,6 +28,7 @@ The flagship loop is real, CLI-first, locally runnable, and backed by checked-in
 - same-day voice-note submission via `health_model.agent_voice_note_cli`
 - scoped context reads via `health_model.agent_context_cli`
 - recommendation creation with fail-closed behavior via `health_model.agent_recommendation_cli`
+- same-day recommendation judgment writeback with fail-closed non-mutation via `health_model.agent_memory_write_cli`
 
 ## What this repo is not claiming
 
