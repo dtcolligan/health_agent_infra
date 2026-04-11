@@ -2,7 +2,9 @@
 
 ## Repo status
 
-This repo currently presents a truthful public shell around one proved flagship Health Lab loop:
+This repo currently presents a truthful public shell around one proved flagship Health Lab loop. The frozen canonical definition for this repo-visible slice lives at `docs/health_lab_canonical_definition.md`.
+
+The current flagship loop is:
 
 `contract describe -> bundle init -> voice-note submit -> context get -> recommendation create`
 
@@ -19,9 +21,10 @@ The current bounded closed-loop transition proof is `protocol_proof.recommendati
 
 ## Architecture truth
 
+- CLI / data plane / reporting layer: this repo defines bounded contracts, CLI surfaces, reporting entrypoints, and generated artifacts for the current flagship loop.
+- Agent layer: an external agent performs retrieval, synthesis, recommendation generation, prioritisation, explanation, and writeback decisions against user-owned memory.
+- Policy / proof layer: checked-in proof bundles and fail-closed enforcement own scope validation, rejection behavior, and non-mutation guarantees.
 - Private memory layer: user-owned health memory lives outside this repo and outside Health Lab.
-- Agent runtime layer: an external agent performs retrieval, synthesis, recommendation generation, and writeback.
-- Health Lab protocol layer: this repo defines and proves bounded contracts, CLI surfaces, and reference artifacts for that workflow.
 
 ## What is proven now
 
@@ -45,7 +48,7 @@ The current bounded closed-loop transition proof is `protocol_proof.recommendati
 
 Unresolved truths that still matter:
 - Note: the repository directory is still named `garmin_lab` for historical reasons, while the current project framing is Health Lab.
-- older Garmin, dashboard, web, and adjacent project surfaces remain in-tree and can still distract from the flagship proof path
+- older Garmin, dashboard, web, and adjacent project surfaces remain in-tree and can still distract from the flagship proof path, so `dashboard/`, `web/`, and `garmin/` are explicitly constrained as legacy or adjacent surfaces rather than the canonical current slice
 - the cleanest public review path is the checked-in demo and proof bundles, not the whole repo
 - local runtime outputs under `data/` are not public-safe proof artifacts unless explicitly curated
 

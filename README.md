@@ -1,15 +1,17 @@
 # Health Lab
 
-Health Lab is a protocol and contract layer for agent-mediated personal health workflows: it gives an agent truthful ways to retrieve bounded health evidence from a user-owned private memory layer, produce inspectable outputs, and write structured updates back.
+Health Lab is the trust layer for agent-mediated personal health work over user-owned memory. In repo terms, it is a bounded contract and proof system that gives external agents truthful ways to retrieve scoped health evidence, produce inspectable artifacts, and write structured updates back safely.
 
 Note: the repository directory is still named `garmin_lab` for historical reasons, while the current project framing is Health Lab.
 
+See `docs/health_lab_canonical_definition.md` for the frozen canonical definition and three-part architecture boundary used by this repo.
+
 ## Architecture boundary
 
-- Health Lab is the protocol and specification layer in this repo.
-- Private health data belongs in a user-owned memory layer outside Health Lab.
-- Agents perform retrieval, synthesis, recommendation generation, and writeback against that external memory layer.
-- The checked-in CLIs and proof bundles in this repo are reference implementation surfaces, not a claim that Health Lab itself is the full runtime or durable data host.
+- CLI / data plane / reporting layer: the checked-in CLI and reporting surfaces under `health_model/` own contract discovery, bundle bootstrap, intake, scoped retrieval, validation entrypoints, and generated artifacts.
+- Agent layer: external agents own interpretation, synthesis, prioritisation, explanation, and recommendation generation against user-owned memory.
+- Policy / proof layer: checked-in proof bundles and fail-closed contract enforcement own the trust boundary for scope, rejection, and non-mutation guarantees.
+- Private health data belongs in a user-owned memory layer outside Health Lab, and the checked-in repo surfaces are reference implementation and proof surfaces rather than a claim that Health Lab is the durable private data host.
 
 ## What works today
 
@@ -90,7 +92,7 @@ Treat this as a reference proof of agent-operated retrieval, synthesis handoff, 
 - Same-day recommendation judgment writeback via `python3 -m health_model.agent_memory_write_cli recommendation-judgment`
 
 ### Legacy and adjacent repo surfaces
-- Older Garmin, food logging, dashboard, and web-app surfaces remain in-tree as legacy or adjacent code, but they are not part of the current flagship proof path.
+- Older Garmin, food logging, dashboard, and web-app surfaces remain in-tree as legacy or adjacent code. In particular, `dashboard/`, `web/`, and `garmin/` are explicitly constrained as legacy or adjacent surfaces, not the canonical current Health Lab slice.
 
 ### Not yet
 - No claim of clinical-grade guidance, diagnosis, or monitoring
@@ -100,11 +102,11 @@ Treat this as a reference proof of agent-operated retrieval, synthesis handoff, 
 
 ## Quick repo orientation
 
-The current flagship loop lives in `health_model/`. Older project surfaces for Garmin ingestion, dashboards, and the web app still exist in the repo as legacy or adjacent code, but they are not part of the current flagship proof path.
+The current flagship loop lives in `health_model/`, and its canonical architecture boundary is frozen in `docs/health_lab_canonical_definition.md`. Older project surfaces for Garmin ingestion, dashboards, and the web app still exist in the repo as legacy or adjacent code, but they are not part of the current flagship proof path.
 
 If you want the smallest trustworthy slice first, run `python3 scripts/run_canonical_public_demo.py`, inspect `artifacts/public_demo/generated/`, then compare that disposable run with `artifacts/public_demo/captured/` and the audited flagship proof bundle at `artifacts/flagship_loop_proof/2026-04-09/` or regenerate the stricter proof audit with `python3 scripts/run_flagship_loop_proof_audit.py`.
 
-For repo-level trust and contribution boundaries, see `STATUS.md`, `CONTRIBUTING.md`, and `LICENSE` at the repo root.
+For repo-level trust and contribution boundaries, see `docs/health_lab_canonical_definition.md`, `STATUS.md`, `CONTRIBUTING.md`, and `LICENSE` at the repo root.
 
 ## Canonical Health Lab daily snapshot core
 
