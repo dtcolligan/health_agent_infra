@@ -74,7 +74,10 @@ The v1 normalized artifact families are:
 - `sleep_daily`
 - `readiness_daily`
 - `training_session`
-- `gym_exercise_set`
+- `exercise_catalog`
+- `exercise_alias`
+- `gym_set_record`
+- `program_block`
 - `nutrition_daily`
 - `supplement_intake`
 - `lab_result`
@@ -222,35 +225,96 @@ Recommended v1 fields grounded in current `TrainingSession` dataclass:
 Contract rule:
 - Garmin, Strava, Oura, manual resistance logs, and future lifting imports must all converge on this artifact family when they describe a session.
 
-### 6. `gym_exercise_set`
+### 6. `exercise_catalog`
 
 Purpose:
-- one normalized resistance-training set artifact
+- one canonical exercise definition artifact owned by Health Lab, not by any single source system
 
 Required fields:
-- `gym_exercise_set_id`
-- `training_session_id`
-- `date`
-- `exercise_name`
+- `exercise_catalog_id`
+- `canonical_exercise_name`
+- `movement_pattern` when known
 - `source_name`
 - `source_record_id`
 - `provenance_record_id`
 - `conflict_status`
 
-Recommended v1 fields grounded in current `GymExerciseSet` dataclass and manual logging builders:
-- `exercise_group`
+Recommended v1 fields:
+- `equipment`
+- `primary_muscle_groups`
+- `secondary_muscle_groups`
+- `unilateral_bool`
+- `loaded_pattern`
+
+### 7. `exercise_alias`
+
+Purpose:
+- one source-specific or colloquial exercise naming alias that resolves to a canonical exercise definition
+
+Required fields:
+- `exercise_alias_id`
+- `exercise_catalog_id`
+- `alias_name`
+- `source_name`
+- `source_record_id`
+- `provenance_record_id`
+- `conflict_status`
+
+Recommended v1 fields:
+- `source_native_exercise_id`
+- `normalization_rule`
+- `notes`
+
+### 8. `gym_set_record`
+
+Purpose:
+- one normalized resistance-training set artifact
+
+Required fields:
+- `gym_set_record_id`
+- `training_session_id`
+- `date`
+- `exercise_catalog_id` or canonical exercise reference
+- `source_name`
+- `source_record_id`
+- `provenance_record_id`
+- `conflict_status`
+
+Recommended v1 fields:
+- `exercise_alias_id`
 - `set_number`
 - `reps`
 - `weight_kg`
 - `rir`
 - `rpe`
 - `completed_bool`
+- `set_type`
 - `note`
 
 Contract rule:
 - manual and future imported lifting sources must normalize into the same set artifact family.
 
-### 7. `nutrition_daily`
+### 9. `program_block`
+
+Purpose:
+- one normalized training-program or block-level artifact that can anchor workout intent, progression context, and adherence tracking
+
+Required fields:
+- `program_block_id`
+- `source_name`
+- `source_record_id`
+- `provenance_record_id`
+- `conflict_status`
+- `start_date` or effective boundary
+
+Recommended v1 fields:
+- `block_name`
+- `goal`
+- `split_type`
+- `planned_frequency`
+- `adherence_status`
+
+### 10. `nutrition_daily`
 
 Purpose:
 - one day-level normalized nutrition artifact
@@ -273,7 +337,7 @@ Recommended v1 fields grounded in current `NutritionDaily` dataclass:
 - `food_log_completeness`
 - `top_meals_summary`
 
-### 8. `supplement_intake`
+### 11. `supplement_intake`
 
 Purpose:
 - one normalized supplement or medication-style intake event
@@ -294,7 +358,7 @@ Recommended v1 fields:
 - `notes`
 - `confidence_label`
 
-### 9. `lab_result`
+### 12. `lab_result`
 
 Purpose:
 - one normalized bloodwork or lab-result artifact
@@ -318,7 +382,7 @@ Recommended v1 fields:
 - `notes`
 - `confidence_label`
 
-### 10. `subjective_daily_input`
+### 13. `subjective_daily_input`
 
 Purpose:
 - one day-level normalized subjective or self-reported daily artifact
@@ -347,7 +411,7 @@ Manual subjective recovery v1 stable-ID rule:
 
 In this slice, any `perceived_recovery` value remains downstream-only derivation and is not a new canonical source field inside `subjective_daily_input`.
 
-### 11. `daily_health_snapshot`
+### 14. `daily_health_snapshot`
 
 Purpose:
 - one downstream day-level merged snapshot across normalized artifacts
@@ -414,10 +478,13 @@ For overlapping training evidence from Garmin and Strava:
 
 ## Resistance-training v1 boundary
 
-The schema freeze for resistance training is intentionally limited to:
+The schema freeze for resistance training is now centered on:
 - `training_session` as the session-level normalized output
-- `gym_exercise_set` as the set-level normalized output
-- stable linkage from sets to sessions
-- provenance and confidence preservation across manual and future imported sources
+- `exercise_catalog` as the canonical exercise-definition layer
+- `exercise_alias` as the source-to-canonical exercise bridge
+- `gym_set_record` as the set-level normalized output
+- `program_block` as the bounded programming-context layer
+- stable linkage from sets to sessions and exercises
+- provenance and confidence preservation across wger, manual fallback, and future imported sources
 
-A deeper exercise-identity or programming model is deferred.
+A deeper metric or programming model can still expand later, but these gym-domain objects are now the v1 center of gravity.

@@ -24,6 +24,7 @@ It freezes:
 - which canonical artifact families each source is expected to populate
 - which source families are deferred or placeholder-only
 - the platform-contract level expectation for resistance training
+- the preferred v1 connector trio: Garmin + wger + Cronometer
 
 This slice does not add source-specific implementation.
 
@@ -43,7 +44,10 @@ The downstream normalized artifact families for v1 are:
 - `sleep_daily`
 - `readiness_daily`
 - `training_session`
-- `gym_exercise_set`
+- `exercise_catalog`
+- `exercise_alias`
+- `gym_set_record`
+- `program_block`
 - `nutrition_daily`
 - `supplement_intake`
 - `lab_result`
@@ -54,15 +58,16 @@ The downstream normalized artifact families for v1 are:
 
 | Source family | v1 status | Entry lane | Why in scope now | Expected canonical artifact families |
 | --- | --- | --- | --- | --- |
-| Garmin | in_v1 | `pull` | already grounded in repo docs, data, and current adapter reality | `source_record`, `provenance_record`, `sleep_daily`, `readiness_daily`, `training_session`, `daily_health_snapshot` |
-| Strava | in_v1 | `pull` | required for cross-source training overlap contract, especially with Garmin | `source_record`, `provenance_record`, `training_session`, `daily_health_snapshot` |
-| nutrition system / imported food pipeline | in_v1 | `pull` | current repo already has nutrition domain surfaces and imported-food schema intent | `source_record`, `provenance_record`, `nutrition_daily`, `daily_health_snapshot` |
-| supplements | in_v1 | `merge_human_inputs` first, future `pull` allowed later | important health-domain input, but likely manual-first in current v1 reality | `source_record`, `provenance_record`, `supplement_intake`, `daily_health_snapshot` |
+| Garmin | in_v1 | `pull` | already grounded in repo docs, data, and current adapter reality, and now part of the frozen v1 trio | `source_record`, `provenance_record`, `sleep_daily`, `readiness_daily`, `training_session`, `daily_health_snapshot` |
+| wger | in_v1 | `pull` | preferred open, controllable gym-domain source system for resistance training in v1 | `source_record`, `provenance_record`, `training_session`, `gym_set_record`, `exercise_catalog`, `exercise_alias`, `program_block`, `daily_health_snapshot` |
+| Cronometer | in_v1 | `pull` | preferred nutrition and supplements source system in v1 via bounded export-first connector surfaces | `source_record`, `provenance_record`, `nutrition_daily`, `supplement_intake`, `daily_health_snapshot` |
+| Strava | in_v1 | `pull` | required for cross-source training overlap contract, especially with Garmin, but not in the frozen first trio | `source_record`, `provenance_record`, `training_session`, `daily_health_snapshot` |
+| supplements | in_v1 | `merge_human_inputs` first, future `pull` allowed later | still valid manual-first fallback even though Cronometer is the preferred source system | `source_record`, `provenance_record`, `supplement_intake`, `daily_health_snapshot` |
 | bloodwork | in_v1 | `merge_human_inputs` first, future `pull` allowed later | important health-domain input, currently best treated as manual-first | `source_record`, `provenance_record`, `lab_result`, `daily_health_snapshot` |
 | Oura | in_v1 | `pull` | high-value passive source family, must be covered by the platform contract before implementation | `source_record`, `provenance_record`, `sleep_daily`, `readiness_daily`, `training_session`, `daily_health_snapshot` |
-| resistance training | in_v1 | `merge_human_inputs` required initially | current repo already has manual gym logging and schema support that should be frozen at contract level | `source_record`, `provenance_record`, `training_session`, `gym_exercise_set`, `daily_health_snapshot` |
+| resistance training | in_v1 | `pull` via preferred `wger` source, manual fallback remains allowed | v1 gym domain should center on a controllable external source system while preserving source independence and fallback manual entry | `source_record`, `provenance_record`, `training_session`, `gym_set_record`, `exercise_catalog`, `exercise_alias`, `program_block`, `daily_health_snapshot` |
 | manual subjective recovery inputs | in_v1 | `merge_human_inputs` | already a real lane responsibility and needed for daily context | `source_record`, `provenance_record`, `subjective_daily_input`, `daily_health_snapshot` |
-| voice-note / manual human inputs | in_v1 | `merge_human_inputs` | already a canonical lane with voice-note intake and manual logging | `source_record`, `provenance_record`, `subjective_daily_input`, `supplement_intake`, `lab_result`, `gym_exercise_set`, `training_session`, `nutrition_daily`, `daily_health_snapshot` |
+| voice-note / manual human inputs | in_v1 | `merge_human_inputs` | already a canonical lane with voice-note intake and manual logging | `source_record`, `provenance_record`, `subjective_daily_input`, `supplement_intake`, `lab_result`, `gym_set_record`, `training_session`, `nutrition_daily`, `daily_health_snapshot` |
 
 ## Deferred but not required for this slice
 
@@ -84,10 +89,12 @@ A future source may be added later, but not without updating the source registry
 Resistance training is in v1 now.
 
 The contract-level freeze is:
-- the required initial entry lane is `merge_human_inputs`
-- the canonical normalized outputs are `training_session` and `gym_exercise_set`
-- manual logs and future imported lifting adapters must converge into those same canonical outputs
-- exercise identity, session grouping, and progression metrics are real design obligations, but their deeper modeling spec is deferred to a separate bounded slice
+- the preferred v1 source-system entry lane is `pull` through `wger`
+- manual logs remain a valid fallback and coexistence path, not the primary v1 assumption
+- the canonical normalized outputs are Health Lab owned objects, not wger-native objects
+- the gym-domain core now centers on `training_session`, `exercise_catalog`, `exercise_alias`, `gym_set_record`, and `program_block`
+- derived metrics such as volume, estimated 1RM, weekly hard sets, density, and adherence remain Health Lab downstream concerns
+- future imported lifting adapters must converge into the same canonical gym-domain objects
 
 ## Garmin and Strava overlap expectation
 
@@ -102,6 +109,6 @@ The platform contract therefore freezes that:
 
 This document does not:
 - implement any adapter
-- restructure the repo
+- restructure the repo beyond documenting the preferred source path shape
 - add new canonical buckets
 - require a full resistance-training deep spec in the same slice
