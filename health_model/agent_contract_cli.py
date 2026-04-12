@@ -719,6 +719,56 @@ def _contract_payload() -> dict[str, Any]:
                 },
                 "response_envelope": "writeback",
             },
+            "writeback.recommendation_resolution_transition": {
+                "module": "health_model.agent_memory_write_cli",
+                "command": "recommendation-resolution-transition",
+                "mode": "write",
+                "description": "Write one updated bounded recommendation-resolution-window locator by attaching one already-written same-day judgment to one targeted pending recommendation entry, and optionally emit the paired feedback-window locator.",
+                "implementation_status": "proof_complete",
+                "args": [
+                    {
+                        "name": "output_dir",
+                        "flag": "--output-dir",
+                        "type": "string",
+                        "required": True,
+                        "description": "Directory where dated and latest locator artifacts are written.",
+                    },
+                    {
+                        "name": "payload_json",
+                        "flag": "--payload-json",
+                        "type": "json_object",
+                        "required": False,
+                        "description": "Recommendation resolution transition payload JSON object string. Exactly one of --payload-json or --payload-path is required.",
+                    },
+                    {
+                        "name": "payload_path",
+                        "flag": "--payload-path",
+                        "type": "string",
+                        "required": False,
+                        "description": "Path to one recommendation resolution transition payload JSON file. Exactly one of --payload-json or --payload-path is required.",
+                    },
+                ],
+                "consumes": ["agent_recommendation", "recommendation_judgment", "recommendation_resolution_window_memory"],
+                "produces": ["recommendation_resolution_window_memory_dated", "recommendation_resolution_window_memory_latest", "recommendation_feedback_window_memory_dated", "recommendation_feedback_window_memory_latest"],
+                "payload_shape": {
+                    "required_fields": [
+                        "user_id",
+                        "start_date",
+                        "end_date",
+                        "recommendation_artifact_path",
+                        "recommendation_artifact_id",
+                        "judgment_artifact_path",
+                        "judgment_artifact_id",
+                        "resolution_window_memory_path",
+                        "written_at",
+                        "request_id",
+                        "requested_at"
+                    ],
+                    "optional_fields": ["feedback_window_memory_path"],
+                    "notes": "The payload must stay within one seven-day locator-scoped window, validate the supplied recommendation and judgment linkage, mutate only the targeted recommendation entry by attaching judgment_artifact_path, and fail closed without mutating written locator artifacts on rejection.",
+                },
+                "response_envelope": "writeback",
+            },
         },
         "accepted_enums": {
             "bundle_commands": ["init"],
@@ -739,7 +789,7 @@ def _contract_payload() -> dict[str, Any]:
             ],
             "recommendation_commands": ["create"],
             "recommendation_payload_inputs": ["payload_json", "payload_path"],
-            "writeback_operations": ["writeback.recommendation_judgment"],
+            "writeback_operations": ["writeback.recommendation_judgment", "writeback.recommendation_resolution_transition"],
             "writeback_payload_inputs": ["payload_json", "payload_path"],
             "judgment_labels": ["useful", "obvious", "wrong", "ignored"],
             "contract_commands": ["describe"],
@@ -771,6 +821,9 @@ def _contract_payload() -> dict[str, Any]:
             "action_taken",
             "why",
             "written_at",
+            "resolution_window_memory_path",
+            "feedback_window_memory_path",
+            "judgment_artifact_id",
         ],
         "artifact_types": {
             "consumed": [
@@ -817,6 +870,22 @@ def _contract_payload() -> dict[str, Any]:
                         "{output_dir}/recommendation_judgment_latest.json"
                     ],
                     "notes": "writeback.recommendation_judgment writes exactly one same-day recommendation judgment artifact grounded in one recommendation artifact and fails closed on scope mismatch, missing recommendation artifacts, invalid labels, invalid timestamps, or mismatched recommendation ids.",
+                },
+                {
+                    "artifact_type": "recommendation_resolution_window_memory",
+                    "paths": [
+                        "{output_dir}/recommendation_resolution_window_memory_{start_date}_{end_date}.json",
+                        "{output_dir}/recommendation_resolution_window_memory_latest.json"
+                    ],
+                    "notes": "writeback.recommendation_resolution_transition writes one updated locator artifact for the same bounded seven-day window and mutates only the targeted recommendation entry by attaching the supplied judgment_artifact_path.",
+                },
+                {
+                    "artifact_type": "recommendation_feedback_window_memory",
+                    "paths": [
+                        "{output_dir}/recommendation_feedback_window_memory_{start_date}_{end_date}.json",
+                        "{output_dir}/recommendation_feedback_window_memory_latest.json"
+                    ],
+                    "notes": "writeback.recommendation_resolution_transition may also emit a paired feedback-window locator for the same bounded window when feedback_window_memory_path is supplied.",
                 }
             ],
         },
@@ -828,6 +897,10 @@ def _contract_payload() -> dict[str, Any]:
             "latest_recommendation_artifact": "{output_dir}/agent_recommendation_latest.json",
             "dated_recommendation_judgment_artifact": "{output_dir}/recommendation_judgment_{date}.json",
             "latest_recommendation_judgment_artifact": "{output_dir}/recommendation_judgment_latest.json",
+            "dated_recommendation_resolution_window_memory_artifact": "{output_dir}/recommendation_resolution_window_memory_{start_date}_{end_date}.json",
+            "latest_recommendation_resolution_window_memory_artifact": "{output_dir}/recommendation_resolution_window_memory_latest.json",
+            "dated_recommendation_feedback_window_memory_artifact": "{output_dir}/recommendation_feedback_window_memory_{start_date}_{end_date}.json",
+            "latest_recommendation_feedback_window_memory_artifact": "{output_dir}/recommendation_feedback_window_memory_latest.json",
         },
         "response_envelopes": {
             "bootstrap.init": {
@@ -899,6 +972,7 @@ def _contract_payload() -> dict[str, Any]:
             "recommendation_feedback_window_retrieval_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-recommendation-feedback-window/",
             "recommendation_resolution_window_retrieval_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window/",
             "recommendation_creation_with_resolution_window_grounding_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-recommendation-creation-with-resolution-window-grounding/",
+            "recommendation_resolution_transition_writeback_proof_bundle": "artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-transition-writeback/",
         },
     }
 

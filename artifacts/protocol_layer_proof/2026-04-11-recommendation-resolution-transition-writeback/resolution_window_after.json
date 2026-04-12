@@ -1,0 +1,181 @@
+{
+  "artifact_path": "/Users/myapplemini01/Projects/garmin_lab/artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-transition-writeback/recommendation_resolution_window_memory_2026-04-04_2026-04-10.json",
+  "error": null,
+  "ok": true,
+  "retrieval": {
+    "conflicts": [],
+    "coverage_status": "partial",
+    "evidence": {
+      "days_requested": 7,
+      "days_with_recommendations": 3,
+      "judged_items": 3,
+      "pending_judgment_items": 0,
+      "per_recommendation": [
+        {
+          "coverage_status": "present",
+          "date": "2026-04-04",
+          "judgment": {
+            "action_taken": "Acted on the recommendation for 2026-04-04.",
+            "judgment_id": "judgment_window_20260404_01",
+            "judgment_label": "useful",
+            "recommendation_artifact_id": "rec_window_20260404_hydration_01",
+            "recommendation_artifact_path": "artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window-selective-transition/agent_recommendation_2026-04-04.json",
+            "recommendation_evidence_refs": [
+              "evidence_20260404_01"
+            ],
+            "request_id": "req_writeback_window_20260404",
+            "requested_at": "2026-04-04T20:14:00+01:00",
+            "why": "The recommendation was actionable on 2026-04-04.",
+            "written_at": "2026-04-04T20:15:00+01:00"
+          },
+          "linkage": {
+            "judgment_recommendation_artifact_id": "rec_window_20260404_hydration_01",
+            "judgment_recommendation_artifact_path": "artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window-selective-transition/agent_recommendation_2026-04-04.json",
+            "recommendation_artifact_id": "rec_window_20260404_hydration_01",
+            "supplied_recommendation_artifact_path": "artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window-selective-transition/agent_recommendation_2026-04-04.json"
+          },
+          "recommendation": {
+            "confidence_score": 0.8,
+            "context_artifact_id": "agent_context_user_dom_2026-04-04",
+            "context_artifact_path": "data/health/agent_readable_daily_context_2026-04-04.json",
+            "evidence_refs": [
+              "evidence_20260404_01"
+            ],
+            "rationale": "Bounded proof recommendation for 2026-04-04.",
+            "recommendation_id": "rec_window_20260404_hydration_01",
+            "summary": "Early hydration and an easier training day."
+          },
+          "resolution_status": "judged"
+        },
+        {
+          "coverage_status": "present",
+          "date": "2026-04-07",
+          "judgment": {
+            "action_taken": "Took the lighter walking-focused day and kept the session to mobility and easy movement.",
+            "judgment_id": "judgment_window_selective_transition_20260407_01",
+            "judgment_label": "useful",
+            "recommendation_artifact_id": "rec_window_20260407_walk_01",
+            "recommendation_artifact_path": "artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window-selective-transition/agent_recommendation_2026-04-07.json",
+            "recommendation_evidence_refs": [
+              "evidence_20260407_01"
+            ],
+            "request_id": "req_window_selective_transition_writeback_success_20260407_01",
+            "requested_at": "2026-04-07T20:14:00+01:00",
+            "why": "The pending recommendation matched the low-readiness context without changing the already-judged neighboring days.",
+            "written_at": "2026-04-07T20:15:00+01:00"
+          },
+          "linkage": {
+            "judgment_recommendation_artifact_id": "rec_window_20260407_walk_01",
+            "judgment_recommendation_artifact_path": "artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window-selective-transition/agent_recommendation_2026-04-07.json",
+            "recommendation_artifact_id": "rec_window_20260407_walk_01",
+            "supplied_recommendation_artifact_path": "artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window-selective-transition/agent_recommendation_2026-04-07.json"
+          },
+          "recommendation": {
+            "confidence_score": 0.8,
+            "context_artifact_id": "agent_context_user_dom_2026-04-07",
+            "context_artifact_path": "data/health/agent_readable_daily_context_2026-04-07.json",
+            "evidence_refs": [
+              "evidence_20260407_01"
+            ],
+            "rationale": "Bounded proof recommendation for 2026-04-07.",
+            "recommendation_id": "rec_window_20260407_walk_01",
+            "summary": "Choose walking and mobility over intensity."
+          },
+          "resolution_status": "judged"
+        },
+        {
+          "coverage_status": "present",
+          "date": "2026-04-10",
+          "judgment": {
+            "action_taken": "Acted on the recommendation for 2026-04-10.",
+            "judgment_id": "judgment_window_20260410_01",
+            "judgment_label": "useful",
+            "recommendation_artifact_id": "rec_window_20260410_recovery_01",
+            "recommendation_artifact_path": "artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window-selective-transition/agent_recommendation_2026-04-10.json",
+            "recommendation_evidence_refs": [
+              "evidence_20260410_01"
+            ],
+            "request_id": "req_writeback_window_20260410",
+            "requested_at": "2026-04-10T20:14:00+01:00",
+            "why": "The recommendation was actionable on 2026-04-10.",
+            "written_at": "2026-04-10T20:15:00+01:00"
+          },
+          "linkage": {
+            "judgment_recommendation_artifact_id": "rec_window_20260410_recovery_01",
+            "judgment_recommendation_artifact_path": "artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window-selective-transition/agent_recommendation_2026-04-10.json",
+            "recommendation_artifact_id": "rec_window_20260410_recovery_01",
+            "supplied_recommendation_artifact_path": "artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window-selective-transition/agent_recommendation_2026-04-10.json"
+          },
+          "recommendation": {
+            "confidence_score": 0.8,
+            "context_artifact_id": "agent_context_user_dom_2026-04-10",
+            "context_artifact_path": "data/health/agent_readable_daily_context_2026-04-10.json",
+            "evidence_refs": [
+              "evidence_20260410_01"
+            ],
+            "rationale": "Bounded proof recommendation for 2026-04-10.",
+            "recommendation_id": "rec_window_20260410_recovery_01",
+            "summary": "Keep the evening light and prioritize recovery basics."
+          },
+          "resolution_status": "judged"
+        }
+      ],
+      "recommendation_items": 3
+    },
+    "generated_from": {
+      "accepted_recommendations": [
+        {
+          "date": "2026-04-04",
+          "judgment_artifact_path": "artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window-selective-transition/recommendation_judgment_2026-04-04.json",
+          "recommendation_artifact_path": "artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window-selective-transition/agent_recommendation_2026-04-04.json"
+        },
+        {
+          "date": "2026-04-07",
+          "judgment_artifact_path": "/Users/myapplemini01/Projects/garmin_lab/artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window-selective-transition/recommendation_judgment_2026-04-07.json",
+          "recommendation_artifact_path": "artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window-selective-transition/agent_recommendation_2026-04-07.json"
+        },
+        {
+          "date": "2026-04-10",
+          "judgment_artifact_path": "artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window-selective-transition/recommendation_judgment_2026-04-10.json",
+          "recommendation_artifact_path": "artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window-selective-transition/agent_recommendation_2026-04-10.json"
+        }
+      ],
+      "memory_locator": "/Users/myapplemini01/Projects/garmin_lab/artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-transition-writeback/recommendation_resolution_window_memory_2026-04-04_2026-04-10.json"
+    },
+    "important_gaps": [
+      {
+        "code": "no_recommendation",
+        "date": "2026-04-05"
+      },
+      {
+        "code": "no_recommendation",
+        "date": "2026-04-06"
+      },
+      {
+        "code": "no_recommendation",
+        "date": "2026-04-08"
+      },
+      {
+        "code": "no_recommendation",
+        "date": "2026-04-09"
+      }
+    ],
+    "operation": "retrieve.recommendation_resolution_window",
+    "scope": {
+      "end_date": "2026-04-10",
+      "start_date": "2026-04-04",
+      "timezone": null,
+      "user_id": "user_dom"
+    },
+    "unsupported_claims": []
+  },
+  "validation": {
+    "is_valid": true,
+    "request_echo": {
+      "request_id": "req_resolution_after_2026_04_11",
+      "requested_at": "2026-04-11T14:32:00+01:00"
+    },
+    "schema_issues": [],
+    "semantic_issues": []
+  }
+}

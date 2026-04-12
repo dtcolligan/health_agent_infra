@@ -1,0 +1,20 @@
+{
+  "date": "2026-04-11",
+  "deterministic_replay_commands": [
+    "python3 scripts/run_recommendation_resolution_transition_writeback_proof.py",
+    "python3 -m health_model.agent_memory_write_cli recommendation-resolution-transition --output-dir artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-transition-writeback --payload-path artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-transition-writeback/writeback_success_request.json"
+  ],
+  "deterministic_replay_tests": [
+    "python3 -m unittest tests.test_agent_memory_write_cli tests.test_agent_contract_cli"
+  ],
+  "frozen_command": "python3 scripts/run_recommendation_resolution_transition_writeback_proof.py",
+  "slice": "protocol_proof.recommendation_resolution_transition_writeback",
+  "smoke_checks": [
+    "pre-write window shows the 2026-04-07 target as pending_judgment",
+    "successful transition returns ok=true and explicit written locator paths",
+    "post-write resolution shows only the target item moving to judged",
+    "post-write feedback exposes the linked recommendation plus judgment pair for 2026-04-07",
+    "neighbor judged entries remain field-stable and no-recommendation gaps remain unchanged",
+    "rejected transition fails closed and does not mutate written locator artifacts"
+  ]
+}

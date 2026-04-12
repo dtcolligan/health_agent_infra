@@ -1,0 +1,24 @@
+{
+  "accepted_feedback_pairs": [
+    {
+      "date": "2026-04-04",
+      "judgment_artifact_path": "artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window-selective-transition/recommendation_judgment_2026-04-04.json",
+      "recommendation_artifact_path": "artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window-selective-transition/agent_recommendation_2026-04-04.json"
+    },
+    {
+      "date": "2026-04-07",
+      "judgment_artifact_path": "artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window-selective-transition/recommendation_judgment_2026-04-07.json",
+      "recommendation_artifact_path": "artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window-selective-transition/agent_recommendation_2026-04-07.json"
+    },
+    {
+      "date": "2026-04-10",
+      "judgment_artifact_path": "artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window-selective-transition/recommendation_judgment_2026-04-10.json",
+      "recommendation_artifact_path": "artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window-selective-transition/agent_recommendation_2026-04-10.json"
+    }
+  ],
+  "artifact_type": "recommendation_feedback_window_memory",
+  "end_date": "2026-04-10",
+  "operation": "retrieve.recommendation_feedback_window",
+  "start_date": "2026-04-04",
+  "user_id": "user_dom"
+}

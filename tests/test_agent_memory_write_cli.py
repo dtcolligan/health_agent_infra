@@ -10,6 +10,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 RECOMMENDATION_FIXTURE = REPO_ROOT / "data" / "health" / "agent_recommendation_2026-04-10.json"
+TRANSITION_FIXTURE_ROOT = REPO_ROOT / "artifacts" / "protocol_layer_proof" / "2026-04-11-recommendation-resolution-window-selective-transition"
 
 
 class AgentMemoryWriteCliIntegrationTest(unittest.TestCase):
@@ -160,6 +161,86 @@ class AgentMemoryWriteCliIntegrationTest(unittest.TestCase):
             self.assertEqual(result["error"]["code"], "recommendation_artifact_id_mismatch")
             self.assertEqual(dated_path.read_bytes(), original_bytes)
             self.assertEqual(latest_path.read_bytes(), original_bytes)
+
+    def test_recommendation_resolution_transition_writes_updated_resolution_and_feedback_locators(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_dir = Path(temp_dir) / "out"
+            payload = {
+                "user_id": "user_dom",
+                "start_date": "2026-04-04",
+                "end_date": "2026-04-10",
+                "recommendation_artifact_path": str(TRANSITION_FIXTURE_ROOT / "agent_recommendation_2026-04-07.json"),
+                "recommendation_artifact_id": "rec_window_20260407_walk_01",
+                "judgment_artifact_path": str(TRANSITION_FIXTURE_ROOT / "recommendation_judgment_2026-04-07.json"),
+                "judgment_artifact_id": "judgment_window_selective_transition_20260407_01",
+                "resolution_window_memory_path": str(TRANSITION_FIXTURE_ROOT / "recommendation_resolution_window_before_memory.json"),
+                "feedback_window_memory_path": str(TRANSITION_FIXTURE_ROOT / "recommendation_feedback_window_after_memory.json"),
+                "written_at": "2026-04-11T14:31:00+01:00",
+                "request_id": "req_transition_test_success",
+                "requested_at": "2026-04-11T14:30:00+01:00",
+            }
+
+            result = self._run_cli([
+                "recommendation-resolution-transition",
+                "--output-dir", str(output_dir),
+                "--payload-json", json.dumps(payload),
+            ])
+
+            self.assertTrue(result["ok"], msg=result)
+            resolution_path = Path(result["artifact_path"])
+            resolution_latest = Path(result["latest_artifact_path"])
+            self.assertTrue(resolution_path.exists())
+            self.assertEqual(resolution_path.read_bytes(), resolution_latest.read_bytes())
+            locator = json.loads(resolution_path.read_text())
+            target_entry = next(entry for entry in locator["accepted_recommendations"] if entry["date"] == "2026-04-07")
+            self.assertEqual(Path(target_entry["judgment_artifact_path"]).resolve(), (TRANSITION_FIXTURE_ROOT / "recommendation_judgment_2026-04-07.json").resolve())
+            self.assertFalse(any(entry.get("date") == "2026-04-04" and entry.get("judgment_artifact_path") is None for entry in locator["accepted_recommendations"]))
+
+            feedback_written = result["writeback"]["written_locator_artifacts"]["feedback_window"]
+            self.assertIsNotNone(feedback_written)
+            feedback_locator = json.loads(Path(feedback_written["artifact_path"]).read_text())
+            self.assertEqual(len(feedback_locator["accepted_feedback_pairs"]), 3)
+            self.assertTrue(any(entry["date"] == "2026-04-07" for entry in feedback_locator["accepted_feedback_pairs"]))
+
+    def test_recommendation_resolution_transition_rejects_duplicate_target_without_mutation(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            locator_path = Path(temp_dir) / "recommendation_resolution_window_memory.json"
+            locator_payload = json.loads((TRANSITION_FIXTURE_ROOT / "recommendation_resolution_window_before_memory.json").read_text())
+            locator_payload["accepted_recommendations"].append(dict(locator_payload["accepted_recommendations"][1]))
+            locator_path.write_text(json.dumps(locator_payload, indent=2, sort_keys=True) + "\n")
+
+            output_dir = Path(temp_dir) / "out"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            existing_dated = output_dir / "recommendation_resolution_window_memory_2026-04-04_2026-04-10.json"
+            existing_latest = output_dir / "recommendation_resolution_window_memory_latest.json"
+            original = b'{"keep":"original"}\n'
+            existing_dated.write_bytes(original)
+            existing_latest.write_bytes(original)
+
+            payload = {
+                "user_id": "user_dom",
+                "start_date": "2026-04-04",
+                "end_date": "2026-04-10",
+                "recommendation_artifact_path": str(TRANSITION_FIXTURE_ROOT / "agent_recommendation_2026-04-07.json"),
+                "recommendation_artifact_id": "rec_window_20260407_walk_01",
+                "judgment_artifact_path": str(TRANSITION_FIXTURE_ROOT / "recommendation_judgment_2026-04-07.json"),
+                "judgment_artifact_id": "judgment_window_selective_transition_20260407_01",
+                "resolution_window_memory_path": str(locator_path),
+                "written_at": "2026-04-11T14:31:00+01:00",
+                "request_id": "req_transition_test_reject",
+                "requested_at": "2026-04-11T14:30:00+01:00",
+            }
+
+            result = self._run_cli([
+                "recommendation-resolution-transition",
+                "--output-dir", str(output_dir),
+                "--payload-json", json.dumps(payload),
+            ], expected_returncode=1)
+
+            self.assertFalse(result["ok"])
+            self.assertEqual(result["error"]["code"], "duplicate_recommendation_entry")
+            self.assertEqual(existing_dated.read_bytes(), original)
+            self.assertEqual(existing_latest.read_bytes(), original)
 
     def _run_cli(self, args: list[str], *, expected_returncode: int = 0) -> dict[str, object]:
         completed = subprocess.run(

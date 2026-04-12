@@ -1,0 +1,17 @@
+{
+  "action_taken": "Acted on the recommendation for 2026-04-10.",
+  "artifact_type": "recommendation_judgment",
+  "date": "2026-04-10",
+  "judgment_id": "judgment_window_20260410_01",
+  "judgment_label": "useful",
+  "recommendation_artifact_id": "rec_window_20260410_recovery_01",
+  "recommendation_artifact_path": "artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window-selective-transition/agent_recommendation_2026-04-10.json",
+  "recommendation_evidence_refs": [
+    "evidence_20260410_01"
+  ],
+  "request_id": "req_writeback_window_20260410",
+  "requested_at": "2026-04-10T20:14:00+01:00",
+  "user_id": "user_dom",
+  "why": "The recommendation was actionable on 2026-04-10.",
+  "written_at": "2026-04-10T20:15:00+01:00"
+}

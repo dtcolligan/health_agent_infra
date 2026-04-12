@@ -1,0 +1,44 @@
+{
+  "artifact_path": "/Users/myapplemini01/Projects/garmin_lab/artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-transition-writeback/recommendation_resolution_window_memory_2026-04-04_2026-04-10.json",
+  "error": null,
+  "latest_artifact_path": "/Users/myapplemini01/Projects/garmin_lab/artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-transition-writeback/recommendation_resolution_window_memory_latest.json",
+  "ok": true,
+  "validation": {
+    "is_valid": true,
+    "request_echo": {
+      "request_id": "req_resolution_transition_writeback_success_2026_04_11",
+      "requested_at": "2026-04-11T14:30:00+01:00"
+    },
+    "schema_issues": [],
+    "semantic_issues": []
+  },
+  "writeback": {
+    "end_date": "2026-04-10",
+    "feedback_window_memory_path": "/Users/myapplemini01/Projects/garmin_lab/artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window-selective-transition/recommendation_feedback_window_after_memory.json",
+    "judgment_artifact_id": "judgment_window_selective_transition_20260407_01",
+    "judgment_artifact_path": "/Users/myapplemini01/Projects/garmin_lab/artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window-selective-transition/recommendation_judgment_2026-04-07.json",
+    "operation": "writeback.recommendation_resolution_transition",
+    "recommendation_artifact_id": "rec_window_20260407_walk_01",
+    "recommendation_artifact_path": "/Users/myapplemini01/Projects/garmin_lab/artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-window-selective-transition/agent_recommendation_2026-04-07.json",
+    "request_id": "req_resolution_transition_writeback_success_2026_04_11",
+    "requested_at": "2026-04-11T14:30:00+01:00",
+    "resolution_window_memory_path": "/Users/myapplemini01/Projects/garmin_lab/artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-transition-writeback/recommendation_resolution_window_before_memory.json",
+    "start_date": "2026-04-04",
+    "transition_target": {
+      "date": "2026-04-07",
+      "resolution_status": "judged"
+    },
+    "user_id": "user_dom",
+    "written_at": "2026-04-11T14:31:00+01:00",
+    "written_locator_artifacts": {
+      "feedback_window": {
+        "artifact_path": "/Users/myapplemini01/Projects/garmin_lab/artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-transition-writeback/recommendation_feedback_window_memory_2026-04-04_2026-04-10.json",
+        "latest_artifact_path": "/Users/myapplemini01/Projects/garmin_lab/artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-transition-writeback/recommendation_feedback_window_memory_latest.json"
+      },
+      "resolution_window": {
+        "artifact_path": "/Users/myapplemini01/Projects/garmin_lab/artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-transition-writeback/recommendation_resolution_window_memory_2026-04-04_2026-04-10.json",
+        "latest_artifact_path": "/Users/myapplemini01/Projects/garmin_lab/artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-transition-writeback/recommendation_resolution_window_memory_latest.json"
+      }
+    }
+  }
+}

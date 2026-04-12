@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from health_model import agent_retrieval_cli
 from health_model.retrieval_request_metadata import validate_and_echo_request_metadata
 
 
@@ -28,6 +29,20 @@ REQUIRED_PAYLOAD_FIELDS = {
     "requested_at",
 }
 OPTIONAL_PAYLOAD_FIELDS = {"caveat", "time_cost_note", "friction_points", "gym_note"}
+RESOLUTION_TRANSITION_REQUIRED_PAYLOAD_FIELDS = {
+    "user_id",
+    "start_date",
+    "end_date",
+    "recommendation_artifact_path",
+    "recommendation_artifact_id",
+    "judgment_artifact_path",
+    "judgment_artifact_id",
+    "resolution_window_memory_path",
+    "written_at",
+    "request_id",
+    "requested_at",
+}
+RESOLUTION_TRANSITION_OPTIONAL_PAYLOAD_FIELDS = {"feedback_window_memory_path"}
 
 
 class CliParseError(ValueError):
@@ -40,7 +55,7 @@ class JsonArgumentParser(argparse.ArgumentParser):
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = JsonArgumentParser(description="Write one validated same-day recommendation judgment artifact.")
+    parser = JsonArgumentParser(description="Write bounded Health Lab recommendation writeback artifacts.")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     writeback_parser = subparsers.add_parser("recommendation-judgment")
@@ -48,6 +63,12 @@ def build_parser() -> argparse.ArgumentParser:
     payload_group = writeback_parser.add_mutually_exclusive_group(required=True)
     payload_group.add_argument("--payload-json")
     payload_group.add_argument("--payload-path")
+
+    transition_parser = subparsers.add_parser("recommendation-resolution-transition")
+    transition_parser.add_argument("--output-dir", required=True)
+    transition_payload_group = transition_parser.add_mutually_exclusive_group(required=True)
+    transition_payload_group.add_argument("--payload-json")
+    transition_payload_group.add_argument("--payload-path")
 
     return parser
 
@@ -81,9 +102,14 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def run_command(args: argparse.Namespace) -> dict[str, Any]:
-    if args.command != "recommendation-judgment":
-        raise ValueError(f"Unsupported command: {args.command}")
+    if args.command == "recommendation-judgment":
+        return _run_recommendation_judgment(args)
+    if args.command == "recommendation-resolution-transition":
+        return _run_recommendation_resolution_transition(args)
+    raise ValueError(f"Unsupported command: {args.command}")
 
+
+def _run_recommendation_judgment(args: argparse.Namespace) -> dict[str, Any]:
     payload_result = _load_payload(args)
     if not payload_result["ok"]:
         return payload_result
@@ -161,6 +187,181 @@ def run_command(args: argparse.Namespace) -> dict[str, Any]:
     }
 
 
+def _run_recommendation_resolution_transition(args: argparse.Namespace) -> dict[str, Any]:
+    payload_result = _load_payload(args)
+    if not payload_result["ok"]:
+        return payload_result
+
+    payload = payload_result["payload"]
+    validation_issues = _resolution_transition_payload_issues(payload)
+    if validation_issues:
+        return _validation_error(
+            artifact_path=None,
+            latest_artifact_path=None,
+            code=validation_issues[0]["code"],
+            message="Recommendation resolution transition payload failed validation.",
+            semantic_issues=validation_issues,
+            details={"payload_source": payload_result["payload_source"]},
+        )
+
+    request_validation, request_echo = validate_and_echo_request_metadata(
+        request_id=payload["request_id"],
+        requested_at=payload["requested_at"],
+    )
+    if not request_validation["is_valid"]:
+        return _validation_error(
+            artifact_path=None,
+            latest_artifact_path=None,
+            code=request_validation["semantic_issues"][0]["code"],
+            message="Request metadata failed validation.",
+            semantic_issues=request_validation["semantic_issues"],
+            details={"payload_source": payload_result["payload_source"], "request_echo": request_echo},
+            request_echo=request_echo,
+        )
+
+    recommendation_path = Path(str(payload["recommendation_artifact_path"]))
+    recommendation_response = _read_artifact_json(recommendation_path, missing_code="recommendation_artifact_not_found", invalid_code="invalid_recommendation_artifact_json")
+    if not recommendation_response["ok"]:
+        return _with_request_echo(recommendation_response, request_echo)
+    recommendation = recommendation_response["artifact"]
+    recommendation_date = recommendation.get("date")
+    recommendation_issues = agent_retrieval_cli._recommendation_semantic_issues(raw=recommendation, user_id=payload["user_id"], date=recommendation_date)
+    if recommendation_issues:
+        return _validation_error(
+            artifact_path=None,
+            latest_artifact_path=None,
+            code=recommendation_issues[0]["code"],
+            message="Referenced recommendation artifact failed validation.",
+            semantic_issues=recommendation_issues,
+            details={"recommendation_artifact_path": str(recommendation_path)},
+            request_echo=request_echo,
+        )
+    if recommendation.get("recommendation_id") != payload["recommendation_artifact_id"]:
+        return _validation_error(
+            artifact_path=None,
+            latest_artifact_path=None,
+            code="recommendation_artifact_id_mismatch",
+            message="Referenced recommendation artifact id did not match payload.",
+            semantic_issues=[_issue(code="recommendation_artifact_id_mismatch", message="Referenced recommendation artifact id did not match payload.", path="recommendation_artifact_id")],
+            details={"recommendation_artifact_path": str(recommendation_path)},
+            request_echo=request_echo,
+        )
+
+    judgment_path = Path(str(payload["judgment_artifact_path"]))
+    judgment_response = agent_retrieval_cli._read_recommendation_judgment_artifact(
+        path=judgment_path,
+        user_id=payload["user_id"],
+        date=str(recommendation_date),
+    )
+    if not judgment_response["ok"]:
+        return _with_request_echo(judgment_response, request_echo)
+    judgment = judgment_response["artifact"]
+
+    linkage_issues = agent_retrieval_cli._recommendation_feedback_linkage_issues(
+        recommendation=recommendation,
+        judgment=judgment,
+        supplied_recommendation_artifact_path=str(recommendation_path),
+    )
+    if judgment.get("judgment_id") != payload["judgment_artifact_id"]:
+        linkage_issues.append(
+            _issue(code="judgment_artifact_id_mismatch", message="Referenced judgment artifact id did not match payload.", path="judgment_artifact_id")
+        )
+    if linkage_issues:
+        return _validation_error(
+            artifact_path=None,
+            latest_artifact_path=None,
+            code=linkage_issues[0]["code"],
+            message="Recommendation resolution transition linkage validation failed.",
+            semantic_issues=linkage_issues,
+            details={
+                "recommendation_artifact_path": str(recommendation_path),
+                "judgment_artifact_path": str(judgment_path),
+            },
+            request_echo=request_echo,
+        )
+
+    locator_path = Path(str(payload["resolution_window_memory_path"]))
+    locator_result = _load_resolution_window_locator(
+        path=locator_path,
+        user_id=payload["user_id"],
+        start_date=payload["start_date"],
+        end_date=payload["end_date"],
+    )
+    if not locator_result["ok"]:
+        return _with_request_echo(locator_result, request_echo)
+
+    transition_result = _apply_resolution_transition(
+        locator_payload=locator_result["locator"],
+        recommendation_path=recommendation_path,
+        judgment_path=judgment_path,
+    )
+    if not transition_result["ok"]:
+        return _with_request_echo(transition_result, request_echo)
+
+    output_dir = Path(args.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    dated_path = output_dir / f"recommendation_resolution_window_memory_{payload['start_date']}_{payload['end_date']}.json"
+    latest_path = output_dir / "recommendation_resolution_window_memory_latest.json"
+    serialized_locator = json.dumps(transition_result["locator"], indent=2, sort_keys=True) + "\n"
+    _write_artifact_pair_atomically(serialized=serialized_locator, dated_path=dated_path, latest_path=latest_path)
+
+    feedback_written_paths = None
+    feedback_memory_path = payload.get("feedback_window_memory_path")
+    if feedback_memory_path:
+        feedback_result = _build_feedback_window_locator(
+            path=Path(str(feedback_memory_path)),
+            user_id=payload["user_id"],
+            start_date=payload["start_date"],
+            end_date=payload["end_date"],
+            recommendation_path=recommendation_path,
+            judgment_path=judgment_path,
+        )
+        if not feedback_result["ok"]:
+            return _with_request_echo(feedback_result, request_echo)
+        feedback_dated_path = output_dir / f"recommendation_feedback_window_memory_{payload['start_date']}_{payload['end_date']}.json"
+        feedback_latest_path = output_dir / "recommendation_feedback_window_memory_latest.json"
+        serialized_feedback = json.dumps(feedback_result["locator"], indent=2, sort_keys=True) + "\n"
+        _write_artifact_pair_atomically(serialized=serialized_feedback, dated_path=feedback_dated_path, latest_path=feedback_latest_path)
+        feedback_written_paths = {
+            "artifact_path": str(feedback_dated_path),
+            "latest_artifact_path": str(feedback_latest_path),
+        }
+
+    return {
+        "ok": True,
+        "artifact_path": str(dated_path),
+        "latest_artifact_path": str(latest_path),
+        "writeback": {
+            "operation": "writeback.recommendation_resolution_transition",
+            "user_id": payload["user_id"],
+            "start_date": payload["start_date"],
+            "end_date": payload["end_date"],
+            "recommendation_artifact_path": str(recommendation_path),
+            "recommendation_artifact_id": payload["recommendation_artifact_id"],
+            "judgment_artifact_path": str(judgment_path),
+            "judgment_artifact_id": payload["judgment_artifact_id"],
+            "resolution_window_memory_path": str(locator_path),
+            "feedback_window_memory_path": str(feedback_memory_path) if feedback_memory_path else None,
+            "written_at": payload["written_at"],
+            "request_id": payload["request_id"],
+            "requested_at": payload["requested_at"],
+            "written_locator_artifacts": {
+                "resolution_window": {
+                    "artifact_path": str(dated_path),
+                    "latest_artifact_path": str(latest_path),
+                },
+                "feedback_window": feedback_written_paths,
+            },
+            "transition_target": {
+                "date": transition_result["target_date"],
+                "resolution_status": "judged",
+            },
+        },
+        "validation": {"is_valid": True, "schema_issues": [], "semantic_issues": [], "request_echo": request_echo},
+        "error": None,
+    }
+
+
 def _load_payload(args: argparse.Namespace) -> dict[str, Any]:
     payload_source = "payload_json"
     raw_payload = args.payload_json
@@ -173,8 +374,8 @@ def _load_payload(args: argparse.Namespace) -> dict[str, Any]:
                 artifact_path=None,
                 latest_artifact_path=None,
                 code="payload_not_found",
-                message="Recommendation judgment payload file does not exist.",
-                semantic_issues=[_issue(code="payload_not_found", message="Recommendation judgment payload file does not exist.", path="payload_path")],
+                message="Payload file does not exist.",
+                semantic_issues=[_issue(code="payload_not_found", message="Payload file does not exist.", path="payload_path")],
                 details={"payload_path": str(payload_path)},
             )
         raw_payload = payload_path.read_text()
@@ -186,7 +387,7 @@ def _load_payload(args: argparse.Namespace) -> dict[str, Any]:
             artifact_path=None,
             latest_artifact_path=None,
             code="invalid_payload_json",
-            message="Recommendation judgment payload is not valid JSON.",
+            message="Payload is not valid JSON.",
             semantic_issues=[_issue(code="invalid_payload_json", message=str(exc), path=payload_source)],
             details={"payload_source": payload_source},
         )
@@ -196,8 +397,8 @@ def _load_payload(args: argparse.Namespace) -> dict[str, Any]:
             artifact_path=None,
             latest_artifact_path=None,
             code="invalid_payload_shape",
-            message="Recommendation judgment payload JSON must be an object.",
-            semantic_issues=[_issue(code="invalid_payload_shape", message="Recommendation judgment payload JSON must be an object.", path="$")],
+            message="Payload JSON must be an object.",
+            semantic_issues=[_issue(code="invalid_payload_shape", message="Payload JSON must be an object.", path="$")],
             details={"payload_source": payload_source},
         )
 
@@ -252,6 +453,38 @@ def _payload_semantic_issues(payload: dict[str, Any]) -> list[dict[str, str]]:
             for index, value in enumerate(friction_points):
                 if not isinstance(value, str) or not value.strip():
                     issues.append(_issue(code="invalid_friction_point", message="Each friction point must be a non-empty string.", path=f"friction_points[{index}]"))
+
+    return issues
+
+
+def _resolution_transition_payload_issues(payload: dict[str, Any]) -> list[dict[str, str]]:
+    issues: list[dict[str, str]] = []
+
+    allowed_fields = RESOLUTION_TRANSITION_REQUIRED_PAYLOAD_FIELDS | RESOLUTION_TRANSITION_OPTIONAL_PAYLOAD_FIELDS
+    extra_fields = sorted(set(payload.keys()) - allowed_fields)
+    for field in extra_fields:
+        issues.append(_issue(code="unexpected_payload_field", message="Unexpected payload field.", path=field))
+
+    missing_fields = sorted(RESOLUTION_TRANSITION_REQUIRED_PAYLOAD_FIELDS - set(payload.keys()))
+    for field in missing_fields:
+        issues.append(_issue(code="missing_required_field", message="Missing required field.", path=field))
+
+    if issues:
+        return issues
+
+    for field in sorted(RESOLUTION_TRANSITION_REQUIRED_PAYLOAD_FIELDS):
+        if not isinstance(payload[field], str) or not payload[field].strip():
+            issues.append(_issue(code="invalid_string_field", message="Field must be a non-empty string.", path=field))
+
+    if "feedback_window_memory_path" in payload and (not isinstance(payload["feedback_window_memory_path"], str) or not payload["feedback_window_memory_path"].strip()):
+        issues.append(_issue(code="invalid_string_field", message="Field must be a non-empty string when provided.", path="feedback_window_memory_path"))
+
+    if agent_retrieval_cli.agent_context_cli._parse_iso_date(payload["start_date"]) is None:
+        issues.append(_issue(code="invalid_start_date", message="start_date must be YYYY-MM-DD.", path="start_date"))
+    if agent_retrieval_cli.agent_context_cli._parse_iso_date(payload["end_date"]) is None:
+        issues.append(_issue(code="invalid_end_date", message="end_date must be YYYY-MM-DD.", path="end_date"))
+    if not _is_iso_datetime_with_timezone(payload["written_at"]):
+        issues.append(_issue(code="invalid_written_at", message="written_at must be an ISO 8601 datetime string with timezone information.", path="written_at"))
 
     return issues
 
@@ -343,6 +576,180 @@ def _build_judgment(*, payload: dict[str, Any], recommendation: dict[str, Any], 
     return judgment
 
 
+def _load_resolution_window_locator(*, path: Path, user_id: str, start_date: str, end_date: str) -> dict[str, Any]:
+    raw_result = _read_artifact_json(path, missing_code="memory_locator_not_found", invalid_code="invalid_memory_locator_json")
+    if not raw_result["ok"]:
+        return raw_result
+    issues = agent_retrieval_cli._recommendation_resolution_window_locator_issues(
+        payload=raw_result["artifact"],
+        user_id=user_id,
+        start_date=start_date,
+        end_date=end_date,
+    )
+    if issues:
+        return _validation_error(
+            artifact_path=str(path),
+            latest_artifact_path=None,
+            code=issues[0]["code"],
+            message="resolution_window_memory_path failed bounded validation.",
+            semantic_issues=issues,
+            details={"resolution_window_memory_path": str(path)},
+        )
+    return {
+        "ok": True,
+        "artifact_path": str(path),
+        "locator": raw_result["artifact"],
+        "validation": {"is_valid": True, "schema_issues": [], "semantic_issues": []},
+        "error": None,
+    }
+
+
+def _apply_resolution_transition(*, locator_payload: dict[str, Any], recommendation_path: Path, judgment_path: Path) -> dict[str, Any]:
+    updated_payload = json.loads(json.dumps(locator_payload))
+    target_path = str(recommendation_path.resolve())
+    matches = [
+        entry
+        for entry in updated_payload.get("accepted_recommendations", [])
+        if agent_retrieval_cli._resolve_artifact_path(entry.get("recommendation_artifact_path")) == target_path
+    ]
+    if not matches:
+        return _validation_error(
+            artifact_path=None,
+            latest_artifact_path=None,
+            code="target_recommendation_not_found",
+            message="Target recommendation was absent from resolution locator.",
+            semantic_issues=[_issue(code="target_recommendation_not_found", message="Target recommendation was absent from resolution locator.", path="recommendation_artifact_path")],
+            details={"recommendation_artifact_path": str(recommendation_path)},
+        )
+    if len(matches) > 1:
+        return _validation_error(
+            artifact_path=None,
+            latest_artifact_path=None,
+            code="duplicate_target_recommendation",
+            message="Resolution locator listed the target recommendation more than once.",
+            semantic_issues=[_issue(code="duplicate_target_recommendation", message="Resolution locator listed the target recommendation more than once.", path="accepted_recommendations")],
+            details={"recommendation_artifact_path": str(recommendation_path)},
+        )
+
+    target_entry = matches[0]
+    if target_entry.get("judgment_artifact_path"):
+        return _validation_error(
+            artifact_path=None,
+            latest_artifact_path=None,
+            code="target_already_judged",
+            message="Target recommendation already has a judgment_artifact_path.",
+            semantic_issues=[_issue(code="target_already_judged", message="Target recommendation already has a judgment_artifact_path.", path="judgment_artifact_path")],
+            details={"recommendation_artifact_path": str(recommendation_path)},
+        )
+
+    target_entry["judgment_artifact_path"] = str(judgment_path)
+    return {"ok": True, "locator": updated_payload, "target_date": target_entry["date"], "validation": {"is_valid": True, "schema_issues": [], "semantic_issues": []}, "error": None}
+
+
+def _build_feedback_window_locator(
+    *,
+    path: Path,
+    user_id: str,
+    start_date: str,
+    end_date: str,
+    recommendation_path: Path,
+    judgment_path: Path,
+) -> dict[str, Any]:
+    if path.exists():
+        raw_result = _read_artifact_json(path, missing_code="memory_locator_not_found", invalid_code="invalid_memory_locator_json")
+        if not raw_result["ok"]:
+            return raw_result
+        updated = raw_result["artifact"]
+        issues = agent_retrieval_cli._recommendation_feedback_window_locator_issues(
+            payload=updated,
+            user_id=user_id,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        if issues:
+            return _validation_error(
+                artifact_path=str(path),
+                latest_artifact_path=None,
+                code=issues[0]["code"],
+                message="feedback_window_memory_path failed bounded validation.",
+                semantic_issues=issues,
+                details={"feedback_window_memory_path": str(path)},
+            )
+        updated = json.loads(json.dumps(updated))
+    else:
+        updated = {
+            "artifact_type": agent_retrieval_cli.RECOMMENDATION_FEEDBACK_WINDOW_MEMORY_ARTIFACT_TYPE,
+            "operation": "retrieve.recommendation_feedback_window",
+            "user_id": user_id,
+            "start_date": start_date,
+            "end_date": end_date,
+            "accepted_feedback_pairs": [],
+        }
+
+    target_date = _artifact_date(recommendation_path)
+    resolved_recommendation_path = str(recommendation_path.resolve())
+    resolved_judgment_path = str(judgment_path.resolve())
+    for entry in updated["accepted_feedback_pairs"]:
+        if agent_retrieval_cli._resolve_artifact_path(entry.get("recommendation_artifact_path")) == resolved_recommendation_path:
+            if agent_retrieval_cli._resolve_artifact_path(entry.get("judgment_artifact_path")) != resolved_judgment_path:
+                return _validation_error(
+                    artifact_path=str(path),
+                    latest_artifact_path=None,
+                    code="feedback_pair_conflict",
+                    message="feedback_window_memory_path already linked the target recommendation inconsistently.",
+                    semantic_issues=[_issue(code="feedback_pair_conflict", message="feedback_window_memory_path already linked the target recommendation inconsistently.", path="accepted_feedback_pairs")],
+                    details={"feedback_window_memory_path": str(path)},
+                )
+            return {"ok": True, "locator": updated, "validation": {"is_valid": True, "schema_issues": [], "semantic_issues": []}, "error": None}
+
+    updated["accepted_feedback_pairs"].append(
+        {
+            "date": target_date,
+            "recommendation_artifact_path": str(recommendation_path),
+            "judgment_artifact_path": str(judgment_path),
+        }
+    )
+    updated["accepted_feedback_pairs"] = sorted(updated["accepted_feedback_pairs"], key=lambda item: (item["date"], item["recommendation_artifact_path"]))
+    return {"ok": True, "locator": updated, "validation": {"is_valid": True, "schema_issues": [], "semantic_issues": []}, "error": None}
+
+
+def _read_artifact_json(path: Path, *, missing_code: str, invalid_code: str) -> dict[str, Any]:
+    if not path.exists():
+        return _validation_error(
+            artifact_path=str(path),
+            latest_artifact_path=None,
+            code=missing_code,
+            message="Artifact file does not exist.",
+            semantic_issues=[_issue(code=missing_code, message="Artifact file does not exist.", path="artifact_path")],
+            details={"artifact_path": str(path)},
+        )
+    try:
+        raw = json.loads(path.read_text())
+    except json.JSONDecodeError as exc:
+        return _validation_error(
+            artifact_path=str(path),
+            latest_artifact_path=None,
+            code=invalid_code,
+            message="Artifact file is not valid JSON.",
+            semantic_issues=[_issue(code=invalid_code, message=str(exc), path="artifact_path")],
+            details={"artifact_path": str(path)},
+        )
+    if not isinstance(raw, dict):
+        return _validation_error(
+            artifact_path=str(path),
+            latest_artifact_path=None,
+            code="invalid_artifact_shape",
+            message="Artifact JSON must be an object.",
+            semantic_issues=[_issue(code="invalid_artifact_shape", message="Artifact JSON must be an object.", path="$")],
+            details={"artifact_path": str(path)},
+        )
+    return {"ok": True, "artifact_path": str(path), "artifact": raw, "validation": {"is_valid": True, "schema_issues": [], "semantic_issues": []}, "error": None}
+
+
+def _artifact_date(path: Path) -> str:
+    return str(json.loads(path.read_text())["date"])
+
+
 def _write_artifact_pair_atomically(*, serialized: str, dated_path: Path, latest_path: Path) -> None:
     original_states = {
         dated_path: _capture_file_state(dated_path),
@@ -384,6 +791,12 @@ def _restore_artifact_file_state(*, target_path: Path, state: dict[str, str | bo
         return
     if target_path.exists():
         target_path.unlink()
+
+
+def _with_request_echo(response: dict[str, Any], request_echo: dict[str, Any]) -> dict[str, Any]:
+    validation = dict(response.get("validation", {}))
+    validation["request_echo"] = request_echo
+    return {**response, "validation": validation}
 
 
 def _validation_error(

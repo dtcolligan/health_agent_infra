@@ -49,7 +49,7 @@ class AgentContractCliIntegrationTest(unittest.TestCase):
         )
         self.assertEqual(contract["accepted_enums"]["recommendation_commands"], ["create"])
         self.assertEqual(contract["accepted_enums"]["recommendation_payload_inputs"], ["payload_json", "payload_path"])
-        self.assertEqual(contract["accepted_enums"]["writeback_operations"], ["writeback.recommendation_judgment"])
+        self.assertEqual(contract["accepted_enums"]["writeback_operations"], ["writeback.recommendation_judgment", "writeback.recommendation_resolution_transition"])
         self.assertEqual(contract["accepted_enums"]["writeback_payload_inputs"], ["payload_json", "payload_path"])
         self.assertEqual(contract["accepted_enums"]["judgment_labels"], ["useful", "obvious", "wrong", "ignored"])
         self.assertEqual(contract["accepted_enums"]["completeness_state"], ["partial", "complete", "corrected"])
@@ -89,6 +89,14 @@ class AgentContractCliIntegrationTest(unittest.TestCase):
         self.assertEqual(
             contract["path_conventions"]["latest_recommendation_judgment_artifact"],
             "{output_dir}/recommendation_judgment_latest.json",
+        )
+        self.assertEqual(
+            contract["path_conventions"]["dated_recommendation_resolution_window_memory_artifact"],
+            "{output_dir}/recommendation_resolution_window_memory_{start_date}_{end_date}.json",
+        )
+        self.assertEqual(
+            contract["path_conventions"]["latest_recommendation_resolution_window_memory_artifact"],
+            "{output_dir}/recommendation_resolution_window_memory_latest.json",
         )
 
         bootstrap_init = contract["supported_operations"]["bootstrap.init"]
@@ -265,6 +273,20 @@ class AgentContractCliIntegrationTest(unittest.TestCase):
         self.assertEqual(writeback_args["payload_json"]["type"], "json_object")
         self.assertFalse(writeback_args["payload_json"]["required"])
         self.assertFalse(writeback_args["payload_path"]["required"])
+
+        writeback_transition = contract["supported_operations"]["writeback.recommendation_resolution_transition"]
+        writeback_transition_args = {arg["name"]: arg for arg in writeback_transition["args"]}
+        self.assertEqual(writeback_transition["module"], "health_model.agent_memory_write_cli")
+        self.assertEqual(writeback_transition["command"], "recommendation-resolution-transition")
+        self.assertEqual(writeback_transition["implementation_status"], "proof_complete")
+        self.assertEqual(
+            writeback_transition["consumes"],
+            ["agent_recommendation", "recommendation_judgment", "recommendation_resolution_window_memory"],
+        )
+        self.assertIn("feedback_window_memory_path", writeback_transition["payload_shape"]["optional_fields"])
+        self.assertEqual(writeback_transition_args["output_dir"]["flag"], "--output-dir")
+        self.assertFalse(writeback_transition_args["payload_json"]["required"])
+        self.assertFalse(writeback_transition_args["payload_path"]["required"])
         self.assertEqual(
             writeback_judgment["payload_shape"]["required_fields"],
             [

@@ -1,0 +1,16 @@
+{
+  "artifact_state_after_rejection": {
+    "dated_sha256": "451325b957dcbb461f40c37e6ef9fa2317fd4e3be618c987c2ae11419a04c2ec",
+    "latest_sha256": "451325b957dcbb461f40c37e6ef9fa2317fd4e3be618c987c2ae11419a04c2ec"
+  },
+  "artifact_state_before_rejection": {
+    "dated_artifact_path": "/Users/myapplemini01/Projects/garmin_lab/artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-transition-writeback/recommendation_resolution_window_memory_2026-04-04_2026-04-10.json",
+    "dated_sha256": "451325b957dcbb461f40c37e6ef9fa2317fd4e3be618c987c2ae11419a04c2ec",
+    "latest_artifact_path": "/Users/myapplemini01/Projects/garmin_lab/artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-transition-writeback/recommendation_resolution_window_memory_latest.json",
+    "latest_sha256": "451325b957dcbb461f40c37e6ef9fa2317fd4e3be618c987c2ae11419a04c2ec"
+  },
+  "dated_artifact_unchanged": true,
+  "error_code": "judgment_artifact_id_mismatch",
+  "latest_artifact_unchanged": true,
+  "proof": "rejected_transition_does_not_mutate_written_locator_artifacts"
+}
