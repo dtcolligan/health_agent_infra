@@ -306,6 +306,8 @@ The contract discovery CLI is read-only and currently supports one bounded comma
 
 ## Voice-note intake proof
 
+The canonical human-input lane for this slice now lives under `merge_human_inputs/`, with compatibility wrappers preserved at `health_model/voice_note_intake.py` and `health_model/manual_logging.py`.
+
 The repo also includes a bounded voice-note intake path in `health_model/voice_note_intake.py`.
 
 It implements:

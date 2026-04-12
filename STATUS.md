@@ -36,6 +36,7 @@ The current bounded closed-loop transition proof is `protocol_proof.recommendati
 - contract discovery via `health_model.agent_contract_cli`, with `health_agent_infra.agent_contract_cli` retained temporarily for compatibility
 - bundle initialization via `health_model.agent_bundle_cli`, with `health_agent_infra.agent_bundle_cli` retained temporarily for compatibility
 - same-day voice-note submission via `health_model.agent_voice_note_cli`, with `health_agent_infra.agent_voice_note_cli` retained temporarily for compatibility
+- slice-1 human-input migration landed under `merge_human_inputs/`, with `health_model.manual_logging`, `health_model.voice_note_intake`, and `bot.*` preserved as compatibility wrappers
 - scoped context reads via `health_model.agent_context_cli`, with `health_agent_infra.agent_context_cli` retained temporarily for compatibility
 - recommendation creation with fail-closed behavior via `health_model.agent_recommendation_cli`, with `health_agent_infra.agent_recommendation_cli` retained temporarily for compatibility
 - same-day recommendation judgment writeback with fail-closed non-mutation via `health_model.agent_memory_write_cli`, with `health_agent_infra.agent_memory_write_cli` retained temporarily for compatibility
