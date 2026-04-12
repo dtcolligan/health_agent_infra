@@ -29,6 +29,20 @@ class AgentReadableDailyContextTest(unittest.TestCase):
         self.assertGreater(artifact["explicit_grounding"]["signal_status_counts"]["conflicted"], 0)
         self.assertIn("missing_subjective_sleep_quality", {gap["code"] for gap in artifact["important_gaps"]})
         self.assertIn("conflicting_passive_activity", {conflict["code"] for conflict in artifact["conflicts"]})
+        subjective_metadata_signal = next(
+            signal
+            for signal in artifact["explicit_grounding"]["signals"]
+            if signal["domain"] == "subjective_state" and signal["signal_key"] == "subjective_daily_input_record"
+        )
+        self.assertEqual(subjective_metadata_signal["value"]["source_name"], "manual_subjective_recovery")
+        self.assertEqual(
+            subjective_metadata_signal["value"]["source_record_id"],
+            "subjective:artifact_voice_20260409:day:2026-04-09",
+        )
+        self.assertEqual(
+            subjective_metadata_signal["value"]["provenance_record_id"],
+            "provenance:subjective:artifact_voice_20260409:day:2026-04-09",
+        )
 
     def test_multi_day_bundle_scopes_provenance_to_selected_day(self) -> None:
         bundle = json.loads((FIXTURE_DIR / "fixture_multi_day_bundle.json").read_text())
@@ -70,6 +84,21 @@ class AgentReadableDailyContextTest(unittest.TestCase):
                 "manual_gym_session_20260409",
                 "manual_set_1_20260409",
             ],
+        )
+        subjective_metadata_signal = next(
+            signal
+            for signal in artifact["explicit_grounding"]["signals"]
+            if signal["domain"] == "subjective_state" and signal["signal_key"] == "subjective_daily_input_record"
+        )
+        self.assertEqual(subjective_metadata_signal["status"], "grounded")
+        self.assertEqual(subjective_metadata_signal["value"]["source_name"], "manual_subjective_recovery")
+        self.assertEqual(
+            subjective_metadata_signal["value"]["source_record_id"],
+            "subjective:artifact_voice_20260409:day:2026-04-09",
+        )
+        self.assertEqual(
+            subjective_metadata_signal["value"]["provenance_record_id"],
+            "provenance:subjective:artifact_voice_20260409:day:2026-04-09",
         )
 
 

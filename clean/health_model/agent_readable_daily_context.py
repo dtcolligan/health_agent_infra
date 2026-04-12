@@ -105,7 +105,7 @@ def _sleep_signals(summary: SleepSemanticSummary) -> list[dict[str, Any]]:
 
 
 def _subjective_signals(summary: SubjectiveStateSemanticSummary) -> list[dict[str, Any]]:
-    return [
+    signals = [
         _signal_entry("subjective_state", "energy", summary.energy),
         _signal_entry("subjective_state", "stress", summary.stress),
         _signal_entry("subjective_state", "mood", summary.mood),
@@ -114,6 +114,10 @@ def _subjective_signals(summary: SubjectiveStateSemanticSummary) -> list[dict[st
         _signal_entry("subjective_state", "free_text_human_summary", summary.free_text_human_summary),
         _signal_entry("subjective_state", "unresolved_ambiguity_markers", summary.unresolved_ambiguity_markers),
     ]
+    metadata_signal = getattr(summary, "normalization_metadata", None)
+    if metadata_signal is not None:
+        signals.append(_signal_entry("subjective_state", "subjective_daily_input_record", metadata_signal))
+    return signals
 
 
 def _activity_training_signals(summary: ActivityTrainingSemanticSummary) -> list[dict[str, Any]]:

@@ -148,6 +148,7 @@ Registry-aligned examples:
 - Strava: `strava:<athlete_or_account>:activity:<native_activity_id>`
 - Oura: `oura:<account>:<native_record_type>:<native_record_id_or_date>`
 - human input: `human_input:<artifact_id>:<derived_record_kind>:<effective_date_or_local_key>`
+- manual subjective recovery: `subjective:<source_artifact>:day:<date>`
 
 ## Provenance requirements
 
@@ -159,6 +160,8 @@ Minimum provenance contract:
 - supporting refs to the raw receipt or human-input artifact
 - parser version when relevant
 - explicit `conflict_status`
+
+For manual subjective recovery v1, the primary provenance ID is derived as `provenance:<source_record_id>` and must remain stable on replay of the same source artifact and day.
 
 Normalized artifacts without provenance are invalid in v1.
 

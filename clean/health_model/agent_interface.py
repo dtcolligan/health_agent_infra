@@ -20,6 +20,12 @@ from health_model.shared_input_backbone import ValidationResult, validate_shared
 
 
 ALLOWED_ATOMIC_APPEND_LOG_TYPES = {"meal", "hydration"}
+IDEMPOTENT_FAMILIES = {
+    "source_artifacts": "artifact_id",
+    "input_events": "event_id",
+    "subjective_daily_entries": "entry_id",
+    "manual_log_entries": "entry_id",
+}
 
 
 class ValidationIssueDict(TypedDict):
@@ -329,7 +335,7 @@ def append_bundle_fragment_to_persisted_bundle(
         }
 
     base_bundle = load_persisted_bundle(bundle_path=bundle_path)
-    merged_bundle = merge_bundle_fragments(base_bundle, fragment)
+    merged_bundle = _merge_bundle_for_idempotent_append(base_bundle, fragment)
     merged_validation = validate_shared_input_bundle(merged_bundle)
     if not merged_validation.is_valid:
         return {
@@ -392,7 +398,7 @@ def append_fragment_and_regenerate_daily_context(
         error_message = (
             "Bundle fragment must match the requested user_id and date."
             if scoping_issues
-            else "Bundle fragment must contain only meal or hydration manual log entries."
+            else "Bundle fragment must contain only subjective daily entries, meal, or hydration manual log entries."
         )
         return {
             "ok": False,
@@ -412,7 +418,7 @@ def append_fragment_and_regenerate_daily_context(
     bundle_file = Path(bundle_path)
     original_bundle_text = bundle_file.read_text()
     base_bundle = json.loads(original_bundle_text)
-    merged_bundle = merge_bundle_fragments(base_bundle, fragment)
+    merged_bundle = _merge_bundle_for_idempotent_append(base_bundle, fragment)
     merged_validation = validate_shared_input_bundle(merged_bundle)
     if not merged_validation.is_valid:
         return {
@@ -610,6 +616,24 @@ def _bundle_fragment_log_type_issues(*, fragment: BundleFragment) -> list[Any]:
                 )
             )
     return issues
+
+
+def _merge_bundle_for_idempotent_append(base_bundle: dict[str, Any], fragment: BundleFragment) -> dict[str, list[dict[str, Any]]]:
+    merged = merge_bundle_fragments(base_bundle)
+    for family, id_field in IDEMPOTENT_FAMILIES.items():
+        incoming_rows = [dict(row) for row in fragment.get(family, [])]
+        if not incoming_rows:
+            continue
+        existing_rows = [dict(row) for row in merged.get(family, [])]
+        existing_by_id = {row[id_field]: row for row in existing_rows}
+        ordered_ids = [row[id_field] for row in existing_rows]
+        for row in incoming_rows:
+            row_id = row[id_field]
+            if row_id not in existing_by_id:
+                ordered_ids.append(row_id)
+            existing_by_id[row_id] = row
+        merged[family] = [existing_by_id[row_id] for row_id in ordered_ids]
+    return merged
 
 
 def _accepted_provenance_payload(fragment: BundleFragment) -> dict[str, list[str] | str]:

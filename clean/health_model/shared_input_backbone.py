@@ -164,6 +164,10 @@ class SubjectiveDailyEntryModel(BaseModel):
     entry_id: str = Field(min_length=1, pattern=r"^subjective_")
     user_id: str = Field(min_length=1)
     date: date
+    source_name: Optional[str] = None
+    source_record_id: Optional[str] = None
+    provenance_record_id: Optional[str] = None
+    conflict_status: ConflictStatus = ConflictStatus.NONE
     energy_self_rating: Optional[int] = Field(default=None, ge=1, le=5)
     stress_self_rating: Optional[int] = Field(default=None, ge=1, le=5)
     mood_self_rating: Optional[int] = Field(default=None, ge=1, le=5)
@@ -316,6 +320,12 @@ def _semantic_issues(bundle: SharedInputBundleModel) -> list[ValidationIssue]:
                 issues.append(_issue("failed_subjective_high_confidence", "Failed subjective extraction cannot carry high confidence.", f"subjective_daily_entries[{index}].confidence_label"))
         if not _confidence_label_matches_score(entry.confidence_label, entry.confidence_score):
             issues.append(_issue("confidence_label_score_mismatch", "confidence_label must map to confidence_score using the frozen thresholds.", f"subjective_daily_entries[{index}].confidence_label"))
+        if entry.source_record_id is not None and not entry.source_record_id.startswith("subjective:"):
+            issues.append(_issue("invalid_subjective_source_record_id", "subjective source_record_id must follow subjective:<source_artifact>:day:<date>.", f"subjective_daily_entries[{index}].source_record_id"))
+        if entry.provenance_record_id is not None and entry.source_record_id is not None:
+            expected_provenance_record_id = f"provenance:{entry.source_record_id}"
+            if entry.provenance_record_id != expected_provenance_record_id:
+                issues.append(_issue("subjective_provenance_mismatch", "subjective provenance_record_id must be derived from source_record_id.", f"subjective_daily_entries[{index}].provenance_record_id"))
         issues.extend(_detect_semantic_override_fields(entry, index, "subjective_daily_entries"))
 
     for index, entry in enumerate(bundle.manual_log_entries):

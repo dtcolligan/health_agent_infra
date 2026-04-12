@@ -163,6 +163,7 @@ class SubjectiveStateSemanticSummary:
     free_text_human_summary: WrappedField = field(default_factory=lambda: _missing_field())
     extraction_confidence: SummaryConfidence = field(default_factory=lambda: SummaryConfidence("low", 0.0))
     unresolved_ambiguity_markers: WrappedField = field(default_factory=lambda: _missing_field())
+    normalization_metadata: WrappedField = field(default_factory=lambda: _missing_field())
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -278,6 +279,7 @@ def build_subjective_state_semantic_summary(bundle: Mapping[str, Any], user_id: 
     free_text_human_summary = _entry_string_field(entry, "free_text_summary")
     perceived_recovery = _build_perceived_recovery_field(bundle, entry, user_id, date, conflicts)
     unresolved_ambiguity_markers = _build_ambiguity_markers_field(entry, len(entries) > 1)
+    normalization_metadata = _build_subjective_normalization_metadata_field(bundle, entry)
 
     if entry is None:
         important_gaps.append(ImportantGap("missing_subjective_entry", "No subjective daily entry was available for this day."))
@@ -305,6 +307,7 @@ def build_subjective_state_semantic_summary(bundle: Mapping[str, Any], user_id: 
         free_text_human_summary=free_text_human_summary,
         extraction_confidence=extraction_confidence,
         unresolved_ambiguity_markers=unresolved_ambiguity_markers,
+        normalization_metadata=normalization_metadata,
     )
 
 
@@ -712,6 +715,22 @@ def _build_perceived_recovery_field(
     )
 
 
+def _build_subjective_normalization_metadata_field(bundle: Mapping[str, Any], entry: Mapping[str, Any] | None) -> WrappedField:
+    if entry is None:
+        return _missing_field("No subjective daily input record was available.")
+    metadata = _subjective_entry_normalization_metadata(bundle, entry)
+    score = float(entry.get("confidence_score", 0.0))
+    return WrappedField(
+        status="grounded",
+        value=metadata,
+        confidence_label=_label_from_score(score),
+        confidence_score=score,
+        evidence_refs=[entry["entry_id"]],
+        derivation_method="none",
+        uncertainty_note="Subjective daily input normalization metadata is exposed so downstream derivations stay inspectable.",
+    )
+
+
 def _build_ambiguity_markers_field(entry: Mapping[str, Any] | None, has_conflict: bool) -> WrappedField:
     markers: list[str] = []
     refs: list[str] = []
@@ -990,6 +1009,58 @@ def _event_scalar_value(event: Mapping[str, Any]) -> Any:
     if event.get("value_json") is not None:
         return event["value_json"]
     return None
+
+
+def _subjective_entry_normalization_metadata(
+    bundle: Mapping[str, Any], entry: Mapping[str, Any]
+) -> dict[str, Any]:
+    source_artifact_id = _subjective_entry_source_artifact_id(entry)
+    source_name = entry.get("source_name") or ("manual_subjective_recovery" if source_artifact_id else None)
+    source_record_id = entry.get("source_record_id") or _derived_subjective_source_record_id(entry, source_artifact_id)
+    provenance_record_id = entry.get("provenance_record_id") or (
+        f"provenance:{source_record_id}" if source_record_id else None
+    )
+    artifact = _source_artifact_by_id(bundle, source_artifact_id)
+    return {
+        "source_name": source_name,
+        "source_record_id": source_record_id,
+        "provenance_record_id": provenance_record_id,
+        "source_artifact_id": source_artifact_id,
+        "source_artifact_name": artifact.get("source_name") if artifact else None,
+        "conflict_status": entry.get("conflict_status", "none"),
+        "extraction_status": entry.get("extraction_status"),
+    }
+
+
+
+def _subjective_entry_source_artifact_id(entry: Mapping[str, Any]) -> str | None:
+    source_artifact_ids = entry.get("source_artifact_ids") or []
+    if isinstance(source_artifact_ids, list) and source_artifact_ids:
+        first = source_artifact_ids[0]
+        return str(first) if first else None
+    return None
+
+
+
+def _derived_subjective_source_record_id(entry: Mapping[str, Any], source_artifact_id: str | None) -> str | None:
+    if not source_artifact_id or not entry.get("date"):
+        return None
+    return f"subjective:{source_artifact_id}:day:{entry['date']}"
+
+
+
+def _source_artifact_by_id(bundle: Mapping[str, Any], artifact_id: str | None) -> Mapping[str, Any] | None:
+    if artifact_id is None:
+        return None
+    return next(
+        (
+            artifact
+            for artifact in bundle.get("source_artifacts", [])
+            if artifact.get("artifact_id") == artifact_id
+        ),
+        None,
+    )
+
 
 
 def _average_event_score(events: list[Mapping[str, Any]]) -> float:

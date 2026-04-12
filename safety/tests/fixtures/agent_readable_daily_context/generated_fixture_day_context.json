@@ -35,7 +35,7 @@
   },
   "explicit_grounding": {
     "signal_status_counts": {
-      "grounded": 17,
+      "grounded": 18,
       "inferred": 2,
       "missing": 4,
       "conflicted": 2
@@ -194,6 +194,27 @@
         ],
         "derivation_method": "coverage_classification",
         "uncertainty_note": null
+      },
+      {
+        "domain": "subjective_state",
+        "signal_key": "subjective_daily_input_record",
+        "status": "grounded",
+        "value": {
+          "source_name": "manual_subjective_recovery",
+          "source_record_id": "subjective:artifact_voice_20260409:day:2026-04-09",
+          "provenance_record_id": "provenance:subjective:artifact_voice_20260409:day:2026-04-09",
+          "source_artifact_id": "artifact_voice_20260409",
+          "source_artifact_name": "daily_voice_note",
+          "conflict_status": "none",
+          "extraction_status": "complete"
+        },
+        "confidence_label": "medium",
+        "confidence_score": 0.78,
+        "evidence_refs": [
+          "subjective_voice_20260409"
+        ],
+        "derivation_method": "none",
+        "uncertainty_note": "Subjective daily input normalization metadata is exposed so downstream derivations stay inspectable."
       },
       {
         "domain": "activity_training",
@@ -594,6 +615,25 @@
         ],
         "derivation_method": "coverage_classification",
         "uncertainty_note": null
+      },
+      "normalization_metadata": {
+        "status": "grounded",
+        "value": {
+          "source_name": "manual_subjective_recovery",
+          "source_record_id": "subjective:artifact_voice_20260409:day:2026-04-09",
+          "provenance_record_id": "provenance:subjective:artifact_voice_20260409:day:2026-04-09",
+          "source_artifact_id": "artifact_voice_20260409",
+          "source_artifact_name": "daily_voice_note",
+          "conflict_status": "none",
+          "extraction_status": "complete"
+        },
+        "confidence_label": "medium",
+        "confidence_score": 0.78,
+        "evidence_refs": [
+          "subjective_voice_20260409"
+        ],
+        "derivation_method": "none",
+        "uncertainty_note": "Subjective daily input normalization metadata is exposed so downstream derivations stay inspectable."
       }
     },
     "activity_training": {

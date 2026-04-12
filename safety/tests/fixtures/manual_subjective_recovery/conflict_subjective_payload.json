@@ -1,0 +1,50 @@
+{
+  "user_id": "user_dom",
+  "artifact_id": "artifact_conflict_subjective_20260409",
+  "parser_version": "voice-extractor@0.2.0",
+  "voice_note": {
+    "source_record_id": "voice-note-2026-04-09-conflict",
+    "source_name": "daily_voice_note",
+    "collected_at": "2026-04-09T22:30:00+01:00",
+    "ingested_at": "2026-04-09T22:30:20+01:00",
+    "raw_location": "file:///healthlab/audio/2026-04-09-conflict-note.m4a",
+    "raw_format": "m4a"
+  },
+  "transcript": {
+    "transcript_ref": "file:///healthlab/transcripts/2026-04-09-conflict-note.json",
+    "text": "I felt both recovered and pretty strained by the end of the day."
+  },
+  "derived_events": [
+    {
+      "event_id": "event_conflict_recovery_a",
+      "source_record_id": "segment_a",
+      "domain": "subjective",
+      "metric_name": "perceived_recovery_state",
+      "value_type": "enum",
+      "value": "recovered",
+      "effective_date": "2026-04-09",
+      "confidence_score": 0.62,
+      "conflict_status": "coexists_conflicted",
+      "supporting_refs": ["transcript:chars:0-22"]
+    },
+    {
+      "event_id": "event_conflict_recovery_b",
+      "source_record_id": "segment_b",
+      "domain": "subjective",
+      "metric_name": "perceived_recovery_state",
+      "value_type": "enum",
+      "value": "strained",
+      "effective_date": "2026-04-09",
+      "confidence_score": 0.62,
+      "conflict_status": "coexists_conflicted",
+      "supporting_refs": ["transcript:chars:27-63"]
+    }
+  ],
+  "subjective_entry": {
+    "entry_id": "subjective_conflict_20260409",
+    "date": "2026-04-09",
+    "free_text_summary": "Felt pulled between recovered and strained.",
+    "extraction_status": "partial",
+    "confidence_score": 0.62
+  }
+}

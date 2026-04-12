@@ -1,0 +1,26 @@
+{
+  "user_id": "user_dom",
+  "artifact_id": "artifact_partial_subjective_20260409",
+  "parser_version": "voice-extractor@0.2.0",
+  "voice_note": {
+    "source_record_id": "voice-note-2026-04-09-partial",
+    "source_name": "daily_voice_note",
+    "collected_at": "2026-04-09T22:10:00+01:00",
+    "ingested_at": "2026-04-09T22:10:20+01:00",
+    "raw_location": "file:///healthlab/audio/2026-04-09-partial-note.m4a",
+    "raw_format": "m4a"
+  },
+  "transcript": {
+    "transcript_ref": "file:///healthlab/transcripts/2026-04-09-partial-note.json",
+    "text": "Bit tired, not sure how stressed I was, and sleep was hard to judge."
+  },
+  "derived_events": [],
+  "subjective_entry": {
+    "entry_id": "subjective_partial_20260409",
+    "date": "2026-04-09",
+    "energy_self_rating": 2,
+    "free_text_summary": "Bit tired and sleep was hard to judge.",
+    "extraction_status": "partial",
+    "confidence_score": 0.52
+  }
+}

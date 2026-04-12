@@ -66,6 +66,78 @@ class AgentVoiceNoteCliIntegrationTest(unittest.TestCase):
             self.assertIn("event_01JQVOICECAF1", dated_artifact["generated_from"]["input_event_ids"])
             self.assertIn("event_01JQVOICELEGS1", dated_artifact["generated_from"]["input_event_ids"])
             self.assertEqual(dated_artifact["generated_from"]["subjective_entry_ids"], ["subjective_01JQVOICESUBJ01"])
+            subjective_metadata_signal = next(
+                signal
+                for signal in dated_artifact["explicit_grounding"]["signals"]
+                if signal["domain"] == "subjective_state" and signal["signal_key"] == "subjective_daily_input_record"
+            )
+            self.assertEqual(
+                subjective_metadata_signal["value"]["source_record_id"],
+                "subjective:artifact_01JQVOICEINTAKE01:day:2026-04-09",
+            )
+            self.assertEqual(
+                subjective_metadata_signal["value"]["provenance_record_id"],
+                "provenance:subjective:artifact_01JQVOICEINTAKE01:day:2026-04-09",
+            )
+
+    def test_cli_replay_is_idempotent_for_same_voice_note_subjective_day(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            health_dir = Path(temp_dir) / "data" / "health"
+            bundle_path = health_dir / "shared_input_bundle_2026-04-09.json"
+
+            self._run_module(
+                "health_model.agent_bundle_cli",
+                [
+                    "init",
+                    "--bundle-path",
+                    str(bundle_path),
+                    "--user-id",
+                    "user_dom",
+                    "--date",
+                    "2026-04-09",
+                ],
+            )
+            first_submit = self._run_cli(
+                [
+                    "submit",
+                    "--bundle-path",
+                    str(bundle_path),
+                    "--output-dir",
+                    str(health_dir),
+                    "--user-id",
+                    "user_dom",
+                    "--date",
+                    "2026-04-09",
+                    "--payload-path",
+                    str(VOICE_NOTE_FIXTURE),
+                ]
+            )
+            second_submit = self._run_cli(
+                [
+                    "submit",
+                    "--bundle-path",
+                    str(bundle_path),
+                    "--output-dir",
+                    str(health_dir),
+                    "--user-id",
+                    "user_dom",
+                    "--date",
+                    "2026-04-09",
+                    "--payload-path",
+                    str(VOICE_NOTE_FIXTURE),
+                ]
+            )
+
+            self.assertTrue(first_submit["ok"], msg=first_submit)
+            self.assertTrue(second_submit["ok"], msg=second_submit)
+            persisted_bundle = json.loads(bundle_path.read_text())
+            self.assertEqual(len(persisted_bundle["subjective_daily_entries"]), 1)
+            self.assertEqual(len(persisted_bundle["source_artifacts"]), 1)
+            self.assertEqual(len(persisted_bundle["input_events"]), 2)
+            self.assertEqual(
+                persisted_bundle["subjective_daily_entries"][0]["source_record_id"],
+                "subjective:artifact_01JQVOICEINTAKE01:day:2026-04-09",
+            )
 
     def test_cli_rejects_scope_mismatch_without_mutating_bundle_or_context_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

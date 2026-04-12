@@ -28,8 +28,15 @@ class VoiceNoteIntakeTest(unittest.TestCase):
         bundle = canonicalize_voice_note_payload(_load_fixture("daily_voice_note_input.json"))
 
         artifact_id = bundle["source_artifacts"][0]["artifact_id"]
+        subjective_entry = bundle["subjective_daily_entries"][0]
         self.assertTrue(all(event["provenance"]["artifact_id"] == artifact_id for event in bundle["input_events"]))
-        self.assertEqual(bundle["subjective_daily_entries"][0]["source_artifact_ids"], [artifact_id])
+        self.assertEqual(subjective_entry["source_artifact_ids"], [artifact_id])
+        self.assertEqual(subjective_entry["source_record_id"], f"subjective:{artifact_id}:day:2026-04-09")
+        self.assertEqual(
+            subjective_entry["provenance_record_id"],
+            f"provenance:subjective:{artifact_id}:day:2026-04-09",
+        )
+        self.assertEqual(subjective_entry["conflict_status"], "none")
         self.assertTrue(all(event["provenance"]["supporting_refs"] for event in bundle["input_events"]))
 
     def test_missing_voice_note_value_is_explicit_and_validated(self) -> None:

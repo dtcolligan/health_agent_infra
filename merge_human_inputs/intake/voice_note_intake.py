@@ -15,6 +15,14 @@ from health_model.shared_input_backbone import (
 )
 
 
+def subjective_source_record_id(*, source_artifact_id: str, date: str) -> str:
+    return f"subjective:{source_artifact_id}:day:{date}"
+
+
+def subjective_provenance_record_id(*, source_record_id: str) -> str:
+    return f"provenance:{source_record_id}"
+
+
 def build_voice_note_source_artifact(
     *,
     artifact_id: str,
@@ -124,11 +132,16 @@ def build_subjective_daily_entry_from_voice_note(
     perceived_sleep_quality: int | None = None,
     illness_or_soreness_flag: bool | None = None,
 ) -> dict[str, Any]:
+    source_record_id = subjective_source_record_id(source_artifact_id=source_artifact_id, date=date)
     return _drop_none_values(
         {
             "entry_id": entry_id,
             "user_id": user_id,
             "date": date,
+            "source_name": "manual_subjective_recovery",
+            "source_record_id": source_record_id,
+            "provenance_record_id": subjective_provenance_record_id(source_record_id=source_record_id),
+            "conflict_status": ConflictStatus.NONE.value,
             "energy_self_rating": energy_self_rating,
             "stress_self_rating": stress_self_rating,
             "mood_self_rating": mood_self_rating,

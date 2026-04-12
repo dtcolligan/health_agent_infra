@@ -341,6 +341,12 @@ Recommended v1 fields grounded in `SubjectiveDailyEntryModel`:
 - `confidence_label`
 - `confidence_score`
 
+Manual subjective recovery v1 stable-ID rule:
+- `source_record_id = subjective:<source_artifact>:day:<date>`
+- `provenance_record_id = provenance:<source_record_id>`
+
+In this slice, any `perceived_recovery` value remains downstream-only derivation and is not a new canonical source field inside `subjective_daily_input`.
+
 ### 11. `daily_health_snapshot`
 
 Purpose:
