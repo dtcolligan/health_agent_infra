@@ -27,5 +27,5 @@ classifiers = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["health_agent_infra*", "health_model*"]
+include = ["health_agent_infra*", "health_model*", "writeback*"]
 exclude = ["tests*", "data*", "artifacts*"]

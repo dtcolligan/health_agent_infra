@@ -1,0 +1,432 @@
+{
+  "date_range": {
+    "start": "2026-02-05",
+    "end": "2026-04-08",
+    "days": 63
+  },
+  "coverage": {
+    "daily_rows": 63,
+    "activity_rows": 28,
+    "running_activity_rows": 26,
+    "hydration_rows": 27,
+    "health_rows": 59
+  },
+  "latest_day": {
+    "date": "2026-04-08",
+    "steps": 13597,
+    "sleep_score_overall": 84,
+    "training_readiness_level": "LOW",
+    "training_recovery_time_hours": 24.05,
+    "body_battery": 43,
+    "training_status": "PRODUCTIVE"
+  },
+  "recent_7_day_averages": {
+    "steps": 11595,
+    "sleep_score_overall": 83,
+    "resting_hr": 52,
+    "body_battery": 43,
+    "acute_load": null
+  },
+  "recent_7_day_vs_previous_7_day": {
+    "steps_delta": 100.86,
+    "sleep_score_delta": 0.55,
+    "resting_hr_delta": -0.14,
+    "body_battery_delta": 9.14
+  },
+  "activity_summary": {
+    "total_activities": 28,
+    "total_running_distance_km": 169.2,
+    "avg_running_distance_km": 6.51,
+    "best_run": {
+      "date": "2026-02-07",
+      "distance_km": 11.27,
+      "duration_min": 77.8,
+      "avg_hr": 139,
+      "training_load": 53.8492431640625
+    },
+    "latest_run": {
+      "date": "2026-04-08",
+      "distance_km": 7.47,
+      "duration_min": 48.6,
+      "avg_hr": 140,
+      "training_load": 49.848052978515625
+    }
+  },
+  "signals": {
+    "sleep_score_days_present": 59,
+    "training_readiness_days_present": 63,
+    "hrv_days_present": 59,
+    "hydration_events_with_estimated_sweat_loss": 26
+  },
+  "interpretation": {
+    "label": "absorb-and-maintain",
+    "headline": "The latest day reads like an absorb-the-work snapshot, where productive fitness can coexist with a short-term signal to keep the next move conservative.",
+    "positives": [
+      "sleep score is in a solid range",
+      "movement stayed at or above the recent weekly baseline",
+      "Garmin marks the wider block as productive"
+    ],
+    "cautions": [
+      "body battery is still muted, so recovery may be only partial",
+      "readiness is low even though the broader block is productive, which usually means fitness may be building but today is not the day to force extra intensity",
+      "recovery time is still about 24 hours, so this reads as residual load rather than a green light",
+      "the latest day already contains a 7.47 km run with load 49.848052978515625, so low readiness may reflect absorbed work rather than a system failure"
+    ],
+    "latest_run_context": {
+      "date": "2026-04-08",
+      "distance_km": 7.47,
+      "training_load": 49.848052978515625
+    },
+    "disclaimer": "Conservative interpretation only. This view describes training signals and recovery context, not medical status or injury risk."
+  },
+  "visuals": {
+    "daily_points": [
+      {
+        "date": "2026-03-19",
+        "steps": 14360,
+        "sleep_score": 84,
+        "body_battery": 28,
+        "resting_hr": 47,
+        "hrv": 83,
+        "readiness_level": "HIGH",
+        "readiness_score": 4
+      },
+      {
+        "date": "2026-03-20",
+        "steps": 17968,
+        "sleep_score": 82,
+        "body_battery": 22,
+        "resting_hr": 47,
+        "hrv": 89,
+        "readiness_level": "MODERATE",
+        "readiness_score": 3
+      },
+      {
+        "date": "2026-03-21",
+        "steps": 20526,
+        "sleep_score": 73,
+        "body_battery": 14,
+        "resting_hr": 48,
+        "hrv": 85,
+        "readiness_level": "MODERATE",
+        "readiness_score": 3
+      },
+      {
+        "date": "2026-03-22",
+        "steps": 9681,
+        "sleep_score": 72,
+        "body_battery": 33,
+        "resting_hr": 48,
+        "hrv": 79,
+        "readiness_level": "MODERATE",
+        "readiness_score": 3
+      },
+      {
+        "date": "2026-03-23",
+        "steps": 15473,
+        "sleep_score": 86,
+        "body_battery": 26,
+        "resting_hr": 49,
+        "hrv": 85,
+        "readiness_level": "MODERATE",
+        "readiness_score": 3
+      },
+      {
+        "date": "2026-03-24",
+        "steps": 13333,
+        "sleep_score": 82,
+        "body_battery": 10,
+        "resting_hr": 50,
+        "hrv": 80,
+        "readiness_level": "MODERATE",
+        "readiness_score": 3
+      },
+      {
+        "date": "2026-03-25",
+        "steps": 9720,
+        "sleep_score": 56,
+        "body_battery": 28,
+        "resting_hr": 50,
+        "hrv": 73,
+        "readiness_level": "LOW",
+        "readiness_score": 2
+      },
+      {
+        "date": "2026-03-26",
+        "steps": 10966,
+        "sleep_score": 87,
+        "body_battery": 53,
+        "resting_hr": 50,
+        "hrv": 57,
+        "readiness_level": "MODERATE",
+        "readiness_score": 3
+      },
+      {
+        "date": "2026-03-27",
+        "steps": 12095,
+        "sleep_score": 73,
+        "body_battery": 21,
+        "resting_hr": 52,
+        "hrv": 74,
+        "readiness_level": "MODERATE",
+        "readiness_score": 3
+      },
+      {
+        "date": "2026-03-28",
+        "steps": 9154,
+        "sleep_score": 84,
+        "body_battery": 36,
+        "resting_hr": 52,
+        "hrv": 70,
+        "readiness_level": "HIGH",
+        "readiness_score": 4
+      },
+      {
+        "date": "2026-03-29",
+        "steps": 4617,
+        "sleep_score": 83,
+        "body_battery": 34,
+        "resting_hr": 52,
+        "hrv": 71,
+        "readiness_level": "HIGH",
+        "readiness_score": 4
+      },
+      {
+        "date": "2026-03-30",
+        "steps": 8058,
+        "sleep_score": 81,
+        "body_battery": 21,
+        "resting_hr": 52,
+        "hrv": 72,
+        "readiness_level": "MODERATE",
+        "readiness_score": 3
+      },
+      {
+        "date": "2026-03-31",
+        "steps": 19628,
+        "sleep_score": 81,
+        "body_battery": 30,
+        "resting_hr": 52,
+        "hrv": 78,
+        "readiness_level": "MODERATE",
+        "readiness_score": 3
+      },
+      {
+        "date": "2026-04-01",
+        "steps": 15944,
+        "sleep_score": 87,
+        "body_battery": 43,
+        "resting_hr": 52,
+        "hrv": 79,
+        "readiness_level": "MODERATE",
+        "readiness_score": 3
+      },
+      {
+        "date": "2026-04-02",
+        "steps": 21119,
+        "sleep_score": 78,
+        "body_battery": 31,
+        "resting_hr": 53,
+        "hrv": 65,
+        "readiness_level": "LOW",
+        "readiness_score": 2
+      },
+      {
+        "date": "2026-04-03",
+        "steps": 13090,
+        "sleep_score": 79,
+        "body_battery": 50,
+        "resting_hr": 53,
+        "hrv": 66,
+        "readiness_level": "LOW",
+        "readiness_score": 2
+      },
+      {
+        "date": "2026-04-04",
+        "steps": 11899,
+        "sleep_score": 81,
+        "body_battery": 41,
+        "resting_hr": 52,
+        "hrv": 83,
+        "readiness_level": "LOW",
+        "readiness_score": 2
+      },
+      {
+        "date": "2026-04-05",
+        "steps": 991,
+        "sleep_score": null,
+        "body_battery": 64,
+        "resting_hr": 52,
+        "hrv": null,
+        "readiness_level": "MODERATE",
+        "readiness_score": 3
+      },
+      {
+        "date": "2026-04-06",
+        "steps": 10215,
+        "sleep_score": 94,
+        "body_battery": 36,
+        "resting_hr": 51,
+        "hrv": 91,
+        "readiness_level": "MODERATE",
+        "readiness_score": 3
+      },
+      {
+        "date": "2026-04-07",
+        "steps": 10257,
+        "sleep_score": 81,
+        "body_battery": 37,
+        "resting_hr": 50,
+        "hrv": 83,
+        "readiness_level": "MODERATE",
+        "readiness_score": 3
+      },
+      {
+        "date": "2026-04-08",
+        "steps": 13597,
+        "sleep_score": 84,
+        "body_battery": 43,
+        "resting_hr": 50,
+        "hrv": 80,
+        "readiness_level": "LOW",
+        "readiness_score": 2
+      }
+    ],
+    "running_points": [
+      {
+        "date": "2026-03-09",
+        "distance_km": 5.21,
+        "duration_min": 24.8,
+        "avg_hr": 171,
+        "training_load": 122.9032745361328
+      },
+      {
+        "date": "2026-03-12",
+        "distance_km": 6.25,
+        "duration_min": 39.5,
+        "avg_hr": 155,
+        "training_load": 75.85952758789062
+      },
+      {
+        "date": "2026-03-14",
+        "distance_km": 9.42,
+        "duration_min": 58.0,
+        "avg_hr": 151,
+        "training_load": 86.23812866210938
+      },
+      {
+        "date": "2026-03-17",
+        "distance_km": 8.48,
+        "duration_min": 50.2,
+        "avg_hr": 148,
+        "training_load": 79.98577880859375
+      },
+      {
+        "date": "2026-03-20",
+        "distance_km": 5.16,
+        "duration_min": 35.0,
+        "avg_hr": 137,
+        "training_load": 42.93487548828125
+      },
+      {
+        "date": "2026-03-23",
+        "distance_km": 6.98,
+        "duration_min": 42.1,
+        "avg_hr": 151,
+        "training_load": 76.70986938476562
+      },
+      {
+        "date": "2026-03-31",
+        "distance_km": 8.56,
+        "duration_min": 60.1,
+        "avg_hr": 158,
+        "training_load": 68.01673889160156
+      },
+      {
+        "date": "2026-04-02",
+        "distance_km": 9.22,
+        "duration_min": 57.3,
+        "avg_hr": 151,
+        "training_load": 85.38618469238281
+      },
+      {
+        "date": "2026-04-03",
+        "distance_km": 6.56,
+        "duration_min": 36.2,
+        "avg_hr": 152,
+        "training_load": 84.50213623046875
+      },
+      {
+        "date": "2026-04-04",
+        "distance_km": 6.92,
+        "duration_min": 42.8,
+        "avg_hr": 146,
+        "training_load": 71.48692321777344
+      },
+      {
+        "date": "2026-04-06",
+        "distance_km": 4.16,
+        "duration_min": 22.1,
+        "avg_hr": 151,
+        "training_load": 62.53623962402344
+      },
+      {
+        "date": "2026-04-08",
+        "distance_km": 7.47,
+        "duration_min": 48.6,
+        "avg_hr": 140,
+        "training_load": 49.848052978515625
+      }
+    ],
+    "weekly_running_points": [
+      {
+        "week_start": "2026-02-10",
+        "distance_km": 9.87,
+        "training_load": 124.5851287841797,
+        "run_count": 2
+      },
+      {
+        "week_start": "2026-02-17",
+        "distance_km": 24.93,
+        "training_load": 265.7647399902344,
+        "run_count": 5
+      },
+      {
+        "week_start": "2026-02-24",
+        "distance_km": 12.52,
+        "training_load": 137.01768493652344,
+        "run_count": 2
+      },
+      {
+        "week_start": "2026-03-03",
+        "distance_km": 24.92,
+        "training_load": 313.3396453857422,
+        "run_count": 4
+      },
+      {
+        "week_start": "2026-03-10",
+        "distance_km": 15.67,
+        "training_load": 162.09765625,
+        "run_count": 2
+      },
+      {
+        "week_start": "2026-03-17",
+        "distance_km": 20.63,
+        "training_load": 199.63052368164062,
+        "run_count": 3
+      },
+      {
+        "week_start": "2026-03-31",
+        "distance_km": 35.42,
+        "training_load": 371.92822265625,
+        "run_count": 5
+      },
+      {
+        "week_start": "2026-04-07",
+        "distance_km": 7.47,
+        "training_load": 49.848052978515625,
+        "run_count": 1
+      }
+    ]
+  }
+}

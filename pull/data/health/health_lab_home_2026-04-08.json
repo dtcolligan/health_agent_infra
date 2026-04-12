@@ -1,0 +1,252 @@
+{
+  "schema_version": 1,
+  "artifact_type": "health_lab_home",
+  "generated_at": "2026-04-09T20:09:34.979656+00:00",
+  "date": "2026-04-08",
+  "current_state": {
+    "date": "2026-04-08",
+    "overall_state": "recover_and_absorb",
+    "day_summary": "Recovery-oriented day: Garmin shows low readiness with about 24.1 hours remaining while running and gym work are both present.",
+    "pillars": [
+      {
+        "pillar": "Running",
+        "status": "active",
+        "summary": "1 run logged, 7.47 km total.",
+        "source": "garmin_export",
+        "data_available": true,
+        "key_metrics": {
+          "sessions_count": 1,
+          "volume_m": 7470.58,
+          "latest_avg_hr": 140.0,
+          "latest_training_effect_aerobic": 2.700000047683716
+        },
+        "missingness": null
+      },
+      {
+        "pillar": "Gym",
+        "status": "active",
+        "summary": "1 gym session logged with 3 sets and 26 reps.",
+        "source": "manual_gym_log",
+        "data_available": true,
+        "key_metrics": {
+          "sessions_count": 1,
+          "total_sets": 3,
+          "total_reps": 26,
+          "total_load_kg": 1410.0
+        },
+        "missingness": null
+      },
+      {
+        "pillar": "Sleeping",
+        "status": "tracked",
+        "summary": "9.05 hours sleep with score 84.0.",
+        "source": "garmin_export",
+        "data_available": true,
+        "key_metrics": {
+          "sleep_duration_hours": 9.05,
+          "sleep_score": 84.0,
+          "awake_count": 1
+        },
+        "missingness": null
+      },
+      {
+        "pillar": "Nutrition",
+        "status": "tracked",
+        "summary": "3 meals logged; calories 1860 kcal. Seeded proof only.",
+        "source": "health_log_sqlite_daily_summary_seeded_proof",
+        "data_available": true,
+        "key_metrics": {
+          "meal_count": 3,
+          "calories_kcal": 1860.0,
+          "protein_g": 134.0,
+          "carbs_g": 178.0,
+          "fat_g": 60.0,
+          "fiber_g": 21.0
+        },
+        "missingness": null
+      }
+    ],
+    "nutrition": {
+      "label": "nutrition",
+      "status": "tracked",
+      "summary": "3 meals logged; calories 1860 kcal.",
+      "source": "health_log_sqlite_daily_summary_seeded_proof",
+      "data_available": true,
+      "metrics": {
+        "meal_count": 3,
+        "calories_kcal": 1860.0,
+        "protein_g": 134.0,
+        "carbs_g": 178.0,
+        "fat_g": 60.0,
+        "fiber_g": 21.0,
+        "food_log_completeness": "logged"
+      },
+      "note": "Nutrition is from explicitly labeled seeded proof rows for bounded verification only, not real history. Chicken rice bowl (760 kcal), Salmon potatoes plate (680 kcal), Greek yogurt with berries (420 kcal)",
+      "missingness": null
+    },
+    "hydration": {
+      "label": "hydration",
+      "status": "partial",
+      "summary": "Hydration event coverage is present, but intake volume is not available for the target day.",
+      "source": "garmin_hydration_events_export",
+      "data_available": true,
+      "metrics": {
+        "coverage": "coverage_only",
+        "intake_ml": null,
+        "event_count": 1,
+        "estimated_sweat_loss_ml": 777.0,
+        "measured_sweat_loss_ml": null
+      },
+      "note": "Garmin hydration coverage exists for the day, but no positive intake total was logged. Garmin estimated sweat loss at 777 ml.",
+      "missingness": "Current inputs expose hydration event coverage, but not a supported positive intake total for the target day."
+    }
+  },
+  "today_action": {
+    "day_type": "recovery_bias_day",
+    "action_class": "recovery_only",
+    "summary": "Today reads like a recovery-biased day. Keep the main action easy and avoid treating it as a performance push.",
+    "data_backed_drivers": [
+      "Garmin readiness is low with about 24.1 recovery hours remaining.",
+      "Sleep support is 9.05 hours with sleep score 84.0.",
+      "Current-day load context already includes 1 run and 1 gym session.",
+      "Recent integrated context: The latest day reads like an absorb-the-work snapshot, where productive fitness can coexist with a short-term signal to keep the next move conservative."
+    ],
+    "generic_guidance": [
+      "Generic guidance: bias toward easier training or recovery work unless another trusted signal clearly says otherwise.",
+      "Generic guidance: prefer recovery work, mobility, walking, or an easy session unless another trusted signal clearly overrides this."
+    ],
+    "unsupported_or_withheld": [
+      "Nutrition totals come from explicitly labeled seeded proof rows for bounded verification only, so treat them as proof data rather than real history.",
+      "Hydration event coverage exists, but intake-volume actioning stays withheld because a supported intake total is missing.",
+      "Subjective energy, soreness, and schedule constraints are unsupported in this slice, so the action layer stays conservative."
+    ]
+  },
+  "guidance": {
+    "today_priority": "Protect recovery and avoid treating today as a green-light performance push.",
+    "generic_guidance": [
+      "Generic guidance: bias toward easier training or recovery work unless another trusted signal clearly says otherwise."
+    ],
+    "unsupported_guidance_reason": null
+  },
+  "explanation": {
+    "data_backed_observations": [
+      "Garmin export shows low readiness with about 24.1 recovery hours remaining.",
+      "Sleeping: 9.05 hours and sleep score 84.0.",
+      "Running: 1 run totaling 7.47 km.",
+      "Gym: 1 session with 3 sets and 1410.0 kg estimated load.",
+      "Nutrition: 3 meals logged for 1860 kcal.",
+      "Nutrition provenance: totals come from explicitly labeled seeded proof rows, not real user history.",
+      "Hydration: Garmin hydration event coverage exists, but intake volume is not supported for the day."
+    ],
+    "why_today_guidance": [
+      "Garmin export shows low readiness with about 24.1 recovery hours remaining.",
+      "The latest day reads like an absorb-the-work snapshot, where productive fitness can coexist with a short-term signal to keep the next move conservative."
+    ],
+    "source_notes": [
+      "Data-backed observations come from the canonical daily snapshot plus the bounded Garmin analysis summary.",
+      "Nutrition is from explicitly labeled seeded proof rows for bounded verification only, not real history.",
+      "Hydration is surfaced as a current-state metric from Garmin hydration events, and unsupported intake totals stay explicit.",
+      "Generic guidance stays separate and unsupported domains remain explicit."
+    ]
+  },
+  "trajectory": {
+    "label": "absorb-and-maintain",
+    "trend_summary": "Last 7 days vs previous 7: steps delta 100.86, sleep score delta 0.55, resting HR delta -0.14, body battery delta 9.14.",
+    "recent_changes": {
+      "steps_delta": 100.86,
+      "sleep_score_delta": 0.55,
+      "resting_hr_delta": -0.14,
+      "body_battery_delta": 9.14
+    },
+    "latest_run_context": {
+      "date": "2026-04-08",
+      "distance_km": 7.47,
+      "training_load": 49.848052978515625
+    }
+  },
+  "review_learning": {
+    "review_summary": "Conservative interpretation only. This view describes training signals and recovery context, not medical status or injury risk.",
+    "learning_prompt": "Review whether the low-readiness day felt like normal absorbed load, and capture nutrition or hydration notes if they affected recovery.",
+    "missing_inputs_to_capture": [
+      "Hydration intake total for the target day"
+    ]
+  },
+  "pillar_grounding": [
+    {
+      "pillar": "Running",
+      "status": "active",
+      "summary": "1 run logged, 7.47 km total.",
+      "source": "garmin_export",
+      "data_available": true,
+      "key_metrics": {
+        "sessions_count": 1,
+        "volume_m": 7470.58,
+        "latest_avg_hr": 140.0,
+        "latest_training_effect_aerobic": 2.700000047683716
+      },
+      "missingness": null
+    },
+    {
+      "pillar": "Gym",
+      "status": "active",
+      "summary": "1 gym session logged with 3 sets and 26 reps.",
+      "source": "manual_gym_log",
+      "data_available": true,
+      "key_metrics": {
+        "sessions_count": 1,
+        "total_sets": 3,
+        "total_reps": 26,
+        "total_load_kg": 1410.0
+      },
+      "missingness": null
+    },
+    {
+      "pillar": "Sleeping",
+      "status": "tracked",
+      "summary": "9.05 hours sleep with score 84.0.",
+      "source": "garmin_export",
+      "data_available": true,
+      "key_metrics": {
+        "sleep_duration_hours": 9.05,
+        "sleep_score": 84.0,
+        "awake_count": 1
+      },
+      "missingness": null
+    },
+    {
+      "pillar": "Nutrition",
+      "status": "tracked",
+      "summary": "3 meals logged; calories 1860 kcal. Seeded proof only.",
+      "source": "health_log_sqlite_daily_summary_seeded_proof",
+      "data_available": true,
+      "key_metrics": {
+        "meal_count": 3,
+        "calories_kcal": 1860.0,
+        "protein_g": 134.0,
+        "carbs_g": 178.0,
+        "fat_g": 60.0,
+        "fiber_g": 21.0
+      },
+      "missingness": null
+    }
+  ],
+  "source_artifacts": {
+    "daily_snapshot": {
+      "date": "2026-04-08",
+      "source_flags": {
+        "garmin_export": true,
+        "manual_gym_log": true,
+        "nutrition_sqlite": true,
+        "hydration_export": true
+      }
+    },
+    "garmin_analysis_summary": {
+      "available": true,
+      "date_range": {
+        "start": "2026-02-05",
+        "end": "2026-04-08",
+        "days": 63
+      }
+    }
+  }
+}

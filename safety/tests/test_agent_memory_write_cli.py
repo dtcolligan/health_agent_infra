@@ -14,6 +14,38 @@ TRANSITION_FIXTURE_ROOT = REPO_ROOT / "artifacts" / "protocol_layer_proof" / "20
 
 
 class AgentMemoryWriteCliIntegrationTest(unittest.TestCase):
+    def test_legacy_health_model_entrypoint_remains_compatible(self) -> None:
+        recommendation = json.loads(RECOMMENDATION_FIXTURE.read_text())
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            health_dir = Path(temp_dir) / "data" / "health"
+            payload = {
+                "user_id": "user_dom",
+                "date": "2026-04-10",
+                "recommendation_artifact_path": str(RECOMMENDATION_FIXTURE),
+                "recommendation_artifact_id": recommendation["recommendation_id"],
+                "judgment_id": "judgment_legacy_entrypoint_01",
+                "judgment_label": "useful",
+                "action_taken": "Used the legacy wrapper.",
+                "why": "Compatibility entrypoints should still work.",
+                "written_at": "2026-04-10T20:15:00+01:00",
+                "request_id": "req_legacy_entrypoint_01",
+                "requested_at": "2026-04-10T20:14:00+01:00",
+            }
+
+            completed = subprocess.run(
+                [sys.executable, "-m", "health_model.agent_memory_write_cli", "recommendation-judgment", "--output-dir", str(health_dir), "--payload-json", json.dumps(payload)],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(completed.returncode, 0, msg=completed.stderr or completed.stdout)
+            self.assertEqual(completed.stderr.strip(), "")
+            result = json.loads(completed.stdout)
+            self.assertTrue(result["ok"], msg=result)
+
     def test_recommendation_judgment_writes_dated_and_latest_artifacts_for_valid_payload(self) -> None:
         recommendation = json.loads(RECOMMENDATION_FIXTURE.read_text())
 
@@ -244,7 +276,7 @@ class AgentMemoryWriteCliIntegrationTest(unittest.TestCase):
 
     def _run_cli(self, args: list[str], *, expected_returncode: int = 0) -> dict[str, object]:
         completed = subprocess.run(
-            [sys.executable, "-m", "health_model.agent_memory_write_cli", *args],
+            [sys.executable, "-m", "health_agent_infra.agent_memory_write_cli", *args],
             cwd=REPO_ROOT,
             capture_output=True,
             text=True,
