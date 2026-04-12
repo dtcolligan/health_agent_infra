@@ -49,11 +49,11 @@ def _run_step(name: str, *args: str) -> dict:
 def main() -> int:
     _reset_output_dir()
 
-    contract = _run_step("contract describe", "-m", "health_model.agent_contract_cli", "describe")
+    contract = _run_step("contract describe", "-m", "health_agent_infra.agent_contract_cli", "describe")
     bundle = _run_step(
         "bundle init",
         "-m",
-        "health_model.agent_bundle_cli",
+        "health_agent_infra.agent_bundle_cli",
         "init",
         "--bundle-path",
         str(BUNDLE_PATH),
@@ -65,7 +65,7 @@ def main() -> int:
     voice_note = _run_step(
         "voice-note submit",
         "-m",
-        "health_model.agent_voice_note_cli",
+        "health_agent_infra.agent_voice_note_cli",
         "submit",
         "--bundle-path",
         str(BUNDLE_PATH),
@@ -81,7 +81,7 @@ def main() -> int:
     context = _run_step(
         "context get",
         "-m",
-        "health_model.agent_context_cli",
+        "health_agent_infra.agent_context_cli",
         "get",
         "--artifact-path",
         str(CONTEXT_PATH),
@@ -93,7 +93,7 @@ def main() -> int:
     recommendation = _run_step(
         "recommendation create",
         "-m",
-        "health_model.agent_recommendation_cli",
+        "health_agent_infra.agent_recommendation_cli",
         "create",
         "--output-dir",
         str(OUTPUT_ROOT),
