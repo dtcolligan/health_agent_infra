@@ -1,0 +1,12 @@
+{
+  "artifact_family": "provenance_record",
+  "provenance_record_id": "provenance_nutrition_daily_d3906457ed92dc97",
+  "source_record_id": "nutrition:cronometer:day:2026-04-09",
+  "derivation_method": "food_import_normalization",
+  "supporting_refs": [
+    "/var/folders/0x/nzg00zm516l2nzfq2z18gm4c0000gn/T/tmprxskifau/work/daily_nutrition_followup/daily_nutrition_followup.csv",
+    "/var/folders/0x/nzg00zm516l2nzfq2z18gm4c0000gn/T/tmprxskifau/work/daily_nutrition_followup/daily_nutrition_followup.csv#daily-nutrition"
+  ],
+  "parser_version": "cronometer-export-daily-nutrition-v1",
+  "conflict_status": "none"
+}

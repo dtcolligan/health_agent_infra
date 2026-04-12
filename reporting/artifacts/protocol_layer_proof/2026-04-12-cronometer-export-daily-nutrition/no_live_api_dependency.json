@@ -1,0 +1,8 @@
+{
+  "mode": "export_artifact_only",
+  "network_calls_present": false,
+  "private_endpoint_dependency": false,
+  "receipt_types_supported": [
+    "daily-nutrition"
+  ]
+}

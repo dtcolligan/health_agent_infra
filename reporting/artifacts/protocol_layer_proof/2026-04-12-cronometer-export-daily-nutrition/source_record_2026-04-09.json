@@ -1,0 +1,15 @@
+{
+  "artifact_family": "source_record",
+  "source_record_id": "nutrition:cronometer:day:2026-04-09",
+  "source_name": "cronometer",
+  "source_type": "imported_food_pipeline",
+  "entry_lane": "pull",
+  "raw_location": "/var/folders/0x/nzg00zm516l2nzfq2z18gm4c0000gn/T/tmprxskifau/work/daily_nutrition_followup/daily_nutrition_followup.csv",
+  "raw_format": "csv",
+  "effective_date": "2026-04-09",
+  "collected_at": null,
+  "ingested_at": "2026-04-12T19:44:47.108274+00:00",
+  "hash_or_version": "05b6b3a0ee409f09",
+  "native_record_type": "daily-nutrition",
+  "native_record_id": "2026-04-09"
+}

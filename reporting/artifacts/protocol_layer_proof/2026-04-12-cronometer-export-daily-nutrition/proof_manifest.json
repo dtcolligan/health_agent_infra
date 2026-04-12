@@ -1,0 +1,22 @@
+{
+  "proof_target": "receipt-first Cronometer daily-nutrition export ingestion",
+  "artifacts": [
+    "baseline_first.json",
+    "baseline_second.json",
+    "crash_interrupted.json",
+    "crash_resume.json",
+    "crash_resumed.json",
+    "daily_nutrition_baseline.csv",
+    "daily_nutrition_followup.csv",
+    "followup.json",
+    "no_live_api_dependency.json",
+    "nutrition_daily_2026-04-09.json",
+    "nutrition_daily_2026-04-11.json",
+    "overlap_replay.json",
+    "provenance_record_2026-04-09.json",
+    "replay_stability.json",
+    "runtime_state.json",
+    "runtime_state_crash.json",
+    "source_record_2026-04-09.json"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "day_hashes": {
+    "2026-04-08": "a86f615195b5bb1f5c76338743702a821cebe2a3c86ce7799fa20ecf4df0a755",
+    "2026-04-09": "7a29ff3e4c8538b1f9187f58ddf4538292ae9b012742091e29eb168dc63ac82f",
+    "2026-04-10": "8f472e7a3b1595008aebe526c7b6832142ba37589ef4d81ae62b6a243d680c44",
+    "2026-04-11": "d9c3bf8808ae36aaf216de6101302819922cba98d678eec7afd1787833885f26"
+  },
+  "last_receipt_hash": "05b6b3a0ee409f096d1525f322f4e0c9475ac92e8c586bdd1ed55cd0056d11bc",
+  "last_successful_day": "2026-04-11",
+  "runs": [
+    {
+      "receipt_path": "/var/folders/0x/nzg00zm516l2nzfq2z18gm4c0000gn/T/tmprxskifau/crash_work/daily_nutrition_baseline/daily_nutrition_baseline.csv",
+      "run_id": "cronometer:a09e0ee373e4",
+      "status": "completed"
+    },
+    {
+      "receipt_path": "/var/folders/0x/nzg00zm516l2nzfq2z18gm4c0000gn/T/tmprxskifau/crash_work/daily_nutrition_followup/daily_nutrition_followup.csv",
+      "run_id": "cronometer:05b6b3a0ee40",
+      "status": "interrupted"
+    },
+    {
+      "receipt_path": "/var/folders/0x/nzg00zm516l2nzfq2z18gm4c0000gn/T/tmprxskifau/crash_work/daily_nutrition_followup/daily_nutrition_followup.csv",
+      "run_id": "cronometer:05b6b3a0ee40",
+      "status": "completed"
+    }
+  ],
+  "slice_status": {
+    "cronometer:05b6b3a0ee40": {
+      "2026-04-08": "completed",
+      "2026-04-09": "completed",
+      "2026-04-10": "completed",
+      "2026-04-11": "completed"
+    },
+    "cronometer:a09e0ee373e4": {
+      "2026-04-08": "completed",
+      "2026-04-09": "completed",
+      "2026-04-10": "completed"
+    }
+  }
+}

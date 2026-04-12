@@ -1,0 +1,11 @@
+{
+  "run_id": "cronometer:a09e0ee373e4",
+  "processed_dates": [],
+  "target_dates": [
+    "2026-04-08",
+    "2026-04-09",
+    "2026-04-10"
+  ],
+  "interrupted": false,
+  "receipt_path": "/var/folders/0x/nzg00zm516l2nzfq2z18gm4c0000gn/T/tmprxskifau/work/daily_nutrition_baseline/daily_nutrition_baseline.csv"
+}

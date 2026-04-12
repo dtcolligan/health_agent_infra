@@ -1,0 +1,17 @@
+{
+  "artifact_family": "nutrition_daily",
+  "date": "2026-04-09",
+  "nutrition_daily_id": "nutrition_daily_d3906457ed92dc97",
+  "source_name": "cronometer",
+  "source_record_id": "nutrition:cronometer:day:2026-04-09",
+  "provenance_record_id": "provenance_nutrition_daily_d3906457ed92dc97",
+  "conflict_status": "none",
+  "calories_kcal": 2110.0,
+  "protein_g": 155.0,
+  "carbs_g": 198.0,
+  "fat_g": 70.0,
+  "fiber_g": 29.0,
+  "meal_count": 4,
+  "food_log_completeness": "logged",
+  "top_meals_summary": "Egg wrap breakfast (520 kcal), Beef burrito bowl (870 kcal), Protein oats (420 kcal), Chocolate milk (300 kcal)"
+}
