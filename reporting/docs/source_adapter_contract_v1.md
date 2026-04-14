@@ -38,7 +38,8 @@ This contract names many source families. That does not make them all flagship-c
 For this doctrine interval:
 - Garmin plus typed manual readiness is the frozen target flagship path
 - Cronometer is a bridge/reference nutrition source, not a flagship-completion dependency
-- external gym connectors such as `wger` or `Hevy` are non-flagship or exploratory connector surfaces
+- manual structured gym logs are the source-of-truth path for resistance training
+- `wger` is the only retained bounded exploratory non-flagship gym connector prototype
 
 ## Lane ownership contract
 
@@ -295,7 +296,7 @@ Resistance training is in v1.
 Adapter-level freeze:
 - manual structured logging through `merge_human_inputs` is the required source-of-truth initial lane
 - normalized outputs must be `training_session`, `gym_set_record`, `exercise_catalog`, `exercise_alias`, and `program_block`
-- future imported lifting sources such as `wger` or `Hevy` must converge into the same canonical outputs
+- future imported lifting sources must converge into the same canonical outputs
 - those external gym connectors remain non-flagship or exploratory in this doctrine interval
 - deeper exercise taxonomy and progression logic are deferred to a later bounded spec
 

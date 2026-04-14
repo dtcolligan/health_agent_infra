@@ -84,7 +84,6 @@ The downstream normalized artifact families for v1 are:
 | bloodwork | in_v1 | `merge_human_inputs` first, future `pull` allowed later | bridge_reference | important health-domain input, currently best treated as manual-first rather than a flagship dependency | `source_record`, `provenance_record`, `lab_result`, `daily_health_snapshot` |
 | resistance training | in_v1 | `merge_human_inputs` first, future `pull` adapters allowed later | manual_first_non_flagship_connectors | manual structured logs inside Health Lab are the source-of-truth path for this freeze, while external gym connectors remain optional later convergence surfaces | `source_record`, `provenance_record`, `training_session`, `gym_set_record`, `exercise_catalog`, `exercise_alias`, `program_block`, `daily_health_snapshot` |
 | wger | in_v1 | `pull` | exploratory_non_flagship_connector | useful bounded gym connector work with a live mock-backed proof bundle, but not the flagship source of truth and not required for flagship completion | `source_record`, `provenance_record`, `training_session`, `gym_set_record`, `exercise_catalog`, `exercise_alias`, `program_block`, `daily_health_snapshot` |
-| Hevy | in_v1 | `pull` | exploratory_non_flagship_connector | bounded fixture-backed viability work already exists on the tree, but it remains narrower and more exploratory than the `wger` prototype and is not required for flagship completion | `source_record`, `provenance_record`, `training_session`, `gym_set_record`, `daily_health_snapshot` |
 | Strava | in_v1 | `pull` | bridge_reference | still relevant for overlap contracts, but not part of the frozen flagship convergence target | `source_record`, `provenance_record`, `training_session`, `daily_health_snapshot` |
 | Oura | in_v1 | `pull` | bridge_reference | high-value passive source family that can remain in the platform contract without becoming a flagship gate for this interval | `source_record`, `provenance_record`, `sleep_daily`, `readiness_daily`, `training_session`, `daily_health_snapshot` |
 
@@ -96,7 +95,7 @@ The following are intentionally deferred as separate source-specific or family-s
 - richer exercise identity catalog design
 - detailed auth/storage handling per third-party service
 - additional source-specific proof bundles beyond the bounded ones already on the tree
-- making Cronometer, `wger`, `Hevy`, or any other external connector a flagship-completion gate
+- making Cronometer, `wger`, or any other external connector a flagship-completion gate
 
 ## Placeholder-only status in this slice
 
@@ -110,7 +109,7 @@ Resistance training is in v1 now.
 
 The contract-level freeze is:
 - manual structured logs inside `merge_human_inputs` are the current source-of-truth path for this doctrine interval
-- external gym connectors such as `wger` or `Hevy` are live bounded prototype or viability surfaces already on the tree, but they remain non-flagship exploratory connectors rather than the source of truth
+- `wger` is the retained bounded exploratory connector surface on the tree, but it remains non-flagship and not the source of truth
 - the canonical normalized outputs are Health Lab owned objects, not connector-native objects
 - the gym-domain core centers on `training_session`, `exercise_catalog`, `exercise_alias`, `gym_set_record`, and `program_block`
 - derived metrics such as volume, estimated 1RM, weekly hard sets, density, and adherence remain Health Lab downstream concerns
@@ -144,4 +143,4 @@ This document does not:
 - restructure the repo beyond documenting the preferred source path shape
 - add new canonical buckets
 - require a full resistance-training deep spec in the same slice
-- require `wger`, `Hevy`, or Cronometer for flagship completion
+- require `wger` or Cronometer for flagship completion

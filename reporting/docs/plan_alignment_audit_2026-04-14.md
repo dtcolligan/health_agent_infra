@@ -42,7 +42,7 @@ These are the main mismatches between the repo and the plan.
 ### Drift A — connector exploration has leaked into repo-facing truth
 The plan says the repo should move toward a Health Lab product with Garmin as one adapter, manual gym ingestion, nutrition as a first-class pillar, and a unified health model.
 
-Current repo drift includes:
+Current repo drift included:
 - `pull/hevy/`
 - `reporting/artifacts/protocol_layer_proof/2026-04-12-hevy-api-viability/`
 - connector-specific proof material that can dominate the repo story if it is not clearly subordinated to the plan
@@ -85,7 +85,7 @@ A large amount of current readability still depends on historical proof bundles 
 
 ### Cut or demote
 - any connector or proof surface that implies a live direction not supported by the transformation plan
-- any repo-facing teaching that makes `Hevy` or other leftover connector exploration look like the current MVP path
+- any repo-facing teaching that makes removed or leftover connector exploration look like the current MVP path
 - status language that substitutes local proof-lane updates for phase tracking
 
 ### Defer
