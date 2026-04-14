@@ -2,6 +2,8 @@
 
 This bundle makes the first contract-aligned manual-first Phase 4 resistance-training object layer obvious to a repo reviewer.
 
+Current canonical set-level truth here is `gym_set_record`. Any retained `gym_exercise_set` surface in the snapshot artifact is legacy compatibility only.
+
 Claim boundary:
 - manual structured gym logs are the source-of-truth path
 - `wger` stays exploratory and non-flagship

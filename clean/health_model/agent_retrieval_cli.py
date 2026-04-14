@@ -316,7 +316,7 @@ def _assemble_day_snapshot(*, artifact: dict[str, Any]) -> dict[str, Any]:
     nutrition = artifact.get("nutrition_daily") or {}
     running_sessions = artifact.get("running_sessions") or []
     gym_sessions = artifact.get("gym_sessions") or []
-    gym_sets = artifact.get("gym_exercise_sets") or []
+    gym_sets = artifact.get("gym_set_records") or artifact.get("gym_exercise_sets") or []
     source_flags = artifact.get("source_flags") or {}
 
     garmin_ready = bool(source_flags.get("garmin")) or any(

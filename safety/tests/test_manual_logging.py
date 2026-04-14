@@ -211,6 +211,8 @@ class ManualLoggingTest(unittest.TestCase):
         self.assertEqual(sets[0].provenance_record_id, "provenance:resistance_training:manual_gym_sessions:gym_exercise_set:example-upper-2026-04-08:bench-1")
         self.assertEqual(sets[0].confidence_label, "high")
         self.assertEqual(sets[0].conflict_status, "none")
+        self.assertEqual(sets[0].compatibility_status, "legacy_compatibility_only")
+        self.assertEqual(sets[0].canonical_artifact_family, "gym_set_record")
 
         replay_sessions, replay_sets = build_gym_sessions(sessions_payload, "2026-04-08", source_artifact="manual_gym_sessions")
         self.assertEqual([row.training_session_id for row in sessions], [row.training_session_id for row in replay_sessions])
@@ -295,6 +297,15 @@ class ManualLoggingTest(unittest.TestCase):
         self.assertEqual(bundle["daily_health_snapshot"]["gym_total_sets"], 2)
         self.assertEqual(bundle["daily_health_snapshot"]["gym_total_reps"], 18)
         self.assertEqual(bundle["daily_health_snapshot"]["gym_total_load_kg"], 930.0)
+        self.assertEqual(
+            [row["gym_set_record_id"] for row in bundle["daily_health_snapshot"]["gym_set_records"]],
+            [
+                "gym_set_record:resistance_training:manual_gym_sessions.example:set:upper-2026-04-08:bench-press-1",
+                "gym_set_record:resistance_training:manual_gym_sessions.example:set:upper-2026-04-08:lat-pulldown-1",
+            ],
+        )
+        self.assertEqual(bundle["daily_health_snapshot"]["legacy_compatibility_aliases"], {"gym_exercise_sets": "gym_set_records"})
+        self.assertTrue(all(row["compatibility_status"] == "legacy_compatibility_only" for row in bundle["daily_health_snapshot"]["gym_exercise_sets"]))
 
         with tempfile.TemporaryDirectory() as tmpdir:
             proof = write_manual_resistance_training_proof_artifacts(export_dir, gym_log_path, Path(tmpdir), "2026-04-08")
@@ -346,8 +357,12 @@ class ManualLoggingTest(unittest.TestCase):
         self.assertEqual(snapshot.gym_total_reps, 26)
         self.assertEqual(snapshot.gym_total_load_kg, 1410.0)
         self.assertEqual(snapshot.gym_sessions[0]["training_session_id"], "resistance_training:manual_gym_sessions:session:example-upper-2026-04-08")
+        self.assertEqual(snapshot.gym_set_records[0]["gym_set_record_id"], "gym_set_record:resistance_training:manual_gym_sessions:set:example-upper-2026-04-08:bench-1")
         self.assertEqual(snapshot.gym_exercise_sets[0]["gym_exercise_set_id"], "resistance_training:manual_gym_sessions:set:example-upper-2026-04-08:bench-1")
+        self.assertEqual(snapshot.gym_exercise_sets[0]["compatibility_status"], "legacy_compatibility_only")
+        self.assertEqual(snapshot.legacy_compatibility_aliases, {"gym_exercise_sets": "gym_set_records"})
         self.assertEqual(snapshot.gym_sessions, replay.gym_sessions)
+        self.assertEqual(snapshot.gym_set_records, replay.gym_set_records)
         self.assertEqual(snapshot.gym_exercise_sets, replay.gym_exercise_sets)
         self.assertIn("gym_total_load_kg", snapshot.data_backed_fields)
 

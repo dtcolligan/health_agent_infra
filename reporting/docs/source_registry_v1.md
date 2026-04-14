@@ -60,7 +60,7 @@ This registry therefore names both current-proof broader manual surfaces and the
 
 - `voice-note / broader manual human inputs` is marked `prototype` overall because the broader derived-record family is not fully proved yet, even though the lane itself already has real proof-bearing surfaces in the repo.
 - `typed manual readiness / subjective recovery inputs` is the frozen human-input half of the target flagship doctrine and now has live repo-grounded proof, even though exact later field extensions and writeback details remain separate contract work.
-- `resistance training` is now marked `prototype` because the manual-first session/set path, canonical `training_session` plus `gym_exercise_set` emission, and daily snapshot gym rollups are live on the tree, but the broader exercise-model family is not yet surfaced honestly enough to call `proof_complete`.
+- `resistance training` is now marked `prototype` because the manual-first session/set path, canonical `training_session` plus `gym_set_record` emission, and daily snapshot gym rollups are live on the tree; any retained `gym_exercise_set` surface is legacy/compatibility only, and the broader exercise-model family is not yet surfaced honestly enough to call `proof_complete`.
 - `wger` remains the bounded exploratory connector surface retained on the tree. It does not change the manual-first flagship doctrine.
 - A source may have a future secondary acquisition path, but its v1 primary entry lane is the lane frozen above.
 - `clean` is not an entry lane. It is the normalization lane after source entry.

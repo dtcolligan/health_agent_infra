@@ -81,7 +81,7 @@ There is now one explicit bounded Phase 4 manual-gym prototype on the tree. Revi
 - `clean/health_model/daily_snapshot.py`
 - `safety/tests/test_manual_logging.py`
 
-That slice proves manual structured session input, canonical `training_session` / `gym_exercise_set` emission, and daily snapshot gym rollups. It does **not** claim full resistance-training source-family completion yet.
+That slice proves manual structured session input, canonical `training_session` / `gym_set_record` emission, and daily snapshot gym rollups. Any retained `gym_exercise_set` snapshot surface is legacy compatibility only, not canonical truth. It does **not** claim full resistance-training source-family completion yet.
 
 Start with:
 

@@ -110,6 +110,8 @@ class TrainingSession:
 
 @dataclass
 class GymExerciseSet:
+    # Legacy compatibility-only set surface retained for downstream replay stability.
+    # Canonical set-level truth is GymSetRecord / `gym_set_record`.
     artifact_family: str = "gym_exercise_set"
     set_id: str = ""
     session_id: str = ""
@@ -122,6 +124,8 @@ class GymExerciseSet:
     provenance_record_id: str | None = None
     confidence_label: str | None = None
     conflict_status: str = "none"
+    compatibility_status: str = "legacy_compatibility_only"
+    canonical_artifact_family: str = "gym_set_record"
     exercise_group: str | None = None
     set_number: int | None = None
     reps: int | None = None
@@ -242,6 +246,8 @@ class DailyHealthSnapshot:
     readiness_daily: dict[str, Any] | None = None
     running_sessions: list[dict[str, Any]] = field(default_factory=list)
     gym_sessions: list[dict[str, Any]] = field(default_factory=list)
+    gym_set_records: list[dict[str, Any]] = field(default_factory=list)
+    legacy_compatibility_aliases: dict[str, str] = field(default_factory=dict)
     gym_exercise_sets: list[dict[str, Any]] = field(default_factory=list)
     subjective_daily: dict[str, Any] | None = None
     nutrition_daily: dict[str, Any] | None = None

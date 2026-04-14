@@ -853,7 +853,13 @@ def generate_snapshot(
     sleep = build_sleep(daily_row, date, export_dir) if not daily_rows.empty else SleepDaily(date=date)
     readiness = build_readiness(daily_row, date, export_dir) if not daily_rows.empty else ReadinessDaily(date=date)
     running_sessions = build_running_sessions(activities, date, export_dir)
-    gym_sessions, gym_sets = build_gym_sessions(gym_by_date.get(date, []), date, source_artifact=manual_gym_source_artifact)
+    manual_gym_sessions = gym_by_date.get(date, [])
+    gym_sessions, gym_sets = build_gym_sessions(manual_gym_sessions, date, source_artifact=manual_gym_source_artifact)
+    _, _, _, gym_set_records = build_manual_resistance_training_objects(
+        manual_gym_sessions,
+        date,
+        source_artifact=manual_gym_source_artifact,
+    ) if manual_gym_sessions else ([], [], [], [])
     nutrition = build_nutrition(nutrition_rows, db_path, date)
 
     hydration_ml = None
@@ -930,6 +936,8 @@ def generate_snapshot(
         readiness_daily=asdict(readiness),
         running_sessions=[asdict(s) for s in running_sessions],
         gym_sessions=[asdict(s) for s in gym_sessions],
+        gym_set_records=[asdict(s) for s in gym_set_records],
+        legacy_compatibility_aliases={"gym_exercise_sets": "gym_set_records"} if gym_sets else {},
         gym_exercise_sets=[asdict(s) for s in gym_sets],
         subjective_daily=subjective_daily,
         nutrition_daily=asdict(nutrition),
