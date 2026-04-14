@@ -43,7 +43,9 @@ This wrapper does not prove that the target flagship path is already implemented
 For truthful review:
 - treat this wrapper as proof of the current CLI-first demo lineage
 - treat Cronometer as a bridge/reference nutrition surface outside this demo's flagship claim
-- treat external gym connectors such as `wger` or `Hevy` as non-flagship or exploratory surfaces outside this demo's flagship claim
+- treat manual structured gym logs as the source-of-truth path for this doctrine interval
+- treat `wger` only as the bounded exploratory non-flagship connector prototype defined by the repo plan, outside this demo's flagship claim
+- treat leftover connector residue outside that doctrine as non-canonical
 
 ## Pathing truth
 

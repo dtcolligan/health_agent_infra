@@ -82,16 +82,17 @@ This doc freezes that target doctrine for truthful repo-facing language. It does
 Classification for this interval:
 - Garmin is the passive-data anchor for the frozen target flagship path
 - typed manual readiness intake is the human-input anchor for the frozen target flagship path
-- Cronometer remains a bridge/reference nutrition surface, not a flagship-completion dependency
-- external gym connectors such as `pull/sources/wger/` or `pull/hevy/` remain non-flagship or exploratory connector surfaces in this doctrine interval
+- manual structured gym logs remain the source-of-truth path for this doctrine interval
+- `pull/sources/wger/` remains only a bounded exploratory non-flagship connector prototype for later convergence into Health Lab canonical gym objects
+- leftover connector surfaces outside that doctrine are non-canonical unless later promoted by the plan
 
 ## Bridge and exploratory connectors
 
 Some connector-facing work exists or may be named in repo docs because it is useful bounded platform work.
 
-That includes surfaces such as Cronometer export support, `pull/sources/wger/`, and `pull/hevy/`.
+That includes surfaces such as Cronometer export support and the bounded `pull/sources/wger/` prototype.
 
-Those surfaces should be described explicitly as bridge/reference or exploratory connector work when that is the truth. They should not be silently deleted from docs, and they should not be described as the current flagship proof path.
+Those surfaces should be described explicitly as bridge/reference or bounded exploratory connector work when that is the truth. They should not be described as the current flagship proof path, and leftover connector residue outside this doctrine should not be allowed to define repo-facing truth.
 
 ## What Health Lab is not claiming
 
