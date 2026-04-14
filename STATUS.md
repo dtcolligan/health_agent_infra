@@ -10,7 +10,8 @@ Source plan: `reporting/docs/health_lab_repo_transformation_plan_2026-04-09.md`
   - evidence: the repo has a schema-backed daily snapshot path under `clean/health_model/`, and the deterministic day-snapshot reconciliation lane passed as a bounded proof slice
 - Phase 3 — adapter reframing: in progress
   - evidence: Garmin is being treated as an adapter into the shared health model, but source-registry / connector-truth cleanup is still incomplete and the current lane was interrupted before completion
-- Phase 4 — gym ingestion introduction: not yet landed as an interpretable phase deliverable
+- Phase 4 — gym ingestion introduction: first bounded manual-gym prototype deliverable landed
+  - evidence: `merge_human_inputs/examples/manual_gym_sessions.example.json`, `clean/health_model/daily_snapshot.py`, `safety/tests/test_manual_logging.py`, and `reporting/artifacts/protocol_layer_proof/2026-04-14-manual-gym-phase-4-prototype/`
 - Phase 5 — nutrition surface cleanup: not yet landed as an interpretable phase deliverable
 - Phase 6 — ClawSuite-facing outputs: not yet landed as an interpretable phase deliverable
 
@@ -19,7 +20,7 @@ Source plan: `reporting/docs/health_lab_repo_transformation_plan_2026-04-09.md`
 - current_phase: Phase 3 — adapter reframing
 - current_bounded_lane: source-registry and connector-truth reconciliation
 - intended_stack_to_reconcile: Garmin + manual structured logging surfaces + nutrition pipeline, with `wger` kept only as the bounded exploratory non-flagship connector prototype defined in `reporting/docs/wger_connector_plan_v1.md`
-- current_truth: the last several local slices mainly hardened Phase 2 foundations and the Phase 2 -> Phase 3 handoff, not the later MVP phases
+- current_truth: the last several local slices mainly hardened Phase 2 foundations and the Phase 2 -> Phase 3 handoff, and Phase 4 now has a first bounded manual-gym prototype deliverable surfaced on the tree
 - blocker: the connector/source-registry lane was interrupted, and repo-facing doctrine still needs to be reconciled cleanly against the intended stack
 
 ## Canonical repo framing
@@ -66,6 +67,7 @@ Public review surfaces:
 - `reporting/docs/health_lab_canonical_public_demo.md`
 - `reporting/artifacts/public_demo/captured/`
 - `reporting/artifacts/flagship_loop_proof/2026-04-09/`
+- `reporting/artifacts/protocol_layer_proof/2026-04-14-manual-gym-phase-4-prototype/`
 
 For checked-in proof review, `reporting/artifacts/` is the sole canonical root.
 
@@ -86,6 +88,7 @@ For truthful review right now:
 - treat the CLI-first loop above as the proved public path
 - treat Garmin plus typed manual readiness as the approved target flagship path still being formalized and built
 - treat the transformation plan as the only canonical direction for connector and ingestion scope
+- treat Phase 4 gym ingestion as having one explicit manual-first prototype deliverable on the tree, not a full resistance-training completion claim
 - treat manual structured gym logs as the source-of-truth path for this doctrine interval
 - treat `wger` only as the bounded exploratory non-flagship connector prototype defined in `reporting/docs/wger_connector_plan_v1.md`
 - treat leftover connector surfaces outside that doctrine as non-canonical until a later plan phase explicitly promotes them

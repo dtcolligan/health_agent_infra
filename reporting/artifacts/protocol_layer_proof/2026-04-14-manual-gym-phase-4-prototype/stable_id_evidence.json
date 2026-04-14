@@ -1,0 +1,60 @@
+{
+  "claim_level": "prototype",
+  "replays_match": {
+    "training_session_ids": true,
+    "gym_exercise_set_ids": true,
+    "daily_health_snapshot_id": true,
+    "daily_rollups": {
+      "gym_sessions_count": true,
+      "gym_total_sets": true,
+      "gym_total_reps": true,
+      "gym_total_load_kg": true
+    }
+  },
+  "first": {
+    "training_session_ids": [
+      "resistance_training:manual_gym_sessions.example:session:upper-2026-04-08"
+    ],
+    "gym_exercise_set_ids": [
+      "resistance_training:manual_gym_sessions.example:set:upper-2026-04-08:bench-press-1",
+      "resistance_training:manual_gym_sessions.example:set:upper-2026-04-08:lat-pulldown-1"
+    ],
+    "daily_health_snapshot_id": "daily_health_snapshot_1315b147e00bc9c1",
+    "gym_rollups": {
+      "gym_sessions_count": 1,
+      "gym_total_sets": 2,
+      "gym_total_reps": 18,
+      "gym_total_load_kg": 930.0
+    },
+    "source_flags": {
+      "garmin": true,
+      "subjective": false,
+      "cronometer": false,
+      "manual_gym_log": true,
+      "wger": false
+    }
+  },
+  "second": {
+    "training_session_ids": [
+      "resistance_training:manual_gym_sessions.example:session:upper-2026-04-08"
+    ],
+    "gym_exercise_set_ids": [
+      "resistance_training:manual_gym_sessions.example:set:upper-2026-04-08:bench-press-1",
+      "resistance_training:manual_gym_sessions.example:set:upper-2026-04-08:lat-pulldown-1"
+    ],
+    "daily_health_snapshot_id": "daily_health_snapshot_1315b147e00bc9c1",
+    "gym_rollups": {
+      "gym_sessions_count": 1,
+      "gym_total_sets": 2,
+      "gym_total_reps": 18,
+      "gym_total_load_kg": 930.0
+    },
+    "source_flags": {
+      "garmin": true,
+      "subjective": false,
+      "cronometer": false,
+      "manual_gym_log": true,
+      "wger": false
+    }
+  }
+}

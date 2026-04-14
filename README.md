@@ -74,12 +74,22 @@ That target flagship is a frozen direction for the next slices, not a claim that
 
 Repo-facing truth should follow the transformation plan. For the current gym-source doctrine interval, manual structured gym logs remain the source-of-truth path, `wger` is a bounded exploratory non-flagship connector prototype, and leftover connector surfaces outside that doctrine are not the canonical current direction unless the plan explicitly promotes them.
 
+There is now one explicit bounded Phase 4 manual-gym prototype on the tree. Review it here:
+
+- `reporting/artifacts/protocol_layer_proof/2026-04-14-manual-gym-phase-4-prototype/`
+- `merge_human_inputs/examples/manual_gym_sessions.example.json`
+- `clean/health_model/daily_snapshot.py`
+- `safety/tests/test_manual_logging.py`
+
+That slice proves manual structured session input, canonical `training_session` / `gym_exercise_set` emission, and daily snapshot gym rollups. It does **not** claim full resistance-training source-family completion yet.
+
 Start with:
 
 - `reporting/docs/health_lab_canonical_definition.md`
 - `reporting/docs/health_lab_canonical_public_demo.md`
 - `reporting/artifacts/public_demo/captured/`
 - `reporting/artifacts/flagship_loop_proof/2026-04-09/`
+- `reporting/artifacts/protocol_layer_proof/2026-04-14-manual-gym-phase-4-prototype/`
 - `STATUS.md`
 
 For checked-in proof review, `reporting/artifacts/` is the sole canonical proof root for this repo.

@@ -1,0 +1,33 @@
+[
+  {
+    "artifact_family": "training_session",
+    "session_id": "upper-2026-04-08",
+    "date": "2026-04-08",
+    "session_type": "gym",
+    "source": "manual_gym_log",
+    "training_session_id": "resistance_training:manual_gym_sessions.example:session:upper-2026-04-08",
+    "source_name": "resistance_training",
+    "source_record_id": "resistance_training:manual_gym_sessions.example:session:upper-2026-04-08",
+    "provenance_record_id": "provenance:resistance_training:manual_gym_sessions.example:training_session:upper-2026-04-08",
+    "confidence_label": "high",
+    "conflict_status": "none",
+    "start_time_local": "2026-04-08T18:00:00",
+    "duration_sec": 3000.0,
+    "session_title": "Upper body",
+    "rpe_1_10": 7.0,
+    "energy_pre_1_5": 3.0,
+    "energy_post_1_5": 2.0,
+    "notes": "Optional free-text note.",
+    "distance_m": null,
+    "avg_hr": null,
+    "max_hr": null,
+    "avg_pace_sec_per_km": null,
+    "elevation_gain_m": null,
+    "training_effect_aerobic": null,
+    "lift_focus": "push_pull",
+    "exercise_count": 2,
+    "total_sets": 2,
+    "total_reps": 18,
+    "total_load_kg": 930.0
+  }
+]

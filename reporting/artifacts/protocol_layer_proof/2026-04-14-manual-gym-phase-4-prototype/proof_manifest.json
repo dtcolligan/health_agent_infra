@@ -1,0 +1,41 @@
+{
+  "proof_bundle_version": "phase-4-manual-gym-prototype-v1",
+  "claim_level": "prototype",
+  "claim": "first bounded manual-first Phase 4 resistance-training deliverable is live on the tree",
+  "doctrine": {
+    "manual_structured_gym_logs": "source_of_truth",
+    "wger": "exploratory_non_flagship_only"
+  },
+  "target_date": "2026-04-08",
+  "inputs": {
+    "manual_gym_session_input": "merge_human_inputs/examples/manual_gym_sessions.example.json",
+    "garmin_fixture_for_daily_snapshot_rollup": "safety/tests/fixtures/manual_logging/garmin_minimal_export"
+  },
+  "live_surfaces": [
+    "merge_human_inputs/manual_logs/manual_logging.py",
+    "merge_human_inputs/examples/manual_gym_sessions.example.json",
+    "clean/health_model/daily_snapshot.py",
+    "safety/tests/test_manual_logging.py"
+  ],
+  "checked_in_artifacts": {
+    "manual_gym_session_input": "reporting/artifacts/protocol_layer_proof/2026-04-14-manual-gym-phase-4-prototype/manual_gym_session_input.json",
+    "training_sessions": "reporting/artifacts/protocol_layer_proof/2026-04-14-manual-gym-phase-4-prototype/training_sessions.json",
+    "gym_exercise_sets": "reporting/artifacts/protocol_layer_proof/2026-04-14-manual-gym-phase-4-prototype/gym_exercise_sets.json",
+    "daily_health_snapshot": "reporting/artifacts/protocol_layer_proof/2026-04-14-manual-gym-phase-4-prototype/daily_health_snapshot.json",
+    "stable_id_evidence": "reporting/artifacts/protocol_layer_proof/2026-04-14-manual-gym-phase-4-prototype/stable_id_evidence.json"
+  },
+  "proof_summary": {
+    "training_sessions_count": 1,
+    "gym_exercise_sets_count": 2,
+    "daily_snapshot_gym_sessions_count": 1,
+    "daily_snapshot_gym_total_sets": 2,
+    "daily_snapshot_gym_total_reps": 18,
+    "daily_snapshot_gym_total_load_kg": 930.0
+  },
+  "smoke_check": "PYTHONPATH=clean:safety python3 -m unittest safety.tests.test_manual_logging",
+  "limits": [
+    "This is a manual-first prototype slice, not proof_complete for the full resistance-training source family.",
+    "exercise_catalog, exercise_alias, and program_block remain follow-on proof surfaces.",
+    "No connector promotion is implied; wger stays exploratory and non-flagship."
+  ]
+}
