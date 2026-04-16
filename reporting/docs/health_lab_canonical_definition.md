@@ -57,13 +57,19 @@ Those path references explain current repo reality. They do not override the buc
 
 ## Current public proof path
 
-The clearest shipped proof remains the CLI-first loop:
+The clearest shipped proof is the `recovery_readiness_v1` flagship loop (delivered 2026-04-16):
 
-`contract describe -> bundle init -> voice-note submit -> context get -> recommendation create`
+`PULL -> CLEAN -> STATE -> POLICY -> RECOMMEND -> ACTION -> REVIEW`
 
-Today that loop is implemented mainly from within the `clean` bucket, especially `clean/health_model/`, with compatibility wrappers also present in the `safety` bucket. Public proof and review surfaces live in the `reporting` bucket.
+Implemented in `clean/health_model/recovery_readiness_v1/`. Runs end-to-end over both synthetic fixtures and a committed real Garmin CSV export.
 
-Key review surfaces:
+Key flagship review surfaces:
+
+- `reporting/docs/flagship_walkthrough.md`
+- `reporting/artifacts/flagship_loop_proof/2026-04-16-recovery-readiness-v1/` (synthetic, 8 scenarios)
+- `reporting/artifacts/flagship_loop_proof/2026-04-16-garmin-real-slice/` (real Garmin CSV)
+
+The older CLI-first loop (`contract describe -> bundle init -> voice-note submit -> context get -> recommendation create`) remains in the tree as compatibility. Review surfaces for that older lineage:
 
 - `reporting/docs/health_lab_canonical_public_demo.md`
 - `reporting/artifacts/public_demo/captured/`
@@ -71,18 +77,16 @@ Key review surfaces:
 - `reporting/artifacts/protocol_layer_proof/2026-04-11-writeback-judgment/`
 - `reporting/artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-transition/`
 
-## Frozen target flagship path, not yet implemented end-to-end
+## Flagship path, delivered 2026-04-16
 
-The approved target flagship doctrine is narrower than the current public proof path:
+The narrow flagship path `Garmin passive pull -> typed manual readiness intake -> deterministic normalization -> typed state -> policy -> bounded recommendation -> bounded local writeback -> review` was delivered 2026-04-16 as `recovery_readiness_v1`. Proof bundles live at `reporting/artifacts/flagship_loop_proof/2026-04-16-recovery-readiness-v1/` (synthetic, 8 scenarios) and `reporting/artifacts/flagship_loop_proof/2026-04-16-garmin-real-slice/` (real Garmin CSV).
 
-`Garmin passive pull -> typed manual readiness intake -> deterministic normalization/bundle/context -> bounded recommendation -> bounded writeback`
-
-This doc freezes that target doctrine for truthful repo-facing language. It does not claim the full target loop is already implemented or publicly proved end-to-end today.
+The older CLI-first lineage (`contract describe -> bundle init -> voice-note submit -> context get -> recommendation create`) remains present as compatibility, not as current flagship proof.
 
 Classification for this interval:
-- Garmin is the passive-data anchor for the frozen target flagship path
-- typed manual readiness intake is the human-input anchor for the frozen target flagship path
-- manual structured gym logs remain the source-of-truth path for this doctrine interval
+- Garmin is the passive-data anchor for the delivered flagship path (via the thin `pull/garmin/recovery_readiness_adapter.py`)
+- typed manual readiness intake is the human-input anchor for the delivered flagship path (via the manual-readiness dict shape consumed by `clean_inputs`)
+- manual structured gym logs remain the source-of-truth path for resistance training, distinct from the flagship loop
 - `pull/sources/wger/` remains only a bounded exploratory non-flagship connector prototype for later convergence into Health Lab canonical gym objects
 - leftover connector surfaces outside that doctrine are non-canonical unless later promoted by the plan
 

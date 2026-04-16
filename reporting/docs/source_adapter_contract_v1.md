@@ -23,20 +23,18 @@ The repo also needs one frozen contract for:
 - proof artifact expectations
 - exact `pull` vs `clean` vs `merge_human_inputs` responsibilities
 
-## Current proof versus frozen target flagship
+## Current flagship versus broader-family contract scope
 
-The current public proof path is still the broader CLI-first lineage:
+The narrow flagship loop (Garmin passive pull → typed manual readiness → deterministic normalization → typed state → policy → bounded recommendation → bounded local writeback → review) was delivered 2026-04-16 as `recovery_readiness_v1`.
 
-`contract describe -> bundle init -> voice-note submit -> context get -> recommendation create`
+The older CLI-first lineage (`contract describe -> bundle init -> voice-note submit -> context get -> recommendation create`) remains in the tree as compatibility, not current flagship proof.
 
-The approved target flagship doctrine for later slices is:
+**This adapter contract applies to broader-family adapters** — those aspiring to emit the full canonical artifact families (`source_record`, `provenance_record`, and the per-source canonical outputs) into the multi-source platform. It is the contract the older broader Garmin/Cronometer/manual-gym surfaces aspire to satisfy.
 
-`Garmin passive pull -> typed manual readiness intake -> deterministic normalization/bundle/context -> bounded recommendation -> bounded writeback`
+The flagship's thin Garmin adapter (`pull/garmin/recovery_readiness_adapter.py`) has a **narrower informal contract**: it emits a `CleanedEvidence` dict shape for direct flagship-loop consumption, without the full provenance_record / source_record / canonical-family expectations this doc describes. The flagship slice and this contract coexist; reconciling them is a candidate future slice (none committed yet).
 
-This contract names many source families. That does not make them all flagship-critical.
-
-For this doctrine interval:
-- Garmin plus typed manual readiness is the frozen target flagship path
+For this doctrine interval (still accurate):
+- Garmin plus typed manual readiness is the narrow flagship path (delivered)
 - Cronometer is a bridge/reference nutrition source, not a flagship-completion dependency
 - manual structured gym logs are the source-of-truth path for resistance training
 - `wger` is the only retained bounded exploratory non-flagship gym connector prototype

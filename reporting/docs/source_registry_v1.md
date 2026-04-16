@@ -25,21 +25,21 @@ Use this registry together with:
 - `prototype`: a live bounded implementation or proof surface exists on the tree, but maturity remains partial, mock-backed, fixture-backed, or otherwise explicitly non-flagship
 - `planned`: intentionally named in the contract, but implementation has not started yet
 
-## Current proof versus frozen target flagship
+## Current flagship versus platform-contract scope
 
-The current public proof path is still the broader CLI-first lineage:
+The narrow flagship loop `Garmin passive pull -> typed manual readiness intake -> deterministic normalization -> typed state -> policy -> bounded recommendation -> bounded local writeback -> review` was delivered 2026-04-16 as `recovery_readiness_v1`. Current flagship proof lives at `reporting/artifacts/flagship_loop_proof/2026-04-16-recovery-readiness-v1/` (synthetic, 8 scenarios) and `reporting/artifacts/flagship_loop_proof/2026-04-16-garmin-real-slice/` (real Garmin CSV).
 
-`contract describe -> bundle init -> voice-note submit -> context get -> recommendation create`
+The older CLI-first lineage (`contract describe -> bundle init -> voice-note submit -> context get -> recommendation create`) remains in the tree as compatibility, not current flagship proof.
 
-The approved target flagship doctrine for later slices remains:
+**Important scope distinction for this registry:** The flagship's Garmin adapter (`pull/garmin/recovery_readiness_adapter.py`) emits a narrow `CleanedEvidence` dict consumed by `clean/health_model/recovery_readiness_v1/clean.py::clean_inputs`. It does **not** emit the full canonical artifact family this registry names (`source_record`, `provenance_record`, `sleep_daily`, `readiness_daily`, `training_session`, `daily_health_snapshot`). That broader canonical emission is aspirational platform scope governed by older broader Garmin surfaces on the tree and the `daily_health_snapshot` merge-contract proof bundles.
 
-`Garmin passive pull -> typed manual readiness intake -> deterministic normalization/bundle/context -> bounded recommendation -> bounded writeback`
+"`proof_complete`" in the registry below therefore means different things for different sources:
+- for Garmin and typed manual readiness: flagship slice consumption is proved end-to-end; broader canonical-family emission is prototype at best
+- for other sources: as stated in the per-source done-definition column
 
-The typed manual readiness intake half of that target is now a live proof-bearing human-input surface on the tree, but this registry still does **not** claim that the full target flagship loop is already complete.
+This registry names both the flagship-delivered slice and the aspirational broader platform contract. A future Phase 3 slice may reconcile the narrow flagship adapter with the broader contract; no such reconciliation has been committed yet.
 
-For the current doctrine-aligned day-proof boundary, the active runnable proof surface is `reporting/scripts/run_daily_health_snapshot_merge_contract_proof.py` with bundle `reporting/artifacts/protocol_layer_proof/2026-04-12-daily-health-snapshot-merge-contract-v1/`. The older `2026-04-12-trio-day-proof-gated-by-wger-runtime/` root is retained for audit continuity only.
-
-This registry therefore names both current-proof broader manual surfaces and the live typed-manual-readiness flagship-adjacent surface without claiming that every later flagship dependency is already fully implemented.
+For the doctrine-aligned day-proof boundary on the broader platform contract, the runnable proof surface is `reporting/scripts/run_daily_health_snapshot_merge_contract_proof.py` with bundle `reporting/artifacts/protocol_layer_proof/2026-04-12-daily-health-snapshot-merge-contract-v1/`.
 
 ## Registry
 
@@ -61,7 +61,7 @@ This registry therefore names both current-proof broader manual surfaces and the
 ### Lane ownership
 
 - `voice-note / broader manual human inputs` is marked `prototype` overall because the broader derived-record family is not fully proved yet, even though the lane itself already has real proof-bearing surfaces in the repo.
-- `typed manual readiness / subjective recovery inputs` is the frozen human-input half of the target flagship doctrine and now has live repo-grounded proof, even though exact later field extensions and writeback details remain separate contract work.
+- `typed manual readiness / subjective recovery inputs` is the human-input anchor of the delivered flagship (`recovery_readiness_v1`, 2026-04-16). Field extensions beyond the current manual-readiness dict shape and broader writeback details remain separate contract work.
 - `resistance training` is now marked `prototype` because the manual-first session/set path, canonical `training_session` plus `gym_set_record` emission, and daily snapshot gym rollups are live on the tree; any retained `gym_exercise_set` surface is legacy/compatibility only, and the broader exercise-model family is not yet surfaced honestly enough to call `proof_complete`.
 - `wger` remains the bounded exploratory connector surface retained on the tree. It does not change the manual-first flagship doctrine.
 - A source may have a future secondary acquisition path, but its v1 primary entry lane is the lane frozen above.

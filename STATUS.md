@@ -127,18 +127,15 @@ Additional bounded writeback proof:
 - `reporting/artifacts/protocol_layer_proof/2026-04-11-writeback-judgment/`
 - `reporting/artifacts/protocol_layer_proof/2026-04-11-recommendation-resolution-transition/`
 
-## Frozen target flagship doctrine, not yet current proof
+## Flagship status
 
-The approved target flagship for the next slices is:
-
-`Garmin passive pull -> typed manual readiness intake -> deterministic normalization/bundle/context -> bounded recommendation -> bounded writeback`
-
-That is the frozen doctrine, not a claim that the full end-to-end target loop is already implemented.
+The narrow flagship loop (Garmin passive pull → typed manual readiness → deterministic normalization → typed state → policy → bounded recommendation → bounded local writeback → review) was delivered 2026-04-16 as `recovery_readiness_v1`. See `clean/health_model/recovery_readiness_v1/` and the proof bundles under `reporting/artifacts/flagship_loop_proof/2026-04-16-*`.
 
 For truthful review right now:
-- treat the CLI-first loop above as the proved public path
-- treat Garmin plus typed manual readiness as the approved target flagship path still being formalized and built
-- treat the transformation plan as the only canonical direction for connector and ingestion scope
+- treat `recovery_readiness_v1` as the current flagship proof path
+- treat the older CLI-first chain as retained compatibility, not current flagship
+- treat the broader multi-source platform contract (full canonical artifact families, daily_health_snapshot merge) as aspirational scope distinct from the delivered narrow flagship
+- treat the transformation plan as the canonical direction for connector and ingestion scope
 - treat Phase 4 gym ingestion as having one explicit manual-first prototype deliverable on the tree, not a full resistance-training completion claim
 - treat manual structured gym logs as the source-of-truth path for this doctrine interval
 - treat `wger` only as the bounded exploratory non-flagship connector prototype defined in `reporting/docs/wger_connector_plan_v1.md`

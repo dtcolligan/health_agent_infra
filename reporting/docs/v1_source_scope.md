@@ -28,23 +28,19 @@ It freezes:
 
 This slice does not require new source-specific implementation. It classifies the live source-specific surfaces on the tree truthfully instead of pretending they do not exist.
 
-## Frozen flagship doctrine for this interval
+## Flagship doctrine for this interval
 
-The current public proof path is still the CLI-first lineage:
+The narrow flagship path `Garmin passive pull -> typed manual readiness intake -> deterministic normalization -> typed state -> policy -> bounded recommendation -> bounded local writeback -> review` was delivered 2026-04-16 as `recovery_readiness_v1`. See `clean/health_model/recovery_readiness_v1/` and the sibling proof bundles under `reporting/artifacts/flagship_loop_proof/2026-04-16-*`.
 
-`contract describe -> bundle init -> voice-note submit -> context get -> recommendation create`
+The older CLI-first lineage (`contract describe -> bundle init -> voice-note submit -> context get -> recommendation create`) remains in the tree as compatibility, not current flagship proof.
 
-The approved target flagship doctrine for later slices is narrower:
-
-`Garmin passive pull -> typed manual readiness intake -> deterministic normalization/bundle/context -> bounded recommendation -> bounded writeback`
+The **broader multi-source platform contract** that this source-scope doc names — full canonical artifact families (`source_record`, `provenance_record`, `sleep_daily`, `readiness_daily`, `training_session`, `daily_health_snapshot`) emitted across many source families — is **aspirational platform scope beyond the current flagship**. The flagship's Garmin adapter (`pull/garmin/recovery_readiness_adapter.py`) emits a narrow `CleanedEvidence` dict, not the full canonical family. Two adapter lineages coexist in the tree: the thin flagship adapter, and older broader surfaces that aspire to the platform contract.
 
 This source-scope doc therefore distinguishes:
-- flagship-target source families
-- current-proof-but-broader manual surfaces
-- bridge/reference source families
-- exploratory non-flagship connector surfaces
-
-The typed manual readiness intake half of the target flagship path is already present with live repo proof, even though the full end-to-end flagship loop remains a later claim boundary.
+- flagship-delivered source families (Garmin + typed manual readiness, via the narrow `recovery_readiness_v1` slice)
+- current-proof-but-broader manual surfaces (the older CLI-first lineage)
+- bridge/reference source families (named in the platform contract, not flagship-critical)
+- exploratory non-flagship connector surfaces (wger)
 
 ## Lane boundary summary
 
@@ -76,9 +72,9 @@ The downstream normalized artifact families for v1 are:
 
 | Source family | v1 status | Entry lane | Doctrine role | Why in scope now | Expected canonical artifact families |
 | --- | --- | --- | --- | --- | --- |
-| Garmin | in_v1 | `pull` | flagship_target | already grounded in repo docs, data, and current adapter reality, and it is the passive-data anchor for the frozen target flagship path | `source_record`, `provenance_record`, `sleep_daily`, `readiness_daily`, `training_session`, `daily_health_snapshot` |
-| typed manual readiness / subjective recovery inputs | in_v1 | `merge_human_inputs` | flagship_target | typed manual readiness intake is the human-input anchor for the frozen target flagship path, it is already implemented and proved on the live tree, and it should stay explicit/manual rather than implied through third-party gym tooling | `source_record`, `provenance_record`, `subjective_daily_input`, `readiness_daily`, `daily_health_snapshot` |
-| voice-note / broader manual human inputs | in_v1 | `merge_human_inputs` | current_proof_broader_manual_surface | the current public proof already uses voice-note intake, but that broader manual family is wider than the narrower typed-readiness flagship target | `source_record`, `provenance_record`, `subjective_daily_input`, `supplement_intake`, `lab_result`, `gym_set_record`, `training_session`, `nutrition_daily`, `daily_health_snapshot` |
+| Garmin | in_v1 | `pull` | flagship_target | passive-data anchor for the delivered flagship path; thin `recovery_readiness_v1` adapter emits `CleanedEvidence`; older broader surfaces aspire to the full canonical-family emission | `source_record`, `provenance_record`, `sleep_daily`, `readiness_daily`, `training_session`, `daily_health_snapshot` (broader-family aspiration; flagship slice emits narrower `CleanedEvidence` only) |
+| typed manual readiness / subjective recovery inputs | in_v1 | `merge_human_inputs` | flagship_target | human-input anchor for the delivered flagship path, consumed by `clean_inputs` as a typed manual readiness dict; explicit/manual by design rather than implied through third-party tooling | `source_record`, `provenance_record`, `subjective_daily_input`, `readiness_daily`, `daily_health_snapshot` (broader-family aspiration; flagship slice consumes a narrower manual readiness dict only) |
+| voice-note / broader manual human inputs | in_v1 | `merge_human_inputs` | current_proof_broader_manual_surface | the older CLI-first proof path uses voice-note intake; the narrower typed-readiness flagship (`recovery_readiness_v1`) does not depend on it | `source_record`, `provenance_record`, `subjective_daily_input`, `supplement_intake`, `lab_result`, `gym_set_record`, `training_session`, `nutrition_daily`, `daily_health_snapshot` |
 | Cronometer | in_v1 | `pull` | bridge_reference | useful bounded nutrition and supplements bridge/reference source via export-first connector surfaces, but not required for flagship completion | `source_record`, `provenance_record`, `nutrition_daily`, `supplement_intake`, `daily_health_snapshot` |
 | supplements | in_v1 | `merge_human_inputs` first, future `pull` allowed later | bridge_reference | valid manual fallback and backfill path whether or not Cronometer is present | `source_record`, `provenance_record`, `supplement_intake`, `daily_health_snapshot` |
 | bloodwork | in_v1 | `merge_human_inputs` first, future `pull` allowed later | bridge_reference | important health-domain input, currently best treated as manual-first rather than a flagship dependency | `source_record`, `provenance_record`, `lab_result`, `daily_health_snapshot` |

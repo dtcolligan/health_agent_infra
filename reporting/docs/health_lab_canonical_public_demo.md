@@ -32,19 +32,15 @@ Truth surfaces stay distinct:
 
 ## What this demo proves, and what it does not
 
-This demo proves the current public-safe CLI-first path only.
+This demo proves the older CLI-first lineage only (contract describe → bundle init → voice-note submit → context get → recommendation create). That lineage remains in the tree as compatibility but is no longer the current flagship.
 
-The approved target flagship doctrine for later slices is:
-
-`Garmin passive pull -> typed manual readiness intake -> deterministic normalization/bundle/context -> bounded recommendation -> bounded writeback`
-
-This wrapper does not prove that the target flagship path is already implemented end-to-end.
+The narrow flagship path `Garmin passive pull -> typed manual readiness intake -> deterministic normalization -> typed state -> policy -> bounded recommendation -> bounded local writeback -> review` was delivered 2026-04-16 as `recovery_readiness_v1`, with its own sibling proof bundles under `reporting/artifacts/flagship_loop_proof/2026-04-16-*`. Those bundles — not this wrapper — are the current flagship proof.
 
 For truthful review:
-- treat this wrapper as proof of the current CLI-first demo lineage
-- treat Cronometer as a bridge/reference nutrition surface outside this demo's flagship claim
-- treat manual structured gym logs as the source-of-truth path for this doctrine interval
-- treat `wger` only as the bounded exploratory non-flagship connector prototype defined by the repo plan, outside this demo's flagship claim
+- treat this wrapper as proof of the older CLI-first demo lineage, not the current flagship
+- treat Cronometer as a bridge/reference nutrition surface outside this demo's claim and outside the current flagship
+- treat manual structured gym logs as the source-of-truth path for resistance training, distinct from either proof path
+- treat `wger` only as the bounded exploratory non-flagship connector prototype defined by the repo plan
 - treat leftover connector residue outside that doctrine as non-canonical
 
 ## Pathing truth
