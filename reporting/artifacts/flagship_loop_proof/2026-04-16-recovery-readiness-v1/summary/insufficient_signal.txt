@@ -1,0 +1,12 @@
+scenario:          insufficient_signal
+as_of_date:        2026-04-16
+recovery_status:   unknown
+readiness_score:   None
+coverage:          insufficient
+uncertainties:     hrv_unavailable, manual_checkin_missing, resting_hr_record_missing, sleep_record_missing
+action:            defer_decision_insufficient_signal
+confidence:        low
+policy_decisions:
+  - require_min_coverage: block — coverage=insufficient; required inputs missing
+review_at:         2026-04-17T07:00:00+00:00
+writeback:         /tmp/noop/recovery_readiness_v1/recommendation_log.jsonl

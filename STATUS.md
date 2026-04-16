@@ -12,7 +12,20 @@ The Phase 1 doctrine pass per the Chief Operational Brief landed as a dated doc 
 - `reporting/docs/minimal_policy_rules.md`
 - `reporting/docs/explicit_non_goals.md`
 
-That set defines the runtime model (`PULL -> CLEAN -> STATE -> POLICY -> RECOMMEND -> ACTION -> REVIEW`), the single flagship loop (`recovery_readiness_v1`), and the explicit non-goals. Phase 2 (narrow end-to-end implementation) builds against those specs.
+That set defines the runtime model (`PULL -> CLEAN -> STATE -> POLICY -> RECOMMEND -> ACTION -> REVIEW`), the single flagship loop (`recovery_readiness_v1`), and the explicit non-goals.
+
+## Phase 2 flagship implementation (landed 2026-04-16)
+
+The flagship `recovery_readiness_v1` loop runs end-to-end against the Phase 1 schemas. PULL is a synthetic fixture in this slice; all other layers are real.
+
+- implementation: `clean/health_model/recovery_readiness_v1/`
+- tests (19 passing): `safety/tests/test_recovery_readiness_v1.py`
+- captured proof: `reporting/artifacts/flagship_loop_proof/2026-04-16-recovery-readiness-v1/`
+- walkthrough: `reporting/docs/flagship_walkthrough.md`
+
+Six scenarios are captured: `recovered_with_easy_plan`, `mildly_impaired_with_hard_plan`, `impaired_with_hard_plan`, `rhr_spike_three_days`, `insufficient_signal`, `sparse_signal`. Each one demonstrates a different runtime facet: green-path, bounded downgrade, stronger downgrade, R4 escalation, R1 block, and sparse-coverage confidence downgrade. The writeback bundle contains six recommendation-log entries, a daily plan note with six entries, six review events, and six review outcomes.
+
+Remaining Phase 2 follow-on: wire a real Garmin PULL slice through the stable CleanedEvidence contract.
 
 ## Report-phase tracker
 

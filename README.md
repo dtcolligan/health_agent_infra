@@ -76,6 +76,28 @@ The canonical runtime architecture from that doctrine is:
 
 That runtime model sits on top of the eight-bucket repo organisation, it does not replace it.
 
+## Phase 2 flagship proof (landed 2026-04-16)
+
+The flagship loop runs end-to-end against the Phase 1 schemas. One module, one CLI, 19 passing tests, six captured scenarios.
+
+- code: `clean/health_model/recovery_readiness_v1/`
+- tests: `safety/tests/test_recovery_readiness_v1.py`
+- captured proof: `reporting/artifacts/flagship_loop_proof/2026-04-16-recovery-readiness-v1/`
+- walkthrough: `reporting/docs/flagship_walkthrough.md`
+
+Run it from repo root:
+
+```bash
+PYTHONPATH=clean:safety python -m health_model.recovery_readiness_v1.cli run \
+  --scenario mildly_impaired_with_hard_plan \
+  --base-dir /tmp/recovery_readiness_v1 \
+  --date 2026-04-16 \
+  --now 2026-04-16T07:15:00+00:00 \
+  --record-review-outcome followed_and_improved
+```
+
+The captured proof bundle demonstrates all six flagship-spec conditions: deterministic evidence path, typed state, policy audit trail, structured recommendation, bounded local writeback, and a recorded review outcome.
+
 ## Current proof path and frozen target flagship
 
 The clearest public proof is still the CLI-first loop:

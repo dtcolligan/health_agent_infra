@@ -1,0 +1,12 @@
+scenario:          recovered_with_easy_plan
+as_of_date:        2026-04-16
+recovery_status:   recovered
+readiness_score:   1.0
+coverage:          full
+uncertainties:     (none)
+action:            proceed_with_planned_session
+confidence:        high
+policy_decisions:
+  - require_min_coverage: allow — coverage=full, required inputs present
+review_at:         2026-04-17T07:00:00+00:00
+writeback:         /tmp/noop/recovery_readiness_v1/recommendation_log.jsonl

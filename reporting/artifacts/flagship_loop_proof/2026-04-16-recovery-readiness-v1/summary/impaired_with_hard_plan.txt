@@ -1,0 +1,12 @@
+scenario:          impaired_with_hard_plan
+as_of_date:        2026-04-16
+recovery_status:   impaired
+readiness_score:   0.05
+coverage:          full
+uncertainties:     (none)
+action:            downgrade_session_to_mobility_only
+confidence:        high
+policy_decisions:
+  - require_min_coverage: allow — coverage=full, required inputs present
+review_at:         2026-04-17T07:00:00+00:00
+writeback:         /tmp/noop/recovery_readiness_v1/recommendation_log.jsonl

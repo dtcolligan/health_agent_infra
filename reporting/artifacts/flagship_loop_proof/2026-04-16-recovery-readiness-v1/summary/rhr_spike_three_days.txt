@@ -1,0 +1,13 @@
+scenario:          rhr_spike_three_days
+as_of_date:        2026-04-16
+recovery_status:   mildly_impaired
+readiness_score:   0.6
+coverage:          full
+uncertainties:     (none)
+action:            escalate_for_user_review
+confidence:        high
+policy_decisions:
+  - require_min_coverage: allow — coverage=full, required inputs present
+  - resting_hr_spike_escalation: escalate — resting HR well above baseline 3 days running
+review_at:         2026-04-17T07:00:00+00:00
+writeback:         /tmp/noop/recovery_readiness_v1/recommendation_log.jsonl
