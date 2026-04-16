@@ -76,9 +76,10 @@ All enumerations are closed sets. Adding a new value is a schema change.
 - `resting_hr_record_missing`
 - `manual_checkin_missing`
 - `training_load_window_incomplete`
-- `nutrition_incomplete`
 - `baseline_window_too_short`
 - `single_source_only`
+
+Additional tokens may be added only once the runtime emits them. Tokens that describe data the runtime does not actually consume (for example, nutrition) should not appear on this list.
 
 The vocabulary is extensible. Each new token is documented in this file before being emitted.
 
@@ -126,7 +127,7 @@ Illustrative only. Not validated.
     "required_inputs_present": true,
     "notes": ["hrv not reported by source today"]
   },
-  "uncertainties": ["hrv_unavailable", "nutrition_incomplete"],
+  "uncertainties": ["hrv_unavailable"],
   "inputs_used": {
     "garmin_sleep_record_id": "g_sleep_2026-04-15",
     "garmin_resting_hr_record_id": "g_rhr_2026-04-16",

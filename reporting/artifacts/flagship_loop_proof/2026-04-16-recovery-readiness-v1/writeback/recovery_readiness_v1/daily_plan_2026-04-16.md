@@ -31,7 +31,7 @@
 ## 2026-04-16 — escalate_for_user_review
 
 - confidence: high
-- rationale: sleep_debt=none, soreness_signal=moderate, resting_hr_vs_baseline=above, training_load_trailing_7d=high, hrv_vs_baseline=below
+- rationale: sleep_debt=none, soreness_signal=moderate, resting_hr_vs_baseline=well_above, training_load_trailing_7d=high, hrv_vs_baseline=below
 - uncertainty: (none)
 - detail: `{"consecutive_days": 3, "reason_token": "resting_hr_spike_3_days_running"}`
 - review_at: 2026-04-17T07:00:00+00:00
@@ -50,7 +50,7 @@
 <!-- rec_2026-04-16_u_sparse_signal_01 -->
 ## 2026-04-16 — proceed_with_planned_session
 
-- confidence: low
+- confidence: moderate
 - rationale: sleep_debt=none, soreness_signal=moderate, resting_hr_vs_baseline=unknown, training_load_trailing_7d=high
 - uncertainty: hrv_unavailable, resting_hr_record_missing
 - detail: `{"caveat": "keep_effort_conversational"}`

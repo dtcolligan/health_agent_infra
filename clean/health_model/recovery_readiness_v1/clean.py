@@ -53,11 +53,11 @@ def clean_inputs(
         sleep_hours = garmin_sleep.get("duration_hours")
         sleep_record_id = garmin_sleep.get("record_id")
 
+    rhr_latest = _dedupe_by_date(garmin_resting_hr_recent)
     today_rhr = None
     today_rhr_id = None
     rhr_history: list[float] = []
-    for rec in sorted(garmin_resting_hr_recent, key=lambda r: r["date"]):
-        rec_date = _coerce_date(rec["date"])
+    for rec_date, rec in sorted(rhr_latest.items()):
         if rec_date == as_of:
             today_rhr = rec.get("bpm")
             today_rhr_id = rec.get("record_id")
@@ -66,11 +66,11 @@ def clean_inputs(
                 rhr_history.append(rec["bpm"])
     rhr_baseline = _mean(rhr_history)
 
+    hrv_latest = _dedupe_by_date(garmin_hrv_recent)
     today_hrv = None
     today_hrv_id = None
     hrv_history: list[float] = []
-    for rec in sorted(garmin_hrv_recent, key=lambda r: r["date"]):
-        rec_date = _coerce_date(rec["date"])
+    for rec_date, rec in sorted(hrv_latest.items()):
         if rec_date == as_of:
             today_hrv = rec.get("rmssd_ms")
             today_hrv_id = rec.get("record_id")
@@ -139,18 +139,31 @@ def clean_inputs(
     )
 
 
+def _dedupe_by_date(records: list[dict]) -> dict[date, dict]:
+    """Map each record date to the last record seen for that date."""
+
+    result: dict[date, dict] = {}
+    for rec in records:
+        result[_coerce_date(rec["date"])] = rec
+    return result
+
+
+WELL_ABOVE_RESTING_HR_RATIO = 1.15
+
+
 def _count_rhr_spike_days(*, as_of: date, history: list[dict], baseline: Optional[float]) -> int:
-    """Count consecutive trailing days (including today) where resting HR was well above baseline."""
+    """Consecutive trailing days (including today) where resting HR is well_above baseline.
+
+    The threshold matches the STATE layer's `well_above` band for resting HR
+    (ratio >= 1.15), so this count and state.resting_hr_vs_baseline agree on
+    what "well above" means.
+    """
 
     if baseline is None:
         return 0
-    by_date: dict[date, float] = {}
-    for rec in history:
-        if rec.get("bpm") is None:
-            continue
-        by_date[_coerce_date(rec["date"])] = rec["bpm"]
+    by_date = {d: rec["bpm"] for d, rec in _dedupe_by_date(history).items() if rec.get("bpm") is not None}
 
-    threshold = baseline * 1.10
+    threshold = baseline * WELL_ABOVE_RESTING_HR_RATIO
     days = 0
     cursor = as_of
     while True:

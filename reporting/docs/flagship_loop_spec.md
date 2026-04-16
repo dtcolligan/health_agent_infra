@@ -50,7 +50,8 @@ REVIEW      -> next-day follow-up event asking whether the intervention helped
 
 ### Optional
 - short workload or calendar context note
-- nutrition note, if user has volunteered one (not required; missingness must not block the loop)
+
+Nutrition is explicitly out of scope for this flagship loop (see [explicit_non_goals.md](explicit_non_goals.md)).
 
 ### Missingness handling
 See [minimal_policy_rules.md](minimal_policy_rules.md). The loop must degrade gracefully when non-required inputs are absent, and must refuse to produce a confident recommendation when required inputs are too sparse.
@@ -74,7 +75,7 @@ Illustrative shape only. Field names and types are authoritative in the schema d
 - recommendation: `action = downgrade_hard_session_to_zone_2`
 - rationale: sleep debt elevated, soreness high, resting HR above 7-day baseline
 - confidence: `moderate`
-- uncertainty: `nutrition_incomplete, hrv_unavailable`
+- uncertainty: `hrv_unavailable`
 - action: append recommendation entry to today's plan note via bounded writeback
 - review: tomorrow morning, prompt user with a yes/no on whether the downgrade helped recovery or session quality
 

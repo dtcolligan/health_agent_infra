@@ -131,14 +131,7 @@ def _propose(
         rationale.append(f"hrv_vs_baseline={state.hrv_vs_baseline}")
 
     status = state.recovery_status
-    base_confidence: Confidence
-    if state.signal_quality.coverage == "full":
-        base_confidence = "high"
-    elif state.signal_quality.coverage == "partial":
-        base_confidence = "moderate"
-    else:
-        base_confidence = "low"
-
+    base_confidence: Confidence = "high"
     planned = (planned_session_type or "").lower()
 
     if status == "impaired":

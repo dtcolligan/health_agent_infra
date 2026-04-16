@@ -1,7 +1,7 @@
 scenario:          rhr_spike_three_days
 as_of_date:        2026-04-16
 recovery_status:   mildly_impaired
-readiness_score:   0.6
+readiness_score:   0.5
 coverage:          full
 uncertainties:     (none)
 action:            escalate_for_user_review

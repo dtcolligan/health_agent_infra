@@ -5,8 +5,9 @@ readiness_score:   0.85
 coverage:          sparse
 uncertainties:     hrv_unavailable, resting_hr_record_missing
 action:            proceed_with_planned_session
-confidence:        low
+confidence:        moderate
 policy_decisions:
   - require_min_coverage: allow — coverage=sparse, required inputs partial
+  - no_high_confidence_on_sparse_signal: soften — capped confidence to moderate on sparse signal (hrv_unavailable,resting_hr_record_missing)
 review_at:         2026-04-17T07:00:00+00:00
 writeback:         /tmp/noop/recovery_readiness_v1/recommendation_log.jsonl

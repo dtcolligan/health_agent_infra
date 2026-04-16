@@ -22,14 +22,14 @@
     "active_goal": "spring_10k_base_build",
     "as_of_date": "2026-04-16",
     "energy_self_report": "moderate",
-    "hrv_baseline": 69.0,
+    "hrv_baseline": 68.85714285714286,
     "hrv_ms": 62.0,
     "hrv_record_id": "g_hrv_2026-04-16",
     "manual_readiness_submission_id": "m_ready_2026-04-16",
     "optional_context_note_ids": [],
     "planned_session_type": "moderate",
-    "resting_hr": 60.0,
-    "resting_hr_baseline": 53.0,
+    "resting_hr": 64.0,
+    "resting_hr_baseline": 53.714285714285715,
     "resting_hr_record_id": "g_rhr_2026-04-16",
     "resting_hr_spike_days": 3,
     "sleep_hours": 7.8,
@@ -52,9 +52,9 @@
       "optional_context_note_ids": [],
       "training_load_window": "trailing_7d"
     },
-    "readiness_score": 0.6,
+    "readiness_score": 0.5,
     "recovery_status": "mildly_impaired",
-    "resting_hr_vs_baseline": "above",
+    "resting_hr_vs_baseline": "well_above",
     "schema_version": "recovery_state.v1",
     "signal_quality": {
       "coverage": "full",
@@ -120,7 +120,7 @@
     "rationale": [
       "sleep_debt=none",
       "soreness_signal=moderate",
-      "resting_hr_vs_baseline=above",
+      "resting_hr_vs_baseline=well_above",
       "training_load_trailing_7d=high",
       "hrv_vs_baseline=below"
     ],

@@ -136,21 +136,60 @@ def test_policy_blocks_on_insufficient_signal():
     assert decision.decision == "block"
 
 
-def test_policy_softens_high_to_moderate_on_sparse():
+def test_policy_softens_high_to_moderate_on_sparse_scenario():
+    """End-to-end: sparse coverage produces a visible R2 soften audit entry."""
+
     evidence, state = _build_state("sparse_signal")
-    if state.signal_quality.coverage != "sparse":
-        pytest.skip("scenario did not produce sparse coverage in this environment")
+    assert state.signal_quality.coverage == "sparse"
     rec = build_training_recommendation(
         state,
         now=NOW,
         rhr_spike_days=evidence.resting_hr_spike_days,
         planned_session_type=evidence.planned_session_type,
     )
-    assert rec.confidence in {"low", "moderate"}
+    soften_decisions = [
+        d for d in rec.policy_decisions
+        if d.rule_id == "no_high_confidence_on_sparse_signal"
+    ]
+    assert soften_decisions, "R2 must emit a soften audit entry on sparse coverage"
+    assert soften_decisions[0].decision == "soften"
+    assert rec.confidence == "moderate"
+
+
+def test_policy_r2_soften_is_proven_directly():
+    """Unit-style: calling evaluate_policy with high confidence on sparse state."""
+
+    from health_model.recovery_readiness_v1.policy import Proposal, evaluate_policy
+
+    _, state = _build_state("sparse_signal")
+    assert state.signal_quality.coverage == "sparse"
+    proposal = Proposal(
+        action="proceed_with_planned_session",
+        action_detail=None,
+        rationale=["sleep_debt=none"],
+        confidence="high",
+        uncertainty=list(state.uncertainties),
+        follow_up_present=True,
+        follow_up_within_24h=True,
+    )
+    evaluation = evaluate_policy(state, proposal, rhr_spike_days=0)
+    assert not evaluation.blocked
+    assert evaluation.mutated.confidence == "moderate"
+    rule_ids = [d.rule_id for d in evaluation.decisions]
+    assert "no_high_confidence_on_sparse_signal" in rule_ids
+    soften = next(d for d in evaluation.decisions if d.rule_id == "no_high_confidence_on_sparse_signal")
+    assert soften.decision == "soften"
 
 
 def test_policy_escalates_on_rhr_spike_three_days():
+    """R4 ties to state.resting_hr_vs_baseline == 'well_above' via the shared threshold."""
+
     evidence, state = _build_state("rhr_spike_three_days")
+    assert state.resting_hr_vs_baseline == "well_above", (
+        "R4 doctrine requires state.resting_hr_vs_baseline == 'well_above'; "
+        "CLEAN spike threshold must match the STATE well_above band"
+    )
+    assert evidence.resting_hr_spike_days >= 3
     rec = build_training_recommendation(
         state,
         now=NOW,

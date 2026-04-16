@@ -161,8 +161,6 @@ def _derive_band(
         return "at"
     else:
         ratio = value / baseline
-        if ratio <= 0.85:
-            return "below"
         if ratio <= 0.95:
             return "below"
         if ratio >= 1.10:

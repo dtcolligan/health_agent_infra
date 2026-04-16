@@ -136,7 +136,7 @@ Illustrative only. Not validated.
     "training_load_trailing_7d=high"
   ],
   "confidence": "moderate",
-  "uncertainty": ["hrv_unavailable", "nutrition_incomplete"],
+  "uncertainty": ["hrv_unavailable"],
   "follow_up": {
     "review_at": "2026-04-17T07:00:00Z",
     "review_question": "Did yesterday's downgrade to Zone 2 improve how today feels?",

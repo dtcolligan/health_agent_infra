@@ -16,7 +16,7 @@ The system does not produce general wellness advice, lifestyle recommendations o
 No consumer UI, no web dashboard, no mobile app. CLI and file artifacts are sufficient proof surfaces for this phase.
 
 ### 4. Deep nutrition system
-Nutrition is not an input of the flagship loop in a substantive way. An optional nutrition note may be read but must not drive recommendations.
+Nutrition is not an input of the flagship loop. The current runtime does not consume nutrition data at all, and does not emit uncertainty tokens for it.
 
 ### 5. Medical-style outputs
 No diagnosis, no condition naming, no treatment suggestions, no claims that imply clinical authority.

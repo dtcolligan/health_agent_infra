@@ -89,7 +89,7 @@ def garmin_pull_fixture(
         for offset in range(0, 3):
             d = as_of - timedelta(days=offset)
             rhr_series.append(
-                {"date": d.isoformat(), "bpm": 60.0, "record_id": f"g_rhr_{d.isoformat()}"}
+                {"date": d.isoformat(), "bpm": 64.0, "record_id": f"g_rhr_{d.isoformat()}"}
             )
             hrv_series.append(
                 {"date": d.isoformat(), "rmssd_ms": 62.0, "record_id": f"g_hrv_{d.isoformat()}"}

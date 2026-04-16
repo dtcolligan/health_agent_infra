@@ -8,6 +8,11 @@
         "decision": "allow",
         "note": "coverage=sparse, required inputs partial",
         "rule_id": "require_min_coverage"
+      },
+      {
+        "decision": "soften",
+        "note": "capped confidence to moderate on sparse signal (hrv_unavailable,resting_hr_record_missing)",
+        "rule_id": "no_high_confidence_on_sparse_signal"
       }
     ],
     "recommendation_id": "rec_2026-04-16_u_sparse_signal_01",
@@ -94,7 +99,7 @@
       "caveat": "keep_effort_conversational"
     },
     "bounded": true,
-    "confidence": "low",
+    "confidence": "moderate",
     "follow_up": {
       "review_at": "2026-04-17T07:00:00+00:00",
       "review_event_id": "rev_2026-04-17_u_sparse_signal_rec_2026-04-16_u_sparse_signal_01",
@@ -107,6 +112,11 @@
         "decision": "allow",
         "note": "coverage=sparse, required inputs partial",
         "rule_id": "require_min_coverage"
+      },
+      {
+        "decision": "soften",
+        "note": "capped confidence to moderate on sparse signal (hrv_unavailable,resting_hr_record_missing)",
+        "rule_id": "no_high_confidence_on_sparse_signal"
       }
     ],
     "rationale": [
