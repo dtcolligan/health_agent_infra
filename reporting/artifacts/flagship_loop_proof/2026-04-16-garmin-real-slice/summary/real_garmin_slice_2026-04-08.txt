@@ -1,0 +1,13 @@
+scenario:          real_garmin_slice_2026-04-08
+as_of_date:        2026-04-08
+recovery_status:   recovered
+readiness_score:   0.95
+coverage:          sparse
+uncertainties:     training_load_window_incomplete
+action:            proceed_with_planned_session
+confidence:        moderate
+policy_decisions:
+  - require_min_coverage: allow — coverage=sparse, required inputs partial
+  - no_high_confidence_on_sparse_signal: soften — capped confidence to moderate on sparse signal (training_load_window_incomplete)
+review_at:         2026-04-09T07:00:00+00:00
+writeback:         /private/tmp/real_slice_summary/recovery_readiness_v1/recommendation_log.jsonl

@@ -57,3 +57,23 @@
 - review_at: 2026-04-17T07:00:00+00:00
 - issued_at: 2026-04-16T07:15:00+00:00
 
+<!-- rec_2026-04-16_u_tailoring_recovered_strength_block_01 -->
+## 2026-04-16 — proceed_with_planned_session
+
+- confidence: high
+- rationale: sleep_debt=none, soreness_signal=low, resting_hr_vs_baseline=at, training_load_trailing_7d=high, hrv_vs_baseline=above, active_goal=strength_block, strength_block tailoring: RPE<=8, <=5 working sets, compound focus
+- uncertainty: (none)
+- detail: `{"active_goal": "strength_block", "rpe_cap": 8, "session_focus": "compound_heavy", "set_cap": 5}`
+- review_at: 2026-04-17T07:00:00+00:00
+- issued_at: 2026-04-16T07:15:00+00:00
+
+<!-- rec_2026-04-16_u_tailoring_recovered_endurance_taper_01 -->
+## 2026-04-16 — proceed_with_planned_session
+
+- confidence: high
+- rationale: sleep_debt=none, soreness_signal=low, resting_hr_vs_baseline=at, training_load_trailing_7d=high, hrv_vs_baseline=above, active_goal=endurance_taper, endurance_taper tailoring: Z2 ceiling, <=45 min, easy aerobic focus
+- uncertainty: (none)
+- detail: `{"active_goal": "endurance_taper", "duration_cap_min": 45, "session_focus": "aerobic_easy", "zone_cap": 2}`
+- review_at: 2026-04-17T07:00:00+00:00
+- issued_at: 2026-04-16T07:15:00+00:00
+

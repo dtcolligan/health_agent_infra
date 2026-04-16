@@ -39,6 +39,8 @@ def garmin_pull_fixture(
         - rhr_spike_three_days
         - insufficient_signal (missing sleep)
         - sparse_signal (missing hrv + low rhr data)
+        - tailoring_recovered_strength_block (same evidence as endurance_taper; goal differs)
+        - tailoring_recovered_endurance_taper (same evidence as strength_block; goal differs)
     """
 
     rhr_series, hrv_series = baseline_week(as_of)
@@ -49,7 +51,11 @@ def garmin_pull_fixture(
         "duration_hours": 7.8,
     }
 
-    if scenario == "recovered_with_easy_plan":
+    if scenario in {
+        "recovered_with_easy_plan",
+        "tailoring_recovered_strength_block",
+        "tailoring_recovered_endurance_taper",
+    }:
         rhr_series.append({"date": as_of.isoformat(), "bpm": 51.0, "record_id": f"g_rhr_{as_of.isoformat()}"})
         hrv_series.append({"date": as_of.isoformat(), "rmssd_ms": 72.0, "record_id": f"g_hrv_{as_of.isoformat()}"})
         return {
@@ -140,4 +146,20 @@ def manual_readiness_fixture(as_of: date, *, scenario: str) -> dict | None:
         return None
     if scenario == "sparse_signal":
         return {**common, "soreness": "moderate", "energy": "moderate", "planned_session_type": "moderate"}
+    if scenario == "tailoring_recovered_strength_block":
+        return {
+            "submission_id": f"m_ready_{as_of.isoformat()}",
+            "active_goal": "strength_block",
+            "soreness": "low",
+            "energy": "high",
+            "planned_session_type": "moderate",
+        }
+    if scenario == "tailoring_recovered_endurance_taper":
+        return {
+            "submission_id": f"m_ready_{as_of.isoformat()}",
+            "active_goal": "endurance_taper",
+            "soreness": "low",
+            "energy": "high",
+            "planned_session_type": "moderate",
+        }
     raise ValueError(f"unknown scenario: {scenario}")

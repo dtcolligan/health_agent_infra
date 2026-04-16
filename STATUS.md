@@ -16,16 +16,15 @@ That set defines the runtime model (`PULL -> CLEAN -> STATE -> POLICY -> RECOMME
 
 ## Phase 2 flagship implementation (landed 2026-04-16)
 
-The flagship `recovery_readiness_v1` loop runs end-to-end against the Phase 1 schemas. PULL is a synthetic fixture in this slice; all other layers are real.
+The flagship `recovery_readiness_v1` loop runs end-to-end against the Phase 1 schemas over both synthetic fixtures and real Garmin evidence.
 
 - implementation: `clean/health_model/recovery_readiness_v1/`
-- tests (19 passing): `safety/tests/test_recovery_readiness_v1.py`
-- captured proof: `reporting/artifacts/flagship_loop_proof/2026-04-16-recovery-readiness-v1/`
+- tests (28 passing): `safety/tests/test_recovery_readiness_v1.py`
+- captured synthetic proof: `reporting/artifacts/flagship_loop_proof/2026-04-16-recovery-readiness-v1/`
+- captured real Garmin slice: `reporting/artifacts/flagship_loop_proof/2026-04-16-garmin-real-slice/`
 - walkthrough: `reporting/docs/flagship_walkthrough.md`
 
-Six scenarios are captured: `recovered_with_easy_plan`, `mildly_impaired_with_hard_plan`, `impaired_with_hard_plan`, `rhr_spike_three_days`, `insufficient_signal`, `sparse_signal`. Each one demonstrates a different runtime facet: green-path, bounded downgrade, stronger downgrade, R4 escalation, R1 block, and sparse-coverage confidence downgrade. The writeback bundle contains six recommendation-log entries, a daily plan note with six entries, six review events, and six review outcomes.
-
-Remaining Phase 2 follow-on: wire a real Garmin PULL slice through the stable CleanedEvidence contract.
+Eight synthetic scenarios are captured (six original runtime facets plus two goal-conditioned tailoring captures): `recovered_with_easy_plan`, `mildly_impaired_with_hard_plan`, `impaired_with_hard_plan`, `rhr_spike_three_days`, `insufficient_signal`, `sparse_signal`, `tailoring_recovered_strength_block`, `tailoring_recovered_endurance_taper`. The tailoring pair demonstrates state-conditioned action-parameter variance on identical evidence. One real Garmin slice is additionally captured as the Phase 2 real-evidence proof.
 
 ## Report-phase tracker
 

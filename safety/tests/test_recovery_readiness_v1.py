@@ -357,3 +357,183 @@ def test_cli_end_to_end_rhr_spike(tmp_path: Path):
     artifact = _run_cli(base, "rhr_spike_three_days")
     assert artifact["training_recommendation"]["action"] == "escalate_for_user_review"
     assert artifact["training_recommendation"]["action_detail"]["reason_token"] == "resting_hr_spike_3_days_running"
+
+
+# ---------------------------------------------------------------------------
+# Tailoring — state-conditioned action variance on identical evidence
+# ---------------------------------------------------------------------------
+
+def test_tailoring_same_evidence_different_goal_surfaces_in_recommendation(tmp_path: Path):
+    """Two runs, identical Garmin + readiness evidence, only active_goal differs.
+
+    The active_goal must flow CLEAN -> STATE -> RECOMMEND and surface in the
+    recommendation's action_detail and rationale. Action stays inside the
+    policy-allowed envelope for the recovered path.
+    """
+
+    strength = _run_cli(tmp_path / "a" / "recovery_readiness_v1",
+                        "tailoring_recovered_strength_block")
+    endurance = _run_cli(tmp_path / "b" / "recovery_readiness_v1",
+                         "tailoring_recovered_endurance_taper")
+
+    assert strength["recovery_state"]["recovery_status"] == "recovered"
+    assert endurance["recovery_state"]["recovery_status"] == "recovered"
+    assert strength["recovery_state"]["active_goal"] == "strength_block"
+    assert endurance["recovery_state"]["active_goal"] == "endurance_taper"
+
+    assert strength["training_recommendation"]["action"] == "proceed_with_planned_session"
+    assert endurance["training_recommendation"]["action"] == "proceed_with_planned_session"
+
+    strength_detail = strength["training_recommendation"]["action_detail"]
+    endurance_detail = endurance["training_recommendation"]["action_detail"]
+    assert strength_detail is not None and endurance_detail is not None
+    assert strength_detail["active_goal"] == "strength_block"
+    assert endurance_detail["active_goal"] == "endurance_taper"
+
+    # Tailoring must be *visible as numeric caps in the action_detail*, not
+    # just as different goal labels. This is the §11.B "tailoring visible"
+    # assertion: a downstream agent can act on rpe_cap / zone_cap.
+    assert strength_detail.get("rpe_cap") is not None
+    assert strength_detail.get("set_cap") is not None
+    assert "rpe_cap" not in endurance_detail
+    assert endurance_detail.get("zone_cap") is not None
+    assert endurance_detail.get("duration_cap_min") is not None
+    assert "zone_cap" not in strength_detail
+    assert strength_detail.get("session_focus") != endurance_detail.get("session_focus")
+
+    assert "active_goal=strength_block" in strength["training_recommendation"]["rationale"]
+    assert "active_goal=endurance_taper" in endurance["training_recommendation"]["rationale"]
+
+
+# ---------------------------------------------------------------------------
+# CLEAN / STATE rebalance tests (W3c)
+# ---------------------------------------------------------------------------
+
+def test_clean_passes_active_goal_through_to_state():
+    """active_goal from manual readiness must survive CLEAN and land on the state."""
+
+    evidence, state = _build_state("tailoring_recovered_strength_block")
+    assert evidence.active_goal == "strength_block"
+    assert state.active_goal == "strength_block"
+
+
+def test_state_readiness_score_bounded_on_scorable_scenarios():
+    """readiness_score must be in [0, 1] for any scenario with sufficient coverage."""
+
+    for scenario in (
+        "recovered_with_easy_plan",
+        "mildly_impaired_with_hard_plan",
+        "impaired_with_hard_plan",
+    ):
+        _, state = _build_state(scenario)
+        assert state.readiness_score is not None, scenario
+        assert 0.0 <= state.readiness_score <= 1.0, scenario
+
+
+# ---------------------------------------------------------------------------
+# REVIEW — confidence calibration stub (W3b)
+# ---------------------------------------------------------------------------
+
+def test_derive_confidence_adjustment_on_empty_history_returns_zero():
+    from health_model.recovery_readiness_v1.review import derive_confidence_adjustment
+
+    assert derive_confidence_adjustment([]) == 0.0
+
+
+def test_derive_confidence_adjustment_returns_bounded_float():
+    from health_model.recovery_readiness_v1 import ReviewOutcome
+    from health_model.recovery_readiness_v1.review import derive_confidence_adjustment
+
+    outcomes = [
+        ReviewOutcome(
+            review_event_id=f"rev_{i}",
+            recommendation_id=f"rec_{i}",
+            user_id="u_local_1",
+            recorded_at=NOW,
+            followed_recommendation=True,
+            self_reported_improvement=True,
+        )
+        for i in range(5)
+    ]
+    delta = derive_confidence_adjustment(outcomes)
+    assert isinstance(delta, float)
+    assert -0.5 <= delta <= 0.5
+
+
+def test_derive_confidence_adjustment_returns_positive_on_followed_improved_history():
+    """A short history of followed+improved outcomes must nudge confidence up.
+
+    This closes the review loop in structure: outcomes actually move the delta,
+    not just exist. Bounded per the first-pass clamp of ±0.25.
+    """
+
+    from health_model.recovery_readiness_v1 import ReviewOutcome
+    from health_model.recovery_readiness_v1.review import derive_confidence_adjustment
+
+    outcomes = [
+        ReviewOutcome(
+            review_event_id=f"rev_{i}",
+            recommendation_id=f"rec_{i}",
+            user_id="u_local_1",
+            recorded_at=NOW,
+            followed_recommendation=True,
+            self_reported_improvement=True,
+        )
+        for i in range(2)
+    ]
+    delta = derive_confidence_adjustment(outcomes)
+    assert delta > 0.0
+    assert delta <= 0.25
+
+
+# ---------------------------------------------------------------------------
+# Real-slice PULL adapter (W4)
+# ---------------------------------------------------------------------------
+
+def test_garmin_adapter_reads_committed_export_and_emits_fixture_shape():
+    """The adapter must produce a dict with the same keys synthetic fixtures emit."""
+
+    import sys
+    pull_root = Path(__file__).resolve().parents[2] / "pull"
+    if str(pull_root) not in sys.path:
+        sys.path.insert(0, str(pull_root))
+    from garmin.recovery_readiness_adapter import load_recovery_readiness_inputs
+
+    as_of = date(2026, 4, 8)
+    pull = load_recovery_readiness_inputs(as_of)
+
+    assert set(pull.keys()) == {"sleep", "resting_hr", "hrv", "training_load"}
+    assert pull["sleep"] is not None
+    assert "duration_hours" in pull["sleep"]
+    assert pull["sleep"]["duration_hours"] > 0
+    assert any(row["date"] == as_of.isoformat() for row in pull["resting_hr"])
+    assert all({"date", "bpm", "record_id"} <= set(row.keys()) for row in pull["resting_hr"])
+
+
+def test_real_slice_cli_runs_end_to_end(tmp_path: Path):
+    """Full PULL->REVIEW loop must run against the committed CSV export."""
+
+    import argparse
+    import sys
+    pull_root = Path(__file__).resolve().parents[2] / "pull"
+    if str(pull_root) not in sys.path:
+        sys.path.insert(0, str(pull_root))
+
+    ns = argparse.Namespace(
+        command="run",
+        scenario="mildly_impaired_with_hard_plan",
+        source="real",
+        base_dir=str(tmp_path / "recovery_readiness_v1"),
+        date="2026-04-08",
+        user_id="u_real_slice_test",
+        now="2026-04-08T07:15:00+00:00",
+        record_review_outcome=None,
+        emit_json=False,
+    )
+    artifact = cli_run(ns)
+    assert artifact["run_metadata"]["source"] == "real"
+    assert artifact["run_metadata"]["scenario"] == "real_garmin_slice_2026-04-08"
+    assert artifact["training_recommendation"]["bounded"] is True
+    assert artifact["recovery_state"]["signal_quality"]["coverage"] in {
+        "full", "partial", "sparse", "insufficient"
+    }

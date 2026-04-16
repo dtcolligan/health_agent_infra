@@ -162,7 +162,7 @@ response, not an agentic loop.
 
 ## Other scenarios in the captured proof
 
-The proof artifact captures six scenarios. Each one demonstrates a
+The proof artifact captures eight scenarios. Each one demonstrates a
 different facet of the runtime:
 
 | scenario | shows |
@@ -173,9 +173,13 @@ different facet of the runtime:
 | `rhr_spike_three_days` | R4 escalation for persistent resting-HR spike |
 | `insufficient_signal` | R1 policy block; system defers rather than guesses |
 | `sparse_signal` | confidence downgrade when coverage is thin |
+| `tailoring_recovered_strength_block` | goal-conditioned action-parameter variance on identical evidence (paired) |
+| `tailoring_recovered_endurance_taper` | paired alternate goal produces different session-detail caps |
 
-All six are reproducible by swapping the `--scenario` argument in the
-command above.
+All eight are reproducible by swapping the `--scenario` argument in the
+command above. A ninth capture, `--source real`, runs the same loop
+against the committed Garmin CSV export — see
+[reporting/artifacts/flagship_loop_proof/2026-04-16-garmin-real-slice/](../artifacts/flagship_loop_proof/2026-04-16-garmin-real-slice/).
 
 ## What this proves
 

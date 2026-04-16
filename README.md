@@ -1,6 +1,27 @@
-# Health Agent  Infra
+# Health Agent Infra
 
-Health Agent Infra is a bucket-organized infrastructure repo for agent-mediated personal health work over user-owned memory.
+**Health Agent Infra (internal name: Health Lab) is a governed runtime and contract layer that turns user-owned health evidence into structured state, making safe, personally tailored agent action possible.**
+
+It is not a chatbot, a wearable API, a broad AI health app, or a clinical product. It is the narrow, currently under-built layer between raw personal evidence and bounded agent action, proved end-to-end through one flagship loop: `PULL → CLEAN → STATE → POLICY → RECOMMEND → ACTION → REVIEW`.
+
+## Read this repo in 3 minutes
+
+1. **Thesis and runtime model** — [reporting/docs/canonical_doctrine.md](reporting/docs/canonical_doctrine.md)
+2. **Flagship loop spec** — [reporting/docs/flagship_loop_spec.md](reporting/docs/flagship_loop_spec.md)
+3. **End-to-end walkthrough** — [reporting/docs/flagship_walkthrough.md](reporting/docs/flagship_walkthrough.md)
+4. **Inspect one captured synthetic scenario** — `reporting/artifacts/flagship_loop_proof/2026-04-16-recovery-readiness-v1/captured/recovered_with_easy_plan.json`
+5. **Inspect the real Garmin slice** — `reporting/artifacts/flagship_loop_proof/2026-04-16-garmin-real-slice/captured/real_garmin_slice_2026-04-08.json`
+
+That sequence takes a smart outsider from thesis to running code — over both synthetic and real evidence — in under three minutes.
+
+## Scope
+
+- **Controlling doctrine**: [reporting/docs/canonical_doctrine.md](reporting/docs/canonical_doctrine.md) — wins any conflict with other docs until explicitly retired.
+- **Explicit non-goals**: [reporting/docs/explicit_non_goals.md](reporting/docs/explicit_non_goals.md) — 12 hard + 2 soft non-goals, including no second connector, no rich UI, no medical-style outputs, no connector sprawl.
+- **Phase 2 plan (executed 2026-04-16)**: [reporting/docs/plan_2026-04-16.md](reporting/docs/plan_2026-04-16.md).
+- **How to contribute**: [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Repo organisation
 
 The canonical project shape is only these eight buckets:
 
@@ -13,7 +34,7 @@ The canonical project shape is only these eight buckets:
 - `writeback`
 - `safety`
 
-Anything else in the repo should be treated as implementation detail, compatibility surface, proof material, or legacy/archive content, not as an extra canonical layer.
+Anything else in the repo should be treated as implementation detail, compatibility surface, proof material, or legacy/archive content, not as an extra canonical layer. The 7-part runtime model (`PULL → CLEAN → STATE → POLICY → RECOMMEND → ACTION → REVIEW`) is a conceptual overlay on top of these buckets, not a replacement for them.
 
 ## Repo truth right now
 
@@ -78,7 +99,7 @@ That runtime model sits on top of the eight-bucket repo organisation, it does no
 
 ## Phase 2 flagship proof (landed 2026-04-16)
 
-The flagship loop runs end-to-end against the Phase 1 schemas. One module, one CLI, 19 passing tests, six captured scenarios.
+The flagship loop runs end-to-end against the Phase 1 schemas over both synthetic fixtures and real Garmin evidence. One module, one CLI, 28 passing tests, eight captured synthetic scenarios plus one real Garmin slice.
 
 - code: `clean/health_model/recovery_readiness_v1/`
 - tests: `safety/tests/test_recovery_readiness_v1.py`

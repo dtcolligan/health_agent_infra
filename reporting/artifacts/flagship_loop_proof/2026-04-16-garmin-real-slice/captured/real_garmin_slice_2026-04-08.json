@@ -1,0 +1,143 @@
+{
+  "action_record": {
+    "idempotency_key": "rec_2026-04-08_u_garmin_real_slice_2026-04-08_01",
+    "performed_at": "2026-04-08T07:15:00+00:00",
+    "plan_note_path": "/Users/domcolligan/Documents/health_agent_infra/reporting/artifacts/flagship_loop_proof/2026-04-16-garmin-real-slice/writeback/recovery_readiness_v1/daily_plan_2026-04-08.md",
+    "policy_decisions": [
+      {
+        "decision": "allow",
+        "note": "coverage=sparse, required inputs partial",
+        "rule_id": "require_min_coverage"
+      },
+      {
+        "decision": "soften",
+        "note": "capped confidence to moderate on sparse signal (training_load_window_incomplete)",
+        "rule_id": "no_high_confidence_on_sparse_signal"
+      }
+    ],
+    "recommendation_id": "rec_2026-04-08_u_garmin_real_slice_2026-04-08_01",
+    "writeback_path": "/Users/domcolligan/Documents/health_agent_infra/reporting/artifacts/flagship_loop_proof/2026-04-16-garmin-real-slice/writeback/recovery_readiness_v1/recommendation_log.jsonl"
+  },
+  "cleaned_evidence": {
+    "active_goal": "spring_10k_base_build",
+    "as_of_date": "2026-04-08",
+    "energy_self_report": "moderate",
+    "hrv_baseline": 74.0,
+    "hrv_ms": 80.0,
+    "hrv_record_id": "g_hrv_2026-04-08",
+    "manual_readiness_submission_id": "m_ready_real_2026-04-08",
+    "optional_context_note_ids": [],
+    "planned_session_type": "moderate",
+    "resting_hr": 50.0,
+    "resting_hr_baseline": 51.642857142857146,
+    "resting_hr_record_id": "g_rhr_2026-04-08",
+    "resting_hr_spike_days": 0,
+    "sleep_hours": 9.05,
+    "sleep_record_id": "g_sleep_2026-04-08",
+    "soreness_self_report": "moderate",
+    "trailing_7d_training_load": null,
+    "training_load_baseline": null,
+    "user_id": "u_garmin_real_slice_2026-04-08"
+  },
+  "recovery_state": {
+    "active_goal": "spring_10k_base_build",
+    "as_of_date": "2026-04-08",
+    "computed_at": "2026-04-08T07:15:00+00:00",
+    "hrv_vs_baseline": "above",
+    "inputs_used": {
+      "garmin_hrv_record_id": "g_hrv_2026-04-08",
+      "garmin_resting_hr_record_id": "g_rhr_2026-04-08",
+      "garmin_sleep_record_id": "g_sleep_2026-04-08",
+      "manual_readiness_submission_id": "m_ready_real_2026-04-08",
+      "optional_context_note_ids": [],
+      "training_load_window": "trailing_7d"
+    },
+    "readiness_score": 0.95,
+    "recovery_status": "recovered",
+    "resting_hr_vs_baseline": "at",
+    "schema_version": "recovery_state.v1",
+    "signal_quality": {
+      "coverage": "sparse",
+      "notes": [],
+      "required_inputs_present": false
+    },
+    "sleep_debt": "none",
+    "soreness_signal": "moderate",
+    "training_load_trailing_7d": "unknown",
+    "uncertainties": [
+      "training_load_window_incomplete"
+    ],
+    "user_id": "u_garmin_real_slice_2026-04-08"
+  },
+  "review_event": {
+    "recommendation_id": "rec_2026-04-08_u_garmin_real_slice_2026-04-08_01",
+    "review_at": "2026-04-09T07:00:00+00:00",
+    "review_event_id": "rev_2026-04-09_u_garmin_real_slice_2026-04-08_rec_2026-04-08_u_garmin_real_slice_2026-04-08_01",
+    "review_question": "Did today's session feel appropriate for your recovery?",
+    "user_id": "u_garmin_real_slice_2026-04-08"
+  },
+  "review_outcome": {
+    "followed_recommendation": true,
+    "free_text": "synthetic outcome: followed_and_improved",
+    "recommendation_id": "rec_2026-04-08_u_garmin_real_slice_2026-04-08_01",
+    "recorded_at": "2026-04-08T07:15:00+00:00",
+    "review_event_id": "rev_2026-04-09_u_garmin_real_slice_2026-04-08_rec_2026-04-08_u_garmin_real_slice_2026-04-08_01",
+    "self_reported_improvement": true,
+    "user_id": "u_garmin_real_slice_2026-04-08"
+  },
+  "run_metadata": {
+    "as_of_date": "2026-04-08",
+    "base_dir": "/Users/domcolligan/Documents/health_agent_infra/reporting/artifacts/flagship_loop_proof/2026-04-16-garmin-real-slice/writeback/recovery_readiness_v1",
+    "now": "2026-04-08T07:15:00+00:00",
+    "scenario": "real_garmin_slice_2026-04-08",
+    "source": "real",
+    "user_id": "u_garmin_real_slice_2026-04-08"
+  },
+  "training_recommendation": {
+    "action": "proceed_with_planned_session",
+    "action_detail": {
+      "active_goal": "spring_10k_base_build"
+    },
+    "bounded": true,
+    "confidence": "moderate",
+    "follow_up": {
+      "review_at": "2026-04-09T07:00:00+00:00",
+      "review_event_id": "rev_2026-04-09_u_garmin_real_slice_2026-04-08_rec_2026-04-08_u_garmin_real_slice_2026-04-08_01",
+      "review_question": "Did today's session feel appropriate for your recovery?"
+    },
+    "for_date": "2026-04-08",
+    "issued_at": "2026-04-08T07:15:00+00:00",
+    "policy_decisions": [
+      {
+        "decision": "allow",
+        "note": "coverage=sparse, required inputs partial",
+        "rule_id": "require_min_coverage"
+      },
+      {
+        "decision": "soften",
+        "note": "capped confidence to moderate on sparse signal (training_load_window_incomplete)",
+        "rule_id": "no_high_confidence_on_sparse_signal"
+      }
+    ],
+    "rationale": [
+      "sleep_debt=none",
+      "soreness_signal=moderate",
+      "resting_hr_vs_baseline=at",
+      "training_load_trailing_7d=unknown",
+      "hrv_vs_baseline=above",
+      "active_goal=spring_10k_base_build"
+    ],
+    "recommendation_id": "rec_2026-04-08_u_garmin_real_slice_2026-04-08_01",
+    "schema_version": "training_recommendation.v1",
+    "state_ref": {
+      "as_of_date": "2026-04-08",
+      "computed_at": "2026-04-08T07:15:00+00:00",
+      "hash": null,
+      "schema_version": "recovery_state.v1"
+    },
+    "uncertainty": [
+      "training_load_window_incomplete"
+    ],
+    "user_id": "u_garmin_real_slice_2026-04-08"
+  }
+}

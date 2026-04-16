@@ -1,0 +1,133 @@
+{
+  "action_record": {
+    "idempotency_key": "rec_2026-04-16_u_tailoring_recovered_strength_block_01",
+    "performed_at": "2026-04-16T07:15:00+00:00",
+    "plan_note_path": "/Users/domcolligan/Documents/health_agent_infra/reporting/artifacts/flagship_loop_proof/2026-04-16-recovery-readiness-v1/writeback/recovery_readiness_v1/daily_plan_2026-04-16.md",
+    "policy_decisions": [
+      {
+        "decision": "allow",
+        "note": "coverage=full, required inputs present",
+        "rule_id": "require_min_coverage"
+      }
+    ],
+    "recommendation_id": "rec_2026-04-16_u_tailoring_recovered_strength_block_01",
+    "writeback_path": "/Users/domcolligan/Documents/health_agent_infra/reporting/artifacts/flagship_loop_proof/2026-04-16-recovery-readiness-v1/writeback/recovery_readiness_v1/recommendation_log.jsonl"
+  },
+  "cleaned_evidence": {
+    "active_goal": "strength_block",
+    "as_of_date": "2026-04-16",
+    "energy_self_report": "high",
+    "hrv_baseline": 70.0,
+    "hrv_ms": 72.0,
+    "hrv_record_id": "g_hrv_2026-04-16",
+    "manual_readiness_submission_id": "m_ready_2026-04-16",
+    "optional_context_note_ids": [],
+    "planned_session_type": "moderate",
+    "resting_hr": 51.0,
+    "resting_hr_baseline": 52.0,
+    "resting_hr_record_id": "g_rhr_2026-04-16",
+    "resting_hr_spike_days": 0,
+    "sleep_hours": 7.8,
+    "sleep_record_id": "g_sleep_2026-04-16",
+    "soreness_self_report": "low",
+    "trailing_7d_training_load": 560.0,
+    "training_load_baseline": 490.0,
+    "user_id": "u_tailoring_recovered_strength_block"
+  },
+  "recovery_state": {
+    "active_goal": "strength_block",
+    "as_of_date": "2026-04-16",
+    "computed_at": "2026-04-16T07:15:00+00:00",
+    "hrv_vs_baseline": "above",
+    "inputs_used": {
+      "garmin_hrv_record_id": "g_hrv_2026-04-16",
+      "garmin_resting_hr_record_id": "g_rhr_2026-04-16",
+      "garmin_sleep_record_id": "g_sleep_2026-04-16",
+      "manual_readiness_submission_id": "m_ready_2026-04-16",
+      "optional_context_note_ids": [],
+      "training_load_window": "trailing_7d"
+    },
+    "readiness_score": 1.0,
+    "recovery_status": "recovered",
+    "resting_hr_vs_baseline": "at",
+    "schema_version": "recovery_state.v1",
+    "signal_quality": {
+      "coverage": "full",
+      "notes": [],
+      "required_inputs_present": true
+    },
+    "sleep_debt": "none",
+    "soreness_signal": "low",
+    "training_load_trailing_7d": "high",
+    "uncertainties": [],
+    "user_id": "u_tailoring_recovered_strength_block"
+  },
+  "review_event": {
+    "recommendation_id": "rec_2026-04-16_u_tailoring_recovered_strength_block_01",
+    "review_at": "2026-04-17T07:00:00+00:00",
+    "review_event_id": "rev_2026-04-17_u_tailoring_recovered_strength_block_rec_2026-04-16_u_tailoring_recovered_strength_block_01",
+    "review_question": "Did today's session feel appropriate for your recovery?",
+    "user_id": "u_tailoring_recovered_strength_block"
+  },
+  "review_outcome": {
+    "followed_recommendation": true,
+    "free_text": "synthetic outcome: followed_and_improved",
+    "recommendation_id": "rec_2026-04-16_u_tailoring_recovered_strength_block_01",
+    "recorded_at": "2026-04-16T07:15:00+00:00",
+    "review_event_id": "rev_2026-04-17_u_tailoring_recovered_strength_block_rec_2026-04-16_u_tailoring_recovered_strength_block_01",
+    "self_reported_improvement": true,
+    "user_id": "u_tailoring_recovered_strength_block"
+  },
+  "run_metadata": {
+    "as_of_date": "2026-04-16",
+    "base_dir": "/Users/domcolligan/Documents/health_agent_infra/reporting/artifacts/flagship_loop_proof/2026-04-16-recovery-readiness-v1/writeback/recovery_readiness_v1",
+    "now": "2026-04-16T07:15:00+00:00",
+    "scenario": "tailoring_recovered_strength_block",
+    "source": "synthetic",
+    "user_id": "u_tailoring_recovered_strength_block"
+  },
+  "training_recommendation": {
+    "action": "proceed_with_planned_session",
+    "action_detail": {
+      "active_goal": "strength_block",
+      "rpe_cap": 8,
+      "session_focus": "compound_heavy",
+      "set_cap": 5
+    },
+    "bounded": true,
+    "confidence": "high",
+    "follow_up": {
+      "review_at": "2026-04-17T07:00:00+00:00",
+      "review_event_id": "rev_2026-04-17_u_tailoring_recovered_strength_block_rec_2026-04-16_u_tailoring_recovered_strength_block_01",
+      "review_question": "Did today's session feel appropriate for your recovery?"
+    },
+    "for_date": "2026-04-16",
+    "issued_at": "2026-04-16T07:15:00+00:00",
+    "policy_decisions": [
+      {
+        "decision": "allow",
+        "note": "coverage=full, required inputs present",
+        "rule_id": "require_min_coverage"
+      }
+    ],
+    "rationale": [
+      "sleep_debt=none",
+      "soreness_signal=low",
+      "resting_hr_vs_baseline=at",
+      "training_load_trailing_7d=high",
+      "hrv_vs_baseline=above",
+      "active_goal=strength_block",
+      "strength_block tailoring: RPE<=8, <=5 working sets, compound focus"
+    ],
+    "recommendation_id": "rec_2026-04-16_u_tailoring_recovered_strength_block_01",
+    "schema_version": "training_recommendation.v1",
+    "state_ref": {
+      "as_of_date": "2026-04-16",
+      "computed_at": "2026-04-16T07:15:00+00:00",
+      "hash": null,
+      "schema_version": "recovery_state.v1"
+    },
+    "uncertainty": [],
+    "user_id": "u_tailoring_recovered_strength_block"
+  }
+}

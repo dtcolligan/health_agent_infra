@@ -9,8 +9,8 @@ This artifact is the first inspectable end-to-end proof of the flagship
 PULL -> CLEAN -> STATE -> POLICY -> RECOMMEND -> ACTION -> REVIEW
 ```
 
-across six scenarios, using synthetic PULL-layer fixtures. Every other layer
-is the real implementation under `clean/health_model/recovery_readiness_v1/`.
+across eight scenarios, using synthetic PULL-layer fixtures. Every other
+layer is the real implementation under `clean/health_model/recovery_readiness_v1/`.
 
 ## Scenarios captured
 
@@ -22,6 +22,23 @@ is the real implementation under `clean/health_model/recovery_readiness_v1/`.
 | rhr_spike_three_days | mildly_impaired | escalate_for_user_review | full | R4 persistent-RHR-spike escalation |
 | insufficient_signal | unknown | defer_decision_insufficient_signal | insufficient | R1 block on missing required inputs |
 | sparse_signal | mildly_impaired | proceed_with_planned_session (confidence: low) | sparse | confidence downgrade under sparse coverage |
+| tailoring_recovered_strength_block | recovered | proceed_with_planned_session | full | state-conditioned tailoring — identical evidence as endurance row, `active_goal=strength_block` surfaces in `action_detail` and `rationale` |
+| tailoring_recovered_endurance_taper | recovered | proceed_with_planned_session | full | state-conditioned tailoring — identical evidence as strength row, `active_goal=endurance_taper` surfaces in `action_detail` and `rationale` |
+
+### The tailoring pair
+
+The two `tailoring_*` rows demonstrate **personal tailoring as state-conditioned
+action variance on identical physiological evidence**. Both scenarios use the
+same Garmin sleep/RHR/HRV/training-load fixtures and the same low-soreness /
+high-energy manual readiness — only `active_goal` differs. The recommendation's
+`action_detail` and one `rationale` line reflect that difference.
+
+The current goal-conditioning is a **minimal honest stub**: it surfaces the
+goal name to prove the wiring. The founder-authored TODO in
+`clean/health_model/recovery_readiness_v1/recommend.py::_goal_conditioned_detail`
+is where real goal-specific caps (intensity, volume, target zones) land. Once
+that TODO is filled in, regenerating these two captures will show genuine
+action-parameter variance on identical evidence.
 
 ## Files
 
@@ -33,10 +50,11 @@ is the real implementation under `clean/health_model/recovery_readiness_v1/`.
   default output.
 - `writeback/recovery_readiness_v1/` — the actual local writeback targets
   the ACTION layer produced during this capture:
-  - `recommendation_log.jsonl` — six typed recommendation records
-  - `daily_plan_2026-04-16.md` — six daily-plan entries, one per scenario
-  - `review_events.jsonl` — six scheduled review events
-  - `review_outcomes.jsonl` — six synthetic `followed_and_improved` outcomes
+  - `recommendation_log.jsonl` — eight typed recommendation records (six
+    original scenarios plus the two `tailoring_*` scenarios)
+  - `daily_plan_2026-04-16.md` — eight daily-plan entries, one per scenario
+  - `review_events.jsonl` — eight scheduled review events
+  - `review_outcomes.jsonl` — eight synthetic `followed_and_improved` outcomes
     recorded via the REVIEW layer
 
 ## How to reproduce

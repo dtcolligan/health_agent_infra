@@ -40,6 +40,8 @@ SCENARIOS = (
     "rhr_spike_three_days",
     "insufficient_signal",
     "sparse_signal",
+    "tailoring_recovered_strength_block",
+    "tailoring_recovered_endurance_taper",
 )
 
 
@@ -49,6 +51,12 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
 
     run = sub.add_parser("run", help="Run the flagship loop end-to-end")
     run.add_argument("--scenario", choices=SCENARIOS, default="mildly_impaired_with_hard_plan")
+    run.add_argument(
+        "--source",
+        choices=("synthetic", "real"),
+        default="synthetic",
+        help="synthetic fixture (default) or the committed Garmin CSV export",
+    )
     run.add_argument("--base-dir", required=True, help="Writeback root (must contain 'recovery_readiness_v1')")
     run.add_argument("--date", default=None, help="As-of date, ISO-8601 (default: today UTC)")
     run.add_argument("--user-id", default="u_local_1")
@@ -85,8 +93,20 @@ def run(args: argparse.Namespace) -> dict:
     as_of = date.fromisoformat(args.date) if args.date else datetime.now(timezone.utc).date()
     now = _coerce_dt(args.now)
 
-    pull = garmin_pull_fixture(as_of, scenario=args.scenario)
-    manual = manual_readiness_fixture(as_of, scenario=args.scenario)
+    source = getattr(args, "source", "synthetic")
+    if source == "real":
+        from garmin.recovery_readiness_adapter import (
+            default_manual_readiness,
+            load_recovery_readiness_inputs,
+        )
+
+        pull = load_recovery_readiness_inputs(as_of)
+        manual = default_manual_readiness(as_of)
+        scenario_label = f"real_garmin_slice_{as_of.isoformat()}"
+    else:
+        pull = garmin_pull_fixture(as_of, scenario=args.scenario)
+        manual = manual_readiness_fixture(as_of, scenario=args.scenario)
+        scenario_label = args.scenario
 
     evidence = clean_inputs(
         user_id=args.user_id,
@@ -130,7 +150,8 @@ def run(args: argparse.Namespace) -> dict:
 
     run_artifact = {
         "run_metadata": {
-            "scenario": args.scenario,
+            "scenario": scenario_label,
+            "source": source,
             "as_of_date": as_of.isoformat(),
             "user_id": args.user_id,
             "now": now.isoformat(),

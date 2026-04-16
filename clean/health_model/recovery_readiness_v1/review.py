@@ -88,3 +88,43 @@ def _event_already_written(path: Path, review_event_id: str) -> bool:
             if obj.get("review_event_id") == review_event_id:
                 return True
     return False
+
+
+def derive_confidence_adjustment(outcomes: list[ReviewOutcome]) -> float:
+    """Return a confidence delta in ``[-0.5, 0.5]`` derived from review history.
+
+    Structural stub. No persistence, no per-user state, no learning loop: a
+    pure function over a list of past ``ReviewOutcome`` records. Callers may
+    use the returned delta to nudge future recommendation confidence.
+
+    TODO(founder): refine these first-pass deltas and add a decay term.
+
+    First-pass rules (explicit so a reviewer can push back):
+      - ``followed_recommendation=True`` + ``self_reported_improvement=True``
+        => +0.05 per outcome. System proposed something that helped.
+      - ``followed_recommendation=True`` + ``self_reported_improvement=False``
+        => -0.02 per outcome. Followed but did not help. Smaller magnitude
+        than the positive case because non-improvement has many benign
+        explanations (life stress, partial adherence, measurement noise).
+      - ``followed_recommendation=True`` + ``self_reported_improvement=None``
+        => 0.0. Ambiguous.
+      - ``followed_recommendation=False`` => 0.0. No counterfactual available;
+        the user may have disagreed for reasons unrelated to correctness.
+      - Sum clamped to ``[-0.25, 0.25]`` — half the contract envelope of
+        ``[-0.5, 0.5]`` — so one bad week cannot collapse the system.
+      - Empty history => 0.0.
+    """
+
+    if not outcomes:
+        return 0.0
+
+    delta = 0.0
+    for outcome in outcomes:
+        if not outcome.followed_recommendation:
+            continue
+        if outcome.self_reported_improvement is True:
+            delta += 0.05
+        elif outcome.self_reported_improvement is False:
+            delta -= 0.02
+
+    return max(-0.25, min(0.25, delta))
