@@ -384,6 +384,85 @@ def cmd_state_init(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_state_read(args: argparse.Namespace) -> int:
+    """Emit rows from one domain's canonical table within a civil-date range."""
+
+    from health_agent_infra.state import (
+        available_domains,
+        open_connection,
+        read_domain,
+        resolve_db_path,
+    )
+
+    db_path = resolve_db_path(args.db_path)
+    if not db_path.exists():
+        print(f"state DB not found at {db_path}. Run `hai state init` first.",
+              file=sys.stderr)
+        return 2
+
+    since = date.fromisoformat(args.since)
+    until = date.fromisoformat(args.until) if args.until else since
+
+    conn = open_connection(db_path)
+    try:
+        try:
+            rows = read_domain(
+                conn,
+                domain=args.domain,
+                since=since,
+                until=until,
+                user_id=args.user_id,
+            )
+        except ValueError as exc:
+            print(
+                f"unknown domain: {args.domain!r}. known: {available_domains()}",
+                file=sys.stderr,
+            )
+            return 2
+    finally:
+        conn.close()
+
+    _emit_json({
+        "domain": args.domain,
+        "as_of_range": [since.isoformat(), until.isoformat()],
+        "user_id": args.user_id,
+        "rows": rows,
+    })
+    return 0
+
+
+def cmd_state_snapshot(args: argparse.Namespace) -> int:
+    """Emit the cross-domain state snapshot the agent consumes."""
+
+    from health_agent_infra.state import (
+        build_snapshot,
+        open_connection,
+        resolve_db_path,
+    )
+
+    db_path = resolve_db_path(args.db_path)
+    if not db_path.exists():
+        print(f"state DB not found at {db_path}. Run `hai state init` first.",
+              file=sys.stderr)
+        return 2
+
+    as_of = date.fromisoformat(args.as_of)
+
+    conn = open_connection(db_path)
+    try:
+        snapshot = build_snapshot(
+            conn,
+            as_of_date=as_of,
+            user_id=args.user_id,
+            lookback_days=args.lookback_days,
+        )
+    finally:
+        conn.close()
+
+    _emit_json(snapshot)
+    return 0
+
+
 def cmd_state_reproject(args: argparse.Namespace) -> int:
     """Rebuild recommendation_log / review_event / review_outcome from JSONL.
 
@@ -579,6 +658,35 @@ def build_parser() -> argparse.ArgumentParser:
     p_sm.add_argument("--db-path", default=None,
                       help="Path to state.db (default: $HAI_STATE_DB or ~/.local/share/health_agent_infra/state.db)")
     p_sm.set_defaults(func=cmd_state_migrate)
+
+    p_sread = state_sub.add_parser(
+        "read",
+        help="Per-domain read (introspection): rows from one canonical table within a date range",
+    )
+    p_sread.add_argument("--domain", required=True,
+                         help="One of: recovery, running, gym, nutrition, stress, notes, "
+                              "recommendations, reviews, goals")
+    p_sread.add_argument("--since", required=True,
+                         help="Inclusive civil-date lower bound, ISO-8601")
+    p_sread.add_argument("--until", default=None,
+                         help="Inclusive civil-date upper bound (default: same as --since)")
+    p_sread.add_argument("--user-id", default=None,
+                         help="Filter to a single user (default: no filter)")
+    p_sread.add_argument("--db-path", default=None)
+    p_sread.set_defaults(func=cmd_state_read)
+
+    p_ssnap = state_sub.add_parser(
+        "snapshot",
+        help="Cross-domain snapshot: the primary read surface the agent consumes",
+    )
+    p_ssnap.add_argument("--as-of", required=True,
+                         help="Civil date to snapshot, ISO-8601")
+    p_ssnap.add_argument("--user-id", required=True,
+                         help="User whose state to snapshot")
+    p_ssnap.add_argument("--lookback-days", type=int, default=14,
+                         help="Days of history to include (default: 14)")
+    p_ssnap.add_argument("--db-path", default=None)
+    p_ssnap.set_defaults(func=cmd_state_snapshot)
 
     p_sr = state_sub.add_parser(
         "reproject",
