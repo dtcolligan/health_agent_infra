@@ -104,6 +104,7 @@ def test_schema_migrations_has_one_row_per_applied_migration(tmp_path: Path):
     assert [tuple(r) for r in rows] == [
         (1, "001_initial.sql"),
         (2, "002_rename_training_readiness_pct.sql"),
+        (3, "003_synthesis_scaffolding.sql"),
     ]
 
 
@@ -119,7 +120,7 @@ def test_schema_migrations_not_duplicated_on_repeat_init(tmp_path: Path):
     finally:
         conn.close()
 
-    assert count == 2
+    assert count == 3
 
 
 def test_current_schema_version_zero_on_empty_db(tmp_path: Path):
@@ -137,7 +138,7 @@ def test_current_schema_version_matches_head_after_init(tmp_path: Path):
 
     conn = open_connection(db_path)
     try:
-        assert current_schema_version(conn) == 2
+        assert current_schema_version(conn) == 3
     finally:
         conn.close()
 
@@ -275,8 +276,8 @@ def test_cli_state_migrate_on_head_db_reports_empty_applied(tmp_path: Path, caps
 
     import json
     payload = json.loads(capsys.readouterr().out)
-    assert payload["schema_version_before"] == 2
-    assert payload["schema_version_after"] == 2
+    assert payload["schema_version_before"] == 3
+    assert payload["schema_version_after"] == 3
     assert payload["applied"] == []
 
 
@@ -347,7 +348,7 @@ def test_broken_migration_rolls_back_ddl_and_bookkeeping(tmp_path: Path):
         assert len(rows) == 1
 
         # Version is still at head (pre-broken migration), not 99.
-        assert current_schema_version(conn) == 2
+        assert current_schema_version(conn) == 3
     finally:
         conn.close()
 
@@ -439,6 +440,83 @@ def test_foreign_key_enforced_between_review_outcome_and_event(tmp_path: Path):
                 "VALUES ('rev_missing', 'rec_missing', 'u', "
                 "        '2026-04-17T00:00:00Z', 1, 'claude_agent_v1', "
                 "        'claude_agent_v1', '2026-04-17T00:00:00Z')"
+            )
+    finally:
+        conn.close()
+
+
+# ---------------------------------------------------------------------------
+# Migration 003 — synthesis scaffolding
+# ---------------------------------------------------------------------------
+
+def test_migration_003_creates_synthesis_tables(tmp_path: Path):
+    db_path = tmp_path / "state.db"
+    initialize_database(db_path)
+
+    conn = open_connection(db_path)
+    try:
+        names = {
+            row["name"]
+            for row in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            ).fetchall()
+        }
+    finally:
+        conn.close()
+
+    assert {"proposal_log", "daily_plan", "x_rule_firing"}.issubset(names)
+
+
+def test_migration_003_adds_domain_column_with_recovery_default(tmp_path: Path):
+    db_path = tmp_path / "state.db"
+    initialize_database(db_path)
+
+    conn = open_connection(db_path)
+    try:
+        for table in ("recommendation_log", "review_event", "review_outcome"):
+            cols = {
+                row["name"]: row
+                for row in conn.execute(f"PRAGMA table_info({table})").fetchall()
+            }
+            assert "domain" in cols, f"domain column missing on {table}"
+            assert cols["domain"]["notnull"] == 1
+            assert cols["domain"]["dflt_value"] == "'recovery'"
+    finally:
+        conn.close()
+
+
+def test_migration_003_x_rule_firing_tier_check_constraint(tmp_path: Path):
+    db_path = tmp_path / "state.db"
+    initialize_database(db_path)
+
+    conn = open_connection(db_path)
+    try:
+        # Seed a daily_plan row so the FK constraint is satisfied.
+        conn.execute(
+            "INSERT INTO daily_plan "
+            "(daily_plan_id, user_id, for_date, synthesized_at, "
+            " recommendation_ids_json, proposal_ids_json, x_rules_fired_json, "
+            " source, ingest_actor, validated_at, projected_at) "
+            "VALUES ('plan_1', 'u', '2026-04-17', '2026-04-17T00:00:00Z', "
+            "        '[]', '[]', '[]', 'claude_agent_v1', 'claude_agent_v1', "
+            "        '2026-04-17T00:00:00Z', '2026-04-17T00:00:00Z')"
+        )
+        # Valid tier passes.
+        conn.execute(
+            "INSERT INTO x_rule_firing "
+            "(daily_plan_id, user_id, x_rule_id, tier, affected_domain, "
+            " trigger_note, fired_at) "
+            "VALUES ('plan_1', 'u', 'X1a', 'soften', 'running', 't', "
+            "        '2026-04-17T00:00:00Z')"
+        )
+        # Invalid tier raises.
+        with pytest.raises(sqlite3.IntegrityError):
+            conn.execute(
+                "INSERT INTO x_rule_firing "
+                "(daily_plan_id, user_id, x_rule_id, tier, affected_domain, "
+                " trigger_note, fired_at) "
+                "VALUES ('plan_1', 'u', 'X1a', 'banana', 'running', 't', "
+                "        '2026-04-17T00:00:00Z')"
             )
     finally:
         conn.close()
