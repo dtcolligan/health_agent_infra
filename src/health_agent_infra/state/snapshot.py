@@ -206,12 +206,33 @@ def build_snapshot(
     user_id: str,
     lookback_days: int = 14,
     now_local: Optional[datetime] = None,
+    evidence_bundle: Optional[dict[str, Any]] = None,
 ) -> dict[str, Any]:
     """Build the cross-domain snapshot object the agent consumes.
 
     ``now_local`` controls the `pending_user_input` vs `partial` / `absent`
     split per state_model_v1.md §5. Defaults to current local time. Tests
     inject a fixed value to exercise both sides of the 23:30 cutover.
+
+    ``evidence_bundle`` is a ``dict`` matching the stdout of ``hai clean``
+    (keys: ``cleaned_evidence``, ``raw_summary``). When supplied, the
+    recovery block is expanded from ``{today, history, missingness}`` to
+    the full Phase 1 per-domain bundle::
+
+        recovery = {
+            today, history, missingness,            # existing keys
+            evidence, raw_summary,                  # from evidence_bundle
+            classified_state, policy_result,        # derived via classify + policy
+        }
+
+    When the bundle is absent, the recovery block keeps its v1.0 shape so
+    existing callers are unaffected. Other domains always keep their
+    v1.0 shape until their own classify/policy lands.
+
+    The plan's end-state is for ``hai state snapshot`` to derive the
+    evidence bundle internally from stored raw data; that lands once the
+    manual-readiness path is persisted (currently the readiness inputs
+    only live in the transient ``hai pull`` evidence JSON).
     """
 
     if now_local is None:
@@ -360,17 +381,39 @@ def build_snapshot(
         else:
             stress_mx = "partial:manual_stress_score"
 
+    recovery_block: dict[str, Any] = {
+        "today": recovery_today,
+        "history": _history("recovery"),
+        "missingness": recovery_mx,
+    }
+    if evidence_bundle is not None:
+        # Phase 1 full-bundle shape: add evidence + raw_summary +
+        # classified_state + policy_result to the recovery block.
+        # Import here (not at module top) to keep `core.schemas` /
+        # `domains.recovery` out of the state package's import cycle at
+        # load time.
+        from health_agent_infra.domains.recovery import (
+            classify_recovery_state,
+            evaluate_recovery_policy,
+        )
+
+        cleaned = evidence_bundle.get("cleaned_evidence") or {}
+        raw_summary = evidence_bundle.get("raw_summary") or {}
+        classified = classify_recovery_state(cleaned, raw_summary)
+        policy = evaluate_recovery_policy(classified, raw_summary)
+
+        recovery_block["evidence"] = cleaned
+        recovery_block["raw_summary"] = raw_summary
+        recovery_block["classified_state"] = _classified_to_dict(classified)
+        recovery_block["policy_result"] = _policy_to_dict(policy)
+
     return {
         "schema_version": "state_snapshot.v1",
         "as_of_date": as_of_date.isoformat(),
         "user_id": user_id,
         "lookback_days": lookback_days,
         "history_range": [lookback_start.isoformat(), (as_of_date - timedelta(days=1)).isoformat()],
-        "recovery": {
-            "today": recovery_today,
-            "history": _history("recovery"),
-            "missingness": recovery_mx,
-        },
+        "recovery": recovery_block,
         "running": {
             "today": running_today,
             "history": _history("running"),
@@ -401,4 +444,43 @@ def build_snapshot(
         "reviews": {
             "recent": recent_revs,
         },
+    }
+
+
+# ---------------------------------------------------------------------------
+# Helpers for classified_state + policy_result serialisation
+# ---------------------------------------------------------------------------
+
+def _classified_to_dict(classified: Any) -> dict[str, Any]:
+    """Convert a ClassifiedRecoveryState frozen dataclass to a plain dict.
+
+    ``uncertainty`` comes off the dataclass as a tuple; snapshot emits it
+    as a list for JSON-friendliness. Field names are preserved verbatim
+    — they are the skill's contract.
+    """
+
+    return {
+        "sleep_debt_band": classified.sleep_debt_band,
+        "resting_hr_band": classified.resting_hr_band,
+        "hrv_band": classified.hrv_band,
+        "training_load_band": classified.training_load_band,
+        "soreness_band": classified.soreness_band,
+        "coverage_band": classified.coverage_band,
+        "recovery_status": classified.recovery_status,
+        "readiness_score": classified.readiness_score,
+        "uncertainty": list(classified.uncertainty),
+    }
+
+
+def _policy_to_dict(policy: Any) -> dict[str, Any]:
+    """Convert a RecoveryPolicyResult frozen dataclass to a plain dict."""
+
+    return {
+        "policy_decisions": [
+            {"rule_id": d.rule_id, "decision": d.decision, "note": d.note}
+            for d in policy.policy_decisions
+        ],
+        "forced_action": policy.forced_action,
+        "forced_action_detail": policy.forced_action_detail,
+        "capped_confidence": policy.capped_confidence,
     }

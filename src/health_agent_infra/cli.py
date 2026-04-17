@@ -1167,7 +1167,14 @@ def cmd_state_read(args: argparse.Namespace) -> int:
 
 
 def cmd_state_snapshot(args: argparse.Namespace) -> int:
-    """Emit the cross-domain state snapshot the agent consumes."""
+    """Emit the cross-domain state snapshot the agent consumes.
+
+    When ``--evidence-json`` is supplied, the recovery block is expanded
+    to the Phase 1 full-bundle shape: evidence + raw_summary +
+    classified_state + policy_result (in addition to today/history/
+    missingness). Without the flag, the recovery block keeps its v1.0
+    shape so existing callers are unaffected.
+    """
 
     from health_agent_infra.state import (
         build_snapshot,
@@ -1183,6 +1190,14 @@ def cmd_state_snapshot(args: argparse.Namespace) -> int:
 
     as_of = date.fromisoformat(args.as_of)
 
+    evidence_bundle: Optional[dict] = None
+    if args.evidence_json:
+        evidence, raw_summary, err = _load_cleaned_bundle(args.evidence_json)
+        if err is not None:
+            print(err, file=sys.stderr)
+            return 2
+        evidence_bundle = {"cleaned_evidence": evidence, "raw_summary": raw_summary}
+
     conn = open_connection(db_path)
     try:
         snapshot = build_snapshot(
@@ -1190,6 +1205,7 @@ def cmd_state_snapshot(args: argparse.Namespace) -> int:
             as_of_date=as_of,
             user_id=args.user_id,
             lookback_days=args.lookback_days,
+            evidence_bundle=evidence_bundle,
         )
     finally:
         conn.close()
@@ -1664,6 +1680,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_ssnap.add_argument("--lookback-days", type=int, default=14,
                          help="Days of history to include (default: 14)")
     p_ssnap.add_argument("--db-path", default=None)
+    p_ssnap.add_argument("--evidence-json", default=None,
+                         help="Optional path to a `hai clean` output JSON. When "
+                              "present, the recovery block is expanded to the "
+                              "full Phase 1 bundle shape (evidence + raw_summary "
+                              "+ classified_state + policy_result). When absent, "
+                              "the recovery block keeps its v1.0 shape.")
     p_ssnap.set_defaults(func=cmd_state_snapshot)
 
     p_sr = state_sub.add_parser(
