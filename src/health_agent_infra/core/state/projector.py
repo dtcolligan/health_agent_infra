@@ -205,8 +205,8 @@ def project_review_event(
         """
         INSERT INTO review_event (
             review_event_id, recommendation_id, user_id,
-            review_at, review_question, projected_at
-        ) VALUES (?, ?, ?, ?, ?, ?)
+            review_at, review_question, domain, projected_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
         (
             event.review_event_id,
@@ -214,6 +214,7 @@ def project_review_event(
             event.user_id,
             event.review_at.isoformat(),
             event.review_question,
+            event.domain,
             _now_iso(),
         ),
     )
@@ -253,8 +254,8 @@ def project_review_outcome(
         INSERT INTO review_outcome (
             review_event_id, recommendation_id, user_id, recorded_at,
             followed_recommendation, self_reported_improvement, free_text,
-            jsonl_offset, source, ingest_actor, projected_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            domain, jsonl_offset, source, ingest_actor, projected_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             outcome.review_event_id,
@@ -264,6 +265,7 @@ def project_review_outcome(
             _bool_to_int(outcome.followed_recommendation),
             _opt_bool_to_int(outcome.self_reported_improvement),
             outcome.free_text,
+            outcome.domain,
             jsonl_offset,
             source,
             ingest_actor,
@@ -1471,8 +1473,8 @@ def reproject_from_jsonl(conn: sqlite3.Connection, base_dir, *, allow_empty: boo
                     """
                     INSERT INTO review_event (
                         review_event_id, recommendation_id, user_id,
-                        review_at, review_question, projected_at
-                    ) VALUES (?, ?, ?, ?, ?, ?)
+                        review_at, review_question, domain, projected_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         data["review_event_id"],
@@ -1480,6 +1482,7 @@ def reproject_from_jsonl(conn: sqlite3.Connection, base_dir, *, allow_empty: boo
                         data["user_id"],
                         data["review_at"],
                         data["review_question"],
+                        data.get("domain", "recovery"),
                         _now_iso(),
                     ),
                 )
@@ -1495,8 +1498,8 @@ def reproject_from_jsonl(conn: sqlite3.Connection, base_dir, *, allow_empty: boo
                     INSERT INTO review_outcome (
                         review_event_id, recommendation_id, user_id, recorded_at,
                         followed_recommendation, self_reported_improvement, free_text,
-                        jsonl_offset, source, ingest_actor, projected_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        domain, jsonl_offset, source, ingest_actor, projected_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         data["review_event_id"],
@@ -1506,6 +1509,7 @@ def reproject_from_jsonl(conn: sqlite3.Connection, base_dir, *, allow_empty: boo
                         1 if data["followed_recommendation"] else 0,
                         _opt_bool_to_int(data.get("self_reported_improvement")),
                         data.get("free_text"),
+                        data.get("domain", "recovery"),
                         line_no,
                         data.get("source", "user_manual"),
                         data.get("ingest_actor", "claude_agent_v1"),

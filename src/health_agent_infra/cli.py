@@ -40,6 +40,7 @@ from health_agent_infra.core.pull.garmin import (
     default_manual_readiness,
 )
 from health_agent_infra.core.review.outcomes import (
+    persist_review_event,
     record_review_outcome,
     schedule_review,
     summarize_review_history,
@@ -487,11 +488,29 @@ def cmd_synthesize(args: argparse.Namespace) -> int:
 # ---------------------------------------------------------------------------
 
 def cmd_review_schedule(args: argparse.Namespace) -> int:
+    """Schedule a review event from a recommendation payload of any domain.
+
+    The payload is parsed generically rather than through the recovery-only
+    ``_recommendation_from_dict`` validator — ``hai writeback`` is the
+    validation boundary, and review scheduling trusts the already-persisted
+    recommendation. ``domain`` is read from the payload (falling back to
+    ``"recovery"`` for v1 rows that pre-date the domain column).
+    """
+
     from health_agent_infra.core.state import project_review_event
 
     data = json.loads(Path(args.recommendation_json).read_text(encoding="utf-8"))
-    recommendation = _recommendation_from_dict(data)
-    event = schedule_review(recommendation, base_dir=Path(args.base_dir))
+    follow_up = data["follow_up"]
+    domain = data.get("domain", "recovery")
+    event = ReviewEvent(
+        review_event_id=follow_up["review_event_id"],
+        recommendation_id=data["recommendation_id"],
+        user_id=data["user_id"],
+        review_at=_coerce_dt(follow_up["review_at"]),
+        review_question=follow_up["review_question"],
+        domain=domain,
+    )
+    persist_review_event(event, base_dir=Path(args.base_dir))
 
     _dual_write_project(
         args.db_path,
@@ -507,12 +526,14 @@ def cmd_review_record(args: argparse.Namespace) -> int:
     from health_agent_infra.core.state import project_review_outcome
 
     data = json.loads(Path(args.outcome_json).read_text(encoding="utf-8"))
+    domain = data.get("domain", "recovery")
     event = ReviewEvent(
         review_event_id=data["review_event_id"],
         recommendation_id=data["recommendation_id"],
         user_id=data["user_id"],
         review_at=_coerce_dt(data.get("review_at", datetime.now(timezone.utc).isoformat())),
         review_question=data.get("review_question", ""),
+        domain=domain,
     )
     outcome = record_review_outcome(
         event,
@@ -535,8 +556,9 @@ def cmd_review_record(args: argparse.Namespace) -> int:
 
 def cmd_review_summary(args: argparse.Namespace) -> int:
     outcomes_path = Path(args.base_dir) / "review_outcomes.jsonl"
+    domain_filter = getattr(args, "domain", None)
     if not outcomes_path.exists():
-        _emit_json(summarize_review_history([]))
+        _emit_json(summarize_review_history([], domain=domain_filter))
         return 0
     outcomes: list[ReviewOutcome] = []
     for line in outcomes_path.read_text(encoding="utf-8").splitlines():
@@ -553,8 +575,9 @@ def cmd_review_summary(args: argparse.Namespace) -> int:
             followed_recommendation=d["followed_recommendation"],
             self_reported_improvement=d.get("self_reported_improvement"),
             free_text=d.get("free_text"),
+            domain=d.get("domain", "recovery"),
         ))
-    _emit_json(summarize_review_history(outcomes))
+    _emit_json(summarize_review_history(outcomes, domain=domain_filter))
     return 0
 
 
@@ -1656,6 +1679,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_rsum = review_sub.add_parser("summary", help="Summarize outcome history counts")
     p_rsum.add_argument("--base-dir", required=True)
     p_rsum.add_argument("--user-id", default=None)
+    p_rsum.add_argument("--domain", default=None,
+                        help="Restrict counts to a single domain "
+                             "(e.g. 'recovery' or 'running'). Omitted = all domains.")
     p_rsum.set_defaults(func=cmd_review_summary)
 
     p_intake = sub.add_parser("intake", help="Typed human-input intake surfaces")

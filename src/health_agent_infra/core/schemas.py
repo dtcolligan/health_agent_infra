@@ -317,6 +317,9 @@ class ReviewEvent:
     user_id: str
     review_at: datetime
     review_question: str
+    # Defaults to "recovery" for backward-compat with v1 rows. The DB column
+    # (migration 003) also backfills to 'recovery' for the same reason.
+    domain: str = "recovery"
 
     def to_dict(self) -> dict:
         return {
@@ -325,6 +328,7 @@ class ReviewEvent:
             "user_id": self.user_id,
             "review_at": self.review_at.isoformat(),
             "review_question": self.review_question,
+            "domain": self.domain,
         }
 
 
@@ -337,6 +341,7 @@ class ReviewOutcome:
     followed_recommendation: bool
     self_reported_improvement: Optional[bool]
     free_text: Optional[str] = None
+    domain: str = "recovery"
 
     def to_dict(self) -> dict:
         return {
@@ -347,4 +352,5 @@ class ReviewOutcome:
             "followed_recommendation": self.followed_recommendation,
             "self_reported_improvement": self.self_reported_improvement,
             "free_text": self.free_text,
+            "domain": self.domain,
         }
