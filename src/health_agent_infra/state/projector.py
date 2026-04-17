@@ -765,6 +765,187 @@ def project_accepted_resistance_training_state_daily(
 
 
 # ---------------------------------------------------------------------------
+# Nutrition intake -> nutrition_intake_raw + accepted_nutrition_state_daily
+# ---------------------------------------------------------------------------
+
+def latest_nutrition_submission_id(
+    conn: sqlite3.Connection,
+    *,
+    as_of_date: date,
+    user_id: str,
+) -> Optional[str]:
+    """Return the most recent submission_id for ``(as_of_date, user_id)``.
+
+    Follows the supersedes chain forward: returns the tail of the chain
+    (the row NOT superseded by any other row). Used by the CLI to stamp
+    ``supersedes_submission_id`` on new submissions so the correction
+    chain stays well-formed.
+    """
+
+    row = conn.execute(
+        """
+        SELECT submission_id FROM nutrition_intake_raw nir
+        WHERE nir.as_of_date = ? AND nir.user_id = ?
+          AND nir.submission_id NOT IN (
+              SELECT supersedes_submission_id FROM nutrition_intake_raw
+              WHERE supersedes_submission_id IS NOT NULL
+          )
+        ORDER BY nir.ingested_at DESC
+        LIMIT 1
+        """,
+        (as_of_date.isoformat(), user_id),
+    ).fetchone()
+    return row["submission_id"] if row else None
+
+
+def project_nutrition_intake_raw(
+    conn: sqlite3.Connection,
+    *,
+    submission_id: str,
+    user_id: str,
+    as_of_date: date,
+    calories: float,
+    protein_g: float,
+    carbs_g: float,
+    fat_g: float,
+    hydration_l: Optional[float],
+    meals_count: Optional[int],
+    ingest_actor: str,
+    supersedes_submission_id: Optional[str] = None,
+    source: str = "user_manual",
+    commit_after: bool = True,
+) -> bool:
+    """Append-only insert of one nutrition submission into
+    ``nutrition_intake_raw``. Idempotent on submission_id.
+
+    Corrections stamp ``supersedes_submission_id`` on the new row; the
+    superseded row stays for audit.
+    """
+
+    existing = conn.execute(
+        "SELECT 1 FROM nutrition_intake_raw WHERE submission_id = ?",
+        (submission_id,),
+    ).fetchone()
+    if existing is not None:
+        return False
+
+    conn.execute(
+        """
+        INSERT INTO nutrition_intake_raw (
+            submission_id, user_id, as_of_date,
+            calories, protein_g, carbs_g, fat_g,
+            hydration_l, meals_count,
+            source, ingest_actor, ingested_at,
+            supersedes_submission_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            submission_id, user_id, as_of_date.isoformat(),
+            calories, protein_g, carbs_g, fat_g,
+            hydration_l, meals_count,
+            source, ingest_actor, _now_iso(),
+            supersedes_submission_id,
+        ),
+    )
+    if commit_after:
+        conn.commit()
+    return True
+
+
+def project_accepted_nutrition_state_daily(
+    conn: sqlite3.Connection,
+    *,
+    as_of_date: date,
+    user_id: str,
+    ingest_actor: str,
+    source: str = "user_manual",
+    commit_after: bool = True,
+) -> bool:
+    """Recompute + UPSERT the day's accepted nutrition state from the
+    latest non-superseded raw row for ``(as_of_date, user_id)``.
+
+    Returns ``True`` on insert, ``False`` on update. ``corrected_at`` is
+    set on update, NULL on insert (hybrid correction grammar).
+
+    ``derived_from`` lists the submission_id that drove this projection.
+    Audit chain: follow ``supersedes_submission_id`` back through
+    ``nutrition_intake_raw`` for history.
+    """
+
+    latest = conn.execute(
+        """
+        SELECT submission_id, calories, protein_g, carbs_g, fat_g,
+               hydration_l, meals_count
+        FROM nutrition_intake_raw nir
+        WHERE nir.as_of_date = ? AND nir.user_id = ?
+          AND nir.submission_id NOT IN (
+              SELECT supersedes_submission_id FROM nutrition_intake_raw
+              WHERE supersedes_submission_id IS NOT NULL
+          )
+        ORDER BY nir.ingested_at DESC
+        LIMIT 1
+        """,
+        (as_of_date.isoformat(), user_id),
+    ).fetchone()
+
+    if latest is None:
+        # No raw rows to derive from — leave the accepted row alone (no-op).
+        # This can legitimately happen during reproject if every raw row is
+        # superseded by a non-existent id, which shouldn't occur in
+        # practice but is benign.
+        return False
+
+    existing = conn.execute(
+        "SELECT 1 FROM accepted_nutrition_state_daily "
+        "WHERE as_of_date = ? AND user_id = ?",
+        (as_of_date.isoformat(), user_id),
+    ).fetchone()
+    is_insert = existing is None
+
+    now_iso = _now_iso()
+    derived_from_json = json.dumps([latest["submission_id"]], sort_keys=True)
+
+    values = (
+        latest["calories"], latest["protein_g"],
+        latest["carbs_g"], latest["fat_g"],
+        latest["hydration_l"], latest["meals_count"],
+        derived_from_json, source, ingest_actor,
+        now_iso,
+        None if is_insert else now_iso,
+        as_of_date.isoformat(), user_id,
+    )
+
+    if is_insert:
+        conn.execute(
+            """
+            INSERT INTO accepted_nutrition_state_daily (
+                calories, protein_g, carbs_g, fat_g,
+                hydration_l, meals_count,
+                derived_from, source, ingest_actor,
+                projected_at, corrected_at,
+                as_of_date, user_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            values,
+        )
+    else:
+        conn.execute(
+            """
+            UPDATE accepted_nutrition_state_daily SET
+                calories = ?, protein_g = ?, carbs_g = ?, fat_g = ?,
+                hydration_l = ?, meals_count = ?,
+                derived_from = ?, source = ?, ingest_actor = ?,
+                projected_at = ?, corrected_at = ?
+            WHERE as_of_date = ? AND user_id = ?
+            """,
+            values,
+        )
+    if commit_after:
+        conn.commit()
+    return is_insert
+
+
+# ---------------------------------------------------------------------------
 # Reprojection from JSONL audit logs
 # ---------------------------------------------------------------------------
 
@@ -816,23 +997,30 @@ def reproject_from_jsonl(conn: sqlite3.Connection, base_dir, *, allow_empty: boo
     events_log = base / "review_events.jsonl"
     outcomes_log = base / "review_outcomes.jsonl"
     gym_log = base / "gym_sessions.jsonl"
+    nutrition_log = base / "nutrition_intake.jsonl"
 
     has_rec_group = any(p.exists() for p in (rec_log, events_log, outcomes_log))
     has_gym_group = gym_log.exists()
+    has_nutrition_group = nutrition_log.exists()
 
-    if not allow_empty and not (has_rec_group or has_gym_group):
+    if not allow_empty and not (
+        has_rec_group or has_gym_group or has_nutrition_group
+    ):
         raise ReprojectBaseDirError(
             f"no audit JSONL files found under {base}. Expected at least "
             f"one of: recommendation_log.jsonl, review_events.jsonl, "
-            f"review_outcomes.jsonl, gym_sessions.jsonl. Refusing to "
-            f"truncate the projection tables. Pass allow_empty=True / "
-            f"--allow-empty-reproject to override."
+            f"review_outcomes.jsonl, gym_sessions.jsonl, "
+            f"nutrition_intake.jsonl. Refusing to touch the projection "
+            f"tables. Pass allow_empty=True / --allow-empty-reproject to "
+            f"override."
         )
 
     counts = {
         "recommendations": 0, "review_events": 0, "review_outcomes": 0,
         "gym_sessions": 0, "gym_sets": 0,
         "accepted_resistance_training_state_daily": 0,
+        "nutrition_intake_raw": 0,
+        "accepted_nutrition_state_daily": 0,
     }
 
     conn.execute("BEGIN EXCLUSIVE")
@@ -849,6 +1037,11 @@ def reproject_from_jsonl(conn: sqlite3.Connection, base_dir, *, allow_empty: boo
             conn.execute("DELETE FROM accepted_resistance_training_state_daily")
             conn.execute("DELETE FROM gym_set")
             conn.execute("DELETE FROM gym_session")
+        if has_nutrition_group:
+            # Nutrition group: no FK between raw and accepted; both
+            # truncated together so replay repopulates both.
+            conn.execute("DELETE FROM accepted_nutrition_state_daily")
+            conn.execute("DELETE FROM nutrition_intake_raw")
 
         if rec_log.exists():
             for line_no, line in enumerate(rec_log.read_text(encoding="utf-8").splitlines(), start=1):
@@ -1016,6 +1209,57 @@ def reproject_from_jsonl(conn: sqlite3.Connection, base_dir, *, allow_empty: boo
                     commit_after=False,
                 )
                 counts["accepted_resistance_training_state_daily"] += 1
+
+        if nutrition_log.exists():
+            # Nutrition replay: each line is one submission. The natural
+            # `ingested_at` order in the raw table follows the line order
+            # here (reproject stamps fresh timestamps). The correction
+            # chain is preserved by replaying `supersedes_submission_id`
+            # exactly as stored in JSONL.
+            days_touched: set[tuple[str, str]] = set()
+            for line_no, line in enumerate(
+                nutrition_log.read_text(encoding="utf-8").splitlines(), start=1,
+            ):
+                if not line.strip():
+                    continue
+                data = json.loads(line)
+                as_of_iso = data["as_of_date"]
+                user_id = data["user_id"]
+                conn.execute(
+                    """
+                    INSERT OR IGNORE INTO nutrition_intake_raw (
+                        submission_id, user_id, as_of_date,
+                        calories, protein_g, carbs_g, fat_g,
+                        hydration_l, meals_count,
+                        source, ingest_actor, ingested_at,
+                        supersedes_submission_id
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        data["submission_id"], user_id, as_of_iso,
+                        data.get("calories"), data.get("protein_g"),
+                        data.get("carbs_g"), data.get("fat_g"),
+                        data.get("hydration_l"), data.get("meals_count"),
+                        data.get("source", "user_manual"),
+                        data.get("ingest_actor", "claude_agent_v1"),
+                        data.get("submitted_at", _now_iso()),
+                        data.get("supersedes_submission_id"),
+                    ),
+                )
+                counts["nutrition_intake_raw"] += 1
+                days_touched.add((as_of_iso, user_id))
+
+            from datetime import date as _date
+            for as_of_iso, user_id in sorted(days_touched):
+                project_accepted_nutrition_state_daily(
+                    conn,
+                    as_of_date=_date.fromisoformat(as_of_iso),
+                    user_id=user_id,
+                    ingest_actor="hai_state_reproject",
+                    source="user_manual",
+                    commit_after=False,
+                )
+                counts["accepted_nutrition_state_daily"] += 1
 
         conn.commit()
     except Exception:

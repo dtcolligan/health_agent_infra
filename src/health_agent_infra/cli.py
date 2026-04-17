@@ -645,6 +645,185 @@ def _project_gym_submission_into_state(db_path_arg, submission) -> None:
         conn.close()
 
 
+def cmd_intake_nutrition(args: argparse.Namespace) -> int:
+    """Log a day's nutrition aggregate as raw user-reported evidence.
+
+    Nutrition is daily-grain ("I ate X calories today"). Re-running for
+    the same ``(as_of_date, user_id)`` is treated as a **correction**:
+
+      - A new ``nutrition_intake_raw`` row is appended with
+        ``supersedes_submission_id`` pointing at the previous row.
+      - ``accepted_nutrition_state_daily`` is UPSERTed; ``corrected_at``
+        is set on update, NULL on first insert (state_model_v1.md §3).
+
+    Writes:
+      - JSONL audit: ``<base_dir>/nutrition_intake.jsonl`` (one line per
+        invocation, append-only, the durable boundary).
+      - DB projection: ``nutrition_intake_raw`` (append-only) +
+        ``accepted_nutrition_state_daily`` (UPSERT) inside one
+        ``BEGIN IMMEDIATE`` / ``COMMIT``.
+    """
+
+    from health_agent_infra.intake.nutrition import (
+        NutritionSubmission,
+        append_submission_jsonl,
+    )
+
+    for name, value in (
+        ("calories", args.calories),
+        ("protein_g", args.protein_g),
+        ("carbs_g", args.carbs_g),
+        ("fat_g", args.fat_g),
+    ):
+        if value is None:
+            print(
+                f"intake nutrition requires --{name.replace('_', '-')}",
+                file=sys.stderr,
+            )
+            return 2
+        if value < 0:
+            print(f"intake nutrition: --{name.replace('_', '-')} must be >= 0",
+                  file=sys.stderr)
+            return 2
+
+    as_of = _coerce_date(args.as_of)
+    issued_at = datetime.now(timezone.utc)
+    suffix = issued_at.strftime("%H%M%S%f")
+    submission_id = f"m_nut_{as_of.isoformat()}_{suffix}"
+
+    # Auto-detect supersedes chain: if a raw row already exists for this
+    # (as_of_date, user_id), the new row supersedes the current tail.
+    supersedes_id = _resolve_prior_nutrition_submission(
+        args.db_path, as_of_date=as_of, user_id=args.user_id,
+    )
+
+    submission = NutritionSubmission(
+        submission_id=submission_id,
+        user_id=args.user_id,
+        as_of_date=as_of,
+        calories=float(args.calories),
+        protein_g=float(args.protein_g),
+        carbs_g=float(args.carbs_g),
+        fat_g=float(args.fat_g),
+        hydration_l=float(args.hydration_l) if args.hydration_l is not None else None,
+        meals_count=int(args.meals_count) if args.meals_count is not None else None,
+        ingest_actor=args.ingest_actor,
+        submitted_at=issued_at,
+        supersedes_submission_id=supersedes_id,
+    )
+
+    # JSONL audit first (durable boundary).
+    base_dir = Path(args.base_dir).expanduser()
+    jsonl_path = append_submission_jsonl(submission, base_dir=base_dir)
+
+    # DB projection is atomic + fail-soft.
+    _project_nutrition_submission_into_state(args.db_path, submission)
+
+    _emit_json({
+        "submission_id": submission.submission_id,
+        "user_id": submission.user_id,
+        "as_of_date": submission.as_of_date.isoformat(),
+        "supersedes_submission_id": submission.supersedes_submission_id,
+        "jsonl_path": str(jsonl_path),
+    })
+    return 0
+
+
+def _resolve_prior_nutrition_submission(
+    db_path_arg, *, as_of_date: date, user_id: str,
+) -> Optional[str]:
+    """Return the latest non-superseded submission_id for the day, or None.
+
+    If the DB doesn't exist, returns None (no chain to continue). The
+    caller stamps this onto a new submission's ``supersedes_submission_id``
+    to preserve the append-only correction chain (state_model §3).
+    """
+
+    from health_agent_infra.state import (
+        latest_nutrition_submission_id,
+        open_connection,
+        resolve_db_path,
+    )
+
+    db_path = resolve_db_path(db_path_arg)
+    if not db_path.exists():
+        return None
+    conn = open_connection(db_path)
+    try:
+        return latest_nutrition_submission_id(
+            conn, as_of_date=as_of_date, user_id=user_id,
+        )
+    finally:
+        conn.close()
+
+
+def _project_nutrition_submission_into_state(db_path_arg, submission) -> None:
+    """Project a nutrition submission into the state DB atomically.
+
+    Same fail-soft + BEGIN IMMEDIATE / COMMIT pattern as
+    ``_project_gym_submission_into_state``. A mid-flight failure rolls
+    back both tables; the JSONL audit already landed so
+    ``hai state reproject --base-dir <d>`` can recover.
+    """
+
+    from health_agent_infra.state import (
+        open_connection,
+        project_accepted_nutrition_state_daily,
+        project_nutrition_intake_raw,
+        resolve_db_path,
+    )
+
+    db_path = resolve_db_path(db_path_arg)
+    if not db_path.exists():
+        print(
+            f"note: state DB projection skipped ({db_path} not found). "
+            f"JSONL audit record is durable. Run `hai state init` to enable "
+            f"DB dual-write.",
+            file=sys.stderr,
+        )
+        return
+
+    conn = open_connection(db_path)
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            project_nutrition_intake_raw(
+                conn,
+                submission_id=submission.submission_id,
+                user_id=submission.user_id,
+                as_of_date=submission.as_of_date,
+                calories=submission.calories,
+                protein_g=submission.protein_g,
+                carbs_g=submission.carbs_g,
+                fat_g=submission.fat_g,
+                hydration_l=submission.hydration_l,
+                meals_count=submission.meals_count,
+                ingest_actor=submission.ingest_actor,
+                supersedes_submission_id=submission.supersedes_submission_id,
+                commit_after=False,
+            )
+            project_accepted_nutrition_state_daily(
+                conn,
+                as_of_date=submission.as_of_date,
+                user_id=submission.user_id,
+                ingest_actor=submission.ingest_actor,
+                commit_after=False,
+            )
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+    except Exception as exc:  # noqa: BLE001
+        print(
+            f"warning: nutrition intake projection into state DB failed "
+            f"and was rolled back: {exc}. JSONL audit is durable; run "
+            f"`hai state reproject --base-dir <writeback-root>` to recover.",
+            file=sys.stderr,
+        )
+    finally:
+        conn.close()
+
+
 def cmd_intake_readiness(args: argparse.Namespace) -> int:
     """Emit a typed manual-readiness JSON blob to stdout.
 
@@ -767,12 +946,22 @@ def cmd_state_snapshot(args: argparse.Namespace) -> int:
 
 
 def cmd_state_reproject(args: argparse.Namespace) -> int:
-    """Rebuild recommendation_log / review_event / review_outcome from JSONL.
+    """Rebuild projected tables from the JSONL audit logs under ``--base-dir``.
 
-    The JSONL files under ``--base-dir`` are the durable source of truth;
-    the DB is a queryable projection. This command truncates the three
-    projected tables and re-reads every line in dependency order
-    (recommendations -> events -> outcomes). Idempotent.
+    **Scoped by log group** (7C.1 patch). Only the table groups whose
+    audit JSONLs are present in ``--base-dir`` are touched:
+
+      - ``recommendation_log.jsonl`` / ``review_events.jsonl`` /
+        ``review_outcomes.jsonl`` → recommendation + review tables.
+      - ``gym_sessions.jsonl`` → ``gym_session`` + ``gym_set`` +
+        ``accepted_resistance_training_state_daily``.
+      - ``nutrition_intake.jsonl`` → ``nutrition_intake_raw`` +
+        ``accepted_nutrition_state_daily``.
+
+    Groups whose logs are absent are left alone. Replay happens inside
+    one ``BEGIN EXCLUSIVE`` / ``COMMIT`` transaction; idempotent. Fail-
+    closed on a base_dir with none of the expected JSONLs unless
+    ``--allow-empty-reproject`` is passed.
     """
 
     from health_agent_infra.state import (
@@ -982,6 +1171,36 @@ def build_parser() -> argparse.ArgumentParser:
                       help="State DB path (same semantics as `hai writeback --db-path`)")
     p_ig.set_defaults(func=cmd_intake_gym)
 
+    p_in = intake_sub.add_parser(
+        "nutrition",
+        help="Log a day's nutrition aggregate (calories + macros) as raw "
+             "user-reported evidence. Re-running for the same day is a "
+             "correction (supersedes chain + corrected_at).",
+    )
+    p_in.add_argument("--calories", type=float, required=True,
+                      help="Total calories consumed that day")
+    p_in.add_argument("--protein-g", type=float, required=True,
+                      help="Total protein in grams")
+    p_in.add_argument("--carbs-g", type=float, required=True,
+                      help="Total carbohydrates in grams")
+    p_in.add_argument("--fat-g", type=float, required=True,
+                      help="Total fat in grams")
+    p_in.add_argument("--hydration-l", type=float, default=None,
+                      help="Total hydration in litres. Optional.")
+    p_in.add_argument("--meals-count", type=int, default=None,
+                      help="Number of distinct meals. Optional.")
+    p_in.add_argument("--as-of", default=None,
+                      help="Civil date this intake belongs to (ISO-8601, "
+                           "default today UTC)")
+    p_in.add_argument("--user-id", default="u_local_1")
+    p_in.add_argument("--ingest-actor", default="hai_cli_direct",
+                      choices=("hai_cli_direct", "claude_agent_v1"))
+    p_in.add_argument("--base-dir", required=True,
+                      help="Intake root (nutrition_intake.jsonl lands here)")
+    p_in.add_argument("--db-path", default=None,
+                      help="State DB path (same semantics as other intake cmds)")
+    p_in.set_defaults(func=cmd_intake_nutrition)
+
     p_ir = intake_sub.add_parser("readiness",
                                  help="Emit a typed manual-readiness JSON to stdout")
     p_ir.add_argument("--soreness", required=True, choices=SORENESS_CHOICES,
@@ -1040,10 +1259,16 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_sr = state_sub.add_parser(
         "reproject",
-        help="Rebuild recommendation_log / review_event / review_outcome from JSONL audit logs",
+        help="Rebuild projected tables from JSONL audit logs, scoped to the "
+             "log groups present under --base-dir (recommendation/review, "
+             "gym, nutrition).",
     )
     p_sr.add_argument("--base-dir", required=True,
-                      help="Writeback root containing recommendation_log.jsonl etc.")
+                      help="Writeback/intake root. Recognised audit files: "
+                           "recommendation_log.jsonl, review_events.jsonl, "
+                           "review_outcomes.jsonl, gym_sessions.jsonl, "
+                           "nutrition_intake.jsonl. Only the groups whose "
+                           "files are present get truncated and rebuilt.")
     p_sr.add_argument("--db-path", default=None,
                       help="State DB path (default: $HAI_STATE_DB or platform default)")
     p_sr.add_argument("--allow-empty-reproject", action="store_true",
