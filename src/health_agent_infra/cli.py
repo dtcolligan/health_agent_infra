@@ -152,7 +152,6 @@ def cmd_clean(args: argparse.Namespace) -> int:
             as_of_date=as_of,
             user_id=user_id,
             raw_row=raw_row,
-            manual_stress_score=_manual_stress_score_from(manual),
         )
 
     _emit_json({
@@ -162,37 +161,31 @@ def cmd_clean(args: argparse.Namespace) -> int:
     return 0
 
 
-def _manual_stress_score_from(manual: Optional[dict]) -> Optional[int]:
-    """Return a validated 1–5 integer from the manual readiness intake, if present."""
-
-    if not manual:
-        return None
-    v = manual.get("manual_stress_score")
-    if v is None:
-        return None
-    try:
-        n = int(v)
-    except (TypeError, ValueError):
-        return None
-    if n < 1 or n > 5:
-        return None
-    return n
-
-
 def _project_clean_into_state(
     db_path_arg,
     *,
     as_of_date: date,
     user_id: str,
     raw_row: dict,
-    manual_stress_score: Optional[int],
 ) -> None:
-    """Project raw Garmin row + derived accepted state into the state DB.
+    """Project Garmin raw row + two accepted-state rows into the state DB.
 
-    Fail-soft: if the DB is absent or any INSERT/UPDATE raises, we print a
-    stderr warning and return. The `hai clean` stdout is unaffected. This is
-    the same pattern as `hai writeback` / `hai review` (see
-    ``_dual_write_project``), adapted for the three-table recovery path.
+    **Atomicity contract.** All three INSERT/UPDATE operations land in a
+    single ``BEGIN IMMEDIATE`` transaction: either every row commits, or
+    none do. A failure mid-projection rolls back, leaving the DB in the
+    same shape it was before ``hai clean`` started. Without this, a
+    partial failure could persist source_daily_garmin while both accepted
+    tables stayed empty — and unlike writeback/review, `hai clean` has no
+    JSONL audit log, so there would be no reproject path.
+
+    **Scope.** Only Garmin-sourced fields land here. Manual stress,
+    nutrition, gym, notes flow through their own ``hai intake`` commands
+    (7C) with their own raw-evidence tables; they never enter accepted
+    state via ``hai clean``.
+
+    **Fail-soft at the CLI boundary.** DB absent or transaction rolled back
+    ⇒ stderr warning and return. stdout is unaffected. Same pattern as
+    ``_dual_write_project``, adapted for the three-table recovery path.
     """
 
     from health_agent_infra.state import (
@@ -221,32 +214,40 @@ def _project_clean_into_state(
 
     conn = open_connection(db_path)
     try:
-        project_source_daily_garmin(
-            conn,
-            as_of_date=as_of_date,
-            user_id=user_id,
-            raw_row=raw_row,
-            export_batch_id=export_batch_id,
-        )
-        project_accepted_recovery_state_daily(
-            conn,
-            as_of_date=as_of_date,
-            user_id=user_id,
-            raw_row=raw_row,
-            manual_stress_score=manual_stress_score,
-            source_row_ids=[source_row_id],
-        )
-        project_accepted_running_state_daily(
-            conn,
-            as_of_date=as_of_date,
-            user_id=user_id,
-            raw_row=raw_row,
-            source_row_ids=[source_row_id],
-        )
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            project_source_daily_garmin(
+                conn,
+                as_of_date=as_of_date,
+                user_id=user_id,
+                raw_row=raw_row,
+                export_batch_id=export_batch_id,
+                commit_after=False,
+            )
+            project_accepted_recovery_state_daily(
+                conn,
+                as_of_date=as_of_date,
+                user_id=user_id,
+                raw_row=raw_row,
+                source_row_ids=[source_row_id],
+                commit_after=False,
+            )
+            project_accepted_running_state_daily(
+                conn,
+                as_of_date=as_of_date,
+                user_id=user_id,
+                raw_row=raw_row,
+                source_row_ids=[source_row_id],
+                commit_after=False,
+            )
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
     except Exception as exc:  # noqa: BLE001 — any DB failure becomes a warning
         print(
-            f"warning: clean projection into state DB failed: {exc}. "
-            f"`hai clean` output is still durable on stdout.",
+            f"warning: clean projection into state DB failed and was rolled "
+            f"back: {exc}. `hai clean` output is still durable on stdout.",
             file=sys.stderr,
         )
     finally:

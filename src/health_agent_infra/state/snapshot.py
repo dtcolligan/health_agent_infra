@@ -103,8 +103,13 @@ _METADATA_COLUMNS: frozenset[str] = frozenset({
 _V1_REQUIRED_FIELDS: dict[str, frozenset[str]] = {
     "recovery": frozenset({
         "sleep_hours", "resting_hr", "hrv_ms", "all_day_stress",
-        "manual_stress_score", "acute_load", "chronic_load", "acwr_ratio",
+        "acute_load", "chronic_load", "acwr_ratio",
         "body_battery_end_of_day",
+        # manual_stress_score is user-reported and must flow through
+        # stress_manual_raw → accepted recovery (7C). Until 7C ships, a
+        # clean-only pipeline cannot populate it, so it is NOT part of the
+        # v1 "required for present" set. Its NULL-ness still surfaces via
+        # the `stress` block's missingness token, which is the right place.
     }),
     "running": frozenset({
         "total_distance_m", "moderate_intensity_min", "vigorous_intensity_min",

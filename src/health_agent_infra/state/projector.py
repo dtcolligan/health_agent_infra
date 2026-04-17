@@ -268,6 +268,7 @@ def project_source_daily_garmin(
     csv_row_index: int = 0,
     ingest_actor: str = "garmin_csv_adapter",
     supersedes_export_batch_id: Optional[str] = None,
+    commit_after: bool = True,
 ) -> bool:
     """Append-only insert of one Garmin day-row into ``source_daily_garmin``.
 
@@ -276,6 +277,11 @@ def project_source_daily_garmin(
     same batch id is a no-op. A genuinely-new pull with updated Garmin data
     should use a fresh ``export_batch_id`` so the correction lands as a new
     raw row (state_model_v1.md §3).
+
+    ``commit_after`` defaults to True for standalone callers. Set False when
+    composing multiple projector calls inside an outer transaction — the
+    caller then owns the ``COMMIT`` / ``ROLLBACK`` lifecycle, guaranteeing
+    all-or-nothing persistence across the composed projection.
     """
 
     existing = conn.execute(
@@ -303,7 +309,8 @@ def project_source_daily_garmin(
         f"INSERT INTO source_daily_garmin ({columns_sql}) VALUES ({placeholders})",
         values,
     )
-    conn.commit()
+    if commit_after:
+        conn.commit()
     return True
 
 
@@ -342,20 +349,28 @@ def project_accepted_recovery_state_daily(
     as_of_date: date,
     user_id: str,
     raw_row: dict,
-    manual_stress_score: Optional[int] = None,
     source_row_ids: Optional[list[str]] = None,
     source: str = "garmin",
     ingest_actor: str = "garmin_csv_adapter",
+    commit_after: bool = True,
 ) -> bool:
-    """UPSERT one day's accepted recovery state.
+    """UPSERT one day's accepted recovery state from a Garmin raw row.
 
     First write sets ``projected_at``; subsequent writes set ``corrected_at``
     per the hybrid correction grammar (state_model_v1.md §3). Returns
     ``True`` if this was an insert, ``False`` on update.
 
-    ``training_readiness_pct`` is deferred to 7B (not populated in v1 base
-    projection). ``manual_stress_score`` comes from the caller; v1 accepts
-    it directly on this row rather than through ``stress_manual_raw``.
+    **Scope (7A.3):** this projector only writes Garmin-sourced fields.
+    ``manual_stress_score`` is intentionally **not** written here — it is a
+    user-reported fact that must land in ``stress_manual_raw`` first (so the
+    raw→accepted audit chain holds), then be merged into this row by a
+    separate projection step. That merge arrives with 7C's ``hai intake
+    stress`` command. Until then, ``manual_stress_score`` stays NULL on
+    every accepted recovery row written by this function.
+
+    ``training_readiness_pct`` is similarly deferred to 7B.
+
+    ``commit_after``: set False when composing inside an outer transaction.
     """
 
     now_iso = _now_iso()
@@ -376,7 +391,7 @@ def project_accepted_recovery_state_daily(
         raw_row.get("resting_hr"),
         raw_row.get("health_hrv_value"),
         raw_row.get("all_day_stress"),
-        manual_stress_score,
+        None,  # manual_stress_score — 7C will populate via stress_manual_raw
         raw_row.get("acute_load"),
         raw_row.get("chronic_load"),
         acwr,
@@ -419,7 +434,8 @@ def project_accepted_recovery_state_daily(
             """,
             values,
         )
-    conn.commit()
+    if commit_after:
+        conn.commit()
     return is_insert
 
 
@@ -436,6 +452,7 @@ def project_accepted_running_state_daily(
     source_row_ids: Optional[list[str]] = None,
     source: str = "garmin",
     ingest_actor: str = "garmin_csv_adapter",
+    commit_after: bool = True,
 ) -> bool:
     """UPSERT one day's accepted running state with ``derivation_path='garmin_daily'``.
 
@@ -443,6 +460,8 @@ def project_accepted_running_state_daily(
     (distance_m + intensity minutes). Per-activity ``running_session`` rows
     don't exist yet, so ``session_count`` and ``total_duration_s`` are NULL
     and snapshots must not flag them as partial (state_model_v1.md §8).
+
+    ``commit_after``: set False when composing inside an outer transaction.
     """
 
     now_iso = _now_iso()
@@ -498,7 +517,8 @@ def project_accepted_running_state_daily(
             """,
             values,
         )
-    conn.commit()
+    if commit_after:
+        conn.commit()
     return is_insert
 
 

@@ -231,7 +231,6 @@ def test_accepted_recovery_insert_sets_projected_at_and_null_corrected_at(tmp_pa
             as_of_date=AS_OF,
             user_id=USER,
             raw_row=_full_raw_row(),
-            manual_stress_score=2,
             source_row_ids=["batch_x:0"],
         )
         assert inserted is True
@@ -245,7 +244,9 @@ def test_accepted_recovery_insert_sets_projected_at_and_null_corrected_at(tmp_pa
         assert row["resting_hr"] == 52.0
         assert row["hrv_ms"] == 48.0
         assert row["all_day_stress"] == 30
-        assert row["manual_stress_score"] == 2
+        # manual_stress_score is NEVER populated by this projector in v1 —
+        # it must flow through stress_manual_raw first (7C). Stays NULL.
+        assert row["manual_stress_score"] is None
         assert row["acute_load"] == 400.0
         assert row["chronic_load"] == 380.0
         # acwr_ratio is computed: 400/380
@@ -266,14 +267,12 @@ def test_accepted_recovery_upsert_sets_corrected_at(tmp_path: Path):
     conn = open_connection(db)
     try:
         project_accepted_recovery_state_daily(
-            conn, as_of_date=AS_OF, user_id=USER,
-            raw_row=_full_raw_row(), manual_stress_score=2,
+            conn, as_of_date=AS_OF, user_id=USER, raw_row=_full_raw_row(),
         )
         corrected_row = dict(_full_raw_row())
         corrected_row["resting_hr"] = 49.0
         inserted = project_accepted_recovery_state_daily(
-            conn, as_of_date=AS_OF, user_id=USER,
-            raw_row=corrected_row, manual_stress_score=3,
+            conn, as_of_date=AS_OF, user_id=USER, raw_row=corrected_row,
         )
         assert inserted is False  # it was an UPDATE
         row = conn.execute(
@@ -282,7 +281,7 @@ def test_accepted_recovery_upsert_sets_corrected_at(tmp_path: Path):
             (AS_OF.isoformat(), USER),
         ).fetchone()
         assert row["resting_hr"] == 49.0
-        assert row["manual_stress_score"] == 3
+        assert row["manual_stress_score"] is None  # still NULL on upsert
         assert row["corrected_at"] is not None
     finally:
         conn.close()
@@ -430,8 +429,9 @@ def test_snapshot_stress_garmin_present_manual_null_after_cutover_is_partial(tmp
         project_accepted_recovery_state_daily(
             conn, as_of_date=AS_OF, user_id=USER,
             raw_row=_full_raw_row(),  # carries all_day_stress=30
-            manual_stress_score=None,  # user hasn't logged
         )
+        # manual_stress_score is NOT populated by this projector; it stays
+        # NULL until 7C lands the stress_manual_raw path.
         snap = build_snapshot(
             conn, as_of_date=AS_OF, user_id=USER,
             now_local=datetime(2026, 5, 1, 10, 0),  # day well-closed
@@ -452,8 +452,7 @@ def test_snapshot_stress_garmin_present_manual_null_before_cutover_is_pending(tm
     conn = open_connection(db)
     try:
         project_accepted_recovery_state_daily(
-            conn, as_of_date=AS_OF, user_id=USER,
-            raw_row=_full_raw_row(), manual_stress_score=None,
+            conn, as_of_date=AS_OF, user_id=USER, raw_row=_full_raw_row(),
         )
         snap = build_snapshot(
             conn, as_of_date=AS_OF, user_id=USER,
@@ -527,7 +526,6 @@ def _write_pull_payload(tmp_path: Path) -> Path:
             "soreness": "moderate",
             "energy": "moderate",
             "planned_session_type": "moderate",
-            "manual_stress_score": 2,
         },
     }
     p = tmp_path / "evidence.json"
@@ -569,7 +567,11 @@ def test_cli_clean_projects_recovery_and_running(tmp_path: Path):
 
     assert len(recovery) == 1
     assert recovery[0]["resting_hr"] == 52.0
-    assert recovery[0]["manual_stress_score"] == 2
+    # manual_stress_score stays NULL — it must flow through stress_manual_raw
+    # (7C), never via `hai clean`.
+    assert recovery[0]["manual_stress_score"] is None
+    assert recovery[0]["source"] == "garmin"
+    assert recovery[0]["ingest_actor"] == "garmin_csv_adapter"
     assert len(running) == 1
     assert running[0]["derivation_path"] == "garmin_daily"
     assert running[0]["session_count"] is None
@@ -599,8 +601,11 @@ def test_cli_clean_then_snapshot_returns_present_recovery_and_running(tmp_path: 
     assert snap["running"]["missingness"] == "present"
     assert snap["recovery"]["today"]["sleep_hours"] == pytest.approx(6.5, rel=0.01)
     assert snap["recovery"]["today"]["all_day_stress"] == 30
-    assert snap["recovery"]["today"]["manual_stress_score"] == 2
+    assert snap["recovery"]["today"]["manual_stress_score"] is None
     assert snap["running"]["today"]["total_distance_m"] == 8500.0
+    # Stress is `partial:manual_stress_score` because Garmin landed but
+    # no stress_manual_raw row exists yet — 7C territory.
+    assert snap["stress"]["missingness"] == "partial:manual_stress_score"
 
 
 def test_cli_clean_without_db_is_failsoft_and_emits_stdout(tmp_path: Path, capsys):
@@ -650,6 +655,170 @@ def test_cli_clean_without_raw_daily_row_is_failsoft(tmp_path: Path):
     finally:
         conn.close()
     assert rows == []  # projection was skipped
+
+
+# ---------------------------------------------------------------------------
+# Atomicity — mid-flight projector failure rolls the whole clean write back
+# ---------------------------------------------------------------------------
+
+def test_cli_clean_projection_is_atomic_on_middle_failure(tmp_path, monkeypatch):
+    """If project_accepted_recovery_state_daily raises, neither
+    source_daily_garmin nor accepted_running_state_daily should persist —
+    the whole projection is one transaction. Without atomicity, a partial
+    write leaves the DB in a state no JSONL reproject can repair."""
+
+    db = _init_db(tmp_path)
+    evidence = _write_pull_payload(tmp_path)
+
+    import health_agent_infra.state.projector as projector_module
+
+    def _boom(*args, **kwargs):
+        raise RuntimeError("simulated projector failure mid-flight")
+
+    monkeypatch.setattr(
+        projector_module, "project_accepted_recovery_state_daily", _boom,
+    )
+    # CLI imports the projector at call time via `from ... import ...`. We
+    # need to patch the symbol the CLI will see — i.e. within the
+    # `health_agent_infra.state` package too.
+    import health_agent_infra.state as state_pkg
+    monkeypatch.setattr(
+        state_pkg, "project_accepted_recovery_state_daily", _boom,
+    )
+
+    rc = cli_main([
+        "clean", "--evidence-json", str(evidence), "--db-path", str(db),
+    ])
+    # Fail-soft: CLI still exits 0 (stdout is the audit boundary; DB is
+    # best-effort). The warning lands on stderr; we don't assert its exact
+    # wording here.
+    assert rc == 0
+
+    conn = open_connection(db)
+    try:
+        raw_count = conn.execute(
+            "SELECT COUNT(*) FROM source_daily_garmin"
+        ).fetchone()[0]
+        recovery_count = conn.execute(
+            "SELECT COUNT(*) FROM accepted_recovery_state_daily"
+        ).fetchone()[0]
+        running_count = conn.execute(
+            "SELECT COUNT(*) FROM accepted_running_state_daily"
+        ).fetchone()[0]
+    finally:
+        conn.close()
+
+    # All three tables stayed empty: the first INSERT was rolled back when
+    # the middle projector raised. No half-projected state.
+    assert raw_count == 0, (
+        f"expected source_daily_garmin to be rolled back, got {raw_count} rows"
+    )
+    assert recovery_count == 0
+    assert running_count == 0
+
+
+def test_cli_clean_projection_recovers_on_retry_after_rollback(tmp_path, monkeypatch):
+    """After the rolled-back failure above, a clean rerun (without the
+    injected failure) must succeed and land all three rows."""
+
+    db = _init_db(tmp_path)
+    evidence = _write_pull_payload(tmp_path)
+
+    import health_agent_infra.state as state_pkg
+    real_projector = state_pkg.project_accepted_recovery_state_daily
+
+    boom = {"armed": True}
+
+    def _fail_once(*args, **kwargs):
+        if boom["armed"]:
+            boom["armed"] = False
+            raise RuntimeError("first-run failure")
+        return real_projector(*args, **kwargs)
+
+    monkeypatch.setattr(
+        state_pkg, "project_accepted_recovery_state_daily", _fail_once,
+    )
+
+    assert cli_main([
+        "clean", "--evidence-json", str(evidence), "--db-path", str(db),
+    ]) == 0
+    assert cli_main([
+        "clean", "--evidence-json", str(evidence), "--db-path", str(db),
+    ]) == 0
+
+    conn = open_connection(db)
+    try:
+        recovery = read_domain(
+            conn, domain="recovery", since=AS_OF, until=AS_OF, user_id=USER,
+        )
+        running = read_domain(
+            conn, domain="running", since=AS_OF, until=AS_OF, user_id=USER,
+        )
+        raw_count = conn.execute(
+            "SELECT COUNT(*) FROM source_daily_garmin"
+        ).fetchone()[0]
+    finally:
+        conn.close()
+    assert len(recovery) == 1
+    assert len(running) == 1
+    # Only the successful run wrote a raw row; the first transaction was
+    # rolled back before source_daily_garmin could commit.
+    assert raw_count == 1
+
+
+# ---------------------------------------------------------------------------
+# Provenance: hai clean never populates manual_stress_score
+# ---------------------------------------------------------------------------
+
+def test_cli_clean_never_populates_manual_stress_score(tmp_path):
+    """Even if a future intake path attaches manual stress to the readiness
+    payload, `hai clean` must leave accepted_recovery_state_daily's
+    manual_stress_score NULL. That fact must enter via stress_manual_raw
+    (7C) so the raw→accepted audit chain holds."""
+
+    db = _init_db(tmp_path)
+    payload = {
+        "as_of_date": AS_OF.isoformat(),
+        "user_id": USER,
+        "source": "garmin",
+        "pull": {
+            "sleep": None, "resting_hr": [], "hrv": [], "training_load": [],
+            "raw_daily_row": _full_raw_row(),
+        },
+        # Deliberately include a stress field that a misbehaving upstream
+        # might attach. cmd_clean must ignore it.
+        "manual_readiness": {
+            "submission_id": "m_ready_x",
+            "soreness": "moderate", "energy": "moderate",
+            "planned_session_type": "moderate",
+            "manual_stress_score": 4,  # MUST NOT land in the accepted row
+        },
+    }
+    evidence = tmp_path / "evidence.json"
+    evidence.write_text(json.dumps(payload), encoding="utf-8")
+    rc = cli_main([
+        "clean", "--evidence-json", str(evidence), "--db-path", str(db),
+    ])
+    assert rc == 0
+
+    conn = open_connection(db)
+    try:
+        row = conn.execute(
+            "SELECT manual_stress_score, source, ingest_actor FROM "
+            "accepted_recovery_state_daily WHERE as_of_date = ? AND user_id = ?",
+            (AS_OF.isoformat(), USER),
+        ).fetchone()
+        # stress_manual_raw must stay empty — clean does not touch it.
+        raw_count = conn.execute(
+            "SELECT COUNT(*) FROM stress_manual_raw"
+        ).fetchone()[0]
+    finally:
+        conn.close()
+
+    assert row["manual_stress_score"] is None
+    assert row["source"] == "garmin"
+    assert row["ingest_actor"] == "garmin_csv_adapter"
+    assert raw_count == 0
 
 
 # ---------------------------------------------------------------------------
