@@ -11,6 +11,7 @@ requires-python = ">=3.11"
 license = { file = "LICENSE" }
 dependencies = [
   "pandas>=2.0",
+  "platformdirs>=4.0",
 ]
 keywords = ["health", "agents", "cli", "claude", "skills"]
 classifiers = [

@@ -25,6 +25,12 @@ from pathlib import Path
 from typing import Any, Optional
 
 from health_agent_infra.clean import build_raw_summary, clean_inputs
+from health_agent_infra.core.config import (
+    ConfigError,
+    load_thresholds,
+    scaffold_thresholds_toml,
+    user_config_path,
+)
 from health_agent_infra.pull.garmin import (
     GarminRecoveryReadinessAdapter,
     default_manual_readiness,
@@ -1288,6 +1294,36 @@ def cmd_state_migrate(args: argparse.Namespace) -> int:
 # hai setup-skills
 # ---------------------------------------------------------------------------
 
+def cmd_config_init(args: argparse.Namespace) -> int:
+    dest = Path(args.path).expanduser() if args.path else user_config_path()
+    if dest.exists() and not args.force:
+        print(
+            f"config file already exists at {dest}; pass --force to overwrite",
+            file=sys.stderr,
+        )
+        return 2
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(scaffold_thresholds_toml(), encoding="utf-8")
+    _emit_json({"written": str(dest), "overwrote": bool(args.force and dest.exists())})
+    return 0
+
+
+def cmd_config_show(args: argparse.Namespace) -> int:
+    path = Path(args.path).expanduser() if args.path else None
+    try:
+        merged = load_thresholds(path=path)
+    except ConfigError as exc:
+        print(f"config error: {exc}", file=sys.stderr)
+        return 2
+    effective_path = path if path is not None else user_config_path()
+    _emit_json({
+        "source_path": str(effective_path),
+        "source_exists": effective_path.exists(),
+        "effective_thresholds": merged,
+    })
+    return 0
+
+
 def cmd_setup_skills(args: argparse.Namespace) -> int:
     dest = Path(args.dest).expanduser()
     dest.mkdir(parents=True, exist_ok=True)
@@ -1566,6 +1602,27 @@ def build_parser() -> argparse.ArgumentParser:
     p_setup.add_argument("--force", action="store_true",
                          help="Overwrite existing skill directories of the same name")
     p_setup.set_defaults(func=cmd_setup_skills)
+
+    p_config = sub.add_parser("config", help="Inspect or scaffold runtime thresholds")
+    config_sub = p_config.add_subparsers(dest="config_command", required=True)
+
+    p_ci = config_sub.add_parser(
+        "init",
+        help="Scaffold a thresholds.toml at the user config path (platformdirs)",
+    )
+    p_ci.add_argument("--path", default=None,
+                      help="Override destination path (default: platformdirs user_config_dir)")
+    p_ci.add_argument("--force", action="store_true",
+                      help="Overwrite an existing thresholds.toml")
+    p_ci.set_defaults(func=cmd_config_init)
+
+    p_cs = config_sub.add_parser(
+        "show",
+        help="Print the merged effective thresholds (defaults + user overrides)",
+    )
+    p_cs.add_argument("--path", default=None,
+                      help="Override source path (default: platformdirs user_config_dir)")
+    p_cs.set_defaults(func=cmd_config_show)
 
     return parser
 
