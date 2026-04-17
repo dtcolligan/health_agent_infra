@@ -22,7 +22,7 @@ import sys
 from dataclasses import asdict, is_dataclass
 from datetime import date, datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from health_agent_infra.clean import build_raw_summary, clean_inputs
 from health_agent_infra.pull.garmin import (
@@ -144,11 +144,113 @@ def cmd_clean(args: argparse.Namespace) -> int:
         garmin_hrv_recent=pull.get("hrv", []),
         garmin_training_load_7d=pull.get("training_load", []),
     )
+
+    raw_row = pull.get("raw_daily_row")
+    if raw_row is not None:
+        _project_clean_into_state(
+            args.db_path,
+            as_of_date=as_of,
+            user_id=user_id,
+            raw_row=raw_row,
+            manual_stress_score=_manual_stress_score_from(manual),
+        )
+
     _emit_json({
         "cleaned_evidence": evidence.to_dict(),
         "raw_summary": summary.to_dict(),
     })
     return 0
+
+
+def _manual_stress_score_from(manual: Optional[dict]) -> Optional[int]:
+    """Return a validated 1–5 integer from the manual readiness intake, if present."""
+
+    if not manual:
+        return None
+    v = manual.get("manual_stress_score")
+    if v is None:
+        return None
+    try:
+        n = int(v)
+    except (TypeError, ValueError):
+        return None
+    if n < 1 or n > 5:
+        return None
+    return n
+
+
+def _project_clean_into_state(
+    db_path_arg,
+    *,
+    as_of_date: date,
+    user_id: str,
+    raw_row: dict,
+    manual_stress_score: Optional[int],
+) -> None:
+    """Project raw Garmin row + derived accepted state into the state DB.
+
+    Fail-soft: if the DB is absent or any INSERT/UPDATE raises, we print a
+    stderr warning and return. The `hai clean` stdout is unaffected. This is
+    the same pattern as `hai writeback` / `hai review` (see
+    ``_dual_write_project``), adapted for the three-table recovery path.
+    """
+
+    from health_agent_infra.state import (
+        open_connection,
+        project_accepted_recovery_state_daily,
+        project_accepted_running_state_daily,
+        project_source_daily_garmin,
+        resolve_db_path,
+    )
+
+    db_path = resolve_db_path(db_path_arg)
+    if not db_path.exists():
+        print(
+            f"note: state DB projection skipped ({db_path} not found). "
+            f"`hai clean` stdout is still emitted. Run `hai state init` to "
+            f"enable DB dual-write.",
+            file=sys.stderr,
+        )
+        return
+
+    # export_batch_id stamps the pull run so corrections land as new raw rows
+    # per state_model_v1.md §3. A re-pull with newer Garmin data gets a fresh
+    # id; a rerun with the same id is an idempotent no-op.
+    export_batch_id = f"live_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%f')}"
+    source_row_id = f"{export_batch_id}:0"
+
+    conn = open_connection(db_path)
+    try:
+        project_source_daily_garmin(
+            conn,
+            as_of_date=as_of_date,
+            user_id=user_id,
+            raw_row=raw_row,
+            export_batch_id=export_batch_id,
+        )
+        project_accepted_recovery_state_daily(
+            conn,
+            as_of_date=as_of_date,
+            user_id=user_id,
+            raw_row=raw_row,
+            manual_stress_score=manual_stress_score,
+            source_row_ids=[source_row_id],
+        )
+        project_accepted_running_state_daily(
+            conn,
+            as_of_date=as_of_date,
+            user_id=user_id,
+            raw_row=raw_row,
+            source_row_ids=[source_row_id],
+        )
+    except Exception as exc:  # noqa: BLE001 — any DB failure becomes a warning
+        print(
+            f"warning: clean projection into state DB failed: {exc}. "
+            f"`hai clean` output is still durable on stdout.",
+            file=sys.stderr,
+        )
+    finally:
+        conn.close()
 
 
 # ---------------------------------------------------------------------------
@@ -596,6 +698,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_clean = sub.add_parser("clean", help="Normalize pulled evidence + raw summary")
     p_clean.add_argument("--evidence-json", required=True,
                          help="Path to a JSON file produced by `hai pull`")
+    p_clean.add_argument("--db-path", default=None,
+                         help="State DB path (default: $HAI_STATE_DB or platform default). "
+                              "If the DB is absent, projection is skipped with a stderr note; "
+                              "stdout is unchanged.")
     p_clean.set_defaults(func=cmd_clean)
 
     p_wb = sub.add_parser("writeback", help="Schema-validate and persist a recommendation")

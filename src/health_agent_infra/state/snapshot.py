@@ -93,6 +93,30 @@ _METADATA_COLUMNS: frozenset[str] = frozenset({
     "derivation_path",
 })
 
+# Per-domain "v1 required" fields — the fields a fully-populated v1 row is
+# expected to carry. Fields outside this set are enrichment deferred to 7B
+# (e.g. `training_readiness_pct`) or NULL-by-design (e.g. running's
+# `session_count` when `derivation_path='garmin_daily'`). NULLs on non-
+# required fields don't count toward `partial:<fields>`.
+#
+# When 7B lands, these sets grow; the snapshot surface stays the same.
+_V1_REQUIRED_FIELDS: dict[str, frozenset[str]] = {
+    "recovery": frozenset({
+        "sleep_hours", "resting_hr", "hrv_ms", "all_day_stress",
+        "manual_stress_score", "acute_load", "chronic_load", "acwr_ratio",
+        "body_battery_end_of_day",
+    }),
+    "running": frozenset({
+        "total_distance_m", "moderate_intensity_min", "vigorous_intensity_min",
+    }),
+    "gym": frozenset({
+        "session_count", "total_sets",
+    }),
+    "nutrition": frozenset({
+        "calories", "protein_g", "carbs_g", "fat_g",
+    }),
+}
+
 
 def available_domains() -> list[str]:
     """Return the list of domain names ``read_domain`` accepts."""
@@ -201,18 +225,35 @@ def build_snapshot(
             until=as_of_date,
             user_id=user_id,
         )
+        required = _V1_REQUIRED_FIELDS.get(domain)
+
         if rows:
-            # Field-level NULLs on data columns => partial. Bookkeeping
-            # columns (source, projected_at, corrected_at, …) never count
-            # toward the partial token.
             row = rows[0]
-            null_fields = sorted(
-                k for k, v in row.items()
-                if v is None and k not in _METADATA_COLUMNS
-            )
-            if null_fields:
-                return row, f"partial:{','.join(null_fields)}"
-            return row, "present"
+            if required is not None:
+                null_fields = sorted(
+                    k for k in required if row.get(k) is None
+                )
+            else:
+                # No declared required-field set for this domain: fall back
+                # to "everything non-metadata counts."
+                null_fields = sorted(
+                    k for k, v in row.items()
+                    if v is None and k not in _METADATA_COLUMNS
+                )
+
+            if not null_fields:
+                return row, "present"
+
+            # User-reported domain, today before cutover, with some nulls:
+            # surface as pending_user_input rather than partial. The user is
+            # still logging; the gaps are expected to close by 23:30.
+            if (
+                is_today
+                and is_before_cutover
+                and domain in _USER_REPORTED_DOMAINS
+            ):
+                return row, f"pending_user_input:{','.join(null_fields)}"
+            return row, f"partial:{','.join(null_fields)}"
 
         # No row. Decide absent vs pending_user_input.
         if (
@@ -271,12 +312,33 @@ def build_snapshot(
         today_garmin_stress = recovery_today.get("all_day_stress")
         today_manual_stress = recovery_today.get("manual_stress_score")
 
-    if today_manual_stress is not None:
+    stress_nulls: list[str] = []
+    if today_garmin_stress is None:
+        stress_nulls.append("all_day_stress")
+    if today_manual_stress is None:
+        stress_nulls.append("manual_stress_score")
+
+    if not stress_nulls:
         stress_mx = "present"
-    elif is_today and is_before_cutover:
-        stress_mx = "pending_user_input"
+    elif len(stress_nulls) == 2:
+        # Neither signal present. Treat as absent, unless today is still in
+        # progress and the user might still log — then pending_user_input.
+        if is_today and is_before_cutover:
+            stress_mx = "pending_user_input"
+        else:
+            stress_mx = "absent"
     else:
-        stress_mx = "absent"
+        # One signal present, the other null. Garmin-present + manual-null
+        # must not flatten to `absent`: Garmin data is real evidence that
+        # the manual gap alone defines.
+        if (
+            is_today
+            and is_before_cutover
+            and "manual_stress_score" in stress_nulls
+        ):
+            stress_mx = f"pending_user_input:{','.join(stress_nulls)}"
+        else:
+            stress_mx = f"partial:{','.join(stress_nulls)}"
 
     return {
         "schema_version": "state_snapshot.v1",

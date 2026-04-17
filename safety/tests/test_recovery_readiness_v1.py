@@ -160,10 +160,14 @@ def test_garmin_adapter_reads_committed_export_and_emits_fixture_shape():
     as_of = date(2026, 4, 8)
     pull = load_recovery_readiness_inputs(as_of)
 
-    assert set(pull.keys()) == {"sleep", "resting_hr", "hrv", "training_load"}
+    assert {"sleep", "resting_hr", "hrv", "training_load", "raw_daily_row"} <= set(pull.keys())
     assert pull["sleep"] is not None
     assert "duration_hours" in pull["sleep"]
     assert any(row["date"] == as_of.isoformat() for row in pull["resting_hr"])
+    # raw_daily_row carries the full CSV row for projection into
+    # source_daily_garmin (state_model_v1.md §8, Phase 7A.3).
+    assert pull["raw_daily_row"] is not None
+    assert "resting_hr" in pull["raw_daily_row"]
 
 
 def test_garmin_adapter_class_conforms_to_flagship_pull_protocol():
@@ -172,7 +176,7 @@ def test_garmin_adapter_class_conforms_to_flagship_pull_protocol():
     assert adapter.source_name == "garmin"
 
     pull = adapter.load(date(2026, 4, 8))
-    assert set(pull.keys()) == {"sleep", "resting_hr", "hrv", "training_load"}
+    assert {"sleep", "resting_hr", "hrv", "training_load", "raw_daily_row"} <= set(pull.keys())
 
 
 # ---------------------------------------------------------------------------

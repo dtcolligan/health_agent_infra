@@ -76,11 +76,18 @@ def load_recovery_readiness_inputs(
     hrv = _series_from_column(window, column="health_hrv_value", out_field="rmssd_ms", record_prefix="g_hrv")
     training_load = _series_from_column(window, column="acute_load", out_field="load", record_prefix="g_load")
 
+    # Raw today-row carries the full CSV shape — source-of-truth raw evidence
+    # for projection into `source_daily_garmin`. Simplified series above are
+    # pre-extracted for the existing `clean` contract; raw_daily_row is what
+    # gets stored in the raw evidence layer (state_model_v1.md §2).
+    raw_daily_row = _extract_raw_daily_row(window, as_of)
+
     return {
         "sleep": sleep,
         "resting_hr": resting_hr,
         "hrv": hrv,
         "training_load": training_load,
+        "raw_daily_row": raw_daily_row,
     }
 
 
@@ -102,6 +109,33 @@ def _extract_sleep(window: pd.DataFrame, as_of: date) -> Optional[dict]:
         "record_id": f"g_sleep_{as_of.isoformat()}",
         "duration_hours": round(total_sec / 3600.0, 2),
     }
+
+
+def _extract_raw_daily_row(window: pd.DataFrame, as_of: date) -> Optional[dict]:
+    """Extract the full CSV row for ``as_of`` as a plain dict.
+
+    Returns every column present in the Garmin export, coerced for JSON
+    serialization: pandas NaN becomes ``None``; numpy numerics become Python
+    ints/floats; dates become ISO strings. Returns ``None`` when no row
+    matches the target date (same contract as ``_extract_sleep``).
+    """
+
+    as_of_rows = window[window["date"] == as_of]
+    if len(as_of_rows) != 1:
+        return None
+    row = as_of_rows.iloc[0]
+    out: dict = {}
+    for col in row.index:
+        v = row[col]
+        if pd.isna(v):
+            out[col] = None
+        elif hasattr(v, "item"):
+            out[col] = v.item()
+        elif isinstance(v, date):
+            out[col] = v.isoformat()
+        else:
+            out[col] = v
+    return out
 
 
 def _series_from_column(

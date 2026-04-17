@@ -28,7 +28,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Optional
 
 from health_agent_infra.schemas import (
@@ -219,6 +219,287 @@ def project_review_outcome(
     )
     conn.commit()
     return int(cursor.lastrowid)
+
+
+# ---------------------------------------------------------------------------
+# Garmin raw daily row -> source_daily_garmin (raw evidence)
+# ---------------------------------------------------------------------------
+
+# Columns we persist into source_daily_garmin. Order matches migration 001.
+# Any key in ``raw_row`` outside this list is ignored (defensive against CSV
+# schema drift — new columns land via a later migration, not a silent write).
+_SOURCE_DAILY_GARMIN_COLUMNS: tuple[str, ...] = (
+    "steps", "distance_m", "active_kcal", "total_kcal",
+    "moderate_intensity_min", "vigorous_intensity_min",
+    "floors_ascended_m", "avg_environment_altitude_m",
+    "resting_hr", "min_hr_day", "max_hr_day",
+    "sleep_deep_sec", "sleep_light_sec", "sleep_rem_sec", "sleep_awake_sec",
+    "avg_sleep_respiration", "avg_sleep_stress", "awake_count",
+    "sleep_score_overall", "sleep_score_quality",
+    "sleep_score_duration", "sleep_score_recovery",
+    "all_day_stress", "body_battery",
+    "training_readiness_level", "training_recovery_time_hours",
+    "training_readiness_sleep_pct", "training_readiness_hrv_pct",
+    "training_readiness_stress_pct", "training_readiness_sleep_history_pct",
+    "training_readiness_load_pct", "training_readiness_hrv_weekly_avg",
+    "training_readiness_valid_sleep",
+    "acute_load", "chronic_load", "acwr_status", "acwr_status_feedback",
+    "training_status", "training_status_feedback",
+    "health_hrv_value", "health_hrv_status",
+    "health_hrv_baseline_low", "health_hrv_baseline_high",
+    "health_hr_value", "health_hr_status",
+    "health_hr_baseline_low", "health_hr_baseline_high",
+    "health_spo2_value", "health_spo2_status",
+    "health_spo2_baseline_low", "health_spo2_baseline_high",
+    "health_skin_temp_c_value", "health_skin_temp_c_status",
+    "health_skin_temp_c_baseline_low", "health_skin_temp_c_baseline_high",
+    "health_respiration_value", "health_respiration_status",
+    "health_respiration_baseline_low", "health_respiration_baseline_high",
+)
+
+
+def project_source_daily_garmin(
+    conn: sqlite3.Connection,
+    *,
+    as_of_date: date,
+    user_id: str,
+    raw_row: dict,
+    export_batch_id: str,
+    csv_row_index: int = 0,
+    ingest_actor: str = "garmin_csv_adapter",
+    supersedes_export_batch_id: Optional[str] = None,
+) -> bool:
+    """Append-only insert of one Garmin day-row into ``source_daily_garmin``.
+
+    Returns ``True`` on insert, ``False`` if the (as_of_date, user_id,
+    export_batch_id) PK already exists — re-running the same pull with the
+    same batch id is a no-op. A genuinely-new pull with updated Garmin data
+    should use a fresh ``export_batch_id`` so the correction lands as a new
+    raw row (state_model_v1.md §3).
+    """
+
+    existing = conn.execute(
+        "SELECT 1 FROM source_daily_garmin WHERE as_of_date = ? AND user_id = ? "
+        "AND export_batch_id = ?",
+        (as_of_date.isoformat(), user_id, export_batch_id),
+    ).fetchone()
+    if existing is not None:
+        return False
+
+    values: list = [
+        as_of_date.isoformat(), user_id, export_batch_id, csv_row_index,
+        "garmin", ingest_actor, _now_iso(), supersedes_export_batch_id,
+    ]
+    for col in _SOURCE_DAILY_GARMIN_COLUMNS:
+        values.append(raw_row.get(col))
+
+    placeholders = ", ".join(["?"] * (8 + len(_SOURCE_DAILY_GARMIN_COLUMNS)))
+    columns_sql = (
+        "as_of_date, user_id, export_batch_id, csv_row_index, "
+        "source, ingest_actor, ingested_at, supersedes_export_batch_id, "
+        + ", ".join(_SOURCE_DAILY_GARMIN_COLUMNS)
+    )
+    conn.execute(
+        f"INSERT INTO source_daily_garmin ({columns_sql}) VALUES ({placeholders})",
+        values,
+    )
+    conn.commit()
+    return True
+
+
+# ---------------------------------------------------------------------------
+# Accepted recovery state — UPSERT + corrected_at
+# ---------------------------------------------------------------------------
+
+def _sleep_hours_from_raw(raw_row: dict) -> Optional[float]:
+    """Sum deep+light+rem sleep seconds, return hours. None if none present."""
+
+    total_sec = 0.0
+    seen = False
+    for col in ("sleep_deep_sec", "sleep_light_sec", "sleep_rem_sec"):
+        v = raw_row.get(col)
+        if v is not None:
+            total_sec += float(v)
+            seen = True
+    if not seen or total_sec <= 0:
+        return None
+    return round(total_sec / 3600.0, 2)
+
+
+def _acwr_ratio_from_raw(raw_row: dict) -> Optional[float]:
+    """Compute acute/chronic ratio when both fields present and chronic > 0."""
+
+    acute = raw_row.get("acute_load")
+    chronic = raw_row.get("chronic_load")
+    if acute is None or chronic is None or chronic == 0:
+        return None
+    return round(float(acute) / float(chronic), 3)
+
+
+def project_accepted_recovery_state_daily(
+    conn: sqlite3.Connection,
+    *,
+    as_of_date: date,
+    user_id: str,
+    raw_row: dict,
+    manual_stress_score: Optional[int] = None,
+    source_row_ids: Optional[list[str]] = None,
+    source: str = "garmin",
+    ingest_actor: str = "garmin_csv_adapter",
+) -> bool:
+    """UPSERT one day's accepted recovery state.
+
+    First write sets ``projected_at``; subsequent writes set ``corrected_at``
+    per the hybrid correction grammar (state_model_v1.md §3). Returns
+    ``True`` if this was an insert, ``False`` on update.
+
+    ``training_readiness_pct`` is deferred to 7B (not populated in v1 base
+    projection). ``manual_stress_score`` comes from the caller; v1 accepts
+    it directly on this row rather than through ``stress_manual_raw``.
+    """
+
+    now_iso = _now_iso()
+    derived_from_json = json.dumps(source_row_ids or [], sort_keys=True)
+
+    existing = conn.execute(
+        "SELECT 1 FROM accepted_recovery_state_daily "
+        "WHERE as_of_date = ? AND user_id = ?",
+        (as_of_date.isoformat(), user_id),
+    ).fetchone()
+    is_insert = existing is None
+
+    sleep_hours = _sleep_hours_from_raw(raw_row)
+    acwr = _acwr_ratio_from_raw(raw_row)
+
+    values = (
+        sleep_hours,
+        raw_row.get("resting_hr"),
+        raw_row.get("health_hrv_value"),
+        raw_row.get("all_day_stress"),
+        manual_stress_score,
+        raw_row.get("acute_load"),
+        raw_row.get("chronic_load"),
+        acwr,
+        None,  # training_readiness_pct — deferred to 7B
+        raw_row.get("body_battery"),
+        derived_from_json,
+        source,
+        ingest_actor,
+        now_iso,  # projected_at
+        None if is_insert else now_iso,  # corrected_at
+        as_of_date.isoformat(),
+        user_id,
+    )
+
+    if is_insert:
+        conn.execute(
+            """
+            INSERT INTO accepted_recovery_state_daily (
+                sleep_hours, resting_hr, hrv_ms, all_day_stress,
+                manual_stress_score, acute_load, chronic_load, acwr_ratio,
+                training_readiness_pct, body_battery_end_of_day,
+                derived_from, source, ingest_actor,
+                projected_at, corrected_at,
+                as_of_date, user_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            values,
+        )
+    else:
+        conn.execute(
+            """
+            UPDATE accepted_recovery_state_daily SET
+                sleep_hours = ?, resting_hr = ?, hrv_ms = ?, all_day_stress = ?,
+                manual_stress_score = ?, acute_load = ?, chronic_load = ?,
+                acwr_ratio = ?, training_readiness_pct = ?,
+                body_battery_end_of_day = ?,
+                derived_from = ?, source = ?, ingest_actor = ?,
+                projected_at = ?, corrected_at = ?
+            WHERE as_of_date = ? AND user_id = ?
+            """,
+            values,
+        )
+    conn.commit()
+    return is_insert
+
+
+# ---------------------------------------------------------------------------
+# Accepted running state — UPSERT + corrected_at, derivation_path='garmin_daily'
+# ---------------------------------------------------------------------------
+
+def project_accepted_running_state_daily(
+    conn: sqlite3.Connection,
+    *,
+    as_of_date: date,
+    user_id: str,
+    raw_row: dict,
+    source_row_ids: Optional[list[str]] = None,
+    source: str = "garmin",
+    ingest_actor: str = "garmin_csv_adapter",
+) -> bool:
+    """UPSERT one day's accepted running state with ``derivation_path='garmin_daily'``.
+
+    In v1, running is synthesised from the daily Garmin aggregate
+    (distance_m + intensity minutes). Per-activity ``running_session`` rows
+    don't exist yet, so ``session_count`` and ``total_duration_s`` are NULL
+    and snapshots must not flag them as partial (state_model_v1.md §8).
+    """
+
+    now_iso = _now_iso()
+    derived_from_json = json.dumps(source_row_ids or [], sort_keys=True)
+
+    existing = conn.execute(
+        "SELECT 1 FROM accepted_running_state_daily "
+        "WHERE as_of_date = ? AND user_id = ?",
+        (as_of_date.isoformat(), user_id),
+    ).fetchone()
+    is_insert = existing is None
+
+    values = (
+        raw_row.get("distance_m"),
+        None,  # total_duration_s — not in daily CSV; 7B-deferred enrichment
+        raw_row.get("moderate_intensity_min"),
+        raw_row.get("vigorous_intensity_min"),
+        None,  # session_count — NULL by design on garmin_daily path
+        "garmin_daily",
+        derived_from_json,
+        source,
+        ingest_actor,
+        now_iso,
+        None if is_insert else now_iso,
+        as_of_date.isoformat(),
+        user_id,
+    )
+
+    if is_insert:
+        conn.execute(
+            """
+            INSERT INTO accepted_running_state_daily (
+                total_distance_m, total_duration_s,
+                moderate_intensity_min, vigorous_intensity_min,
+                session_count, derivation_path,
+                derived_from, source, ingest_actor,
+                projected_at, corrected_at,
+                as_of_date, user_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            values,
+        )
+    else:
+        conn.execute(
+            """
+            UPDATE accepted_running_state_daily SET
+                total_distance_m = ?, total_duration_s = ?,
+                moderate_intensity_min = ?, vigorous_intensity_min = ?,
+                session_count = ?, derivation_path = ?,
+                derived_from = ?, source = ?, ingest_actor = ?,
+                projected_at = ?, corrected_at = ?
+            WHERE as_of_date = ? AND user_id = ?
+            """,
+            values,
+        )
+    conn.commit()
+    return is_insert
 
 
 # ---------------------------------------------------------------------------

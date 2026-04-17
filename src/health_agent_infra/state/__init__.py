@@ -7,9 +7,12 @@ arrive in later phases. This module is not imported by any subcommand beyond
 
 from health_agent_infra.state.projector import (
     ReprojectBaseDirError,
+    project_accepted_recovery_state_daily,
+    project_accepted_running_state_daily,
     project_recommendation,
     project_review_event,
     project_review_outcome,
+    project_source_daily_garmin,
     reproject_from_jsonl,
 )
 from health_agent_infra.state.snapshot import (
@@ -35,9 +38,12 @@ __all__ = [
     "current_schema_version",
     "initialize_database",
     "open_connection",
+    "project_accepted_recovery_state_daily",
+    "project_accepted_running_state_daily",
     "project_recommendation",
     "project_review_event",
     "project_review_outcome",
+    "project_source_daily_garmin",
     "read_domain",
     "reproject_from_jsonl",
     "resolve_db_path",

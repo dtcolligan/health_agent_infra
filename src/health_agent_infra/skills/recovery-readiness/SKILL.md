@@ -1,26 +1,48 @@
 ---
 name: recovery-readiness
-description: Classify recovery state, apply safety policy, and shape a training recommendation from a day's cleaned Garmin evidence and typed manual readiness intake. Use when the `hai clean` tool has produced cleaned evidence + raw summary JSON and the user needs a bounded recommendation for today's session.
-allowed-tools: Read, Bash(hai writeback *), Bash(hai review *)
+description: Classify recovery state, apply safety policy, and shape a training recommendation from the cross-domain state snapshot plus the day's cleaned Garmin evidence. Use when the user needs a bounded recommendation for today's session.
+allowed-tools: Read, Bash(hai state snapshot *), Bash(hai state read *), Bash(hai clean *), Bash(hai writeback *), Bash(hai review *)
 disable-model-invocation: false
 ---
 
 # Recovery Readiness
 
-You produce a single `TrainingRecommendation` JSON object from a day's evidence. The deterministic runtime has already pulled Garmin data and computed a `CleanedEvidence` plus `RawSummary`. Your job is three things, in order:
+You produce a single `TrainingRecommendation` JSON object from a day's state. Your job is three things, in order:
 
-1. **Classify state** — from the raw numbers, decide where the athlete sits on sleep, resting HR, HRV, training load, soreness, and overall recovery status.
-2. **Apply policy** — a set of mandatory safety gates. If any block triggers, output a `defer_decision_insufficient_signal` recommendation.
-3. **Shape the recommendation** — choose an action, attach goal-aware detail, compute confidence, and write the rationale.
+1. **Load state** — run `hai state snapshot` to load the cross-domain envelope the runtime has already projected. Supplement with `hai clean` deltas/ratios for the signals the snapshot doesn't compute (baseline ratios, spike-day counts, coverage fractions).
+2. **Classify + apply policy** — from the loaded state, decide where the athlete sits on sleep, resting HR, HRV, training load, soreness, and overall recovery status. Apply the six policy gates.
+3. **Shape the recommendation** — choose an action, attach goal-aware detail, compute confidence, write the rationale, and call `hai writeback --recommendation-json <path>`. The writeback tool validates the shape before persisting; it is your determinism check.
 
-When you're done, you call `hai writeback --recommendation-json <path>` with your JSON. The writeback tool validates the shape before persisting; it is your determinism check.
+## Step 0 — Load state
 
-## Inputs you will receive
+**Primary read.** Call:
 
-The `hai clean` command emits a single JSON object with these top-level keys:
+```
+hai state snapshot --as-of <today> --user-id <user>
+```
 
-- `cleaned_evidence` — typed record of the day's passive + manual inputs (sleep hours, resting HR, HRV, trailing training load, soreness self-report, planned session type, active goal, record IDs).
-- `raw_summary` — deltas, ratios, counts, and coverage fractions computed over a 14-day window. Contains `sleep_hours`, `sleep_baseline_hours`, `sleep_debt_hours`, `resting_hr`, `resting_hr_baseline`, `resting_hr_ratio_vs_baseline`, `resting_hr_spike_days`, `hrv_ms`, `hrv_baseline`, `hrv_ratio_vs_baseline`, `trailing_7d_training_load`, `training_load_baseline`, `training_load_ratio_vs_baseline`, and coverage fractions (`coverage_sleep`, `coverage_rhr`, `coverage_hrv`, `coverage_training_load`).
+The JSON that comes back is governed by `reporting/docs/state_model_v1.md` and carries **per-domain missingness tokens**. You must read these tokens before reasoning about any field; they distinguish four cases (`absent`, `partial:<fields>`, `pending_user_input[:fields]`, `present`) per §5. A `null` field without its token is never safe to interpret.
+
+Fields you rely on live under:
+
+- `recovery.today` — `sleep_hours`, `resting_hr`, `hrv_ms`, `all_day_stress`, `manual_stress_score`, `acute_load`, `chronic_load`, `acwr_ratio`, `body_battery_end_of_day`.
+- `running.today` — `total_distance_m`, `moderate_intensity_min`, `vigorous_intensity_min` (plus `derivation_path`; `session_count` is legitimately NULL when `derivation_path='garmin_daily'`).
+- `goals_active` — list of active goals with optional `domain` scope.
+- `recommendations.recent` — last N days' recommendations.
+- `reviews.recent` — last N days' outcomes.
+- `stress.today_garmin` / `stress.today_manual` — the two stress signals with their own missingness token.
+
+If any required domain is `absent` or `partial`, surface that fact in your `uncertainty[]` and let the policy layer (R1, R5) do its work.
+
+**Secondary read (optional).** For per-domain introspection use:
+
+```
+hai state read --domain <recovery|running|gym|nutrition|stress|notes|recommendations|reviews|goals> --since <date> [--until <date>]
+```
+
+Use this when you need a narrower slice than `snapshot` gives — e.g. to inspect one recent recommendation in full. Not the normal path.
+
+**Raw summary supplement.** `hai state snapshot` does **not** include baseline ratios or coverage fractions. If you need `resting_hr_ratio_vs_baseline`, `hrv_ratio_vs_baseline`, `resting_hr_spike_days`, `training_load_ratio_vs_baseline`, or the coverage fractions, run `hai clean --evidence-json <path>` against the pulled evidence JSON. The `raw_summary` block in its stdout supplies these.
 
 Missing fields mean the source did not report that signal. Do not fabricate.
 
