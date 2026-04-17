@@ -1,0 +1,139 @@
+{
+  "_meta": {
+    "authored_at": "2026-04-17",
+    "authored_by": "Claude Opus 4.7 (Phase 2.5 Track A session)",
+    "authored_blind_to_slice": true,
+    "note": "Queries authored BEFORE the USDA slice was downloaded or inspected. Each entry captures a food-string an upstream narration parser would plausibly extract from natural meal narration. expected_intent is in plain English and is the ground truth for manual top-1 scoring; scoring does NOT reference USDA fdc_ids.",
+    "difficulty_buckets": [
+      "easy_canonical",
+      "preparation_variant",
+      "ambiguous",
+      "brand_vs_generic",
+      "portion_laden",
+      "composite_meal",
+      "vague_casual"
+    ]
+  },
+  "queries": [
+    {
+      "id": "q01",
+      "query": "scrambled eggs",
+      "bucket": "preparation_variant",
+      "expected_intent": "chicken eggs prepared by scrambling; any generic egg entry with 'scrambled' preparation or plain 'eggs' is acceptable"
+    },
+    {
+      "id": "q02",
+      "query": "oatmeal",
+      "bucket": "easy_canonical",
+      "expected_intent": "rolled oats / porridge; generic oatmeal entry is acceptable"
+    },
+    {
+      "id": "q03",
+      "query": "greek yogurt",
+      "bucket": "easy_canonical",
+      "expected_intent": "plain greek yogurt (nonfat/low-fat/whole — any); NOT a flavored variant unless it's the only match"
+    },
+    {
+      "id": "q04",
+      "query": "chobani yogurt",
+      "bucket": "brand_vs_generic",
+      "expected_intent": "user said the brand; fallback to generic greek yogurt is acceptable since our slice won't carry brands"
+    },
+    {
+      "id": "q05",
+      "query": "chicken breast",
+      "bucket": "easy_canonical",
+      "expected_intent": "skinless boneless chicken breast (raw or cooked — either)"
+    },
+    {
+      "id": "q06",
+      "query": "grilled chicken",
+      "bucket": "preparation_variant",
+      "expected_intent": "chicken, any cut, cooked by grilling — breast preferred if both available"
+    },
+    {
+      "id": "q07",
+      "query": "a cup of rice",
+      "bucket": "portion_laden",
+      "expected_intent": "cooked white rice — portion should not confuse the matcher"
+    },
+    {
+      "id": "q08",
+      "query": "brown rice",
+      "bucket": "easy_canonical",
+      "expected_intent": "cooked brown rice; long-grain is the most common variant"
+    },
+    {
+      "id": "q09",
+      "query": "two slices of whole wheat toast",
+      "bucket": "portion_laden",
+      "expected_intent": "whole wheat bread (toasted or not — slice count should not confuse match)"
+    },
+    {
+      "id": "q10",
+      "query": "peanut butter sandwich",
+      "bucket": "composite_meal",
+      "expected_intent": "this is two foods: bread + peanut butter. Top-1 match on either peanut butter OR bread is a partial hit; neither is a miss"
+    },
+    {
+      "id": "q11",
+      "query": "banana",
+      "bucket": "easy_canonical",
+      "expected_intent": "raw banana"
+    },
+    {
+      "id": "q12",
+      "query": "apple",
+      "bucket": "easy_canonical",
+      "expected_intent": "raw apple, any variety"
+    },
+    {
+      "id": "q13",
+      "query": "protein shake",
+      "bucket": "ambiguous",
+      "expected_intent": "whey protein powder or generic 'protein supplement'; USDA may not carry branded protein powders — a whey / casein entry is acceptable"
+    },
+    {
+      "id": "q14",
+      "query": "coffee with milk",
+      "bucket": "composite_meal",
+      "expected_intent": "two foods: coffee + milk. Either match is a partial hit"
+    },
+    {
+      "id": "q15",
+      "query": "spinach salad",
+      "bucket": "ambiguous",
+      "expected_intent": "raw spinach is the dominant ingredient; top-1 on spinach is a match. Pure 'salad' with no ingredient info would be a miss"
+    },
+    {
+      "id": "q16",
+      "query": "salmon fillet",
+      "bucket": "easy_canonical",
+      "expected_intent": "atlantic salmon, cooked — raw is acceptable"
+    },
+    {
+      "id": "q17",
+      "query": "chicken wrap with cucumber",
+      "bucket": "composite_meal",
+      "expected_intent": "three foods: chicken + tortilla/wrap + cucumber. Partial hit on any of the three components"
+    },
+    {
+      "id": "q18",
+      "query": "some almonds",
+      "bucket": "vague_casual",
+      "expected_intent": "raw almonds; 'some' is a quantity filler and should not affect match"
+    },
+    {
+      "id": "q19",
+      "query": "avocado toast",
+      "bucket": "composite_meal",
+      "expected_intent": "avocado + bread. Partial hit on either"
+    },
+    {
+      "id": "q20",
+      "query": "broccoli",
+      "bucket": "easy_canonical",
+      "expected_intent": "raw or cooked broccoli"
+    }
+  ]
+}

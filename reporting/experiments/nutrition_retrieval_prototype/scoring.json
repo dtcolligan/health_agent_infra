@@ -1,0 +1,41 @@
+{
+  "_meta": {
+    "scored_at": "2026-04-17",
+    "scored_by": "Claude Opus 4.7 (same session as query author; ground truth taken from queries.json expected_intent)",
+    "scoring_scheme": {
+      "match": "top-1 satisfies expected_intent (generic canonical food, correct category and form)",
+      "partial": "top-1 is in the right food category but wrong specific variant/preparation/brand context; not actively misleading for macros but would misrepresent micros or accuracy",
+      "miss": "top-1 is in a different food category from the user's intent — using it would actively misrepresent the meal"
+    }
+  },
+  "scores": [
+    {"id": "q01", "query": "scrambled eggs", "top1": "Eggs, scrambled, frozen mixture", "verdict": "partial", "failure_mode": "preparation", "note": "frozen mixture is scrambled eggs but a specific processed form; rank-2 'Egg, whole, cooked, scrambled' is the ideal canonical — ranking fails to prefer it"},
+    {"id": "q02", "query": "oatmeal", "top1": "Babyfood, cereal, oatmeal, with honey, dry", "verdict": "miss", "failure_mode": "aliasing", "note": "DB has 'Cereals, oats, regular and quick, prepared with water' but scorer surfaces baby food first; a user eating oatmeal for breakfast is NOT eating baby food"},
+    {"id": "q03", "query": "greek yogurt", "top1": "Yogurt, Greek, 2% fat, apricot, CHOBANI", "verdict": "partial", "failure_mode": "brand_vs_generic", "note": "flavored branded entry beats generic plain — intent was plain greek yogurt; rank-3 is the canonical plain nonfat"},
+    {"id": "q04", "query": "chobani yogurt", "top1": "Yogurt, Greek, 2% fat, apricot, CHOBANI", "verdict": "match", "failure_mode": null, "note": "user said brand, top-1 is that brand — variant choice is arbitrary when user didn't specify"},
+    {"id": "q05", "query": "chicken breast", "top1": "Chicken breast, roll, oven-roasted", "verdict": "partial", "failure_mode": "preparation", "note": "deli roll product beats canonical 'Chicken, broilers or fryers, breast, skinless, boneless, meat only, cooked'; exact head-noun bonus fires for 'Chicken breast' (compound head) over 'Chicken' (single-token head)"},
+    {"id": "q06", "query": "grilled chicken", "top1": "Fast Foods, grilled chicken filet sandwich, with lettuce, tomato and spread", "verdict": "miss", "failure_mode": "composite_capture", "note": "fast-food sandwich wins; canonical 'Chicken, broiler, breast, grilled' is rank 4"},
+    {"id": "q07", "query": "a cup of rice", "top1": "Rice, white, glutinous, unenriched, uncooked", "verdict": "partial", "failure_mode": "preparation", "note": "portion wording stripped correctly; rice wins head-match; but 'glutinous uncooked' is an unusual choice when 'medium-grain enriched cooked' exists at rank 5"},
+    {"id": "q08", "query": "brown rice", "top1": "Snacks, rice cakes, brown rice, sesame seed", "verdict": "miss", "failure_mode": "aliasing_word_order", "note": "tied score with real 'Rice, brown, long-grain, cooked' at 4.0; USDA naming 'Rice, brown' vs user 'brown rice' breaks the contiguous-phrase bonus; tie breaks to earlier CSV row which happens to be the snack"},
+    {"id": "q09", "query": "two slices of whole wheat toast", "top1": "Wheat flour, whole-grain", "verdict": "miss", "failure_mode": "aliasing", "note": "DB has 'Bread, whole-wheat, commercially prepared, toasted' but user says 'toast' which doesn't alias to 'bread' in our tokenizer; flour wins"},
+    {"id": "q10", "query": "peanut butter sandwich", "top1": "Cookies, peanut butter sandwich, regular", "verdict": "miss", "failure_mode": "aliasing", "note": "'sandwich' in USDA naming refers to cookie sandwiches, not meal sandwiches; user's meaning of 'sandwich' is bread-based"},
+    {"id": "q11", "query": "banana", "top1": "Bananas, raw", "verdict": "match", "failure_mode": null, "note": "clean head-noun match; plural-'s' normalization earns its keep here"},
+    {"id": "q12", "query": "apple", "top1": "Apples, raw, without skin", "verdict": "match", "failure_mode": null, "note": "raw apple, any variety — intent satisfied; nutrition-wise 'with skin' would be slightly better default"},
+    {"id": "q13", "query": "protein shake", "top1": "Beverages, SLIMFAST, Meal replacement, High Protein Shake, Ready-To-Drink, 3-2-1 plan", "verdict": "partial", "failure_mode": "brand_vs_generic", "note": "branded meal-replacement RTD beats generic 'nutritional shake mix, high protein, powder' at rank 3; intent was whey/casein powder-based shake"},
+    {"id": "q14", "query": "coffee with milk", "top1": "Beverages, coffee, ready to drink, vanilla, light, milk based, sweetened", "verdict": "partial", "failure_mode": "composite_needs_decomposition", "note": "RTD sweetened vanilla product doesn't represent brewed coffee + added milk; should decompose into two retrievals"},
+    {"id": "q15", "query": "spinach salad", "top1": "Salad dressing, blue or roquefort cheese dressing, light", "verdict": "miss", "failure_mode": "aliasing", "note": "'salad' token dominates, matching dressings; spinach is not in top-5 at all — 'Spinach, raw' exists but scorer doesn't reach it"},
+    {"id": "q16", "query": "salmon fillet", "top1": "Vegetarian fillets", "verdict": "miss", "failure_mode": "aliasing", "note": "'fillet' as standalone product beats 'Fish, salmon, Atlantic...' which exists but has head 'Fish'; 'fillet' appears more centrally in 'Vegetarian fillets'"},
+    {"id": "q17", "query": "chicken wrap with cucumber", "top1": "Sea cucumber, yane (Alaska Native)", "verdict": "miss", "failure_mode": "composite_ambiguity", "note": "sea cucumber (animal) matches 'cucumber' token; composite meal would need pre-segmentation into {chicken, tortilla, cucumber} before retrieval"},
+    {"id": "q18", "query": "some almonds", "top1": "Snacks, granola bars, hard, almond", "verdict": "miss", "failure_mode": "tie_break_luck", "note": "ties at 4.0 with 'Nuts, almonds' entries; CSV order puts granola bars first; scorer lacks a 'prefer less-processed' tiebreak"},
+    {"id": "q19", "query": "avocado toast", "top1": "Avocados, raw, all commercial varieties", "verdict": "match", "failure_mode": null, "note": "partial hit on avocado component; composite intent satisfied per queries.json ground truth"},
+    {"id": "q20", "query": "broccoli", "top1": "Broccoli, raw", "verdict": "match", "failure_mode": null, "note": "head-noun exact match, correct"}
+  ],
+  "totals": {
+    "n": 20,
+    "match": 5,
+    "partial": 6,
+    "miss": 9,
+    "top1_strict_accuracy": 0.25,
+    "top1_generous_accuracy_match_plus_partial": 0.55
+  }
+}

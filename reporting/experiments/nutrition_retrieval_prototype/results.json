@@ -1,0 +1,765 @@
+{
+  "slice_size": 7793,
+  "results": [
+    {
+      "id": "q01",
+      "query": "scrambled eggs",
+      "bucket": "preparation_variant",
+      "expected_intent": "chicken eggs prepared by scrambling; any generic egg entry with 'scrambled' preparation or plain 'eggs' is acceptable",
+      "top5": [
+        {
+          "rank": 1,
+          "score": 4.0,
+          "fdc_id": "169904",
+          "description": "Eggs, scrambled, frozen mixture"
+        },
+        {
+          "rank": 2,
+          "score": 4.0,
+          "fdc_id": "172187",
+          "description": "Egg, whole, cooked, scrambled"
+        },
+        {
+          "rank": 3,
+          "score": 3.0,
+          "fdc_id": "173272",
+          "description": "Fast foods, egg, scrambled"
+        },
+        {
+          "rank": 4,
+          "score": 2.4,
+          "fdc_id": "168772",
+          "description": "Egg custards, dry mix"
+        },
+        {
+          "rank": 5,
+          "score": 2.4,
+          "fdc_id": "168773",
+          "description": "Egg custards, dry mix, prepared with whole milk"
+        }
+      ]
+    },
+    {
+      "id": "q02",
+      "query": "oatmeal",
+      "bucket": "easy_canonical",
+      "expected_intent": "rolled oats / porridge; generic oatmeal entry is acceptable",
+      "top5": [
+        {
+          "rank": 1,
+          "score": 4.0,
+          "fdc_id": "170968",
+          "description": "Babyfood, cereal, oatmeal, with honey, dry"
+        },
+        {
+          "rank": 2,
+          "score": 4.0,
+          "fdc_id": "171360",
+          "description": "Babyfood, cereal, oatmeal, dry fortified"
+        },
+        {
+          "rank": 3,
+          "score": 4.0,
+          "fdc_id": "171361",
+          "description": "Babyfood, cereal, oatmeal, with bananas, dry"
+        },
+        {
+          "rank": 4,
+          "score": 4.0,
+          "fdc_id": "171362",
+          "description": "Babyfood, cereal, oatmeal, with applesauce and bananas, strained"
+        },
+        {
+          "rank": 5,
+          "score": 4.0,
+          "fdc_id": "171363",
+          "description": "Babyfood, cereal, oatmeal, with applesauce and bananas, junior, fortified"
+        }
+      ]
+    },
+    {
+      "id": "q03",
+      "query": "greek yogurt",
+      "bucket": "easy_canonical",
+      "expected_intent": "plain greek yogurt (nonfat/low-fat/whole \u2014 any); NOT a flavored variant unless it's the only match",
+      "top5": [
+        {
+          "rank": 1,
+          "score": 4.0,
+          "fdc_id": "170864",
+          "description": "Yogurt, Greek, 2% fat, apricot, CHOBANI"
+        },
+        {
+          "rank": 2,
+          "score": 4.0,
+          "fdc_id": "170891",
+          "description": "Yogurt, Greek, 2% fat,mixed berry blend, CHOBANI"
+        },
+        {
+          "rank": 3,
+          "score": 4.0,
+          "fdc_id": "170894",
+          "description": "Yogurt, Greek, plain, nonfat (Includes foods for USDA's Food Distribution Program)"
+        },
+        {
+          "rank": 4,
+          "score": 4.0,
+          "fdc_id": "170901",
+          "description": "Yogurt, Greek, strawberry, nonfat"
+        },
+        {
+          "rank": 5,
+          "score": 4.0,
+          "fdc_id": "170902",
+          "description": "Yogurt, Greek, vanilla, nonfat"
+        }
+      ]
+    },
+    {
+      "id": "q04",
+      "query": "chobani yogurt",
+      "bucket": "brand_vs_generic",
+      "expected_intent": "user said the brand; fallback to generic greek yogurt is acceptable since our slice won't carry brands",
+      "top5": [
+        {
+          "rank": 1,
+          "score": 4.0,
+          "fdc_id": "170864",
+          "description": "Yogurt, Greek, 2% fat, apricot, CHOBANI"
+        },
+        {
+          "rank": 2,
+          "score": 4.0,
+          "fdc_id": "170891",
+          "description": "Yogurt, Greek, 2% fat,mixed berry blend, CHOBANI"
+        },
+        {
+          "rank": 3,
+          "score": 4.0,
+          "fdc_id": "170909",
+          "description": "Yogurt, Greek, 2% fat, pineapple, CHOBANI"
+        },
+        {
+          "rank": 4,
+          "score": 4.0,
+          "fdc_id": "170912",
+          "description": "Yogurt, Greek, 2% fat, strawberry banana, CHOBANI"
+        },
+        {
+          "rank": 5,
+          "score": 4.0,
+          "fdc_id": "170913",
+          "description": "Yogurt, Greek, nonfat, Fruit on Bottom, Pomegranate, CHOBANI"
+        }
+      ]
+    },
+    {
+      "id": "q05",
+      "query": "chicken breast",
+      "bucket": "easy_canonical",
+      "expected_intent": "skinless boneless chicken breast (raw or cooked \u2014 either)",
+      "top5": [
+        {
+          "rank": 1,
+          "score": 9.995,
+          "fdc_id": "174608",
+          "description": "Chicken breast, roll, oven-roasted"
+        },
+        {
+          "rank": 2,
+          "score": 9.993,
+          "fdc_id": "172962",
+          "description": "Chicken breast, fat-free, mesquite flavor, sliced"
+        },
+        {
+          "rank": 3,
+          "score": 9.993,
+          "fdc_id": "172963",
+          "description": "Chicken breast, oven-roasted, fat-free, sliced"
+        },
+        {
+          "rank": 4,
+          "score": 9.993,
+          "fdc_id": "173874",
+          "description": "Chicken breast, deli, rotisserie seasoned, sliced, prepackaged"
+        },
+        {
+          "rank": 5,
+          "score": 6.0,
+          "fdc_id": "171514",
+          "description": "Chicken breast tenders, breaded, cooked, microwaved"
+        }
+      ]
+    },
+    {
+      "id": "q06",
+      "query": "grilled chicken",
+      "bucket": "preparation_variant",
+      "expected_intent": "chicken, any cut, cooked by grilling \u2014 breast preferred if both available",
+      "top5": [
+        {
+          "rank": 1,
+          "score": 4.0,
+          "fdc_id": "170368",
+          "description": "Fast Foods, grilled chicken filet sandwich, with lettuce, tomato and spread"
+        },
+        {
+          "rank": 2,
+          "score": 4.0,
+          "fdc_id": "170752",
+          "description": "Fast foods, grilled chicken, bacon and tomato club sandwich, with cheese, lettuce, and mayonnaise"
+        },
+        {
+          "rank": 3,
+          "score": 4.0,
+          "fdc_id": "170786",
+          "description": "Fast foods, grilled chicken in tortilla, with lettuce, cheese, and ranch sauce"
+        },
+        {
+          "rank": 4,
+          "score": 4.0,
+          "fdc_id": "171534",
+          "description": "Chicken, broiler or fryers, breast, skinless, boneless, meat only, cooked, grilled"
+        },
+        {
+          "rank": 5,
+          "score": 4.0,
+          "fdc_id": "171536",
+          "description": "Chicken, broiler or fryers, breast, skinless, boneless, meat only, with added solution, cooked, grilled"
+        }
+      ]
+    },
+    {
+      "id": "q07",
+      "query": "a cup of rice",
+      "bucket": "portion_laden",
+      "expected_intent": "cooked white rice \u2014 portion should not confuse the matcher",
+      "top5": [
+        {
+          "rank": 1,
+          "score": 9.995,
+          "fdc_id": "168883",
+          "description": "Rice, white, glutinous, unenriched, uncooked"
+        },
+        {
+          "rank": 2,
+          "score": 9.995,
+          "fdc_id": "169711",
+          "description": "Rice, white, glutinous, unenriched, cooked"
+        },
+        {
+          "rank": 3,
+          "score": 9.995,
+          "fdc_id": "169712",
+          "description": "Rice, white, steamed, Chinese restaurant"
+        },
+        {
+          "rank": 4,
+          "score": 9.994,
+          "fdc_id": "168879",
+          "description": "Rice, white, medium-grain, raw, enriched"
+        },
+        {
+          "rank": 5,
+          "score": 9.994,
+          "fdc_id": "168880",
+          "description": "Rice, white, medium-grain, enriched, cooked"
+        }
+      ]
+    },
+    {
+      "id": "q08",
+      "query": "brown rice",
+      "bucket": "easy_canonical",
+      "expected_intent": "cooked brown rice; long-grain is the most common variant",
+      "top5": [
+        {
+          "rank": 1,
+          "score": 4.0,
+          "fdc_id": "167557",
+          "description": "Snacks, rice cakes, brown rice, sesame seed"
+        },
+        {
+          "rank": 2,
+          "score": 4.0,
+          "fdc_id": "167698",
+          "description": "Pork sausage rice links, brown and serve, cooked"
+        },
+        {
+          "rank": 3,
+          "score": 4.0,
+          "fdc_id": "167966",
+          "description": "Snacks, rice cracker brown rice, plain"
+        },
+        {
+          "rank": 4,
+          "score": 4.0,
+          "fdc_id": "167967",
+          "description": "Snacks, rice cakes, brown rice, buckwheat"
+        },
+        {
+          "rank": 5,
+          "score": 4.0,
+          "fdc_id": "168855",
+          "description": "Snacks, rice cakes, brown rice, rye"
+        }
+      ]
+    },
+    {
+      "id": "q09",
+      "query": "two slices of whole wheat toast",
+      "bucket": "portion_laden",
+      "expected_intent": "whole wheat bread (toasted or not \u2014 slice count should not confuse match)",
+      "top5": [
+        {
+          "rank": 1,
+          "score": 2.5667,
+          "fdc_id": "168893",
+          "description": "Wheat flour, whole-grain (Includes foods for USDA's Food Distribution Program)"
+        },
+        {
+          "rank": 2,
+          "score": 2.5667,
+          "fdc_id": "168944",
+          "description": "Wheat flour, whole-grain, soft wheat"
+        },
+        {
+          "rank": 3,
+          "score": 1.9,
+          "fdc_id": "167933",
+          "description": "Crackers, whole-wheat, reduced fat"
+        },
+        {
+          "rank": 4,
+          "score": 1.9,
+          "fdc_id": "167942",
+          "description": "Crackers, saltines, whole wheat (includes multi-grain)"
+        },
+        {
+          "rank": 5,
+          "score": 1.9,
+          "fdc_id": "167965",
+          "description": "Snacks, pretzels, hard, whole-wheat including both salted and unsalted"
+        }
+      ]
+    },
+    {
+      "id": "q10",
+      "query": "peanut butter sandwich",
+      "bucket": "composite_meal",
+      "expected_intent": "this is two foods: bread + peanut butter. Top-1 match on either peanut butter OR bread is a partial hit; neither is a miss",
+      "top5": [
+        {
+          "rank": 1,
+          "score": 4.0,
+          "fdc_id": "174965",
+          "description": "Cookies, peanut butter sandwich, regular"
+        },
+        {
+          "rank": 2,
+          "score": 4.0,
+          "fdc_id": "174969",
+          "description": "Cookies, peanut butter sandwich, special dietary"
+        },
+        {
+          "rank": 3,
+          "score": 3.2333,
+          "fdc_id": "169869",
+          "description": "Peanut butter, reduced sodium"
+        },
+        {
+          "rank": 4,
+          "score": 3.2333,
+          "fdc_id": "172458",
+          "description": "Peanut butter, smooth, reduced fat"
+        },
+        {
+          "rank": 5,
+          "score": 3.2333,
+          "fdc_id": "172459",
+          "description": "Peanut butter, smooth, vitamin and mineral fortified"
+        }
+      ]
+    },
+    {
+      "id": "q11",
+      "query": "banana",
+      "bucket": "easy_canonical",
+      "expected_intent": "raw banana",
+      "top5": [
+        {
+          "rank": 1,
+          "score": 9.998,
+          "fdc_id": "173944",
+          "description": "Bananas, raw"
+        },
+        {
+          "rank": 2,
+          "score": 9.996,
+          "fdc_id": "173945",
+          "description": "Bananas, dehydrated, or banana powder"
+        },
+        {
+          "rank": 3,
+          "score": 6.0,
+          "fdc_id": "175230",
+          "description": "SILK Banana-Strawberry soy yogurt"
+        },
+        {
+          "rank": 4,
+          "score": 4.0,
+          "fdc_id": "167588",
+          "description": "Puddings, banana, dry mix, instant, prepared with 2% milk"
+        },
+        {
+          "rank": 5,
+          "score": 4.0,
+          "fdc_id": "167589",
+          "description": "Puddings, banana, dry mix, regular, prepared with 2% milk"
+        }
+      ]
+    },
+    {
+      "id": "q12",
+      "query": "apple",
+      "bucket": "easy_canonical",
+      "expected_intent": "raw apple, any variety",
+      "top5": [
+        {
+          "rank": 1,
+          "score": 9.996,
+          "fdc_id": "171689",
+          "description": "Apples, raw, without skin"
+        },
+        {
+          "rank": 2,
+          "score": 9.996,
+          "fdc_id": "171691",
+          "description": "Apples, dried, sulfured, uncooked"
+        },
+        {
+          "rank": 3,
+          "score": 9.995,
+          "fdc_id": "168202",
+          "description": "Apples, raw, golden delicious, with skin"
+        },
+        {
+          "rank": 4,
+          "score": 9.994,
+          "fdc_id": "171690",
+          "description": "Apples, dehydrated (low moisture), sulfured, stewed"
+        },
+        {
+          "rank": 5,
+          "score": 9.994,
+          "fdc_id": "171693",
+          "description": "Apples, dried, sulfured, stewed, with added sugar"
+        }
+      ]
+    },
+    {
+      "id": "q13",
+      "query": "protein shake",
+      "bucket": "ambiguous",
+      "expected_intent": "whey protein powder or generic 'protein supplement'; USDA may not carry branded protein powders \u2014 a whey / casein entry is acceptable",
+      "top5": [
+        {
+          "rank": 1,
+          "score": 4.0,
+          "fdc_id": "173170",
+          "description": "Beverages, SLIMFAST, Meal replacement,  High Protein Shake, Ready-To-Drink, 3-2-1 plan"
+        },
+        {
+          "rank": 2,
+          "score": 3.0,
+          "fdc_id": "173174",
+          "description": "Beverages, UNILEVER, SLIMFAST Shake Mix, high protein, whey powder, 3-2-1 Plan,"
+        },
+        {
+          "rank": 3,
+          "score": 3.0,
+          "fdc_id": "174181",
+          "description": "Beverages, nutritional shake mix, high protein, powder"
+        },
+        {
+          "rank": 4,
+          "score": 2.4,
+          "fdc_id": "170883",
+          "description": "Milk shakes, thick chocolate"
+        },
+        {
+          "rank": 5,
+          "score": 2.4,
+          "fdc_id": "170884",
+          "description": "Milk shakes, thick vanilla"
+        }
+      ]
+    },
+    {
+      "id": "q14",
+      "query": "coffee with milk",
+      "bucket": "composite_meal",
+      "expected_intent": "two foods: coffee + milk. Either match is a partial hit",
+      "top5": [
+        {
+          "rank": 1,
+          "score": 3.3,
+          "fdc_id": "171877",
+          "description": "Beverages, coffee, ready to drink, vanilla, light, milk based, sweetened"
+        },
+        {
+          "rank": 2,
+          "score": 3.3,
+          "fdc_id": "171880",
+          "description": "Beverages, coffee, ready to drink, milk based, sweetened"
+        },
+        {
+          "rank": 3,
+          "score": 3.3,
+          "fdc_id": "173648",
+          "description": "Beverages, coffee substitute, cereal grain beverage, powder, prepared with whole milk"
+        },
+        {
+          "rank": 4,
+          "score": 3.3,
+          "fdc_id": "174119",
+          "description": "Beverages, coffee, ready to drink, iced, mocha, milk based"
+        },
+        {
+          "rank": 5,
+          "score": 3.0,
+          "fdc_id": "169637",
+          "description": "Candies, milk chocolate coated coffee beans"
+        }
+      ]
+    },
+    {
+      "id": "q15",
+      "query": "spinach salad",
+      "bucket": "ambiguous",
+      "expected_intent": "raw spinach is the dominant ingredient; top-1 on spinach is a match. Pure 'salad' with no ingredient info would be a miss",
+      "top5": [
+        {
+          "rank": 1,
+          "score": 2.4,
+          "fdc_id": "167692",
+          "description": "Salad dressing, blue or roquefort cheese dressing, light"
+        },
+        {
+          "rank": 2,
+          "score": 2.4,
+          "fdc_id": "167693",
+          "description": "Salad dressing, french dressing, reduced calorie"
+        },
+        {
+          "rank": 3,
+          "score": 2.4,
+          "fdc_id": "167699",
+          "description": "Salad dressing, blue or roquefort cheese dressing, fat-free"
+        },
+        {
+          "rank": 4,
+          "score": 2.4,
+          "fdc_id": "167700",
+          "description": "Salad Dressing, mayonnaise-like, fat-free"
+        },
+        {
+          "rank": 5,
+          "score": 2.4,
+          "fdc_id": "167704",
+          "description": "Salad dressing, bacon and tomato"
+        }
+      ]
+    },
+    {
+      "id": "q16",
+      "query": "salmon fillet",
+      "bucket": "easy_canonical",
+      "expected_intent": "atlantic salmon, cooked \u2014 raw is acceptable",
+      "top5": [
+        {
+          "rank": 1,
+          "score": 2.4,
+          "fdc_id": "169068",
+          "description": "Vegetarian fillets"
+        },
+        {
+          "rank": 2,
+          "score": 2.4,
+          "fdc_id": "169813",
+          "description": "Salmon, red (sockeye), filets with skin, smoked (Alaska Native)"
+        },
+        {
+          "rank": 3,
+          "score": 2.4,
+          "fdc_id": "173721",
+          "description": "Salmon nuggets, breaded, frozen, heated"
+        },
+        {
+          "rank": 4,
+          "score": 2.4,
+          "fdc_id": "173722",
+          "description": "Salmon nuggets, cooked as purchased, unheated"
+        },
+        {
+          "rank": 5,
+          "score": 2.4,
+          "fdc_id": "173723",
+          "description": "Salmon, sockeye, canned, drained solids, without skin and bones"
+        }
+      ]
+    },
+    {
+      "id": "q17",
+      "query": "chicken wrap with cucumber",
+      "bucket": "composite_meal",
+      "expected_intent": "three foods: chicken + tortilla/wrap + cucumber. Partial hit on any of the three components",
+      "top5": [
+        {
+          "rank": 1,
+          "score": 1.4667,
+          "fdc_id": "167618",
+          "description": "Sea cucumber, yane (Alaska Native)"
+        },
+        {
+          "rank": 2,
+          "score": 1.4667,
+          "fdc_id": "167719",
+          "description": "Chicken, meatless, breaded, fried"
+        },
+        {
+          "rank": 3,
+          "score": 1.4667,
+          "fdc_id": "168409",
+          "description": "Cucumber, with peel, raw"
+        },
+        {
+          "rank": 4,
+          "score": 1.4667,
+          "fdc_id": "168961",
+          "description": "Chicken, thighs, frozen, breaded, reheated"
+        },
+        {
+          "rank": 5,
+          "score": 1.4667,
+          "fdc_id": "169225",
+          "description": "Cucumber, peeled, raw"
+        }
+      ]
+    },
+    {
+      "id": "q18",
+      "query": "some almonds",
+      "bucket": "vague_casual",
+      "expected_intent": "raw almonds; 'some' is a quantity filler and should not affect match",
+      "top5": [
+        {
+          "rank": 1,
+          "score": 4.0,
+          "fdc_id": "167543",
+          "description": "Snacks, granola bars, hard, almond"
+        },
+        {
+          "rank": 2,
+          "score": 4.0,
+          "fdc_id": "167562",
+          "description": "Candies, ALMOND JOY Candy Bar"
+        },
+        {
+          "rank": 3,
+          "score": 4.0,
+          "fdc_id": "167947",
+          "description": "Candies, TOBLERONE, milk chocolate with honey and almond nougat"
+        },
+        {
+          "rank": 4,
+          "score": 4.0,
+          "fdc_id": "167979",
+          "description": "Candies, HERSHEY'S GOLDEN ALMOND SOLITAIRES"
+        },
+        {
+          "rank": 5,
+          "score": 4.0,
+          "fdc_id": "167994",
+          "description": "Candies, MARS SNACKFOOD US, MARS Almond Bar"
+        }
+      ]
+    },
+    {
+      "id": "q19",
+      "query": "avocado toast",
+      "bucket": "composite_meal",
+      "expected_intent": "avocado + bread. Partial hit on either",
+      "top5": [
+        {
+          "rank": 1,
+          "score": 2.4,
+          "fdc_id": "171705",
+          "description": "Avocados, raw, all commercial varieties"
+        },
+        {
+          "rank": 2,
+          "score": 2.4,
+          "fdc_id": "171706",
+          "description": "Avocados, raw, California"
+        },
+        {
+          "rank": 3,
+          "score": 2.4,
+          "fdc_id": "171707",
+          "description": "Avocados, raw, Florida"
+        },
+        {
+          "rank": 4,
+          "score": 2.4,
+          "fdc_id": "172763",
+          "description": "French toast, frozen, ready-to-heat"
+        },
+        {
+          "rank": 5,
+          "score": 2.4,
+          "fdc_id": "174998",
+          "description": "French toast, prepared from recipe, made with low fat (2%) milk"
+        }
+      ]
+    },
+    {
+      "id": "q20",
+      "query": "broccoli",
+      "bucket": "easy_canonical",
+      "expected_intent": "raw or cooked broccoli",
+      "top5": [
+        {
+          "rank": 1,
+          "score": 9.998,
+          "fdc_id": "170379",
+          "description": "Broccoli, raw"
+        },
+        {
+          "rank": 2,
+          "score": 9.997,
+          "fdc_id": "169329",
+          "description": "Broccoli, leaves, raw"
+        },
+        {
+          "rank": 3,
+          "score": 9.997,
+          "fdc_id": "169331",
+          "description": "Broccoli, stalks, raw"
+        },
+        {
+          "rank": 4,
+          "score": 9.997,
+          "fdc_id": "169392",
+          "description": "Broccoli, chinese, cooked"
+        },
+        {
+          "rank": 5,
+          "score": 9.997,
+          "fdc_id": "169404",
+          "description": "Broccoli, chinese, raw"
+        }
+      ]
+    }
+  ]
+}
