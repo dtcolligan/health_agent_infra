@@ -1,5 +1,0 @@
-{
-  "catalog_idempotent": true,
-  "gym_idempotent": true,
-  "training_idempotent": true
-}

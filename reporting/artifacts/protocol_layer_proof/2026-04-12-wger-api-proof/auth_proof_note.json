@@ -1,9 +1,0 @@
-{
-  "base_url": "http://127.0.0.1:51136",
-  "proof_note": "JWT flow verified against a disposable local mock of the published wger API surface.",
-  "token_obtained": true,
-  "token_refreshed": true,
-  "verify_response": {
-    "detail": "ok"
-  }
-}

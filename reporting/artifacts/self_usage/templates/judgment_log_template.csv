@@ -1,2 +1,0 @@
-date,inputs_logged,context_artifact_path,recommendation_artifact_path,recommendation_summary,label,action_taken,why,caveat,gym_note
-YYYY-MM-DD,"hydration; meal; voice note",data/health/agent_readable_daily_context_YYYY-MM-DD.json,data/health/agent_recommendation_YYYY-MM-DD.json,"One sentence summary",useful,"What you did next","1-2 lines on why","Missing data or caveat","If training occurred, confirm it was logged only in data/health/manual_gym_sessions.json and note the same-day judgment here."

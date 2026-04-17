@@ -1,5 +1,0 @@
-{
-  "numeric_totals_source": "daily_summary",
-  "manual_or_voice_note_behavior": "not_silently_merged_into_imported_numeric_totals",
-  "meal_summary_derivation": "meal_items scoped to requested user/date"
-}

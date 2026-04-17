@@ -1,7 +1,0 @@
-{
-  "byte_identical_copy": true,
-  "frozen_upstream_recommendation_copy_path": "/Users/myapplemini01/Projects/health_agent_infra/reporting/artifacts/protocol_layer_proof/2026-04-13-manual-readiness-grounded-recommendation-judgment-writeback/frozen_upstream_agent_recommendation_2026-04-09.json",
-  "frozen_upstream_recommendation_copy_sha256": "a6b75180f5bcf7f2d8db177622a80e14f8046926c5f143a3bc83ab85e579d620",
-  "upstream_recommendation_source_path": "/Users/myapplemini01/Projects/health_agent_infra/reporting/artifacts/protocol_layer_proof/2026-04-13-manual-readiness-grounded-recommendation/agent_recommendation_2026-04-09.json",
-  "upstream_recommendation_source_sha256": "a6b75180f5bcf7f2d8db177622a80e14f8046926c5f143a3bc83ab85e579d620"
-}

@@ -1,8 +1,0 @@
-{
-  "artifact_path": "data/health/day_nutrition_brief_2026-04-08.json",
-  "date": "2026-04-08",
-  "operation": "retrieve.day_nutrition_brief",
-  "request_id": "req_day_nutrition_brief_proof_2026_04_11",
-  "requested_at": "2026-04-11T09:20:00+01:00",
-  "user_id": "1"
-}

@@ -1,9 +1,0 @@
-{
-  "matches_writeback_operations": true,
-  "matches_transition_operation": true,
-  "matches_resolution_window_paths": true,
-  "matches_feedback_window_paths": true,
-  "matches_feedback_window_optional_field": true,
-  "matches_transition_proof_bundle": true,
-  "all_match": true
-}

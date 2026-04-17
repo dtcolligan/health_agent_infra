@@ -1,7 +1,0 @@
-{
-  "blocked_case_requires_typed_manual_readiness_lane": true,
-  "optional_non_flagship_lanes_do_not_block_flagship_claim": true,
-  "fully_aligned_case_emits_truthful_snapshot_with_provenance": true,
-  "resistance_training_lane_owns_aligned_gym_rollups": true,
-  "rerun_preserves_snapshot_and_provenance_ids": true
-}
