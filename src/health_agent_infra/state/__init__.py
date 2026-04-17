@@ -6,6 +6,7 @@ arrive in later phases. This module is not imported by any subcommand beyond
 """
 
 from health_agent_infra.state.projector import (
+    ReprojectBaseDirError,
     project_recommendation,
     project_review_event,
     project_review_outcome,
@@ -22,6 +23,7 @@ from health_agent_infra.state.store import (
 
 __all__ = [
     "DEFAULT_DB_PATH",
+    "ReprojectBaseDirError",
     "apply_pending_migrations",
     "current_schema_version",
     "initialize_database",

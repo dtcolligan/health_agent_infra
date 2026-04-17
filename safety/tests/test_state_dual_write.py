@@ -483,6 +483,146 @@ def test_reproject_fails_clearly_when_base_dir_missing(tmp_path: Path, capsys):
     assert "base-dir not found" in err
 
 
+def test_reproject_refuses_when_base_dir_lacks_audit_logs(tmp_path: Path, capsys):
+    """The exact failure mode the audit flagged: --base-dir points at an
+    existing but empty/wrong directory. Previously this silently truncated
+    the projection tables. Now it must refuse and leave the DB untouched."""
+
+    from health_agent_infra.state import ReprojectBaseDirError
+
+    # 1. Seed a DB with a recommendation so we can verify it isn't wiped.
+    db = _init_db(tmp_path)
+    rec = _sample_rec()
+    conn = open_connection(db)
+    try:
+        project_recommendation(conn, rec)
+        count_before = conn.execute(
+            "SELECT COUNT(*) AS n FROM recommendation_log"
+        ).fetchone()["n"]
+    finally:
+        conn.close()
+    assert count_before == 1
+
+    # 2. Create an unrelated existing directory with no audit logs.
+    wrong_dir = tmp_path / "some_unrelated_dir"
+    wrong_dir.mkdir()
+    (wrong_dir / "README.txt").write_text("not an audit log", encoding="utf-8")
+
+    # 3. Direct-function call must raise without touching the DB.
+    conn = open_connection(db)
+    try:
+        with pytest.raises(ReprojectBaseDirError):
+            reproject_from_jsonl(conn, wrong_dir)
+
+        count_after = conn.execute(
+            "SELECT COUNT(*) AS n FROM recommendation_log"
+        ).fetchone()["n"]
+        assert count_after == count_before, "reproject must not wipe on empty base-dir"
+    finally:
+        conn.close()
+
+
+def test_reproject_cli_fails_closed_on_empty_base_dir(tmp_path: Path, capsys):
+    """Same failure mode, through the CLI. Must exit 2 with a clear stderr."""
+
+    db = _init_db(tmp_path)
+    rec = _sample_rec()
+    conn = open_connection(db)
+    try:
+        project_recommendation(conn, rec)
+    finally:
+        conn.close()
+
+    wrong_dir = tmp_path / "wrong"
+    wrong_dir.mkdir()
+
+    rc = cli_main([
+        "state", "reproject",
+        "--base-dir", str(wrong_dir),
+        "--db-path", str(db),
+    ])
+    err = capsys.readouterr().err
+    assert rc == 2
+    assert "reproject refused" in err
+    assert "allow-empty-reproject" in err
+
+    # DB unaffected.
+    conn = open_connection(db)
+    try:
+        count = conn.execute(
+            "SELECT COUNT(*) AS n FROM recommendation_log"
+        ).fetchone()["n"]
+    finally:
+        conn.close()
+    assert count == 1
+
+
+def test_reproject_cli_allow_empty_flag_bypasses_the_guard(tmp_path: Path, capsys):
+    """--allow-empty-reproject is the explicit escape hatch for the rare
+    case where an operator wants to reset projection tables. The flag lets
+    the reproject run on an empty dir and wipe cleanly."""
+
+    db = _init_db(tmp_path)
+    rec = _sample_rec()
+    conn = open_connection(db)
+    try:
+        project_recommendation(conn, rec)
+    finally:
+        conn.close()
+
+    empty_dir = tmp_path / "intentionally_empty"
+    empty_dir.mkdir()
+
+    rc = cli_main([
+        "state", "reproject",
+        "--base-dir", str(empty_dir),
+        "--db-path", str(db),
+        "--allow-empty-reproject",
+    ])
+    capsys.readouterr()
+    assert rc == 0
+
+    # Wipe succeeded; recommendation_log is empty post-reproject.
+    conn = open_connection(db)
+    try:
+        count = conn.execute(
+            "SELECT COUNT(*) AS n FROM recommendation_log"
+        ).fetchone()["n"]
+    finally:
+        conn.close()
+    assert count == 0
+
+
+def test_reproject_runs_when_only_recommendation_log_present(tmp_path: Path, capsys):
+    """The 'at least one expected JSONL' rule lets partially-populated
+    base-dirs reproject. A common legitimate case: the user has written
+    recommendations but never scheduled a review yet."""
+
+    db = _init_db(tmp_path)
+    base = tmp_path / ALLOWED_RELATIVE_ROOT
+    base.mkdir(parents=True)
+    rec = _sample_rec()
+    perform_writeback(rec, base_dir=base, now=NOW)
+
+    # Only recommendation_log.jsonl exists; review logs are absent.
+    assert (base / "recommendation_log.jsonl").exists()
+    assert not (base / "review_events.jsonl").exists()
+    assert not (base / "review_outcomes.jsonl").exists()
+
+    rc = cli_main([
+        "state", "reproject",
+        "--base-dir", str(base),
+        "--db-path", str(db),
+    ])
+    out = capsys.readouterr().out
+    assert rc == 0
+
+    report = json.loads(out)
+    assert report["reprojected"]["recommendations"] == 1
+    assert report["reprojected"]["review_events"] == 0
+    assert report["reprojected"]["review_outcomes"] == 0
+
+
 def test_reproject_direct_function_is_atomic(tmp_path: Path):
     """reproject_from_jsonl wraps the rebuild in a transaction. If
     mid-reproject the JSONL has a corrupt line, the DB state must roll

@@ -394,6 +394,7 @@ def cmd_state_reproject(args: argparse.Namespace) -> int:
     """
 
     from health_agent_infra.state import (
+        ReprojectBaseDirError,
         open_connection,
         reproject_from_jsonl,
         resolve_db_path,
@@ -414,7 +415,13 @@ def cmd_state_reproject(args: argparse.Namespace) -> int:
 
     conn = open_connection(db_path)
     try:
-        counts = reproject_from_jsonl(conn, base_dir)
+        try:
+            counts = reproject_from_jsonl(
+                conn, base_dir, allow_empty=args.allow_empty_reproject,
+            )
+        except ReprojectBaseDirError as exc:
+            print(f"reproject refused: {exc}", file=sys.stderr)
+            return 2
     finally:
         conn.close()
     _emit_json({
@@ -581,6 +588,10 @@ def build_parser() -> argparse.ArgumentParser:
                       help="Writeback root containing recommendation_log.jsonl etc.")
     p_sr.add_argument("--db-path", default=None,
                       help="State DB path (default: $HAI_STATE_DB or platform default)")
+    p_sr.add_argument("--allow-empty-reproject", action="store_true",
+                      help="Allow reproject to truncate the projection tables even when "
+                           "the base-dir contains none of the expected JSONL audit logs. "
+                           "Refuses by default to guard against typo-driven data loss.")
     p_sr.set_defaults(func=cmd_state_reproject)
 
     p_setup = sub.add_parser("setup-skills", help="Copy packaged skills/ into ~/.claude/skills/")

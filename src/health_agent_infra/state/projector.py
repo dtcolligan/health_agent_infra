@@ -225,7 +225,17 @@ def project_review_outcome(
 # Reprojection from JSONL audit logs
 # ---------------------------------------------------------------------------
 
-def reproject_from_jsonl(conn: sqlite3.Connection, base_dir) -> dict:
+class ReprojectBaseDirError(Exception):
+    """Raised when reproject is asked to rebuild from a base-dir that does
+    not contain any of the expected audit JSONL files.
+
+    Guards against the failure mode where a typo in ``--base-dir`` silently
+    wipes the projection tables. Callers who genuinely want to reset the DB
+    can opt into this via ``allow_empty=True``.
+    """
+
+
+def reproject_from_jsonl(conn: sqlite3.Connection, base_dir, *, allow_empty: bool = False) -> dict:
     """Rebuild recommendation_log / review_event / review_outcome from the
     JSONL audit logs under ``base_dir``.
 
@@ -236,6 +246,12 @@ def reproject_from_jsonl(conn: sqlite3.Connection, base_dir) -> dict:
 
     ``base_dir`` is the writeback root (same directory `hai writeback`
     appends to).
+
+    **Safety.** If none of the three expected JSONL files exist in
+    ``base_dir``, the function raises ``ReprojectBaseDirError`` before
+    touching the DB, so a typo in the path can't silently wipe the
+    projection tables. Pass ``allow_empty=True`` to override — reserved for
+    the rare case where an operator explicitly wants to reset the DB tables.
     """
 
     from pathlib import Path
@@ -244,6 +260,17 @@ def reproject_from_jsonl(conn: sqlite3.Connection, base_dir) -> dict:
     rec_log = base / "recommendation_log.jsonl"
     events_log = base / "review_events.jsonl"
     outcomes_log = base / "review_outcomes.jsonl"
+
+    if not allow_empty:
+        expected = (rec_log, events_log, outcomes_log)
+        if not any(p.exists() for p in expected):
+            raise ReprojectBaseDirError(
+                f"no audit JSONL files found under {base}. Expected at least "
+                f"one of: recommendation_log.jsonl, review_events.jsonl, "
+                f"review_outcomes.jsonl. Refusing to truncate the projection "
+                f"tables. Pass allow_empty=True / --allow-empty-reproject to "
+                f"override."
+            )
 
     counts = {"recommendations": 0, "review_events": 0, "review_outcomes": 0}
 
