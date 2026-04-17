@@ -45,6 +45,47 @@ CONFIG_FILENAME = "thresholds.toml"
 
 DEFAULT_THRESHOLDS: dict[str, Any] = {
     "classify": {
+        "running": {
+            "weekly_mileage_trend_band": {
+                # Boundaries on weekly_mileage_ratio (current 7d / trailing
+                # 28d-week-mean baseline). A value at the boundary lands in
+                # the higher band.
+                "very_low_max_ratio": 0.5,
+                "low_max_ratio": 0.8,
+                "moderate_max_ratio": 1.2,
+                "high_max_ratio": 1.5,
+            },
+            "hard_session_load_band": {
+                # Boundaries on recent_hard_session_count_7d.
+                "light_max_count": 1,
+                "moderate_max_count": 2,
+                # heavy = anything strictly greater than moderate_max_count.
+            },
+            "freshness_band": {
+                # Boundaries on acwr_ratio. fatigued/overreaching boundaries
+                # are aligned with X3a (1.3-1.5 → soften) and X3b (≥1.5 →
+                # block) so synthesis can read the band directly.
+                "fresh_max_ratio": 0.8,
+                "neutral_max_ratio": 1.3,
+                "fatigued_max_ratio": 1.5,
+            },
+            "recovery_adjacent_band": {
+                "favourable_min_training_readiness_pct": 70,
+                "compromised_max_training_readiness_pct": 40,
+            },
+            "readiness_score_penalty": {
+                # Negative values are bonuses (raise the score).
+                "mileage_trend_high": 0.05,
+                "mileage_trend_very_high": 0.15,
+                "hard_session_load_moderate": 0.05,
+                "hard_session_load_heavy": 0.15,
+                "freshness_fresh": -0.02,
+                "freshness_fatigued": 0.15,
+                "freshness_overreaching": 0.30,
+                "recovery_adjacent_favourable": -0.05,
+                "recovery_adjacent_compromised": 0.20,
+            },
+        },
         "recovery": {
             "sleep_debt_band": {
                 "none_min_hours": 7.5,
@@ -89,6 +130,13 @@ DEFAULT_THRESHOLDS: dict[str, Any] = {
     "policy": {
         "recovery": {
             "r6_resting_hr_spike_days_threshold": 3,
+        },
+        "running": {
+            # Aligned with X3b (≥1.5 → block any hard session). The R-rule
+            # forces escalate_for_user_review at the same threshold so the
+            # running domain has its own forced action even when synthesis
+            # is not run.
+            "r_acwr_spike_min_ratio": 1.5,
         },
     },
     "synthesis": {
