@@ -352,13 +352,16 @@ _TRAINING_READINESS_COMPONENT_COLUMNS = (
 )
 
 
-def _training_readiness_pct_from_raw(raw_row: dict) -> Optional[float]:
+def _training_readiness_component_mean_pct_from_raw(raw_row: dict) -> Optional[float]:
     """Mean of the five Garmin readiness component pcts; None if any missing.
 
-    Garmin computes its own weighted overall readiness, but that number isn't
-    exported in daily_summary_export.csv — only the five dimension pcts are.
-    The mean is a defensible proxy (7B). Agents that want stricter fidelity
-    should read the components directly from RawSummary instead.
+    **Not** Garmin's own overall readiness score. Garmin's CSV doesn't
+    export that value, only the five dimension pcts and a categorical
+    `training_readiness_level`. A plain arithmetic mean is the simplest
+    summary; it can disagree with Garmin's categorical level because
+    Garmin weights internally. Agents must treat this as a local proxy,
+    cross-check against `training_readiness_level`, and surface any
+    disagreement in their rationale.
     """
 
     vals: list[float] = []
@@ -400,8 +403,10 @@ def project_accepted_recovery_state_daily(
     stress`` command. Until then, ``manual_stress_score`` stays NULL on
     every accepted recovery row written by this function.
 
-    ``training_readiness_pct`` is populated as the mean of the five Garmin
-    readiness component pcts (7B). None if any component is missing.
+    ``training_readiness_component_mean_pct`` is populated as the
+    arithmetic mean of the five Garmin readiness component pcts (7B). It
+    is **not** Garmin's own overall Training Readiness score — that number
+    isn't exported in the daily CSV. None if any component is missing.
 
     ``commit_after``: set False when composing inside an outer transaction.
     """
@@ -418,7 +423,7 @@ def project_accepted_recovery_state_daily(
 
     sleep_hours = _sleep_hours_from_raw(raw_row)
     acwr = _acwr_ratio_from_raw(raw_row)
-    training_readiness_pct = _training_readiness_pct_from_raw(raw_row)
+    readiness_mean = _training_readiness_component_mean_pct_from_raw(raw_row)
 
     values = (
         sleep_hours,
@@ -429,7 +434,7 @@ def project_accepted_recovery_state_daily(
         raw_row.get("acute_load"),
         raw_row.get("chronic_load"),
         acwr,
-        training_readiness_pct,  # 7B: mean of 5 component pcts
+        readiness_mean,  # local mean of 5 Garmin components; NOT vendor overall
         raw_row.get("body_battery"),
         derived_from_json,
         source,
@@ -446,7 +451,7 @@ def project_accepted_recovery_state_daily(
             INSERT INTO accepted_recovery_state_daily (
                 sleep_hours, resting_hr, hrv_ms, all_day_stress,
                 manual_stress_score, acute_load, chronic_load, acwr_ratio,
-                training_readiness_pct, body_battery_end_of_day,
+                training_readiness_component_mean_pct, body_battery_end_of_day,
                 derived_from, source, ingest_actor,
                 projected_at, corrected_at,
                 as_of_date, user_id
@@ -460,7 +465,7 @@ def project_accepted_recovery_state_daily(
             UPDATE accepted_recovery_state_daily SET
                 sleep_hours = ?, resting_hr = ?, hrv_ms = ?, all_day_stress = ?,
                 manual_stress_score = ?, acute_load = ?, chronic_load = ?,
-                acwr_ratio = ?, training_readiness_pct = ?,
+                acwr_ratio = ?, training_readiness_component_mean_pct = ?,
                 body_battery_end_of_day = ?,
                 derived_from = ?, source = ?, ingest_actor = ?,
                 projected_at = ?, corrected_at = ?

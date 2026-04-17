@@ -54,7 +54,7 @@ def test_resolve_db_path_falls_back_to_platform_default(monkeypatch):
 # initialize_database
 # ---------------------------------------------------------------------------
 
-def test_initialize_database_creates_file_and_applies_001(tmp_path: Path):
+def test_initialize_database_creates_file_and_applies_all_migrations(tmp_path: Path):
     db_path = tmp_path / "new.db"
     assert not db_path.exists()
 
@@ -62,10 +62,11 @@ def test_initialize_database_creates_file_and_applies_001(tmp_path: Path):
 
     assert resolved == db_path
     assert db_path.exists()
-    assert len(applied) == 1
-    version, filename = applied[0]
-    assert version == 1
-    assert filename == "001_initial.sql"
+    assert len(applied) >= 1
+    # 001 must always be first; additional migrations accumulate after.
+    assert applied[0] == (1, "001_initial.sql")
+    versions = [v for v, _ in applied]
+    assert versions == sorted(versions)
 
 
 def test_initialize_database_creates_parent_dir_if_missing(tmp_path: Path):
@@ -100,7 +101,10 @@ def test_schema_migrations_has_one_row_per_applied_migration(tmp_path: Path):
     finally:
         conn.close()
 
-    assert [tuple(r) for r in rows] == [(1, "001_initial.sql")]
+    assert [tuple(r) for r in rows] == [
+        (1, "001_initial.sql"),
+        (2, "002_rename_training_readiness_pct.sql"),
+    ]
 
 
 def test_schema_migrations_not_duplicated_on_repeat_init(tmp_path: Path):
@@ -115,7 +119,7 @@ def test_schema_migrations_not_duplicated_on_repeat_init(tmp_path: Path):
     finally:
         conn.close()
 
-    assert count == 1
+    assert count == 2
 
 
 def test_current_schema_version_zero_on_empty_db(tmp_path: Path):
@@ -133,7 +137,7 @@ def test_current_schema_version_matches_head_after_init(tmp_path: Path):
 
     conn = open_connection(db_path)
     try:
-        assert current_schema_version(conn) == 1
+        assert current_schema_version(conn) == 2
     finally:
         conn.close()
 
@@ -155,7 +159,7 @@ def test_apply_pending_migrations_no_op_at_head(tmp_path: Path):
     assert applied == []
 
 
-def test_apply_pending_migrations_runs_001_on_empty_db(tmp_path: Path):
+def test_apply_pending_migrations_runs_all_migrations_on_empty_db(tmp_path: Path):
     db_path = tmp_path / "state.db"
     conn = open_connection(db_path)
     try:
@@ -163,8 +167,12 @@ def test_apply_pending_migrations_runs_001_on_empty_db(tmp_path: Path):
     finally:
         conn.close()
 
-    assert len(applied) == 1
-    assert applied[0][0] == 1
+    # Applied in ascending version order. The list grows whenever we add a
+    # new forward migration; test asserts head landed, not a specific count.
+    assert len(applied) >= 1
+    assert applied[0][0] == 1  # 001_initial first
+    versions = [v for v, _ in applied]
+    assert versions == sorted(versions), "migrations must apply in ascending order"
 
 
 # ---------------------------------------------------------------------------
@@ -250,7 +258,11 @@ def test_cli_state_init_creates_db_and_reports_applied(tmp_path: Path, capsys):
     import json
     payload = json.loads(out)
     assert payload["db_path"] == str(db_path)
-    assert payload["created"] == [[1, "001_initial.sql"]]
+    created = payload["created"]
+    # 001 must be first; any later migrations follow in ascending order.
+    assert created[0] == [1, "001_initial.sql"]
+    versions = [v for v, _ in created]
+    assert versions == sorted(versions)
 
 
 def test_cli_state_migrate_on_head_db_reports_empty_applied(tmp_path: Path, capsys):
@@ -263,8 +275,8 @@ def test_cli_state_migrate_on_head_db_reports_empty_applied(tmp_path: Path, caps
 
     import json
     payload = json.loads(capsys.readouterr().out)
-    assert payload["schema_version_before"] == 1
-    assert payload["schema_version_after"] == 1
+    assert payload["schema_version_before"] == 2
+    assert payload["schema_version_after"] == 2
     assert payload["applied"] == []
 
 
@@ -334,8 +346,8 @@ def test_broken_migration_rolls_back_ddl_and_bookkeeping(tmp_path: Path):
         ).fetchall()
         assert len(rows) == 1
 
-        # Version is still at 1, not 99.
-        assert current_schema_version(conn) == 1
+        # Version is still at head (pre-broken migration), not 99.
+        assert current_schema_version(conn) == 2
     finally:
         conn.close()
 

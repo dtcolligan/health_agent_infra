@@ -51,7 +51,7 @@ def _seed_recovery(conn: sqlite3.Connection, *, as_of: date, user_id: str,
                     acute_load: float | None = 400.0,
                     chronic_load: float | None = 380.0,
                     acwr_ratio: float | None = 1.05,
-                    training_readiness_pct: float | None = 72.0,
+                    training_readiness_component_mean_pct: float | None = 72.0,
                     body_battery_end_of_day: int | None = 65) -> None:
     conn.execute(
         """
@@ -59,7 +59,8 @@ def _seed_recovery(conn: sqlite3.Connection, *, as_of: date, user_id: str,
             as_of_date, user_id,
             sleep_hours, resting_hr, hrv_ms, all_day_stress,
             manual_stress_score, acute_load, chronic_load,
-            acwr_ratio, training_readiness_pct, body_battery_end_of_day,
+            acwr_ratio, training_readiness_component_mean_pct,
+            body_battery_end_of_day,
             derived_from, source, ingest_actor, projected_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
@@ -67,7 +68,8 @@ def _seed_recovery(conn: sqlite3.Connection, *, as_of: date, user_id: str,
             as_of.isoformat(), user_id,
             sleep_hours, resting_hr, hrv_ms, all_day_stress,
             manual_stress_score, acute_load, chronic_load,
-            acwr_ratio, training_readiness_pct, body_battery_end_of_day,
+            acwr_ratio, training_readiness_component_mean_pct,
+            body_battery_end_of_day,
             "[]", "garmin", "garmin_csv_adapter",
             "2026-04-17T06:00:00Z",
         ),
@@ -265,9 +267,10 @@ def test_snapshot_surfaces_present_when_all_fields_populated(tmp_path: Path):
     assert snap["stress"]["today_manual"] == 2
 
 
-def test_snapshot_emits_partial_with_null_field_list(tmp_path: Path):
-    """If a today row exists but some columns are NULL, missingness reports
-    `partial:<field1>,<field2>` per state_model_v1.md §5."""
+def test_snapshot_emits_unavailable_at_source_for_passive_null_fields(tmp_path: Path):
+    """If a passive (Garmin) today-row exists but some columns are NULL,
+    missingness reports `unavailable_at_source:<fields>` per state_model_v1.md
+    §5. `partial` is reserved for user-reported domains with closed-day gaps."""
 
     db = _init_db(tmp_path)
     conn = open_connection(db)
@@ -284,7 +287,7 @@ def test_snapshot_emits_partial_with_null_field_list(tmp_path: Path):
         conn.close()
 
     mx = snap["recovery"]["missingness"]
-    assert mx.startswith("partial:")
+    assert mx.startswith("unavailable_at_source:"), f"got {mx!r}"
     # A few explicit fields we know are NULL — each should appear.
     for field in ("hrv_ms", "acute_load", "chronic_load"):
         assert field in mx

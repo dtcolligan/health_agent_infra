@@ -304,12 +304,14 @@ def _extract_garmin_richness(raw_daily_row: Optional[dict]) -> dict:
     if acute is not None and chronic is not None and chronic != 0:
         garmin_acwr = round(acute / chronic, 3)
 
-    # Training readiness — mean of the 5 component pcts when all present;
-    # None if any component is missing. Garmin computes its own weighted
-    # overall internally, but that value isn't exported; the mean is a
-    # defensible proxy and is documented as such to the skill.
+    # Local mean of the 5 component pcts when all present; None if any
+    # component is missing. Garmin does NOT export an overall Training
+    # Readiness pct in the daily CSV — only components + the categorical
+    # level. The mean is NOT Garmin's own weighting; it can disagree with
+    # `training_readiness_level`. The skill surfaces that disagreement
+    # rather than hiding it behind a single "overall" number.
     components = [_float(col) for col in _GARMIN_READINESS_COMPONENT_COLUMNS]
-    readiness_pct = (
+    component_mean_pct = (
         round(sum(components) / len(components), 1)
         if all(c is not None for c in components)
         else None
@@ -324,7 +326,7 @@ def _extract_garmin_richness(raw_daily_row: Optional[dict]) -> dict:
         "garmin_acwr_ratio": garmin_acwr,
         "acwr_status": _str("acwr_status"),
         "training_readiness_level": _str("training_readiness_level"),
-        "training_readiness_pct": readiness_pct,
+        "training_readiness_component_mean_pct": component_mean_pct,
         "training_readiness_sleep_pct": components[0],
         "training_readiness_hrv_pct": components[1],
         "training_readiness_stress_pct": components[2],

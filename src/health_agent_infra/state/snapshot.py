@@ -105,11 +105,10 @@ _V1_REQUIRED_FIELDS: dict[str, frozenset[str]] = {
         "sleep_hours", "resting_hr", "hrv_ms", "all_day_stress",
         "acute_load", "chronic_load", "acwr_ratio",
         "body_battery_end_of_day",
-        # Phase 7B: training_readiness_pct is computed from five Garmin
-        # component pcts. When Garmin records them all, this field is
-        # populated; a missing value is honest partial (Garmin didn't
-        # compute readiness for that day — usually missing overnight sleep).
-        "training_readiness_pct",
+        # Phase 7B: locally-computed mean of five Garmin component pcts.
+        # A missing value here means Garmin didn't record ≥1 component that
+        # day — surfaced as `unavailable_at_source`, not `partial`.
+        "training_readiness_component_mean_pct",
         # manual_stress_score is user-reported and must flow through
         # stress_manual_raw → accepted recovery (7C). Until 7C ships, a
         # clean-only pipeline cannot populate it, so it is NOT part of the
@@ -254,16 +253,23 @@ def build_snapshot(
             if not null_fields:
                 return row, "present"
 
-            # User-reported domain, today before cutover, with some nulls:
-            # surface as pending_user_input rather than partial. The user is
-            # still logging; the gaps are expected to close by 23:30.
-            if (
-                is_today
-                and is_before_cutover
-                and domain in _USER_REPORTED_DOMAINS
-            ):
-                return row, f"pending_user_input:{','.join(null_fields)}"
-            return row, f"partial:{','.join(null_fields)}"
+            # Token choice per state_model_v1.md §5:
+            #   - User-reported domain + today before cutover + null fields:
+            #     the user is still logging; gaps are expected to close by
+            #     23:30. Emit `pending_user_input:<fields>`.
+            #   - User-reported domain + day closed: user had the whole day;
+            #     the gaps are the final state. Emit `partial:<fields>`.
+            #   - Passive domain (Garmin-backed): we queried the source and
+            #     it didn't return that field. Emit `unavailable_at_source:
+            #     <fields>` — the gap is the source's, not ours, and is
+            #     qualitatively different from an incomplete-user-log
+            #     `partial`. The agent reads this as "Garmin didn't record"
+            #     rather than "data collection is still in progress."
+            if domain in _USER_REPORTED_DOMAINS:
+                if is_today and is_before_cutover:
+                    return row, f"pending_user_input:{','.join(null_fields)}"
+                return row, f"partial:{','.join(null_fields)}"
+            return row, f"unavailable_at_source:{','.join(null_fields)}"
 
         # No row. Decide absent vs pending_user_input.
         if (
@@ -322,33 +328,37 @@ def build_snapshot(
         today_garmin_stress = recovery_today.get("all_day_stress")
         today_manual_stress = recovery_today.get("manual_stress_score")
 
-    stress_nulls: list[str] = []
-    if today_garmin_stress is None:
-        stress_nulls.append("all_day_stress")
-    if today_manual_stress is None:
-        stress_nulls.append("manual_stress_score")
+    garmin_null = today_garmin_stress is None
+    manual_null = today_manual_stress is None
 
-    if not stress_nulls:
+    # Stress blends two origins into one block: Garmin (passive) +
+    # user_manual (user-reported). Missingness routes by origin per
+    # state_model_v1.md §5:
+    #   - Both present: `present`.
+    #   - Both null + today/before-cutover: `pending_user_input` (user can
+    #     still log; Garmin's absence doesn't resolve by user action, but
+    #     we keep the bare token here since the user can still contribute).
+    #   - Both null + day closed: `absent` (no stress evidence at all).
+    #   - Garmin null only: `unavailable_at_source:all_day_stress` — the
+    #     source was queried and didn't return. Independent of time-of-day.
+    #   - Manual null only: routed by time. today/before-cutover →
+    #     `pending_user_input:manual_stress_score`; day closed →
+    #     `partial:manual_stress_score`.
+    if not garmin_null and not manual_null:
         stress_mx = "present"
-    elif len(stress_nulls) == 2:
-        # Neither signal present. Treat as absent, unless today is still in
-        # progress and the user might still log — then pending_user_input.
+    elif garmin_null and manual_null:
         if is_today and is_before_cutover:
             stress_mx = "pending_user_input"
         else:
             stress_mx = "absent"
+    elif garmin_null:
+        stress_mx = "unavailable_at_source:all_day_stress"
     else:
-        # One signal present, the other null. Garmin-present + manual-null
-        # must not flatten to `absent`: Garmin data is real evidence that
-        # the manual gap alone defines.
-        if (
-            is_today
-            and is_before_cutover
-            and "manual_stress_score" in stress_nulls
-        ):
-            stress_mx = f"pending_user_input:{','.join(stress_nulls)}"
+        # manual_null only
+        if is_today and is_before_cutover:
+            stress_mx = "pending_user_input:manual_stress_score"
         else:
-            stress_mx = f"partial:{','.join(stress_nulls)}"
+            stress_mx = "partial:manual_stress_score"
 
     return {
         "schema_version": "state_snapshot.v1",

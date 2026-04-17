@@ -111,12 +111,17 @@ class RawSummary:
     garmin_acwr_ratio: Optional[float] = None
     acwr_status: Optional[str] = None
 
-    # Garmin Training Readiness — overall + five component pcts. The
-    # overall pct is computed as the mean of the five components when
-    # all five are present; None otherwise. training_readiness_level
-    # preserves Garmin's categorical band (e.g. "High", "Moderate").
+    # Garmin Training Readiness — five exported component pcts plus a
+    # locally-computed mean. Garmin does NOT export its own overall
+    # Training Readiness pct in the daily CSV; only the five component
+    # pcts and the categorical level. training_readiness_component_mean_pct
+    # is a plain arithmetic mean of the five components (no Garmin-style
+    # weighting). When any component is missing, the mean is None.
+    # training_readiness_level preserves Garmin's categorical band (e.g.
+    # "High", "LOW") — that IS vendor-authored and can disagree with the
+    # local mean.
     training_readiness_level: Optional[str] = None
-    training_readiness_pct: Optional[float] = None
+    training_readiness_component_mean_pct: Optional[float] = None
     training_readiness_sleep_pct: Optional[float] = None
     training_readiness_hrv_pct: Optional[float] = None
     training_readiness_stress_pct: Optional[float] = None

@@ -48,21 +48,60 @@ Missing fields mean the source did not report that signal. Do not fabricate.
 
 ## Richer Garmin signals (7B)
 
-`hai clean`'s `raw_summary` and `hai state snapshot`'s `recovery.today` both carry a set of Garmin-native today-only fields you should cross-check against your own banding:
+7B adds more fields, but **they don't all come from the same read surface**. Read this table carefully before you reach for a field:
 
-- **`training_readiness_pct`** (0–100, float). Mean of five Garmin component pcts (`training_readiness_sleep_pct`, `_hrv_pct`, `_stress_pct`, `_sleep_history_pct`, `_load_pct`). A pre-computed vendor score: useful as a reality check against your own recovery-status classification. **If your agent-computed `recovery_status` is `impaired` but `training_readiness_pct ≥ 75`, name the disagreement in `rationale[]` and lean towards the higher-coverage signal** (usually Garmin's, because it sees overnight sleep components you don't).
-  - `training_readiness_level` (categorical string — e.g. `"High"`, `"Moderate"`, `"Low"`). Garmin's banded label. Surface it alongside the pct in rationale.
-- **`all_day_stress`** (0–100, int). Garmin's own all-day stress score. Combine with the user's `manual_stress_score` (from the `stress` snapshot block) when the manual is present; fall back to this alone when it isn't.
-- **`body_battery_end_of_day`** (0–100, int). Garmin's energy reserve proxy at day-end.
-- **`garmin_acwr_ratio`** (float). Acute-chronic workload ratio computed from Garmin's `acute_load`/`chronic_load`. Distinct from the `training_load_ratio_vs_baseline` you compute from the 7-day-vs-28-day window — Garmin uses its own time windows. Use both: they should agree directionally on spike days.
-  - `acwr_status` (categorical string — `"Optimal"`, `"Undertrained"`, `"Overreaching"`, etc.). Garmin's band on that ratio.
-- **`moderate_intensity_min`, `vigorous_intensity_min`, `total_distance_m`** (ints / float). Intensity-minute and distance totals for the day. Useful context when a session's already started before you run.
+### Fields on `snapshot.recovery.today`
 
-**How to use these in classification.** Your existing bands (sleep debt, RHR, HRV, load) stay authoritative — they're deterministic and transparent. The Garmin signals are a **sanity layer**: if your agent-computed `readiness_score` diverges sharply from `training_readiness_pct` (say, by > 20 percentage points), that's a signal to lower confidence from `high` to `moderate` and name the divergence in `uncertainty[]` as `agent_garmin_readiness_disagreement`.
+The snapshot-level recovery view carries these Garmin-sourced fields. No secondary call needed:
 
-**What you do NOT do.** Do not override your agent bands with Garmin bands. Do not invent weighted blends. The skill's job is to interpret state; the runtime's job (enforced by `hai writeback`) is to bound what you emit. Surface vendor-pre-computed signals as cross-checks, not as replacements.
+- `sleep_hours`, `resting_hr`, `hrv_ms` — the original 7A.1 signals.
+- `all_day_stress` (0–100, int) — Garmin's passive all-day stress integration.
+- `acute_load`, `chronic_load`, `acwr_ratio` — Garmin's raw load values + a locally-computed `acute/chronic` ratio.
+- `training_readiness_component_mean_pct` (0–100, float) — **locally-computed arithmetic mean** of Garmin's five Training Readiness component pcts. This is **not** Garmin's own overall Training Readiness score; Garmin doesn't export that number in its daily CSV. Garmin weights the components internally, so this mean can disagree with `training_readiness_level` (see below). Treat it as a rough summary, not as Garmin's own judgment.
+- `body_battery_end_of_day` (0–100, int) — Garmin's energy reserve proxy at day-end.
+- `manual_stress_score` — always NULL in v1 (user-reported intake ships with 7C).
 
-Missing fields in this block mean Garmin didn't record that signal. Do not fabricate. Add a specific uncertainty token per missing field (e.g. `training_readiness_pct_unavailable`, `body_battery_unavailable`).
+### Fields on `snapshot.running.today`
+
+The snapshot-level running view (daily-grain, `derivation_path='garmin_daily'`) carries:
+
+- `total_distance_m` — aggregate distance for the day.
+- `moderate_intensity_min`, `vigorous_intensity_min` — intensity-minute counts.
+- `session_count`, `total_duration_s` — NULL by design on the `garmin_daily` derivation path (they'd require per-activity source data). Not a partial signal; do not flag.
+
+### Fields only in `hai clean`'s `raw_summary`
+
+These are **not** on the snapshot today-row yet. To read them, run `hai clean --evidence-json <path> --db-path <db>` against the pulled evidence JSON; the fields appear under the `raw_summary` key on stdout:
+
+- `training_readiness_level` (categorical string — e.g. `"High"`, `"LOW"`, `"Moderate"`). Garmin's own categorical readiness band. **This is vendor-authored**, unlike the component mean above. When it disagrees with your agent-computed recovery status or with `training_readiness_component_mean_pct`, surface the disagreement in rationale and treat confidence cautiously.
+- The five Training Readiness component pcts: `training_readiness_sleep_pct`, `_hrv_pct`, `_stress_pct`, `_sleep_history_pct`, `_load_pct`. Inspect components directly when the mean and level disagree.
+- `garmin_acwr_ratio` — duplicate of `snapshot.recovery.today.acwr_ratio`, kept alongside:
+- `acwr_status` (categorical string — e.g. `"Optimal"`). Garmin's own band for the acute/chronic ratio.
+
+### How to use these in classification
+
+Your existing deterministic bands (sleep debt, RHR, HRV, load) remain authoritative. The Garmin signals give you:
+
+1. **A sanity cross-check.** If `recovery_status='impaired'` but `training_readiness_level='High'` (vendor-banded, not your local mean), name the disagreement in `rationale[]` as `agent_vendor_readiness_disagreement` and lower confidence from `high` to `moderate`.
+2. **Extra context you couldn't derive yourself.** `body_battery_end_of_day`, `all_day_stress`, and intensity minutes are passive aggregates that your own bands don't try to reproduce. Surface them as informational lines in `rationale[]` when they support the conclusion (e.g., `all_day_stress=72 supports elevated sleep debt band`).
+3. **Disagreement handling.** If your local `training_readiness_component_mean_pct` diverges from `training_readiness_level` (e.g., mean=70.0 but level="LOW"), that means Garmin's internal weighting prioritized a component you didn't. Do not trust the local mean alone; pair it with the categorical level in rationale and add `training_readiness_weighting_disagreement` to uncertainty.
+
+### What you do NOT do
+
+- Do not override your agent bands with Garmin bands; both are signals, neither is ground truth.
+- Do not invent weighted blends.
+- Do not treat `training_readiness_component_mean_pct` as a vendor score. It's a local arithmetic mean.
+
+### Missingness semantics for these fields
+
+Per state_model_v1.md §5, the snapshot's `missingness` token distinguishes:
+
+- `unavailable_at_source:<fields>` — Garmin was queried and didn't return that field (common for overnight HRV, single-component readiness pcts, etc.). **This is the expected tag for passive Garmin gaps.** Do not treat it as "data collection failure"; it's "Garmin didn't record."
+- `partial:<fields>` — day closed and user-reported fields are still missing.
+- `pending_user_input:<fields>` — today before 23:30, user may still log.
+- `absent` — no row at all.
+
+When you see `unavailable_at_source:training_readiness_component_mean_pct` on `snapshot.recovery.missingness`, that means Garmin didn't record at least one of the five readiness components for that day (usually because overnight sleep wasn't tracked). Add a specific uncertainty token per such field (e.g. `training_readiness_unavailable_at_source`, `body_battery_unavailable_at_source`).
 
 ## Step 1 — Classify state
 

@@ -251,8 +251,9 @@ def test_accepted_recovery_insert_sets_projected_at_and_null_corrected_at(tmp_pa
         assert row["chronic_load"] == 380.0
         # acwr_ratio is computed: 400/380
         assert row["acwr_ratio"] == pytest.approx(400.0 / 380.0, rel=0.001)
-        # Phase 7B: training_readiness_pct = mean of (82,70,75,88,65) = 76.0
-        assert row["training_readiness_pct"] == pytest.approx(76.0, rel=0.01)
+        # Phase 7B: training_readiness_component_mean_pct = mean of
+        # (82,70,75,88,65) = 76.0 (locally computed; not a Garmin overall).
+        assert row["training_readiness_component_mean_pct"] == pytest.approx(76.0, rel=0.01)
         assert row["body_battery_end_of_day"] == 65
         assert row["projected_at"] is not None
         assert row["corrected_at"] is None
@@ -413,6 +414,126 @@ def test_snapshot_user_reported_partial_after_cutover_is_partial(tmp_path: Path)
     mx = snap["nutrition"]["missingness"]
     assert mx.startswith("partial:"), f"expected partial, got {mx!r}"
     assert "carbs_g" in mx and "fat_g" in mx
+
+
+# ---------------------------------------------------------------------------
+# Missingness taxonomy: passive-Garmin null uses unavailable_at_source
+# ---------------------------------------------------------------------------
+
+def test_snapshot_recovery_passive_null_uses_unavailable_at_source(tmp_path: Path):
+    """Recovery is a passive Garmin-backed domain. When a required field is
+    NULL, the snapshot must emit `unavailable_at_source:<fields>`, NOT
+    `partial:<fields>`. This preserves the state_model_v1.md §5 distinction
+    between "source was asked and didn't return" and "user input incomplete."""
+
+    db = _init_db(tmp_path)
+    conn = open_connection(db)
+    try:
+        # Build a raw row where Garmin failed to record HRV + one readiness
+        # component (realistic: user didn't wear the watch overnight).
+        raw = _full_raw_row()
+        raw["health_hrv_value"] = None
+        raw["training_readiness_sleep_pct"] = None
+        project_accepted_recovery_state_daily(
+            conn, as_of_date=AS_OF, user_id=USER, raw_row=raw,
+        )
+        snap = build_snapshot(
+            conn, as_of_date=AS_OF, user_id=USER,
+            now_local=datetime(2026, 5, 1, 10, 0),  # day well-closed
+        )
+    finally:
+        conn.close()
+
+    mx = snap["recovery"]["missingness"]
+    assert mx.startswith("unavailable_at_source:"), f"got {mx!r}"
+    assert "hrv_ms" in mx
+    assert "training_readiness_component_mean_pct" in mx
+    # Passive domains never emit `partial:` or `pending_user_input:` on
+    # null-field-list since no user action would change the outcome.
+    assert not mx.startswith("partial:")
+    assert not mx.startswith("pending_user_input:")
+
+
+def test_snapshot_running_passive_null_uses_unavailable_at_source(tmp_path: Path):
+    """Same contract for running: Garmin-sourced NULLs → unavailable_at_source."""
+
+    db = _init_db(tmp_path)
+    conn = open_connection(db)
+    try:
+        raw = _full_raw_row()
+        raw["distance_m"] = None  # Garmin didn't record distance today
+        project_accepted_running_state_daily(
+            conn, as_of_date=AS_OF, user_id=USER, raw_row=raw,
+        )
+        snap = build_snapshot(
+            conn, as_of_date=AS_OF, user_id=USER,
+            now_local=datetime(2026, 5, 1, 10, 0),
+        )
+    finally:
+        conn.close()
+
+    mx = snap["running"]["missingness"]
+    assert mx == "unavailable_at_source:total_distance_m", f"got {mx!r}"
+
+
+def test_snapshot_recovery_passive_null_is_source_tag_even_before_cutover(tmp_path: Path):
+    """Passive-domain missingness is time-of-day independent: Garmin didn't
+    record, and that's true regardless of whether the user is still awake."""
+
+    db = _init_db(tmp_path)
+    conn = open_connection(db)
+    try:
+        raw = _full_raw_row()
+        raw["health_hrv_value"] = None
+        project_accepted_recovery_state_daily(
+            conn, as_of_date=AS_OF, user_id=USER, raw_row=raw,
+        )
+        # Before cutover — user could still log stress, but Garmin won't
+        # retroactively record HRV. The tag stays unavailable_at_source.
+        snap = build_snapshot(
+            conn, as_of_date=AS_OF, user_id=USER,
+            now_local=datetime(AS_OF.year, AS_OF.month, AS_OF.day, 14, 0),
+        )
+    finally:
+        conn.close()
+
+    mx = snap["recovery"]["missingness"]
+    assert mx.startswith("unavailable_at_source:"), f"got {mx!r}"
+
+
+def test_snapshot_stress_garmin_null_manual_present_uses_unavailable_at_source(tmp_path: Path):
+    """Stress block: Garmin null + manual present must not flatten to
+    `partial:all_day_stress` — the Garmin side is passive and its NULL is
+    `unavailable_at_source`, not "incomplete logging."""
+
+    db = _init_db(tmp_path)
+    conn = open_connection(db)
+    try:
+        # Seed recovery with all_day_stress=NULL and manual_stress_score=3
+        # directly via SQL (the cmd_clean path can't do this in v1 since
+        # manual stress is 7C territory — but 7C's intake will eventually
+        # merge into this same row, and we need the semantics locked now).
+        raw = _full_raw_row()
+        raw["all_day_stress"] = None
+        project_accepted_recovery_state_daily(
+            conn, as_of_date=AS_OF, user_id=USER, raw_row=raw,
+        )
+        conn.execute(
+            "UPDATE accepted_recovery_state_daily "
+            "SET manual_stress_score = 3 "
+            "WHERE as_of_date = ? AND user_id = ?",
+            (AS_OF.isoformat(), USER),
+        )
+        conn.commit()
+        snap = build_snapshot(
+            conn, as_of_date=AS_OF, user_id=USER,
+            now_local=datetime(2026, 5, 1, 10, 0),
+        )
+    finally:
+        conn.close()
+
+    mx = snap["stress"]["missingness"]
+    assert mx == "unavailable_at_source:all_day_stress", f"got {mx!r}"
 
 
 # ---------------------------------------------------------------------------

@@ -109,8 +109,9 @@ def test_raw_summary_populates_garmin_richness_fields_from_raw_row():
     assert summary.garmin_acwr_ratio == pytest.approx(1.053, abs=0.001)
     assert summary.acwr_status == "Optimal"
     assert summary.training_readiness_level == "High"
-    # Mean of (82, 70, 75, 88, 65) = 76.0
-    assert summary.training_readiness_pct == pytest.approx(76.0, rel=0.01)
+    # Locally-computed arithmetic mean of (82, 70, 75, 88, 65) = 76.0. NOT
+    # Garmin's own overall Training Readiness — Garmin doesn't export that.
+    assert summary.training_readiness_component_mean_pct == pytest.approx(76.0, rel=0.01)
     assert summary.training_readiness_sleep_pct == 82.0
     assert summary.training_readiness_hrv_pct == 70.0
     assert summary.training_readiness_stress_pct == 75.0
@@ -139,14 +140,13 @@ def test_raw_summary_garmin_fields_are_none_when_raw_row_absent():
     assert summary.garmin_acwr_ratio is None
     assert summary.acwr_status is None
     assert summary.training_readiness_level is None
-    assert summary.training_readiness_pct is None
+    assert summary.training_readiness_component_mean_pct is None
     assert summary.training_readiness_sleep_pct is None
 
 
-def test_raw_summary_training_readiness_pct_is_none_when_any_component_missing():
-    """Overall training_readiness_pct is computed as the MEAN of all 5
-    components. If any one is missing, the overall stays None — we don't
-    fabricate a partial average."""
+def test_raw_summary_training_readiness_component_mean_pct_is_none_when_any_component_missing():
+    """The local arithmetic mean requires all 5 components. If any is
+    missing, the mean stays None — we don't fabricate a partial average."""
 
     raw = _full_raw_row()
     raw["training_readiness_hrv_pct"] = None  # drop one component
@@ -159,7 +159,7 @@ def test_raw_summary_training_readiness_pct_is_none_when_any_component_missing()
         garmin_training_load_7d=[],
         raw_daily_row=raw,
     )
-    assert summary.training_readiness_pct is None
+    assert summary.training_readiness_component_mean_pct is None
     # But the four present components are still surfaced individually:
     assert summary.training_readiness_sleep_pct == 82.0
     assert summary.training_readiness_hrv_pct is None
@@ -237,7 +237,7 @@ def _init_db(tmp_path: Path) -> Path:
     return db
 
 
-def test_cli_clean_populates_training_readiness_pct_on_accepted_recovery(tmp_path: Path):
+def test_cli_clean_populates_training_readiness_component_mean_pct_on_accepted_recovery(tmp_path: Path):
     db = _init_db(tmp_path)
     evidence = _write_pull_payload(tmp_path)
     rc = cli_main([
@@ -255,12 +255,15 @@ def test_cli_clean_populates_training_readiness_pct_on_accepted_recovery(tmp_pat
 
     assert len(rows) == 1
     # Mean of (82, 70, 75, 88, 65) = 76.0
-    assert rows[0]["training_readiness_pct"] == pytest.approx(76.0, rel=0.01)
+    assert rows[0]["training_readiness_component_mean_pct"] == pytest.approx(76.0, rel=0.01)
 
 
-def test_cli_clean_training_readiness_pct_null_when_component_missing(tmp_path: Path):
-    """A real-world Garmin row without all five components yields NULL
-    training_readiness_pct; snapshot flags it as `partial:training_readiness_pct`."""
+def test_cli_clean_readiness_null_on_missing_component_surfaces_unavailable_at_source(tmp_path: Path):
+    """A Garmin row missing one readiness component yields NULL mean. The
+    snapshot must tag this as `unavailable_at_source:training_readiness_component_mean_pct`,
+    NOT `partial:...`: the source (Garmin) was queried and didn't record —
+    that's qualitatively different from incomplete user-logged data
+    (state_model_v1.md §5)."""
 
     raw = _full_raw_row()
     raw["training_readiness_stress_pct"] = None
@@ -282,17 +285,17 @@ def test_cli_clean_training_readiness_pct_null_when_component_missing(tmp_path: 
         conn.close()
 
     row = snap["recovery"]["today"]
-    assert row["training_readiness_pct"] is None
-    # Stress is still partial because manual_stress_score is None.
-    # Recovery missingness includes training_readiness_pct as a required v1
-    # field that's gone NULL — honest partial.
+    assert row["training_readiness_component_mean_pct"] is None
     mx = snap["recovery"]["missingness"]
-    assert "training_readiness_pct" in mx
+    # Must be unavailable_at_source (Garmin-didn't-record), NOT partial
+    # (which would imply incomplete user logging).
+    assert mx.startswith("unavailable_at_source:"), f"got {mx!r}"
+    assert "training_readiness_component_mean_pct" in mx
 
 
 def test_cli_clean_snapshot_recovery_present_with_full_7b_row(tmp_path: Path):
-    """A fully-populated Garmin row now produces recovery.missingness='present' —
-    training_readiness_pct landed, completing the v1 required set."""
+    """A fully-populated Garmin row produces recovery.missingness='present' —
+    the locally-computed readiness mean completes the v1 required set."""
 
     db = _init_db(tmp_path)
     evidence = _write_pull_payload(tmp_path)
@@ -311,7 +314,7 @@ def test_cli_clean_snapshot_recovery_present_with_full_7b_row(tmp_path: Path):
         conn.close()
 
     assert snap["recovery"]["missingness"] == "present"
-    assert snap["recovery"]["today"]["training_readiness_pct"] == pytest.approx(76.0, rel=0.01)
+    assert snap["recovery"]["today"]["training_readiness_component_mean_pct"] == pytest.approx(76.0, rel=0.01)
 
 
 # ---------------------------------------------------------------------------
@@ -344,7 +347,7 @@ def test_real_garmin_slice_populates_every_new_raw_summary_field():
         "all_day_stress", "body_battery_end_of_day",
         "total_distance_m", "moderate_intensity_min", "vigorous_intensity_min",
         "garmin_acwr_ratio", "acwr_status",
-        "training_readiness_level", "training_readiness_pct",
+        "training_readiness_level", "training_readiness_component_mean_pct",
         "training_readiness_sleep_pct", "training_readiness_hrv_pct",
         "training_readiness_stress_pct", "training_readiness_sleep_history_pct",
         "training_readiness_load_pct",
@@ -359,7 +362,7 @@ def test_real_garmin_slice_populates_every_new_raw_summary_field():
             "all_day_stress", "body_battery_end_of_day",
             "total_distance_m", "moderate_intensity_min",
             "vigorous_intensity_min", "garmin_acwr_ratio",
-            "training_readiness_level", "training_readiness_pct",
+            "training_readiness_level", "training_readiness_component_mean_pct",
         ) if payload[k] is not None
     )
     assert nonnull_new >= 4, (
@@ -383,7 +386,7 @@ def test_recovery_readiness_skill_names_7b_fields():
     # agent has an anchor when reading snapshot/clean output. We don't pin
     # prose; we pin that the names exist.
     for token in (
-        "training_readiness_pct",
+        "training_readiness_component_mean_pct",
         "training_readiness_level",
         "all_day_stress",
         "body_battery_end_of_day",
@@ -394,3 +397,19 @@ def test_recovery_readiness_skill_names_7b_fields():
         "total_distance_m",
     ):
         assert token in skill, f"SKILL.md missing 7B field: {token}"
+    # Must NOT FRAME the local mean as a pre-computed vendor score — that
+    # was the 7B finding that prompted the rename + skill rewrite. The
+    # word "vendor score" may appear in a prohibitive context (e.g. "do
+    # not treat X as a vendor score"); we pin the misleading POSITIVE
+    # framing specifically.
+    lower = skill.lower()
+    assert "pre-computed vendor score" not in lower, (
+        "SKILL.md still frames training_readiness_component_mean_pct as a "
+        "pre-computed vendor score. It's a locally-computed arithmetic mean."
+    )
+    # Must call out the provenance explicitly — "locally" or "local" should
+    # appear near the computed mean. Light-touch assertion:
+    assert "locally-computed" in lower or "arithmetic mean" in lower, (
+        "SKILL.md must explain training_readiness_component_mean_pct is a "
+        "local computation, not a vendor-authored number."
+    )
