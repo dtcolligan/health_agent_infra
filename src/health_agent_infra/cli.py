@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import sys
 from dataclasses import asdict, is_dataclass
@@ -35,9 +36,18 @@ from health_agent_infra.domains.recovery import (
     classify_recovery_state,
     evaluate_recovery_policy,
 )
+from health_agent_infra.core.pull.auth import (
+    CredentialStore,
+    KeyringUnavailableError,
+)
 from health_agent_infra.core.pull.garmin import (
     GarminRecoveryReadinessAdapter,
     default_manual_readiness,
+)
+from health_agent_infra.core.pull.garmin_live import (
+    GarminLiveAdapter,
+    GarminLiveError,
+    build_default_client,
 )
 from health_agent_infra.core.review.outcomes import (
     persist_review_event,
@@ -107,8 +117,21 @@ def _emit_json(obj: Any) -> None:
 
 def cmd_pull(args: argparse.Namespace) -> int:
     as_of = _coerce_date(args.date)
-    adapter = GarminRecoveryReadinessAdapter()
-    pull = adapter.load(as_of)
+
+    if getattr(args, "live", False):
+        try:
+            adapter = _build_live_adapter(args)
+        except GarminLiveError as exc:
+            print(f"live pull error: {exc}", file=sys.stderr)
+            return 2
+    else:
+        adapter = GarminRecoveryReadinessAdapter()
+
+    try:
+        pull = adapter.load(as_of)
+    except GarminLiveError as exc:
+        print(f"live pull error: {exc}", file=sys.stderr)
+        return 2
 
     manual = None
     if args.manual_readiness_json:
@@ -125,6 +148,25 @@ def cmd_pull(args: argparse.Namespace) -> int:
     }
     _emit_json(payload)
     return 0
+
+
+def _build_live_adapter(args: argparse.Namespace):
+    """Resolve credentials → live client → adapter, or raise GarminLiveError.
+
+    Pulled into a helper so tests can monkeypatch the client-building step
+    while exercising the real CLI arg parsing and credential flow.
+    """
+
+    store = CredentialStore.default()
+    credentials = store.load_garmin()
+    if credentials is None:
+        raise GarminLiveError(
+            "no Garmin credentials found. Run `hai auth garmin` or set "
+            "HAI_GARMIN_EMAIL + HAI_GARMIN_PASSWORD."
+        )
+    client = build_default_client(credentials)
+    history_days = getattr(args, "history_days", 14)
+    return GarminLiveAdapter(client=client, history_days=history_days)
 
 
 # ---------------------------------------------------------------------------
@@ -341,6 +383,99 @@ def _dual_write_project(db_path_arg, project_fn, label: str) -> None:
         )
     finally:
         conn.close()
+
+
+# ---------------------------------------------------------------------------
+# hai auth garmin / hai auth status
+# ---------------------------------------------------------------------------
+
+def cmd_auth_garmin(args: argparse.Namespace) -> int:
+    """Store Garmin credentials in the OS keyring.
+
+    Non-interactive callers (agents, tests) supply ``--email`` and either
+    ``--password-stdin`` (reads one password line from stdin) or the
+    ``HAI_GARMIN_PASSWORD`` env var. Interactive callers are prompted via
+    ``input()`` / ``getpass``. The password is never echoed or logged.
+    """
+
+    import getpass
+
+    email = args.email
+    password = None
+
+    if args.password_stdin:
+        password = sys.stdin.readline().rstrip("\n")
+    elif args.password_env:
+        password = os.environ.get(args.password_env)
+        if not password:
+            print(
+                f"auth error: env var {args.password_env} is not set or empty",
+                file=sys.stderr,
+            )
+            return 2
+
+    if email is None:
+        try:
+            email = input("Garmin email: ").strip()
+        except EOFError:
+            print("auth error: no email provided", file=sys.stderr)
+            return 2
+    if not email:
+        print("auth error: email must be non-empty", file=sys.stderr)
+        return 2
+
+    if password is None:
+        try:
+            password = getpass.getpass("Garmin password: ")
+        except EOFError:
+            print("auth error: no password provided", file=sys.stderr)
+            return 2
+    if not password:
+        print("auth error: password must be non-empty", file=sys.stderr)
+        return 2
+
+    store = _credential_store_for(args)
+    try:
+        store.store_garmin(email, password)
+    except KeyringUnavailableError as exc:
+        print(f"auth error: {exc}", file=sys.stderr)
+        return 2
+    except ValueError as exc:
+        print(f"auth error: {exc}", file=sys.stderr)
+        return 2
+
+    # Emit a non-secret confirmation. Email presence is fine to surface so
+    # the operator sees which account was stored; password is never shown.
+    _emit_json({
+        "stored": True,
+        "service": "garmin",
+        "email": email,
+        "backend": _backend_kind(store),
+    })
+    return 0
+
+
+def cmd_auth_status(args: argparse.Namespace) -> int:
+    """Report credential presence only — never prints secrets."""
+
+    store = _credential_store_for(args)
+    status = store.garmin_status()
+    status["backend"] = _backend_kind(store)
+    _emit_json(status)
+    return 0
+
+
+def _credential_store_for(args: argparse.Namespace) -> CredentialStore:
+    # Tests set ``_credential_store_override`` via monkeypatching to inject
+    # a backend; production falls through to the real keyring + env.
+    override = getattr(args, "_credential_store_override", None)
+    if override is not None:
+        return override
+    return CredentialStore.default()
+
+
+def _backend_kind(store: CredentialStore) -> str:
+    return type(store.backend).__name__
 
 
 def cmd_writeback(args: argparse.Namespace) -> int:
@@ -1600,7 +1735,38 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Path to a JSON file with manual readiness fields")
     p_pull.add_argument("--use-default-manual-readiness", action="store_true",
                         help="Use a neutral manual readiness default (for offline runs)")
+    p_pull.add_argument("--live", action="store_true",
+                        help="Fetch from Garmin Connect via stored credentials. "
+                             "Default (flag omitted) continues to read the "
+                             "committed CSV export.")
+    p_pull.add_argument("--history-days", type=int, default=14,
+                        help="Trailing window size for resting_hr / hrv / "
+                             "training_load series (live pull only). Matches "
+                             "the CSV adapter default.")
     p_pull.set_defaults(func=cmd_pull)
+
+    p_auth = sub.add_parser("auth", help="Credential management for external sources")
+    auth_sub = p_auth.add_subparsers(dest="auth_command", required=True)
+
+    p_auth_garmin = auth_sub.add_parser(
+        "garmin",
+        help="Store Garmin credentials in the OS keyring (interactive by default)",
+    )
+    p_auth_garmin.add_argument("--email", default=None,
+                               help="Garmin account email (prompts if omitted)")
+    p_auth_garmin.add_argument("--password-stdin", action="store_true",
+                               help="Read the Garmin password from a single "
+                                    "line on stdin (for non-interactive use)")
+    p_auth_garmin.add_argument("--password-env", default=None,
+                               help="Read the Garmin password from the named "
+                                    "environment variable")
+    p_auth_garmin.set_defaults(func=cmd_auth_garmin)
+
+    p_auth_status = auth_sub.add_parser(
+        "status",
+        help="Report whether credentials are configured (presence only, no secrets)",
+    )
+    p_auth_status.set_defaults(func=cmd_auth_status)
 
     p_clean = sub.add_parser("clean", help="Normalize pulled evidence + raw summary")
     p_clean.add_argument("--evidence-json", required=True,

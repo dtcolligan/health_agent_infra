@@ -12,6 +12,8 @@ license = { file = "LICENSE" }
 dependencies = [
   "pandas>=2.0",
   "platformdirs>=4.0",
+  "keyring>=24.0",
+  "garminconnect>=0.2",
 ]
 keywords = ["health", "agents", "cli", "claude", "skills"]
 classifiers = [
@@ -36,3 +38,8 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["safety/tests"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+]
