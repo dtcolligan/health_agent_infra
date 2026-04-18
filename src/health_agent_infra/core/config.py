@@ -86,6 +86,53 @@ DEFAULT_THRESHOLDS: dict[str, Any] = {
                 "recovery_adjacent_compromised": 0.20,
             },
         },
+        "sleep": {
+            # Aligned with recovery.sleep_debt_band so the Phase-3-step-5
+            # X1 rewire (X1a moderate → soften; X1b elevated → block) can
+            # flip from reading the recovery classifier to reading the
+            # sleep classifier without re-thresholding.
+            "sleep_debt_band": {
+                "none_min_hours": 7.5,
+                "mild_min_hours": 7.0,
+                "moderate_min_hours": 6.0,
+            },
+            # Boundaries on Garmin's 0-100 sleep_score_overall. A value
+            # AT a boundary lands in the higher band.
+            "sleep_quality_band": {
+                "excellent_min_score": 90,
+                "good_min_score": 80,
+                "fair_min_score": 60,
+            },
+            # Boundaries on sleep_start_variance_minutes (stddev of
+            # sleep_start_ts across recent nights). v1.1 enrichment;
+            # v1 production sees None here and classifies as "unknown".
+            "sleep_timing_consistency_band": {
+                "consistent_max_stddev_min": 30,
+                "variable_max_stddev_min": 60,
+            },
+            # Boundaries on efficiency_pct = asleep_min /
+            # (asleep_min + awake_min) * 100.
+            "sleep_efficiency_band": {
+                "excellent_min_pct": 90,
+                "good_min_pct": 85,
+                "fair_min_pct": 75,
+            },
+            # Additive penalties; negative values are bonuses.
+            "sleep_score_penalty": {
+                "debt_mild": 0.05,
+                "debt_moderate": 0.15,
+                "debt_elevated": 0.25,
+                "quality_excellent": -0.02,
+                "quality_good": 0.0,
+                "quality_fair": 0.10,
+                "quality_poor": 0.20,
+                "efficiency_excellent": -0.02,
+                "efficiency_fair": 0.05,
+                "efficiency_poor": 0.15,
+                "consistency_variable": 0.02,
+                "consistency_highly_variable": 0.08,
+            },
+        },
         "recovery": {
             "sleep_debt_band": {
                 "none_min_hours": 7.5,
@@ -128,6 +175,15 @@ DEFAULT_THRESHOLDS: dict[str, Any] = {
         },
     },
     "policy": {
+        "sleep": {
+            # R-chronic-deprivation: escalate when there have been this
+            # many or more nights of <chronic_deprivation_hours sleep in
+            # the trailing 7-night window (today included). Forces
+            # ``sleep_debt_repayment_day`` as the remedial action; the
+            # policy_decision tier records the ``escalate`` severity.
+            "r_chronic_deprivation_nights": 4,
+            "r_chronic_deprivation_hours": 6.0,
+        },
         "recovery": {
             "r6_resting_hr_spike_days_threshold": 3,
         },
