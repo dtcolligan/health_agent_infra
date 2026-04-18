@@ -1,4 +1,4 @@
-"""Gym-session intake — typed parsing + JSONL audit append.
+"""Strength intake surfaces — gym sessions + user taxonomy extension.
 
 Two input shapes land at the same typed ``GymSessionSubmission``:
 
@@ -23,10 +23,13 @@ replay.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Optional
+
+from health_agent_infra.domains.strength.signals import MUSCLE_GROUPS
 
 
 GYM_SESSIONS_JSONL = "gym_sessions.jsonl"
@@ -151,3 +154,98 @@ def append_submission_jsonl(
         for line in submission.to_jsonl_lines():
             fh.write(json.dumps(line, sort_keys=True) + "\n")
     return path
+
+
+# ---------------------------------------------------------------------------
+# User-defined exercise taxonomy intake
+# ---------------------------------------------------------------------------
+
+
+def normalize_exercise_id(value: str) -> str:
+    """Return a stable snake_case taxonomy id from free text.
+
+    ``hai intake exercise`` accepts an optional explicit ``--exercise-id``.
+    When omitted, we derive one deterministically from the canonical name so
+    re-running the same command is idempotent.
+    """
+
+    norm = re.sub(r"[^a-z0-9]+", "_", value.strip().casefold()).strip("_")
+    if not norm:
+        raise ValueError("exercise_id/name must contain at least one letter or digit")
+    return norm
+
+
+def _norm_token(value: str) -> str:
+    return value.strip().casefold()
+
+
+def _split_multi(value: Optional[str]) -> tuple[str, ...]:
+    if value is None or not value.strip():
+        return ()
+    parts = re.split(r"[|,]", value)
+    out: list[str] = []
+    seen: set[str] = set()
+    for raw in parts:
+        token = raw.strip()
+        if not token:
+            continue
+        key = _norm_token(token)
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(token)
+    return tuple(out)
+
+
+def _join_pipe(values: tuple[str, ...]) -> Optional[str]:
+    return "|".join(values) if values else None
+
+
+def build_manual_taxonomy_row(
+    *,
+    canonical_name: str,
+    primary_muscle_group: str,
+    category: str,
+    equipment: str,
+    exercise_id: Optional[str] = None,
+    aliases: Optional[str] = None,
+    secondary_muscle_groups: Optional[str] = None,
+) -> dict[str, Optional[str]]:
+    """Normalise `hai intake exercise` flags into one taxonomy row dict."""
+
+    canonical = canonical_name.strip()
+    if not canonical:
+        raise ValueError("--name must be a non-empty string")
+    primary = primary_muscle_group.strip()
+    if not primary:
+        raise ValueError("--primary-muscle-group must be a non-empty string")
+    if primary not in MUSCLE_GROUPS:
+        raise ValueError(
+            "--primary-muscle-group must be one of: "
+            + ", ".join(MUSCLE_GROUPS)
+        )
+
+    eid = normalize_exercise_id(exercise_id if exercise_id else canonical)
+
+    alias_values = tuple(
+        token for token in _split_multi(aliases)
+        if _norm_token(token) != _norm_token(canonical)
+    )
+    secondary_values = _split_multi(secondary_muscle_groups)
+    unknown_secondary = [g for g in secondary_values if g not in MUSCLE_GROUPS]
+    if unknown_secondary:
+        raise ValueError(
+            "--secondary-muscle-groups contains unknown values: "
+            + ", ".join(unknown_secondary)
+        )
+
+    return {
+        "exercise_id": eid,
+        "canonical_name": canonical,
+        "aliases": _join_pipe(alias_values),
+        "primary_muscle_group": primary,
+        "secondary_muscle_groups": _join_pipe(secondary_values),
+        "category": category,
+        "equipment": equipment,
+        "source": "user_manual",
+    }

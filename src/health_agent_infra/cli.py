@@ -19,6 +19,7 @@ import argparse
 import json
 import os
 import shutil
+import sqlite3
 import sys
 from dataclasses import asdict, is_dataclass
 from datetime import date, datetime, timezone
@@ -740,6 +741,10 @@ def cmd_review_summary(args: argparse.Namespace) -> int:
 
 SORENESS_CHOICES = ("low", "moderate", "high")
 ENERGY_CHOICES = ("low", "moderate", "high")
+EXERCISE_CATEGORY_CHOICES = ("compound", "isolation")
+EXERCISE_EQUIPMENT_CHOICES = (
+    "barbell", "dumbbell", "cable", "bodyweight", "machine", "kettlebell",
+)
 
 
 def cmd_intake_gym(args: argparse.Namespace) -> int:
@@ -962,6 +967,95 @@ def _project_gym_submission_into_state(db_path_arg, submission) -> None:
         )
     finally:
         conn.close()
+
+
+def cmd_intake_exercise(args: argparse.Namespace) -> int:
+    """Insert a user-defined exercise-taxonomy row into the state DB.
+
+    This is the deliberate extension path strength skills surface when
+    unmatched exercise tokens appear. It writes directly to
+    ``exercise_taxonomy`` with ``source='user_manual'``; no JSONL audit
+    exists for taxonomy rows in v1, so the DB row is the canonical record.
+    """
+
+    from health_agent_infra.core.state import (
+        open_connection,
+        project_exercise_taxonomy_entry,
+        resolve_db_path,
+    )
+    from health_agent_infra.domains.strength.intake import (
+        build_manual_taxonomy_row,
+    )
+
+    try:
+        row = build_manual_taxonomy_row(
+            canonical_name=args.name,
+            primary_muscle_group=args.primary_muscle_group,
+            category=args.category,
+            equipment=args.equipment,
+            exercise_id=args.exercise_id,
+            aliases=args.aliases,
+            secondary_muscle_groups=args.secondary_muscle_groups,
+        )
+    except ValueError as exc:
+        print(f"intake exercise rejected: {exc}", file=sys.stderr)
+        return 2
+
+    db_path = resolve_db_path(args.db_path)
+    if not db_path.exists():
+        print(
+            f"state DB not found at {db_path}. Run `hai state init` first.",
+            file=sys.stderr,
+        )
+        return 2
+
+    conn = open_connection(db_path)
+    try:
+        try:
+            inserted = project_exercise_taxonomy_entry(
+                conn,
+                exercise_id=row["exercise_id"],
+                canonical_name=row["canonical_name"],
+                aliases=row["aliases"],
+                primary_muscle_group=row["primary_muscle_group"],
+                secondary_muscle_groups=row["secondary_muscle_groups"],
+                category=row["category"],
+                equipment=row["equipment"],
+                source="user_manual",
+            )
+        except sqlite3.IntegrityError as exc:
+            print(f"intake exercise rejected: {exc}", file=sys.stderr)
+            return 2
+
+        saved = conn.execute(
+            """
+            SELECT exercise_id, canonical_name, aliases,
+                   primary_muscle_group, secondary_muscle_groups,
+                   category, equipment, source
+            FROM exercise_taxonomy
+            WHERE exercise_id = ?
+            """,
+            (row["exercise_id"],),
+        ).fetchone()
+    finally:
+        conn.close()
+
+    _emit_json({
+        "inserted": inserted,
+        "exercise_id": saved["exercise_id"],
+        "canonical_name": saved["canonical_name"],
+        "aliases": saved["aliases"].split("|") if saved["aliases"] else [],
+        "primary_muscle_group": saved["primary_muscle_group"],
+        "secondary_muscle_groups": (
+            saved["secondary_muscle_groups"].split("|")
+            if saved["secondary_muscle_groups"]
+            else []
+        ),
+        "category": saved["category"],
+        "equipment": saved["equipment"],
+        "source": saved["source"],
+    })
+    return 0
 
 
 def cmd_intake_nutrition(args: argparse.Namespace) -> int:
@@ -2005,6 +2099,31 @@ def build_parser() -> argparse.ArgumentParser:
     p_ig.add_argument("--db-path", default=None,
                       help="State DB path (same semantics as `hai writeback --db-path`)")
     p_ig.set_defaults(func=cmd_intake_gym)
+
+    p_ie = intake_sub.add_parser(
+        "exercise",
+        help="Add a user-defined exercise-taxonomy row for future matching",
+    )
+    p_ie.add_argument("--name", required=True,
+                      help="Canonical display name for the new lift")
+    p_ie.add_argument("--primary-muscle-group", required=True,
+                      help="Primary muscle group label stored on the taxonomy row")
+    p_ie.add_argument("--category", required=True,
+                      choices=EXERCISE_CATEGORY_CHOICES,
+                      help="Taxonomy category: compound | isolation")
+    p_ie.add_argument("--equipment", required=True,
+                      choices=EXERCISE_EQUIPMENT_CHOICES,
+                      help="Equipment bucket used in exercise search")
+    p_ie.add_argument("--exercise-id", default=None,
+                      help="Optional explicit taxonomy id. Defaults to a "
+                           "deterministic snake_case slug of --name")
+    p_ie.add_argument("--aliases", default=None,
+                      help="Optional comma- or pipe-separated aliases")
+    p_ie.add_argument("--secondary-muscle-groups", default=None,
+                      help="Optional comma- or pipe-separated secondary groups")
+    p_ie.add_argument("--db-path", default=None,
+                      help="State DB path (default: platformdirs user_data_dir)")
+    p_ie.set_defaults(func=cmd_intake_exercise)
 
     p_in = intake_sub.add_parser(
         "nutrition",

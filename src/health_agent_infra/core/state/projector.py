@@ -558,6 +558,97 @@ def project_gym_set(
     return True
 
 
+def project_exercise_taxonomy_entry(
+    conn: sqlite3.Connection,
+    *,
+    exercise_id: str,
+    canonical_name: str,
+    aliases: Optional[str],
+    primary_muscle_group: str,
+    secondary_muscle_groups: Optional[str],
+    category: str,
+    equipment: str,
+    source: str = "user_manual",
+    commit_after: bool = True,
+) -> bool:
+    """Insert one user-defined ``exercise_taxonomy`` row.
+
+    Idempotent on the full row shape: re-submitting the exact same
+    ``exercise_id`` / ``canonical_name`` / metadata tuple returns ``False``.
+    Conflicting reuse of an existing id or canonical name raises
+    ``sqlite3.IntegrityError`` so the CLI can fail loudly instead of
+    silently mutating taxonomy rows.
+    """
+
+    def _fetch_by(field: str, value: str) -> Optional[sqlite3.Row]:
+        return conn.execute(
+            f"""
+            SELECT exercise_id, canonical_name, aliases,
+                   primary_muscle_group, secondary_muscle_groups,
+                   category, equipment, source
+            FROM exercise_taxonomy
+            WHERE {field} = ?
+            """,
+            (value,),
+        ).fetchone()
+
+    by_id = _fetch_by("exercise_id", exercise_id)
+    by_name = _fetch_by("canonical_name", canonical_name)
+
+    if by_id is not None and by_name is not None and by_id["exercise_id"] != by_name["exercise_id"]:
+        raise sqlite3.IntegrityError(
+            "exercise taxonomy conflict: exercise_id and canonical_name map to different rows"
+        )
+
+    existing = by_id or by_name
+    desired = {
+        "exercise_id": exercise_id,
+        "canonical_name": canonical_name,
+        "aliases": aliases,
+        "primary_muscle_group": primary_muscle_group,
+        "secondary_muscle_groups": secondary_muscle_groups,
+        "category": category,
+        "equipment": equipment,
+        "source": source,
+    }
+
+    if existing is not None:
+        current = {
+            "exercise_id": existing["exercise_id"],
+            "canonical_name": existing["canonical_name"],
+            "aliases": existing["aliases"],
+            "primary_muscle_group": existing["primary_muscle_group"],
+            "secondary_muscle_groups": existing["secondary_muscle_groups"],
+            "category": existing["category"],
+            "equipment": existing["equipment"],
+            "source": existing["source"],
+        }
+        if current == desired:
+            return False
+        conflict_field = "exercise_id" if by_id is not None else "canonical_name"
+        raise sqlite3.IntegrityError(
+            f"exercise taxonomy conflict on existing {conflict_field}={desired[conflict_field]!r}"
+        )
+
+    conn.execute(
+        """
+        INSERT INTO exercise_taxonomy (
+            exercise_id, canonical_name, aliases,
+            primary_muscle_group, secondary_muscle_groups,
+            category, equipment, source
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            exercise_id, canonical_name, aliases,
+            primary_muscle_group, secondary_muscle_groups,
+            category, equipment, source,
+        ),
+    )
+    if commit_after:
+        conn.commit()
+    return True
+
+
 # Accepted resistance-training projection moved to
 # :mod:`health_agent_infra.core.state.projectors.strength` in Phase 4
 # step 2. The orchestrator re-exports it via the top-level imports so
