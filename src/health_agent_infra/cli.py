@@ -1929,6 +1929,39 @@ def cmd_setup_skills(args: argparse.Namespace) -> int:
 # argparse wiring
 # ---------------------------------------------------------------------------
 
+
+def _try_register_eval_subparser(sub: argparse._SubParsersAction) -> bool:
+    """Register ``hai eval`` if a ``safety/evals/`` tree is reachable.
+
+    The eval framework lives alongside the package (``safety/evals/``)
+    rather than inside the wheel. In a source checkout this path is
+    reachable by walking one level up from ``src/``; in a wheel-only
+    install the tree is absent and the subcommand is silently skipped.
+    """
+
+    import health_agent_infra as _pkg
+
+    candidates: list[Path] = []
+    pkg_root = Path(_pkg.__file__).resolve().parent
+    # src/health_agent_infra → src/ → repo root
+    candidates.append(pkg_root.parent.parent)
+    candidates.append(Path.cwd())
+
+    for root in candidates:
+        evals_cli = root / "safety" / "evals" / "cli.py"
+        if evals_cli.exists():
+            root_str = str(root)
+            if root_str not in sys.path:
+                sys.path.insert(0, root_str)
+            try:
+                from safety.evals.cli import register_eval_subparser
+            except ImportError:
+                continue
+            register_eval_subparser(sub)
+            return True
+    return False
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="hai", description="Health Agent Infra CLI")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -2344,6 +2377,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_esearch.add_argument("--db-path", default=None,
                            help="Path to state DB (default: platformdirs user_data_dir)")
     p_esearch.set_defaults(func=cmd_exercise_search)
+
+    _try_register_eval_subparser(sub)
 
     return parser
 
