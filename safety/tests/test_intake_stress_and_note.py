@@ -670,8 +670,14 @@ def test_reproject_clears_manual_stress_for_days_dropped_from_jsonl(tmp_path: Pa
     assert cli_main(_stress_args(base, db, score=4, as_of="2026-04-18")) == 0
 
     # Replace the JSONL with one that ONLY mentions 2026-04-18.
+    # Match the as_of_date field directly — a naive `"2026-04-18" in l`
+    # substring match also catches `ingested_at` timestamps when the test
+    # runs on that calendar day, which would silently keep both rows.
     full = (base / "stress_manual.jsonl").read_text().splitlines()
-    keep = [l for l in full if l.strip() and "2026-04-18" in l]
+    keep = [
+        l for l in full
+        if l.strip() and json.loads(l).get("as_of_date") == "2026-04-18"
+    ]
     (base / "stress_manual.jsonl").write_text("\n".join(keep) + "\n")
 
     conn = open_connection(db)
