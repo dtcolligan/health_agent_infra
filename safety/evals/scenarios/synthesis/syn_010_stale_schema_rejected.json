@@ -1,0 +1,55 @@
+{
+  "scenario_id": "syn_010_stale_schema_rejected",
+  "kind": "synthesis",
+  "description": "A proposal carrying a stale schema_version + an out-of-enum action is rejected at writeback validation before synthesis consumes it. Synthesis then refuses because no proposals reached proposal_log. Mirrors Phase 2.5 Track B s4.",
+  "as_of_date": "2026-04-18",
+  "user_id": "u_eval",
+  "snapshot": {
+    "sleep": {"classified_state": {"sleep_debt_band": "none"}},
+    "recovery": {"today": {"acwr_ratio": 1.0}},
+    "stress": {"today_garmin": 25, "today_body_battery": 60}
+  },
+  "proposals": [
+    {
+      "proposal_id": "prop_stale_schema",
+      "schema_version": "recovery_proposal.v0.9",
+      "user_id": "u_eval",
+      "for_date": "2026-04-18",
+      "domain": "recovery",
+      "action": "proceed_with_planned_session",
+      "action_detail": null,
+      "rationale": [],
+      "confidence": "high",
+      "uncertainty": [],
+      "policy_decisions": [
+        {"rule_id": "r1_coverage", "decision": "allow", "note": "eval_fixture"}
+      ],
+      "bounded": true,
+      "_defect": "stale_schema_version"
+    },
+    {
+      "proposal_id": "prop_bad_enum",
+      "schema_version": "recovery_proposal.v1",
+      "user_id": "u_eval",
+      "for_date": "2026-04-18",
+      "domain": "recovery",
+      "action": "train_hard_anyway",
+      "action_detail": null,
+      "rationale": [],
+      "confidence": "high",
+      "uncertainty": [],
+      "policy_decisions": [
+        {"rule_id": "r1_coverage", "decision": "allow", "note": "eval_fixture"}
+      ],
+      "bounded": true,
+      "_defect": "out_of_enum_action"
+    }
+  ],
+  "expected": {
+    "validation_errors": [
+      {"proposal_id": "prop_stale_schema", "accepted": false, "error_invariant": "schema_version"},
+      {"proposal_id": "prop_bad_enum", "accepted": false, "error_invariant": "action_enum"}
+    ],
+    "synthesis_error": "expected"
+  }
+}

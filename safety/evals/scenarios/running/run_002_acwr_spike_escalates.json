@@ -1,0 +1,23 @@
+{
+  "scenario_id": "run_002_acwr_spike_escalates",
+  "kind": "domain",
+  "domain": "running",
+  "description": "ACWR ratio at 1.5 fires R-acwr-spike; forces escalate_for_user_review regardless of other bands.",
+  "input": {
+    "signals": {
+      "weekly_mileage_m": 75000.0,
+      "weekly_mileage_baseline_m": 50000.0,
+      "recent_hard_session_count_7d": 3,
+      "acwr_ratio": 1.55,
+      "training_readiness_pct": 65,
+      "sleep_debt_band": "none",
+      "resting_hr_band": "above"
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": "escalate_for_user_review",
+      "fired_rule_ids": ["acwr_spike_escalation"]
+    }
+  }
+}

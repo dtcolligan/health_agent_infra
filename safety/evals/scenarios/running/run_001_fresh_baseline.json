@@ -1,0 +1,29 @@
+{
+  "scenario_id": "run_001_fresh_baseline",
+  "kind": "domain",
+  "domain": "running",
+  "description": "Typical week on baseline mileage with one hard session; ACWR balanced. Expect no policy firings.",
+  "input": {
+    "signals": {
+      "weekly_mileage_m": 50000.0,
+      "weekly_mileage_baseline_m": 50000.0,
+      "recent_hard_session_count_7d": 1,
+      "acwr_ratio": 1.0,
+      "training_readiness_pct": 75,
+      "sleep_debt_band": "none",
+      "resting_hr_band": "at"
+    }
+  },
+  "expected": {
+    "classified": {
+      "weekly_mileage_trend_band": "moderate",
+      "hard_session_load_band": "light",
+      "coverage_band": "full"
+    },
+    "policy": {
+      "forced_action": null,
+      "capped_confidence": null,
+      "fired_rule_ids": []
+    }
+  }
+}

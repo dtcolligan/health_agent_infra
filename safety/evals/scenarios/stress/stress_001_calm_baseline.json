@@ -1,0 +1,25 @@
+{
+  "scenario_id": "stress_001_calm_baseline",
+  "kind": "domain",
+  "domain": "stress",
+  "description": "Low Garmin stress, manual score 2/5, healthy body-battery trend. No firings.",
+  "input": {
+    "signals": {
+      "garmin_all_day_stress": 25,
+      "manual_stress_score": 2,
+      "body_battery_end_of_day": 72,
+      "body_battery_prev_day": 68,
+      "stress_history_garmin_last_7": [20, 22, 25, 28, 24, 22, 25]
+    }
+  },
+  "expected": {
+    "classified": {
+      "coverage_band": "full"
+    },
+    "policy": {
+      "forced_action": null,
+      "capped_confidence": null,
+      "fired_rule_ids": []
+    }
+  }
+}

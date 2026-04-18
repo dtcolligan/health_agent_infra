@@ -1,0 +1,43 @@
+{
+  "scenario_id": "rec_001_rested_baseline",
+  "kind": "domain",
+  "domain": "recovery",
+  "description": "Well-rested baseline day; all signals at baseline. Expect no policy firings and no forced_action.",
+  "input": {
+    "evidence": {
+      "as_of_date": "2026-04-17",
+      "user_id": "u_eval",
+      "sleep_hours": 8.0,
+      "resting_hr": 52.0,
+      "hrv_ms": 80.0,
+      "soreness_self_report": "low"
+    },
+    "raw_summary": {
+      "as_of_date": "2026-04-17",
+      "user_id": "u_eval",
+      "resting_hr_baseline": 52.0,
+      "resting_hr_ratio_vs_baseline": 1.0,
+      "hrv_ratio_vs_baseline": 1.0,
+      "trailing_7d_training_load": 400.0,
+      "training_load_baseline": 400.0,
+      "training_load_ratio_vs_baseline": 1.0,
+      "resting_hr_spike_days": 0
+    }
+  },
+  "expected": {
+    "classified": {
+      "sleep_debt_band": "none",
+      "resting_hr_band": "at",
+      "hrv_band": "at",
+      "training_load_band": "moderate",
+      "soreness_band": "low",
+      "coverage_band": "full",
+      "recovery_status": "recovered"
+    },
+    "policy": {
+      "forced_action": null,
+      "capped_confidence": null,
+      "fired_rule_ids": []
+    }
+  }
+}

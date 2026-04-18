@@ -1,0 +1,20 @@
+{
+  "scenario_id": "sleep_003_sparse_coverage_caps",
+  "kind": "domain",
+  "domain": "sleep",
+  "description": "Only sleep_hours available; score + efficiency + timing all missing → sparse → R-sparse caps confidence.",
+  "input": {
+    "signals": {
+      "sleep_hours": 7.6
+    }
+  },
+  "expected": {
+    "classified": {
+      "coverage_band": "sparse"
+    },
+    "policy": {
+      "capped_confidence": "moderate",
+      "fired_rule_ids": ["no_high_confidence_on_sparse_signal"]
+    }
+  }
+}

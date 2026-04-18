@@ -1,0 +1,20 @@
+{
+  "scenario_id": "stress_003_sparse_coverage_caps",
+  "kind": "domain",
+  "domain": "stress",
+  "description": "Only manual stress score present; Garmin + body battery unknown → sparse → R-sparse caps confidence.",
+  "input": {
+    "signals": {
+      "manual_stress_score": 3
+    }
+  },
+  "expected": {
+    "classified": {
+      "coverage_band": "sparse"
+    },
+    "policy": {
+      "capped_confidence": "moderate",
+      "fired_rule_ids": ["no_high_confidence_on_sparse_signal"]
+    }
+  }
+}

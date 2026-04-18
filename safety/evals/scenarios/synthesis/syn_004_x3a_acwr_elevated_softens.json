@@ -1,0 +1,28 @@
+{
+  "scenario_id": "syn_004_x3a_acwr_elevated_softens",
+  "kind": "synthesis",
+  "description": "ACWR 1.35 ∈ [1.3, 1.5) fires X3a; soften hard running proposal.",
+  "as_of_date": "2026-04-18",
+  "user_id": "u_eval",
+  "snapshot": {
+    "sleep": {"classified_state": {"sleep_debt_band": "none"}},
+    "recovery": {"today": {"acwr_ratio": 1.35}},
+    "stress": {"today_garmin": 30, "today_body_battery": 60}
+  },
+  "proposals": [
+    {
+      "proposal_id": "prop_run_syn004",
+      "user_id": "u_eval",
+      "for_date": "2026-04-18",
+      "domain": "running",
+      "action": "proceed_with_planned_run",
+      "confidence": "high"
+    }
+  ],
+  "expected": {
+    "x_rules_fired": ["X3a"],
+    "final_actions": {
+      "running": "downgrade_to_easy_aerobic"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "scenario_id": "nutrition_003_no_row_insufficient_coverage",
+  "kind": "domain",
+  "domain": "nutrition",
+  "description": "No accepted nutrition row for today → coverage=insufficient → R-coverage forces defer. Reinforces the v1 macros-only contract: absence of a daily-macros row is NOT a deficiency, it's missing evidence. micronutrient_coverage resolves to 'unknown' when derivation_path is unset; it only resolves to 'unavailable_at_source' when the row exists and is explicitly stamped 'daily_macros'.",
+  "input": {
+    "signals": {}
+  },
+  "expected": {
+    "classified": {
+      "coverage_band": "insufficient",
+      "micronutrient_coverage": "unknown"
+    },
+    "policy": {
+      "forced_action": "defer_decision_insufficient_signal",
+      "fired_rule_ids": ["require_min_coverage"]
+    }
+  }
+}

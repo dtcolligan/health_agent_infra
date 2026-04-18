@@ -1,0 +1,36 @@
+{
+  "scenario_id": "rec_002_rhr_spike_escalates",
+  "kind": "domain",
+  "domain": "recovery",
+  "description": "Sustained resting-HR spike (≥3 days) fires R6 and forces escalate_for_user_review.",
+  "input": {
+    "evidence": {
+      "as_of_date": "2026-04-17",
+      "user_id": "u_eval",
+      "sleep_hours": 7.5,
+      "resting_hr": 65.0,
+      "hrv_ms": 60.0,
+      "soreness_self_report": "moderate"
+    },
+    "raw_summary": {
+      "as_of_date": "2026-04-17",
+      "user_id": "u_eval",
+      "resting_hr_baseline": 52.0,
+      "resting_hr_ratio_vs_baseline": 1.25,
+      "hrv_ratio_vs_baseline": 0.85,
+      "trailing_7d_training_load": 450.0,
+      "training_load_baseline": 400.0,
+      "training_load_ratio_vs_baseline": 1.12,
+      "resting_hr_spike_days": 3
+    }
+  },
+  "expected": {
+    "classified": {
+      "resting_hr_band": "well_above"
+    },
+    "policy": {
+      "forced_action": "escalate_for_user_review",
+      "fired_rule_ids": ["resting_hr_spike_escalation"]
+    }
+  }
+}

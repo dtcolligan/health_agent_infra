@@ -1,0 +1,26 @@
+{
+  "scenario_id": "sleep_001_adequate_baseline",
+  "kind": "domain",
+  "domain": "sleep",
+  "description": "8h sleep, good score, tight timing consistency. Expect full coverage, no firings.",
+  "input": {
+    "signals": {
+      "sleep_hours": 8.0,
+      "sleep_score_overall": 85,
+      "sleep_awake_min": 20.0,
+      "sleep_start_variance_minutes": 15.0,
+      "sleep_history_hours_last_7": [8.0, 7.8, 8.1, 7.9, 8.0, 8.2, 8.0]
+    }
+  },
+  "expected": {
+    "classified": {
+      "sleep_debt_band": "none",
+      "coverage_band": "full"
+    },
+    "policy": {
+      "forced_action": null,
+      "capped_confidence": null,
+      "fired_rule_ids": []
+    }
+  }
+}

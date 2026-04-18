@@ -1,0 +1,44 @@
+{
+  "scenario_id": "syn_009_x9_phase_b_adjusts_nutrition",
+  "kind": "synthesis",
+  "description": "Hard running stays hard (no Phase A triggers); nutrition draft exists → X9 (Phase B, post_adjust) adjusts nutrition action_detail without touching its action. Reinforces the code-vs-skill boundary: runtime owns X9 action_detail mutation; skills must not pre-bake this adjustment.",
+  "as_of_date": "2026-04-18",
+  "user_id": "u_eval",
+  "snapshot": {
+    "sleep": {"classified_state": {"sleep_debt_band": "none"}},
+    "recovery": {"today": {"acwr_ratio": 1.0}},
+    "stress": {"today_garmin": 25, "today_body_battery": 70},
+    "nutrition": {
+      "classified_state": {
+        "calorie_deficit_kcal": 100.0,
+        "protein_ratio": 0.9,
+        "derivation_path": "daily_macros"
+      }
+    }
+  },
+  "proposals": [
+    {
+      "proposal_id": "prop_run_syn009",
+      "user_id": "u_eval",
+      "for_date": "2026-04-18",
+      "domain": "running",
+      "action": "proceed_with_planned_run",
+      "confidence": "high"
+    },
+    {
+      "proposal_id": "prop_nut_syn009",
+      "user_id": "u_eval",
+      "for_date": "2026-04-18",
+      "domain": "nutrition",
+      "action": "maintain_targets",
+      "confidence": "moderate"
+    }
+  ],
+  "expected": {
+    "x_rules_fired": ["X9"],
+    "final_actions": {
+      "running": "proceed_with_planned_run",
+      "nutrition": "maintain_targets"
+    }
+  }
+}

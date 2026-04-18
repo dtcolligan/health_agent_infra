@@ -172,55 +172,80 @@ class SynthesisScenarioResult:
 
 def _domain_classify(
     domain: str,
-    evidence: dict[str, Any],
-    raw_summary: dict[str, Any],
+    scenario_input: dict[str, Any],
     thresholds: dict[str, Any],
 ) -> Any:
+    """Dispatch to the domain classifier with the input shape it expects.
+
+    Recovery takes ``(evidence, raw_summary)``; every other domain takes
+    a single ``signals`` dict. Scenarios author one or the other (or both
+    in the recovery case) inside ``input``.
+    """
+
+    evidence = dict(scenario_input.get("evidence") or {})
+    raw_summary = dict(scenario_input.get("raw_summary") or {})
+    signals = dict(scenario_input.get("signals") or {})
+
     if domain == "recovery":
         from health_agent_infra.domains.recovery.classify import classify_recovery_state
         return classify_recovery_state(evidence, raw_summary, thresholds=thresholds)
     if domain == "running":
         from health_agent_infra.domains.running.classify import classify_running_state
-        return classify_running_state(evidence, raw_summary, thresholds=thresholds)
+        return classify_running_state(signals, thresholds=thresholds)
     if domain == "sleep":
         from health_agent_infra.domains.sleep.classify import classify_sleep_state
-        return classify_sleep_state(evidence, raw_summary, thresholds=thresholds)
+        return classify_sleep_state(signals, thresholds=thresholds)
     if domain == "stress":
         from health_agent_infra.domains.stress.classify import classify_stress_state
-        return classify_stress_state(evidence, raw_summary, thresholds=thresholds)
+        return classify_stress_state(signals, thresholds=thresholds)
     if domain == "strength":
         from health_agent_infra.domains.strength.classify import classify_strength_state
-        return classify_strength_state(evidence, raw_summary, thresholds=thresholds)
+        return classify_strength_state(signals, thresholds=thresholds)
     if domain == "nutrition":
         from health_agent_infra.domains.nutrition.classify import classify_nutrition_state
-        return classify_nutrition_state(evidence, raw_summary, thresholds=thresholds)
+        return classify_nutrition_state(signals, thresholds=thresholds)
     raise EvalRunError(f"no classifier wired for domain {domain!r}")
 
 
 def _domain_policy(
     domain: str,
     classified: Any,
-    raw_summary: dict[str, Any],
+    scenario_input: dict[str, Any],
     thresholds: dict[str, Any],
 ) -> Any:
+    """Dispatch to the domain policy with the input shape it expects.
+
+    Recovery policy consumes ``raw_summary``; every other domain's policy
+    consumes the same ``signals`` dict the classifier saw.
+    """
+
+    raw_summary = dict(scenario_input.get("raw_summary") or {})
+    signals = dict(scenario_input.get("signals") or {})
+
     if domain == "recovery":
         from health_agent_infra.domains.recovery.policy import evaluate_recovery_policy
         return evaluate_recovery_policy(classified, raw_summary, thresholds=thresholds)
     if domain == "running":
         from health_agent_infra.domains.running.policy import evaluate_running_policy
-        return evaluate_running_policy(classified, raw_summary, thresholds=thresholds)
+        return evaluate_running_policy(classified, signals, thresholds=thresholds)
     if domain == "sleep":
         from health_agent_infra.domains.sleep.policy import evaluate_sleep_policy
-        return evaluate_sleep_policy(classified, raw_summary, thresholds=thresholds)
+        return evaluate_sleep_policy(classified, signals, thresholds=thresholds)
     if domain == "stress":
         from health_agent_infra.domains.stress.policy import evaluate_stress_policy
-        return evaluate_stress_policy(classified, raw_summary, thresholds=thresholds)
+        return evaluate_stress_policy(classified, signals, thresholds=thresholds)
     if domain == "strength":
         from health_agent_infra.domains.strength.policy import evaluate_strength_policy
-        return evaluate_strength_policy(classified, raw_summary, thresholds=thresholds)
+        # Strength policy signature is (classified, thresholds); the
+        # classified state already carries volume_ratio + unmatched tokens
+        # so there's no signals passthrough.
+        return evaluate_strength_policy(classified, thresholds=thresholds)
     if domain == "nutrition":
         from health_agent_infra.domains.nutrition.policy import evaluate_nutrition_policy
-        return evaluate_nutrition_policy(classified, raw_summary, thresholds=thresholds)
+        # Nutrition policy signature is (classified, thresholds) — no
+        # signals passthrough (classified already captures calorie_deficit
+        # and protein_ratio).
+        return evaluate_nutrition_policy(classified, thresholds=thresholds)
     raise EvalRunError(f"no policy wired for domain {domain!r}")
 
 
@@ -258,13 +283,11 @@ def run_domain_scenario(scenario: dict[str, Any]) -> DomainScenarioResult:
             f"domain scenario {scenario.get('scenario_id')!r} "
             f"has invalid domain {domain!r}",
         )
-    input_block = scenario.get("input") or {}
-    evidence = dict(input_block.get("evidence") or {})
-    raw_summary = dict(input_block.get("raw_summary") or {})
+    input_block = dict(scenario.get("input") or {})
     thresholds = load_thresholds()
 
-    classified = _domain_classify(domain, evidence, raw_summary, thresholds)
-    policy = _domain_policy(domain, classified, raw_summary, thresholds)
+    classified = _domain_classify(domain, input_block, thresholds)
+    policy = _domain_policy(domain, classified, input_block, thresholds)
 
     return DomainScenarioResult(
         scenario_id=scenario["scenario_id"],
@@ -323,7 +346,7 @@ def score_domain_result(
         firings: list[dict[str, Any]] = []
         for key in ("policy_decisions", "rule_firings", "decisions"):
             candidate = result.policy.get(key)
-            if isinstance(candidate, list):
+            if isinstance(candidate, (list, tuple)):
                 firings.extend(c for c in candidate if isinstance(c, dict))
         # Only include decisions whose tier is not "allow" — evals care
         # about what fired actively. Scenarios can always assert the

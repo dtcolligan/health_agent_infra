@@ -1,0 +1,21 @@
+{
+  "scenario_id": "stress_002_sustained_high_escalates",
+  "kind": "domain",
+  "domain": "stress",
+  "description": "5 consecutive days of Garmin stress >= 60 ending today → R-sustained-stress escalates.",
+  "input": {
+    "signals": {
+      "garmin_all_day_stress": 72,
+      "manual_stress_score": 4,
+      "body_battery_end_of_day": 30,
+      "body_battery_prev_day": 38,
+      "stress_history_garmin_last_7": [40, 42, 65, 70, 68, 75, 72]
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": "escalate_for_user_review",
+      "fired_rule_ids": ["sustained_very_high_stress_escalation"]
+    }
+  }
+}

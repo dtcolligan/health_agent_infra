@@ -1,0 +1,21 @@
+{
+  "scenario_id": "run_003_sparse_coverage_caps",
+  "kind": "domain",
+  "domain": "running",
+  "description": "Only weekly-mileage signal present; rest unknown → sparse coverage triggers R-sparse cap.",
+  "input": {
+    "signals": {
+      "weekly_mileage_m": 50000.0,
+      "weekly_mileage_baseline_m": 50000.0
+    }
+  },
+  "expected": {
+    "classified": {
+      "coverage_band": "sparse"
+    },
+    "policy": {
+      "capped_confidence": "moderate",
+      "fired_rule_ids": ["no_high_confidence_on_sparse_signal"]
+    }
+  }
+}

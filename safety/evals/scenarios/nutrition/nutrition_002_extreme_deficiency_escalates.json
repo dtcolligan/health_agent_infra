@@ -1,0 +1,30 @@
+{
+  "scenario_id": "nutrition_002_extreme_deficiency_escalates",
+  "kind": "domain",
+  "domain": "nutrition",
+  "description": "Calorie deficit ≥ 500 kcal AND protein ratio < 0.7 → R-extreme-deficiency forces escalate.",
+  "input": {
+    "signals": {
+      "today_row": {
+        "calories": 1500.0,
+        "protein_g": 60.0,
+        "carbs_g": 180.0,
+        "fat_g": 50.0,
+        "hydration_l": 1.8,
+        "meals_count": 2,
+        "derivation_path": "daily_macros"
+      }
+    }
+  },
+  "expected": {
+    "classified": {
+      "calorie_balance_band": "high_deficit",
+      "protein_sufficiency_band": "very_low",
+      "micronutrient_coverage": "unavailable_at_source"
+    },
+    "policy": {
+      "forced_action": "escalate_for_user_review",
+      "fired_rule_ids": ["extreme_deficiency_escalation"]
+    }
+  }
+}

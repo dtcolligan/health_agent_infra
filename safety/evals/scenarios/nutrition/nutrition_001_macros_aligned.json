@@ -1,0 +1,34 @@
+{
+  "scenario_id": "nutrition_001_macros_aligned",
+  "kind": "domain",
+  "domain": "nutrition",
+  "description": "Daily macros at target; hydration met; derivation_path=daily_macros (v1 scope). No firings.",
+  "input": {
+    "signals": {
+      "today_row": {
+        "calories": 2400.0,
+        "protein_g": 140.0,
+        "carbs_g": 280.0,
+        "fat_g": 75.0,
+        "hydration_l": 2.5,
+        "meals_count": 3,
+        "derivation_path": "daily_macros"
+      }
+    }
+  },
+  "expected": {
+    "classified": {
+      "calorie_balance_band": "met",
+      "protein_sufficiency_band": "met",
+      "hydration_band": "met",
+      "micronutrient_coverage": "unavailable_at_source",
+      "coverage_band": "full",
+      "derivation_path": "daily_macros"
+    },
+    "policy": {
+      "forced_action": null,
+      "capped_confidence": null,
+      "fired_rule_ids": []
+    }
+  }
+}

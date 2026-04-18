@@ -1,0 +1,41 @@
+{
+  "scenario_id": "syn_007_x7_high_stress_caps_confidence",
+  "kind": "synthesis",
+  "description": "Garmin stress in the 'high' band fires X7 (cap_confidence). Actions pass through but both proposals' confidence is capped to moderate.",
+  "as_of_date": "2026-04-18",
+  "user_id": "u_eval",
+  "snapshot": {
+    "sleep": {"classified_state": {"sleep_debt_band": "none"}},
+    "recovery": {"today": {"acwr_ratio": 1.0}},
+    "stress": {"today_garmin": 70, "today_body_battery": 55}
+  },
+  "proposals": [
+    {
+      "proposal_id": "prop_rec_syn007",
+      "user_id": "u_eval",
+      "for_date": "2026-04-18",
+      "domain": "recovery",
+      "action": "proceed_with_planned_session",
+      "confidence": "high"
+    },
+    {
+      "proposal_id": "prop_run_syn007",
+      "user_id": "u_eval",
+      "for_date": "2026-04-18",
+      "domain": "running",
+      "action": "proceed_with_planned_run",
+      "confidence": "high"
+    }
+  ],
+  "expected": {
+    "x_rules_fired": ["X7"],
+    "final_actions": {
+      "recovery": "proceed_with_planned_session",
+      "running": "proceed_with_planned_run"
+    },
+    "final_confidences": {
+      "recovery": "moderate",
+      "running": "moderate"
+    }
+  }
+}

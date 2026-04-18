@@ -1,0 +1,21 @@
+{
+  "scenario_id": "sleep_002_chronic_deprivation_forces_repayment",
+  "kind": "domain",
+  "domain": "sleep",
+  "description": "4 nights < 6h in the trailing 7 fires R-chronic-deprivation → forces sleep_debt_repayment_day.",
+  "input": {
+    "signals": {
+      "sleep_hours": 5.5,
+      "sleep_score_overall": 60,
+      "sleep_awake_min": 45.0,
+      "sleep_start_variance_minutes": 40.0,
+      "sleep_history_hours_last_7": [5.5, 5.8, 5.2, 5.9, 7.2, 7.1, 7.0]
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": "sleep_debt_repayment_day",
+      "fired_rule_ids": ["chronic_deprivation_escalation"]
+    }
+  }
+}

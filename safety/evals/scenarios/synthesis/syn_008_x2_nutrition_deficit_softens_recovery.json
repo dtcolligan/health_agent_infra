@@ -1,0 +1,44 @@
+{
+  "scenario_id": "syn_008_x2_nutrition_deficit_softens_recovery",
+  "kind": "synthesis",
+  "description": "Nutrition snapshot (macros-only) shows 600 kcal deficit AND protein ratio 0.55; X2 softens hard recovery proposal. Reinforces the v1 macros-only scope: X2 fires against classified calorie_deficit_kcal / protein_ratio derived from daily_macros — no meal-level or micronutrient signal is consulted or asserted.",
+  "as_of_date": "2026-04-18",
+  "user_id": "u_eval",
+  "snapshot": {
+    "sleep": {"classified_state": {"sleep_debt_band": "none"}},
+    "recovery": {"today": {"acwr_ratio": 1.0}},
+    "stress": {"today_garmin": 25, "today_body_battery": 60},
+    "nutrition": {
+      "classified_state": {
+        "calorie_deficit_kcal": 600.0,
+        "protein_ratio": 0.55,
+        "derivation_path": "daily_macros"
+      }
+    }
+  },
+  "proposals": [
+    {
+      "proposal_id": "prop_rec_syn008",
+      "user_id": "u_eval",
+      "for_date": "2026-04-18",
+      "domain": "recovery",
+      "action": "proceed_with_planned_session",
+      "confidence": "high"
+    },
+    {
+      "proposal_id": "prop_nut_syn008",
+      "user_id": "u_eval",
+      "for_date": "2026-04-18",
+      "domain": "nutrition",
+      "action": "increase_protein_intake",
+      "confidence": "moderate"
+    }
+  ],
+  "expected": {
+    "x_rules_fired": ["X2"],
+    "final_actions": {
+      "recovery": "downgrade_hard_session_to_zone_2",
+      "nutrition": "increase_protein_intake"
+    }
+  }
+}

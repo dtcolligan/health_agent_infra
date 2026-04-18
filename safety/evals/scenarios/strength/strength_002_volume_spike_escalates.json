@@ -1,0 +1,23 @@
+{
+  "scenario_id": "strength_002_volume_spike_escalates",
+  "kind": "domain",
+  "domain": "strength",
+  "description": "7-day volume ratio 1.6 (> 1.5 threshold) fires R-volume-spike → forces escalate.",
+  "input": {
+    "signals": {
+      "volume_ratio_7d_vs_28d_week_mean": 1.6,
+      "sessions_last_7d": 5,
+      "sessions_last_28d": 14,
+      "days_since_heavy_by_group": {"quads": 0, "chest": 1, "back": 2, "hamstrings": 1},
+      "unmatched_exercise_tokens": [],
+      "today_volume_by_muscle_group": {"quads": 4000.0},
+      "estimated_1rm_today": {}
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": "escalate_for_user_review",
+      "fired_rule_ids": ["volume_spike_escalation"]
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "scenario_id": "rec_003_sparse_coverage_caps_confidence",
+  "kind": "domain",
+  "domain": "recovery",
+  "description": "Missing HRV + missing training-load baseline → sparse coverage → R5 caps confidence to moderate.",
+  "input": {
+    "evidence": {
+      "as_of_date": "2026-04-17",
+      "user_id": "u_eval",
+      "sleep_hours": 7.8,
+      "resting_hr": 54.0,
+      "soreness_self_report": "low"
+    },
+    "raw_summary": {
+      "as_of_date": "2026-04-17",
+      "user_id": "u_eval",
+      "resting_hr_baseline": 52.0,
+      "resting_hr_ratio_vs_baseline": 1.03,
+      "resting_hr_spike_days": 0
+    }
+  },
+  "expected": {
+    "classified": {
+      "coverage_band": "sparse",
+      "hrv_band": "unknown",
+      "training_load_band": "unknown"
+    },
+    "policy": {
+      "capped_confidence": "moderate",
+      "fired_rule_ids": ["no_high_confidence_on_sparse_signal"]
+    }
+  }
+}

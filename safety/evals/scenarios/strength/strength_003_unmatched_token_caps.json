@@ -1,0 +1,23 @@
+{
+  "scenario_id": "strength_003_unmatched_token_caps",
+  "kind": "domain",
+  "domain": "strength",
+  "description": "Session contains a free-text exercise that didn't resolve against taxonomy. R-unmatched-exercise caps confidence.",
+  "input": {
+    "signals": {
+      "volume_ratio_7d_vs_28d_week_mean": 1.0,
+      "sessions_last_7d": 2,
+      "sessions_last_28d": 10,
+      "days_since_heavy_by_group": {"quads": 3, "chest": 4, "back": 3, "hamstrings": 5},
+      "unmatched_exercise_tokens": ["landmine twist", "nordic curl variation"],
+      "today_volume_by_muscle_group": {"quads": 1500.0},
+      "estimated_1rm_today": {}
+    }
+  },
+  "expected": {
+    "policy": {
+      "capped_confidence": "moderate",
+      "fired_rule_ids": ["unmatched_exercise_confidence_cap"]
+    }
+  }
+}
