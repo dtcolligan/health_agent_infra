@@ -216,6 +216,59 @@ DEFAULT_THRESHOLDS: dict[str, Any] = {
                 "unmatched_exercise_present": 0.05,
             },
         },
+        "nutrition": {
+            # Phase 5 step 2 — macros-only v1 targets. Single default target
+            # set per Phase 2.5 retrieval-gate outcome: meal-level + goal-
+            # aware micronutrient targeting defer to a post-v1 release.
+            # Users override values wholesale via thresholds.toml; a future
+            # goals-domain expansion may add a goal→target mapping on top
+            # of (not instead of) these defaults.
+            "targets": {
+                "calorie_target_kcal": 2400.0,
+                "protein_target_g": 140.0,
+                "hydration_target_l": 2.5,
+            },
+            # calorie_balance_band fires on absolute_deficit_kcal =
+            # target - actual. A negative value (surplus) lands in
+            # "surplus". A value AT a boundary lands in the higher
+            # (more-deficit) band. Aligned with X2's 500-kcal deficit
+            # trigger: "high_deficit" begins at exactly the X2 threshold
+            # so the X-rule's read is the same threshold the domain
+            # classifier already named.
+            "calorie_balance_band": {
+                "mild_deficit_min_kcal": 100.0,
+                "moderate_deficit_min_kcal": 300.0,
+                "high_deficit_min_kcal": 500.0,
+                "surplus_min_kcal": 300.0,     # target+300 or more = surplus
+            },
+            # protein_sufficiency_band fires on protein_ratio =
+            # protein_g_actual / protein_g_target. Aligned with X2's
+            # 0.7 threshold — "very_low" begins at exactly the X2 trigger
+            # so the X-rule's read is the same threshold the domain
+            # classifier already named.
+            "protein_sufficiency_band": {
+                "very_low_max_ratio": 0.7,
+                "low_max_ratio": 1.0,
+            },
+            # hydration_band fires on hydration_ratio =
+            # hydration_l_actual / hydration_l_target.
+            "hydration_band": {
+                "low_max_ratio": 0.75,
+            },
+            # Additive penalties feeding the composite nutrition_score;
+            # negative values are bonuses (raise the score).
+            "nutrition_score_penalty": {
+                "calorie_mild_deficit": 0.05,
+                "calorie_moderate_deficit": 0.15,
+                "calorie_high_deficit": 0.30,
+                "calorie_surplus": 0.10,
+                "protein_low": 0.10,
+                "protein_very_low": 0.25,
+                "hydration_low": 0.05,
+                "coverage_partial": 0.05,
+                "coverage_sparse": 0.15,
+            },
+        },
         "recovery": {
             "sleep_debt_band": {
                 "none_min_hours": 7.5,
@@ -294,11 +347,34 @@ DEFAULT_THRESHOLDS: dict[str, Any] = {
             # escalations coincide at the same volume signal.
             "r_volume_spike_min_ratio": 1.5,
         },
+        "nutrition": {
+            # Phase 5 step 2 — macros-only v1. R-extreme-deficiency:
+            # escalate when BOTH a high calorie deficit (≥500 kcal) AND
+            # very-low protein (<70% of target) fire on the same day.
+            # Either alone is softened via the calorie / protein band
+            # verdict; the combination is the overreaching-deficit
+            # signal worth a user review rather than a silent downgrade.
+            # The individual thresholds match X2's trigger values so the
+            # R-rule and the X-rule read the same numeric boundaries.
+            "r_extreme_deficiency_min_calorie_deficit_kcal": 500.0,
+            "r_extreme_deficiency_max_protein_ratio": 0.7,
+        },
     },
     "synthesis": {
         "x_rules": {
             "x1a": {"sleep_debt_trigger_band": "moderate"},
             "x1b": {"sleep_debt_trigger_band": "elevated"},
+            # Phase 5 step 4. X2 softens hard strength / recovery
+            # proposals when today's nutrition shows either a high
+            # calorie deficit (≥500 kcal absolute) OR protein below
+            # 70% of target. Thresholds mirror the nutrition domain's
+            # calorie_balance_band / protein_sufficiency_band cutoffs
+            # so the X-rule reads the same numeric boundaries the
+            # classifier named.
+            "x2": {
+                "deficit_kcal_min": 500.0,
+                "protein_ratio_max": 0.7,
+            },
             "x3a": {"acwr_ratio_lower": 1.3, "acwr_ratio_upper": 1.5},
             "x3b": {"acwr_ratio_min": 1.5},
             # Phase 4 step 5. X4 triggers when yesterday's strength
