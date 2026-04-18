@@ -1,6 +1,7 @@
-"""Protocol for flagship pull adapters.
+"""Protocol for runtime pull adapters.
 
-This Protocol captures the thin flagship contract: a named source and a
+``FlagshipPullAdapter`` is the historical internal name retained for
+compatibility. The Protocol captures the thin runtime pull contract: a named source and a
 deterministic loader that returns evidence in the dict shape
 ``health_agent_infra.core.clean.recovery_prep.clean_inputs`` consumes (keys
 ``sleep``, ``resting_hr``, ``hrv``, ``training_load``).
@@ -18,7 +19,7 @@ from typing import Protocol, runtime_checkable
 
 @runtime_checkable
 class FlagshipPullAdapter(Protocol):
-    """Minimum contract for a pull adapter feeding the flagship loop.
+    """Minimum contract for a pull adapter feeding the runtime.
 
     Conformers must:
 

@@ -1,6 +1,6 @@
 # Status
 
-## Architecture (v1 rebuild, Phase 7 steps 1–4 complete; release ops pending — 2026-04-18)
+## Architecture (v1 rebuild, v0.1.0 released — 2026-04-18)
 
 Health Agent Infra is a multi-domain runtime for a personal health
 agent. Six domains (recovery, running, sleep, stress, strength,
@@ -84,11 +84,11 @@ the full list with rationale.
 | 4 | Strength domain | complete (+ ``hai intake exercise`` follow-up) |
 | 5 | Nutrition domain (macros-only) | complete |
 | 6 | Eval harness + docs | complete |
-| 7 | Polish + publish | in progress (steps 1–4 done; release ops pending) |
+| 7 | Polish + publish | complete (`v0.1.0` released) |
 
-## What's next (Phase 7 remainder)
+## What's next (post-release)
 
-Steps 1–4 have shipped on `rebuild`:
+The rebuild plan is complete through `v0.1.0`:
 - Step 1 — ``hai daily`` morning orchestrator (commit ``e875bb2``).
 - Step 2 — ``hai init`` first-run wizard, ``hai doctor``, ``hai
   --version`` (commit ``3afad17``).
@@ -96,12 +96,12 @@ Steps 1–4 have shipped on `rebuild`:
   smoke-test, matrix CI; commit ``64961fc``).
 - Step 4 — launch artifact at
   [`reporting/plans/launch_notes.md`](reporting/plans/launch_notes.md).
+ - Release ops — merged to ``main``, tagged ``v0.1.0``, and
+   published to TestPyPI + PyPI with clean-venv smoke tests.
 
-Still pending before a real PyPI release:
+Still optional / deferred post-release:
 - Optional MCP server wrapper (``hai mcp serve``) — deferred,
-  CLI surface is sufficient for initial release.
-- Release operations: tag ``v0.1.0``, upload to TestPyPI, validate
-  install, upload to PyPI.
+  CLI surface is sufficient for `0.1.0`.
 
 Open cross-phase questions tracked at ``reporting/plans/comprehensive_rebuild_plan.md`` §8:
 

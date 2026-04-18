@@ -42,9 +42,9 @@ discipline is load-bearing, not aspirational.
 - One wearable source in v1: Garmin (CSV fixture + optional live
   pull via ``python-garminconnect``).
 - Apple Health, Oura, Whoop, Strava are NOT scoped for v1. The
-  pull layer is structured around a ``FlagshipPullAdapter`` Protocol
-  so a second source is addable, but adding one is a product
-  decision, not a background goal.
+  pull layer keeps a small adapter Protocol (historically named
+  ``FlagshipPullAdapter`` in code) so a second source is addable,
+  but adding one is a product decision, not a background goal.
 
 ## Not meal-level nutrition in v1
 
@@ -92,12 +92,12 @@ judgment
   against the user's own goal, not a prescribed regime.
 - No mental-health surface, no crisis triage.
 
-## Not polished for general install
+## Not a broad integration platform
 
-- Source checkout install is supported (``pip install -e .``); a
-  wheel install + PyPI publish is scoped for Phase 7.
-- First-run wizard (``hai init``) + MCP server wrapper are Phase 7
-  deliverables, not v1.
+- `v0.1.0` is released and installable from PyPI.
+- `hai init` and `hai doctor` ship in v1.
+- An MCP server wrapper remains optional and deferred; the shipped
+  surface is the `hai` CLI plus packaged skills.
 
 ## What is explicitly in-scope
 

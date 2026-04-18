@@ -1,8 +1,8 @@
 # Launch notes — Health Agent Infra v0.1.0
 
 This is the launch artifact for the v1 rebuild. It describes the
-runtime as it actually exists at the end of Phase 7 step 3 (commit
-`64961fc`). Read it alongside [`README.md`](../../README.md),
+runtime as it exists in the shipped `v0.1.0` release on `main`.
+Read it alongside [`README.md`](../../README.md),
 [`STATUS.md`](../../STATUS.md), and the docs under
 [`reporting/docs/`](../docs/).
 
@@ -197,9 +197,9 @@ them is a product decision.
   a single `user_id`. The schema carries the field but auth, row-
   level isolation, and tenant separation are not in scope.
 - **No second wearable in v1.** Garmin only (CSV + live). Apple
-  Health / Oura / Whoop / Strava are out of scope; the
-  `FlagshipPullAdapter` Protocol leaves a clean seam to add one but
-  doing so is a product decision.
+  Health / Oura / Whoop / Strava are out of scope; the pull-adapter
+  protocol leaves a clean seam to add one but doing so is a product
+  decision.
 - **No general AI health UI.** Surface is the `hai` CLI plus a
   typed Claude Code conversation. No web app, no mobile, no voice,
   no push notifications.
@@ -217,11 +217,10 @@ Honestly outstanding work past v0.1.0:
   [`safety/evals/skill_harness_blocker.md`](../../safety/evals/skill_harness_blocker.md).
   Until the harness lands, skill quality is governed only by the
   schema + write-surface contracts and by author review.
-- **Release operations not executed.** Wheel and sdist build
-  cleanly, CI builds + smoke-tests them on every push, but the
-  0.1.0 git tag is not yet created and nothing has been uploaded
-  to TestPyPI or PyPI. That step is held back from this commit
-  intentionally.
+- **Release completed, but operational follow-ups remain.** `v0.1.0`
+  is tagged on GitHub and published to both TestPyPI and PyPI, with
+  clean-venv install smoke tests completed. Future release work is
+  operational rather than architectural.
 - **MCP server wrapper not built.** Phase 7 listed `hai mcp serve`
   as optional. CLI + Claude Code skills surface is sufficient for
   initial release; the MCP wrapper is deferred.
@@ -238,7 +237,7 @@ Honestly outstanding work past v0.1.0:
 ## What "shipped" means here
 
 `v0.1.0` is the source-of-truth checkpoint of the rebuild: the
-runtime works end-to-end on a fresh `pip install -e .` + `hai init`
-+ `hai daily` with credentials configured, the test suite is green,
-and CI builds an installable wheel. It is **not** yet a `pip install
-health_agent_infra`-from-PyPI release; that is the next manual step.
+runtime works end-to-end on a fresh `pip install health-agent-infra`
++ `hai init` + `hai daily` with credentials configured, the test
+suite is green, CI builds installable artifacts, and the package is
+published on PyPI.

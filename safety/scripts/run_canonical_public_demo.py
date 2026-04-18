@@ -1,3 +1,10 @@
+"""Legacy pre-rebuild demo shim.
+
+This script is retained only so archived pre-rebuild proof artifacts can
+still be replayed. The module names it references are historical and do
+not describe the shipped v1 runtime surfaces.
+"""
+
 from __future__ import annotations
 
 import runpy

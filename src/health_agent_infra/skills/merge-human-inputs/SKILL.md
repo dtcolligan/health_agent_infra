@@ -7,7 +7,7 @@ disable-model-invocation: false
 
 # Merge Human Inputs
 
-You take unstructured human input — narration, voice transcript, half-typed answers — and route it into typed `hai intake <kind>` calls. Two ground rules govern everything below:
+You take unstructured human input — narration, transcribed human speech, half-typed answers — and route it into typed `hai intake <kind>` calls. Two ground rules govern everything below:
 
 1. **Structured if it fits, free-text note otherwise.** If the user gives values that match a structured intake's required fields, use that intake. If they don't, log a note. Never invent numbers to fill a typed slot.
 2. **You partition, you do not interpret.** Classification (recovery state bands, action selection) belongs to the recovery-readiness skill. You move bytes from narration into the right intake command and ask for clarification when needed.
@@ -16,7 +16,7 @@ You take unstructured human input — narration, voice transcript, half-typed an
 
 | Command | Purpose | Required fields | Optional |
 |---|---|---|---|
-| `hai intake readiness` | Subjective pre-session check (flagship hot path) | `--soreness {low\|moderate\|high}` `--energy {low\|moderate\|high}` `--planned-session-type` | `--active-goal` `--as-of` |
+| `hai intake readiness` | Subjective pre-session check (primary hot path) | `--soreness {low\|moderate\|high}` `--energy {low\|moderate\|high}` `--planned-session-type` | `--active-goal` `--as-of` |
 | `hai intake gym` | Resistance-training sets | `--session-id --exercise --set-number --weight-kg --reps` (or `--session-json`) | `--session-name --notes --rpe --tags --as-of` |
 | `hai intake nutrition` | Daily nutrition aggregate | `--calories --protein-g --carbs-g --fat-g` | `--hydration-l --meals-count --as-of` |
 | `hai intake stress` | Subjective stress (1–5) | `--score {1,2,3,4,5}` | `--tags --as-of` |
@@ -26,7 +26,7 @@ All of these accept `--user-id`, `--ingest-actor` (`hai_cli_direct` or `claude_a
 
 ## The hybrid rule (decision table)
 
-This is the rule the founder named for 7C. Lead with the structured form when it fits; fall back to `hai intake note` when it doesn't. **Never fabricate numbers to fit a structured slot** — ask for the missing piece, or take the note.
+This is the hybrid rule. Lead with the structured form when it fits; fall back to `hai intake note` when it doesn't. **Never fabricate numbers to fit a structured slot** — ask for the missing piece, or take the note.
 
 | User narration | Route to | Why |
 |---|---|---|
@@ -45,7 +45,7 @@ When in doubt: **note it.** A note never loses information. A wrong structured i
 
 ## Hot path: readiness intake before `hai pull`
 
-The flagship loop expects readiness before a `hai pull`. Walk the user through the four fields, then chain:
+The daily flow expects readiness before a `hai pull`. Walk the user through the four fields, then chain:
 
 ```bash
 hai intake readiness --soreness moderate --energy moderate \

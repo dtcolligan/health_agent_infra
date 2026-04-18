@@ -7,6 +7,12 @@ synthesis skill reconciles them via codified cross-domain rules
 into bounded per-domain recommendations validated at the ``hai
 writeback`` boundary.
 
+Its source of truth is a **local SQLite database on the user's
+device**. That local state persists accepted daily state, proposal
+history, synthesized plans, final recommendations, and review
+outcomes across days, so the agent resumes from runtime state
+rather than from chat memory alone.
+
 It is not a chatbot, a wearable API, a general AI health app, or a
 clinical product. It is infrastructure the agent consumes:
 **deterministic Python tools** that ingest evidence, classify state,
@@ -33,7 +39,7 @@ macros-only in v1 (no meal-level / food taxonomy / micronutrient
 inference) per the Phase 2.5 retrieval-gate outcome — see
 [``reporting/docs/non_goals.md``](reporting/docs/non_goals.md).
 
-## Runtime at a glance
+## Local-first runtime at a glance
 
 ```
 pull / intake  →  projectors  →  accepted_*_state_daily tables
@@ -63,15 +69,26 @@ pull / intake  →  projectors  →  accepted_*_state_daily tables
              hai review schedule / record / summary
 ```
 
+- **Local state memory** — ``accepted_*_state_daily`` tables store
+  the canonical per-domain day-level state the runtime reasons over.
+- **Decision memory** — ``proposal_log``, ``daily_plan``,
+  ``x_rule_firing``, and ``recommendation_log`` preserve what the
+  agent proposed, what synthesis changed, and what was finally
+  committed.
+- **Outcome memory** — ``review_event`` and ``review_outcome``
+  record how the plan went, so the history of decisions and outcomes
+  stays on-device.
+
 See [``reporting/docs/architecture.md``](reporting/docs/architecture.md)
 for the full pipeline + code-vs-skill boundary.
 
 ## Install
 
 ```bash
-pip install -e .              # or pip install health_agent_infra once published
+pip install -e .              # local editable install
+# or: pip install health-agent-infra
 hai setup-skills              # copies skills into ~/.claude/skills/
-hai state init                # initialises the local SQLite state DB
+hai state init                # creates the local on-device memory store
 hai --help
 ```
 
@@ -169,7 +186,7 @@ safety/
 - Not meal-level nutrition in v1.
 - Not a skill-narration eval harness yet (Phase 2.5 Track B
   Condition 3 deferred — see ``safety/evals/skill_harness_blocker.md``).
-- Not a polished wheel install / first-run wizard (Phase 7).
+- Not an MCP-wrapper-integrated or skill-harness-eval-complete release yet.
 
 ## Contributing
 

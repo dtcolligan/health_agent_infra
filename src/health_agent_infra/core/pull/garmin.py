@@ -1,9 +1,9 @@
-"""Adapter from the committed Garmin CSV export into recovery_readiness_v1 shape.
+"""Adapter from the committed Garmin CSV export into the runtime evidence shape.
 
-The flagship loop consumes evidence through ``clean_inputs()``, which accepts a
+The runtime consumes evidence through ``clean_inputs()``, which accepts a
 fixed dict shape (see ``clean.health_model.recovery_readiness_v1.clean``).
 This adapter reads the already-committed offline Garmin export under
-``pull/data/garmin/export/`` and emits that same shape, so the flagship can run
+``pull/data/garmin/export/`` and emits that same shape, so the runtime can run
 end-to-end on real evidence without changing any downstream schema or logic.
 
 Bounds per the Phase 2 plan:
@@ -49,7 +49,7 @@ def load_recovery_readiness_inputs(
     """Return a PULL-shaped dict compatible with ``clean_inputs()``.
 
     Args:
-        as_of: the target date for the flagship run.
+        as_of: the target date for the runtime pull.
         export_dir: directory containing ``daily_summary_export.csv``. Defaults
             to the repo-local committed export.
         history_days: trailing window used for baselines and training load.
@@ -166,7 +166,7 @@ def default_manual_readiness(
     """Return a neutral manual readiness intake for the real-slice capture.
 
     Real manual readiness comes from a typed intake surface in a production
-    flow. For the Phase 2 proof capture, a neutral default lets the flagship
+    flow. For the Phase 2 proof capture, a neutral default lets the runtime
     run end-to-end over real Garmin evidence without fabricating subjective
     detail.
     """
@@ -183,10 +183,11 @@ def default_manual_readiness(
 class GarminRecoveryReadinessAdapter:
     """Flagship-slice pull adapter over the committed Garmin CSV export.
 
-    Conforms structurally to ``FlagshipPullAdapter`` (see
+    Conforms structurally to ``FlagshipPullAdapter`` (historical
+    internal name retained in code; see
     ``health_agent_infra.core.pull.protocol``). Delegates to the module-level
     ``load_recovery_readiness_inputs`` helper so existing CLI paths remain
-    unchanged; the class exists to make the flagship adapter contract
+    unchanged; the class exists to make the pull-adapter contract
     explicit at the type-check layer without forcing a call-site refactor.
     """
 

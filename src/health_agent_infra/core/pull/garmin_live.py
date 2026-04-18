@@ -19,7 +19,8 @@ Upstream client is ``python-garminconnect``. The adapter itself is
 library-agnostic: it depends on a ``GarminLiveClient`` Protocol with a
 single ``fetch_day(day)`` method. Tests inject a mock client; production
 code builds a real client via ``build_default_client(credentials)``, which
-is the only place the ``garminconnect`` module is imported.
+is the only place the ``garminconnect`` module is imported. The adapter
+conforms to the pull Protocol historically named ``FlagshipPullAdapter``.
 
 Design constraints from the plan:
 

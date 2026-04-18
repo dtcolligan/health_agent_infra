@@ -21,7 +21,7 @@ agent's output at three determinism boundaries (``hai propose``,
 
 ```bash
 cd /path/to/health_agent_infra
-pip install -e .                # or `pip install health_agent_infra` once published
+pip install -e .                # or `pip install health-agent-infra`
 hai setup-skills                # copies skills to ~/.claude/skills/
 hai state init                  # creates the SQLite state DB + applies migrations
 ```
