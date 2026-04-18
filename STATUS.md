@@ -1,75 +1,111 @@
 # Status
 
-## Architecture (post-reshape, 2026-04-17)
+## Architecture (v1 rebuild, Phase 6 complete — 2026-04-18)
 
-Health Agent Infra is a **tools-plus-skills package** an agent installs:
+Health Agent Infra is a multi-domain runtime for a personal health
+agent. Six domains (recovery, running, sleep, stress, strength,
+nutrition) are first-class, each with schemas + classifier + policy
++ readiness skill. A synthesis layer reconciles per-domain
+proposals via ten X-rule evaluators across two phases, commits
+atomically to SQLite, and surfaces final per-domain
+recommendations through a review loop.
 
-- **Python tools** — `src/health_agent_infra/` exposes a `hai` CLI with subcommands for pull, clean, writeback, review, and setup-skills. All deterministic. The runtime holds no classification, no policy, no recommendation logic.
-- **Markdown skills** — `skills/` ships five skills: `recovery-readiness`, `reporting`, `merge-human-inputs`, `writeback-protocol`, `safety`. An agent reads these to decide what to do with the evidence.
-- **Determinism boundary** — `hai writeback` validates the agent's recommendation JSON against `TrainingRecommendation` before persisting. Malformed recommendations fail closed.
+See [`reporting/docs/architecture.md`](reporting/docs/architecture.md).
 
 ## What's proven
 
-The flagship loop runs end-to-end with an agent doing the judgment:
+- **State + projection** — Migrations 001–006 applied;
+  ``hai state reproject`` covers recovery, running, sleep, stress,
+  strength, and macros-only nutrition.
+- **Per-domain runtime** — Every domain ships ``classify.py`` +
+  ``policy.py`` + a readiness skill. ``hai classify`` and ``hai
+  policy`` debug commands cover recovery today (extension to other
+  domains via eval runner).
+- **Synthesis** — ``core/synthesis.py`` atomic-commits daily_plan
+  + x_rule_firings + N recommendations in one SQLite transaction.
+  ``--supersede`` keeps an old plan addressable with a
+  ``superseded_by`` pointer; default behaviour replaces cleanly.
+- **X-rules** — 10 evaluators (X1a/b, X2, X3a/b, X4, X5, X6a/b,
+  X7, X9) with tier precedence (block > soften > cap_confidence >
+  adjust) and a Phase B write-surface guard.
+- **Live Garmin pull** — ``hai auth garmin`` stores credentials in
+  the OS keyring; ``hai pull --live`` fetches a day's evidence via
+  ``python-garminconnect``.
+- **Eval framework** — ``safety/evals/`` ships 28 scenarios (18
+  domain + 10 synthesis) scored against frozen rubrics. All 28
+  pass on the Phase 6 checkpoint. Skill-narration axis marked
+  ``skipped_requires_agent_harness`` pending the Phase 2.5
+  Condition 3 follow-up.
+- **Test suite** — 1200+ tests cover schemas, classify, policy,
+  projectors, migrations, CLI surfaces, atomic-transaction
+  semantics, skill-boundary contracts, eval runner, scenario pack.
 
-```
-hai pull (Garmin CSV)
-    └─► hai clean
-            └─► agent reads CleanedEvidence + RawSummary + recovery-readiness skill
-                    └─► agent produces TrainingRecommendation JSON
-                            └─► hai writeback (schema-validated + idempotent)
-                                    └─► hai review schedule
-                                            └─► hai review record (next day)
-```
+## Known failing test
 
-- 14 deterministic + contract tests passing in `safety/tests/test_recovery_readiness_v1.py`.
-- Two proof bundles preserved as inputs-and-outputs examples:
-  - `reporting/artifacts/flagship_loop_proof/2026-04-16-recovery-readiness-v1/` — 8 synthetic scenarios (from the pre-reshape era). Bundle contents describe what the agent-plus-skills can be expected to produce on those inputs.
-  - `reporting/artifacts/flagship_loop_proof/2026-04-16-garmin-real-slice/` — the real Garmin CSV slice.
-  - Note: the captured JSONs were produced by the pre-reshape Python runtime. Regenerating them under the new skills-driven flow is a follow-on.
+``safety/tests/test_intake_stress_and_note.py ::
+test_reproject_clears_manual_stress_for_days_dropped_from_jsonl`` is a
+date-flaky test tracked across Phases 5–6. It has not been fixed in
+Phase 6. Treat as a known-bad; do not conflate with Phase 6 work
+when diagnosing new failures.
 
-## Install and run
+## Install
 
 ```bash
 pip install -e .
 hai setup-skills
+hai state init
 hai --help
 ```
 
-See [README.md](README.md) for the full subcommand list and [reporting/docs/agent_integration.md](reporting/docs/agent_integration.md) for Claude Code and Claude Agent SDK integration notes.
+See [`README.md`](README.md) for the full subcommand list and
+[`reporting/docs/agent_integration.md`](reporting/docs/agent_integration.md)
+for Claude Code / Agent SDK wiring.
 
-## Doctrine
-
-The controlling doctrine is [`reporting/docs/canonical_doctrine.md`](reporting/docs/canonical_doctrine.md). Non-goals are frozen in [`reporting/docs/explicit_non_goals.md`](reporting/docs/explicit_non_goals.md). The reshape itself is recorded in [`reporting/docs/phase_timeline.md`](reporting/docs/phase_timeline.md).
-
-## What this is not
+## Non-goals
 
 - Not a clinical product or medical device.
 - Not hosted or multi-user.
-- Not a polished install flow for general users.
-- Not a learning loop — no ML model in the runtime.
-- Not a multi-source platform — Garmin plus typed manual readiness only. Broader source fusion is out of scope.
-- Not a replacement for a coach, clinician, or informed user judgment.
+- Not an ML / learning loop (review records outcomes; does not
+  feed back).
+- Not a multi-source fusion platform (Garmin + user intake only
+  in v1).
+- Not meal-level nutrition / food taxonomy / micronutrient
+  inference in v1 (deferred post-Phase-2.5 retrieval-gate).
+- Not a skill-narration eval harness yet (deferred).
 
-## Tools + skills at a glance
+See [`reporting/docs/non_goals.md`](reporting/docs/non_goals.md) for
+the full list with rationale.
 
-| Layer | Surface | Location |
+## Phase progression
+
+| Phase | Scope | Status |
 |---|---|---|
-| Data acquisition | `hai pull` + Garmin adapter | `src/health_agent_infra/pull/` |
-| Normalization / raw aggregation | `hai clean` | `src/health_agent_infra/clean/` |
-| Schema-validated writeback | `hai writeback` | `src/health_agent_infra/writeback/` |
-| Review scheduling + outcomes | `hai review` | `src/health_agent_infra/review/` |
-| State classification + policy + recommendation | recovery-readiness skill | `skills/recovery-readiness/SKILL.md` |
-| User-facing narration | reporting skill | `skills/reporting/SKILL.md` |
-| Raw human input partitioning | merge-human-inputs skill | `skills/merge-human-inputs/SKILL.md` |
-| Writeback invocation protocol | writeback-protocol skill | `skills/writeback-protocol/SKILL.md` |
-| Fail-closed boundaries | safety skill | `skills/safety/SKILL.md` |
+| 0 | Preflight on existing system | complete |
+| 0.5 | Synthesis feasibility prototype | complete (GO for Phase 1) |
+| 1 | Core reshape + recovery classify/policy | complete |
+| 2 | Running + synthesis activation + live pull | complete |
+| 2.5 | Retrieval gate + independent eval pack | complete (macros-only nutrition; GO for Phase 3) |
+| 3 | Sleep + stress domains | complete |
+| 4 | Strength domain | complete (+ ``hai intake exercise`` follow-up) |
+| 5 | Nutrition domain (macros-only) | complete |
+| 6 | Eval harness + docs | **complete (this checkpoint)** |
+| 7 | Polish + publish | not started |
 
-## What's next
+## What's next (Phase 7 scope, not started)
 
-No active roadmap beyond the reshape. Candidate directions — to be picked deliberately, not executed by default:
+- Daily-use ergonomics: ``hai daily`` orchestrator for the morning
+  routine.
+- First-run wizard: ``hai init`` scaffolds thresholds + prompts
+  for Garmin auth.
+- Wheel build + PyPI publish (``0.1.0``).
+- Optional MCP server wrapper (``hai mcp serve``).
+- Launch artifact documenting the runtime thesis + scope.
 
-- Regenerate the 2026-04-16 proof bundles with a real agent driving the skills-driven flow, so the captured JSONs match what the runtime actually produces now (not just what the pre-reshape Python produced).
-- Add a second source adapter conforming to `FlagshipPullAdapter` (e.g., a typed manual readiness intake adapter distinct from the neutral default).
-- Publish to PyPI once the install story is validated by a real user run.
-- MCP server wrapper for agents that prefer MCP over CLI subcommands.
+Open cross-phase questions tracked at ``reporting/plans/comprehensive_rebuild_plan.md`` §8:
+
+- Apple Health adapter timing (post-Phase-7, demand-driven).
+- Learning loop design (no ML in v1; revisit post-launch).
+- Goal-specific recommendation logic (periodization, taper,
+  bulk/cut) — deferred post-launch.
+- Food database maintenance + meal-level re-gate (deferred until
+  the three structural retrieval failure classes are fixed).

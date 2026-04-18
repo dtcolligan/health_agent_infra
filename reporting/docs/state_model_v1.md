@@ -1,8 +1,24 @@
 # State Model v1
 
-Status: proposed control doc. Written 2026-04-17 as phase 7A.0 of the broad-state / narrow-action build. **Nothing in the SQLite schema, intake CLIs, or snapshot surface is authoritative until this doc is approved.** The DDL that lands in phase 7A.1 translates from this doc, not the other way around.
+Status: **authoritative** as of the Phase 6 checkpoint (2026-04-18).
+Migrations 001–006 are live. The DDL under
+``src/health_agent_infra/core/state/migrations/`` is the source of
+truth; this doc reflects it and is updated when migrations land.
 
-This document governs the interpretation of state in Health Agent Infra. It does not replace the Founder Doctrine; it operationalises the doctrine's "broad state, narrow action" rule into specific entities, layers, and mutation rules.
+This document governs the interpretation of state in Health Agent
+Infra. Per the v1 rebuild, classification and mechanical policy
+live in Python (``domains/<d>/classify.py`` + ``policy.py``), so
+sections describing "skill markdown owns classification" below are
+historical framing — the current boundary is tighter (see
+[``architecture.md``](architecture.md) §code-vs-skill).
+
+**Phase 2.5 retrieval-gate compression (2026-04-17):** The
+nutrition scope was compressed to macros-only — no ``meal_log``, no
+``food_taxonomy``, no micronutrient columns, and
+``accepted_nutrition_state_daily.derivation_path`` is
+``'daily_macros'`` only in v1. Any prior-session references to
+meal-level columns or a USDA food database in this doc are
+superseded; see [``non_goals.md``](non_goals.md).
 
 ---
 

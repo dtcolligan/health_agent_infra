@@ -1,108 +1,170 @@
 # Agent Integration
 
-How a Claude agent (or open Claude-equivalent) installs and uses Health Agent Infra.
+How a Claude agent (or open Claude-equivalent) installs and uses
+Health Agent Infra v1.
 
 The package ships two things the agent consumes:
 
-1. **A CLI called `hai`** — deterministic subcommands on the user's PATH.
-2. **Five markdown skills** under `skills/` — judgment-layer instructions.
+1. **A CLI called ``hai``** — deterministic subcommands on the
+   user's PATH.
+2. **Twelve markdown skills** under ``skills/`` — six per-domain
+   readiness skills, a synthesis skill, plus cross-cutting
+   (strength-intake, merge-human-inputs, writeback-protocol,
+   reporting, safety).
 
-The agent reads skills, makes decisions, and invokes CLI subcommands to move structured state. The CLI validates the agent's output at the writeback boundary.
+The agent reads skills, makes judgment calls, and invokes CLI
+subcommands to move structured state. The CLI validates the
+agent's output at three determinism boundaries (``hai propose``,
+``hai synthesize``, ``hai writeback``).
 
 ## Install
 
-For local development:
-
 ```bash
 cd /path/to/health_agent_infra
-pip install -e .
-hai setup-skills
+pip install -e .                # or `pip install health_agent_infra` once published
+hai setup-skills                # copies skills to ~/.claude/skills/
+hai state init                  # creates the SQLite state DB + applies migrations
 ```
-
-`pip install -e .` (or `pip install health_agent_infra` once published) exposes the `hai` command on the user's PATH. `hai setup-skills` copies every directory under the packaged `src/health_agent_infra/skills/` into `~/.claude/skills/` (or a custom path via `--dest`). The skills are shipped inside the wheel via `importlib.resources`, so the command works identically in editable and installed modes. If a skill of the same name already exists at the destination, `hai setup-skills` skips it unless `--force` is passed.
 
 Verify:
 
 ```bash
 hai --help
-ls ~/.claude/skills/   # should list recovery-readiness, reporting, merge-human-inputs, writeback-protocol, safety
+ls ~/.claude/skills/
+# recovery-readiness  running-readiness  sleep-quality  stress-regulation
+# strength-readiness  nutrition-alignment  daily-plan-synthesis
+# strength-intake  merge-human-inputs  writeback-protocol  reporting  safety
 ```
 
 ## Claude Code
 
-After `hai setup-skills`, Claude Code discovers the skills automatically the next time it starts. The skills appear in its available-skills list with descriptions drawn from each `SKILL.md` frontmatter.
+Claude Code discovers the skills automatically from
+``~/.claude/skills/``. Each skill's ``allowed-tools`` frontmatter
+scopes the CLI subcommands it may invoke — e.g., the
+``recovery-readiness`` skill allows
+``Bash(hai propose --domain recovery *)`` but nothing else.
 
-The agent invokes CLI subcommands via its `Bash` tool. Each `SKILL.md` scopes `allowed-tools` to the exact CLI patterns it needs — e.g., the writeback-protocol skill allows `Bash(hai writeback *)` and `Bash(hai review *)` but not other commands.
+Typical daily loop:
 
-Typical agent loop in Claude Code:
-
-1. User: "Give me today's training recommendation."
-2. Agent reads `recovery-readiness` skill (loaded on user prompt or via skill discovery).
-3. Agent asks the user for today's manual readiness via the merge-human-inputs skill, then captures it:
-   `hai intake readiness --soreness moderate --energy high --planned-session-type hard --active-goal strength_block > /tmp/mr.json`
-4. Agent: `hai pull --date $(date +%Y-%m-%d) --user-id u_1 --manual-readiness-json /tmp/mr.json > /tmp/evidence.json`
-5. Agent: `hai clean --evidence-json /tmp/evidence.json > /tmp/prep.json`
-6. Agent reads `prep.json`, classifies state and applies policy per the skill, writes `TrainingRecommendation` JSON to `/tmp/rec.json`.
-7. Agent: `hai writeback --recommendation-json /tmp/rec.json --base-dir ~/.local/share/hai/recovery_readiness_v1`
-8. Agent: `hai review schedule --recommendation-json /tmp/rec.json --base-dir ~/.local/share/hai/recovery_readiness_v1`
-9. Agent uses the `reporting` skill to narrate the recommendation back to the user.
-
-For offline replays or fixtures, step 3 can be replaced with `--use-default-manual-readiness` in step 4; that produces a neutral default without asking the user. The default is explicitly fabricated, not inferred — use it only for testing.
+1. User: "Plan my day."
+2. Agent invokes ``hai pull`` (or ``hai pull --live`` when a Garmin
+   live-pull is configured) and any needed ``hai intake *``
+   commands.
+3. Agent runs ``hai clean`` + ``hai state reproject`` to refresh
+   accepted state.
+4. Agent reads ``hai state snapshot --as-of <date> --user-id <u>``.
+5. Per domain, agent reads the domain's readiness skill + the
+   snapshot's domain block, honours any ``policy_result.forced_action``
+   / ``capped_confidence``, composes a ``DomainProposal``, and
+   invokes ``hai propose --domain <d> --proposal-json <p>``.
+6. With all six proposals in proposal_log, agent invokes ``hai
+   synthesize --as-of <date> --user-id <u>``. The runtime applies
+   Phase A mutations, passes the bundle + firings to the
+   daily-plan-synthesis skill for rationale overlay, then runs
+   Phase B, then commits the daily_plan + x_rule_firings + N
+   recommendations in one SQLite transaction.
+7. Agent uses the ``reporting`` skill to narrate the synthesised
+   plan back to the user.
+8. Next morning: agent records outcomes via ``hai review record
+   --domain <d>``.
 
 ## Claude Agent SDK
 
-Two options:
+Two supported paths:
 
-1. **CLI subcommand dispatch** — the SDK agent runs `hai` subcommands via shell. This is the same flow as Claude Code. Fully agent-agnostic.
-2. **Direct Python imports** — if the SDK is running in the same Python environment where `pip install -e .` happened, the agent can `from health_agent_infra.clean import clean_inputs, build_raw_summary` and call functions directly. This skips subprocess overhead but couples the agent to Python. Use only for performance-sensitive inner loops.
+1. **CLI subcommand dispatch** — the SDK agent shells out to
+   ``hai``. Same flow as Claude Code; fully agent-agnostic.
+2. **Direct Python imports** — if the SDK runs in the same Python
+   environment where ``pip install -e .`` happened, the agent can
+   ``from health_agent_infra.core.state.snapshot import
+   build_snapshot`` and call functions directly. Skips subprocess
+   overhead; couples the agent to Python.
 
-For the SDK, skill discovery is not automatic. Upload skills to the Anthropic Skills API (the SDK has org-level support) or reference them by file path in your agent's system prompt.
-
-## Other Claude surfaces
-
-- **Claude.ai** — skill upload is per-user via the UI. Upload each `skills/<skill>/SKILL.md` manually; supporting files in a skill directory are not currently supported there.
-- **Web API** — use the Skills API to register skills by `skill_id` and reference them in conversation turns.
+For the SDK, skill discovery is not automatic. Either upload skills
+to the Anthropic Skills API or reference them by file path in your
+agent's system prompt.
 
 ## Open Claude-equivalent agents
 
-Any agent with:
+Any agent with both:
 
-- A shell-exec tool (for `hai` subcommands), AND
-- A way to load markdown system-prompt fragments at session start (for the skills)
+- A shell-exec tool (for ``hai`` subcommands), AND
+- A way to load markdown fragments at session start (for the
+  skills)
 
-can drive this package. The contract between agent and runtime is the `TrainingRecommendation` JSON schema at `hai writeback` — open-source agents just need to produce a valid JSON.
+can drive this package. The wire contract is JSON at the three
+determinism boundaries.
 
-## MCP
+## Determinism boundaries (three places the runtime refuses)
 
-No MCP server ships yet. A future wrapper could expose the CLI subcommands as MCP tools for agents that prefer MCP over shell. Tracked in `STATUS.md` under "what's next."
+1. **``hai propose``** — validates a DomainProposal against
+   ``core/writeback/proposal.py :: validate_proposal_dict``.
+   Checked invariants: ``required_fields_present``,
+   ``forbidden_fields_absent``, ``domain_supported``, ``domain_match``,
+   ``schema_version``, ``action_enum``, ``confidence_enum``,
+   ``bounded_true``, ``policy_decisions_present``, ``for_date_iso``.
+   Violations exit 2 with a named ``invariant=<id>`` stderr tag.
 
-## Where tools expect paths
+2. **``hai synthesize``** — refuses with ``SynthesisError`` when
+   no proposals exist for the (for_date, user_id). Rolls back the
+   entire transaction on any failure inside. Phase B firings are
+   passed through a write-surface guard that rejects any attempt
+   to mutate ``action`` or touch a domain not registered in
+   ``PHASE_B_TARGETS``.
 
-- `hai pull` reads from `src/health_agent_infra/data/garmin/export/daily_summary_export.csv` — shipped inside the wheel, resolved via `importlib.resources`. Override via the adapter's `export_dir` kwarg if you want to point at a different export.
-- `hai writeback` requires `--base-dir` whose path ends in `recovery_readiness_v1/`. Enforced at the I/O boundary. Suggested default: `~/.local/share/health_agent_infra/recovery_readiness_v1/`.
-- `hai setup-skills` defaults to `~/.claude/skills/`. Override via `--dest`.
+3. **``hai writeback``** — validates a BoundedRecommendation
+   against the same schema family. Same exit-code + invariant-id
+   contract.
 
-## Where the determinism boundary is
-
-**`hai writeback` calls `src/health_agent_infra/validate.py::validate_recommendation_dict` before any side effect.** That pure function enforces the following invariants — each with a stable machine-readable `invariant` id that the CLI surfaces in stderr on failure:
-
-- `required_fields_present` — every required key exists in the JSON
-- `schema_version` — exact match against the runtime's `RECOMMENDATION_SCHEMA_VERSION`
-- `action_enum` — `action` is one of the six-value `ActionKind` set (runtime-enforced; `Literal` types in Python are compile-time hints only)
-- `confidence_enum` — `confidence` ∈ {`low`, `moderate`, `high`}
-- `bounded_true` — `bounded is True`
-- `no_banned_tokens` — R2: none of the ten banned diagnosis-shaped tokens appear in `rationale[]` or `action_detail` values (case-insensitive)
-- `follow_up_shape` — `follow_up` is an object carrying `review_at`, `review_question`, `review_event_id`
-- `review_at_within_24h` — R4: `review_at` is within 24 hours of `issued_at` and not before
-- `policy_decisions_present` — at least one `PolicyDecision` entry is recorded
-
-Violations exit with code 2 and stderr `writeback rejected: invariant=<id>: <message>`. Nothing persists. Callers can pattern-match on the invariant id without parsing prose.
-
-Everything upstream (pull, clean) is deterministic pure functions on evidence. Everything downstream (writeback, review) is idempotent persistence with locality enforcement (`base_dir` must be a path segment named `recovery_readiness_v1`).
+Nothing persists until its determinism check passes. Callers can
+pattern-match on the ``invariant`` id without parsing prose.
 
 ## What an agent should NOT do
 
-- Modify JSONL files directly. All state mutation goes through `hai`.
-- Claim more than the evidence supports. Rationale in the recommendation must reference raw_summary numbers.
-- Use diagnostic / clinical language. R2 in the recovery-readiness skill and the writeback schema check both reject it.
-- Call `hai` subcommands outside its `allowed-tools` scope in the relevant skill.
+- Modify JSONL or SQLite files directly. All state mutation goes
+  through ``hai``.
+- Claim more than the evidence supports. Rationale in a proposal
+  must reference snapshot numbers (bands, deltas, ratios).
+- Use diagnostic / clinical language. The safety skill + writeback
+  banned-tokens check both reject it.
+- Pre-bake Phase B adjustments (e.g. X9's protein-target bump).
+  That is runtime territory; the synthesis skill must not write
+  an ``action_detail`` reason_token that starts with ``x9_`` or
+  equivalent.
+- Call ``hai`` subcommands outside the ``allowed-tools`` scope of
+  whichever skill is currently active.
+
+## MCP
+
+No MCP server ships in v1. A future wrapper exposing CLI
+subcommands as MCP tools is tracked as Phase 7 scope.
+
+## Where tools expect paths
+
+- ``hai pull`` reads from
+  ``src/health_agent_infra/data/garmin/export/daily_summary_export.csv``
+  by default (CSV fixture). ``hai pull --live`` uses keyring-stored
+  Garmin credentials.
+- ``hai state snapshot`` / ``hai state reproject`` default to
+  ``platformdirs`` user-data path; override via ``--db-path``.
+- ``hai writeback`` / ``hai propose`` / ``hai review`` take
+  ``--base-dir`` for JSONL audit logs; the default is
+  ``~/.local/share/hai/``.
+- ``hai setup-skills`` defaults to ``~/.claude/skills/``. Override
+  via ``--dest``.
+- ``hai config show`` prints the effective thresholds (defaults
+  merged with user overrides at ``~/.config/hai/thresholds.toml``).
+
+## Evaluating changes
+
+After modifying a domain classifier, policy, or skill:
+
+```bash
+hai eval run --domain recovery
+hai eval run --synthesis
+```
+
+The deterministic runtime layers are scored against frozen
+scenarios under ``safety/evals/scenarios/``. Skill-layer narration
+is NOT scored — see ``safety/evals/skill_harness_blocker.md`` for
+the deferred follow-up.
