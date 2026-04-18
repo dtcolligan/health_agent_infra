@@ -34,6 +34,8 @@ where = ["src"]
   "skills/**/*.md",
   "data/**/*.csv",
   "state/migrations/*.sql",
+  "core/state/migrations/*.sql",
+  "domains/strength/*.csv",
 ]
 
 [tool.pytest.ini_options]

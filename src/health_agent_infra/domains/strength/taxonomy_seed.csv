@@ -1,0 +1,83 @@
+exercise_id,canonical_name,aliases,primary_muscle_group,secondary_muscle_groups,category,equipment
+back_squat,Back Squat,back squat|squat|barbell squat|bs|high bar squat|low bar squat,quads,glutes|core,compound,barbell
+front_squat,Front Squat,front squat|fsq,quads,glutes|core,compound,barbell
+goblet_squat,Goblet Squat,goblet squat,quads,glutes|core,compound,dumbbell
+bulgarian_split_squat,Bulgarian Split Squat,bulgarian split squat|bss|split squat|bulgarian,quads,glutes|hamstrings|core,compound,dumbbell
+hack_squat,Hack Squat,hack squat,quads,glutes,compound,machine
+leg_press,Leg Press,leg press,quads,glutes|hamstrings,compound,machine
+overhead_squat,Overhead Squat,overhead squat|ohsq,quads,glutes|core|shoulders,compound,barbell
+zercher_squat,Zercher Squat,zercher squat,quads,glutes|core|back,compound,barbell
+conventional_deadlift,Conventional Deadlift,deadlift|conventional deadlift|dl|bb dl,hamstrings,glutes|back|core,compound,barbell
+sumo_deadlift,Sumo Deadlift,sumo deadlift|sumo dl,glutes,hamstrings|back|core,compound,barbell
+romanian_deadlift,Romanian Deadlift,romanian deadlift|rdl,hamstrings,glutes|back,compound,barbell
+trap_bar_deadlift,Trap Bar Deadlift,trap bar deadlift|tbdl|trap bar|hex bar deadlift,quads,glutes|hamstrings|back,compound,barbell
+stiff_leg_deadlift,Stiff Leg Deadlift,stiff leg deadlift|sldl|stiff legged deadlift,hamstrings,glutes|back,compound,barbell
+good_morning,Good Morning,good morning|gm,hamstrings,glutes|back,compound,barbell
+kettlebell_swing,Kettlebell Swing,kettlebell swing|kb swing|swing,glutes,hamstrings|back|core,compound,kettlebell
+hip_thrust,Hip Thrust,hip thrust|barbell hip thrust|bb hip thrust,glutes,hamstrings|core,compound,barbell
+glute_bridge,Glute Bridge,glute bridge|bridge,glutes,hamstrings|core,compound,bodyweight
+cable_pull_through,Cable Pull Through,pull through|cable pull through,glutes,hamstrings|back,compound,cable
+walking_lunge,Walking Lunge,walking lunge|lunges|lunge,quads,glutes|hamstrings|core,compound,dumbbell
+reverse_lunge,Reverse Lunge,reverse lunge,quads,glutes|hamstrings,compound,dumbbell
+step_up,Step Up,step up|step ups,quads,glutes|hamstrings,compound,dumbbell
+leg_extension,Leg Extension,leg extension|leg ext,quads,,isolation,machine
+leg_curl,Leg Curl,leg curl|lying leg curl|seated leg curl|hamstring curl,hamstrings,,isolation,machine
+nordic_curl,Nordic Curl,nordic curl|nordics,hamstrings,glutes|core,isolation,bodyweight
+standing_calf_raise,Standing Calf Raise,standing calf raise|calf raise|calves,calves,,isolation,machine
+seated_calf_raise,Seated Calf Raise,seated calf raise,calves,,isolation,machine
+bench_press,Bench Press,bench press|bench|barbell bench|bp|flat bench,chest,triceps|shoulders,compound,barbell
+incline_bench_press,Incline Bench Press,incline bench press|incline bench|incline bp,chest,triceps|shoulders,compound,barbell
+decline_bench_press,Decline Bench Press,decline bench press|decline bench,chest,triceps|shoulders,compound,barbell
+dumbbell_bench_press,Dumbbell Bench Press,dumbbell bench press|db bench|db bp,chest,triceps|shoulders,compound,dumbbell
+dumbbell_incline_press,Incline Dumbbell Press,incline dumbbell press|incline db press|incline db bench,chest,triceps|shoulders,compound,dumbbell
+close_grip_bench_press,Close Grip Bench Press,close grip bench|cgbp|close grip bp,triceps,chest|shoulders,compound,barbell
+overhead_press,Overhead Press,overhead press|ohp|shoulder press|military press|strict press,shoulders,triceps|core,compound,barbell
+push_press,Push Press,push press,shoulders,triceps|core|quads,compound,barbell
+dumbbell_shoulder_press,Dumbbell Shoulder Press,dumbbell shoulder press|db shoulder press|db ohp,shoulders,triceps,compound,dumbbell
+arnold_press,Arnold Press,arnold press,shoulders,triceps,compound,dumbbell
+machine_chest_press,Machine Chest Press,machine chest press|chest press machine,chest,triceps|shoulders,compound,machine
+dip,Dip,dip|dips,triceps,chest|shoulders,compound,bodyweight
+push_up,Push Up,push up|pushup|push-up,chest,triceps|shoulders|core,compound,bodyweight
+pull_up,Pull Up,pull up|pullup|pull-up,back,biceps|core,compound,bodyweight
+chin_up,Chin Up,chin up|chinup|chin-up,back,biceps|core,compound,bodyweight
+lat_pulldown,Lat Pulldown,lat pulldown|pulldown,back,biceps,compound,cable
+barbell_row,Barbell Row,barbell row|bent over row|bb row|row,back,biceps|core,compound,barbell
+pendlay_row,Pendlay Row,pendlay row,back,biceps|core,compound,barbell
+dumbbell_row,Dumbbell Row,dumbbell row|db row|one arm row,back,biceps,compound,dumbbell
+seated_cable_row,Seated Cable Row,seated row|cable row|seated cable row,back,biceps,compound,cable
+t_bar_row,T-Bar Row,t bar row|t-bar row|tbar row,back,biceps,compound,machine
+face_pull,Face Pull,face pull,shoulders,back,isolation,cable
+barbell_shrug,Barbell Shrug,shrug|barbell shrug,back,,isolation,barbell
+dumbbell_shrug,Dumbbell Shrug,db shrug|dumbbell shrug,back,,isolation,dumbbell
+barbell_curl,Barbell Curl,barbell curl|bb curl|bicep curl,biceps,,isolation,barbell
+dumbbell_curl,Dumbbell Curl,dumbbell curl|db curl,biceps,,isolation,dumbbell
+hammer_curl,Hammer Curl,hammer curl,biceps,,isolation,dumbbell
+preacher_curl,Preacher Curl,preacher curl,biceps,,isolation,barbell
+incline_dumbbell_curl,Incline Dumbbell Curl,incline curl|incline db curl,biceps,,isolation,dumbbell
+cable_curl,Cable Curl,cable curl,biceps,,isolation,cable
+tricep_pushdown,Tricep Pushdown,tricep pushdown|pushdown|cable pushdown,triceps,,isolation,cable
+skull_crusher,Skull Crusher,skull crusher|skullcrusher|lying tricep extension,triceps,,isolation,barbell
+overhead_tricep_extension,Overhead Tricep Extension,overhead tricep extension|oh tri ext|french press,triceps,,isolation,dumbbell
+tricep_kickback,Tricep Kickback,kickback|tricep kickback,triceps,,isolation,dumbbell
+lateral_raise,Lateral Raise,lateral raise|side raise|lat raise|db lateral,shoulders,,isolation,dumbbell
+front_raise,Front Raise,front raise,shoulders,,isolation,dumbbell
+rear_delt_fly,Rear Delt Fly,rear delt fly|rear delt raise|reverse fly,shoulders,back,isolation,dumbbell
+upright_row,Upright Row,upright row,shoulders,back,compound,barbell
+dumbbell_fly,Dumbbell Fly,dumbbell fly|db fly|chest fly,chest,,isolation,dumbbell
+cable_fly,Cable Fly,cable fly|cable crossover,chest,,isolation,cable
+pec_deck,Pec Deck,pec deck|machine fly,chest,,isolation,machine
+plank,Plank,plank,core,,isolation,bodyweight
+sit_up,Sit Up,sit up|situp|sit-up,core,,isolation,bodyweight
+hanging_leg_raise,Hanging Leg Raise,hanging leg raise|leg raise,core,,isolation,bodyweight
+cable_crunch,Cable Crunch,cable crunch,core,,isolation,cable
+russian_twist,Russian Twist,russian twist,core,,isolation,bodyweight
+ab_rollout,Ab Rollout,ab rollout|rollout,core,,isolation,bodyweight
+weighted_sit_up,Weighted Sit Up,weighted sit up,core,,isolation,bodyweight
+power_clean,Power Clean,power clean|clean,quads,hamstrings|glutes|back|shoulders|core,compound,barbell
+hang_clean,Hang Clean,hang clean,quads,hamstrings|glutes|back|shoulders|core,compound,barbell
+clean_and_jerk,Clean and Jerk,clean and jerk|c&j,quads,hamstrings|glutes|back|shoulders|triceps|core,compound,barbell
+snatch,Snatch,snatch|power snatch,quads,hamstrings|glutes|back|shoulders|core,compound,barbell
+push_jerk,Push Jerk,push jerk,shoulders,quads|triceps|core,compound,barbell
+cable_lateral_raise,Cable Lateral Raise,cable lateral raise|cable side raise,shoulders,,isolation,cable
+reverse_pec_deck,Reverse Pec Deck,reverse pec deck,shoulders,back,isolation,machine
+machine_row,Machine Row,machine row|seated machine row,back,biceps,compound,machine

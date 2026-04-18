@@ -106,6 +106,7 @@ def test_schema_migrations_has_one_row_per_applied_migration(tmp_path: Path):
         (2, "002_rename_training_readiness_pct.sql"),
         (3, "003_synthesis_scaffolding.sql"),
         (4, "004_sleep_stress_tables.sql"),
+        (5, "005_strength_expansion.sql"),
     ]
 
 
@@ -121,7 +122,7 @@ def test_schema_migrations_not_duplicated_on_repeat_init(tmp_path: Path):
     finally:
         conn.close()
 
-    assert count == 4
+    assert count == 5
 
 
 def test_current_schema_version_zero_on_empty_db(tmp_path: Path):
@@ -139,7 +140,7 @@ def test_current_schema_version_matches_head_after_init(tmp_path: Path):
 
     conn = open_connection(db_path)
     try:
-        assert current_schema_version(conn) == 4
+        assert current_schema_version(conn) == 5
     finally:
         conn.close()
 
@@ -221,6 +222,7 @@ EXPECTED_TABLES = {
     "accepted_running_state_daily",
     "accepted_resistance_training_state_daily",
     "accepted_nutrition_state_daily",
+    "exercise_taxonomy",
     "goal",
     # recommendation + review
     "recommendation_log",
@@ -277,8 +279,8 @@ def test_cli_state_migrate_on_head_db_reports_empty_applied(tmp_path: Path, caps
 
     import json
     payload = json.loads(capsys.readouterr().out)
-    assert payload["schema_version_before"] == 4
-    assert payload["schema_version_after"] == 4
+    assert payload["schema_version_before"] == 5
+    assert payload["schema_version_after"] == 5
     assert payload["applied"] == []
 
 
@@ -349,7 +351,7 @@ def test_broken_migration_rolls_back_ddl_and_bookkeeping(tmp_path: Path):
         assert len(rows) == 1
 
         # Version is still at head (pre-broken migration), not 99.
-        assert current_schema_version(conn) == 4
+        assert current_schema_version(conn) == 5
     finally:
         conn.close()
 
