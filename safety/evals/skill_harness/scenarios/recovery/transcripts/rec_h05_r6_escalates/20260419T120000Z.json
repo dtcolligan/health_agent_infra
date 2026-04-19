@@ -1,0 +1,50 @@
+{
+  "scenario_id": "rec_h05_r6_escalates",
+  "source": "hand_authored_reference",
+  "recorded_at": "2026-04-19T12:00:00Z",
+  "notes": "Reference transcript demonstrating the R6-forced escalate_for_user_review branch. Not evidence of live skill behaviour.",
+  "recommendation": {
+    "schema_version": "training_recommendation.v1",
+    "recommendation_id": "rec_2026-04-17_u_eval_01",
+    "user_id": "u_eval",
+    "issued_at": "2026-04-17T12:00:00+00:00",
+    "for_date": "2026-04-17",
+    "action": "escalate_for_user_review",
+    "action_detail": {
+      "reason_token": "resting_hr_spike_3_days_running",
+      "consecutive_days": 3
+    },
+    "rationale": [
+      "resting_hr_vs_baseline=well_above: 65 bpm vs 52 baseline, third consecutive elevated day",
+      "training_load=moderate: 1.12x 7d baseline",
+      "sleep_debt=mild: 7.5h, acceptable but not restorative",
+      "policy escalation triggered by R6 (resting_hr_spike_3_days_running)",
+      "withholding autonomous adjustment pending user review"
+    ],
+    "confidence": "moderate",
+    "uncertainty": [],
+    "follow_up": {
+      "review_at": "2026-04-18T07:00:00+00:00",
+      "review_question": "You had a persistent signal we flagged. Did you take any action?",
+      "review_event_id": "rev_2026-04-18_u_eval_rec_2026-04-17_u_eval_01"
+    },
+    "policy_decisions": [
+      {
+        "rule_id": "require_min_coverage",
+        "decision": "allow",
+        "note": "coverage=full; required inputs present"
+      },
+      {
+        "rule_id": "no_high_confidence_on_sparse_signal",
+        "decision": "allow",
+        "note": "coverage=full; no cap required"
+      },
+      {
+        "rule_id": "resting_hr_spike_escalation",
+        "decision": "escalate",
+        "note": "resting_hr_spike_days=3 >= threshold=3"
+      }
+    ],
+    "bounded": true
+  }
+}

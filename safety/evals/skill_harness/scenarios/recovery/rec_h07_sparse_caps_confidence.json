@@ -1,0 +1,44 @@
+{
+  "scenario_id": "rec_h07_sparse_caps_confidence",
+  "domain": "recovery",
+  "description": "Sleep + soreness present but HRV and training-load baseline missing → coverage=sparse → R5 caps confidence at moderate. Skill follows the matrix (recovered + easy planned → proceed) but must not exceed moderate confidence, and must carry the associated uncertainty tokens.",
+  "input": {
+    "user_id": "u_eval",
+    "for_date": "2026-04-17",
+    "evidence": {
+      "as_of_date": "2026-04-17",
+      "user_id": "u_eval",
+      "sleep_hours": 7.8,
+      "resting_hr": 54.0,
+      "soreness_self_report": "low",
+      "planned_session_type": "easy"
+    },
+    "raw_summary": {
+      "as_of_date": "2026-04-17",
+      "user_id": "u_eval",
+      "resting_hr_baseline": 52.0,
+      "resting_hr_ratio_vs_baseline": 1.03,
+      "resting_hr_spike_days": 0
+    },
+    "today": {
+      "training_readiness_level": "Moderate",
+      "training_readiness_component_mean_pct": 62,
+      "body_battery_end_of_day": 60
+    }
+  },
+  "expected": {
+    "action": "proceed_with_planned_session",
+    "confidence_at_or_below": "moderate",
+    "policy_decisions_preserved": true,
+    "action_detail_required_keys": [],
+    "recommendation_id_pattern": "rec_2026-04-17_u_eval_\\d+",
+    "rationale_must_reference_bands": [
+      "sleep_debt",
+      "resting_hr"
+    ],
+    "uncertainty_must_contain": [
+      "hrv_unavailable"
+    ],
+    "uncertainty_must_not_contain": []
+  }
+}

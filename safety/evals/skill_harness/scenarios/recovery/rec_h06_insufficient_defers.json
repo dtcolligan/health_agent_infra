@@ -1,0 +1,40 @@
+{
+  "scenario_id": "rec_h06_insufficient_defers",
+  "domain": "recovery",
+  "description": "Sleep record missing and soreness unknown → R1 blocks. Skill must honour forced_action defer_decision_insufficient_signal with confidence=low.",
+  "input": {
+    "user_id": "u_eval",
+    "for_date": "2026-04-17",
+    "evidence": {
+      "as_of_date": "2026-04-17",
+      "user_id": "u_eval",
+      "resting_hr": 55.0,
+      "planned_session_type": "hard"
+    },
+    "raw_summary": {
+      "as_of_date": "2026-04-17",
+      "user_id": "u_eval",
+      "resting_hr_baseline": 52.0,
+      "resting_hr_ratio_vs_baseline": 1.06,
+      "resting_hr_spike_days": 0
+    },
+    "today": {
+      "training_readiness_level": "Moderate",
+      "training_readiness_component_mean_pct": 60,
+      "body_battery_end_of_day": 55
+    }
+  },
+  "expected": {
+    "action": "defer_decision_insufficient_signal",
+    "confidence_at_or_below": "low",
+    "policy_decisions_preserved": true,
+    "action_detail_required_keys": [],
+    "recommendation_id_pattern": "rec_2026-04-17_u_eval_\\d+",
+    "rationale_must_reference_bands": [],
+    "uncertainty_must_contain": [
+      "sleep_record_missing",
+      "manual_checkin_missing"
+    ],
+    "uncertainty_must_not_contain": []
+  }
+}

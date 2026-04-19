@@ -1,0 +1,49 @@
+{
+  "scenario_id": "rec_h04_impaired_other_rest",
+  "domain": "recovery",
+  "description": "Impaired recovery with a non-hard planned session (easy run). Matrix maps this to rest_day_recommended with suggested_activity in action_detail.",
+  "input": {
+    "user_id": "u_eval",
+    "for_date": "2026-04-17",
+    "evidence": {
+      "as_of_date": "2026-04-17",
+      "user_id": "u_eval",
+      "sleep_hours": 5.5,
+      "resting_hr": 63.0,
+      "hrv_ms": 50.0,
+      "soreness_self_report": "high",
+      "planned_session_type": "easy"
+    },
+    "raw_summary": {
+      "as_of_date": "2026-04-17",
+      "user_id": "u_eval",
+      "resting_hr_baseline": 52.0,
+      "resting_hr_ratio_vs_baseline": 1.21,
+      "hrv_ratio_vs_baseline": 0.79,
+      "trailing_7d_training_load": 640.0,
+      "training_load_baseline": 400.0,
+      "training_load_ratio_vs_baseline": 1.6,
+      "resting_hr_spike_days": 1
+    },
+    "today": {
+      "training_readiness_level": "Low",
+      "training_readiness_component_mean_pct": 30,
+      "body_battery_end_of_day": 22,
+      "all_day_stress": 68
+    }
+  },
+  "expected": {
+    "action": "rest_day_recommended",
+    "confidence_at_or_below": "high",
+    "policy_decisions_preserved": true,
+    "action_detail_required_keys": ["suggested_activity"],
+    "recommendation_id_pattern": "rec_2026-04-17_u_eval_\\d+",
+    "rationale_must_reference_bands": [
+      "sleep_debt",
+      "soreness",
+      "training_load"
+    ],
+    "uncertainty_must_contain": [],
+    "uncertainty_must_not_contain": []
+  }
+}

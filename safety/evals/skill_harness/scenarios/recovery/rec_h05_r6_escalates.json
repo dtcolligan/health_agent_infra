@@ -1,0 +1,48 @@
+{
+  "scenario_id": "rec_h05_r6_escalates",
+  "domain": "recovery",
+  "description": "RHR spike on 3 consecutive days fires R6. Skill must honour forced_action escalate_for_user_review; confidence no higher than moderate.",
+  "input": {
+    "user_id": "u_eval",
+    "for_date": "2026-04-17",
+    "evidence": {
+      "as_of_date": "2026-04-17",
+      "user_id": "u_eval",
+      "sleep_hours": 7.5,
+      "resting_hr": 65.0,
+      "hrv_ms": 60.0,
+      "soreness_self_report": "moderate",
+      "planned_session_type": "hard"
+    },
+    "raw_summary": {
+      "as_of_date": "2026-04-17",
+      "user_id": "u_eval",
+      "resting_hr_baseline": 52.0,
+      "resting_hr_ratio_vs_baseline": 1.25,
+      "hrv_ratio_vs_baseline": 0.85,
+      "trailing_7d_training_load": 450.0,
+      "training_load_baseline": 400.0,
+      "training_load_ratio_vs_baseline": 1.12,
+      "resting_hr_spike_days": 3
+    },
+    "today": {
+      "training_readiness_level": "Low",
+      "training_readiness_component_mean_pct": 48,
+      "body_battery_end_of_day": 44,
+      "all_day_stress": 58
+    }
+  },
+  "expected": {
+    "action": "escalate_for_user_review",
+    "confidence_at_or_below": "moderate",
+    "policy_decisions_preserved": true,
+    "action_detail_required_keys": ["reason_token", "consecutive_days"],
+    "recommendation_id_pattern": "rec_2026-04-17_u_eval_\\d+",
+    "rationale_must_reference_bands": [
+      "resting_hr",
+      "training_load"
+    ],
+    "uncertainty_must_contain": [],
+    "uncertainty_must_not_contain": []
+  }
+}

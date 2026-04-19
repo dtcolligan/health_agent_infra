@@ -1,0 +1,49 @@
+{
+  "scenario_id": "rec_h02_mildly_impaired_hard_downgrades",
+  "domain": "recovery",
+  "description": "Mild sleep debt + above-baseline RHR against a hard planned session. Status mildly_impaired; skill must downgrade to zone 2 with target_intensity + target_duration_minutes in action_detail.",
+  "input": {
+    "user_id": "u_eval",
+    "for_date": "2026-04-17",
+    "evidence": {
+      "as_of_date": "2026-04-17",
+      "user_id": "u_eval",
+      "sleep_hours": 6.4,
+      "resting_hr": 58.0,
+      "hrv_ms": 58.0,
+      "soreness_self_report": "moderate",
+      "planned_session_type": "hard"
+    },
+    "raw_summary": {
+      "as_of_date": "2026-04-17",
+      "user_id": "u_eval",
+      "resting_hr_baseline": 52.0,
+      "resting_hr_ratio_vs_baseline": 1.11,
+      "hrv_ratio_vs_baseline": 0.92,
+      "trailing_7d_training_load": 420.0,
+      "training_load_baseline": 400.0,
+      "training_load_ratio_vs_baseline": 1.05,
+      "resting_hr_spike_days": 1
+    },
+    "today": {
+      "training_readiness_level": "Moderate",
+      "training_readiness_component_mean_pct": 58,
+      "body_battery_end_of_day": 55,
+      "all_day_stress": 38
+    }
+  },
+  "expected": {
+    "action": "downgrade_hard_session_to_zone_2",
+    "confidence_at_or_below": "high",
+    "policy_decisions_preserved": true,
+    "action_detail_required_keys": ["target_intensity", "target_duration_minutes"],
+    "recommendation_id_pattern": "rec_2026-04-17_u_eval_\\d+",
+    "rationale_must_reference_bands": [
+      "sleep_debt",
+      "resting_hr",
+      "soreness"
+    ],
+    "uncertainty_must_contain": [],
+    "uncertainty_must_not_contain": []
+  }
+}

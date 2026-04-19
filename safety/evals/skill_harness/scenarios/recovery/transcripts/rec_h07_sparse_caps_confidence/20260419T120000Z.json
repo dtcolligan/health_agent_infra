@@ -1,0 +1,50 @@
+{
+  "scenario_id": "rec_h07_sparse_caps_confidence",
+  "source": "hand_authored_reference",
+  "recorded_at": "2026-04-19T12:00:00Z",
+  "notes": "Reference transcript demonstrating coverage=sparse with R5 capping confidence to moderate and the uncertainty list propagating missing-signal tokens. Not evidence of live skill behaviour.",
+  "recommendation": {
+    "schema_version": "training_recommendation.v1",
+    "recommendation_id": "rec_2026-04-17_u_eval_01",
+    "user_id": "u_eval",
+    "issued_at": "2026-04-17T12:00:00+00:00",
+    "for_date": "2026-04-17",
+    "action": "proceed_with_planned_session",
+    "action_detail": null,
+    "rationale": [
+      "sleep_debt=none: 7.8h of sleep",
+      "resting_hr_vs_baseline=at: 54 bpm against 52 baseline",
+      "soreness_signal=low",
+      "coverage_band=sparse: hrv and training-load baseline unavailable",
+      "policy R5 capped confidence at moderate on sparse signal set"
+    ],
+    "confidence": "moderate",
+    "uncertainty": [
+      "hrv_unavailable",
+      "training_load_window_incomplete"
+    ],
+    "follow_up": {
+      "review_at": "2026-04-18T07:00:00+00:00",
+      "review_question": "Did today's session feel appropriate for your recovery?",
+      "review_event_id": "rev_2026-04-18_u_eval_rec_2026-04-17_u_eval_01"
+    },
+    "policy_decisions": [
+      {
+        "rule_id": "require_min_coverage",
+        "decision": "allow",
+        "note": "coverage=sparse; required inputs present"
+      },
+      {
+        "rule_id": "no_high_confidence_on_sparse_signal",
+        "decision": "soften",
+        "note": "capped confidence to moderate on sparse signal (hrv_unavailable,training_load_window_incomplete)"
+      },
+      {
+        "rule_id": "resting_hr_spike_escalation",
+        "decision": "allow",
+        "note": "resting_hr_spike_days=0 below threshold=3"
+      }
+    ],
+    "bounded": true
+  }
+}

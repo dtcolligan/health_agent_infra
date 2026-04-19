@@ -1,0 +1,49 @@
+{
+  "scenario_id": "rec_h03_impaired_hard_mobility",
+  "domain": "recovery",
+  "description": "Impaired recovery against a hard planned session — spike-training-load plus high soreness. Skill must downgrade to mobility-only with reason_token in action_detail.",
+  "input": {
+    "user_id": "u_eval",
+    "for_date": "2026-04-17",
+    "evidence": {
+      "as_of_date": "2026-04-17",
+      "user_id": "u_eval",
+      "sleep_hours": 5.8,
+      "resting_hr": 62.0,
+      "hrv_ms": 52.0,
+      "soreness_self_report": "high",
+      "planned_session_type": "hard"
+    },
+    "raw_summary": {
+      "as_of_date": "2026-04-17",
+      "user_id": "u_eval",
+      "resting_hr_baseline": 52.0,
+      "resting_hr_ratio_vs_baseline": 1.19,
+      "hrv_ratio_vs_baseline": 0.82,
+      "trailing_7d_training_load": 620.0,
+      "training_load_baseline": 400.0,
+      "training_load_ratio_vs_baseline": 1.55,
+      "resting_hr_spike_days": 1
+    },
+    "today": {
+      "training_readiness_level": "Low",
+      "training_readiness_component_mean_pct": 34,
+      "body_battery_end_of_day": 28,
+      "all_day_stress": 62
+    }
+  },
+  "expected": {
+    "action": "downgrade_session_to_mobility_only",
+    "confidence_at_or_below": "high",
+    "policy_decisions_preserved": true,
+    "action_detail_required_keys": ["reason_token"],
+    "recommendation_id_pattern": "rec_2026-04-17_u_eval_\\d+",
+    "rationale_must_reference_bands": [
+      "soreness",
+      "training_load",
+      "resting_hr"
+    ],
+    "uncertainty_must_contain": [],
+    "uncertainty_must_not_contain": []
+  }
+}
