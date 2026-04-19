@@ -21,8 +21,14 @@ Current v1 documentation for Health Agent Infra. Start with
   Code / Agent SDK / open equivalents install and drive the
   package.
 - [`domains/README.md`](domains/README.md) — "how to add a new
-  domain" recipe; reference implementations are the six v1
+  domain" checklist; reference implementations are the six v1
   domains.
+- [`how_to_add_a_domain.md`](how_to_add_a_domain.md) — conceptual
+  walk-through for the domain-extension surface; pairs with the
+  `domains/README.md` checklist.
+- [`how_to_add_a_pull_adapter.md`](how_to_add_a_pull_adapter.md) —
+  contract + evidence shape + DoD for adding a second source
+  adapter under `core/pull/`.
 
 ## Archived
 

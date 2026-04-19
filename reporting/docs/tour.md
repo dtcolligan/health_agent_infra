@@ -58,8 +58,11 @@ deterministic runtime behaviour on frozen scenarios.
   catalogue.
 - [`state_model_v1.md`](state_model_v1.md) — table-by-table state
   schema.
-- [`domains/README.md`](domains/README.md) — "how to add a domain"
-  recipe.
+- [`how_to_add_a_domain.md`](how_to_add_a_domain.md) —
+  conceptual walk-through for adding a seventh domain; paired with
+  the [`domains/README.md`](domains/README.md) checklist.
+- [`how_to_add_a_pull_adapter.md`](how_to_add_a_pull_adapter.md) —
+  contract for adding a second source adapter under `core/pull/`.
 
 ## 4. Where the runtime lives
 
@@ -190,7 +193,8 @@ hai review summary --domain recovery
 | "What is this project?" | [architecture.md](architecture.md) |
 | "How are X-rules scoped?" | [x_rules.md](x_rules.md) |
 | "What's in the state DB?" | [state_model_v1.md](state_model_v1.md) |
-| "How do I add a domain?" | [domains/README.md](domains/README.md) |
+| "How do I add a domain?" | [how_to_add_a_domain.md](how_to_add_a_domain.md) |
+| "How do I add a pull adapter?" | [how_to_add_a_pull_adapter.md](how_to_add_a_pull_adapter.md) |
 | "Why is feature X not included?" | [non_goals.md](non_goals.md) |
 | "How does an agent install this?" | [agent_integration.md](agent_integration.md) |
 | "Is it tested?" | ``safety/tests/`` (1200+ tests) |

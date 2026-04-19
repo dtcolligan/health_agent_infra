@@ -137,7 +137,9 @@ hai setup-skills
 7. **Non-goals (scope discipline)** — [`reporting/docs/non_goals.md`](reporting/docs/non_goals.md)
 8. **State schema** — [`reporting/docs/state_model_v1.md`](reporting/docs/state_model_v1.md)
 9. **10-minute reading tour** — [`reporting/docs/tour.md`](reporting/docs/tour.md)
-10. **Eval capture** — [`reporting/artifacts/flagship_loop_proof/2026-04-18-multi-domain-evals/`](reporting/artifacts/flagship_loop_proof/2026-04-18-multi-domain-evals/)
+10. **Extension path — pull adapter** — [`reporting/docs/how_to_add_a_pull_adapter.md`](reporting/docs/how_to_add_a_pull_adapter.md)
+11. **Extension path — new domain** — [`reporting/docs/how_to_add_a_domain.md`](reporting/docs/how_to_add_a_domain.md)
+12. **Eval capture** — [`reporting/artifacts/flagship_loop_proof/2026-04-18-multi-domain-evals/`](reporting/artifacts/flagship_loop_proof/2026-04-18-multi-domain-evals/)
 
 ## Repo layout
 

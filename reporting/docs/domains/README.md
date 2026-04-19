@@ -1,9 +1,13 @@
 # Adding a domain
 
 Domain modules are the v1 runtime's primary extension surface. Each
-domain ships six files and one skill. This doc is the recipe — use
-the six existing v1 domains (recovery, running, sleep, stress,
-strength, nutrition) as reference implementations.
+domain ships six files and one skill. This doc is the **checklist**
+— for the full conceptual walk-through (required vs optional
+extension points, synthesis touchpoints, state-shape expectations,
+what not to change) see
+[`../how_to_add_a_domain.md`](../how_to_add_a_domain.md). Reference
+implementations are the six v1 domains (recovery, running, sleep,
+stress, strength, nutrition).
 
 ## The six-part pattern
 
