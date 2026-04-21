@@ -51,17 +51,28 @@ from health_agent_infra.core.state.store import (
     open_connection,
     resolve_db_path,
 )
+from health_agent_infra.core.state.sync_log import (
+    begin_sync,
+    complete_sync,
+    fail_sync,
+    latest_successful_sync_per_source,
+    sync_run,
+)
 
 __all__ = [
     "DEFAULT_DB_PATH",
     "ReprojectBaseDirError",
     "apply_pending_migrations",
     "available_domains",
+    "begin_sync",
     "build_snapshot",
+    "complete_sync",
     "current_schema_version",
     "delete_canonical_plan_cascade",
+    "fail_sync",
     "initialize_database",
     "latest_nutrition_submission_id",
+    "latest_successful_sync_per_source",
     "link_proposal_to_plan",
     "mark_plan_superseded",
     "merge_manual_stress_into_accepted_recovery",
@@ -93,4 +104,5 @@ __all__ = [
     "read_proposals_for_plan_key",
     "reproject_from_jsonl",
     "resolve_db_path",
+    "sync_run",
 ]

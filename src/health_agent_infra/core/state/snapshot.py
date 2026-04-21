@@ -388,6 +388,13 @@ def build_snapshot(
     # X-rules (see memory_model.md §2.1 + roadmap §3.1 decision 4).
     user_memory_block = _user_memory_block(conn, as_of_date=as_of_date, user_id=user_id)
 
+    # Sources freshness (M2) — per-source last-successful sync timestamp +
+    # staleness against as_of_date. Source of truth is sync_run_log
+    # (migration 008); consumers can answer "how fresh is the evidence
+    # I'm reasoning over?" without reading JSONL files. Empty dict on a
+    # pre-008 DB — the block is still present, just unpopulated.
+    sources_block = _sources_block(conn, as_of_date=as_of_date, user_id=user_id)
+
     # Stress (Phase 3): first-class domain on its own accepted table.
     # Two origins co-own it: Garmin (garmin_all_day_stress +
     # body_battery_end_of_day) and user_manual (manual_stress_score).
@@ -647,6 +654,7 @@ def build_snapshot(
             "recent": recent_revs,
         },
         "user_memory": user_memory_block,
+        "sources": sources_block,
     }
 
 
@@ -788,6 +796,75 @@ def _nutrition_classified_to_dict(classified: Any) -> dict[str, Any]:
         "derivation_path": classified.derivation_path,
         "uncertainty": list(classified.uncertainty),
     }
+
+
+def _sources_block(
+    conn: sqlite3.Connection,
+    *,
+    as_of_date: date,
+    user_id: str,
+) -> dict[str, Any]:
+    """Return ``{source: {last_successful_sync_at, staleness_hours}}`` for
+    every source that has ever completed a sync for ``user_id``.
+
+    Staleness is measured from the end of ``as_of_date`` (00:00 UTC on
+    the following day) so historical snapshots don't report absurd
+    "3 years stale" values for evidence that was fresh when the plan
+    ran. A negative staleness (sync completed *after* as_of_date ends)
+    is possible for backfill runs; we let it through rather than
+    clamping, because the honest signal "this evidence was recorded
+    after the civil date it describes" is the kind of thing an auditor
+    might want to flag.
+
+    Pre-008 DB: ``latest_successful_sync_per_source`` returns an empty
+    dict, and this function mirrors that shape so the snapshot stays
+    alive on older DBs.
+    """
+
+    from health_agent_infra.core.state.sync_log import (
+        latest_successful_sync_per_source,
+    )
+
+    rows_by_source = latest_successful_sync_per_source(conn, user_id=user_id)
+    if not rows_by_source:
+        return {}
+
+    # Reference point: 00:00 UTC on the day AFTER as_of_date (i.e. the
+    # instant as_of_date ends). Using end-of-day gives a stable anchor
+    # that doesn't drift between test runs or across timezones.
+    anchor = datetime.combine(
+        as_of_date + timedelta(days=1), time.min, tzinfo=timezone.utc,
+    )
+
+    out: dict[str, Any] = {}
+    for source, row in rows_by_source.items():
+        completed_at_str = row.get("completed_at") or row.get("started_at")
+        if not completed_at_str:
+            # Shouldn't happen — the query filters on status='ok' which
+            # requires complete_sync to have stamped completed_at. Fall
+            # through rather than raising so one malformed row doesn't
+            # blow up the whole snapshot.
+            out[source] = {
+                "last_successful_sync_at": None,
+                "staleness_hours": None,
+            }
+            continue
+        try:
+            completed_at = datetime.fromisoformat(completed_at_str)
+        except ValueError:
+            out[source] = {
+                "last_successful_sync_at": completed_at_str,
+                "staleness_hours": None,
+            }
+            continue
+        if completed_at.tzinfo is None:
+            completed_at = completed_at.replace(tzinfo=timezone.utc)
+        staleness_hours = (anchor - completed_at).total_seconds() / 3600.0
+        out[source] = {
+            "last_successful_sync_at": completed_at.isoformat(),
+            "staleness_hours": round(staleness_hours, 2),
+        }
+    return out
 
 
 def _user_memory_block(

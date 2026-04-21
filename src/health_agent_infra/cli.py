@@ -120,14 +120,30 @@ def _emit_json(obj: Any) -> None:
 
 def cmd_pull(args: argparse.Namespace) -> int:
     as_of = _coerce_date(args.date)
+    mode = "live" if getattr(args, "live", False) else "csv"
+    # The source label is known up front for CSV (fixed adapter class);
+    # for live pulls we still use "garmin_live" — _build_live_adapter
+    # either returns a GarminLiveAdapter whose source_name is the
+    # canonical label, or raises, in which case we log the attempt
+    # against that same label.
+    source_label = "garmin_live" if mode == "live" else GarminRecoveryReadinessAdapter.source_name
 
-    if getattr(args, "live", False):
+    sync_id = _open_sync_row(
+        getattr(args, "db_path", None),
+        source=source_label,
+        user_id=args.user_id,
+        mode=mode,
+        for_date=as_of,
+    )
+
+    if mode == "live":
         try:
             adapter = _build_live_adapter(args)
         except GarminLiveError as exc:
             # Credential-resolution failure — the caller controls this
             # (run `hai auth garmin` or set env vars), so it's USER_INPUT
             # rather than a transient vendor issue.
+            _close_sync_row_failed(args.db_path, sync_id, exc)
             print(f"live pull error: {exc}", file=sys.stderr)
             return exit_codes.USER_INPUT
     else:
@@ -137,6 +153,7 @@ def cmd_pull(args: argparse.Namespace) -> int:
         pull = adapter.load(as_of)
     except GarminLiveError as exc:
         # Vendor API blip (5xx, rate limit, network) — a retry may fix it.
+        _close_sync_row_failed(args.db_path, sync_id, exc)
         print(f"live pull error: {exc}", file=sys.stderr)
         return exit_codes.TRANSIENT
 
@@ -145,6 +162,18 @@ def cmd_pull(args: argparse.Namespace) -> int:
         manual = json.loads(Path(args.manual_readiness_json).read_text(encoding="utf-8"))
     elif args.use_default_manual_readiness:
         manual = default_manual_readiness(as_of)
+
+    # rows_pulled: 1 if we got a daily summary row; 0 otherwise. This
+    # maps "one logical day's evidence = one row" without pretending the
+    # per-metric arrays are independent rows.
+    rows = 1 if pull.get("raw_daily_row") is not None else 0
+    _close_sync_row_ok(
+        args.db_path,
+        sync_id,
+        rows_pulled=rows,
+        rows_accepted=rows,
+        duplicates_skipped=0,
+    )
 
     payload = {
         "as_of_date": as_of.isoformat(),
@@ -155,6 +184,164 @@ def cmd_pull(args: argparse.Namespace) -> int:
     }
     _emit_json(payload)
     return exit_codes.OK
+
+
+# ---------------------------------------------------------------------------
+# Sync-log CLI shim — best-effort wrappers around core/state/sync_log
+#
+# All three helpers silently skip if the DB file is absent. Sync logging
+# is lighter-weight telemetry than the accepted-state projections
+# (which emit stderr warnings on failure) — an operator who hasn't run
+# `hai state init` shouldn't see stderr noise every time they pull.
+# ---------------------------------------------------------------------------
+
+
+def _open_sync_row(
+    db_path_arg,
+    *,
+    source: str,
+    user_id: str,
+    mode: str,
+    for_date,
+):
+    from health_agent_infra.core.state import (
+        begin_sync,
+        open_connection,
+        resolve_db_path,
+    )
+
+    db_path = resolve_db_path(db_path_arg)
+    if not db_path.exists():
+        return None
+    conn = open_connection(db_path)
+    try:
+        return begin_sync(
+            conn,
+            source=source,
+            user_id=user_id,
+            mode=mode,
+            for_date=for_date,
+        )
+    except sqlite3.OperationalError:
+        # Pre-migration-008 DB: skip quietly.
+        return None
+    finally:
+        conn.close()
+
+
+def _close_sync_row_ok(
+    db_path_arg,
+    sync_id,
+    *,
+    rows_pulled,
+    rows_accepted,
+    duplicates_skipped,
+    status: str = "ok",
+) -> None:
+    if sync_id is None:
+        return
+    from health_agent_infra.core.state import (
+        complete_sync,
+        open_connection,
+        resolve_db_path,
+    )
+
+    db_path = resolve_db_path(db_path_arg)
+    if not db_path.exists():
+        return
+    conn = open_connection(db_path)
+    try:
+        complete_sync(
+            conn,
+            sync_id,
+            rows_pulled=rows_pulled,
+            rows_accepted=rows_accepted,
+            duplicates_skipped=duplicates_skipped,
+            status=status,
+        )
+    except sqlite3.OperationalError:
+        return
+    finally:
+        conn.close()
+
+
+def _close_sync_row_failed(db_path_arg, sync_id, exc: BaseException) -> None:
+    if sync_id is None:
+        return
+    from health_agent_infra.core.state import (
+        fail_sync,
+        open_connection,
+        resolve_db_path,
+    )
+
+    db_path = resolve_db_path(db_path_arg)
+    if not db_path.exists():
+        return
+    conn = open_connection(db_path)
+    try:
+        fail_sync(
+            conn,
+            sync_id,
+            error_class=type(exc).__name__,
+            error_message=str(exc),
+        )
+    except sqlite3.OperationalError:
+        return
+    finally:
+        conn.close()
+
+
+def _sync_if_db(
+    db_path_arg,
+    *,
+    source: str,
+    user_id: str,
+    mode: str,
+    for_date=None,
+):
+    """Context manager: write a sync_run_log row if the DB exists, else no-op.
+
+    Yields a mutable dict the caller fills in before exit
+    (``run["rows_pulled"] = N`` etc.). Exceptions re-raise after the
+    row is closed with ``fail_sync``. When the DB is absent or predates
+    migration 008 the yielded dict has no ``sync_id`` and nothing is
+    written.
+    """
+
+    from contextlib import contextmanager
+
+    @contextmanager
+    def _cm():
+        sync_id = _open_sync_row(
+            db_path_arg,
+            source=source,
+            user_id=user_id,
+            mode=mode,
+            for_date=for_date,
+        )
+        run: dict = {
+            "sync_id": sync_id,
+            "rows_pulled": None,
+            "rows_accepted": None,
+            "duplicates_skipped": None,
+            "status": "ok",
+        }
+        try:
+            yield run
+        except Exception as exc:
+            _close_sync_row_failed(db_path_arg, sync_id, exc)
+            raise
+        else:
+            _close_sync_row_ok(
+                db_path_arg,
+                sync_id,
+                rows_pulled=run.get("rows_pulled"),
+                rows_accepted=run.get("rows_accepted"),
+                duplicates_skipped=run.get("duplicates_skipped"),
+                status=run.get("status", "ok"),
+            )
+
+    return _cm()
 
 
 def _build_live_adapter(args: argparse.Namespace):
@@ -1224,11 +1411,22 @@ def cmd_intake_gym(args: argparse.Namespace) -> int:
         submitted_at=issued_at,
     )
 
-    # JSONL audit first (durable boundary). If this fails, nothing landed.
-    jsonl_path = append_submission_jsonl(submission, base_dir=base_dir)
+    with _sync_if_db(
+        args.db_path,
+        source="gym_manual",
+        user_id=submission.user_id,
+        mode="manual",
+        for_date=submission.as_of_date,
+    ) as run:
+        # JSONL audit first (durable boundary). If this fails, nothing landed.
+        jsonl_path = append_submission_jsonl(submission, base_dir=base_dir)
 
-    # DB projection is atomic + fail-soft.
-    _project_gym_submission_into_state(args.db_path, submission)
+        # DB projection is atomic + fail-soft.
+        _project_gym_submission_into_state(args.db_path, submission)
+
+        run["rows_pulled"] = len(submission.sets)
+        run["rows_accepted"] = len(submission.sets)
+        run["duplicates_skipped"] = 0
 
     _emit_json({
         "submission_id": submission.submission_id,
@@ -1386,6 +1584,18 @@ def cmd_intake_exercise(args: argparse.Namespace) -> int:
         )
         return 2
 
+    # Exercise-taxonomy entries are global (not per-user), so sync rows
+    # here use a "global" sentinel — the snapshot's user-scoped
+    # freshness query won't surface them, which is intentional: these
+    # are config-shaped events, not data-ingest ones.
+    sync_id = _open_sync_row(
+        args.db_path,
+        source="exercise_taxonomy_manual",
+        user_id="global",
+        mode="manual",
+        for_date=None,
+    )
+
     conn = open_connection(db_path)
     try:
         try:
@@ -1401,6 +1611,7 @@ def cmd_intake_exercise(args: argparse.Namespace) -> int:
                 source="user_manual",
             )
         except sqlite3.IntegrityError as exc:
+            _close_sync_row_failed(args.db_path, sync_id, exc)
             print(f"intake exercise rejected: {exc}", file=sys.stderr)
             return 2
 
@@ -1416,6 +1627,14 @@ def cmd_intake_exercise(args: argparse.Namespace) -> int:
         ).fetchone()
     finally:
         conn.close()
+
+    _close_sync_row_ok(
+        args.db_path,
+        sync_id,
+        rows_pulled=1 if inserted else 0,
+        rows_accepted=1 if inserted else 0,
+        duplicates_skipped=0 if inserted else 1,
+    )
 
     _emit_json({
         "inserted": inserted,
@@ -1519,12 +1738,23 @@ def cmd_intake_nutrition(args: argparse.Namespace) -> int:
         supersedes_submission_id=supersedes_id,
     )
 
-    # JSONL audit first (durable boundary). base_dir was resolved above for
-    # correction-chain lookup; re-use it here.
-    jsonl_path = append_submission_jsonl(submission, base_dir=base_dir)
+    with _sync_if_db(
+        args.db_path,
+        source="nutrition_manual",
+        user_id=submission.user_id,
+        mode="manual",
+        for_date=submission.as_of_date,
+    ) as run:
+        # JSONL audit first (durable boundary). base_dir was resolved above for
+        # correction-chain lookup; re-use it here.
+        jsonl_path = append_submission_jsonl(submission, base_dir=base_dir)
 
-    # DB projection is atomic + fail-soft.
-    _project_nutrition_submission_into_state(args.db_path, submission)
+        # DB projection is atomic + fail-soft.
+        _project_nutrition_submission_into_state(args.db_path, submission)
+
+        run["rows_pulled"] = 1
+        run["rows_accepted"] = 1
+        run["duplicates_skipped"] = 0
 
     _emit_json({
         "submission_id": submission.submission_id,
@@ -1679,9 +1909,19 @@ def cmd_intake_stress(args: argparse.Namespace) -> int:
         supersedes_submission_id=supersedes_id,
     )
 
-    jsonl_path = append_submission_jsonl(submission, base_dir=base_dir)
+    with _sync_if_db(
+        args.db_path,
+        source="stress_manual",
+        user_id=submission.user_id,
+        mode="manual",
+        for_date=submission.as_of_date,
+    ) as run:
+        jsonl_path = append_submission_jsonl(submission, base_dir=base_dir)
+        _project_stress_submission_into_state(args.db_path, submission)
 
-    _project_stress_submission_into_state(args.db_path, submission)
+        run["rows_pulled"] = 1
+        run["rows_accepted"] = 1
+        run["duplicates_skipped"] = 0
 
     _emit_json({
         "submission_id": submission.submission_id,
@@ -1802,8 +2042,19 @@ def cmd_intake_note(args: argparse.Namespace) -> int:
         ingest_actor=args.ingest_actor,
     )
 
-    jsonl_path = append_note_jsonl(note, base_dir=base_dir)
-    _project_context_note_into_state(args.db_path, note)
+    with _sync_if_db(
+        args.db_path,
+        source="note_manual",
+        user_id=note.user_id,
+        mode="manual",
+        for_date=note.as_of_date,
+    ) as run:
+        jsonl_path = append_note_jsonl(note, base_dir=base_dir)
+        _project_context_note_into_state(args.db_path, note)
+
+        run["rows_pulled"] = 1
+        run["rows_accepted"] = 1
+        run["duplicates_skipped"] = 0
 
     _emit_json({
         "note_id": note.note_id,
@@ -2945,6 +3196,10 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Trailing window size for resting_hr / hrv / "
                              "training_load series (live pull only). Matches "
                              "the CSV adapter default.")
+    p_pull.add_argument("--db-path", default=None,
+                        help="State DB path for sync_run_log writes. Best-effort — "
+                             "if the DB is absent, the pull still runs but the "
+                             "sync row is skipped. Same semantics as `hai writeback`.")
     p_pull.set_defaults(func=cmd_pull)
 
     p_auth = sub.add_parser("auth", help="Credential management for external sources")

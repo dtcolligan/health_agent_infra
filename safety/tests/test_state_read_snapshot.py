@@ -482,9 +482,65 @@ def test_snapshot_envelope_has_expected_top_level_keys(tmp_path: Path):
         "schema_version", "as_of_date", "user_id", "lookback_days",
         "history_range", "recovery", "running", "gym", "nutrition",
         "stress", "notes", "goals_active", "recommendations", "reviews",
+        "sources",
     }
     assert expected.issubset(snap.keys())
     assert snap["schema_version"] == "state_snapshot.v1"
+    # Freshness block is present-but-empty on a DB with no sync rows.
+    assert snap["sources"] == {}
+
+
+def test_snapshot_sources_block_carries_freshness_per_source(tmp_path: Path):
+    """Seed sync_run_log rows for two sources; the sources block should
+    surface the newest successful row per source plus staleness hours
+    against as_of_date's end-of-day anchor."""
+
+    db = _init_db(tmp_path)
+    conn = open_connection(db)
+    try:
+        # garmin last synced at 06:00 UTC on 2026-04-17; staleness
+        # against end of 2026-04-17 (00:00 UTC 2026-04-18) = 18 hours.
+        # nutrition_manual at 20:00 UTC on 2026-04-17 = 4 hours stale.
+        # An older 'ok' garmin sync and an intervening 'failed' one
+        # must not surface — the reader picks the newest 'ok' only.
+        conn.executemany(
+            "INSERT INTO sync_run_log "
+            "(source, user_id, mode, started_at, completed_at, status, "
+            " rows_pulled, rows_accepted, duplicates_skipped) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+                ("garmin", USER, "csv",
+                 "2026-04-16T06:00:00+00:00", "2026-04-16T06:00:05+00:00",
+                 "ok", 1, 1, 0),
+                ("garmin", USER, "csv",
+                 "2026-04-17T06:00:00+00:00", "2026-04-17T06:00:00+00:00",
+                 "ok", 1, 1, 0),
+                ("garmin", USER, "csv",
+                 "2026-04-17T08:00:00+00:00", "2026-04-17T08:00:01+00:00",
+                 "failed", None, None, None),
+                ("nutrition_manual", USER, "manual",
+                 "2026-04-17T20:00:00+00:00", "2026-04-17T20:00:00+00:00",
+                 "ok", 1, 1, 0),
+            ],
+        )
+        conn.commit()
+
+        snap = build_snapshot(
+            conn, as_of_date=AS_OF, user_id=USER,
+            now_local=datetime(2026, 5, 1, 10, 0),
+        )
+    finally:
+        conn.close()
+
+    sources = snap["sources"]
+    assert set(sources.keys()) == {"garmin", "nutrition_manual"}
+
+    # anchor is 2026-04-18T00:00+00:00; freshest garmin ok sync at
+    # 2026-04-17T06:00 → 18h stale. nutrition at 20:00 → 4h stale.
+    assert sources["garmin"]["last_successful_sync_at"] == "2026-04-17T06:00:00+00:00"
+    assert sources["garmin"]["staleness_hours"] == 18.0
+    assert sources["nutrition_manual"]["last_successful_sync_at"] == "2026-04-17T20:00:00+00:00"
+    assert sources["nutrition_manual"]["staleness_hours"] == 4.0
 
 
 # ---------------------------------------------------------------------------
