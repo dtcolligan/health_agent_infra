@@ -30,6 +30,7 @@ from datetime import date
 from typing import Any, Optional
 
 from health_agent_infra.core.schemas import canonical_daily_plan_id
+from health_agent_infra.core.synthesis_policy import public_name_for
 
 
 class ExplainNotFoundError(LookupError):
@@ -70,6 +71,7 @@ class ExplainXRuleFiring:
     source_signals: dict[str, Any]
     orphan: bool
     fired_at: str
+    public_name: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -317,6 +319,7 @@ def _load_firings_for_plan(
             source_signals=_loads(row["source_signals_json"]) or {},
             orphan=bool(row["orphan"]),
             fired_at=row["fired_at"],
+            public_name=public_name_for(row["x_rule_id"]),
         )
         if firing.tier in _PHASE_B_TIERS:
             phase_b.append(firing)

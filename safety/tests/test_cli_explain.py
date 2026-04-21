@@ -27,6 +27,7 @@ from typing import Any
 
 import pytest
 
+from health_agent_infra.core import exit_codes
 from health_agent_infra.core.schemas import (
     ReviewEvent,
     ReviewOutcome,
@@ -419,7 +420,7 @@ def test_explain_supersession_linkage_walks_both_directions(tmp_path, capsys):
 
 
 def test_explain_rejects_when_plan_id_missing(tmp_path, capsys):
-    """An unknown plan id reports a not-found error and exits 2."""
+    """An unknown plan id reports a not-found error and exits NOT_FOUND."""
 
     from health_agent_infra.cli import main as cli_main
 
@@ -430,7 +431,7 @@ def test_explain_rejects_when_plan_id_missing(tmp_path, capsys):
         "--daily-plan-id", "plan_2099-01-01_nope",
         "--db-path", str(db_path),
     ])
-    assert rc == 2
+    assert rc == exit_codes.NOT_FOUND
     err = capsys.readouterr().err
     assert "no daily_plan row" in err
 
@@ -450,7 +451,7 @@ def test_explain_rejects_conflicting_flags(tmp_path, capsys):
         "--user-id", "u_local_1",
         "--db-path", str(db_path),
     ])
-    assert rc == 2
+    assert rc == exit_codes.USER_INPUT
     err = capsys.readouterr().err
     assert "either --daily-plan-id" in err.lower() or "not both" in err.lower()
 
@@ -466,6 +467,6 @@ def test_explain_rejects_when_no_selectors(tmp_path, capsys):
         "explain",
         "--db-path", str(db_path),
     ])
-    assert rc == 2
+    assert rc == exit_codes.USER_INPUT
     err = capsys.readouterr().err
     assert "provide --daily-plan-id" in err or "for-date" in err

@@ -27,6 +27,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from health_agent_infra import __version__ as _PACKAGE_VERSION
+from health_agent_infra.core import exit_codes
 from health_agent_infra.core.clean import build_raw_summary, clean_inputs
 from health_agent_infra.core.config import (
     ConfigError,
@@ -124,16 +125,20 @@ def cmd_pull(args: argparse.Namespace) -> int:
         try:
             adapter = _build_live_adapter(args)
         except GarminLiveError as exc:
+            # Credential-resolution failure — the caller controls this
+            # (run `hai auth garmin` or set env vars), so it's USER_INPUT
+            # rather than a transient vendor issue.
             print(f"live pull error: {exc}", file=sys.stderr)
-            return 2
+            return exit_codes.USER_INPUT
     else:
         adapter = GarminRecoveryReadinessAdapter()
 
     try:
         pull = adapter.load(as_of)
     except GarminLiveError as exc:
+        # Vendor API blip (5xx, rate limit, network) — a retry may fix it.
         print(f"live pull error: {exc}", file=sys.stderr)
-        return 2
+        return exit_codes.TRANSIENT
 
     manual = None
     if args.manual_readiness_json:
@@ -149,7 +154,7 @@ def cmd_pull(args: argparse.Namespace) -> int:
         "manual_readiness": manual,
     }
     _emit_json(payload)
-    return 0
+    return exit_codes.OK
 
 
 def _build_live_adapter(args: argparse.Namespace):
@@ -432,37 +437,37 @@ def cmd_auth_garmin(args: argparse.Namespace) -> int:
                 f"auth error: env var {args.password_env} is not set or empty",
                 file=sys.stderr,
             )
-            return 2
+            return exit_codes.USER_INPUT
 
     if email is None:
         try:
             email = input("Garmin email: ").strip()
         except EOFError:
             print("auth error: no email provided", file=sys.stderr)
-            return 2
+            return exit_codes.USER_INPUT
     if not email:
         print("auth error: email must be non-empty", file=sys.stderr)
-        return 2
+        return exit_codes.USER_INPUT
 
     if password is None:
         try:
             password = getpass.getpass("Garmin password: ")
         except EOFError:
             print("auth error: no password provided", file=sys.stderr)
-            return 2
+            return exit_codes.USER_INPUT
     if not password:
         print("auth error: password must be non-empty", file=sys.stderr)
-        return 2
+        return exit_codes.USER_INPUT
 
     store = _credential_store_for(args)
     try:
         store.store_garmin(email, password)
     except KeyringUnavailableError as exc:
         print(f"auth error: {exc}", file=sys.stderr)
-        return 2
+        return exit_codes.USER_INPUT
     except ValueError as exc:
         print(f"auth error: {exc}", file=sys.stderr)
-        return 2
+        return exit_codes.USER_INPUT
 
     # Emit a non-secret confirmation. Email presence is fine to surface so
     # the operator sees which account was stored; password is never shown.
@@ -472,7 +477,7 @@ def cmd_auth_garmin(args: argparse.Namespace) -> int:
         "email": email,
         "backend": _backend_kind(store),
     })
-    return 0
+    return exit_codes.OK
 
 
 def cmd_auth_status(args: argparse.Namespace) -> int:
@@ -482,7 +487,7 @@ def cmd_auth_status(args: argparse.Namespace) -> int:
     status = store.garmin_status()
     status["backend"] = _backend_kind(store)
     _emit_json(status)
-    return 0
+    return exit_codes.OK
 
 
 def _credential_store_for(args: argparse.Namespace) -> CredentialStore:
@@ -590,7 +595,7 @@ def cmd_synthesize(args: argparse.Namespace) -> int:
             f"{db_path}. Run `hai state init` first.",
             file=sys.stderr,
         )
-        return 2
+        return exit_codes.USER_INPUT
 
     # --bundle-only is the skill seam: read-only emission of
     # (snapshot, proposals, phase_a_firings) so the daily-plan-synthesis
@@ -603,7 +608,7 @@ def cmd_synthesize(args: argparse.Namespace) -> int:
                 "cannot be combined with --drafts-json or --supersede.",
                 file=sys.stderr,
             )
-            return 2
+            return exit_codes.USER_INPUT
         conn = open_connection(db_path)
         try:
             bundle = build_synthesis_bundle(
@@ -612,7 +617,7 @@ def cmd_synthesize(args: argparse.Namespace) -> int:
         finally:
             conn.close()
         _emit_json(bundle)
-        return 0
+        return exit_codes.OK
 
     skill_drafts: Optional[list[dict]] = None
     if args.drafts_json:
@@ -626,14 +631,14 @@ def cmd_synthesize(args: argparse.Namespace) -> int:
                 f"({args.drafts_json}): {exc}",
                 file=sys.stderr,
             )
-            return 2
+            return exit_codes.USER_INPUT
         if not isinstance(skill_drafts, list):
             print(
                 f"hai synthesize rejected: drafts JSON must be a JSON array; "
                 f"got {type(skill_drafts).__name__}",
                 file=sys.stderr,
             )
-            return 2
+            return exit_codes.USER_INPUT
 
     conn = open_connection(db_path)
     try:
@@ -647,18 +652,21 @@ def cmd_synthesize(args: argparse.Namespace) -> int:
         )
     except SynthesisError as exc:
         print(f"hai synthesize rejected: {exc}", file=sys.stderr)
-        return 2
+        return exit_codes.USER_INPUT
     except XRuleWriteSurfaceViolation as exc:
+        # A write-surface violation means a Phase B rule tried to touch a
+        # field the guard disallows — a bug in the rule implementation,
+        # not anything the caller did. INTERNAL, not USER_INPUT.
         print(
             f"hai synthesize rejected: write_surface_violation: {exc}",
             file=sys.stderr,
         )
-        return 2
+        return exit_codes.INTERNAL
     finally:
         conn.close()
 
     _emit_json(result.to_dict())
-    return 0
+    return exit_codes.OK
 
 
 # ---------------------------------------------------------------------------
@@ -697,14 +705,14 @@ def cmd_explain(args: argparse.Namespace) -> int:
             "(--for-date and --user-id), not both.",
             file=sys.stderr,
         )
-        return 2
+        return exit_codes.USER_INPUT
     if not args.daily_plan_id and not (args.for_date and args.user_id):
         print(
             "hai explain rejected: provide --daily-plan-id, or both "
             "--for-date and --user-id.",
             file=sys.stderr,
         )
-        return 2
+        return exit_codes.USER_INPUT
 
     db_path = resolve_db_path(args.db_path)
     if not db_path.exists():
@@ -713,7 +721,7 @@ def cmd_explain(args: argparse.Namespace) -> int:
             f"{db_path}. Run `hai state init` first.",
             file=sys.stderr,
         )
-        return 2
+        return exit_codes.USER_INPUT
 
     conn = open_connection(db_path)
     try:
@@ -729,8 +737,9 @@ def cmd_explain(args: argparse.Namespace) -> int:
                     user_id=args.user_id,
                 )
         except ExplainNotFoundError as exc:
+            # Well-formed request, no matching row — NOT_FOUND, not user-input.
             print(f"hai explain: {exc}", file=sys.stderr)
-            return 2
+            return exit_codes.NOT_FOUND
     finally:
         conn.close()
 
@@ -738,7 +747,7 @@ def cmd_explain(args: argparse.Namespace) -> int:
         sys.stdout.write(render_bundle_text(bundle))
     else:
         _emit_json(bundle_to_dict(bundle))
-    return 0
+    return exit_codes.OK
 
 
 # ---------------------------------------------------------------------------

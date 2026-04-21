@@ -89,7 +89,8 @@ SOURCES: tuple[Source, ...] = (
         source_class="internal_x_rules",
         origin_path="reporting/docs/x_rules.md",
         excerpt=(
-            "X1a | ``sleep.classified_state.sleep_debt_band == moderate``"
+            "X1a | sleep-debt-softens-hard | "
+            "``sleep.classified_state.sleep_debt_band == moderate``"
         ),
         topics=("sleep_debt",),
     ),
@@ -99,7 +100,8 @@ SOURCES: tuple[Source, ...] = (
         source_class="internal_x_rules",
         origin_path="reporting/docs/x_rules.md",
         excerpt=(
-            "X1b | ``sleep.classified_state.sleep_debt_band == elevated``"
+            "X1b | sleep-debt-blocks-hard | "
+            "``sleep.classified_state.sleep_debt_band == elevated``"
         ),
         topics=("sleep_debt",),
     ),
@@ -109,7 +111,8 @@ SOURCES: tuple[Source, ...] = (
         source_class="internal_x_rules",
         origin_path="reporting/docs/x_rules.md",
         excerpt=(
-            "X2 | ``nutrition.classified_state.calorie_deficit_kcal ≥ 500``"
+            "X2 | underfuelling-softens-hard | "
+            "``nutrition.classified_state.calorie_deficit_kcal ≥ 500``"
             " OR ``protein_ratio < 0.7``"
         ),
         topics=("protein_ratio_strength",),
@@ -131,7 +134,8 @@ SOURCES: tuple[Source, ...] = (
         source_class="internal_x_rules",
         origin_path="reporting/docs/x_rules.md",
         excerpt=(
-            "X6a | ``stress.today_body_battery < 30``"
+            "X6a | body-battery-low-softens-hard | "
+            "``stress.today_body_battery < 30``"
         ),
         topics=("body_battery",),
     ),

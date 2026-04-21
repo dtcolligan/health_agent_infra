@@ -20,26 +20,43 @@ All thresholds are read from ``~/.config/hai/thresholds.toml`` under
 the ``[synthesis.x_rules]`` section. Defaults live in
 ``core/config.py :: DEFAULT_THRESHOLDS``.
 
+## Rule naming
+
+Every rule has two names. The **internal id** (``X1a``, ``X3b``, ``X9``)
+is the stable handle — it appears in DB rows, JSONL audit records,
+eval-scenario fixtures, and the ``plan.x_rules_fired`` array. The
+**public name** is a readable slug that shows up in ``hai explain``
+output, agent-facing JSON (``firing["public_name"]``), and the tables
+below. Renaming an internal id would break audit continuity; the public
+name is free to evolve.
+
+The mapping lives in ``X_RULE_PUBLIC_NAMES`` in
+``src/health_agent_infra/core/synthesis_policy.py``. Adding a rule
+means appending a row there and adding the **Public name** column entry
+in the relevant table here so the two never drift apart. Slug pattern:
+``<trigger>-<tier_verb>-<target>`` — the tier verb mirrors the tier
+taxonomy (``softens`` / ``blocks`` / ``caps-confidence`` / ``bumps``).
+
 ## Phase A rules
 
-| ID | Trigger | Target | Tier | Mutation |
-|---|---|---|---|---|
-| X1a | ``sleep.classified_state.sleep_debt_band == moderate`` AND a hard proposal exists | each hard proposal's domain | soften | action → domain's ``downgrade_action`` |
-| X1b | ``sleep.classified_state.sleep_debt_band == elevated`` AND a hard proposal exists | each hard proposal's domain | block | action → domain's ``escalate_action`` |
-| X2 | ``nutrition.classified_state.calorie_deficit_kcal ≥ 500`` OR ``protein_ratio < 0.7`` AND a hard strength or recovery proposal exists | strength / recovery | soften | action → domain's ``downgrade_action`` |
-| X3a | ``1.3 ≤ recovery.today.acwr_ratio < 1.5`` AND a hard proposal exists | each hard proposal's domain | soften | action → domain's ``downgrade_action`` |
-| X3b | ``recovery.today.acwr_ratio ≥ 1.5`` AND a hard proposal exists | each hard proposal's domain | block | action → domain's ``escalate_action`` |
-| X4 | Yesterday's strength = heavy lower body AND running intervals/tempo proposed today | running | soften | action → ``downgrade_to_easy_aerobic`` |
-| X5 | Yesterday's running = long run or hard intervals AND lower-body strength proposed today | strength | soften | action → ``downgrade_to_technique_or_accessory`` |
-| X6a | ``stress.today_body_battery < 30`` AND a hard proposal exists | each hard proposal's domain | soften | action → domain's ``downgrade_action`` |
-| X6b | ``stress.today_body_battery < 15`` AND a hard proposal exists | each hard proposal's domain | block | action → domain's ``escalate_action`` |
-| X7 | ``stress.classified_state.garmin_stress_band ∈ {high, very_high}`` | every proposal's domain | cap_confidence | confidence → ``moderate`` (no action mutation) |
+| ID | Public name | Trigger | Target | Tier | Mutation |
+|---|---|---|---|---|---|
+| X1a | sleep-debt-softens-hard | ``sleep.classified_state.sleep_debt_band == moderate`` AND a hard proposal exists | each hard proposal's domain | soften | action → domain's ``downgrade_action`` |
+| X1b | sleep-debt-blocks-hard | ``sleep.classified_state.sleep_debt_band == elevated`` AND a hard proposal exists | each hard proposal's domain | block | action → domain's ``escalate_action`` |
+| X2 | underfuelling-softens-hard | ``nutrition.classified_state.calorie_deficit_kcal ≥ 500`` OR ``protein_ratio < 0.7`` AND a hard strength or recovery proposal exists | strength / recovery | soften | action → domain's ``downgrade_action`` |
+| X3a | load-spike-softens-hard | ``1.3 ≤ recovery.today.acwr_ratio < 1.5`` AND a hard proposal exists | each hard proposal's domain | soften | action → domain's ``downgrade_action`` |
+| X3b | load-spike-blocks-hard | ``recovery.today.acwr_ratio ≥ 1.5`` AND a hard proposal exists | each hard proposal's domain | block | action → domain's ``escalate_action`` |
+| X4 | lower-body-sequencing-softens-run | Yesterday's strength = heavy lower body AND running intervals/tempo proposed today | running | soften | action → ``downgrade_to_easy_aerobic`` |
+| X5 | endurance-fatigue-softens-strength | Yesterday's running = long run or hard intervals AND lower-body strength proposed today | strength | soften | action → ``downgrade_to_technique_or_accessory`` |
+| X6a | body-battery-low-softens-hard | ``stress.today_body_battery < 30`` AND a hard proposal exists | each hard proposal's domain | soften | action → domain's ``downgrade_action`` |
+| X6b | body-battery-depleted-blocks-hard | ``stress.today_body_battery < 15`` AND a hard proposal exists | each hard proposal's domain | block | action → domain's ``escalate_action`` |
+| X7 | stress-elevated-caps-confidence | ``stress.classified_state.garmin_stress_band ∈ {high, very_high}`` | every proposal's domain | cap_confidence | confidence → ``moderate`` (no action mutation) |
 
 ## Phase B rules
 
-| ID | Trigger | Target | Tier | Mutation |
-|---|---|---|---|---|
-| X9 | Any training-domain (recovery / running / strength) draft carries a hard baseline action AND a nutrition draft exists | nutrition | adjust | action_detail appended with protein-target multiplier + ``reason_token=x9_training_intensity_bump`` (action unchanged) |
+| ID | Public name | Trigger | Target | Tier | Mutation |
+|---|---|---|---|---|---|
+| X9 | training-intensity-bumps-protein | Any training-domain (recovery / running / strength) draft carries a hard baseline action AND a nutrition draft exists | nutrition | adjust | action_detail appended with protein-target multiplier + ``reason_token=x9_training_intensity_bump`` (action unchanged) |
 
 ## Tier precedence
 

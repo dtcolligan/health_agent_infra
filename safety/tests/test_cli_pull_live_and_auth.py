@@ -27,6 +27,7 @@ import pytest
 
 from health_agent_infra import cli as cli_mod
 from health_agent_infra.cli import main as cli_main
+from health_agent_infra.core import exit_codes
 from health_agent_infra.core.pull.auth import (
     EMAIL_ENV_VAR,
     PASSWORD_ENV_VAR,
@@ -101,7 +102,7 @@ def test_auth_garmin_fails_cleanly_when_password_env_missing(monkeypatch, capsys
         "auth", "garmin", "--email", "alice@example.com",
         "--password-env", "MY_PW_VAR_X",
     ])
-    assert rc == 2
+    assert rc == exit_codes.USER_INPUT
     err = capsys.readouterr().err
     assert "MY_PW_VAR_X" in err
 
@@ -112,7 +113,7 @@ def test_auth_garmin_rejects_empty_password(monkeypatch, capsys):
     monkeypatch.setattr(sys, "stdin", io.StringIO("\n"))
 
     rc = cli_main(["auth", "garmin", "--email", "alice@example.com", "--password-stdin"])
-    assert rc == 2
+    assert rc == exit_codes.USER_INPUT
     err = capsys.readouterr().err
     assert "password" in err
     assert store.load_garmin() is None
@@ -170,7 +171,7 @@ def test_pull_live_fails_cleanly_without_credentials(monkeypatch, capsys):
     monkeypatch.setattr(cli_mod.CredentialStore, "default", classmethod(lambda cls: store))
 
     rc = cli_main(["pull", "--live", "--date", "2026-04-17"])
-    assert rc == 2
+    assert rc == exit_codes.USER_INPUT
     err = capsys.readouterr().err
     assert "credentials" in err.lower()
 
@@ -243,7 +244,7 @@ def test_pull_live_wraps_adapter_error(monkeypatch, capsys):
     monkeypatch.setattr(cli_mod, "_build_live_adapter", lambda args: ExplodingAdapter())
 
     rc = cli_main(["pull", "--live", "--date", "2026-04-17"])
-    assert rc == 2
+    assert rc == exit_codes.TRANSIENT
     err = capsys.readouterr().err
     assert "upstream 500" in err
 

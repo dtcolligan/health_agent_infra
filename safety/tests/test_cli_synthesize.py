@@ -27,6 +27,7 @@ from pathlib import Path
 
 import pytest
 
+from health_agent_infra.core import exit_codes
 from health_agent_infra.core.schemas import canonical_daily_plan_id
 from health_agent_infra.core.state import (
     initialize_database,
@@ -1119,6 +1120,6 @@ def test_cli_synthesize_bundle_only_rejects_conflicting_flags(
         "--bundle-only",
         "--drafts-json", str(drafts_path),
     ])
-    assert rc == 2
+    assert rc == exit_codes.USER_INPUT
     err = capsys.readouterr().err
     assert "bundle-only" in err.lower()

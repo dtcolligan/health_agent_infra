@@ -95,6 +95,44 @@ PHASE_B_TARGETS: dict[str, frozenset[str]] = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Semantic public names for each X-rule. The internal IDs (``X1a``, ``X3b``,
+# …) stay the stable handle across logs, DB rows, and scenario fixtures — a
+# public name is a readability aid layered on top, surfaced in
+# :meth:`XRuleFiring.to_dict`, the explain bundle, and the docs tables.
+#
+# Naming pattern: ``<trigger>-<tier_verb>-<target>``. Tier verbs follow the
+# tier taxonomy — ``softens`` / ``blocks`` / ``caps-confidence`` / ``bumps``.
+# Registering a new rule means appending a row here *and* adding the column
+# to the Phase A / Phase B tables in ``reporting/docs/x_rules.md`` so the
+# internal id and public name never diverge between code and docs.
+# ---------------------------------------------------------------------------
+X_RULE_PUBLIC_NAMES: dict[str, str] = {
+    "X1a": "sleep-debt-softens-hard",
+    "X1b": "sleep-debt-blocks-hard",
+    "X2": "underfuelling-softens-hard",
+    "X3a": "load-spike-softens-hard",
+    "X3b": "load-spike-blocks-hard",
+    "X4": "lower-body-sequencing-softens-run",
+    "X5": "endurance-fatigue-softens-strength",
+    "X6a": "body-battery-low-softens-hard",
+    "X6b": "body-battery-depleted-blocks-hard",
+    "X7": "stress-elevated-caps-confidence",
+    "X9": "training-intensity-bumps-protein",
+}
+
+
+def public_name_for(rule_id: str) -> Optional[str]:
+    """Return the human-readable public name for ``rule_id``, or ``None``.
+
+    Unknown / experimental rule ids deliberately return ``None`` rather
+    than raising, so historical DB rows written before a rename land
+    cleanly — callers render them under their internal id alone.
+    """
+
+    return X_RULE_PUBLIC_NAMES.get(rule_id)
+
+
 @dataclass(frozen=True)
 class XRuleFiring:
     """One deterministic firing of a cross-domain X-rule.
@@ -129,6 +167,7 @@ class XRuleFiring:
     def to_dict(self) -> dict[str, Any]:
         return {
             "rule_id": self.rule_id,
+            "public_name": public_name_for(self.rule_id),
             "tier": self.tier,
             "affected_domain": self.affected_domain,
             "trigger_note": self.trigger_note,

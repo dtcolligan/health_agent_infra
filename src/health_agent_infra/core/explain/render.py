@@ -198,9 +198,15 @@ def _format_proposal(p: ExplainProposal) -> str:
 
 
 def _format_firing(f: ExplainXRuleFiring) -> str:
+    header = (
+        f"- {f.rule_id} [{f.public_name}] ({f.tier}) → {f.affected_domain}"
+        if f.public_name
+        else f"- {f.rule_id} ({f.tier}) → {f.affected_domain}"
+    )
+    if f.orphan:
+        header += "  [orphan]"
     parts = [
-        f"- {f.rule_id} ({f.tier}) → {f.affected_domain}"
-        + ("  [orphan]" if f.orphan else ""),
+        header,
         f"    trigger    : {f.trigger_note}",
     ]
     if f.mutation not in (None, {}, []):
