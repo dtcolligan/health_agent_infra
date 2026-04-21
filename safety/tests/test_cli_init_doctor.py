@@ -246,7 +246,9 @@ def _doctor_argv(tmp_path: Path, **overrides) -> list[str]:
         "skills-dest": str(tmp_path / "skills"),
     }
     paths.update({k.replace("_", "-"): v for k, v in overrides.items()})
-    argv = ["doctor"]
+    # Default stdout shape is human-readable (M5); existing assertions
+    # parse JSON, so every test passes --json explicitly.
+    argv = ["doctor", "--json"]
     for flag, value in paths.items():
         argv += [f"--{flag}", value]
     return argv

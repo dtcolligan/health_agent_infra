@@ -3058,163 +3058,58 @@ def _worst_status(statuses: list[str]) -> str:
 def cmd_doctor(args: argparse.Namespace) -> int:
     """Read-only diagnostics against the actual v1 runtime surfaces.
 
-    Reports what is present vs missing for each first-run piece — config,
-    state DB + schema version, Garmin credentials, skills install — plus
-    the package version. Does not mutate anything; every state-changing
-    step belongs to ``hai init`` or a targeted subcommand.
+    Seven checks: config, state DB + schema version + size, Garmin
+    credentials, skills install, domain registry, per-source sync
+    freshness (from sync_run_log, M2), and today's proposal /
+    recommendation / pending-review counts (M5).
 
-    Exit code 0 for ``ok`` or ``warn`` overall; 2 for ``fail`` (malformed
-    config on disk). ``warn`` is the normal pre-setup state so the check
-    stays agent-friendly — an agent or shell script can run ``hai doctor
-    && hai daily`` without getting blocked by a missing-auth warning.
+    Default output is human-readable text. Pass ``--json`` for the
+    structured dict an agent can parse.
+
+    Exit code: 0 for ``ok`` or ``warn`` overall; 2 for ``fail``
+    (malformed config on disk). ``warn`` is the normal pre-setup state
+    so ``hai doctor && hai daily`` isn't blocked by a missing-auth
+    warning.
     """
 
-    from health_agent_infra.core.state import (
-        current_schema_version,
-        open_connection,
-        resolve_db_path,
-    )
-    from health_agent_infra.core.state.store import discover_migrations
+    from health_agent_infra.core.doctor import build_report, render_text
+    from health_agent_infra.core.state import resolve_db_path
 
-    report: dict[str, Any] = {
-        "version": _PACKAGE_VERSION,
-        "checks": {},
-    }
-
-    # ---- config ----
     thresholds_path = (
         Path(args.thresholds_path).expanduser()
         if args.thresholds_path
         else user_config_path()
     )
-    if not thresholds_path.exists():
-        report["checks"]["config"] = {
-            "status": "warn",
-            "path": str(thresholds_path),
-            "reason": "thresholds file not present; defaults in effect",
-            "hint": "run `hai init` or `hai config init`",
-        }
-    else:
-        try:
-            load_thresholds(path=thresholds_path)
-            report["checks"]["config"] = {
-                "status": "ok",
-                "path": str(thresholds_path),
-            }
-        except ConfigError as exc:
-            report["checks"]["config"] = {
-                "status": "fail",
-                "path": str(thresholds_path),
-                "reason": str(exc),
-                "hint": "repair the TOML or regenerate with `hai config init --force`",
-            }
-
-    # ---- state DB + migration state ----
     db_path = resolve_db_path(args.db_path)
-    if not db_path.exists():
-        report["checks"]["state_db"] = {
-            "status": "warn",
-            "path": str(db_path),
-            "reason": "state DB file not present",
-            "hint": "run `hai init` or `hai state init`",
-        }
-    else:
-        conn = open_connection(db_path)
-        try:
-            current = current_schema_version(conn)
-        finally:
-            conn.close()
-        packaged = discover_migrations()
-        head = max((v for v, _, _ in packaged), default=0)
-        if current < head:
-            report["checks"]["state_db"] = {
-                "status": "warn",
-                "path": str(db_path),
-                "schema_version": current,
-                "head_version": head,
-                "pending_migrations": head - current,
-                "reason": f"{head - current} pending migration(s)",
-                "hint": "run `hai state migrate`",
-            }
-        else:
-            report["checks"]["state_db"] = {
-                "status": "ok",
-                "path": str(db_path),
-                "schema_version": current,
-                "head_version": head,
-            }
+    skills_dest = Path(args.skills_dest).expanduser()
 
-    # ---- Garmin auth ----
-    store = _credential_store_for(args)
-    auth_status = store.garmin_status()
-    if auth_status["credentials_available"]:
-        if auth_status["keyring"]["password_present"]:
-            source = "keyring"
-        else:
-            source = "env"
-        report["checks"]["auth_garmin"] = {
-            "status": "ok",
-            "credentials_source": source,
-        }
-    else:
-        report["checks"]["auth_garmin"] = {
-            "status": "warn",
-            "reason": "no Garmin credentials stored",
-            "hint": (
-                "run `hai auth garmin` (interactive) or set "
-                "HAI_GARMIN_EMAIL + HAI_GARMIN_PASSWORD in the environment"
-            ),
-        }
-
-    # ---- skills ----
-    dest = Path(args.skills_dest).expanduser()
     with _skills_source() as skills_source:
         packaged_names = (
             sorted(p.name for p in skills_source.iterdir() if p.is_dir())
             if skills_source.exists()
             else []
         )
-    if not dest.exists():
-        report["checks"]["skills"] = {
-            "status": "warn",
-            "dest": str(dest),
-            "packaged_count": len(packaged_names),
-            "installed_count": 0,
-            "reason": "skills destination does not exist",
-            "hint": "run `hai init` or `hai setup-skills`",
-        }
-    else:
-        installed = sorted(p.name for p in dest.iterdir() if p.is_dir())
-        missing = sorted(set(packaged_names) - set(installed))
-        if missing:
-            report["checks"]["skills"] = {
-                "status": "warn",
-                "dest": str(dest),
-                "installed_count": len(installed),
-                "packaged_count": len(packaged_names),
-                "missing": missing,
-                "hint": "run `hai setup-skills` to install missing skills",
-            }
-        else:
-            report["checks"]["skills"] = {
-                "status": "ok",
-                "dest": str(dest),
-                "installed_count": len(installed),
-                "packaged_count": len(packaged_names),
-            }
 
-    # ---- domains (static — the six v1 domains ship with the wheel) ----
-    report["checks"]["domains"] = {
-        "status": "ok",
-        "domains": sorted(_DAILY_SUPPORTED_DOMAINS),
-    }
+    as_of_date = _coerce_date(getattr(args, "as_of", None))
 
-    overall = _worst_status(
-        [c["status"] for c in report["checks"].values()]
+    report = build_report(
+        version=_PACKAGE_VERSION,
+        thresholds_path=thresholds_path,
+        db_path=db_path,
+        skills_dest=skills_dest,
+        packaged_skill_names=packaged_names,
+        domain_names=sorted(_DAILY_SUPPORTED_DOMAINS),
+        credential_store=_credential_store_for(args),
+        user_id=getattr(args, "user_id", "u_local_1"),
+        as_of_date=as_of_date,
     )
-    report["overall_status"] = overall
-    _emit_json(report)
-    return 2 if overall == "fail" else 0
+
+    if getattr(args, "json", False):
+        _emit_json(report.to_dict())
+    else:
+        sys.stdout.write(render_text(report))
+
+    return 2 if report.overall_status == "fail" else 0
 
 
 # ---------------------------------------------------------------------------
@@ -3875,6 +3770,15 @@ def build_parser() -> argparse.ArgumentParser:
     p_doctor.add_argument("--skills-dest", default=str(DEFAULT_CLAUDE_SKILLS_DIR),
                           help="Skills destination to inspect (default: "
                                "~/.claude/skills/).")
+    p_doctor.add_argument("--user-id", default="u_local_1",
+                          help="Which user's sync history + today counts to "
+                               "report. Default: u_local_1.")
+    p_doctor.add_argument("--as-of", default=None,
+                          help="Anchor date for freshness + today counts, "
+                               "ISO-8601. Default: today (UTC).")
+    p_doctor.add_argument("--json", action="store_true",
+                          help="Emit the structured report dict as JSON "
+                               "instead of the human-readable text view.")
     p_doctor.set_defaults(func=cmd_doctor)
 
     p_classify = sub.add_parser(
