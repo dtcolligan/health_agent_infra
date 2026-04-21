@@ -167,12 +167,19 @@ def cmd_pull(args: argparse.Namespace) -> int:
     # maps "one logical day's evidence = one row" without pretending the
     # per-metric arrays are independent rows.
     rows = 1 if pull.get("raw_daily_row") is not None else 0
+    # M6: the live adapter exposes partial-pull telemetry on its
+    # instance so the pull dict's key set stays byte-identical to the
+    # CSV adapter. The CSV adapter has no partial concept, so attribute
+    # absence means "ok" by default.
+    partial = getattr(adapter, "last_pull_partial", False)
+    sync_status = "partial" if partial else "ok"
     _close_sync_row_ok(
         args.db_path,
         sync_id,
         rows_pulled=rows,
         rows_accepted=rows,
         duplicates_skipped=0,
+        status=sync_status,
     )
 
     payload = {
@@ -349,7 +356,15 @@ def _build_live_adapter(args: argparse.Namespace):
 
     Pulled into a helper so tests can monkeypatch the client-building step
     while exercising the real CLI arg parsing and credential flow.
+
+    M6: the adapter + client share a :class:`RetryConfig` derived from
+    the merged thresholds. A user TOML ``[pull.garmin_live]`` section
+    tunes attempts / backoff / rate-limit behavior without code edits.
     """
+
+    from health_agent_infra.core.pull.garmin_live import (
+        retry_config_from_thresholds,
+    )
 
     store = CredentialStore.default()
     credentials = store.load_garmin()
@@ -358,9 +373,20 @@ def _build_live_adapter(args: argparse.Namespace):
             "no Garmin credentials found. Run `hai auth garmin` or set "
             "HAI_GARMIN_EMAIL + HAI_GARMIN_PASSWORD."
         )
-    client = build_default_client(credentials)
+    try:
+        thresholds = load_thresholds()
+    except ConfigError:
+        # Malformed TOML is a config-level concern hai doctor surfaces;
+        # for a pull, fall back to packaged defaults rather than failing.
+        thresholds = None
+    retry_cfg = retry_config_from_thresholds(thresholds)
+    client = build_default_client(credentials, retry_config=retry_cfg)
     history_days = getattr(args, "history_days", 14)
-    return GarminLiveAdapter(client=client, history_days=history_days)
+    return GarminLiveAdapter(
+        client=client,
+        history_days=history_days,
+        retry_config=retry_cfg,
+    )
 
 
 # ---------------------------------------------------------------------------

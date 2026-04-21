@@ -271,7 +271,12 @@ def test_build_live_adapter_returns_adapter_when_creds_and_client_ok(monkeypatch
     class StubClient:
         def fetch_day(self, day):
             return {}
-    monkeypatch.setattr(cli_mod, "build_default_client", lambda creds: StubClient())
+    # M6 wired retry_config through; accept kwargs so the stub keeps
+    # matching the real signature.
+    monkeypatch.setattr(
+        cli_mod, "build_default_client",
+        lambda creds, **kwargs: StubClient(),
+    )
 
     import argparse
     args = argparse.Namespace(live=True, history_days=3)

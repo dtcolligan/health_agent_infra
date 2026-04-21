@@ -35,9 +35,11 @@ Design constraints from the plan:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import random
+import time
+from dataclasses import dataclass, field
 from datetime import date, timedelta
-from typing import Iterable, Optional, Protocol
+from typing import Any, Iterable, Optional, Protocol
 
 from health_agent_infra.core.pull.auth import GarminCredentials
 
@@ -116,7 +118,162 @@ class GarminLiveError(RuntimeError):
     Covers the bounded-blocker surface: missing ``garminconnect`` install,
     login failure, or an upstream client that raises on every call.
     CSV pull remains available either way.
+
+    ``context`` carries rate-limit / HTTP headers when the underlying
+    error surface exposed them — e.g. ``{"retry_after": 30}`` on a 429.
+    Callers that want to report "upstream asked us to wait 30s" can
+    read this without parsing the exception message string.
     """
+
+    def __init__(self, message: str, *, context: Optional[dict[str, Any]] = None) -> None:
+        super().__init__(message)
+        self.context: dict[str, Any] = dict(context) if context else {}
+
+
+# ---------------------------------------------------------------------------
+# Retry + classification helpers (M6)
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class RetryConfig:
+    """Knobs for the per-field retry wrapper.
+
+    Defaults mirror the ``[pull.garmin_live]`` block in
+    :data:`core.config.DEFAULT_THRESHOLDS`. The CLI passes a merged
+    config through :func:`retry_config_from_thresholds` so a user TOML
+    can tune these without code edits.
+    """
+
+    max_attempts: int = 3
+    base_delay_seconds: float = 1.0
+    max_delay_seconds: float = 4.0
+    retry_on_rate_limit: bool = True
+
+
+def retry_config_from_thresholds(thresholds: Optional[dict[str, Any]]) -> RetryConfig:
+    """Derive a :class:`RetryConfig` from a merged thresholds dict."""
+
+    cfg = ((thresholds or {}).get("pull") or {}).get("garmin_live") or {}
+    return RetryConfig(
+        max_attempts=int(cfg.get("max_attempts", 3)),
+        base_delay_seconds=float(cfg.get("base_delay_seconds", 1.0)),
+        max_delay_seconds=float(cfg.get("max_delay_seconds", 4.0)),
+        retry_on_rate_limit=bool(cfg.get("retry_on_rate_limit", True)),
+    )
+
+
+def _classify_http_error(exc: BaseException) -> tuple[str, Optional[int], dict[str, Any]]:
+    """Return ``(category, status_code, context)`` for a raised exception.
+
+    Category is one of:
+      - ``"rate_limit"``: HTTP 429. Retry respects ``retry_on_rate_limit``.
+      - ``"transient"``: HTTP 5xx, network-like failures, or unclassifiable
+        exceptions (permissive default — a flake shouldn't fail a pull).
+      - ``"permanent"``: HTTP 4xx-non-429. Retrying won't help; stop.
+
+    The classification looks for ``.status_code`` first (common on
+    direct HTTP exception types), then ``.response.status_code``
+    (wrapper-style). Absent either, the exception is treated as
+    transient.
+
+    Context may include a ``retry_after`` key (seconds) when the
+    upstream response carried a ``Retry-After`` header — passed
+    through verbatim so the caller can surface it in logs /
+    ``GarminLiveError.context``.
+    """
+
+    status_code = getattr(exc, "status_code", None)
+    response = getattr(exc, "response", None)
+    if status_code is None and response is not None:
+        status_code = getattr(response, "status_code", None)
+
+    context: dict[str, Any] = {}
+    headers = None
+    if response is not None:
+        headers = getattr(response, "headers", None) or {}
+    if headers:
+        retry_after = headers.get("Retry-After") or headers.get("retry-after")
+        if retry_after is not None:
+            try:
+                context["retry_after"] = float(retry_after)
+            except (TypeError, ValueError):
+                context["retry_after"] = retry_after
+
+    if status_code is None:
+        return "transient", None, context
+    try:
+        code = int(status_code)
+    except (TypeError, ValueError):
+        return "transient", None, context
+
+    if code == 429:
+        return "rate_limit", code, context
+    if 500 <= code < 600:
+        return "transient", code, context
+    if 400 <= code < 500:
+        return "permanent", code, context
+    return "transient", code, context
+
+
+def _retry_sleep(
+    attempt: int, config: RetryConfig, context: dict[str, Any],
+) -> None:
+    """Sleep for the nth retry.
+
+    If ``context`` carries a numeric ``retry_after`` the caller honours
+    it (capped at ``max_delay_seconds`` to keep pulls from wedging for
+    minutes on a single 429). Otherwise: exponential backoff from
+    ``base_delay_seconds``, capped at ``max_delay_seconds``, ±25%
+    jitter.
+    """
+
+    retry_after = context.get("retry_after")
+    if isinstance(retry_after, (int, float)):
+        delay = min(float(retry_after), config.max_delay_seconds)
+    else:
+        delay = min(
+            config.base_delay_seconds * (2 ** (attempt - 1)),
+            config.max_delay_seconds,
+        )
+    # ±25% jitter so retries don't synchronise with other clients
+    # hitting the same rate-limited endpoint.
+    jitter = delay * 0.25 * (random.random() * 2 - 1)
+    total = max(0.0, delay + jitter)
+    if total > 0:
+        time.sleep(total)
+
+
+def _safe_call_with_retry(
+    fn, *args, config: RetryConfig, sleep_fn=_retry_sleep, **kwargs,
+) -> tuple[Any, Optional[dict[str, Any]]]:
+    """Invoke ``fn``, retry on transient/rate-limit errors per ``config``.
+
+    Returns ``(result, error_context)`` where ``result`` is either the
+    successful return value or ``None`` when every attempt failed, and
+    ``error_context`` is ``None`` on success or the last exception's
+    classified context dict on failure. A field that failed every
+    attempt becomes a partial-day signal: the caller propagates it
+    upward so the sync row can land ``status='partial'``.
+    """
+
+    last_ctx: dict[str, Any] = {}
+    last_category = "transient"
+    for attempt in range(1, max(1, config.max_attempts) + 1):
+        try:
+            return fn(*args, **kwargs), None
+        except Exception as exc:  # noqa: BLE001 — classifier handles shapes
+            category, _code, ctx = _classify_http_error(exc)
+            last_ctx = ctx
+            last_category = category
+            if category == "permanent":
+                break
+            if category == "rate_limit" and not config.retry_on_rate_limit:
+                break
+            if attempt < config.max_attempts:
+                sleep_fn(attempt, config, ctx)
+                continue
+    return None, {"category": last_category, **last_ctx}
 
 
 class GarminLiveClient(Protocol):
@@ -139,15 +296,58 @@ class GarminLiveAdapter:
     distinguishes live from CSV, while downstream projectors continue to
     key state rows on ``source='garmin'`` (that's hardcoded in the
     projector and independent of adapter provenance).
+
+    ``retry_config`` (M6) threads through per-field retry behavior —
+    the default mirrors :data:`core.config.DEFAULT_THRESHOLDS`'
+    ``[pull.garmin_live]``. The CLI passes a merged thresholds dict
+    down via :func:`retry_config_from_thresholds`.
     """
 
     client: GarminLiveClient
     history_days: int = 14
     source_name: str = "garmin_live"
+    retry_config: RetryConfig = field(default_factory=RetryConfig)
+    # M6 — partial-day telemetry updated each call to :meth:`load`.
+    # Kept off the returned pull dict so the CSV-contract key set stays
+    # byte-identical to the passive adapter; callers read these
+    # directly from the adapter instance when they need the telemetry.
+    last_pull_partial: bool = field(default=False, init=False, repr=False)
+    last_pull_failed_days: list[str] = field(
+        default_factory=list, init=False, repr=False,
+    )
 
     def load(self, as_of: date) -> dict:
+        """Return the normalised pull dict for ``as_of``.
+
+        When one or more upstream field-calls exhaust their retry
+        budget, the adapter still returns whatever succeeded (same
+        partial-field shape as the CSV adapter emits when CSV cells are
+        blank). The per-run telemetry (whether any day was partial,
+        which days failed) lands on :attr:`last_pull_partial` and
+        :attr:`last_pull_failed_days`; the CLI reads these to stamp
+        ``sync_run_log.status='partial'``.
+        """
+
         days = _window_days(as_of, self.history_days)
-        rows = [_normalise_row(day, self.client.fetch_day(day)) for day in days]
+        rows: list[dict] = []
+        partial = False
+        failed_days: list[str] = []
+        for day in days:
+            raw, err = _safe_call_with_retry(
+                self.client.fetch_day, day, config=self.retry_config,
+            )
+            if err is not None:
+                # A day that exhausted retries drops out of the raw
+                # series entirely — whether it's the target day (breaks
+                # raw_daily_row) or a historical day (shortens the
+                # per-metric series). Either way we mark partial so the
+                # operator knows the coverage is incomplete.
+                partial = True
+                failed_days.append(day.isoformat())
+            rows.append(_normalise_row(day, raw))
+
+        self.last_pull_partial = partial
+        self.last_pull_failed_days = failed_days
 
         return {
             "sleep": _extract_sleep(rows, as_of),
@@ -249,7 +449,11 @@ def _extract_raw_daily_row(rows: Iterable[dict], as_of: date) -> Optional[dict]:
 # ---------------------------------------------------------------------------
 
 
-def build_default_client(credentials: GarminCredentials) -> GarminLiveClient:
+def build_default_client(
+    credentials: GarminCredentials,
+    *,
+    retry_config: Optional[RetryConfig] = None,
+) -> GarminLiveClient:
     """Construct a live ``garminconnect``-backed client.
 
     Imports the upstream library lazily so tests (which mock at the
@@ -258,7 +462,9 @@ def build_default_client(credentials: GarminCredentials) -> GarminLiveClient:
 
     Any import or login failure is wrapped in ``GarminLiveError`` so
     callers can report a bounded blocker without catching a zoo of
-    upstream exception types.
+    upstream exception types. Login is also retry-guarded per
+    ``retry_config`` — rate-limited logins are the most annoying
+    failure mode in dev.
     """
 
     try:
@@ -269,12 +475,28 @@ def build_default_client(credentials: GarminCredentials) -> GarminLiveClient:
             "(`pip install garminconnect`) or fall back to CSV pull."
         ) from exc
 
-    try:
+    cfg = retry_config if retry_config is not None else RetryConfig()
+
+    last_exc: dict[str, Any] = {"message": None}
+
+    def _do_login():
         client = Garmin(credentials.email, credentials.password)
-        client.login()
-    except Exception as exc:  # upstream exceptions vary by version
-        raise GarminLiveError(f"Garmin login failed: {exc}") from exc
-    return _GarminConnectClient(client)
+        try:
+            client.login()
+        except Exception as exc:
+            last_exc["message"] = str(exc)
+            raise
+        return client
+
+    client, err = _safe_call_with_retry(_do_login, config=cfg)
+    if client is None:
+        detail = last_exc.get("message")
+        suffix = f": {detail}" if detail else ""
+        raise GarminLiveError(
+            f"Garmin login failed after {cfg.max_attempts} attempt(s){suffix}",
+            context=err or {},
+        )
+    return _GarminConnectClient(client, retry_config=cfg)
 
 
 class _GarminConnectClient:
@@ -284,16 +506,32 @@ class _GarminConnectClient:
     missing fields rather than failing the whole pull. Field mapping is
     deliberately conservative: only the fields downstream code reads are
     populated; everything else stays None and can be added as needed.
+
+    M6: per-endpoint calls retry on transient / rate-limit errors per
+    ``retry_config``. A 4xx-non-429 still short-circuits to None
+    (classifier marks it ``permanent``).
     """
 
-    def __init__(self, client) -> None:  # client: garminconnect.Garmin
+    def __init__(
+        self,
+        client,
+        *,
+        retry_config: Optional[RetryConfig] = None,
+    ) -> None:  # client: garminconnect.Garmin
         self._client = client
+        self._retry_config = retry_config if retry_config is not None else RetryConfig()
+
+    def _call(self, fn, *args, **kwargs):
+        result, _err = _safe_call_with_retry(
+            fn, *args, config=self._retry_config, **kwargs,
+        )
+        return result
 
     def fetch_day(self, day: date) -> dict:
         iso = day.isoformat()
         row: dict = {"date": iso}
 
-        stats = _safe_call(self._client.get_stats, iso) or {}
+        stats = self._call(self._client.get_stats, iso) or {}
         row["steps"] = stats.get("totalSteps")
         row["distance_m"] = stats.get("totalDistanceMeters")
         row["active_kcal"] = stats.get("activeKilocalories")
@@ -307,7 +545,7 @@ class _GarminConnectClient:
         row["all_day_stress"] = stats.get("averageStressLevel")
         row["body_battery"] = stats.get("bodyBatteryMostRecentValue")
 
-        sleep = _safe_call(self._client.get_sleep_data, iso) or {}
+        sleep = self._call(self._client.get_sleep_data, iso) or {}
         dto = sleep.get("dailySleepDTO") or {}
         row["sleep_deep_sec"] = dto.get("deepSleepSeconds")
         row["sleep_light_sec"] = dto.get("lightSleepSeconds")
@@ -322,7 +560,7 @@ class _GarminConnectClient:
         row["avg_sleep_respiration"] = dto.get("averageRespirationValue")
         row["avg_sleep_stress"] = dto.get("avgSleepStress")
 
-        hrv = _safe_call(self._client.get_hrv_data, iso) or {}
+        hrv = self._call(self._client.get_hrv_data, iso) or {}
         hrv_summary = hrv.get("hrvSummary") or {}
         row["health_hrv_value"] = hrv_summary.get("lastNightAvg")
         row["health_hrv_baseline_low"] = (
@@ -332,7 +570,7 @@ class _GarminConnectClient:
             (hrv_summary.get("baseline") or {}).get("balancedHigh")
         )
 
-        tr = _safe_call(self._client.get_training_readiness, iso)
+        tr = self._call(self._client.get_training_readiness, iso)
         if isinstance(tr, list):
             tr = tr[0] if tr else {}
         tr = tr or {}
@@ -345,7 +583,7 @@ class _GarminConnectClient:
         row["training_readiness_hrv_weekly_avg"] = tr.get("hrvScore")
         row["training_readiness_valid_sleep"] = tr.get("validSleep")
 
-        status = _safe_call(self._client.get_training_status, iso) or {}
+        status = self._call(self._client.get_training_status, iso) or {}
         most_recent = (status.get("mostRecentTrainingLoadBalance") or {})
         metrics = (most_recent.get("metricsTrainingLoadBalanceDTOMap") or {})
         # metrics is a dict keyed by device id; pick the first entry
@@ -368,18 +606,3 @@ class _GarminConnectClient:
                 row["training_status"] = None
 
         return row
-
-
-def _safe_call(fn, *args, **kwargs):
-    """Call ``fn`` and swallow any exception into ``None``.
-
-    Every upstream field we pull is optional — a single endpoint flaking
-    should not fail the whole pull. The adapter's raw_daily_row degrades
-    to None for missing fields, which is the same shape the CSV adapter
-    emits when the CSV has blank cells.
-    """
-
-    try:
-        return fn(*args, **kwargs)
-    except Exception:
-        return None

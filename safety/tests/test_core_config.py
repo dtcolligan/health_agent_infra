@@ -35,8 +35,13 @@ from health_agent_infra.core.config import (
 # DEFAULT_THRESHOLDS shape
 # ---------------------------------------------------------------------------
 
-def test_default_thresholds_has_three_top_level_sections():
-    assert set(DEFAULT_THRESHOLDS.keys()) == {"classify", "policy", "synthesis"}
+def test_default_thresholds_has_expected_top_level_sections():
+    # M6 added "pull" (garmin_live retry knobs); prior PRs cemented
+    # classify / policy / synthesis. This set grows when a new config
+    # surface lands — the test should be updated alongside the section.
+    assert set(DEFAULT_THRESHOLDS.keys()) == {
+        "classify", "policy", "synthesis", "pull",
+    }
 
 
 def test_default_thresholds_recovery_bands_present():

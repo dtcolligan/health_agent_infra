@@ -405,6 +405,25 @@ DEFAULT_THRESHOLDS: dict[str, Any] = {
             },
         },
     },
+    # M6 — pull-adapter resilience knobs. Applied inside the Garmin live
+    # adapter's per-field retry wrapper; CSV pulls ignore these. A user
+    # TOML can tune them under ``[pull.garmin_live]`` without editing
+    # code — a tight allowance for flaky networks or an aggressive
+    # backoff for rate-limited dev tokens.
+    "pull": {
+        "garmin_live": {
+            # Total attempts per upstream field call (1 initial + N-1 retries).
+            "max_attempts": 3,
+            # Exponential base delay between attempts. The nth retry
+            # waits ``min(base * 2**(n-1), max_delay)`` plus ±25% jitter.
+            "base_delay_seconds": 1.0,
+            "max_delay_seconds": 4.0,
+            # Whether 429 (rate limit) responses trigger a retry. Set to
+            # ``false`` to surface 429s immediately instead of waiting
+            # out the backoff.
+            "retry_on_rate_limit": True,
+        },
+    },
 }
 
 
