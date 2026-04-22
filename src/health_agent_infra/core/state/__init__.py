@@ -59,17 +59,29 @@ from health_agent_infra.core.state.sync_log import (
     latest_successful_sync_per_source,
     sync_run,
 )
+from health_agent_infra.core.state.runtime_event_log import (
+    begin_event,
+    command_summary,
+    complete_event,
+    fail_event,
+    recent_events,
+    runtime_event,
+)
 
 __all__ = [
     "DEFAULT_DB_PATH",
     "ReprojectBaseDirError",
     "apply_pending_migrations",
     "available_domains",
+    "begin_event",
     "begin_sync",
     "build_snapshot",
+    "command_summary",
+    "complete_event",
     "complete_sync",
     "current_schema_version",
     "delete_canonical_plan_cascade",
+    "fail_event",
     "fail_sync",
     "initialize_database",
     "latest_nutrition_submission_id",
@@ -104,7 +116,9 @@ __all__ = [
     "read_canonical_plan",
     "read_domain",
     "read_proposals_for_plan_key",
+    "recent_events",
     "reproject_from_jsonl",
     "resolve_db_path",
+    "runtime_event",
     "sync_run",
 ]

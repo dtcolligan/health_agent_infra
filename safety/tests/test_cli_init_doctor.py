@@ -381,3 +381,297 @@ def test_doctor_partial_skills_install_is_warn(
     assert skills["packaged_count"] >= 2
     # The other packaged skills show up in missing.
     assert "daily-plan-synthesis" in skills["missing"]
+
+
+# ---------------------------------------------------------------------------
+# hai init --with-auth
+# ---------------------------------------------------------------------------
+
+
+class _NoRawRowAdapter:
+    """Fake live adapter: reports as garmin_live, returns no raw_daily_row.
+
+    No raw_daily_row means _daily_pull_and_project returns projected=False
+    and skips projection — the pull path and sync_run_log bookkeeping are
+    exercised without needing the full projection-friendly row shape. The
+    projection path has its own tests; the backfill loop is the target
+    here.
+    """
+
+    source_name = "garmin_live"
+
+    def load(self, as_of):
+        return {
+            "sleep": None,
+            "resting_hr": [],
+            "hrv": [],
+            "training_load": [],
+            "raw_daily_row": None,
+        }
+
+
+def test_init_with_auth_noops_when_already_configured(
+    tmp_path, capsys, fake_stored_store,
+):
+    rc = cli_main(_init_argv(tmp_path, "--with-auth"))
+    assert rc == 0
+    report = _stdout_json(capsys)
+
+    # Existing steps still present and unchanged in shape.
+    assert report["steps"]["auth_garmin"]["credentials_available"] is True
+    # New step records the short-circuit.
+    assert report["steps"]["interactive_auth"]["status"] == "already_configured"
+
+
+def test_init_with_auth_prompts_and_stores(
+    tmp_path, capsys, monkeypatch, fake_empty_store,
+):
+    # Simulate a user typing an email at input() and a password at getpass().
+    import builtins
+    import getpass as getpass_mod
+
+    prompts_seen: list[str] = []
+
+    def fake_input(prompt: str = "") -> str:
+        prompts_seen.append(prompt)
+        return "new_user@example.com"
+
+    def fake_getpass(prompt: str = "") -> str:
+        prompts_seen.append(prompt)
+        return "s3cret!"
+
+    monkeypatch.setattr(builtins, "input", fake_input)
+    monkeypatch.setattr(getpass_mod, "getpass", fake_getpass)
+
+    rc = cli_main(_init_argv(tmp_path, "--with-auth"))
+    assert rc == 0
+    report = _stdout_json(capsys)
+
+    assert report["steps"]["interactive_auth"]["status"] == "configured"
+    # Credentials actually landed in the injected keyring.
+    creds = fake_empty_store.load_garmin()
+    assert creds is not None
+    assert creds.email == "new_user@example.com"
+    assert creds.password == "s3cret!"
+    # Both prompts fired — proof we actually hit the interactive path.
+    assert any("email" in p.lower() for p in prompts_seen)
+    assert any("password" in p.lower() for p in prompts_seen)
+
+
+def test_init_with_auth_emits_single_json_document(
+    tmp_path, capsys, monkeypatch, fake_empty_store,
+):
+    """cmd_auth_garmin's own JSON is silenced so stdout stays a single doc."""
+
+    import builtins
+    import getpass as getpass_mod
+
+    monkeypatch.setattr(builtins, "input", lambda _="": "a@b.com")
+    monkeypatch.setattr(getpass_mod, "getpass", lambda _="": "pw")
+
+    rc = cli_main(_init_argv(tmp_path, "--with-auth"))
+    assert rc == 0
+    out = capsys.readouterr().out
+    # Exactly one JSON document on stdout — json.loads on the whole stream
+    # would fail if cmd_auth_garmin had leaked its own JSON through.
+    parsed = json.loads(out)
+    assert "steps" in parsed
+
+
+def test_init_with_auth_handles_eof_gracefully(
+    tmp_path, capsys, monkeypatch, fake_empty_store,
+):
+    # No stdin → cmd_auth_garmin's input() raises EOFError; we report
+    # user_skipped rather than surfacing the traceback.
+    import builtins
+
+    def raising_input(prompt: str = "") -> str:
+        raise EOFError()
+
+    monkeypatch.setattr(builtins, "input", raising_input)
+
+    rc = cli_main(_init_argv(tmp_path, "--with-auth"))
+    assert rc == 0
+    report = _stdout_json(capsys)
+    assert report["steps"]["interactive_auth"]["status"] == "user_skipped"
+
+
+# ---------------------------------------------------------------------------
+# hai init --with-first-pull
+# ---------------------------------------------------------------------------
+
+
+def test_init_with_first_pull_skips_without_credentials(
+    tmp_path, capsys, fake_empty_store,
+):
+    rc = cli_main(_init_argv(tmp_path, "--with-first-pull"))
+    assert rc == 0
+    report = _stdout_json(capsys)
+    first = report["steps"]["first_pull"]
+    assert first["status"] == "skipped"
+    assert "credentials" in first["reason"].lower()
+
+
+def test_init_with_first_pull_runs_default_seven_days(
+    tmp_path, capsys, monkeypatch, fake_stored_store,
+):
+    # Inject a fake live adapter so no network / real Garmin call happens.
+    monkeypatch.setattr(
+        cli_mod, "_build_live_adapter", lambda args: _NoRawRowAdapter(),
+    )
+
+    rc = cli_main(_init_argv(tmp_path, "--with-first-pull"))
+    assert rc == 0
+    report = _stdout_json(capsys)
+
+    first = report["steps"]["first_pull"]
+    assert first["status"] == "ran"
+    assert first["days_requested"] == 7
+    assert first["days_succeeded"] == 7
+    assert first["days_failed"] == 0
+    assert len(first["per_day"]) == 7
+    # Dates are unique and chronological (oldest → newest).
+    dates_seen = [entry["date"] for entry in first["per_day"]]
+    assert dates_seen == sorted(dates_seen)
+    assert len(set(dates_seen)) == 7
+    # Every entry reports the source name and no projection (no raw_daily_row).
+    for entry in first["per_day"]:
+        assert entry["status"] == "ok"
+        assert entry["source"] == "garmin_live"
+        assert entry["projected_raw_daily"] is False
+
+
+def test_init_with_first_pull_respects_days_override(
+    tmp_path, capsys, monkeypatch, fake_stored_store,
+):
+    monkeypatch.setattr(
+        cli_mod, "_build_live_adapter", lambda args: _NoRawRowAdapter(),
+    )
+
+    rc = cli_main(_init_argv(tmp_path, "--with-first-pull", "--first-pull-days", "3"))
+    assert rc == 0
+    report = _stdout_json(capsys)
+
+    first = report["steps"]["first_pull"]
+    assert first["days_requested"] == 3
+    assert first["days_succeeded"] == 3
+    assert len(first["per_day"]) == 3
+
+
+def test_init_with_first_pull_writes_one_sync_row_per_day(
+    tmp_path, capsys, monkeypatch, fake_stored_store,
+):
+    from health_agent_infra.core.state import open_connection
+
+    monkeypatch.setattr(
+        cli_mod, "_build_live_adapter", lambda args: _NoRawRowAdapter(),
+    )
+
+    rc = cli_main(_init_argv(tmp_path, "--with-first-pull", "--first-pull-days", "4"))
+    assert rc == 0
+
+    conn = open_connection(tmp_path / "state.db")
+    try:
+        rows = conn.execute(
+            "SELECT source, status, mode, for_date FROM sync_run_log "
+            "ORDER BY sync_id"
+        ).fetchall()
+    finally:
+        conn.close()
+
+    # Four successful live-pull rows, one per backfill day.
+    assert len(rows) == 4
+    assert all(row["source"] == "garmin_live" for row in rows)
+    assert all(row["status"] == "ok" for row in rows)
+    assert all(row["mode"] == "live" for row in rows)
+    # for_date values cover a chronological 4-day window with no gaps.
+    for_dates = sorted(row["for_date"] for row in rows)
+    assert len(set(for_dates)) == 4
+
+
+def test_init_with_first_pull_continues_past_per_day_failure(
+    tmp_path, capsys, monkeypatch, fake_stored_store,
+):
+    from health_agent_infra.core.pull.garmin_live import GarminLiveError
+
+    class _SometimesFailingAdapter:
+        source_name = "garmin_live"
+
+        def __init__(self):
+            self._call_count = 0
+
+        def load(self, as_of):
+            self._call_count += 1
+            # Fail on the 2nd call so we can prove the loop doesn't abort.
+            if self._call_count == 2:
+                raise GarminLiveError("simulated 503 on day 2")
+            return {
+                "sleep": None,
+                "resting_hr": [],
+                "hrv": [],
+                "training_load": [],
+                "raw_daily_row": None,
+            }
+
+    # Reuse one adapter instance across the backfill so call_count survives.
+    adapter = _SometimesFailingAdapter()
+    monkeypatch.setattr(cli_mod, "_build_live_adapter", lambda args: adapter)
+
+    rc = cli_main(_init_argv(tmp_path, "--with-first-pull", "--first-pull-days", "5"))
+    assert rc == 0
+    report = _stdout_json(capsys)
+
+    first = report["steps"]["first_pull"]
+    assert first["status"] == "ran"
+    assert first["days_requested"] == 5
+    assert first["days_succeeded"] == 4
+    assert first["days_failed"] == 1
+    # The failure entry carries error context for later triage.
+    failed_entries = [e for e in first["per_day"] if e["status"] == "failed"]
+    assert len(failed_entries) == 1
+    assert failed_entries[0]["error_class"] == "GarminLiveError"
+    assert "503" in failed_entries[0]["error"]
+
+
+def test_init_with_auth_and_first_pull_end_to_end(
+    tmp_path, capsys, monkeypatch, fake_empty_store,
+):
+    """Happy path: fresh machine → --with-auth → --with-first-pull in one call."""
+
+    import builtins
+    import getpass as getpass_mod
+
+    monkeypatch.setattr(builtins, "input", lambda _="": "flow@example.com")
+    monkeypatch.setattr(getpass_mod, "getpass", lambda _="": "s3cret")
+    monkeypatch.setattr(
+        cli_mod, "_build_live_adapter", lambda args: _NoRawRowAdapter(),
+    )
+
+    rc = cli_main(_init_argv(
+        tmp_path, "--with-auth", "--with-first-pull", "--first-pull-days", "2",
+    ))
+    assert rc == 0
+    report = _stdout_json(capsys)
+
+    # Step 5: auth moved from missing → configured.
+    assert report["steps"]["auth_garmin"]["status"] == "missing"  # pre-prompt snapshot
+    assert report["steps"]["interactive_auth"]["status"] == "configured"
+
+    # Step 6: first-pull honoured the freshly-stored creds.
+    first = report["steps"]["first_pull"]
+    assert first["status"] == "ran"
+    assert first["days_requested"] == 2
+    assert first["days_succeeded"] == 2
+
+
+def test_init_without_new_flags_does_not_add_new_steps(
+    tmp_path, capsys, fake_empty_store,
+):
+    """Backward compatibility: default `hai init` shape is unchanged."""
+
+    rc = cli_main(_init_argv(tmp_path))
+    assert rc == 0
+    report = _stdout_json(capsys)
+
+    expected_steps = {"config", "state_db", "skills", "auth_garmin"}
+    assert set(report["steps"].keys()) == expected_steps

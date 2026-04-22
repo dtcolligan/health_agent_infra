@@ -22,7 +22,7 @@ import shutil
 import sqlite3
 import sys
 from dataclasses import asdict, is_dataclass
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Optional
 
@@ -2749,6 +2749,28 @@ def _schedule_reviews_for_daily_plan(
 
 
 def cmd_daily(args: argparse.Namespace) -> int:
+    """Thin wrapper around :func:`_run_daily` that records a runtime event.
+
+    Every invocation writes one row to ``runtime_event_log`` (migration 012)
+    with started_at, exit_code, duration_ms, and status. The wrapper is
+    best-effort: a missing state DB silently skips logging rather than
+    blocking the run. The orchestration logic lives unchanged in
+    :func:`_run_daily`.
+    """
+
+    from health_agent_infra.core.state import resolve_db_path, runtime_event
+
+    db_path_resolved = resolve_db_path(args.db_path)
+    user_id = getattr(args, "user_id", "u_local_1")
+    with runtime_event(
+        db_path_resolved, command="daily", user_id=user_id,
+    ) as evt:
+        rc = _run_daily(args)
+        evt["exit_code"] = rc
+    return rc
+
+
+def _run_daily(args: argparse.Namespace) -> int:
     """Orchestrate the morning sequence over the existing runtime surfaces.
 
     Stages: pull → clean → snapshot → proposal-gate → synthesize →
@@ -3051,7 +3073,8 @@ def cmd_init(args: argparse.Namespace) -> int:
                 }
 
     # 4. Garmin auth — report presence only, never prompt. The operator
-    # runs `hai auth garmin` separately for credential entry.
+    # runs `hai auth garmin` separately for credential entry, or passes
+    # --with-auth (step 5) for one-shot interactive onboarding.
     store = _credential_store_for(args)
     auth_status = store.garmin_status()
     configured = bool(auth_status["credentials_available"])
@@ -3063,14 +3086,167 @@ def cmd_init(args: argparse.Namespace) -> int:
             if configured
             else (
                 "run `hai auth garmin` to store credentials in the OS "
-                "keyring, or set HAI_GARMIN_EMAIL + HAI_GARMIN_PASSWORD "
-                "for non-interactive use"
+                "keyring, or pass --with-auth to prompt interactively, "
+                "or set HAI_GARMIN_EMAIL + HAI_GARMIN_PASSWORD for "
+                "non-interactive use"
             )
         ),
     }
 
+    # 5. optional: interactive Garmin auth. Off by default so agents and
+    # tests can drive `hai init` non-interactively; opt in with --with-auth
+    # for human onboarding.
+    if getattr(args, "with_auth", False):
+        report["steps"]["interactive_auth"] = _run_interactive_auth(
+            args, already_configured=configured,
+        )
+
+    # 6. optional: first-pull backfill via the live adapter. Runs the same
+    # pull + project path `hai daily` uses, N days ending today, one
+    # sync_run_log row per day so freshness + audit stay consistent.
+    if getattr(args, "with_first_pull", False):
+        # Re-check credentials: step 5 may have just populated them.
+        store_now = _credential_store_for(args)
+        creds_now = bool(store_now.garmin_status()["credentials_available"])
+        report["steps"]["first_pull"] = _run_first_pull_backfill(
+            args,
+            db_path=resolved,
+            user_id=getattr(args, "user_id", "u_local_1"),
+            days=int(getattr(args, "first_pull_days", 7) or 7),
+            credentials_available=creds_now,
+        )
+
     _emit_json(report)
     return exit_codes.OK
+
+
+def _run_interactive_auth(
+    args: argparse.Namespace, *, already_configured: bool,
+) -> dict[str, Any]:
+    """Run ``cmd_auth_garmin`` interactively; record outcome only.
+
+    Silences cmd_auth_garmin's own JSON stdout so ``hai init`` emits a
+    single consolidated report. stderr passes through so typos still
+    surface. No-op if credentials are already present.
+    """
+
+    if already_configured:
+        return {"status": "already_configured"}
+
+    import io
+    from contextlib import redirect_stdout
+
+    auth_args = argparse.Namespace(
+        email=None,
+        password_stdin=False,
+        password_env=None,
+        _credential_store_override=getattr(args, "_credential_store_override", None),
+    )
+    buf = io.StringIO()
+    with redirect_stdout(buf):
+        rc = cmd_auth_garmin(auth_args)
+    if rc == exit_codes.OK:
+        return {"status": "configured"}
+    # cmd_auth_garmin maps empty/EOF input to USER_INPUT. In the interactive
+    # `hai init --with-auth` context that's always "user walked away";
+    # other non-OK codes are a real failure worth flagging distinctly.
+    if rc == exit_codes.USER_INPUT:
+        return {"status": "user_skipped", "exit_code": int(rc)}
+    return {"status": "failed", "exit_code": int(rc)}
+
+
+def _run_first_pull_backfill(
+    args: argparse.Namespace,
+    *,
+    db_path: Path,
+    user_id: str,
+    days: int,
+    credentials_available: bool,
+) -> dict[str, Any]:
+    """Pull + project N days via the live adapter, one sync row per day.
+
+    Per-day failures are recorded and the loop continues — a transient
+    Garmin 5xx on day 3 shouldn't wipe out days 4–7 of backfill. Total
+    counts are summarised in the returned dict so the outer init report
+    stays scannable.
+    """
+
+    if not credentials_available:
+        return {
+            "status": "skipped",
+            "reason": (
+                "no Garmin credentials available; run `hai auth garmin` "
+                "(or pass --with-auth) before --with-first-pull"
+            ),
+        }
+    if not db_path.exists():
+        return {
+            "status": "skipped",
+            "reason": f"state DB not found at {db_path}",
+        }
+    if days < 1:
+        return {
+            "status": "skipped",
+            "reason": f"invalid --first-pull-days: {days}",
+        }
+
+    today = datetime.now(timezone.utc).date()
+    # Oldest-first so the projection chain writes days in chronological
+    # order — aids debugging if a specific date blows up mid-backfill.
+    dates = [today - timedelta(days=i) for i in range(days)]
+    dates.reverse()
+
+    pull_args = argparse.Namespace(
+        live=True,
+        db_path=str(db_path),
+        user_id=user_id,
+    )
+
+    day_results: list[dict[str, Any]] = []
+    for d in dates:
+        sync_id = _open_sync_row(
+            db_path,
+            source="garmin_live",
+            user_id=user_id,
+            mode="live",
+            for_date=d,
+        )
+        try:
+            source_name, projected = _daily_pull_and_project(
+                pull_args, as_of=d, user_id=user_id, db_path=db_path,
+            )
+        except GarminLiveError as exc:
+            _close_sync_row_failed(db_path, sync_id, exc)
+            day_results.append({
+                "date": d.isoformat(),
+                "status": "failed",
+                "error_class": type(exc).__name__,
+                "error": str(exc),
+            })
+            continue
+        rows = 1 if projected else 0
+        _close_sync_row_ok(
+            db_path,
+            sync_id,
+            rows_pulled=rows,
+            rows_accepted=rows,
+            duplicates_skipped=0,
+            status="ok",
+        )
+        day_results.append({
+            "date": d.isoformat(),
+            "status": "ok",
+            "source": source_name,
+            "projected_raw_daily": bool(projected),
+        })
+
+    return {
+        "status": "ran",
+        "days_requested": days,
+        "days_succeeded": sum(1 for r in day_results if r["status"] == "ok"),
+        "days_failed": sum(1 for r in day_results if r["status"] == "failed"),
+        "per_day": day_results,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -3144,6 +3320,199 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     # initialised, creds missing, etc.) — maps to USER_INPUT per the
     # exit-code taxonomy ("state precondition the caller controls").
     return exit_codes.USER_INPUT if report.overall_status == "fail" else exit_codes.OK
+
+
+# ---------------------------------------------------------------------------
+# hai stats — local, read-only onboarding + engagement signal
+# ---------------------------------------------------------------------------
+
+
+def cmd_stats(args: argparse.Namespace) -> int:
+    """Summarise sync_run_log + runtime_event_log for the user's own DB.
+
+    Read-only. Three sections:
+
+      1. Sync freshness — last successful pull per source.
+      2. Recent command runs — last N rows from runtime_event_log.
+      3. Command + streak summary — counts per command, consecutive-day
+         streak for `hai daily` (UTC calendar dates).
+
+    Default output is human-readable text; pass ``--json`` for the
+    structured dict. Text stays stable enough for eyeballing; JSON is
+    the machine surface.
+
+    No telemetry leaves the device — this command reads local SQLite
+    only. The user can paste the JSON into a bug report; nothing here
+    is auto-sent anywhere.
+    """
+
+    from health_agent_infra.core.state import (
+        command_summary,
+        latest_successful_sync_per_source,
+        open_connection,
+        recent_events,
+        resolve_db_path,
+    )
+
+    db_path = resolve_db_path(args.db_path)
+    if not db_path.exists():
+        if getattr(args, "json", False):
+            _emit_json({
+                "db_path": str(db_path),
+                "status": "db_missing",
+                "hint": "run `hai init` to create the state DB",
+            })
+        else:
+            print(
+                f"hai stats: no state DB at {db_path}. "
+                f"Run `hai init` first.",
+                file=sys.stderr,
+            )
+        return exit_codes.USER_INPUT
+
+    user_id = getattr(args, "user_id", "u_local_1")
+    limit = max(1, int(getattr(args, "limit", 7) or 7))
+
+    conn = open_connection(db_path)
+    try:
+        freshness = latest_successful_sync_per_source(conn, user_id=user_id)
+        recent = recent_events(conn, limit=limit)
+        summary = command_summary(conn)
+        streak = _daily_streak_from_events(conn)
+    finally:
+        conn.close()
+
+    report: dict[str, Any] = {
+        "db_path": str(db_path),
+        "user_id": user_id,
+        "sync_freshness": {
+            source: {
+                "started_at": row.get("started_at"),
+                "completed_at": row.get("completed_at"),
+                "status": row.get("status"),
+                "for_date": row.get("for_date"),
+                "mode": row.get("mode"),
+            }
+            for source, row in freshness.items()
+        },
+        "recent_events": [
+            {
+                "event_id": r["event_id"],
+                "command": r["command"],
+                "started_at": r["started_at"],
+                "completed_at": r["completed_at"],
+                "status": r["status"],
+                "exit_code": r["exit_code"],
+                "duration_ms": r["duration_ms"],
+                "error_class": r["error_class"],
+                "error_message": r["error_message"],
+            }
+            for r in recent
+        ],
+        "command_summary": summary,
+        "daily_streak_days": streak,
+    }
+
+    if getattr(args, "json", False):
+        _emit_json(report)
+    else:
+        sys.stdout.write(_render_stats_text(report))
+    return exit_codes.OK
+
+
+def _daily_streak_from_events(conn: sqlite3.Connection) -> int:
+    """Consecutive UTC calendar days ending today with ≥1 successful `hai daily`.
+
+    Returns 0 if today doesn't have a successful run. The streak is
+    counted backward from today (inclusive) — missing any intervening
+    day breaks the chain. Robust to a pre-migration-012 DB: returns 0
+    rather than crashing.
+    """
+
+    try:
+        rows = conn.execute(
+            "SELECT DISTINCT substr(started_at, 1, 10) AS day "
+            "FROM runtime_event_log "
+            "WHERE command = 'daily' AND status = 'ok' "
+            "ORDER BY day DESC"
+        ).fetchall()
+    except sqlite3.OperationalError:
+        return 0
+
+    days_with_ok = {row["day"] for row in rows}
+    if not days_with_ok:
+        return 0
+
+    streak = 0
+    today = datetime.now(timezone.utc).date()
+    cursor = today
+    while cursor.isoformat() in days_with_ok:
+        streak += 1
+        cursor -= timedelta(days=1)
+    return streak
+
+
+def _render_stats_text(report: dict[str, Any]) -> str:
+    """Human-readable `hai stats` view. Stable enough for eyeballing."""
+
+    lines: list[str] = []
+    lines.append(f"hai stats  —  db: {report['db_path']}")
+    lines.append(f"             user: {report['user_id']}")
+    lines.append("")
+
+    # Sync freshness
+    lines.append("Sync freshness (last successful pull per source):")
+    fresh = report["sync_freshness"]
+    if not fresh:
+        lines.append("  (no successful syncs yet — run `hai pull --live` or `hai daily`)")
+    else:
+        for source in sorted(fresh):
+            row = fresh[source]
+            started = row.get("started_at") or "—"
+            for_date = row.get("for_date") or ""
+            suffix = f"  for {for_date}" if for_date else ""
+            lines.append(f"  {source:16s} {started}  {row.get('status'):<8s}{suffix}")
+    lines.append("")
+
+    # Recent events
+    lines.append(f"Recent runs (runtime_event_log, last {len(report['recent_events'])}):")
+    events = report["recent_events"]
+    if not events:
+        lines.append("  (no logged runs yet — `hai daily` starts recording once the DB exists)")
+    else:
+        for evt in events:
+            started = evt.get("started_at") or "—"
+            cmd = evt.get("command", "?")
+            status = evt.get("status", "?")
+            dur = evt.get("duration_ms")
+            dur_s = f"{dur} ms" if dur is not None else "—"
+            line = f"  {started}  {cmd:<8s} {status:<6s} {dur_s:>8s}"
+            if evt.get("error_class"):
+                line += f"   {evt['error_class']}: {evt.get('error_message', '')}"
+            lines.append(line)
+    lines.append("")
+
+    # Command summary + streak
+    lines.append("Command summary:")
+    summary = report["command_summary"]
+    if not summary:
+        lines.append("  (no commands logged yet)")
+    else:
+        for cmd in sorted(summary):
+            counts = summary[cmd]
+            lines.append(
+                f"  {cmd:<10s} ok: {counts.get('ok', 0):<4d} "
+                f"failed: {counts.get('failed', 0):<4d} "
+                f"total: {counts.get('total', 0)}"
+            )
+    lines.append("")
+
+    streak = report["daily_streak_days"]
+    streak_suffix = " (run `hai daily` today to start one)" if streak == 0 else ""
+    lines.append(f"Daily streak: {streak} day(s){streak_suffix}")
+    lines.append("")
+
+    return "\n".join(lines)
 
 
 # ---------------------------------------------------------------------------
@@ -4122,6 +4491,24 @@ def build_parser() -> argparse.ArgumentParser:
     p_init.add_argument("--force", action="store_true",
                         help="Overwrite an existing thresholds TOML and "
                              "existing skills directories of the same name.")
+    p_init.add_argument("--with-auth", action="store_true",
+                        help="After the non-interactive setup, prompt for "
+                             "Garmin credentials and store them in the OS "
+                             "keyring (equivalent to running `hai auth "
+                             "garmin` afterward). Requires a TTY.")
+    p_init.add_argument("--with-first-pull", action="store_true",
+                        help="After setup (and --with-auth, if used), pull "
+                             "+ project the last N days of Garmin data via "
+                             "the live adapter so `hai daily` has history "
+                             "to reason over on day one. Requires Garmin "
+                             "credentials.")
+    p_init.add_argument("--first-pull-days", type=int, default=7,
+                        help="Number of days to backfill with "
+                             "--with-first-pull (default: 7). Ignored "
+                             "without --with-first-pull.")
+    p_init.add_argument("--user-id", default="u_local_1",
+                        help="User id to record against the backfill's "
+                             "sync_run_log rows (default: u_local_1).")
     p_init.set_defaults(func=cmd_init)
     annotate_contract(
         p_init,
@@ -4169,6 +4556,40 @@ def build_parser() -> argparse.ArgumentParser:
         description=(
             "Report runtime health: DB present, migrations up to date, "
             "per-source freshness, today's accepted counts."
+        ),
+    )
+
+    p_stats = sub.add_parser(
+        "stats",
+        help=(
+            "Summarise local sync + command-invocation history from the "
+            "state DB. Read-only, never leaves the device."
+        ),
+    )
+    p_stats.add_argument("--db-path", default=None,
+                         help="Override state DB path (default: "
+                              "$HAI_STATE_DB or platform default).")
+    p_stats.add_argument("--user-id", default="u_local_1",
+                         help="Whose sync freshness to report. "
+                              "Default: u_local_1.")
+    p_stats.add_argument("--limit", type=int, default=7,
+                         help="Number of recent runtime_event_log rows "
+                              "to include (default: 7).")
+    p_stats.add_argument("--json", action="store_true",
+                         help="Emit the structured report dict as JSON "
+                              "instead of the human-readable text view.")
+    p_stats.set_defaults(func=cmd_stats)
+    annotate_contract(
+        p_stats,
+        mutation="read-only",
+        idempotent="n/a",
+        json_output="opt-in",  # text default, JSON via flag
+        exit_codes=("OK", "USER_INPUT"),
+        agent_safe=True,
+        description=(
+            "Summarise sync_run_log (last pull per source) + "
+            "runtime_event_log (recent commands, daily streak) from the "
+            "user's local DB. No telemetry leaves the device."
         ),
     )
 

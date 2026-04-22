@@ -47,7 +47,7 @@ forward-compatibility but is not currently emitted.
 
 ## Commands
 
-*36 commands; hai 0.1.0; schema agent_cli_contract.v1*
+*37 commands; hai 0.1.1; schema agent_cli_contract.v1*
 
 | Command | Mutation | Idempotent | JSON | Agent-safe | Exit codes | Description |
 |---|---|---|---|---|---|---|
@@ -85,5 +85,6 @@ forward-compatibility but is not currently emitted.
 | ``hai state read`` | ``read-only`` | ``n/a`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Read a per-domain accepted-state row for a given date. |
 | ``hai state reproject`` | ``writes-state`` | ``yes`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Rebuild the accepted_*_state_daily tables from the raw evidence JSONL. Deterministic projection — safe to re-run. |
 | ``hai state snapshot`` | ``read-only`` | ``n/a`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Emit the cross-domain state snapshot the synthesis / skills layer consumes for a (for_date, user_id) pair. |
+| ``hai stats`` | ``read-only`` | ``n/a`` | ``opt-in`` | yes | ``OK``, ``USER_INPUT`` | Summarise sync_run_log (last pull per source) + runtime_event_log (recent commands, daily streak) from the user's local DB. No telemetry leaves the device. |
 | ``hai synthesize`` | ``writes-state`` | ``yes-with-supersede`` | ``default`` | yes | ``OK``, ``USER_INPUT``, ``INTERNAL`` | Run synthesis end-to-end inside one atomic SQLite transaction: daily_plan + x_rule_firings + planned_recommendation + recommendation_log. --supersede versions the plan instead of replacing it. |
 | ``hai writeback`` | ``writes-state`` | ``no`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Legacy recovery-only direct writeback path. Validates a TrainingRecommendation against the bounded schema and appends to the recovery audit log. Non-recovery domains go through hai synthesize instead. |

@@ -1,49 +1,56 @@
 # Health Agent Infra
 
-**Health Agent Infra is a governed, agent-operable runtime for a
-multi-domain personal health agent.** One Claude agent reads a
-cross-domain state snapshot, emits per-domain proposals via domain
-skills, and a synthesis skill reconciles them via codified
-cross-domain rules into bounded per-domain recommendations validated
-at atomic commit. Every CLI subcommand carries machine-readable
-contract metadata (mutation class, idempotency, exit codes) that an
-agent reads via ``hai capabilities --json``; an authoritative
-``intent-router`` skill maps natural-language intent to deterministic
-workflows against that contract. Every X-rule firing carries both a
-stable slug and a sentence-form explanation an agent can narrate
-verbatim.
+**A governed local agent runtime for personal health data.**
+Claude Code + Garmin today; MCP-portable and multi-source on the roadmap.
 
-Its source of truth is a **local SQLite database on the user's
-device**. That local state persists accepted daily state, proposal
-history, synthesized plans, final recommendations, and review
-outcomes across days, so the agent resumes from runtime state
-rather than from chat memory alone.
+A Claude Code agent reads your own health data, emits per-domain proposals
+bounded by codified rules, and commits auditable recommendations you review
+the next day. Every decision is logged to a local SQLite database on your
+machine; nothing leaves your device.
 
-It is not a chatbot, a wearable API, a general AI health app, or a
-clinical product. It is infrastructure the agent consumes:
-**deterministic Python tools** that ingest evidence, classify state,
-apply policy, run synthesis, and persist recommendations, plus
-**markdown skills** that instruct the agent in how to compose
-rationale and surface uncertainty once actions are mechanically
-constrained.
+**For** technical users comfortable with a CLI who use Claude Code and want
+agent recommendations they can audit, reproduce, and keep local.
 
-- Python = tools (data acquisition, projection, band classification,
-  R-rule + X-rule evaluation, schema validation, atomic
-  transactions, evals).
-- Markdown = skills (judgment: picking from an already-constrained
-  action set, composing rationale, surfacing uncertainty).
-- The code-vs-skill boundary is tight and the plan documents it.
-  Skills never change an action; code never writes prose.
+- **Local-first.** State lives in a SQLite file under your home directory. No
+  cloud, no account, no remote telemetry.
+- **Governed, not generative.** Python owns mechanical decisions
+  (classification bands, policy rules, transactional commits); markdown
+  skills own rationale and uncertainty. Skills never change an action; code
+  never writes prose.
+- **Agent-operable by contract.** Every CLI subcommand carries
+  machine-readable contract metadata (mutation class, idempotency, exit
+  codes) that an agent reads via `hai capabilities --json`. An authoritative
+  `intent-router` skill maps natural-language intent to deterministic
+  workflows; every X-rule firing carries a stable slug plus a sentence-form
+  explanation the agent can narrate verbatim.
+- **Auditable by construction.** Pulls, proposals, rule firings, synthesis,
+  and final recommendations all land in typed tables. Inspect anytime with
+  `hai doctor`, `hai explain`, `hai stats`, or plain SQL.
+
+## Install
+
+```bash
+pipx install health-agent-infra                      # or: pip install -e .
+hai init --with-auth --with-first-pull               # scaffolds state + config + skills,
+                                                     # prompts for Garmin credentials,
+                                                     # backfills the last 7 days
+hai daily                                            # tomorrow morning: pull → clean → propose → synthesize → commit
+hai stats                                            # local funnel: syncs, recent runs, daily streak
+```
+
+Prefer the non-interactive path? Run `hai init` on its own, then `hai auth
+garmin` separately. `hai init` is idempotent and safe to re-run. Full CLI
+surface in
+[`reporting/docs/agent_cli_contract.md`](reporting/docs/agent_cli_contract.md).
 
 ## Six domains in v1
 
-recovery · running · sleep · stress · strength · nutrition
+**recovery · running · sleep · stress · strength · nutrition**
 
-Each ships per-domain schemas, classify, policy, a readiness skill,
-and is wired into the synthesis X-rule catalogue. Nutrition is
-macros-only in v1 (no meal-level / food taxonomy / micronutrient
-inference) per the Phase 2.5 retrieval-gate outcome — see
-[``reporting/docs/non_goals.md``](reporting/docs/non_goals.md).
+Each domain ships its own schemas, classification bands, policy rules, and a
+readiness skill, and is wired into the synthesis X-rule catalogue that
+reconciles across domains. Nutrition is macros-only in v1 — see
+[`reporting/docs/non_goals.md`](reporting/docs/non_goals.md).
 
 ## Local-first runtime at a glance
 
@@ -77,82 +84,50 @@ pull / intake  →  projectors  →  accepted_*_state_daily tables
              hai review schedule / record / summary
 ```
 
-- **Local state memory** — ``accepted_*_state_daily`` tables store
-  the canonical per-domain day-level state the runtime reasons over.
+- **Local state memory** — ``accepted_*_state_daily`` tables store the
+  canonical per-domain day-level state the runtime reasons over.
 - **Decision memory** — ``proposal_log`` (per-domain planned intent),
-  ``planned_recommendation`` (aggregate pre-X-rule plan),
-  ``daily_plan`` + ``x_rule_firing`` + ``recommendation_log``
-  (aggregate adapted plan) preserve the full audit chain: what was
-  originally planned, how X-rules mutated it, and what was finally
-  committed.
-- **Outcome memory** — ``review_event`` and ``review_outcome``
-  record how the plan went, so the history of decisions and outcomes
-  stays on-device.
+  ``planned_recommendation`` (aggregate pre-X-rule plan), ``daily_plan`` +
+  ``x_rule_firing`` + ``recommendation_log`` (aggregate adapted plan)
+  preserve the full audit chain: what was originally planned, how X-rules
+  mutated it, and what was finally committed.
+- **Outcome memory** — ``review_event`` and ``review_outcome`` record how
+  the plan went, so the history of decisions and outcomes stays on-device.
 - **Agent contract surface** — ``hai capabilities --json`` emits a
-  machine-readable manifest of every subcommand; the markdown mirror
-  lives at
+  machine-readable manifest of every subcommand; the markdown mirror lives
+  at
   [``reporting/docs/agent_cli_contract.md``](reporting/docs/agent_cli_contract.md).
-  The ``intent-router`` skill is authoritative for NL → CLI mapping
-  against that contract.
+  The ``intent-router`` skill is authoritative for NL → CLI mapping against
+  that contract.
 
-See [``reporting/docs/architecture.md``](reporting/docs/architecture.md)
-for the full pipeline + code-vs-skill boundary.
+See [`reporting/docs/architecture.md`](reporting/docs/architecture.md) for
+the full pipeline and the code-vs-skill boundary.
 
-## Install
+## Roadmap
 
-```bash
-pip install -e .              # local editable install
-# or: pip install health-agent-infra
-hai setup-skills              # copies skills into ~/.claude/skills/
-hai state init                # creates the local on-device memory store
-hai --help
-```
+- **Runtime portability via MCP.** Expose the agent-safe CLI surface as an
+  MCP server so any agentic runtime (Claude Code, Codex, others) can drive
+  it. Today the project is Claude Code–native; the CLI contract is already
+  annotated agent-safe vs. interactive, which maps cleanly onto MCP tool
+  schemas.
+- **Multi-source wearables.** Apple Health, Oura, Whoop. The adapter
+  protocol (`core/pull/protocol.py`) is already source-agnostic; the
+  per-domain evidence contract needs to broaden before additional sources
+  land. Community adapters welcome — see
+  [`reporting/docs/how_to_add_a_pull_adapter.md`](reporting/docs/how_to_add_a_pull_adapter.md).
+- **Skill-narration eval harness.** Live-mode pilot shipped (Phase E +
+  M8 Phase 4); broader scenario coverage still to come. See
+  `safety/evals/skill_harness_blocker.md`.
 
-## CLI surface
+## What this is not
 
-```
-# Evidence + intake
-hai pull [--live] --date <d>                   # Garmin CSV / live pull
-hai clean --evidence-json <p>                  # raw → CleanedEvidence + RawSummary
-hai intake gym|exercise|nutrition|stress|note|readiness ...
+- Not a medical device, not hosted, not multi-user, not an ML loop. See
+  [`reporting/docs/non_goals.md`](reporting/docs/non_goals.md).
+- Not meal-level nutrition in v1 — macros only.
+- Not an MCP server yet (see Roadmap).
+- Not an MCP-wrapper-integrated or skill-harness-eval-complete release yet.
 
-# State
-hai state init | migrate | read | snapshot | reproject
-
-# Per-domain debug
-hai classify --domain <d> --evidence-json <p>
-hai policy   --domain <d> --evidence-json <p>
-
-# Agent flow
-hai propose  --domain <d> --proposal-json <p>
-hai synthesize --as-of <d> --user-id <u>
-hai daily                                      # morning orchestrator (pull→clean→reproject→propose→synthesize)
-
-# Persistence + review
-hai writeback --recommendation-json <p>  # recovery-only legacy direct path
-hai review schedule | record | summary [--domain <d>]
-
-# Agent contract + audit
-hai capabilities [--markdown]                  # JSON manifest (or regenerate the contract doc)
-hai explain --for-date <d> --user-id <u>       # three-state audit: planned → adapted → performed
-hai memory set | list | archive                # explicit user memory (goals, preferences, constraints)
-
-# Ops
-hai doctor [--json]                            # runtime health + per-source freshness
-hai init                                       # interactive first-run wizard
-
-# Auth + config + helpers
-hai auth garmin | status
-hai config init | show
-hai exercise search --query <free-text>
-
-# Evals
-hai eval run --domain <d> | --synthesis [--json]
-
-hai setup-skills                               # copy 14 packaged skills into ~/.claude/skills/
-```
-
-## Read this repo in 5 minutes
+## Dig deeper
 
 1. **Positioning & role map** — [`reporting/docs/personal_health_agent_positioning.md`](reporting/docs/personal_health_agent_positioning.md)
 2. **Query taxonomy** — [`reporting/docs/query_taxonomy.md`](reporting/docs/query_taxonomy.md)
@@ -169,11 +144,55 @@ hai setup-skills                               # copy 14 packaged skills into ~/
 13. **Agent-operable runtime plan (M8 cycle)** — [`reporting/plans/agent_operable_runtime_plan.md`](reporting/plans/agent_operable_runtime_plan.md)
 14. **Eval capture** — [`reporting/artifacts/flagship_loop_proof/2026-04-18-multi-domain-evals/`](reporting/artifacts/flagship_loop_proof/2026-04-18-multi-domain-evals/)
 
+## CLI surface
+
+```
+# Evidence + intake
+hai pull [--live] --date <d>                   # Garmin CSV / live pull
+hai clean --evidence-json <p>                  # raw → CleanedEvidence + RawSummary
+hai intake gym|exercise|nutrition|stress|note|readiness ...
+
+# State
+hai state init | migrate | read | snapshot | reproject
+
+# Per-domain debug
+hai classify --domain <d> --evidence-json <p>
+hai policy   --domain <d> --evidence-json <p>
+
+# Agent flow (use `hai daily` for the whole loop)
+hai daily                                       # morning orchestrator (pull→clean→reproject→propose→synthesize)
+hai propose  --domain <d> --proposal-json <p>
+hai synthesize --as-of <d> --user-id <u>
+
+# Persistence + review
+hai writeback --recommendation-json <p>         # recovery-only legacy direct path
+hai review schedule | record | summary [--domain <d>]
+
+# Agent contract + audit
+hai capabilities [--markdown]                   # JSON manifest (or regenerate the contract doc)
+hai explain --for-date <d> --user-id <u>        # three-state audit: planned → adapted → performed
+hai memory set | list | archive                 # explicit user memory (goals, preferences, constraints)
+
+# Ops
+hai init [--with-auth] [--with-first-pull]      # first-run wizard (idempotent)
+hai doctor [--json]                             # runtime health + per-source freshness
+hai stats [--json]                              # local funnel (sync + command history, daily streak)
+
+# Auth + config + helpers
+hai auth garmin | status
+hai config init | show
+hai exercise search --query <free-text>
+
+# Evals
+hai eval run --domain <d> | --synthesis [--json]
+
+hai setup-skills                                # copy packaged skills into ~/.claude/skills/
+```
+
 ## Repo layout
 
-For a one-page orientation of every top-level entry (active vs
-historical vs generated) see [`REPO_MAP.md`](REPO_MAP.md). The
-package itself looks like this:
+For a one-page orientation of every top-level entry (active vs historical vs
+generated) see [`REPO_MAP.md`](REPO_MAP.md). The package itself:
 
 ```
 src/health_agent_infra/
@@ -196,62 +215,49 @@ src/health_agent_infra/
 ├── evals/                          # packaged eval runner + scenarios
 └── data/garmin/export/              # committed CSV fixture
 reporting/                          # see reporting/README.md
-├── docs/                            # architecture, x_rules, non_goals, ... (+ archive/)
-├── artifacts/flagship_loop_proof/   # eval runner captures (+ archive/, phase_0/)
+├── docs/                            # architecture, x_rules, non_goals, ...
+├── artifacts/flagship_loop_proof/   # eval runner captures
 ├── plans/                           # post-v0.1 roadmap + historical phase docs
 └── experiments/                     # frozen Phase 0.5 / 2.5 prototypes
 safety/                             # see safety/README.md
-├── tests/                           # 1459 unit + contract + integration
+├── tests/                           # 1489 unit + contract + integration
 ├── evals/                           # eval-doc reference + skill-harness pilot
-└── scripts/                         # legacy pre-rebuild demo shim (do not run)
-merge_human_inputs/                 # docs + example payloads bucket; not a Python module
+└── scripts/                         # legacy pre-rebuild demo shim
 ```
 
 ## What's proven
 
-- Six domains end-to-end: classify → policy → skill proposal →
-  synthesis → writeback → review.
-- Ten X-rule evaluators across two phases with atomic
-  transactional commits, each firing carrying a stable slug and a
-  one-sentence `human_explanation` agents can narrate verbatim.
+- Six domains end-to-end: classify → policy → skill proposal → synthesis →
+  writeback → review.
+- Ten X-rule evaluators across two phases with atomic transactional commits,
+  each firing carrying a stable slug and a one-sentence `human_explanation`
+  agents can narrate verbatim.
 - Three-state audit chain: `proposal_log` → `planned_recommendation`
   (aggregate pre-X-rule intent, migration 011) → `daily_plan` +
-  `recommendation_log` → `review_outcome`. `hai explain` renders
-  all three states from persisted rows alone.
+  `recommendation_log` → `review_outcome`. `hai explain` renders all three
+  states from persisted rows alone.
 - Agent CLI contract: every subcommand annotated with mutation class,
-  idempotency, JSON output, exit codes, agent-safe flag; machine-
-  readable manifest at `hai capabilities --json`; markdown mirror
-  at [`reporting/docs/agent_cli_contract.md`](reporting/docs/agent_cli_contract.md).
+  idempotency, JSON output, exit codes, agent-safe flag; machine-readable
+  manifest at `hai capabilities --json`; markdown mirror at
+  [`reporting/docs/agent_cli_contract.md`](reporting/docs/agent_cli_contract.md).
   Every handler on the stable exit-code taxonomy.
-- Authoritative `intent-router` skill consumes the manifest as the
-  NL → CLI mapping surface; deliberately scoped so mutation commands
-  are previewed before they run.
-- Skill-harness pilot: 7 frozen recovery scenarios, 6 with
-  hand-authored reference transcripts scoring 2.0/2.0 on the
-  token-presence rubric; live-mode backend opt-in via
-  `HAI_SKILL_HARNESS_LIVE=1`.
-- Garmin live pull via keyring (``hai auth garmin`` + ``hai pull
-  --live``).
-- Idempotent synthesis with optional ``--supersede`` versioning.
-- 28 eval scenarios (18 domain + 10 synthesis) — all deterministic
-  axes green.
-- 1459 tests covering every band, every R-rule, every X-rule,
-  atomic transaction semantics, writeback invariants, skill-boundary
-  contracts, capabilities-manifest coverage + determinism, planned-
-  ledger round-trip, three-state explain render.
-
-## What's not
-
-- Not a medical device, not hosted, not multi-user, not an ML
-  loop. See [`reporting/docs/non_goals.md`](reporting/docs/non_goals.md).
-- Not meal-level nutrition in v1.
-- Skill-narration eval harness is shipped as a pilot (Phase E +
-  M8 Phase 4) but still opt-in; live-transcript capture remains
-  operator-driven. See ``safety/evals/skill_harness_blocker.md``.
-- Not an MCP-wrapper-integrated or skill-harness-eval-complete release yet.
+- Authoritative `intent-router` skill consumes the manifest as the NL → CLI
+  mapping surface; deliberately scoped so mutation commands are previewed
+  before they run.
+- Skill-harness pilot: 7 frozen recovery scenarios, 6 with hand-authored
+  reference transcripts scoring 2.0/2.0 on the token-presence rubric;
+  live-mode backend opt-in via `HAI_SKILL_HARNESS_LIVE=1`.
+- Local onboarding + engagement telemetry (migration 012 `runtime_event_log`)
+  surfaced via `hai stats`. No data leaves the device.
+- Garmin live pull via OS keyring (`hai auth garmin` + `hai pull --live`).
+- Idempotent synthesis with optional `--supersede` versioning.
+- 28 eval scenarios (18 domain + 10 synthesis) — all deterministic axes green.
+- **1489 tests** covering every band, every R-rule, every X-rule, atomic
+  transaction semantics, writeback invariants, skill-boundary contracts,
+  capabilities-manifest coverage + determinism, planned-ledger round-trip,
+  three-state explain render, and the new runtime_event_log + hai stats
+  paths.
 
 ## Contributing
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md). The authoritative rebuild
-plan lives at
-``.claude/worktrees/hardcore-kare-a92e25/reporting/plans/comprehensive_rebuild_plan.md``.
+See [`CONTRIBUTING.md`](CONTRIBUTING.md).
