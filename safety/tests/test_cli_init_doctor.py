@@ -427,25 +427,25 @@ def test_init_with_auth_prompts_and_stores(
     tmp_path, capsys, monkeypatch, fake_empty_store,
 ):
     # Simulate a user typing an email at input() and a password at getpass().
+    # 0.1.2 wiring: the email prompt is written to stderr *outside* of
+    # input() so the redirect_stdout around cmd_auth_garmin doesn't eat
+    # it. getpass already writes to stderr by default.
     import builtins
     import getpass as getpass_mod
 
-    prompts_seen: list[str] = []
-
-    def fake_input(prompt: str = "") -> str:
-        prompts_seen.append(prompt)
-        return "new_user@example.com"
+    getpass_prompts: list[str] = []
 
     def fake_getpass(prompt: str = "") -> str:
-        prompts_seen.append(prompt)
+        getpass_prompts.append(prompt)
         return "s3cret!"
 
-    monkeypatch.setattr(builtins, "input", fake_input)
+    monkeypatch.setattr(builtins, "input", lambda _="": "new_user@example.com")
     monkeypatch.setattr(getpass_mod, "getpass", fake_getpass)
 
     rc = cli_main(_init_argv(tmp_path, "--with-auth"))
     assert rc == 0
-    report = _stdout_json(capsys)
+    captured = capsys.readouterr()
+    report = json.loads(captured.out)
 
     assert report["steps"]["interactive_auth"]["status"] == "configured"
     # Credentials actually landed in the injected keyring.
@@ -453,9 +453,10 @@ def test_init_with_auth_prompts_and_stores(
     assert creds is not None
     assert creds.email == "new_user@example.com"
     assert creds.password == "s3cret!"
-    # Both prompts fired — proof we actually hit the interactive path.
-    assert any("email" in p.lower() for p in prompts_seen)
-    assert any("password" in p.lower() for p in prompts_seen)
+    # Email prompt went to stderr (the whole point of the 0.1.2 fix).
+    assert "Garmin email:" in captured.err
+    # Getpass prompt arg mentions password (getpass writes to stderr on its own).
+    assert any("password" in p.lower() for p in getpass_prompts)
 
 
 def test_init_with_auth_emits_single_json_document(
@@ -512,12 +513,25 @@ def test_init_with_first_pull_skips_without_credentials(
     assert "credentials" in first["reason"].lower()
 
 
-def test_init_with_first_pull_runs_default_seven_days(
+def test_init_with_first_pull_makes_single_adapter_call(
     tmp_path, capsys, monkeypatch, fake_stored_store,
 ):
-    # Inject a fake live adapter so no network / real Garmin call happens.
+    """0.1.2 design: one adapter.load(today), not a per-day loop."""
+
+    call_log: list = []
+
+    class _CountingAdapter:
+        source_name = "garmin_live"
+
+        def load(self, as_of):
+            call_log.append(as_of)
+            return {
+                "sleep": None, "resting_hr": [], "hrv": [],
+                "training_load": [], "raw_daily_row": None,
+            }
+
     monkeypatch.setattr(
-        cli_mod, "_build_live_adapter", lambda args: _NoRawRowAdapter(),
+        cli_mod, "_build_live_adapter", lambda args: _CountingAdapter(),
     )
 
     rc = cli_main(_init_argv(tmp_path, "--with-first-pull"))
@@ -525,49 +539,46 @@ def test_init_with_first_pull_runs_default_seven_days(
     report = _stdout_json(capsys)
 
     first = report["steps"]["first_pull"]
-    assert first["status"] == "ran"
-    assert first["days_requested"] == 7
-    assert first["days_succeeded"] == 7
-    assert first["days_failed"] == 0
-    assert len(first["per_day"]) == 7
-    # Dates are unique and chronological (oldest → newest).
-    dates_seen = [entry["date"] for entry in first["per_day"]]
-    assert dates_seen == sorted(dates_seen)
-    assert len(set(dates_seen)) == 7
-    # Every entry reports the source name and no projection (no raw_daily_row).
-    for entry in first["per_day"]:
-        assert entry["status"] == "ok"
-        assert entry["source"] == "garmin_live"
-        assert entry["projected_raw_daily"] is False
+    assert first["status"] == "ok"
+    assert first["history_days"] == 1  # default
+    assert first["approx_api_calls"] == 5  # 5 calls per fetch_day × 1 day
+    assert first["source"] == "garmin_live"
+
+    # Exactly one adapter.load(), and for today.
+    assert len(call_log) == 1
 
 
-def test_init_with_first_pull_respects_days_override(
+def test_init_with_first_pull_respects_history_days_override(
     tmp_path, capsys, monkeypatch, fake_stored_store,
 ):
     monkeypatch.setattr(
         cli_mod, "_build_live_adapter", lambda args: _NoRawRowAdapter(),
     )
 
-    rc = cli_main(_init_argv(tmp_path, "--with-first-pull", "--first-pull-days", "3"))
+    rc = cli_main(_init_argv(
+        tmp_path, "--with-first-pull", "--history-days", "7",
+    ))
     assert rc == 0
     report = _stdout_json(capsys)
 
     first = report["steps"]["first_pull"]
-    assert first["days_requested"] == 3
-    assert first["days_succeeded"] == 3
-    assert len(first["per_day"]) == 3
+    assert first["status"] == "ok"
+    assert first["history_days"] == 7
+    assert first["approx_api_calls"] == 35  # 5 × 7
 
 
-def test_init_with_first_pull_writes_one_sync_row_per_day(
+def test_init_with_first_pull_writes_one_sync_row(
     tmp_path, capsys, monkeypatch, fake_stored_store,
 ):
+    """Single pull → single sync_run_log row, status='ok'."""
+
     from health_agent_infra.core.state import open_connection
 
     monkeypatch.setattr(
         cli_mod, "_build_live_adapter", lambda args: _NoRawRowAdapter(),
     )
 
-    rc = cli_main(_init_argv(tmp_path, "--with-first-pull", "--first-pull-days", "4"))
+    rc = cli_main(_init_argv(tmp_path, "--with-first-pull"))
     assert rc == 0
 
     conn = open_connection(tmp_path / "state.db")
@@ -579,58 +590,52 @@ def test_init_with_first_pull_writes_one_sync_row_per_day(
     finally:
         conn.close()
 
-    # Four successful live-pull rows, one per backfill day.
-    assert len(rows) == 4
-    assert all(row["source"] == "garmin_live" for row in rows)
-    assert all(row["status"] == "ok" for row in rows)
-    assert all(row["mode"] == "live" for row in rows)
-    # for_date values cover a chronological 4-day window with no gaps.
-    for_dates = sorted(row["for_date"] for row in rows)
-    assert len(set(for_dates)) == 4
+    assert len(rows) == 1
+    assert rows[0]["source"] == "garmin_live"
+    assert rows[0]["status"] == "ok"
+    assert rows[0]["mode"] == "live"
 
 
-def test_init_with_first_pull_continues_past_per_day_failure(
+def test_init_with_first_pull_records_failure_with_hint(
     tmp_path, capsys, monkeypatch, fake_stored_store,
 ):
-    from health_agent_infra.core.pull.garmin_live import GarminLiveError
+    """A GarminLiveError (e.g. 429) is surfaced with a retry hint."""
 
-    class _SometimesFailingAdapter:
+    from health_agent_infra.core.pull.garmin_live import GarminLiveError
+    from health_agent_infra.core.state import open_connection
+
+    class _ExplodingAdapter:
         source_name = "garmin_live"
 
-        def __init__(self):
-            self._call_count = 0
-
         def load(self, as_of):
-            self._call_count += 1
-            # Fail on the 2nd call so we can prove the loop doesn't abort.
-            if self._call_count == 2:
-                raise GarminLiveError("simulated 503 on day 2")
-            return {
-                "sleep": None,
-                "resting_hr": [],
-                "hrv": [],
-                "training_load": [],
-                "raw_daily_row": None,
-            }
+            raise GarminLiveError("429 Too Many Requests")
 
-    # Reuse one adapter instance across the backfill so call_count survives.
-    adapter = _SometimesFailingAdapter()
-    monkeypatch.setattr(cli_mod, "_build_live_adapter", lambda args: adapter)
+    monkeypatch.setattr(
+        cli_mod, "_build_live_adapter", lambda args: _ExplodingAdapter(),
+    )
 
-    rc = cli_main(_init_argv(tmp_path, "--with-first-pull", "--first-pull-days", "5"))
+    rc = cli_main(_init_argv(tmp_path, "--with-first-pull"))
+    # Init itself doesn't fail — first_pull is advisory, not required.
     assert rc == 0
     report = _stdout_json(capsys)
 
     first = report["steps"]["first_pull"]
-    assert first["status"] == "ran"
-    assert first["days_requested"] == 5
-    assert first["days_succeeded"] == 4
-    assert first["days_failed"] == 1
-    # The failure entry carries error context for later triage.
-    failed_entries = [e for e in first["per_day"] if e["status"] == "failed"]
-    assert len(failed_entries) == 1
-    assert failed_entries[0]["error_class"] == "GarminLiveError"
-    assert "503" in failed_entries[0]["error"]
+    assert first["status"] == "failed"
+    assert first["error_class"] == "GarminLiveError"
+    assert "429" in first["error"]
+    # The hint guides the user to a lower-footprint retry.
+    assert "history-days 1" in first["hint"]
+    # Failed sync row is still persisted for the audit trail.
+    conn = open_connection(tmp_path / "state.db")
+    try:
+        rows = conn.execute(
+            "SELECT status, error_class FROM sync_run_log"
+        ).fetchall()
+    finally:
+        conn.close()
+    assert len(rows) == 1
+    assert rows[0]["status"] == "failed"
+    assert rows[0]["error_class"] == "GarminLiveError"
 
 
 def test_init_with_auth_and_first_pull_end_to_end(
@@ -648,7 +653,7 @@ def test_init_with_auth_and_first_pull_end_to_end(
     )
 
     rc = cli_main(_init_argv(
-        tmp_path, "--with-auth", "--with-first-pull", "--first-pull-days", "2",
+        tmp_path, "--with-auth", "--with-first-pull", "--history-days", "2",
     ))
     assert rc == 0
     report = _stdout_json(capsys)
@@ -657,11 +662,11 @@ def test_init_with_auth_and_first_pull_end_to_end(
     assert report["steps"]["auth_garmin"]["status"] == "missing"  # pre-prompt snapshot
     assert report["steps"]["interactive_auth"]["status"] == "configured"
 
-    # Step 6: first-pull honoured the freshly-stored creds.
+    # Step 6: first-pull honoured the freshly-stored creds with the chosen window.
     first = report["steps"]["first_pull"]
-    assert first["status"] == "ran"
-    assert first["days_requested"] == 2
-    assert first["days_succeeded"] == 2
+    assert first["status"] == "ok"
+    assert first["history_days"] == 2
+    assert first["approx_api_calls"] == 10
 
 
 def test_init_without_new_flags_does_not_add_new_steps(

@@ -3101,9 +3101,10 @@ def cmd_init(args: argparse.Namespace) -> int:
             args, already_configured=configured,
         )
 
-    # 6. optional: first-pull backfill via the live adapter. Runs the same
-    # pull + project path `hai daily` uses, N days ending today, one
-    # sync_run_log row per day so freshness + audit stay consistent.
+    # 6. optional: first-pull today via the live adapter. One adapter call
+    # (not a loop), `history_days`-wide window (default 1 → 5 API calls).
+    # See _run_first_pull_backfill's docstring for why the 0.1.1 loop was
+    # replaced.
     if getattr(args, "with_first_pull", False):
         # Re-check credentials: step 5 may have just populated them.
         store_now = _credential_store_for(args)
@@ -3112,7 +3113,7 @@ def cmd_init(args: argparse.Namespace) -> int:
             args,
             db_path=resolved,
             user_id=getattr(args, "user_id", "u_local_1"),
-            days=int(getattr(args, "first_pull_days", 7) or 7),
+            history_days=int(getattr(args, "history_days", 1) or 1),
             credentials_available=creds_now,
         )
 
@@ -3123,33 +3124,66 @@ def cmd_init(args: argparse.Namespace) -> int:
 def _run_interactive_auth(
     args: argparse.Namespace, *, already_configured: bool,
 ) -> dict[str, Any]:
-    """Run ``cmd_auth_garmin`` interactively; record outcome only.
+    """Prompt for Garmin credentials; hand them to ``cmd_auth_garmin``.
 
-    Silences cmd_auth_garmin's own JSON stdout so ``hai init`` emits a
-    single consolidated report. stderr passes through so typos still
-    surface. No-op if credentials are already present.
+    Prompts are written by this wrapper (to stderr) rather than by
+    ``cmd_auth_garmin``'s own ``input()`` / ``getpass()``. Reason: we
+    redirect ``cmd_auth_garmin``'s stdout to suppress its JSON emission
+    (so ``hai init`` stays a single-document stream), and Python's
+    ``input()`` writes its prompt to stdout — which would get swallowed
+    by the same redirect, leaving the user staring at a blank cursor.
+    Routing prompts to stderr keeps them visible and leaves stdout
+    unambiguous.
+
+    The collected email + password are passed to ``cmd_auth_garmin`` via
+    ``--email`` and ``--password-env`` so no further prompting happens
+    downstream; the env var is scrubbed on exit.
+
+    No-op if credentials are already present.
     """
 
     if already_configured:
         return {"status": "already_configured"}
 
+    import getpass as _getpass
     import io
+    import os as _os
     from contextlib import redirect_stdout
 
-    auth_args = argparse.Namespace(
-        email=None,
-        password_stdin=False,
-        password_env=None,
-        _credential_store_override=getattr(args, "_credential_store_override", None),
-    )
-    buf = io.StringIO()
-    with redirect_stdout(buf):
-        rc = cmd_auth_garmin(auth_args)
+    sys.stderr.write("Garmin email: ")
+    sys.stderr.flush()
+    try:
+        email = input().strip()
+    except EOFError:
+        return {"status": "user_skipped", "reason": "no input (EOF on email)"}
+    if not email:
+        return {"status": "user_skipped", "reason": "empty email"}
+    try:
+        password = _getpass.getpass("Garmin password: ")
+    except EOFError:
+        return {"status": "user_skipped", "reason": "no input (EOF on password)"}
+    if not password:
+        return {"status": "user_skipped", "reason": "empty password"}
+
+    env_name = "_HAI_INIT_WITH_AUTH_PW"
+    _os.environ[env_name] = password
+    try:
+        auth_args = argparse.Namespace(
+            email=email,
+            password_stdin=False,
+            password_env=env_name,
+            _credential_store_override=getattr(
+                args, "_credential_store_override", None,
+            ),
+        )
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            rc = cmd_auth_garmin(auth_args)
+    finally:
+        _os.environ.pop(env_name, None)
+
     if rc == exit_codes.OK:
         return {"status": "configured"}
-    # cmd_auth_garmin maps empty/EOF input to USER_INPUT. In the interactive
-    # `hai init --with-auth` context that's always "user walked away";
-    # other non-OK codes are a real failure worth flagging distinctly.
     if rc == exit_codes.USER_INPUT:
         return {"status": "user_skipped", "exit_code": int(rc)}
     return {"status": "failed", "exit_code": int(rc)}
@@ -3160,15 +3194,25 @@ def _run_first_pull_backfill(
     *,
     db_path: Path,
     user_id: str,
-    days: int,
+    history_days: int,
     credentials_available: bool,
 ) -> dict[str, Any]:
-    """Pull + project N days via the live adapter, one sync row per day.
+    """Pull + project today's state via a single live-adapter call.
 
-    Per-day failures are recorded and the loop continues — a transient
-    Garmin 5xx on day 3 shouldn't wipe out days 4–7 of backfill. Total
-    counts are summarised in the returned dict so the outer init report
-    stays scannable.
+    **Why one call, not a loop.** Each ``fetch_day`` makes ~5 Garmin
+    API requests, and the adapter internally fetches a `history_days`
+    window of days. So one ``adapter.load(today)`` with
+    `history_days=1` = 5 requests; with the default `history_days=14`
+    it's 70 requests. A multi-day backfill loop calling ``adapter.load``
+    N times (the 0.1.1 design) produced N*5*14 requests — hundreds in a
+    burst — which reliably triggered Garmin's rate limiter and left
+    many users unable to complete setup.
+
+    The replacement: one call, small default history window, explicit
+    opt-in for larger. The historical-series arrays (resting_hr, hrv,
+    training_load) come from the same call's history window, so wider
+    windows still surface baseline context when the user wants it —
+    they just incur a bigger burst.
     """
 
     if not credentials_available:
@@ -3184,68 +3228,68 @@ def _run_first_pull_backfill(
             "status": "skipped",
             "reason": f"state DB not found at {db_path}",
         }
-    if days < 1:
+    if history_days < 1:
         return {
             "status": "skipped",
-            "reason": f"invalid --first-pull-days: {days}",
+            "reason": f"invalid --history-days: {history_days}",
         }
 
     today = datetime.now(timezone.utc).date()
-    # Oldest-first so the projection chain writes days in chronological
-    # order — aids debugging if a specific date blows up mid-backfill.
-    dates = [today - timedelta(days=i) for i in range(days)]
-    dates.reverse()
 
+    # _daily_pull_and_project reads args.history_days when building the
+    # live adapter, so routing the config through that attribute is how
+    # the history window reaches the adapter without broadening the
+    # helper's signature.
     pull_args = argparse.Namespace(
         live=True,
         db_path=str(db_path),
         user_id=user_id,
+        history_days=history_days,
     )
 
-    day_results: list[dict[str, Any]] = []
-    for d in dates:
-        sync_id = _open_sync_row(
-            db_path,
-            source="garmin_live",
-            user_id=user_id,
-            mode="live",
-            for_date=d,
+    sync_id = _open_sync_row(
+        db_path,
+        source="garmin_live",
+        user_id=user_id,
+        mode="live",
+        for_date=today,
+    )
+    try:
+        source_name, projected = _daily_pull_and_project(
+            pull_args, as_of=today, user_id=user_id, db_path=db_path,
         )
-        try:
-            source_name, projected = _daily_pull_and_project(
-                pull_args, as_of=d, user_id=user_id, db_path=db_path,
-            )
-        except GarminLiveError as exc:
-            _close_sync_row_failed(db_path, sync_id, exc)
-            day_results.append({
-                "date": d.isoformat(),
-                "status": "failed",
-                "error_class": type(exc).__name__,
-                "error": str(exc),
-            })
-            continue
-        rows = 1 if projected else 0
-        _close_sync_row_ok(
-            db_path,
-            sync_id,
-            rows_pulled=rows,
-            rows_accepted=rows,
-            duplicates_skipped=0,
-            status="ok",
-        )
-        day_results.append({
-            "date": d.isoformat(),
-            "status": "ok",
-            "source": source_name,
-            "projected_raw_daily": bool(projected),
-        })
+    except GarminLiveError as exc:
+        _close_sync_row_failed(db_path, sync_id, exc)
+        return {
+            "status": "failed",
+            "date": today.isoformat(),
+            "history_days": history_days,
+            "approx_api_calls": 5 * history_days,
+            "error_class": type(exc).__name__,
+            "error": str(exc),
+            "hint": (
+                "429 / rate-limit errors are common on Garmin's API. "
+                "Wait 30–60 minutes before retrying; consider "
+                "--history-days 1 (5 requests) to minimise burst size."
+            ),
+        }
 
+    rows = 1 if projected else 0
+    _close_sync_row_ok(
+        db_path,
+        sync_id,
+        rows_pulled=rows,
+        rows_accepted=rows,
+        duplicates_skipped=0,
+        status="ok",
+    )
     return {
-        "status": "ran",
-        "days_requested": days,
-        "days_succeeded": sum(1 for r in day_results if r["status"] == "ok"),
-        "days_failed": sum(1 for r in day_results if r["status"] == "failed"),
-        "per_day": day_results,
+        "status": "ok",
+        "date": today.isoformat(),
+        "history_days": history_days,
+        "approx_api_calls": 5 * history_days,
+        "source": source_name,
+        "projected_raw_daily": bool(projected),
     }
 
 
@@ -4497,14 +4541,17 @@ def build_parser() -> argparse.ArgumentParser:
                              "keyring (equivalent to running `hai auth "
                              "garmin` afterward). Requires a TTY.")
     p_init.add_argument("--with-first-pull", action="store_true",
-                        help="After setup (and --with-auth, if used), pull "
-                             "+ project the last N days of Garmin data via "
-                             "the live adapter so `hai daily` has history "
-                             "to reason over on day one. Requires Garmin "
-                             "credentials.")
-    p_init.add_argument("--first-pull-days", type=int, default=7,
-                        help="Number of days to backfill with "
-                             "--with-first-pull (default: 7). Ignored "
+                        help="After setup (and --with-auth, if used), do "
+                             "a single live-adapter pull for today so "
+                             "`hai daily` has state to reason over. One "
+                             "network call, configurable history window "
+                             "via --history-days. Requires Garmin creds.")
+    p_init.add_argument("--history-days", type=int, default=1,
+                        help="How many days of historical context the "
+                             "first-pull adapter fetches (default: 1 → "
+                             "~5 Garmin API calls). Larger windows give "
+                             "richer baselines but risk rate-limiting: "
+                             "each extra day adds ~5 API calls. Ignored "
                              "without --with-first-pull.")
     p_init.add_argument("--user-id", default="u_local_1",
                         help="User id to record against the backfill's "
