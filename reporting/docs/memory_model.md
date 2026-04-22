@@ -24,7 +24,8 @@ author, a different idempotency contract, and a different consumer.
 ┌──────────────────────────────────────────────────────────────────────┐
 │  1. Raw evidence memory    — append-only; verbatim inputs            │
 │  2. Accepted state memory  — projector-authored; idempotent per day  │
-│  3. Decision memory        — proposal / plan / firing / recommendation│
+│  3. Decision memory        — proposal / planned / plan / firing /     │
+│                              recommendation (three-state audit)       │
 │  4. Outcome memory         — scheduled + captured review records     │
 └──────────────────────────────────────────────────────────────────────┘
 ```
@@ -110,21 +111,35 @@ from local tables alone.
 
 ### 1.3 Decision memory
 
-**What it holds.** What the agent proposed, what synthesis changed,
-what was finally committed.
+**What it holds.** What the agent proposed, what the runtime's
+pre-X-rule aggregate looked like, what synthesis changed, and what
+was finally committed. Together these form the **three-state audit
+chain** (planned → adapted → performed) that `hai explain` renders
+from persisted rows alone.
 
 - `proposal_log` — every `DomainProposal` that passed `hai propose`
-  validation. Keyed on `(for_date, user_id, domain)`.
+  validation. Keyed on `(for_date, user_id, domain)`. This is the
+  per-domain **planned** intent.
+- `planned_recommendation` — the aggregate pre-X-rule bundle, one row
+  per (daily_plan_id, domain), mirroring the `recommendation_log`
+  shape. Captured inside the synthesis transaction **before** Phase A
+  mutations run, so the bundle can be compared against the adapted
+  outcome without reconstruction. FKs to both `daily_plan` and
+  `proposal_log` make the audit chain fully walkable. Added in
+  migration 011 (M8 Phase 1). Legacy plans committed before 011 have
+  no paired row and degrade cleanly to the two-state view.
 - `daily_plan` — the synthesis row, keyed on `(for_date, user_id)`,
   with a `superseded_by` pointer for `--supersede` versioning.
 - `x_rule_firing` — one row per X-rule firing (Phase A and Phase B),
   carrying rule id, tier, target domain, inputs read, mutation
-  applied, and `orphan` flag.
+  applied, and `orphan` flag. Each firing's rule id maps (via
+  `X_RULE_PUBLIC_NAMES` + `X_RULE_DESCRIPTIONS`) to a stable slug and
+  a one-sentence `human_explanation` surfaced by `hai explain`.
 - `recommendation_log` — the final per-domain `BoundedRecommendation`
-  rows. Linked to the `daily_plan` row for the day. Supports
-  `supersedes` / `superseded_by` pointers.
+  rows (the **adapted** aggregate). Linked to the `daily_plan` row
+  for the day. Supports `supersedes` / `superseded_by` pointers.
 
-All four are written inside a single SQLite transaction by
+All five are written inside a single SQLite transaction by
 `core/synthesis.py :: run_synthesis`. If any step fails, the entire
 transaction rolls back; no partial plan reaches state.
 
@@ -256,7 +271,7 @@ None of those exist today.
 |---|---|---|
 | Raw evidence | `source_daily_garmin`, `running_session`, `gym_session`, `gym_set`, `nutrition_intake_raw`, `stress_manual_raw`, `context_note`, `exercise_taxonomy` | per-domain JSONL audits under `~/.local/share/hai/` (default `base_dir`) |
 | Accepted state | `accepted_recovery_state_daily`, `accepted_running_state_daily`, `accepted_sleep_state_daily`, `accepted_stress_state_daily`, `accepted_resistance_training_state_daily`, `accepted_nutrition_state_daily` | none |
-| Decision | `proposal_log`, `daily_plan`, `x_rule_firing`, `recommendation_log` | `<base_dir>/<domain>_proposals.jsonl`; recovery-only writeback audit |
+| Decision | `proposal_log`, `planned_recommendation`, `daily_plan`, `x_rule_firing`, `recommendation_log` | `<base_dir>/<domain>_proposals.jsonl`; recovery-only writeback audit |
 | Outcome | `review_event`, `review_outcome` | none |
 | Explicit user memory | `user_memory` (migration 007) | none |
 | Adaptive memory | *(intentionally none)* | *(intentionally none)* |

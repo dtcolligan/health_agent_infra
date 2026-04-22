@@ -2,9 +2,24 @@
 
 - Author: Codex
 - Date: 2026-04-19
-- Status: execution-ready
+- Status: **superseded by [`agent_operable_runtime_plan.md`](agent_operable_runtime_plan.md) (M8 cycle).** Phases A–E complete, F/G deferrable (statuses updated inline below).
 - Starting point: `main @ f220c5d`
 - Prior checkpoint: `v0.1.0` shipped; Phase A truth-alignment complete
+
+> **M8 update (2026-04-22):** Phases A, B, C, D shipped as originally
+> scoped. Phase E (skill-harness pilot) was substantially resolved
+> by the work described in
+> [`safety/evals/skill_harness_blocker.md`](../../safety/evals/skill_harness_blocker.md);
+> M8 Phase 4 expanded reference-transcript coverage from 3 to 6 of 7
+> recovery branches. Phases F (grounded expert prototype) and G
+> (extension-path docs) remain deferrable; their deliverables are
+> unchanged and can be picked up in a future cycle if prioritised.
+> The M8 cycle itself added new phases not contemplated here:
+> planned-recommendation ledger (three-state audit), agent CLI
+> contract manifest + full exit-code migration, sentence-form X-rule
+> explanations, and the authoritative `intent-router` skill. See
+> [`agent_operable_runtime_plan.md`](agent_operable_runtime_plan.md)
+> for the full cycle.
 
 This document is the next-cycle master plan after the rebuild and
 `v0.1.0` release. It keeps the same execution discipline as the

@@ -11,10 +11,13 @@ ships two things to an agent like Claude Code:
 - **A CLI called ``hai``** with deterministic subcommands for
   pulling evidence, running intake, projecting state, classifying
   per-domain bands, applying R-rules, emitting proposals, running
-  synthesis, persisting recommendations, and running evals.
-- **A ``skills/`` directory** with twelve markdown skills — one per
-  domain plus a synthesis skill and a handful of cross-cutting
-  skills (merge-human-inputs, writeback-protocol, reporting,
+  synthesis, persisting recommendations, rendering the three-state
+  audit chain via `hai explain`, emitting a contract manifest via
+  `hai capabilities`, and running evals.
+- **A ``skills/`` directory** with fourteen markdown skills — one
+  per domain, a synthesis skill, an authoritative `intent-router`
+  skill (NL → CLI workflow mapping), an expert-explainer, plus
+  cross-cutting (merge-human-inputs, writeback-protocol, reporting,
   safety).
 
 The runtime owns deterministic work (arithmetic, mechanical
@@ -38,8 +41,9 @@ reporting/
     plans/                   # rebuild plan + Phase 2.5 gates
     experiments/             # Phase 0.5 / 2.5 throwaway prototypes
 safety/
-    tests/                   # unit + contract + integration (1200+)
+    tests/                   # unit + contract + integration (1459)
     evals/                   # Phase 6 eval framework (28 scenarios)
+                             # + Phase E/M8 skill-harness pilot
 ```
 
 Rule of thumb: if the file is ``.py``, it's code; if it's
@@ -50,14 +54,21 @@ deterministic runtime behaviour on frozen scenarios.
 ## 3. Where the thesis lives
 
 - [`architecture.md`](architecture.md) — pipeline diagram,
-  code-vs-skill boundary, R-rules + X-rules intro, package layout.
+  code-vs-skill boundary, R-rules + X-rules intro, package layout,
+  agent-operable surfaces (M8).
 - [`non_goals.md`](non_goals.md) — what this project refuses to
   build (no medical device, no hosted product, no ML loop, no
   meal-level nutrition in v1, etc).
 - [`x_rules.md`](x_rules.md) — the full cross-domain X-rule
-  catalogue.
+  catalogue, including sentence-form human explanations per rule.
 - [`state_model_v1.md`](state_model_v1.md) — table-by-table state
-  schema.
+  schema (includes the `planned_recommendation` ledger added in M8).
+- [`explainability.md`](explainability.md) — `hai explain` and the
+  three-state audit bundle (planned → adapted → performed).
+- [`agent_cli_contract.md`](agent_cli_contract.md) — generated
+  per-command contract manifest the intent-router skill consumes.
+- [`../plans/agent_operable_runtime_plan.md`](../plans/agent_operable_runtime_plan.md)
+  — M8 cycle plan and locked design decisions.
 - [`how_to_add_a_domain.md`](how_to_add_a_domain.md) —
   conceptual walk-through for adding a seventh domain; paired with
   the [`domains/README.md`](domains/README.md) checklist.

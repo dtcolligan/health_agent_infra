@@ -171,7 +171,7 @@ See [``x_rules.md``](x_rules.md) for the full catalogue.
 See [``state_model_v1.md``](state_model_v1.md) for the authoritative
 table-by-table schema. Each accepted_*_state_daily table is
 deterministically derived from one or more raw + source tables by
-the projector. Migrations 001–006 are live:
+the projector. Migrations 001–011 are live:
 
 - 001 initial schema
 - 002 training-readiness column rename
@@ -181,6 +181,40 @@ the projector. Migrations 001–006 are live:
 - 006 nutrition macros-only (derivation_path='daily_macros';
   micronutrient columns + food_taxonomy deferred per Phase 2.5
   retrieval gate)
+- 007 explicit user memory (goals / preferences / constraints /
+  context notes)
+- 008 sync_run_log (per-source freshness observability)
+- 009 recommendation_log.daily_plan_id column + index
+- 010 review_outcome enrichment (completed, intensity_delta,
+  pre/post_energy_score, disagreed_firing_ids, …)
+- 011 planned_recommendation ledger (pre-X-rule aggregate, M8
+  Phase 1) — closes the audit chain at the aggregate level so
+  `planned ⊕ firings = adapted` is verifiable from rows alone
+
+## Agent-operable surfaces (M8)
+
+The M8 cycle added three surfaces that make the runtime directly
+agent-operable without changing the governance model:
+
+- **Three-state audit chain.** `planned_recommendation` (migration
+  011) persists the aggregate pre-X-rule bundle alongside the
+  existing `daily_plan` + `recommendation_log`. `hai explain` renders
+  `planned → adapted → performed` side-by-side.
+- **Agent CLI contract.** Every `hai` subcommand carries contract
+  metadata (mutation class, idempotency, JSON output, exit codes,
+  agent-safe flag). `hai capabilities --json` emits a manifest walked
+  from the argparse tree; the markdown mirror lives at
+  [``agent_cli_contract.md``](agent_cli_contract.md). All handlers
+  return from the stable `OK / USER_INPUT / TRANSIENT / NOT_FOUND /
+  INTERNAL` taxonomy.
+- **Sentence-form X-rule explanations.** Every firing carries both a
+  stable slug (`sleep-debt-softens-hard`) and a one-sentence
+  `human_explanation` the agent narrates verbatim.
+- **Authoritative intent-router skill.** Maps NL intent to CLI
+  workflow sequences by reading the capabilities manifest as its
+  source of truth. Teaches the agent `hai` the way Claude already
+  knows `gh`. See [``agent_operable_runtime_plan.md``](../plans/agent_operable_runtime_plan.md)
+  for the full cycle context.
 
 ## Package layout
 

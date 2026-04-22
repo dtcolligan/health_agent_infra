@@ -1,16 +1,21 @@
 # Status
 
-## Architecture (v1 rebuild, v0.1.0 released — 2026-04-18)
+## Architecture (v1 rebuild, v0.1.0 released — 2026-04-18; M8 agent-operable cycle — 2026-04-22)
 
-Health Agent Infra is a multi-domain runtime for a personal health
-agent. Six domains (recovery, running, sleep, stress, strength,
-nutrition) are first-class, each with schemas + classifier + policy
-+ readiness skill. A synthesis layer reconciles per-domain
-proposals via ten X-rule evaluators across two phases, commits
-atomically to SQLite, and surfaces final per-domain
-recommendations through a review loop.
+Health Agent Infra is a **governed, agent-operable runtime** for a
+multi-domain personal health agent. Six domains (recovery, running,
+sleep, stress, strength, nutrition) are first-class, each with
+schemas + classifier + policy + readiness skill. A synthesis layer
+reconciles per-domain proposals via ten X-rule evaluators across
+two phases, commits atomically to SQLite alongside a pre-mutation
+`planned_recommendation` ledger, and surfaces final per-domain
+recommendations through a review loop. Every CLI subcommand carries
+machine-readable contract metadata (`hai capabilities --json`); an
+authoritative `intent-router` skill maps natural-language intent to
+deterministic workflows against that contract.
 
-See [`reporting/docs/architecture.md`](reporting/docs/architecture.md).
+See [`reporting/docs/architecture.md`](reporting/docs/architecture.md)
+and [`reporting/plans/agent_operable_runtime_plan.md`](reporting/plans/agent_operable_runtime_plan.md).
 
 ## What's proven
 
@@ -21,10 +26,26 @@ See [`reporting/docs/architecture.md`](reporting/docs/architecture.md).
   ``policy.py`` + a readiness skill. ``hai classify`` and ``hai
   policy`` debug commands cover recovery today (extension to other
   domains via eval runner).
-- **Synthesis** — ``core/synthesis.py`` atomic-commits daily_plan
-  + x_rule_firings + N recommendations in one SQLite transaction.
-  ``--supersede`` keeps an old plan addressable with a
+- **Synthesis** — ``core/synthesis.py`` atomic-commits daily_plan +
+  x_rule_firings + N recommendations + N planned_recommendation rows
+  (the pre-X-rule aggregate ledger, migration 011) in one SQLite
+  transaction. ``--supersede`` keeps an old plan addressable with a
   ``superseded_by`` pointer; default behaviour replaces cleanly.
+- **Three-state audit chain** — `proposal_log` → `planned_recommendation`
+  → `daily_plan` + `recommendation_log` → `review_outcome` is fully
+  walkable from persisted rows alone. `hai explain` renders all three
+  states side-by-side; every X-rule firing carries a machine-readable
+  slug (`sleep-debt-softens-hard`) plus a sentence-form
+  `human_explanation` an agent can narrate verbatim.
+- **Agent CLI contract** — `hai capabilities --json` emits a
+  manifest of every subcommand (mutation class, idempotency, JSON
+  output, exit codes, agent-safe flag). Markdown mirror committed at
+  [`reporting/docs/agent_cli_contract.md`](reporting/docs/agent_cli_contract.md).
+  Every handler is on the stable `OK` / `USER_INPUT` / `TRANSIENT` /
+  `NOT_FOUND` / `INTERNAL` taxonomy; no `LEGACY_0_2` sentinels remain.
+- **Intent routing** — the `intent-router` skill consumes the
+  capabilities manifest and maps natural-language intent to CLI
+  workflows. Authoritative for every agent host.
 - **X-rules** — 10 evaluators (X1a/b, X2, X3a/b, X4, X5, X6a/b,
   X7, X9) with tier precedence (block > soften > cap_confidence >
   adjust) and a Phase B write-surface guard.
@@ -39,12 +60,14 @@ See [`reporting/docs/architecture.md`](reporting/docs/architecture.md).
   axes pass on the Phase 6 checkpoint; the skill-narration axis is
   marked ``skipped_requires_agent_harness`` per scenario, pending
   the Phase 2.5 Condition 3 follow-up.
-- **Test suite** — 1247 passing, 0 failing across `safety/tests`
-  covering schemas, classify, policy, projectors, migrations, CLI
-  surfaces, atomic-transaction semantics, skill-boundary contracts,
-  eval runner, and scenario pack. The previously known-flaky
-  ``test_reproject_clears_manual_stress_for_days_dropped_from_jsonl``
-  was fixed in commit ``e52eda3``.
+- **Test suite** — 1459 passing, 0 failing across `safety/tests`
+  covering schemas, classify, policy, projectors, migrations (001–011),
+  CLI surfaces, atomic-transaction semantics, skill-boundary contracts,
+  eval runner, scenario pack, capabilities-manifest coverage +
+  determinism, planned-ledger round-trip (`planned ⊕ firings =
+  adapted`), three-state explain render, X-rule sentence registry,
+  and the skill-harness replay shim (6 of 7 recovery branches
+  transcript-covered).
 
 ## Install
 
@@ -88,29 +111,30 @@ the full list with rationale.
 | 5 | Nutrition domain (macros-only) | complete |
 | 6 | Eval harness + docs | complete |
 | 7 | Polish + publish | complete (`v0.1.0` released) |
+| 8 | Agent-operable runtime cycle | complete (see `reporting/plans/agent_operable_runtime_plan.md`) |
 
-## What's next (post-release)
+## What's next (post-M8)
 
-The rebuild plan is complete through `v0.1.0`:
-- Step 1 — ``hai daily`` morning orchestrator (commit ``e875bb2``).
-- Step 2 — ``hai init`` first-run wizard, ``hai doctor``, ``hai
-  --version`` (commit ``3afad17``).
-- Step 3 — packaging + CI readiness (wheel/sdist build, install
-  smoke-test, matrix CI; commit ``64961fc``).
-- Step 4 — launch artifact at
-  [`reporting/plans/launch_notes.md`](reporting/plans/launch_notes.md).
- - Release ops — merged to ``main``, tagged ``v0.1.0``, and
-   published to TestPyPI + PyPI with clean-venv smoke tests.
+The M8 cycle shipped every essential from
+[`reporting/plans/agent_operable_runtime_plan.md`](reporting/plans/agent_operable_runtime_plan.md)
+(Phases 1–5). The post-v0.1 roadmap's A–D are also complete; E, F, G are
+status-updated in [`reporting/plans/post_v0_1_roadmap.md`](reporting/plans/post_v0_1_roadmap.md).
 
-Still optional / deferred post-release:
-- Optional MCP server wrapper (``hai mcp serve``) — deferred,
-  CLI surface is sufficient for `0.1.0`.
+Explicitly deferred follow-ups (in priority order):
 
-Open cross-phase questions tracked at ``reporting/plans/comprehensive_rebuild_plan.md`` §8:
-
-- Apple Health adapter timing (post-Phase-7, demand-driven).
-- Learning loop design (no ML in v1; revisit post-launch).
-- Goal-specific recommendation logic (periodization, taper,
-  bulk/cut) — deferred post-launch.
-- Food database maintenance + meal-level re-gate (deferred until
-  the three structural retrieval failure classes are fixed).
+- **Phase M — active protocol layer.** Revisit only after the
+  planned-snapshot ledger has accumulated a cycle of data that shows
+  what durable multi-day intent is actually load-bearing. See the M8
+  plan §5.
+- **Skill-harness live-transcript capture.** Pilot shipped
+  hand-authored reference transcripts for 6 of 7 recovery branches;
+  capturing live transcripts via `HAI_SKILL_HARNESS_LIVE=1` is an
+  operator-driven step (needs API key / Claude Code session).
+- **Second-domain skill-harness expansion** (sleep / stress /
+  running). Runner is recovery-coupled; generalising it is a
+  meaningful refactor.
+- **LLM-judge rubric axis.** Rubric reserves space; ship deferred.
+- **Optional MCP server wrapper.** CLI surface is sufficient today.
+- **Apple Health adapter.** Demand-driven; no work planned.
+- **Learning loop / goal-specific periodization / meal-level
+  nutrition.** Non-goals in this cycle; revisit with explicit RFC.

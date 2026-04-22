@@ -46,8 +46,11 @@ checked-in repo shape.
 | Know what is shipped right now | [`STATUS.md`](STATUS.md) |
 | Take the guided 10-minute tour | [`reporting/docs/tour.md`](reporting/docs/tour.md) |
 | Read the architecture | [`reporting/docs/architecture.md`](reporting/docs/architecture.md) |
+| See how `hai explain` works (three-state audit) | [`reporting/docs/explainability.md`](reporting/docs/explainability.md) |
+| Read the agent CLI contract | [`reporting/docs/agent_cli_contract.md`](reporting/docs/agent_cli_contract.md) |
 | Add runtime code or a skill | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
-| See the next-cycle plan | [`reporting/plans/post_v0_1_roadmap.md`](reporting/plans/post_v0_1_roadmap.md) |
+| See the current-cycle plan (M8 agent-operable runtime) | [`reporting/plans/agent_operable_runtime_plan.md`](reporting/plans/agent_operable_runtime_plan.md) |
+| See the prior cycle plan (post-v0.1) | [`reporting/plans/post_v0_1_roadmap.md`](reporting/plans/post_v0_1_roadmap.md) |
 | Inspect proof / eval captures | [`reporting/artifacts/`](reporting/artifacts/) |
 | See what was tried and discarded before v1 | [`reporting/experiments/`](reporting/experiments/) |
 
@@ -55,8 +58,12 @@ checked-in repo shape.
 
 - **Active runtime**: `src/health_agent_infra/`.
 - **Active docs**: `README.md`, `STATUS.md`, `CONTRIBUTING.md`,
-  `REPO_MAP.md`, everything directly under `reporting/docs/`,
-  `reporting/plans/post_v0_1_roadmap.md`,
+  `REPO_MAP.md`, everything directly under `reporting/docs/`
+  (including `agent_cli_contract.md` — generated from `hai
+  capabilities --json`),
+  `reporting/plans/agent_operable_runtime_plan.md` (the M8 cycle
+  plan), `reporting/plans/post_v0_1_roadmap.md` (superseded but
+  retained for historical context),
   `reporting/plans/launch_notes.md`,
   `reporting/plans/skill_harness_rfc.md`.
 - **Active proof**:

@@ -1,11 +1,17 @@
 # Health Agent Infra
 
-**Health Agent Infra is a governed runtime for a multi-domain
-personal health agent.** One Claude agent reads a cross-domain
-state snapshot, emits per-domain proposals via domain skills, and a
-synthesis skill reconciles them via codified cross-domain rules
-into bounded per-domain recommendations validated at the ``hai
-writeback`` boundary.
+**Health Agent Infra is a governed, agent-operable runtime for a
+multi-domain personal health agent.** One Claude agent reads a
+cross-domain state snapshot, emits per-domain proposals via domain
+skills, and a synthesis skill reconciles them via codified
+cross-domain rules into bounded per-domain recommendations validated
+at atomic commit. Every CLI subcommand carries machine-readable
+contract metadata (mutation class, idempotency, exit codes) that an
+agent reads via ``hai capabilities --json``; an authoritative
+``intent-router`` skill maps natural-language intent to deterministic
+workflows against that contract. Every X-rule firing carries both a
+stable slug and a sentence-form explanation an agent can narrate
+verbatim.
 
 Its source of truth is a **local SQLite database on the user's
 device**. That local state persists accepted daily state, proposal
@@ -63,7 +69,9 @@ pull / intake  →  projectors  →  accepted_*_state_daily tables
          Phase B X-rules (X9) → action_detail adjustments
                                         │
                                         ▼
-  ATOMIC COMMIT: daily_plan + x_rule_firings + N recommendations
+  ATOMIC COMMIT: daily_plan + x_rule_firings
+               + planned_recommendation (pre-X-rule aggregate)
+               + N recommendation_log (adapted)
                                         │
                                         ▼
              hai review schedule / record / summary
@@ -71,13 +79,21 @@ pull / intake  →  projectors  →  accepted_*_state_daily tables
 
 - **Local state memory** — ``accepted_*_state_daily`` tables store
   the canonical per-domain day-level state the runtime reasons over.
-- **Decision memory** — ``proposal_log``, ``daily_plan``,
-  ``x_rule_firing``, and ``recommendation_log`` preserve what the
-  agent proposed, what synthesis changed, and what was finally
+- **Decision memory** — ``proposal_log`` (per-domain planned intent),
+  ``planned_recommendation`` (aggregate pre-X-rule plan),
+  ``daily_plan`` + ``x_rule_firing`` + ``recommendation_log``
+  (aggregate adapted plan) preserve the full audit chain: what was
+  originally planned, how X-rules mutated it, and what was finally
   committed.
 - **Outcome memory** — ``review_event`` and ``review_outcome``
   record how the plan went, so the history of decisions and outcomes
   stays on-device.
+- **Agent contract surface** — ``hai capabilities --json`` emits a
+  machine-readable manifest of every subcommand; the markdown mirror
+  lives at
+  [``reporting/docs/agent_cli_contract.md``](reporting/docs/agent_cli_contract.md).
+  The ``intent-router`` skill is authoritative for NL → CLI mapping
+  against that contract.
 
 See [``reporting/docs/architecture.md``](reporting/docs/architecture.md)
 for the full pipeline + code-vs-skill boundary.
@@ -110,10 +126,20 @@ hai policy   --domain <d> --evidence-json <p>
 # Agent flow
 hai propose  --domain <d> --proposal-json <p>
 hai synthesize --as-of <d> --user-id <u>
+hai daily                                      # morning orchestrator (pull→clean→reproject→propose→synthesize)
 
 # Persistence + review
 hai writeback --recommendation-json <p>  # recovery-only legacy direct path
 hai review schedule | record | summary [--domain <d>]
+
+# Agent contract + audit
+hai capabilities [--markdown]                  # JSON manifest (or regenerate the contract doc)
+hai explain --for-date <d> --user-id <u>       # three-state audit: planned → adapted → performed
+hai memory set | list | archive                # explicit user memory (goals, preferences, constraints)
+
+# Ops
+hai doctor [--json]                            # runtime health + per-source freshness
+hai init                                       # interactive first-run wizard
 
 # Auth + config + helpers
 hai auth garmin | status
@@ -123,7 +149,7 @@ hai exercise search --query <free-text>
 # Evals
 hai eval run --domain <d> | --synthesis [--json]
 
-hai setup-skills
+hai setup-skills                               # copy 14 packaged skills into ~/.claude/skills/
 ```
 
 ## Read this repo in 5 minutes
@@ -132,14 +158,16 @@ hai setup-skills
 2. **Query taxonomy** — [`reporting/docs/query_taxonomy.md`](reporting/docs/query_taxonomy.md)
 3. **Memory model** — [`reporting/docs/memory_model.md`](reporting/docs/memory_model.md)
 4. **Architecture overview** — [`reporting/docs/architecture.md`](reporting/docs/architecture.md)
-5. **Explainability surface** — [`reporting/docs/explainability.md`](reporting/docs/explainability.md)
-6. **X-rule catalogue** — [`reporting/docs/x_rules.md`](reporting/docs/x_rules.md)
-7. **Non-goals (scope discipline)** — [`reporting/docs/non_goals.md`](reporting/docs/non_goals.md)
-8. **State schema** — [`reporting/docs/state_model_v1.md`](reporting/docs/state_model_v1.md)
-9. **10-minute reading tour** — [`reporting/docs/tour.md`](reporting/docs/tour.md)
-10. **Extension path — pull adapter** — [`reporting/docs/how_to_add_a_pull_adapter.md`](reporting/docs/how_to_add_a_pull_adapter.md)
-11. **Extension path — new domain** — [`reporting/docs/how_to_add_a_domain.md`](reporting/docs/how_to_add_a_domain.md)
-12. **Eval capture** — [`reporting/artifacts/flagship_loop_proof/2026-04-18-multi-domain-evals/`](reporting/artifacts/flagship_loop_proof/2026-04-18-multi-domain-evals/)
+5. **Explainability surface (three-state audit)** — [`reporting/docs/explainability.md`](reporting/docs/explainability.md)
+6. **Agent CLI contract (generated manifest)** — [`reporting/docs/agent_cli_contract.md`](reporting/docs/agent_cli_contract.md)
+7. **X-rule catalogue + sentence explanations** — [`reporting/docs/x_rules.md`](reporting/docs/x_rules.md)
+8. **Non-goals (scope discipline)** — [`reporting/docs/non_goals.md`](reporting/docs/non_goals.md)
+9. **State schema** — [`reporting/docs/state_model_v1.md`](reporting/docs/state_model_v1.md)
+10. **10-minute reading tour** — [`reporting/docs/tour.md`](reporting/docs/tour.md)
+11. **Extension path — pull adapter** — [`reporting/docs/how_to_add_a_pull_adapter.md`](reporting/docs/how_to_add_a_pull_adapter.md)
+12. **Extension path — new domain** — [`reporting/docs/how_to_add_a_domain.md`](reporting/docs/how_to_add_a_domain.md)
+13. **Agent-operable runtime plan (M8 cycle)** — [`reporting/plans/agent_operable_runtime_plan.md`](reporting/plans/agent_operable_runtime_plan.md)
+14. **Eval capture** — [`reporting/artifacts/flagship_loop_proof/2026-04-18-multi-domain-evals/`](reporting/artifacts/flagship_loop_proof/2026-04-18-multi-domain-evals/)
 
 ## Repo layout
 
@@ -173,35 +201,53 @@ reporting/                          # see reporting/README.md
 ├── plans/                           # post-v0.1 roadmap + historical phase docs
 └── experiments/                     # frozen Phase 0.5 / 2.5 prototypes
 safety/                             # see safety/README.md
-├── tests/                           # 1200+ unit + contract + integration
+├── tests/                           # 1459 unit + contract + integration
 ├── evals/                           # eval-doc reference + skill-harness pilot
 └── scripts/                         # legacy pre-rebuild demo shim (do not run)
 merge_human_inputs/                 # docs + example payloads bucket; not a Python module
 ```
 
-## What's proven in v1
+## What's proven
 
 - Six domains end-to-end: classify → policy → skill proposal →
   synthesis → writeback → review.
 - Ten X-rule evaluators across two phases with atomic
-  transactional commits.
+  transactional commits, each firing carrying a stable slug and a
+  one-sentence `human_explanation` agents can narrate verbatim.
+- Three-state audit chain: `proposal_log` → `planned_recommendation`
+  (aggregate pre-X-rule intent, migration 011) → `daily_plan` +
+  `recommendation_log` → `review_outcome`. `hai explain` renders
+  all three states from persisted rows alone.
+- Agent CLI contract: every subcommand annotated with mutation class,
+  idempotency, JSON output, exit codes, agent-safe flag; machine-
+  readable manifest at `hai capabilities --json`; markdown mirror
+  at [`reporting/docs/agent_cli_contract.md`](reporting/docs/agent_cli_contract.md).
+  Every handler on the stable exit-code taxonomy.
+- Authoritative `intent-router` skill consumes the manifest as the
+  NL → CLI mapping surface; deliberately scoped so mutation commands
+  are previewed before they run.
+- Skill-harness pilot: 7 frozen recovery scenarios, 6 with
+  hand-authored reference transcripts scoring 2.0/2.0 on the
+  token-presence rubric; live-mode backend opt-in via
+  `HAI_SKILL_HARNESS_LIVE=1`.
 - Garmin live pull via keyring (``hai auth garmin`` + ``hai pull
   --live``).
 - Idempotent synthesis with optional ``--supersede`` versioning.
 - 28 eval scenarios (18 domain + 10 synthesis) — all deterministic
-  axes green; skill-narration axis explicitly deferred (see
-  `safety/evals/skill_harness_blocker.md`).
-- 1200+ tests covering every band, every R-rule, every X-rule,
+  axes green.
+- 1459 tests covering every band, every R-rule, every X-rule,
   atomic transaction semantics, writeback invariants, skill-boundary
-  contracts.
+  contracts, capabilities-manifest coverage + determinism, planned-
+  ledger round-trip, three-state explain render.
 
 ## What's not
 
 - Not a medical device, not hosted, not multi-user, not an ML
   loop. See [`reporting/docs/non_goals.md`](reporting/docs/non_goals.md).
 - Not meal-level nutrition in v1.
-- Not a skill-narration eval harness yet (Phase 2.5 Track B
-  Condition 3 deferred — see ``safety/evals/skill_harness_blocker.md``).
+- Skill-narration eval harness is shipped as a pilot (Phase E +
+  M8 Phase 4) but still opt-in; live-transcript capture remains
+  operator-driven. See ``safety/evals/skill_harness_blocker.md``.
 - Not an MCP-wrapper-integrated or skill-harness-eval-complete release yet.
 
 ## Contributing

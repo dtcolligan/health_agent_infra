@@ -111,11 +111,16 @@ Phase 2.5 nutrition retrieval gate.
 
 ## Decision-state tables
 
-These tables hold the agent/runtime decision chain:
+These tables hold the agent/runtime decision chain. Together they
+form the **three-state audit view**: `proposal_log` (per-domain
+planned intent) → `planned_recommendation` (aggregate pre-X-rule
+plan) → `daily_plan` + `x_rule_firing` + `recommendation_log`
+(aggregate adapted plan).
 
 | Table | Purpose |
 |---|---|
 | `proposal_log` | Validated `DomainProposal` rows emitted per domain. |
+| `planned_recommendation` | Pre-X-rule aggregate bundle, one row per (daily_plan_id, domain). Mirrors `recommendation_log` shape with FKs to `daily_plan` and `proposal_log`. Added in migration 011 (M8 Phase 1). |
 | `daily_plan` | One synthesized plan per `(for_date, user_id)` canonical key, with explicit supersession path. |
 | `x_rule_firing` | Persisted X-rule firings, including tier, phase, orphan flag, source signals, and mutation JSON. |
 | `recommendation_log` | Final bounded recommendations emitted by synthesis/writeback. |
@@ -123,9 +128,17 @@ These tables hold the agent/runtime decision chain:
 Important invariants:
 
 - `hai propose` validates proposal shape at the write boundary.
-- `hai synthesize` atomically commits `daily_plan + x_rule_firing + N recommendations`.
-- canonical reruns replace by `(for_date, user_id)` unless `--supersede`
-  is used.
+- `hai synthesize` atomically commits `daily_plan + x_rule_firing +
+  planned_recommendation + recommendation_log` in one transaction.
+  The `planned_recommendation` rows capture the output of
+  `_mechanical_draft(original_proposal, ...)` before Phase A mutates
+  anything, so `planned ⊕ firings = adapted` is verifiable from rows.
+- Canonical reruns replace by `(for_date, user_id)` unless
+  `--supersede` is used. `delete_canonical_plan_cascade` removes
+  paired `planned_recommendation` rows so re-synthesis is clean.
+- Legacy plans committed before migration 011 have no paired
+  planned rows; `hai explain` degrades to a two-state view
+  (adapted + performed) for those.
 
 ## Outcome-state tables
 

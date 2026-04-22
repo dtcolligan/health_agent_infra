@@ -14,12 +14,21 @@ audit row lives on disk) and
 ## 1. What it is, in one paragraph
 
 `hai explain` reconstructs a single committed plan from local SQLite —
-the proposals that fed synthesis, the X-rule firings that mutated
-drafts, the final recommendations that were committed, the
-supersession linkage if any, and the review records if any have been
-captured. It opens no write transaction, recomputes nothing, and
+the proposals that fed synthesis, the aggregate **planned** plan
+(the pre-X-rule bundle, from the migration-011
+`planned_recommendation` ledger), the X-rule firings that mutated
+drafts, the final **adapted** recommendations that were committed,
+the supersession linkage if any, and the review records if any have
+been captured. It opens no write transaction, recomputes nothing, and
 fabricates nothing: a field that the runtime never wrote comes back
 empty, not invented.
+
+The surface is the **three-state audit chain** — planned → adapted →
+performed — rendered side-by-side so an agent asked *"why did you
+tone down my run?"* can answer from persisted rows alone: the
+planned action, the adapted action, the triggering firing, and the
+firing's one-sentence `human_explanation` (which the agent narrates
+verbatim).
 
 ## 2. CLI surface
 
@@ -44,9 +53,17 @@ Failure modes the surface exits `2` for:
 
 ## 3. Bundle shape
 
-The JSON bundle is a single object with five stable top-level keys.
-Field names mirror the dataclass attributes in
+The JSON bundle is a single object with seven stable top-level keys:
+`plan`, `proposals`, `planned_recommendations`, `x_rule_firings`,
+`recommendations`, `reviews`, `user_memory`. Field names mirror the
+dataclass attributes in
 `src/health_agent_infra/core/explain/queries.py`.
+
+The pairing `proposals` ↔ `planned_recommendations` ↔
+`recommendations` is the three-state view: per-domain planned intent,
+aggregate pre-X-rule plan, and aggregate adapted plan. Legacy plans
+committed before migration 011 land with `planned_recommendations:
+[]` and degrade cleanly to the two-state view (adapted + performed).
 
 ```json
 {
@@ -76,11 +93,25 @@ Field names mirror the dataclass attributes in
       "validated_at": "ISO-8601" | null
     }
   ],
+  "planned_recommendations": [
+    {
+      "planned_id": "planned_<for_date>_<user_id>_<domain>_01",
+      "proposal_id": "<FK back to proposal_log>",
+      "domain": "recovery|running|sleep|stress|strength|nutrition",
+      "action": "<pre-X-rule action>",
+      "action_detail": { ... } | null,
+      "confidence": "low|moderate|high",
+      "schema_version": "planned_recommendation.v1",
+      "captured_at": "ISO-8601"
+    }
+  ],
   "x_rule_firings": {
     "phase_a": [
       {
         "firing_id": 1,
         "rule_id": "X1a",
+        "public_name": "sleep-debt-softens-hard",
+        "human_explanation": "Sleep debt is moderate, so hard sessions are softened to reduce injury risk while sleep recovers.",
         "tier": "soften|block|cap_confidence|restructure",
         "affected_domain": "...",
         "trigger_note": "...",
@@ -94,6 +125,8 @@ Field names mirror the dataclass attributes in
       {
         "firing_id": 2,
         "rule_id": "X9",
+        "public_name": "training-intensity-bumps-protein",
+        "human_explanation": "Training is hard today, so the nutrition target bumps protein to support adaptation.",
         "tier": "adjust",
         "...": "..."
       }
