@@ -129,7 +129,8 @@ def test_auth_status_empty_reports_no_credentials(monkeypatch, capsys):
     rc = cli_main(["auth", "status"])
     assert rc == 0
     payload = json.loads(capsys.readouterr().out)
-    assert payload["credentials_available"] is False
+    assert payload["garmin"]["credentials_available"] is False
+    assert payload["intervals_icu"]["credentials_available"] is False
 
 
 def test_auth_status_keyring_present(monkeypatch, capsys):
@@ -139,12 +140,10 @@ def test_auth_status_keyring_present(monkeypatch, capsys):
     rc = cli_main(["auth", "status"])
     assert rc == 0
     payload = json.loads(capsys.readouterr().out)
-    assert payload["credentials_available"] is True
-    assert payload["keyring"]["email_present"] is True
-    assert payload["keyring"]["password_present"] is True
+    assert payload["garmin"]["credentials_available"] is True
+    assert payload["garmin"]["keyring"]["email_present"] is True
+    assert payload["garmin"]["keyring"]["password_present"] is True
     # Status never surfaces the email or password literal.
-    raw = capsys.readouterr().out  # second read: now empty
-    del raw
     full_stdout = json.dumps(payload)
     assert "alice@example.com" not in full_stdout
     assert "s3cret" not in full_stdout
@@ -156,10 +155,10 @@ def test_auth_status_env_only(monkeypatch, capsys):
     rc = cli_main(["auth", "status"])
     assert rc == 0
     payload = json.loads(capsys.readouterr().out)
-    assert payload["credentials_available"] is True
-    assert payload["env"]["email_present"] is True
-    assert payload["env"]["password_present"] is True
-    assert payload["keyring"]["email_present"] is False
+    assert payload["garmin"]["credentials_available"] is True
+    assert payload["garmin"]["env"]["email_present"] is True
+    assert payload["garmin"]["env"]["password_present"] is True
+    assert payload["garmin"]["keyring"]["email_present"] is False
 
 
 # ---------------------------------------------------------------------------

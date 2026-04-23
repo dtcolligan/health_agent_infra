@@ -147,6 +147,23 @@ def check_auth_garmin(store: Any) -> dict[str, Any]:
     return {"status": "ok", "credentials_source": source}
 
 
+def check_auth_intervals_icu(store: Any) -> dict[str, Any]:
+    """Credential presence only — never reads the API key."""
+
+    status = store.intervals_icu_status()
+    if not status["credentials_available"]:
+        return {
+            "status": "warn",
+            "reason": "no Intervals.icu credentials stored",
+            "hint": (
+                "run `hai auth intervals-icu` (interactive) or set "
+                "HAI_INTERVALS_ATHLETE_ID + HAI_INTERVALS_API_KEY in the environment"
+            ),
+        }
+    source = "keyring" if status["keyring"]["api_key_present"] else "env"
+    return {"status": "ok", "credentials_source": source}
+
+
 def check_skills(skills_dest: Path, packaged_names: list[str]) -> dict[str, Any]:
     """Skills destination populated with every packaged skill?"""
 
@@ -357,6 +374,7 @@ def build_report(
         "config": check_config(thresholds_path),
         "state_db": check_state_db(db_path),
         "auth_garmin": check_auth_garmin(credential_store),
+        "auth_intervals_icu": check_auth_intervals_icu(credential_store),
         "skills": check_skills(skills_dest, packaged_skill_names),
         "domains": check_domains(domain_names),
         "sources": check_sources(db_path, user_id=user_id, as_of_date=as_of),

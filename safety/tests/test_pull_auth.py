@@ -20,9 +20,15 @@ from health_agent_infra.core.pull.auth import (
     GARMIN_EMAIL_KEY,
     GARMIN_EMAIL_SERVICE,
     GARMIN_SERVICE,
+    INTERVALS_API_KEY_ENV_VAR,
+    INTERVALS_ATHLETE_ENV_VAR,
+    INTERVALS_ATHLETE_KEY,
+    INTERVALS_ATHLETE_SERVICE,
+    INTERVALS_SERVICE,
     PASSWORD_ENV_VAR,
     CredentialStore,
     GarminCredentials,
+    IntervalsIcuCredentials,
     KeyringUnavailableError,
     _NullBackend,
 )
@@ -240,3 +246,157 @@ def test_null_backend_store_loads_via_env_only():
     )
     creds = store.load_garmin()
     assert creds == GarminCredentials(email="env@example.com", password="envpw")
+
+
+# ===========================================================================
+# Intervals.icu credential lifecycle — mirrors the Garmin coverage above.
+# ===========================================================================
+
+def test_store_intervals_icu_writes_both_keyring_entries():
+    store = _empty_store()
+    store.store_intervals_icu("2049151", "apikey123")
+
+    assert store.backend.get_password(
+        INTERVALS_ATHLETE_SERVICE, INTERVALS_ATHLETE_KEY
+    ) == "2049151"
+    assert store.backend.get_password(
+        INTERVALS_SERVICE, "2049151"
+    ) == "apikey123"
+
+
+def test_load_intervals_icu_returns_credentials_after_store():
+    store = _empty_store()
+    store.store_intervals_icu("2049151", "apikey123")
+    creds = store.load_intervals_icu()
+    assert creds == IntervalsIcuCredentials(athlete_id="2049151", api_key="apikey123")
+
+
+def test_store_intervals_icu_rejects_empty_athlete_id():
+    store = _empty_store()
+    with pytest.raises(ValueError):
+        store.store_intervals_icu("", "apikey123")
+
+
+def test_store_intervals_icu_rejects_empty_api_key():
+    store = _empty_store()
+    with pytest.raises(ValueError):
+        store.store_intervals_icu("2049151", "")
+
+
+def test_load_intervals_icu_prefers_keyring_over_env():
+    store = CredentialStore(
+        backend=FakeKeyring(),
+        env={
+            INTERVALS_ATHLETE_ENV_VAR: "envathlete",
+            INTERVALS_API_KEY_ENV_VAR: "envkey",
+        },
+    )
+    store.store_intervals_icu("ringathlete", "ringkey")
+    assert store.load_intervals_icu() == IntervalsIcuCredentials(
+        athlete_id="ringathlete", api_key="ringkey"
+    )
+
+
+def test_load_intervals_icu_falls_back_to_env():
+    store = CredentialStore(
+        backend=FakeKeyring(),
+        env={
+            INTERVALS_ATHLETE_ENV_VAR: "envathlete",
+            INTERVALS_API_KEY_ENV_VAR: "envkey",
+        },
+    )
+    assert store.load_intervals_icu() == IntervalsIcuCredentials(
+        athlete_id="envathlete", api_key="envkey"
+    )
+
+
+def test_load_intervals_icu_requires_both_env_vars():
+    store = CredentialStore(
+        backend=FakeKeyring(),
+        env={INTERVALS_ATHLETE_ENV_VAR: "envathlete"},
+    )
+    assert store.load_intervals_icu() is None
+
+    store2 = CredentialStore(
+        backend=FakeKeyring(),
+        env={INTERVALS_API_KEY_ENV_VAR: "envkey"},
+    )
+    assert store2.load_intervals_icu() is None
+
+
+def test_load_intervals_icu_returns_none_when_nothing_configured():
+    assert _empty_store().load_intervals_icu() is None
+
+
+def test_intervals_icu_status_reports_no_credentials_when_empty():
+    status = _empty_store().intervals_icu_status()
+    assert status["service"] == "intervals_icu"
+    assert status["credentials_available"] is False
+    assert status["keyring"]["athlete_id_present"] is False
+    assert status["keyring"]["api_key_present"] is False
+
+
+def test_intervals_icu_status_does_not_leak_credentials():
+    store = _empty_store()
+    store.store_intervals_icu("athlete42", "topsecret_api_key")
+    status = store.intervals_icu_status()
+
+    def _walk(obj):
+        if isinstance(obj, dict):
+            for v in obj.values():
+                yield from _walk(v)
+        elif isinstance(obj, list):
+            for v in obj:
+                yield from _walk(v)
+        elif isinstance(obj, str):
+            yield obj
+    for s in _walk(status):
+        assert "athlete42" not in s
+        assert "topsecret_api_key" not in s
+
+
+def test_intervals_icu_status_reports_keyring_when_populated():
+    store = _empty_store()
+    store.store_intervals_icu("2049151", "apikey123")
+    status = store.intervals_icu_status()
+    assert status["credentials_available"] is True
+    assert status["keyring"]["athlete_id_present"] is True
+    assert status["keyring"]["api_key_present"] is True
+
+
+def test_clear_intervals_icu_on_empty_store_is_noop():
+    store = _empty_store()
+    store.clear_intervals_icu()
+    assert store.load_intervals_icu() is None
+
+
+def test_clear_intervals_icu_removes_keyring_entries():
+    store = _empty_store()
+    store.store_intervals_icu("2049151", "apikey123")
+    store.clear_intervals_icu()
+    assert store.load_intervals_icu() is None
+    assert store.backend.get_password(
+        INTERVALS_ATHLETE_SERVICE, INTERVALS_ATHLETE_KEY
+    ) is None
+    assert store.backend.get_password(INTERVALS_SERVICE, "2049151") is None
+
+
+def test_garmin_and_intervals_icu_coexist_in_same_store():
+    """Both services must be independently storable/loadable."""
+    store = _empty_store()
+    store.store_garmin("alice@example.com", "garminpw")
+    store.store_intervals_icu("2049151", "intervalskey")
+
+    assert store.load_garmin() == GarminCredentials(
+        email="alice@example.com", password="garminpw"
+    )
+    assert store.load_intervals_icu() == IntervalsIcuCredentials(
+        athlete_id="2049151", api_key="intervalskey"
+    )
+
+    # Clearing one must not affect the other.
+    store.clear_garmin()
+    assert store.load_garmin() is None
+    assert store.load_intervals_icu() == IntervalsIcuCredentials(
+        athlete_id="2049151", api_key="intervalskey"
+    )

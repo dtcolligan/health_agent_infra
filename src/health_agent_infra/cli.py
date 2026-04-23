@@ -57,6 +57,11 @@ from health_agent_infra.core.pull.garmin_live import (
     GarminLiveError,
     build_default_client,
 )
+from health_agent_infra.core.pull.intervals_icu import (
+    IntervalsIcuAdapter,
+    IntervalsIcuError,
+    build_default_client as build_intervals_icu_client,
+)
 from health_agent_infra.core.review.outcomes import (
     persist_review_event,
     record_review_outcome,
@@ -125,13 +130,16 @@ def _emit_json(obj: Any) -> None:
 
 def cmd_pull(args: argparse.Namespace) -> int:
     as_of = _coerce_date(args.date)
-    mode = "live" if getattr(args, "live", False) else "csv"
-    # The source label is known up front for CSV (fixed adapter class);
-    # for live pulls we still use "garmin_live" — _build_live_adapter
-    # either returns a GarminLiveAdapter whose source_name is the
-    # canonical label, or raises, in which case we log the attempt
-    # against that same label.
-    source_label = "garmin_live" if mode == "live" else GarminRecoveryReadinessAdapter.source_name
+    source = _resolve_pull_source(args)
+    # Mode still tracks csv vs live for sync_run_log — both live sources
+    # share the "live" label so existing freshness checks don't need to
+    # grow a new enum value.
+    mode = "csv" if source == "csv" else "live"
+    source_label = {
+        "csv": GarminRecoveryReadinessAdapter.source_name,
+        "garmin_live": "garmin_live",
+        "intervals_icu": "intervals_icu",
+    }[source]
 
     sync_id = _open_sync_row(
         getattr(args, "db_path", None),
@@ -141,23 +149,26 @@ def cmd_pull(args: argparse.Namespace) -> int:
         for_date=as_of,
     )
 
-    if mode == "live":
+    if source == "csv":
+        adapter = GarminRecoveryReadinessAdapter()
+    elif source == "garmin_live":
         try:
             adapter = _build_live_adapter(args)
         except GarminLiveError as exc:
-            # Credential-resolution failure — the caller controls this
-            # (run `hai auth garmin` or set env vars), so it's USER_INPUT
-            # rather than a transient vendor issue.
             _close_sync_row_failed(args.db_path, sync_id, exc)
             print(f"live pull error: {exc}", file=sys.stderr)
             return exit_codes.USER_INPUT
-    else:
-        adapter = GarminRecoveryReadinessAdapter()
+    else:  # intervals_icu
+        try:
+            adapter = _build_intervals_icu_adapter(args)
+        except IntervalsIcuError as exc:
+            _close_sync_row_failed(args.db_path, sync_id, exc)
+            print(f"intervals.icu pull error: {exc}", file=sys.stderr)
+            return exit_codes.USER_INPUT
 
     try:
         pull = adapter.load(as_of)
-    except GarminLiveError as exc:
-        # Vendor API blip (5xx, rate limit, network) — a retry may fix it.
+    except (GarminLiveError, IntervalsIcuError) as exc:
         _close_sync_row_failed(args.db_path, sync_id, exc)
         print(f"live pull error: {exc}", file=sys.stderr)
         return exit_codes.TRANSIENT
@@ -392,6 +403,32 @@ def _build_live_adapter(args: argparse.Namespace):
         history_days=history_days,
         retry_config=retry_cfg,
     )
+
+
+def _build_intervals_icu_adapter(args: argparse.Namespace) -> IntervalsIcuAdapter:
+    """Resolve Intervals.icu credentials → client → adapter, or raise IntervalsIcuError."""
+
+    store = CredentialStore.default()
+    credentials = store.load_intervals_icu()
+    if credentials is None:
+        raise IntervalsIcuError(
+            "no Intervals.icu credentials found. Run `hai auth intervals-icu` "
+            "or set HAI_INTERVALS_ATHLETE_ID + HAI_INTERVALS_API_KEY."
+        )
+    client = build_intervals_icu_client(credentials)
+    history_days = getattr(args, "history_days", 14)
+    return IntervalsIcuAdapter(client=client, history_days=history_days)
+
+
+def _resolve_pull_source(args: argparse.Namespace) -> str:
+    """Pick the pull source: explicit --source beats legacy --live beats default csv."""
+
+    explicit = getattr(args, "source", None)
+    if explicit is not None:
+        return explicit
+    if getattr(args, "live", False):
+        return "garmin_live"
+    return "csv"
 
 
 # ---------------------------------------------------------------------------
@@ -698,13 +735,78 @@ def cmd_auth_garmin(args: argparse.Namespace) -> int:
     return exit_codes.OK
 
 
+def cmd_auth_intervals_icu(args: argparse.Namespace) -> int:
+    """Store Intervals.icu credentials in the OS keyring.
+
+    Non-interactive callers supply ``--athlete-id`` and either
+    ``--api-key-stdin`` or ``--api-key-env``. Interactive callers are
+    prompted via ``input()`` / ``getpass``. The API key is never echoed.
+    """
+
+    import getpass
+
+    athlete_id = args.athlete_id
+    api_key = None
+
+    if args.api_key_stdin:
+        api_key = sys.stdin.readline().rstrip("\n")
+    elif args.api_key_env:
+        api_key = os.environ.get(args.api_key_env)
+        if not api_key:
+            print(
+                f"auth error: env var {args.api_key_env} is not set or empty",
+                file=sys.stderr,
+            )
+            return exit_codes.USER_INPUT
+
+    if athlete_id is None:
+        try:
+            athlete_id = input("Intervals.icu athlete id (e.g. i123456): ").strip()
+        except EOFError:
+            print("auth error: no athlete id provided", file=sys.stderr)
+            return exit_codes.USER_INPUT
+    if not athlete_id:
+        print("auth error: athlete id must be non-empty", file=sys.stderr)
+        return exit_codes.USER_INPUT
+
+    if api_key is None:
+        try:
+            api_key = getpass.getpass("Intervals.icu API key: ")
+        except EOFError:
+            print("auth error: no API key provided", file=sys.stderr)
+            return exit_codes.USER_INPUT
+    if not api_key:
+        print("auth error: API key must be non-empty", file=sys.stderr)
+        return exit_codes.USER_INPUT
+
+    store = _credential_store_for(args)
+    try:
+        store.store_intervals_icu(athlete_id, api_key)
+    except KeyringUnavailableError as exc:
+        print(f"auth error: {exc}", file=sys.stderr)
+        return exit_codes.USER_INPUT
+    except ValueError as exc:
+        print(f"auth error: {exc}", file=sys.stderr)
+        return exit_codes.USER_INPUT
+
+    _emit_json({
+        "stored": True,
+        "service": "intervals_icu",
+        "athlete_id": athlete_id,
+        "backend": _backend_kind(store),
+    })
+    return exit_codes.OK
+
+
 def cmd_auth_status(args: argparse.Namespace) -> int:
     """Report credential presence only — never prints secrets."""
 
     store = _credential_store_for(args)
-    status = store.garmin_status()
-    status["backend"] = _backend_kind(store)
-    _emit_json(status)
+    _emit_json({
+        "backend": _backend_kind(store),
+        "garmin": store.garmin_status(),
+        "intervals_icu": store.intervals_icu_status(),
+    })
     return exit_codes.OK
 
 
@@ -2678,10 +2780,13 @@ def _daily_pull_and_project(
     :class:`GarminLiveError` on failure so the caller can classify.
     """
 
-    if getattr(args, "live", False):
-        adapter = _build_live_adapter(args)
-    else:
+    source = _resolve_pull_source(args)
+    if source == "csv":
         adapter = GarminRecoveryReadinessAdapter()
+    elif source == "garmin_live":
+        adapter = _build_live_adapter(args)
+    else:  # intervals_icu
+        adapter = _build_intervals_icu_adapter(args)
 
     pull = adapter.load(as_of)
     raw_row = pull.get("raw_daily_row")
@@ -2835,7 +2940,7 @@ def _run_daily(args: argparse.Namespace) -> int:
             source_name, projected = _daily_pull_and_project(
                 args, as_of=as_of, user_id=user_id, db_path=db_path,
             )
-        except GarminLiveError as exc:
+        except (GarminLiveError, IntervalsIcuError) as exc:
             report["stages"]["pull"] = {"status": "failed", "error": str(exc)}
             report["overall_status"] = "failed"
             _emit_json(report)
@@ -3619,9 +3724,18 @@ def build_parser() -> argparse.ArgumentParser:
     p_pull.add_argument("--use-default-manual-readiness", action="store_true",
                         help="Use a neutral manual readiness default (for offline runs)")
     p_pull.add_argument("--live", action="store_true",
-                        help="Fetch from Garmin Connect via stored credentials. "
-                             "Default (flag omitted) continues to read the "
+                        help="Legacy flag: equivalent to --source garmin_live. "
+                             "Default (no --live and no --source) reads the "
                              "committed CSV export.")
+    p_pull.add_argument(
+        "--source",
+        choices=("csv", "garmin_live", "intervals_icu"),
+        default=None,
+        help="Evidence source. csv reads the committed fixture; garmin_live "
+             "scrapes Garmin Connect (rate-limited, unreliable); "
+             "intervals_icu pulls from Intervals.icu's wellness API "
+             "(recommended). Defaults to csv unless --live is also set.",
+    )
     p_pull.add_argument("--history-days", type=int, default=14,
                         help="Trailing window size for resting_hr / hrv / "
                              "training_load series (live pull only). Matches "
@@ -3674,6 +3788,32 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
 
+    p_auth_intervals_icu = auth_sub.add_parser(
+        "intervals-icu",
+        help="Store Intervals.icu credentials in the OS keyring (interactive by default)",
+    )
+    p_auth_intervals_icu.add_argument("--athlete-id", default=None,
+                                      help="Intervals.icu athlete id (prompts if omitted)")
+    p_auth_intervals_icu.add_argument("--api-key-stdin", action="store_true",
+                                      help="Read the Intervals.icu API key from a "
+                                           "single line on stdin (for non-interactive use)")
+    p_auth_intervals_icu.add_argument("--api-key-env", default=None,
+                                      help="Read the Intervals.icu API key from the "
+                                           "named environment variable")
+    p_auth_intervals_icu.set_defaults(func=cmd_auth_intervals_icu)
+    annotate_contract(
+        p_auth_intervals_icu,
+        mutation="writes-credentials",
+        idempotent="yes",
+        json_output="default",
+        exit_codes=("OK", "USER_INPUT"),
+        agent_safe=False,
+        description=(
+            "Store Intervals.icu credentials in the OS keyring. "
+            "Interactive by default; operator-only (requires a live API key)."
+        ),
+    )
+
     p_auth_status = auth_sub.add_parser(
         "status",
         help="Report whether credentials are configured (presence only, no secrets)",
@@ -3687,8 +3827,8 @@ def build_parser() -> argparse.ArgumentParser:
         exit_codes=("OK",),
         agent_safe=True,
         description=(
-            "Report whether Garmin credentials are configured. Presence "
-            "only — never emits the secret itself."
+            "Report whether Garmin and Intervals.icu credentials are "
+            "configured. Presence only — never emits the secret itself."
         ),
     )
 
@@ -4456,9 +4596,16 @@ def build_parser() -> argparse.ArgumentParser:
                          help="State DB path (same semantics as "
                               "`hai writeback --db-path`).")
     p_daily.add_argument("--live", action="store_true",
-                         help="Fetch evidence via `python-garminconnect` "
-                              "(requires `hai auth garmin`). Default uses "
-                              "the committed CSV adapter.")
+                         help="Legacy flag: equivalent to --source garmin_live. "
+                              "Default (no --live and no --source) uses the "
+                              "committed CSV adapter.")
+    p_daily.add_argument(
+        "--source",
+        choices=("csv", "garmin_live", "intervals_icu"),
+        default=None,
+        help="Evidence source for the pull stage. Same semantics as "
+             "`hai pull --source`. Defaults to csv unless --live is set.",
+    )
     p_daily.add_argument("--history-days", type=int, default=14,
                          help="Trailing window for live pull series "
                               "(matches `hai pull --history-days`).")

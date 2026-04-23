@@ -74,10 +74,11 @@ def fake_empty_store(monkeypatch):
 
 @pytest.fixture
 def fake_stored_store(monkeypatch):
-    """Credential store with a populated keyring entry."""
+    """Credential store with populated keyring entries for both services."""
 
     store = _fake_store()
     store.store_garmin("alice@example.com", "s3cret")
+    store.store_intervals_icu("i123456", "test_api_key")
     monkeypatch.setattr(
         cli_mod.CredentialStore, "default", classmethod(lambda cls: store)
     )
