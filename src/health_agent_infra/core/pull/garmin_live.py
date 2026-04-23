@@ -67,6 +67,7 @@ RAW_DAILY_ROW_COLUMNS: tuple[str, ...] = (
     "sleep_light_sec",
     "sleep_rem_sec",
     "sleep_awake_sec",
+    "sleep_total_sec",
     "avg_sleep_respiration",
     "avg_sleep_stress",
     "awake_count",

@@ -308,6 +308,44 @@ def test_accepted_sleep_insert_derives_from_raw_minutes_and_scores(tmp_path: Pat
     assert row["avg_sleep_hrv"] is None
 
 
+def test_accepted_sleep_falls_back_to_sleep_total_sec(tmp_path: Path):
+    """Sources that provide total duration but no stage breakdown (e.g.
+    Intervals.icu) populate sleep_total_sec; the projector must surface
+    sleep_hours from that fallback."""
+
+    db = _init_db(tmp_path)
+    conn = open_connection(db)
+    try:
+        raw_row = {
+            "date": AS_OF.isoformat(),
+            "sleep_deep_sec": None,
+            "sleep_light_sec": None,
+            "sleep_rem_sec": None,
+            "sleep_awake_sec": None,
+            "sleep_total_sec": 28740.0,  # 7.98h, matches real Intervals.icu payload
+            "sleep_score_overall": 91,
+        }
+        assert project_accepted_sleep_state_daily(
+            conn, as_of_date=AS_OF, user_id=USER,
+            raw_row=raw_row, source_row_ids=["intervals_icu:0"],
+            source="intervals_icu", ingest_actor="intervals_icu_adapter",
+        ) is True
+        row = conn.execute(
+            "SELECT sleep_hours, sleep_deep_min, sleep_light_min "
+            "FROM accepted_sleep_state_daily "
+            "WHERE as_of_date = ? AND user_id = ?",
+            (AS_OF.isoformat(), USER),
+        ).fetchone()
+    finally:
+        conn.close()
+
+    assert row is not None
+    assert row["sleep_hours"] == pytest.approx(7.98, rel=0.01)
+    # Stage breakdowns stay None when the source doesn't provide them.
+    assert row["sleep_deep_min"] is None
+    assert row["sleep_light_min"] is None
+
+
 def test_accepted_stress_insert_writes_garmin_and_body_battery(tmp_path: Path):
     """Phase 3 step 1: the dedicated stress projector writes
     garmin_all_day_stress + body_battery_end_of_day; manual fields NULL."""

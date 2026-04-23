@@ -22,7 +22,9 @@ from health_agent_infra.core.state.projectors._shared import (
 
 
 def _sleep_hours_from_raw(raw_row: dict) -> Optional[float]:
-    """Sum deep+light+rem sleep seconds, return hours. None if none present."""
+    """Sum deep+light+rem sleep seconds, return hours. Falls back to
+    sleep_total_sec when stage breakdown is unavailable (e.g. Intervals.icu
+    provides duration but not stages)."""
 
     total_sec = 0.0
     seen = False
@@ -31,6 +33,14 @@ def _sleep_hours_from_raw(raw_row: dict) -> Optional[float]:
         if v is not None:
             total_sec += float(v)
             seen = True
+    if not seen:
+        fallback = raw_row.get("sleep_total_sec")
+        if fallback is not None:
+            try:
+                total_sec = float(fallback)
+                seen = total_sec > 0
+            except (TypeError, ValueError):
+                pass
     if not seen or total_sec <= 0:
         return None
     return round(total_sec / 3600.0, 2)

@@ -214,7 +214,7 @@ def test_raw_daily_row_populates_overlapping_fields():
     as_of = date(2026, 4, 17)
     client = ReplayWellnessClient([
         _wellness(as_of, restingHR=58, hrv=48, atl=400, ctl=380,
-                  sleepScore=82, steps=9500),
+                  sleepScore=82, sleepSecs=27000, steps=9500),
     ])
     adapter = IntervalsIcuAdapter(client=client, history_days=0)
     row = adapter.load(as_of)["raw_daily_row"]
@@ -225,7 +225,26 @@ def test_raw_daily_row_populates_overlapping_fields():
     assert row["acute_load"] == 400.0
     assert row["chronic_load"] == 380.0
     assert row["sleep_score_overall"] == 82.0
+    assert row["sleep_total_sec"] == 27000.0
     assert row["steps"] == 9500.0
+
+
+def test_raw_daily_row_sleep_total_sec_falls_back_to_sleep_hours():
+    as_of = date(2026, 4, 17)
+    client = ReplayWellnessClient([
+        _wellness(as_of, restingHR=58, sleepHours=7.5),  # no sleepSecs
+    ])
+    adapter = IntervalsIcuAdapter(client=client, history_days=0)
+    row = adapter.load(as_of)["raw_daily_row"]
+    assert row["sleep_total_sec"] == 7.5 * 3600.0
+
+
+def test_raw_daily_row_sleep_total_sec_none_when_no_sleep_data():
+    as_of = date(2026, 4, 17)
+    client = ReplayWellnessClient([_wellness(as_of, restingHR=58)])
+    adapter = IntervalsIcuAdapter(client=client, history_days=0)
+    row = adapter.load(as_of)["raw_daily_row"]
+    assert row["sleep_total_sec"] is None
 
 
 def test_raw_daily_row_leaves_garmin_only_fields_none():

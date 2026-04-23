@@ -71,6 +71,7 @@ RAW_DAILY_ROW_COLUMNS: tuple[str, ...] = (
     "sleep_light_sec",
     "sleep_rem_sec",
     "sleep_awake_sec",
+    "sleep_total_sec",
     "avg_sleep_respiration",
     "avg_sleep_stress",
     "awake_count",
@@ -336,6 +337,10 @@ def _extract_raw_daily_row(rec: Optional[dict], as_of: date) -> Optional[dict]:
         hours = _as_number(rec.get("sleepHours"))
         if hours is not None:
             sleep_secs = hours * 3600.0
+    # Intervals.icu provides total sleep duration but no stage breakdown.
+    # The sleep projector sums deep+light+rem when present; sleep_total_sec
+    # is the fallback when only the aggregate is available.
+    out["sleep_total_sec"] = sleep_secs
     out["sleep_score_overall"] = _as_number(rec.get("sleepScore"))
     out["acute_load"] = _as_number(rec.get("atl"))
     out["chronic_load"] = _as_number(rec.get("ctl"))
