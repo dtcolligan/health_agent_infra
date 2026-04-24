@@ -55,7 +55,7 @@ JSON; this markdown is an at-a-glance overview for humans.
 
 ## Commands
 
-*37 commands; hai 0.1.4; schema agent_cli_contract.v1*
+*37 commands; hai 0.1.5; schema agent_cli_contract.v1*
 
 | Command | Mutation | Idempotent | JSON | Agent-safe | Exit codes | Description |
 |---|---|---|---|---|---|---|

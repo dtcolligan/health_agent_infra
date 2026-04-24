@@ -9,11 +9,20 @@ Per-release detail lives under `reporting/plans/<version>/release_notes.md`.
 
 ---
 
-## [0.1.4] — 2026-04-24
+## [0.1.5] — 2026-04-24
 
-The first release where the project's stated success criteria survive an
-end-to-end audit. Closes the safety, recovery, privacy, and
-wearable-data-reaches-agent gaps that v0.1.2 / v0.1.3 implicitly assumed.
+Supersedes the earlier `0.1.4` that shipped to PyPI from commit
+`81997aa` before this work landed. PyPI release versions are immutable
+(can't overwrite or unpublish cleanly), so the v0.1.4 planning scope
+(safety closure + activity pull + proposal recovery + privacy
+hardening) ships to users as `0.1.5`. Internal planning documents
+retain the `v0_1_4` path for historical continuity; public package
+version is `0.1.5`.
+
+The first release where the project's stated success criteria survive
+an end-to-end audit. Closes the safety, recovery, privacy, and
+wearable-data-reaches-agent gaps that the earlier `0.1.4` implicitly
+assumed.
 
 Full detail: [`reporting/plans/v0_1_4/release_notes.md`](reporting/plans/v0_1_4/release_notes.md).
 
@@ -95,6 +104,7 @@ Phase A onboarding UX + local telemetry.
 
 Initial release.
 
+[0.1.5]: https://pypi.org/project/health-agent-infra/0.1.5/
 [0.1.4]: https://pypi.org/project/health-agent-infra/0.1.4/
 [0.1.3.dev0]: https://pypi.org/project/health-agent-infra/0.1.3.dev0/
 [0.1.2]: https://pypi.org/project/health-agent-infra/0.1.2/
