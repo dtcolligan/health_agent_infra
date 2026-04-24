@@ -18,6 +18,7 @@ from health_agent_infra.core.explain.queries import (
     ExplainUserMemory,
     ExplainXRuleFiring,
     load_bundle_by_daily_plan_id,
+    load_bundle_chain_for_date,
     load_bundle_for_date,
 )
 from health_agent_infra.core.explain.render import (
@@ -37,6 +38,7 @@ __all__ = [
     "ExplainXRuleFiring",
     "bundle_to_dict",
     "load_bundle_by_daily_plan_id",
+    "load_bundle_chain_for_date",
     "load_bundle_for_date",
     "render_bundle_text",
 ]

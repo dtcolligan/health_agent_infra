@@ -6,7 +6,10 @@
   "user_id": "u_eval",
   "snapshot": {
     "sleep": {"classified_state": {"sleep_debt_band": "none"}},
-    "recovery": {"today": {"acwr_ratio": 1.0}},
+    "recovery": {
+      "today": {"acwr_ratio": 1.0},
+      "evidence": {"planned_session_type": "hard"}
+    },
     "stress": {"today_garmin": 25, "today_body_battery": 70},
     "nutrition": {
       "classified_state": {

@@ -35,12 +35,37 @@ from health_agent_infra.core.state import (
     project_review_outcome,
     reproject_from_jsonl,
 )
-from health_agent_infra.core.writeback.recommendation import (
-    ALLOWED_RELATIVE_ROOT,
-    perform_writeback,
-)
 from health_agent_infra.core.review.outcomes import record_review_outcome, schedule_review
 from health_agent_infra.core import exit_codes
+
+
+# D2: hai writeback was retired in v0.1.4. Tests that used it as a
+# seed for `recommendation_log.jsonl` now write the JSONL line directly;
+# tests that used it to land a DB row call ``project_recommendation``
+# instead.
+_WRITEBACK_ROOT_NAME = "writeback"
+
+
+def _append_recommendation_jsonl(
+    base_dir: Path, rec: TrainingRecommendation,
+) -> None:
+    """Write one recommendation_log.jsonl line. Idempotent on rec id.
+
+    This matches the shape the retired ``perform_writeback`` used to
+    produce, so the reproject path under test still sees a realistic
+    JSONL audit file.
+    """
+    base_dir.mkdir(parents=True, exist_ok=True)
+    log_path = base_dir / "recommendation_log.jsonl"
+    if log_path.exists():
+        for line in log_path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            existing = json.loads(line)
+            if existing.get("recommendation_id") == rec.recommendation_id:
+                return
+    with log_path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(rec.to_dict(), sort_keys=True) + "\n")
 
 
 AS_OF = datetime(2026, 4, 17, 7, 0, tzinfo=timezone.utc).date()
@@ -211,7 +236,12 @@ def test_project_review_outcome_appends(tmp_path: Path):
 
 
 # ---------------------------------------------------------------------------
-# CLI dual-write — hai writeback / hai review schedule / hai review record
+# CLI dual-write — hai review schedule / hai review record
+#
+# `hai writeback` was retired in v0.1.4; the canonical recommendation
+# write path is now `hai synthesize`. These tests seed the DB directly
+# via `project_recommendation` to satisfy the review_event FK so the
+# review CLI dual-write is exercised in isolation.
 # ---------------------------------------------------------------------------
 
 def _write_rec_json(tmp_path: Path, rec: TrainingRecommendation) -> Path:
@@ -220,74 +250,20 @@ def _write_rec_json(tmp_path: Path, rec: TrainingRecommendation) -> Path:
     return path
 
 
-def test_cli_writeback_writes_jsonl_and_db_when_db_exists(tmp_path: Path, capsys):
-    db = _init_db(tmp_path)
-    rec = _sample_rec()
-    rec_file = _write_rec_json(tmp_path, rec)
-    base_dir = tmp_path / ALLOWED_RELATIVE_ROOT
-
-    rc = cli_main([
-        "writeback",
-        "--recommendation-json", str(rec_file),
-        "--base-dir", str(base_dir),
-        "--db-path", str(db),
-    ])
-    capsys.readouterr()
-    assert rc == 0
-
-    # JSONL has the row.
-    lines = (base_dir / "recommendation_log.jsonl").read_text().splitlines()
-    assert len(lines) == 1
-    assert json.loads(lines[0])["recommendation_id"] == rec.recommendation_id
-
-    # DB has the row.
+def _seed_recommendation_in_db(db: Path, rec: TrainingRecommendation) -> None:
     conn = open_connection(db)
     try:
-        row = conn.execute(
-            "SELECT recommendation_id FROM recommendation_log"
-        ).fetchone()
-        assert row["recommendation_id"] == rec.recommendation_id
+        project_recommendation(conn, rec)
     finally:
         conn.close()
-
-
-def test_cli_writeback_succeeds_with_stderr_note_when_db_absent(tmp_path: Path, capsys):
-    """Missing DB is NOT a blocker. JSONL still writes; stderr carries a note;
-    exit 0 because the audit record is durable."""
-
-    rec = _sample_rec()
-    rec_file = _write_rec_json(tmp_path, rec)
-    base_dir = tmp_path / ALLOWED_RELATIVE_ROOT
-    absent_db = tmp_path / "never_created.db"
-
-    rc = cli_main([
-        "writeback",
-        "--recommendation-json", str(rec_file),
-        "--base-dir", str(base_dir),
-        "--db-path", str(absent_db),
-    ])
-    captured = capsys.readouterr()
-    assert rc == 0
-    assert "state DB projection skipped" in captured.err
-    assert "hai state init" in captured.err
-
-    # JSONL still has the row — audit record is durable.
-    lines = (base_dir / "recommendation_log.jsonl").read_text().splitlines()
-    assert len(lines) == 1
 
 
 def test_cli_review_schedule_projects_event(tmp_path: Path, capsys):
     db = _init_db(tmp_path)
     rec = _sample_rec()
     rec_file = _write_rec_json(tmp_path, rec)
-    base_dir = tmp_path / ALLOWED_RELATIVE_ROOT
-
-    # Writeback first (puts the recommendation in DB so the FK can be honored).
-    cli_main([
-        "writeback", "--recommendation-json", str(rec_file),
-        "--base-dir", str(base_dir), "--db-path", str(db),
-    ])
-    capsys.readouterr()
+    base_dir = tmp_path / _WRITEBACK_ROOT_NAME
+    _seed_recommendation_in_db(db, rec)
 
     rc = cli_main([
         "review", "schedule",
@@ -313,12 +289,9 @@ def test_cli_review_record_projects_outcome(tmp_path: Path, capsys):
     db = _init_db(tmp_path)
     rec = _sample_rec()
     rec_file = _write_rec_json(tmp_path, rec)
-    base_dir = tmp_path / ALLOWED_RELATIVE_ROOT
+    base_dir = tmp_path / _WRITEBACK_ROOT_NAME
+    _seed_recommendation_in_db(db, rec)
 
-    cli_main([
-        "writeback", "--recommendation-json", str(rec_file),
-        "--base-dir", str(base_dir), "--db-path", str(db),
-    ])
     cli_main([
         "review", "schedule", "--recommendation-json", str(rec_file),
         "--base-dir", str(base_dir), "--db-path", str(db),
@@ -368,13 +341,13 @@ def test_cli_review_record_projects_outcome(tmp_path: Path, capsys):
 
 def test_reproject_reads_all_three_jsonl_files_into_db(tmp_path: Path, capsys):
     db = _init_db(tmp_path)
-    base = tmp_path / ALLOWED_RELATIVE_ROOT
+    base = tmp_path / _WRITEBACK_ROOT_NAME
     base.mkdir(parents=True)
     rec = _sample_rec()
 
     # Simulate a user who wrote via JSONL-only (DB missing at the time) and
     # now wants to reproject into a fresh DB.
-    perform_writeback(rec, base_dir=base, now=NOW)
+    _append_recommendation_jsonl(base, rec)
     event = schedule_review(rec, base_dir=base)
     record_review_outcome(
         event, base_dir=base,
@@ -423,10 +396,10 @@ def test_reproject_reads_all_three_jsonl_files_into_db(tmp_path: Path, capsys):
 
 def test_reproject_is_idempotent(tmp_path: Path, capsys):
     db = _init_db(tmp_path)
-    base = tmp_path / ALLOWED_RELATIVE_ROOT
+    base = tmp_path / _WRITEBACK_ROOT_NAME
     base.mkdir(parents=True)
     rec = _sample_rec()
-    perform_writeback(rec, base_dir=base, now=NOW)
+    _append_recommendation_jsonl(base, rec)
     event = schedule_review(rec, base_dir=base)
     record_review_outcome(
         event, base_dir=base,
@@ -465,7 +438,7 @@ def test_reproject_is_idempotent(tmp_path: Path, capsys):
 
 
 def test_reproject_fails_clearly_when_db_missing(tmp_path: Path, capsys):
-    base = tmp_path / ALLOWED_RELATIVE_ROOT
+    base = tmp_path / _WRITEBACK_ROOT_NAME
     base.mkdir(parents=True)
     absent_db = tmp_path / "never.db"
 
@@ -619,10 +592,10 @@ def test_reproject_runs_when_only_recommendation_log_present(tmp_path: Path, cap
     recommendations but never scheduled a review yet."""
 
     db = _init_db(tmp_path)
-    base = tmp_path / ALLOWED_RELATIVE_ROOT
+    base = tmp_path / _WRITEBACK_ROOT_NAME
     base.mkdir(parents=True)
     rec = _sample_rec()
-    perform_writeback(rec, base_dir=base, now=NOW)
+    _append_recommendation_jsonl(base, rec)
 
     # Only recommendation_log.jsonl exists; review logs are absent.
     assert (base / "recommendation_log.jsonl").exists()
@@ -649,10 +622,10 @@ def test_reproject_direct_function_is_atomic(tmp_path: Path):
     back to what it was before this call — not left half-wiped."""
 
     db = _init_db(tmp_path)
-    base = tmp_path / ALLOWED_RELATIVE_ROOT
+    base = tmp_path / _WRITEBACK_ROOT_NAME
     base.mkdir(parents=True)
     rec = _sample_rec()
-    perform_writeback(rec, base_dir=base, now=NOW)
+    _append_recommendation_jsonl(base, rec)
 
     # Seed the DB with an initial projection.
     conn = open_connection(db)

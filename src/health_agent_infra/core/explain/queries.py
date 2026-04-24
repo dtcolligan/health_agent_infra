@@ -203,18 +203,141 @@ def load_bundle_for_date(
     *,
     for_date: date,
     user_id: str,
+    plan_version: str = "latest",
 ) -> ExplainBundle:
-    """Load the canonical plan bundle for ``(for_date, user_id)``.
+    """Load a plan bundle for ``(for_date, user_id)``.
 
-    Raises :class:`ExplainNotFoundError` when no canonical plan exists
-    for the key. The bundle's :attr:`ExplainPlan.supersedes` /
-    :attr:`ExplainPlan.superseded_by` fields point at any ``_v<N>``
-    variants so the caller can walk the chain by issuing
-    :func:`load_bundle_by_daily_plan_id` for each id in turn.
+    Per D1 (``reporting/plans/v0_1_4/D1_re_author_semantics.md``), the
+    default resolves the **canonical leaf** of the supersede chain —
+    the plan a user asking "what's today's plan?" actually cares about.
+    Before D1, this returned the chain head (i.e. the first plan
+    ever synthesized for the key), which produced the 2026-04-23 bug
+    where ``hai explain --for-date`` showed the morning's superseded
+    plan instead of the current canonical one.
+
+    ``plan_version`` values:
+
+    - ``"latest"`` (default): canonical leaf (``superseded_by_plan_id
+      IS NULL``). If the chain head has no forward link, returns the
+      head — covers non-superseded days.
+    - ``"first"``: chain head — ``plan_<date>_<user>`` base id.
+
+    ``"all"`` is handled by :func:`load_bundle_chain_for_date` since
+    it returns multiple bundles and therefore a different shape.
+
+    Raises :class:`ExplainNotFoundError` when the resolved plan
+    doesn't exist.
     """
 
-    plan_id = canonical_daily_plan_id(for_date, user_id)
-    return load_bundle_by_daily_plan_id(conn, daily_plan_id=plan_id)
+    if plan_version == "first":
+        plan_id = canonical_daily_plan_id(for_date, user_id)
+        return load_bundle_by_daily_plan_id(conn, daily_plan_id=plan_id)
+    if plan_version == "latest":
+        leaf_id = _resolve_leaf_plan_id(
+            conn, for_date=for_date, user_id=user_id,
+        )
+        return load_bundle_by_daily_plan_id(conn, daily_plan_id=leaf_id)
+    raise ValueError(
+        f"plan_version must be 'latest' or 'first' for single-bundle load "
+        f"(got {plan_version!r}); use load_bundle_chain_for_date for 'all'."
+    )
+
+
+def load_bundle_chain_for_date(
+    conn: sqlite3.Connection,
+    *,
+    for_date: date,
+    user_id: str,
+) -> list[ExplainBundle]:
+    """Return every bundle in the supersede chain for ``(for_date, user_id)``,
+    ordered chain-head → leaf.
+
+    Each bundle is a full :class:`ExplainBundle` so callers can render
+    the entire history (proposals, firings, recommendations, reviews)
+    for audit purposes. The chain-head is ``plan_<date>_<user>``; the
+    chain follows ``superseded_by_plan_id`` pointers (column added in
+    migration 014) until NULL.
+    """
+
+    head_id = canonical_daily_plan_id(for_date, user_id)
+    bundles: list[ExplainBundle] = []
+    seen: set[str] = set()
+    next_id: Optional[str] = head_id
+
+    while next_id is not None:
+        if next_id in seen:
+            # Defensive cycle-guard — shouldn't happen under D1's
+            # atomic supersede, but forward-link loops would silently
+            # hang without this.
+            break
+        seen.add(next_id)
+        try:
+            bundles.append(load_bundle_by_daily_plan_id(
+                conn, daily_plan_id=next_id,
+            ))
+        except ExplainNotFoundError:
+            # Head may not exist if the day was never synthesized;
+            # partial chains (rare) terminate cleanly.
+            break
+
+        row = conn.execute(
+            "SELECT superseded_by_plan_id FROM daily_plan "
+            "WHERE daily_plan_id = ?",
+            (next_id,),
+        ).fetchone()
+        next_id = row["superseded_by_plan_id"] if row else None
+
+    if not bundles:
+        raise ExplainNotFoundError(
+            f"no daily_plan chain for (for_date={for_date!r}, "
+            f"user_id={user_id!r})"
+        )
+    return bundles
+
+
+def _resolve_leaf_plan_id(
+    conn: sqlite3.Connection,
+    *,
+    for_date: date,
+    user_id: str,
+) -> str:
+    """Walk the supersede chain from the canonical head to the leaf.
+
+    The head is ``plan_<for_date>_<user_id>`` (the id synthesis
+    assigns to the first plan for the key). Each non-leaf has
+    ``superseded_by_plan_id`` pointing at the next link. The leaf has
+    ``superseded_by_plan_id IS NULL``.
+
+    Raises :class:`ExplainNotFoundError` if the head doesn't exist.
+    """
+
+    head_id = canonical_daily_plan_id(for_date, user_id)
+    current_id = head_id
+    seen: set[str] = set()
+
+    while True:
+        if current_id in seen:
+            # Cycle guard — shouldn't happen, but never hang.
+            return current_id
+        seen.add(current_id)
+
+        row = conn.execute(
+            "SELECT superseded_by_plan_id FROM daily_plan "
+            "WHERE daily_plan_id = ?",
+            (current_id,),
+        ).fetchone()
+        if row is None:
+            if current_id == head_id:
+                raise ExplainNotFoundError(
+                    f"no daily_plan chain for (for_date={for_date!r}, "
+                    f"user_id={user_id!r})"
+                )
+            # Dangling pointer — treat the previous as the leaf.
+            return current_id
+        next_id = row["superseded_by_plan_id"]
+        if next_id is None:
+            return current_id
+        current_id = next_id
 
 
 def load_bundle_by_daily_plan_id(
@@ -304,15 +427,43 @@ def _hydrate_plan(
 def _load_proposals_for_plan(
     conn: sqlite3.Connection, *, daily_plan_id: str,
 ) -> list[ExplainProposal]:
-    rows = conn.execute(
-        "SELECT proposal_id, domain, schema_version, action, "
-        "  payload_json, confidence, produced_at, validated_at "
-        "FROM proposal_log WHERE daily_plan_id = ? "
-        "ORDER BY domain, proposal_id",
+    """Return the proposals this plan was synthesized from.
+
+    Per D1 (§supersede behavior change), the join uses the plan's
+    stored ``proposal_ids_json`` array rather than the
+    ``proposal_log.daily_plan_id`` FK. Under the old FK-based path,
+    superseding a plan relinked the proposals forward and the prior
+    chain link's explain view silently lost its inputs; storing the
+    ids on the plan row keeps every bundle self-contained.
+    """
+
+    plan_row = conn.execute(
+        "SELECT proposal_ids_json FROM daily_plan WHERE daily_plan_id = ?",
         (daily_plan_id,),
+    ).fetchone()
+    if plan_row is None:
+        return []
+    proposal_ids = _loads(plan_row["proposal_ids_json"]) or []
+    if not proposal_ids:
+        return []
+
+    placeholders = ",".join(["?"] * len(proposal_ids))
+    rows = conn.execute(
+        f"SELECT proposal_id, domain, schema_version, action, "
+        f"  payload_json, confidence, produced_at, validated_at "
+        f"FROM proposal_log WHERE proposal_id IN ({placeholders})",
+        proposal_ids,
     ).fetchall()
+    by_id = {row["proposal_id"]: row for row in rows}
+
     out: list[ExplainProposal] = []
-    for row in rows:
+    for pid in proposal_ids:
+        row = by_id.get(pid)
+        if row is None:
+            # Stored id no longer resolves — rare, but honestly skip
+            # rather than fabricate. Audit-chain integrity test #10
+            # is responsible for catching this class of drift.
+            continue
         payload = _loads(row["payload_json"]) or {}
         out.append(
             ExplainProposal(
@@ -329,6 +480,7 @@ def _load_proposals_for_plan(
                 validated_at=row["validated_at"],
             )
         )
+    out.sort(key=lambda p: (p.domain, p.proposal_id))
     return out
 
 

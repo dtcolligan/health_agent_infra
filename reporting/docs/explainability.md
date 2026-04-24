@@ -42,8 +42,8 @@ hai explain --daily-plan-id <id>                       [--text] [--db-path <p>]
   exact id (including `_v<N>` supersession variants).
 - Default output is JSON, suitable for programmatic consumers.
 - `--text` emits an operator-facing report grouped by audit layer.
-- `--db-path` falls through to the same resolution as
-  `hai writeback --db-path`.
+- `--db-path` falls through to the canonical default (`$HAI_STATE_DB`
+  or `~/.local/share/health_agent_infra/state.db`).
 
 Failure modes the surface exits `2` for:
 

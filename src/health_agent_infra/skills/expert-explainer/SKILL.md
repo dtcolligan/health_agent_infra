@@ -128,8 +128,8 @@ knowledge. Do not attribute a claim to a source you did not retrieve.
 
 ## Invariants
 
-- **Read-only.** You never call `hai writeback`, `hai synthesize`,
-  `hai propose`, `hai memory set`, or any other write surface. The
+- **Read-only.** You never call `hai synthesize`, `hai propose`,
+  `hai memory set`, or any other write surface. The
   `allowed-tools` list pins this — `hai explain` and `hai state
   snapshot` are the only `hai` subcommands you may invoke, and both
   are read-only.

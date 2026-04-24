@@ -371,6 +371,77 @@ def test_explain_text_output_is_human_readable(tmp_path, capsys):
     assert "## Reviews" in out
 
 
+# ---------------------------------------------------------------------------
+# D3 §hai explain --operator rename — canonical flag + deprecation hint
+# ---------------------------------------------------------------------------
+
+
+def test_explain_operator_flag_produces_the_same_report_as_text(tmp_path, capsys):
+    """``--operator`` is the canonical flag as of v0.1.4; it renders
+    byte-identical output to the deprecated ``--text``."""
+
+    from health_agent_infra.cli import main as cli_main
+
+    db_path = _fresh_db(tmp_path)
+    daily_plan_id = _seed_six_domain_plan(db_path)
+
+    rc_op = cli_main([
+        "explain", "--daily-plan-id", daily_plan_id,
+        "--db-path", str(db_path), "--operator",
+    ])
+    operator_out = capsys.readouterr().out
+
+    rc_text = cli_main([
+        "explain", "--daily-plan-id", daily_plan_id,
+        "--db-path", str(db_path), "--text",
+    ])
+    # Discard stderr (carries the deprecation note for --text) but keep
+    # stdout so we can compare renders.
+    text_capture = capsys.readouterr()
+    text_out = text_capture.out
+
+    assert rc_op == 0
+    assert rc_text == 0
+    assert operator_out == text_out
+
+
+def test_explain_text_emits_deprecation_hint_on_stderr(tmp_path, capsys):
+    """``--text`` keeps working for one release cycle but must nudge the
+    caller to migrate via a stderr note. Scripts that parse stdout JSON
+    aren't affected."""
+
+    from health_agent_infra.cli import main as cli_main
+
+    db_path = _fresh_db(tmp_path)
+    daily_plan_id = _seed_six_domain_plan(db_path)
+
+    rc = cli_main([
+        "explain", "--daily-plan-id", daily_plan_id,
+        "--db-path", str(db_path), "--text",
+    ])
+    captured = capsys.readouterr()
+    assert rc == 0
+    assert "--text is deprecated" in captured.err
+    assert "--operator" in captured.err
+
+
+def test_explain_operator_does_not_emit_deprecation_hint(tmp_path, capsys):
+    """Callers already on the canonical flag see clean stderr."""
+
+    from health_agent_infra.cli import main as cli_main
+
+    db_path = _fresh_db(tmp_path)
+    daily_plan_id = _seed_six_domain_plan(db_path)
+
+    rc = cli_main([
+        "explain", "--daily-plan-id", daily_plan_id,
+        "--db-path", str(db_path), "--operator",
+    ])
+    captured = capsys.readouterr()
+    assert rc == 0
+    assert "deprecated" not in captured.err
+
+
 def test_explain_supersession_linkage_walks_both_directions(tmp_path, capsys):
     """A ``--supersede`` rerun creates a ``_v2`` variant. The canonical
     plan's bundle must report ``superseded_by=_v2`` and the variant

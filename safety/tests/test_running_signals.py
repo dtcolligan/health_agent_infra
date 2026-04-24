@@ -39,6 +39,12 @@ def test_signals_dict_keys_match_classifier_input_contract():
         "training_readiness_pct",
         "sleep_debt_band",
         "resting_hr_band",
+        # v0.1.4 structural signals from running_activity.
+        "z4_plus_seconds_today",
+        "z4_plus_seconds_7d",
+        "last_hard_session_days_ago",
+        "today_interval_summary",
+        "activity_count_14d",
     }
 
 
@@ -249,3 +255,202 @@ def test_derived_signals_round_trip_through_classifier_and_policy():
 
     assert classified.coverage_band == "full"
     assert policy.forced_action is None
+
+
+# ---------------------------------------------------------------------------
+# v0.1.4 structural signals from running_activity
+# ---------------------------------------------------------------------------
+
+def _activity(
+    *,
+    as_of: str = "2026-04-23",
+    activity_id: str = "i1",
+    hr_zone_times_s: list[int] | None = None,
+    interval_summary: list[str] | None = None,
+) -> dict:
+    return {
+        "activity_id": activity_id,
+        "as_of_date": as_of,
+        "hr_zone_times_s": hr_zone_times_s,
+        "interval_summary": interval_summary,
+    }
+
+
+def test_z4_plus_seconds_today_sums_zones_4_through_7():
+    # Z4=282, Z5=0, Z6=0, Z7=0 → 282s
+    a = _activity(hr_zone_times_s=[1312, 254, 550, 282, 0, 0, 0])
+    sig = derive_running_signals(
+        {}, running_today=None, running_history=[],
+        activities_today=[a], activities_history=[],
+    )
+    assert sig["z4_plus_seconds_today"] == 282
+
+
+def test_z4_plus_seconds_today_sums_across_multiple_activities():
+    a = _activity(activity_id="i_a", hr_zone_times_s=[0, 0, 0, 100, 50, 0, 0])
+    b = _activity(activity_id="i_b", hr_zone_times_s=[0, 0, 0, 200, 0, 0, 0])
+    sig = derive_running_signals(
+        {}, running_today=None, running_history=[],
+        activities_today=[a, b], activities_history=[],
+    )
+    assert sig["z4_plus_seconds_today"] == 350
+
+
+def test_z4_plus_seconds_today_none_when_no_zone_data():
+    sig = derive_running_signals(
+        {}, running_today=None, running_history=[],
+        activities_today=[_activity(hr_zone_times_s=None)],
+        activities_history=[],
+    )
+    assert sig["z4_plus_seconds_today"] is None
+
+
+def test_last_hard_session_days_ago_is_zero_when_today_is_hard():
+    # Z4+ = 700s > 600s hard-session threshold
+    a = _activity(as_of="2026-04-23", hr_zone_times_s=[0, 0, 0, 700, 0, 0, 0])
+    sig = derive_running_signals(
+        {}, running_today=None, running_history=[],
+        activities_today=[a], activities_history=[],
+    )
+    assert sig["last_hard_session_days_ago"] == 0
+
+
+def test_last_hard_session_days_ago_counts_history():
+    today_a = _activity(as_of="2026-04-23", hr_zone_times_s=[0, 100, 100, 0, 0, 0, 0])  # not hard
+    hist_a = _activity(as_of="2026-04-20", activity_id="i_old",
+                       hr_zone_times_s=[0, 0, 0, 1200, 0, 0, 0])  # hard, 3 days ago
+    sig = derive_running_signals(
+        {}, running_today=None, running_history=[],
+        activities_today=[today_a], activities_history=[hist_a],
+    )
+    assert sig["last_hard_session_days_ago"] == 3
+
+
+def test_last_hard_session_days_ago_none_when_no_hard_session_in_window():
+    today_a = _activity(as_of="2026-04-23",
+                        hr_zone_times_s=[0, 200, 300, 100, 0, 0, 0])  # Z4+=100 <600
+    sig = derive_running_signals(
+        {}, running_today=None, running_history=[],
+        activities_today=[today_a], activities_history=[],
+    )
+    assert sig["last_hard_session_days_ago"] is None
+
+
+def test_last_hard_session_days_ago_anchors_to_as_of_date_not_latest_activity():
+    """Codex r2 regression guard: when there is no activity today, the
+    function previously anchored the gap to the first historical activity
+    (→ yesterday's hard session = 0 days ago, off-by-one). Passing
+    ``as_of_date`` anchors correctly: yesterday's hard session = 1 day."""
+
+    yesterday = _activity(
+        as_of="2026-04-23",
+        hr_zone_times_s=[0, 0, 0, 1200, 0, 0, 0],  # hard
+    )
+    sig = derive_running_signals(
+        {}, running_today=None, running_history=[],
+        activities_today=[],  # NO activity today
+        activities_history=[yesterday],
+        as_of_date="2026-04-24",  # plan date
+    )
+    assert sig["last_hard_session_days_ago"] == 1
+
+
+def test_last_hard_session_days_ago_three_days_ago_no_activity_today():
+    """Same shape but a larger gap. No activity today; hard session three
+    days ago; plan date is today. Gap must be 3."""
+
+    three_days_ago = _activity(
+        as_of="2026-04-21",
+        hr_zone_times_s=[0, 0, 0, 800, 0, 0, 0],  # hard
+    )
+    sig = derive_running_signals(
+        {}, running_today=None, running_history=[],
+        activities_today=[],
+        activities_history=[three_days_ago],
+        as_of_date="2026-04-24",
+    )
+    assert sig["last_hard_session_days_ago"] == 3
+
+
+def test_last_hard_session_days_ago_falls_back_when_as_of_date_absent():
+    """Backwards compatibility: callers that don't pass as_of_date still
+    get the legacy anchor behaviour (gap from first-seen activity).
+    Existing tests rely on this path; no silent change."""
+
+    today_a = _activity(as_of="2026-04-23", hr_zone_times_s=[0, 100, 100, 0, 0, 0, 0])
+    hist_a = _activity(as_of="2026-04-20", activity_id="i_old",
+                       hr_zone_times_s=[0, 0, 0, 1200, 0, 0, 0])
+    sig = derive_running_signals(
+        {}, running_today=None, running_history=[],
+        activities_today=[today_a], activities_history=[hist_a],
+        # no as_of_date passed
+    )
+    # Legacy behaviour: today_iso = today_a.as_of_date = 2026-04-23 → gap = 3
+    assert sig["last_hard_session_days_ago"] == 3
+
+
+def test_today_interval_summary_is_first_non_empty():
+    a = _activity(interval_summary=None)
+    b = _activity(activity_id="i_b", interval_summary=["4x 9m29s 156bpm", "1x 2m7s 146bpm"])
+    sig = derive_running_signals(
+        {}, running_today=None, running_history=[],
+        activities_today=[a, b], activities_history=[],
+    )
+    assert sig["today_interval_summary"] == ["4x 9m29s 156bpm", "1x 2m7s 146bpm"]
+
+
+def test_today_interval_summary_none_when_no_activities():
+    sig = derive_running_signals(
+        {}, running_today=None, running_history=[],
+        activities_today=[], activities_history=[],
+    )
+    assert sig["today_interval_summary"] is None
+
+
+def test_activity_signals_backwards_compatible_without_kwargs():
+    """Skipping the activity kwargs must still work (existing callers)."""
+
+    sig = derive_running_signals(
+        {"garmin_acwr_ratio": 1.0},
+        running_today=None, running_history=[], recovery_classified=None,
+    )
+    assert sig["z4_plus_seconds_today"] is None
+    assert sig["z4_plus_seconds_7d"] is None
+    assert sig["last_hard_session_days_ago"] is None
+    assert sig["today_interval_summary"] is None
+    assert sig["activity_count_14d"] == 0
+
+
+def test_activity_count_14d_counts_today_plus_history():
+    sig = derive_running_signals(
+        {}, running_today=None, running_history=[],
+        activities_today=[_activity(activity_id="t1"), _activity(activity_id="t2")],
+        activities_history=[
+            _activity(activity_id="h1"),
+            _activity(activity_id="h2"),
+            _activity(activity_id="h3"),
+        ],
+    )
+    assert sig["activity_count_14d"] == 5
+
+
+def test_activity_count_relaxation_flips_coverage_from_insufficient(db_free=True):
+    """Integration: five history activities + today's distance should lift
+    coverage off `insufficient`, even when the 28-day rollup baseline is
+    sparse. Mirrors the 2026-04-24 live-data scenario (6 intervals.icu
+    activities across 14 days, no activity today)."""
+
+    from health_agent_infra.domains.running.classify import classify_running_state
+
+    history_rows = [_row(8_000.0, 5)] * 4  # 4 rollup rows, below 7-day baseline
+    sig = derive_running_signals(
+        {"garmin_acwr_ratio": 1.1},
+        running_today=_row(5_000.0, 5),
+        running_history=history_rows,
+        recovery_classified={"sleep_debt_band": "none", "resting_hr_band": "at"},
+        activities_today=[],
+        activities_history=[_activity(activity_id=f"h{i}") for i in range(5)],
+    )
+    classified = classify_running_state(sig)
+    # With 5 activities in the window, coverage is no longer `insufficient`.
+    assert classified.coverage_band != "insufficient"

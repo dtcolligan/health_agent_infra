@@ -350,6 +350,14 @@ class ReviewOutcome:
     pre_energy_score: Optional[int] = None
     post_energy_score: Optional[int] = None
     disagreed_firing_ids: Optional[list[str]] = None
+    # D1 §review_outcome re-link. When a review is recorded against a
+    # recommendation whose owning plan has been superseded, the outcome
+    # is persisted against the canonical-leaf plan's matching-domain
+    # recommendation. ``re_linked_from_recommendation_id`` captures the
+    # original target id; ``re_link_note`` is a short human-readable
+    # explanation. Both are NULL on the common (non-superseded) path.
+    re_linked_from_recommendation_id: Optional[str] = None
+    re_link_note: Optional[str] = None
 
     def to_dict(self) -> dict:
         return {
@@ -371,4 +379,6 @@ class ReviewOutcome:
                 if self.disagreed_firing_ids is not None
                 else None
             ),
+            "re_linked_from_recommendation_id": self.re_linked_from_recommendation_id,
+            "re_link_note": self.re_link_note,
         }

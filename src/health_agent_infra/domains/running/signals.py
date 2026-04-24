@@ -47,6 +47,9 @@ def derive_running_signals(
     running_today: Optional[dict[str, Any]],
     running_history: list[dict[str, Any]],
     recovery_classified: Optional[dict[str, Any]] = None,
+    activities_today: Optional[list[dict[str, Any]]] = None,
+    activities_history: Optional[list[dict[str, Any]]] = None,
+    as_of_date: Optional[str] = None,
 ) -> dict[str, Any]:
     """Build a ``running_signals`` dict for ``classify_running_state``.
 
@@ -70,6 +73,22 @@ def derive_running_signals(
         ``raw_summary``.
       - ``sleep_debt_band`` / ``resting_hr_band``: pulled off
         ``recovery_classified`` when present.
+
+    V0.1.4 adds structural per-session signals from the intervals.icu
+    ``/activities`` stream (``activities_today``, ``activities_history``).
+    These are carried through alongside the rollup-based aggregations so
+    policy or skill code can reason about session structure without
+    re-reading the DB:
+
+      - ``z4_plus_seconds_today`` / ``z4_plus_seconds_7d``: seconds spent
+        in HR zones ≥4 today and across the trailing 7 days. More precise
+        than ``vigorous_intensity_min`` (minute-bucketed) when present.
+      - ``last_hard_session_days_ago``: days since the most recent
+        session whose zone-4+ time cleared the hard threshold. ``None``
+        when no hard session in the visible window.
+      - ``today_interval_summary``: today's ``interval_summary`` list
+        verbatim (e.g. ``['4x 9m29s 156bpm']``) — skills use this for
+        planned-vs-actual match reasoning.
     """
 
     # Gather distances in ascending recency order: history (oldest→newest)
@@ -97,6 +116,18 @@ def derive_running_signals(
         sleep_debt_band = recovery_classified.get("sleep_debt_band")
         resting_hr_band = recovery_classified.get("resting_hr_band")
 
+    activities_today = activities_today or []
+    activities_history = activities_history or []
+
+    z4_plus_today = _sum_z4_plus_seconds(activities_today)
+    z4_plus_7d = _sum_z4_plus_seconds_window(
+        activities_today, activities_history, window_days=7,
+    )
+    last_hard_days_ago = _last_hard_session_days_ago(
+        activities_today, activities_history, as_of_date=as_of_date,
+    )
+    today_interval_summary = _first_non_empty_interval_summary(activities_today)
+
     return {
         "weekly_mileage_m": weekly_mileage_m,
         "weekly_mileage_baseline_m": weekly_mileage_baseline_m,
@@ -107,6 +138,11 @@ def derive_running_signals(
         ),
         "sleep_debt_band": sleep_debt_band,
         "resting_hr_band": resting_hr_band,
+        "z4_plus_seconds_today": z4_plus_today,
+        "z4_plus_seconds_7d": z4_plus_7d,
+        "last_hard_session_days_ago": last_hard_days_ago,
+        "today_interval_summary": today_interval_summary,
+        "activity_count_14d": len(activities_today) + len(activities_history),
     }
 
 
@@ -158,3 +194,134 @@ def _count_hard_sessions(
     if not populated:
         return None
     return sum(1 for v in populated if v >= _HARD_SESSION_VIGOROUS_MIN_THRESHOLD)
+
+
+# --------------------------------------------------------------------------- activity-level helpers
+
+
+# A session is "hard" in the structural sense when zone-4+ time clears
+# this threshold. 10 minutes is conservative — catches a 4×4 threshold
+# block, but a single Z4 strider (~1 min) stays out.
+_HARD_SESSION_Z4_PLUS_SECONDS = 600
+
+
+def _sum_z4_plus_seconds(activities: list[dict]) -> Optional[int]:
+    """Sum hr_zone_times_s[3:] across activities. None if no zone data."""
+
+    total = 0
+    saw_any = False
+    for a in activities:
+        zt = a.get("hr_zone_times_s")
+        if not zt:
+            continue
+        saw_any = True
+        if len(zt) > 3:
+            for v in zt[3:]:
+                if isinstance(v, (int, float)):
+                    total += int(v)
+    return total if saw_any else None
+
+
+def _sum_z4_plus_seconds_window(
+    activities_today: list[dict],
+    activities_history: list[dict],
+    *,
+    window_days: int,
+) -> Optional[int]:
+    """Sum zone-4+ seconds across today + ``window_days-1`` history days.
+
+    History is assumed newest-first (the snapshot layer orders it that
+    way). When no activities in the window carry zone data, returns
+    None rather than 0 so skills can distinguish "light week" from
+    "we don't know."
+    """
+
+    in_window = list(activities_today)
+    # Cap the history to reasonable window size (by activity count, not
+    # civil-day filtering — the window_days semantics here is a soft
+    # guard; the snapshot already bounded the lookback).
+    in_window.extend(activities_history[: window_days * 3])
+    return _sum_z4_plus_seconds(in_window)
+
+
+def _last_hard_session_days_ago(
+    activities_today: list[dict],
+    activities_history: list[dict],
+    *,
+    as_of_date: Optional[str] = None,
+) -> Optional[int]:
+    """Return days-ago of the most recent hard session, or None.
+
+    "Hard" means zone-4+ seconds >= _HARD_SESSION_Z4_PLUS_SECONDS for a
+    single session. Walks today → history in recency order and returns
+    the first match's civil-day distance from the plan date.
+
+    **Codex r2 fix** — previously the function anchored the gap to the
+    first historical activity's date when no activity today existed.
+    That caused "yesterday's hard session" to report as
+    ``last_hard_session_days_ago = 0`` instead of 1 on days the user
+    didn't train. The anchor is now ``as_of_date`` (the snapshot's
+    plan date) whenever the caller provides it; the fallback to the
+    first activity's date is kept only for call sites that don't (yet)
+    pass it.
+    """
+
+    from datetime import date as date_cls
+
+    def _hard(a: dict) -> bool:
+        zt = a.get("hr_zone_times_s")
+        if not zt or len(zt) <= 3:
+            return False
+        z4_plus = sum(int(v) for v in zt[3:] if isinstance(v, (int, float)))
+        return z4_plus >= _HARD_SESSION_Z4_PLUS_SECONDS
+
+    # Anchor the gap to the plan date when provided. Falls back to the
+    # first-seen activity's as_of_date only when as_of_date is absent,
+    # which is the legacy behaviour.
+    today_iso: Optional[str] = as_of_date
+    if today_iso is None:
+        if activities_today:
+            today_iso = activities_today[0].get("as_of_date")
+        elif activities_history:
+            today_iso = activities_history[0].get("as_of_date")
+    if today_iso is None:
+        return None
+    try:
+        today_date = date_cls.fromisoformat(today_iso)
+    except ValueError:
+        return None
+
+    # Today's activities count as days_ago=0 iff they land on today_date.
+    for a in activities_today:
+        if not _hard(a):
+            continue
+        try:
+            a_date = date_cls.fromisoformat(a.get("as_of_date", ""))
+        except ValueError:
+            continue
+        if a_date == today_date:
+            return 0
+
+    for a in activities_history:
+        if not _hard(a):
+            continue
+        try:
+            a_date = date_cls.fromisoformat(a.get("as_of_date", ""))
+        except ValueError:
+            continue
+        gap = (today_date - a_date).days
+        if gap >= 0:
+            return gap
+    return None
+
+
+def _first_non_empty_interval_summary(
+    activities: list[dict],
+) -> Optional[list[str]]:
+    """Return the first non-empty interval_summary list, or None."""
+
+    for a in activities:
+        summary = a.get("interval_summary")
+        if summary:
+            return list(summary)
+    return None

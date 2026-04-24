@@ -25,9 +25,9 @@ recommendations are bounded, explainable, and resumable across days.
   agent's head;
 - every firing, mutation, and final recommendation is persisted to a
   local SQLite database inside a single atomic transaction;
-- every determinism boundary (`hai propose`, `hai synthesize`,
-  `hai writeback`) rejects invalid payloads with a named `invariant` id
-  rather than silently coercing them.
+- every determinism boundary (`hai propose`, `hai synthesize`)
+  rejects invalid payloads with a named `invariant` id rather than
+  silently coercing them.
 
 "Local" means:
 

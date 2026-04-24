@@ -52,6 +52,9 @@ class StressPolicyResult:
     forced_action: Optional[str] = None
     forced_action_detail: Optional[dict[str, Any]] = None
     capped_confidence: Optional[str] = None
+    # D4 cold-start — tokens the snapshot layer folds into
+    # classified_state.uncertainty.
+    extra_uncertainty: tuple[str, ...] = ()
 
 
 # ---------------------------------------------------------------------------
@@ -176,6 +179,7 @@ def evaluate_stress_policy(
     classified: ClassifiedStressState,
     stress_signals: dict[str, Any],
     thresholds: Optional[dict[str, Any]] = None,
+    cold_start_context: Optional[dict[str, Any]] = None,
 ) -> StressPolicyResult:
     """Apply stress R-rules to a classified stress state.
 
@@ -184,6 +188,15 @@ def evaluate_stress_policy(
     R-coverage short-circuits action selection; R-sustained-stress
     overrides even if R-coverage allows; R-sparse caps confidence
     independently of action.
+
+    ``cold_start_context`` is the D4 stress relaxation payload:
+
+        {"cold_start": bool, "energy_self_report": str | None}
+
+    Lighter than running/strength: if the user reported an energy
+    band on their readiness intake, the stress skill may produce a
+    ``maintain_routine`` recommendation at capped ``low`` confidence.
+    Without the energy signal, still defer.
     """
 
     t = thresholds if thresholds is not None else load_thresholds()
@@ -191,11 +204,19 @@ def evaluate_stress_policy(
     forced_action: Optional[str] = None
     forced_action_detail: Optional[dict[str, Any]] = None
     capped_confidence: Optional[str] = None
+    extra_uncertainty: list[str] = []
 
     cov_dec, cov_forced = _r_coverage_gate(classified)
     decisions.append(cov_dec)
     if cov_forced is not None:
-        forced_action = cov_forced
+        relax = _stress_cold_start_relax(cov_forced, cold_start_context)
+        if relax is not None:
+            relax_decision, relax_capped, relax_uncertainty = relax
+            decisions.append(relax_decision)
+            capped_confidence = relax_capped
+            extra_uncertainty.extend(relax_uncertainty)
+        else:
+            forced_action = cov_forced
 
     cap_dec, cap_value = _r_sparse_confidence_cap(classified)
     decisions.append(cap_dec)
@@ -216,4 +237,49 @@ def evaluate_stress_policy(
         forced_action=forced_action,
         forced_action_detail=forced_action_detail,
         capped_confidence=capped_confidence,
+        extra_uncertainty=tuple(extra_uncertainty),
+    )
+
+
+# ---------------------------------------------------------------------------
+# D4 stress cold-start relaxation — lighter than running/strength:
+# an energy self-report alone is enough to lift the coverage defer,
+# but confidence drops to low.
+# ---------------------------------------------------------------------------
+
+
+_STRESS_COLD_START_UNCERTAINTY = "cold_start_stress_history_limited"
+_STRESS_COLD_START_CAPPED = "low"
+
+
+def _stress_cold_start_relax(
+    cov_forced: str,
+    cold_start_context: Optional[dict[str, Any]],
+) -> Optional[tuple[PolicyDecision, str, tuple[str, ...]]]:
+    if cov_forced != "defer_decision_insufficient_signal":
+        return None
+    if cold_start_context is None:
+        return None
+    if not cold_start_context.get("cold_start"):
+        return None
+
+    energy = cold_start_context.get("energy_self_report")
+    if not energy:
+        # No subjective signal anywhere → honest defer. D4 §Stress
+        # keeps relaxation dependent on the energy self-report.
+        return None
+
+    decision = PolicyDecision(
+        rule_id="cold_start_relaxation",
+        decision="soften",
+        note=(
+            "cold-start window active (history_days<14); readiness "
+            "energy self-report present — allowing a maintain_routine "
+            "recommendation at low confidence."
+        ),
+    )
+    return (
+        decision,
+        _STRESS_COLD_START_CAPPED,
+        (_STRESS_COLD_START_UNCERTAINTY,),
     )

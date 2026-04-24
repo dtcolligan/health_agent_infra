@@ -11,13 +11,12 @@ The package ships two things the agent consumes:
    readiness skills, a synthesis skill, an intent-router skill
    (NL → CLI workflow mapping; consumes ``hai capabilities --json``),
    an expert-explainer skill, plus cross-cutting (strength-intake,
-   merge-human-inputs, writeback-protocol, reporting, safety).
+   merge-human-inputs, review-protocol, reporting, safety).
 
 The agent reads skills, makes judgment calls, and invokes CLI
 subcommands to move structured state. The CLI validates the
 agent's output at two determinism boundaries (``hai propose`` and
-``hai synthesize``), plus a legacy recovery-only direct-commit
-boundary (``hai writeback``).
+``hai synthesize``).
 
 ## Install
 
@@ -36,7 +35,7 @@ ls ~/.claude/skills/
 # recovery-readiness  running-readiness  sleep-quality  stress-regulation
 # strength-readiness  nutrition-alignment  daily-plan-synthesis
 # intent-router  expert-explainer
-# strength-intake  merge-human-inputs  writeback-protocol  reporting  safety
+# strength-intake  merge-human-inputs  review-protocol  reporting  safety
 ```
 
 ## Claude Code
@@ -120,14 +119,10 @@ determinism boundaries.
    to mutate ``action`` or touch a domain not registered in
    ``PHASE_B_TARGETS``.
 
-3. **``hai writeback``** — validates a ``TrainingRecommendation``
-   (recovery-only BoundedRecommendation schema) against the same
-   invariant family and appends to the recovery audit log. Same
-   exit-code + invariant-id contract. **Scope:** this surface is the
-   legacy single-domain direct path; running / sleep / stress /
-   strength / nutrition recommendations are validated + persisted by
-   ``hai synthesize`` inside the atomic transaction and never flow
-   through ``hai writeback``.
+Recommendations reach ``recommendation_log`` exclusively through
+``hai synthesize``. (The legacy recovery-only ``hai writeback`` direct
+path was removed in v0.1.4 D2; use ``hai propose --domain recovery`` +
+``hai synthesize``.)
 
 Nothing persists until its determinism check passes. Callers can
 pattern-match on the ``invariant`` id without parsing prose.
@@ -138,8 +133,8 @@ pattern-match on the ``invariant`` id without parsing prose.
   through ``hai``.
 - Claim more than the evidence supports. Rationale in a proposal
   must reference snapshot numbers (bands, deltas, ratios).
-- Use diagnostic / clinical language. The safety skill + writeback
-  banned-tokens check both reject it.
+- Use diagnostic / clinical language. The safety skill + proposal /
+  recommendation validators both reject it.
 - Pre-bake Phase B adjustments (e.g. X9's protein-target bump).
   That is runtime territory; the synthesis skill must not write
   an ``action_detail`` reason_token that starts with ``x9_`` or
@@ -160,9 +155,8 @@ subcommands as MCP tools is tracked as Phase 7 scope.
   Garmin credentials.
 - ``hai state snapshot`` / ``hai state reproject`` default to
   ``platformdirs`` user-data path; override via ``--db-path``.
-- ``hai writeback`` / ``hai propose`` / ``hai review`` take
-  ``--base-dir`` for JSONL audit logs; the default is
-  ``~/.local/share/hai/``.
+- ``hai propose`` / ``hai review`` take ``--base-dir`` for JSONL
+  audit logs; the default is ``~/.local/share/hai/``.
 - ``hai setup-skills`` defaults to ``~/.claude/skills/``. Override
   via ``--dest``.
 - ``hai config show`` prints the effective thresholds (defaults

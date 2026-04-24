@@ -50,6 +50,10 @@ class RunningPolicyResult:
     forced_action: Optional[str] = None
     forced_action_detail: Optional[dict[str, Any]] = None
     capped_confidence: Optional[str] = None
+    # D4 cold-start relaxation may add uncertainty tokens that land on
+    # ``classified_state.uncertainty`` in the snapshot surface. Empty
+    # tuple means no policy-originated uncertainty tokens.
+    extra_uncertainty: tuple[str, ...] = ()
 
 
 # ---------------------------------------------------------------------------
@@ -147,6 +151,7 @@ def evaluate_running_policy(
     classified: ClassifiedRunningState,
     running_signals: dict[str, Any],
     thresholds: Optional[dict[str, Any]] = None,
+    cold_start_context: Optional[dict[str, Any]] = None,
 ) -> RunningPolicyResult:
     """Apply running R-rules to a classified running state.
 
@@ -154,6 +159,19 @@ def evaluate_running_policy(
     capped_confidence the skill must honour. Rule ordering: R-coverage
     short-circuits action selection; R-acwr-spike overrides even if
     R-coverage allows; R-sparse caps confidence independently of action.
+
+    ``cold_start_context`` is the D4 cold-start relaxation payload:
+
+        {"cold_start": bool,
+         "recovery_status": "recovered" | "mildly_impaired" | "impaired" | None,
+         "planned_session_type": str | None}
+
+    When ``cold_start`` is True AND recovery is not ``impaired`` AND a
+    ``planned_session_type`` is present, the coverage gate's forced
+    defer is lifted: the skill gets to produce a non-defer recommendation
+    at capped ``moderate`` confidence, with
+    ``cold_start_running_history_limited`` added to uncertainty.
+    Outside those conditions the pre-D4 behaviour stands.
     """
 
     t = thresholds if thresholds is not None else load_thresholds()
@@ -161,11 +179,23 @@ def evaluate_running_policy(
     forced_action: Optional[str] = None
     forced_action_detail: Optional[dict[str, Any]] = None
     capped_confidence: Optional[str] = None
+    extra_uncertainty: list[str] = []
 
     cov_dec, cov_forced = _r_coverage_gate(classified)
     decisions.append(cov_dec)
     if cov_forced is not None:
-        forced_action = cov_forced
+        relax = _running_cold_start_relax(cov_forced, cold_start_context)
+        if relax is not None:
+            # D4: relaxation keeps the coverage decision as-is in the
+            # audit trail but drops the forced defer. The relaxation
+            # itself is logged as a separate allow/soften decision so
+            # an auditor sees why the defer didn't fire.
+            relax_decision, relax_capped, relax_uncertainty = relax
+            decisions.append(relax_decision)
+            capped_confidence = relax_capped
+            extra_uncertainty.extend(relax_uncertainty)
+        else:
+            forced_action = cov_forced
 
     cap_dec, cap_value = _r_sparse_confidence_cap(classified)
     decisions.append(cap_dec)
@@ -184,4 +214,60 @@ def evaluate_running_policy(
         forced_action=forced_action,
         forced_action_detail=forced_action_detail,
         capped_confidence=capped_confidence,
+        extra_uncertainty=tuple(extra_uncertainty),
     )
+
+
+# ---------------------------------------------------------------------------
+# D4 cold-start relaxation — lifts the coverage-gate's forced defer on
+# first-run users when recovery is non-red and a planned session intent
+# is present.
+# ---------------------------------------------------------------------------
+
+
+_COLD_START_UNCERTAINTY = "cold_start_running_history_limited"
+_COLD_START_CAPPED_CONFIDENCE = "moderate"
+_COLD_START_BLOCKING_RECOVERY_STATUSES = frozenset({"impaired"})
+
+
+def _running_cold_start_relax(
+    cov_forced: str,
+    cold_start_context: Optional[dict[str, Any]],
+) -> Optional[tuple[PolicyDecision, str, tuple[str, ...]]]:
+    """If cold-start relaxation applies, return
+    ``(audit_decision, capped_confidence, extra_uncertainty)``. Return
+    ``None`` when the coverage-gate's forced defer should stand.
+
+    Only operates when the coverage gate fired a defer — never
+    relaxes an ACWR spike escalation or any other forced action.
+    """
+
+    if cov_forced != "defer_decision_insufficient_signal":
+        return None
+    if cold_start_context is None:
+        return None
+    if not cold_start_context.get("cold_start"):
+        return None
+
+    recovery_status = cold_start_context.get("recovery_status")
+    planned_session_type = cold_start_context.get("planned_session_type")
+
+    if recovery_status in _COLD_START_BLOCKING_RECOVERY_STATUSES:
+        # Honest defer: even a first-run user with a planned session
+        # shouldn't train through an impaired recovery state.
+        return None
+    if not planned_session_type:
+        # No structured intent → no anchor for the skill to shape a
+        # recommendation from. Stays defer.
+        return None
+
+    decision = PolicyDecision(
+        rule_id="cold_start_relaxation",
+        decision="soften",
+        note=(
+            "cold-start window active (history_days<14); recovery not "
+            "impaired and planned_session_type supplied — allowing a "
+            "non-defer recommendation at moderate confidence."
+        ),
+    )
+    return decision, _COLD_START_CAPPED_CONFIDENCE, (_COLD_START_UNCERTAINTY,)

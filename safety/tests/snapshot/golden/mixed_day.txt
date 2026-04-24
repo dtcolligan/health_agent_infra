@@ -1,0 +1,67 @@
+Today, 2026-04-24 — your plan
+=============================
+
+2 prescriptions, 4 defers.
+
+[PROCEED] Recovery — Proceed with your planned session.
+-------------------------------------------------------
+
+recovery_baseline.
+
+Confidence: moderate.
+
+Follow-up: How did today's recovery land?
+
+[DEFER] Sleep — Not enough sleep information to recommend a change.
+-------------------------------------------------------------------
+
+The sleep signal for today is missing. `hai pull` re-reads Garmin sleep; if the watch didn't record, there's nothing to recommend on.
+
+Confidence: moderate.
+
+Follow-up: How did today's sleep land?
+
+[DEFER] Running — Not enough information to recommend a run today.
+------------------------------------------------------------------
+
+Either the pull didn't find today's run or the history is too thin. If you haven't synced your watch in a few days, start with `hai pull`; otherwise log any runs you've done recently.
+
+Confidence: moderate.
+
+Follow-up: How did today's running land?
+
+[PROCEED] Strength — Proceed with your planned strength session.
+----------------------------------------------------------------
+
+strength_baseline.
+
+Confidence: moderate.
+
+Follow-up: How did today's strength land?
+
+[DEFER] Stress — Not enough stress information to recommend today.
+------------------------------------------------------------------
+
+Log today's subjective stress on a 1-5 scale: `hai intake stress --score …`. Garmin stress (if present) pairs with this.
+
+Confidence: moderate.
+
+Follow-up: How did today's stress land?
+
+[DEFER] Nutrition — Not enough macros logged to recommend today.
+----------------------------------------------------------------
+
+You haven't logged any nutrition for today, and I don't have a history of your typical macros. My recommendation would be made up. Log today's totals with `hai intake nutrition --calories N --protein-g N --carbs-g N --fat-g N` — even rough estimates help; the system gets more accurate as you log more days.
+
+Confidence: moderate.
+
+Follow-up: How did today's nutrition land?
+
+_Note: you're in the first 14 days of using the agent. My recovery recommendations will get more specific as history accumulates (0/14 days so far)._
+_Note: you're in the first 14 days of using the agent. My sleep recommendations will get more specific as history accumulates (0/14 days so far)._
+_Note: you're in the first 14 days of using the agent. My running recommendations will get more specific as history accumulates (0/14 days so far)._
+_Note: you're in the first 14 days of using the agent. My strength recommendations will get more specific as history accumulates (0/14 days so far)._
+_Note: you're in the first 14 days of using the agent. My stress recommendations will get more specific as history accumulates (0/14 days so far)._
+_Note: you're in the first 14 days of using the agent. My nutrition recommendations will get more specific as history accumulates (0/14 days so far)._
+
+Recorded as plan plan_2026-04-24_u_snap. Run `hai review record` tomorrow morning to log how today went.

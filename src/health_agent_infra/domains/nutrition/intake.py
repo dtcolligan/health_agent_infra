@@ -79,10 +79,13 @@ def append_submission_jsonl(
     so a later DB failure is recoverable via reproject.
     """
 
-    base_dir.mkdir(parents=True, exist_ok=True)
+    from health_agent_infra.core.privacy import secure_directory, secure_file
+
+    secure_directory(base_dir, create=True)
     path = base_dir / NUTRITION_INTAKE_JSONL
     with path.open("a", encoding="utf-8") as fh:
         fh.write(json.dumps(submission.to_jsonl_line(), sort_keys=True) + "\n")
+    secure_file(path)
     return path
 
 

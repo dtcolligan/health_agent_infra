@@ -24,6 +24,118 @@ from typing import Any, Optional
 
 
 # ---------------------------------------------------------------------------
+# D4 — Cold-start window. A user is in cold-start mode for a domain
+# when they have fewer than COLD_START_THRESHOLD_DAYS days of
+# *meaningful signal* in that domain's accepted table. Cold-start
+# relaxes per-domain coverage rules (see reporting/plans/v0_1_4/
+# D4_cold_start.md §Per-domain cold-start rules) so a first-run
+# user doesn't drown in forced defers.
+# ---------------------------------------------------------------------------
+
+COLD_START_THRESHOLD_DAYS: int = 14
+
+# Per-domain "has meaningful signal" predicate, expressed as a SQL
+# WHERE clause against the accepted table. Counting days of
+# meaningful signal (vs raw row-presence) prevents metadata-only
+# rows from shortening the cold-start window.
+_COLD_START_PREDICATES: dict[str, tuple[str, str]] = {
+    # (accepted_table, predicate)
+    "recovery": (
+        "accepted_recovery_state_daily",
+        "resting_hr IS NOT NULL OR hrv_ms IS NOT NULL",
+    ),
+    "running": (
+        "accepted_running_state_daily",
+        "total_distance_m IS NOT NULL OR total_duration_s IS NOT NULL "
+        "OR session_count IS NOT NULL",
+    ),
+    "sleep": (
+        "accepted_sleep_state_daily",
+        "sleep_hours IS NOT NULL OR sleep_score_overall IS NOT NULL",
+    ),
+    "stress": (
+        "accepted_stress_state_daily",
+        "garmin_all_day_stress IS NOT NULL "
+        "OR manual_stress_score IS NOT NULL "
+        "OR body_battery_end_of_day IS NOT NULL",
+    ),
+    # Strength: the projector only creates rows in
+    # accepted_resistance_training_state_daily when a gym_session
+    # exists, so bare row presence is already "meaningful signal."
+    "strength": (
+        "accepted_resistance_training_state_daily",
+        "1 = 1",
+    ),
+    "nutrition": (
+        "accepted_nutrition_state_daily",
+        "calories IS NOT NULL",
+    ),
+}
+
+
+def _domain_history_days(
+    conn: sqlite3.Connection,
+    *,
+    domain: str,
+    user_id: str,
+    as_of_date: date,
+) -> int:
+    """Count distinct as_of_dates with meaningful signal for ``domain``.
+
+    Strictly less-than ``as_of_date`` — today's row doesn't count
+    toward the window because cold-start is about *history* accrued
+    before the day we're planning. Missing tables (pre-migration
+    state) degrade silently to zero.
+    """
+
+    spec = _COLD_START_PREDICATES.get(domain)
+    if spec is None:
+        return 0
+    table, predicate = spec
+    try:
+        row = conn.execute(
+            f"SELECT COUNT(DISTINCT as_of_date) FROM {table} "  # noqa: S608
+            f"WHERE user_id = ? AND as_of_date < ? AND ({predicate})",
+            (user_id, as_of_date.isoformat()),
+        ).fetchone()
+    except sqlite3.OperationalError:
+        # Table doesn't exist yet (fresh DB pre-migration). Treat as
+        # zero history — the user is maximally cold-start.
+        return 0
+    return int(row[0] if row else 0)
+
+
+def _cold_start_flags(
+    conn: sqlite3.Connection,
+    *,
+    user_id: str,
+    as_of_date: date,
+) -> dict[str, dict[str, Any]]:
+    """Return ``{domain: {"history_days": int, "cold_start": bool}}``
+    for every domain that participates in cold-start detection.
+
+    Consumed by :func:`build_snapshot` to attach a ``cold_start``
+    block on each domain snapshot entry. Per-domain policy consults
+    these flags to decide whether to relax coverage.
+    """
+
+    return {
+        domain: {
+            "history_days": (
+                hd := _domain_history_days(
+                    conn,
+                    domain=domain,
+                    user_id=user_id,
+                    as_of_date=as_of_date,
+                )
+            ),
+            "cold_start": hd < COLD_START_THRESHOLD_DAYS,
+        }
+        for domain in _COLD_START_PREDICATES
+    }
+
+
+# ---------------------------------------------------------------------------
 # Domain <-> table registry
 # ---------------------------------------------------------------------------
 
@@ -144,6 +256,47 @@ def available_domains() -> list[str]:
     """Return the list of domain names ``read_domain`` accepts."""
 
     return sorted(_DOMAIN_TABLES.keys())
+
+
+def _activities_for_running_block(
+    conn: sqlite3.Connection,
+    *,
+    user_id: str,
+    as_of_date: date,
+    lookback_days: int,
+) -> tuple[list[dict], list[dict]]:
+    """Load today's + history-window Run activities for the running block.
+
+    Returns ``(activities_today, activities_history)`` where history is
+    the trailing-``lookback_days`` window EXCLUDING today (matches the
+    history/today split the rest of the snapshot uses). Empty lists when
+    no activities have been projected — cleanly degrades when the
+    intervals.icu adapter hasn't yet been pulled on this profile.
+
+    Filtered to ``activity_type='Run'`` because the running domain
+    signals derive only from running sessions; other activity types are
+    captured in ``running_activity`` for future domain expansion but
+    stay out of this block.
+    """
+
+    from health_agent_infra.core.state.projectors.running_activity import (
+        read_activities_for_date,
+        read_activities_range,
+    )
+
+    today = read_activities_for_date(
+        conn, user_id=user_id, as_of_date=as_of_date, activity_type="Run",
+    )
+    history_since = as_of_date - timedelta(days=lookback_days)
+    history_until = as_of_date - timedelta(days=1)
+    history: list[dict] = []
+    if history_until >= history_since:
+        history = read_activities_range(
+            conn, user_id=user_id,
+            since=history_since, until=history_until,
+            activity_type="Run",
+        )
+    return today, history
 
 
 # ---------------------------------------------------------------------------
@@ -444,20 +597,36 @@ def build_snapshot(
     sleep_history = _history("sleep")
     stress_history = _history("stress")
 
+    # D4 — per-domain cold-start flags. Each block gets
+    # ``cold_start`` (bool) and ``history_days`` (int) so the
+    # per-domain policy can relax coverage for first-run users.
+    cold_start_flags = _cold_start_flags(
+        conn, user_id=user_id, as_of_date=as_of_date,
+    )
+
     recovery_block: dict[str, Any] = {
         "today": recovery_today,
         "history": recovery_history,
         "missingness": recovery_mx,
+        **cold_start_flags["recovery"],
     }
+    activities_today, activities_history = _activities_for_running_block(
+        conn, user_id=user_id, as_of_date=as_of_date,
+        lookback_days=lookback_days,
+    )
     running_block: dict[str, Any] = {
         "today": running_today,
         "history": running_history,
         "missingness": running_mx,
+        "activities_today": activities_today,
+        "activities_history": activities_history,
+        **cold_start_flags["running"],
     }
     sleep_block: dict[str, Any] = {
         "today": sleep_today,
         "history": sleep_history,
         "missingness": sleep_mx,
+        **cold_start_flags["sleep"],
     }
     stress_block: dict[str, Any] = {
         "today": stress_today,
@@ -471,6 +640,7 @@ def build_snapshot(
         "today_garmin": today_garmin_stress,
         "today_manual": today_manual_stress,
         "today_body_battery": today_body_battery,
+        **cold_start_flags["stress"],
     }
 
     # Strength block — Phase 4 step 5 promotes the existing "gym" raw
@@ -482,6 +652,7 @@ def build_snapshot(
         "today": strength_today,
         "history": strength_history,
         "missingness": strength_mx,
+        **cold_start_flags["strength"],
     }
 
     # Nutrition block — Phase 5 step 4 promotes the existing pass-through
@@ -497,6 +668,7 @@ def build_snapshot(
         "today": nutrition_today,
         "history": nutrition_history,
         "missingness": nutrition_mx,
+        **cold_start_flags["nutrition"],
     }
 
     if evidence_bundle is not None:
@@ -548,16 +720,39 @@ def build_snapshot(
         # Running (Phase 2 step 3). Reuses recovery's classified_state
         # for the cross-domain peek (sleep_debt_band + resting_hr_band)
         # so a single `--evidence-json` invocation lights up both domains.
+        # v0.1.4 adds activity-level structural signals from the
+        # running_activity table (migration 017).
         running_signals = derive_running_signals(
             raw_summary,
             running_today=running_today,
             running_history=running_history,
             recovery_classified=recovery_block["classified_state"],
+            activities_today=running_block.get("activities_today"),
+            activities_history=running_block.get("activities_history"),
+            as_of_date=as_of_date.isoformat(),
         )
         running_classified = classify_running_state(running_signals)
-        running_policy = evaluate_running_policy(running_classified, running_signals)
+        # D4 cold-start context — lifts the forced defer when the user
+        # is still accumulating history, recovery is non-red, and a
+        # planned session intent is present. See D4 §Running for the
+        # full relaxation contract.
+        running_cold_start_ctx = {
+            "cold_start": running_block["cold_start"],
+            "recovery_status": recovery_block["classified_state"].get(
+                "recovery_status"
+            ),
+            "planned_session_type": cleaned.get("planned_session_type"),
+        }
+        running_policy = evaluate_running_policy(
+            running_classified,
+            running_signals,
+            cold_start_context=running_cold_start_ctx,
+        )
         running_block["signals"] = running_signals
         running_block["classified_state"] = _running_classified_to_dict(running_classified)
+        _merge_policy_uncertainty(
+            running_block["classified_state"], running_policy,
+        )
         running_block["policy_result"] = _policy_to_dict(running_policy)
 
         # Sleep (Phase 3 step 5). Source of truth for sleep_debt_band is
@@ -584,9 +779,22 @@ def build_snapshot(
             stress_history=stress_history,
         )
         stress_classified = classify_stress_state(stress_signals)
-        stress_policy = evaluate_stress_policy(stress_classified, stress_signals)
+        # D4 stress cold-start — energy self-report from manual
+        # readiness is enough to lift the defer at low confidence.
+        stress_cold_start_ctx = {
+            "cold_start": stress_block["cold_start"],
+            "energy_self_report": cleaned.get("energy_self_report"),
+        }
+        stress_policy = evaluate_stress_policy(
+            stress_classified,
+            stress_signals,
+            cold_start_context=stress_cold_start_ctx,
+        )
         stress_block["signals"] = stress_signals
         stress_block["classified_state"] = _stress_classified_to_dict(stress_classified)
+        _merge_policy_uncertainty(
+            stress_block["classified_state"], stress_policy,
+        )
         stress_block["policy_result"] = _policy_to_dict(stress_policy)
 
         # Strength (Phase 4 step 5). X3a/X3b in synthesis read from
@@ -602,9 +810,24 @@ def build_snapshot(
             goal_domain=(goals_active[0]["domain"] if goals_active else None),
         )
         strength_classified = classify_strength_state(strength_signals)
-        strength_policy = evaluate_strength_policy(strength_classified)
+        # D4 cold-start context for strength — explicit intent
+        # required (planned_session_type must contain "strength").
+        strength_cold_start_ctx = {
+            "cold_start": strength_block["cold_start"],
+            "recovery_status": recovery_block["classified_state"].get(
+                "recovery_status"
+            ),
+            "planned_session_type": cleaned.get("planned_session_type"),
+        }
+        strength_policy = evaluate_strength_policy(
+            strength_classified,
+            cold_start_context=strength_cold_start_ctx,
+        )
         strength_block["signals"] = strength_signals
         strength_block["classified_state"] = _strength_classified_to_dict(strength_classified)
+        _merge_policy_uncertainty(
+            strength_block["classified_state"], strength_policy,
+        )
         strength_block["policy_result"] = _policy_to_dict(strength_policy)
 
         # Nutrition (Phase 5 step 4). X2 in synthesis reads
@@ -924,3 +1147,31 @@ def _policy_to_dict(policy: Any) -> dict[str, Any]:
         "forced_action_detail": policy.forced_action_detail,
         "capped_confidence": policy.capped_confidence,
     }
+
+
+def _merge_policy_uncertainty(
+    classified_state: dict[str, Any],
+    policy: Any,
+) -> None:
+    """Merge ``policy.extra_uncertainty`` into
+    ``classified_state["uncertainty"]`` in place, deduping while
+    preserving order. No-op for policies whose dataclass doesn't
+    carry ``extra_uncertainty`` yet.
+
+    This lets per-domain policies attach cold-start (and future)
+    uncertainty tokens without the skill having to know which
+    tokens originated where — the classified_state uncertainty
+    list is the skill's single source of truth.
+    """
+
+    extras = getattr(policy, "extra_uncertainty", ()) or ()
+    if not extras:
+        return
+    existing: list[str] = list(classified_state.get("uncertainty", ()))
+    seen = set(existing)
+    for token in extras:
+        if token in seen:
+            continue
+        existing.append(token)
+        seen.add(token)
+    classified_state["uncertainty"] = existing

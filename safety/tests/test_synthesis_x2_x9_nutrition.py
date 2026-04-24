@@ -53,6 +53,7 @@ def _snapshot(
     protein_ratio=None,
     nutrition_today=None,
     use_classifier=True,
+    planned_session_type: str | None = "hard",
 ):
     """Build a minimal Phase 5 snapshot carrying the nutrition block.
 
@@ -61,6 +62,11 @@ def _snapshot(
     them directly. When False, only ``nutrition.today`` is populated
     and X2 must fall back to computing from that row against the
     config targets.
+
+    ``planned_session_type`` defaults to ``"hard"`` so legacy X9 tests
+    that pre-date the v0.1.4 precondition keep asserting their original
+    behaviour. Pass ``None`` to exercise the "user hasn't planned
+    anything" gate added in acceptance criterion #7.
     """
 
     nutrition: dict = {}
@@ -71,8 +77,11 @@ def _snapshot(
         }
     if nutrition_today is not None:
         nutrition["today"] = nutrition_today
+    recovery: dict = {"classified_state": {}, "today": {}}
+    if planned_session_type is not None:
+        recovery["evidence"] = {"planned_session_type": planned_session_type}
     return {
-        "recovery": {"classified_state": {}, "today": {}},
+        "recovery": recovery,
         "stress": {"today": {}},
         "running": {"history": []},
         "strength": {"history": []},
@@ -352,6 +361,63 @@ def test_x9_does_not_fire_when_strength_already_softened():
     assert firings == []
 
 
+def test_x9_does_not_fire_when_planned_session_type_is_null(tmp_path=None):
+    """Acceptance criterion #7: X9 only fires when the user has
+    explicitly planned a session. A bundle that looks hard on its face
+    (recovery/running/strength proposals with their baseline-hard
+    actions) no longer triggers a protein bump if no readiness intake
+    has declared a planned session type.
+
+    This blocks the pre-v0.1.4 footgun where a first-run user with no
+    intake still got their nutrition nudged because the default
+    proposals were "hard."
+    """
+
+    drafts = [_strength_draft_hard(), _nutrition_draft()]
+    # planned_session_type=None exercises the new gate.
+    firings = evaluate_x9(
+        _snapshot(planned_session_type=None), drafts, _thresholds(),
+    )
+    assert firings == [], (
+        "X9 fired despite no planned_session_type in evidence — "
+        "precondition gate (#7) not enforced"
+    )
+
+
+def test_x9_fires_even_when_planned_session_type_is_non_hard_text():
+    """The gate is strictly "non-null," not "hardness-matching."
+    A user who states any planned session (e.g. ``"intervals"``,
+    ``"easy"``, ``"rest"``) satisfies the precondition; the hardness
+    check remains on the draft itself. Intent: don't overload the gate
+    with a second round of string-parsing — readiness intake states
+    intent; proposals state what the system recommends doing.
+    """
+
+    drafts = [_strength_draft_hard(), _nutrition_draft()]
+    firings = evaluate_x9(
+        _snapshot(planned_session_type="intervals_4x4_z4_z2"),
+        drafts,
+        _thresholds(),
+    )
+    assert len(firings) == 1
+    assert firings[0].rule_id == "X9"
+
+
+def test_x9_does_not_fire_when_planned_set_but_no_hard_training_draft():
+    """Precondition is necessary but not sufficient. A bundle where
+    every training draft has already been softened to a non-baseline
+    action must not trigger X9 even if the user planned something
+    hard, because the runtime's eventual plan isn't hard either."""
+
+    softened_strength = _strength_draft_hard(action="downgrade_to_moderate_load")
+    firings = evaluate_x9(
+        _snapshot(planned_session_type="hard"),
+        [softened_strength, _nutrition_draft()],
+        _thresholds(),
+    )
+    assert firings == []
+
+
 def test_x9_mutates_only_action_detail_not_action():
     drafts = [_strength_draft_hard(), _nutrition_draft()]
     firings = evaluate_phase_b(_snapshot(), drafts, _thresholds())
@@ -473,6 +539,8 @@ def test_end_to_end_synthesis_nutrition_and_hard_running(tmp_path):
         "recovery": {
             "classified_state": {"sleep_debt_band": "none"},
             "today": {"acwr_ratio": 1.0},
+            # X9 precondition (v0.1.4 #7): user has explicitly planned a session.
+            "evidence": {"planned_session_type": "hard"},
         },
         "stress": {"today": {}, "today_body_battery": 80, "today_garmin": 20},
         "running": {"history": []},

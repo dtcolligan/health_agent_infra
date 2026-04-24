@@ -1080,16 +1080,228 @@ def test_cli_clean_never_populates_manual_stress_score(tmp_path):
 # ---------------------------------------------------------------------------
 
 def test_recovery_readiness_skill_allows_hai_state_snapshot():
+    """Recovery-readiness's allowed-tools must grant the bash invocations
+    its protocol depends on: ``hai state snapshot`` to load the evidence
+    bundle, ``hai propose`` to persist the RecoveryProposal (per v0.1.4
+    D2; the legacy ``hai writeback`` path was retired), and
+    ``hai review`` for follow-up schedule inspection.
+    """
     from importlib.resources import files
 
     skill = files("health_agent_infra").joinpath(
         "skills", "recovery-readiness", "SKILL.md"
     ).read_text(encoding="utf-8")
-    # First frontmatter block contains allowed-tools.
-    # Cheap parse: look at the line starting `allowed-tools:`.
     allowed_line = next(
         ln for ln in skill.splitlines() if ln.startswith("allowed-tools:")
     )
     assert "hai state snapshot" in allowed_line
-    assert "hai writeback" in allowed_line
+    assert "hai propose" in allowed_line
+    assert "hai writeback" not in allowed_line, (
+        "hai writeback was retired in v0.1.4 D2; recovery-readiness "
+        "now uses hai propose like the other five domain skills."
+    )
     assert "hai review" in allowed_line
+
+
+# ---------------------------------------------------------------------------
+# Activities pipeline — /activities endpoint → running_activity table +
+# running raw-row enrichment
+# ---------------------------------------------------------------------------
+
+def _write_pull_payload_with_activity(tmp_path: Path, *, activity: dict) -> Path:
+    """Pull payload with one intervals.icu activity for AS_OF. Baseline
+    wellness fields populated so the existing projector path still fires."""
+
+    payload = {
+        "as_of_date": AS_OF.isoformat(),
+        "user_id": USER,
+        "source": "intervals_icu",
+        "pull": {
+            "sleep": {"record_id": "i_sleep_2026-04-17", "duration_hours": 7.5},
+            "resting_hr": [{"date": AS_OF.isoformat(), "bpm": 52.0,
+                             "record_id": "i_rhr_2026-04-17"}],
+            "hrv": [{"date": AS_OF.isoformat(), "rmssd_ms": 48.0,
+                       "record_id": "i_hrv_2026-04-17"}],
+            "training_load": [{"date": AS_OF.isoformat(), "load": 400.0,
+                                "record_id": "i_load_2026-04-17"}],
+            "raw_daily_row": {
+                **_full_raw_row(),
+                # Simulate the pre-fix wellness stream: running fields null.
+                "distance_m": None,
+                "moderate_intensity_min": None,
+                "vigorous_intensity_min": None,
+            },
+            "activities": [activity],
+        },
+        "manual_readiness": None,
+    }
+    p = tmp_path / "evidence_with_activity.json"
+    p.write_text(json.dumps(payload), encoding="utf-8")
+    return p
+
+
+def _sample_activity() -> dict:
+    """Matches IntervalsIcuActivity.as_dict() shape for a Garmin Connect run."""
+
+    return {
+        "activity_id": "i142248964",
+        "user_id": USER,
+        "as_of_date": AS_OF.isoformat(),
+        "start_date_utc": "2026-04-17T10:21:28Z",
+        "start_date_local": "2026-04-17T11:21:28",
+        "source": "GARMIN_CONNECT",
+        "external_id": "22628799588",
+        "activity_type": "Run",
+        "name": "East Lothian Running",
+        "distance_m": 6746.21,
+        "moving_time_s": 2399.0,
+        "elapsed_time_s": 2400.0,
+        "average_hr": 155.0,
+        "max_hr": 182.0,
+        "athlete_max_hr": 202.0,
+        "hr_zone_times_s": [1312, 254, 550, 282, 0, 0, 0],
+        "hr_zones_bpm": [154, 163, 172, 182, 187, 192, 202],
+        "interval_summary": ["4x 9m29s 156bpm", "1x 2m7s 146bpm"],
+        "trimp": 67.5,
+        "icu_training_load": 39.0,
+        "hr_load": 39.0,
+        "hr_load_type": "HRSS",
+        "warmup_time_s": 300.0,
+        "cooldown_time_s": 300.0,
+        "lap_count": 5,
+        "average_speed_mps": 2.81,
+        "max_speed_mps": 3.667,
+        "pace_s_per_m": 2.81,
+        "average_cadence_spm": 84.0,
+        "average_stride_m": 1.0,
+        "calories": 520.0,
+        "total_elevation_gain_m": 23.4,
+        "total_elevation_loss_m": 24.4,
+        "feel": 3,
+        "icu_rpe": 7,
+        "session_rpe": 279.0,
+        "device_name": "Garmin Forerunner 265",
+        "raw_json": "{}",
+    }
+
+
+def test_cli_clean_persists_activity_to_running_activity(tmp_path: Path):
+    db = _init_db(tmp_path)
+    evidence = _write_pull_payload_with_activity(tmp_path, activity=_sample_activity())
+
+    out = StringIO()
+    with redirect_stdout(out):
+        rc = cli_main([
+            "clean",
+            "--evidence-json", str(evidence),
+            "--db-path", str(db),
+        ])
+    assert rc == 0
+
+    conn = open_connection(db)
+    try:
+        row = conn.execute(
+            "SELECT activity_id, distance_m, moving_time_s, activity_type, "
+            "       interval_summary_json "
+            "FROM running_activity WHERE as_of_date = ? AND user_id = ?",
+            (AS_OF.isoformat(), USER),
+        ).fetchone()
+    finally:
+        conn.close()
+
+    assert row["activity_id"] == "i142248964"
+    assert row["distance_m"] == pytest.approx(6746.21)
+    assert row["moving_time_s"] == 2399.0
+    assert row["activity_type"] == "Run"
+    assert "4x 9m29s 156bpm" in row["interval_summary_json"]
+
+
+def test_cli_clean_enriches_daily_rollup_from_activity_hr_zones(tmp_path: Path):
+    """Even when the wellness stream leaves intensity minutes null, the
+    activity aggregation fills them so ``accepted_running_state_daily``
+    carries real numbers into the classifier."""
+
+    db = _init_db(tmp_path)
+    evidence = _write_pull_payload_with_activity(tmp_path, activity=_sample_activity())
+
+    rc = cli_main([
+        "clean",
+        "--evidence-json", str(evidence),
+        "--db-path", str(db),
+    ])
+    assert rc == 0
+
+    conn = open_connection(db)
+    try:
+        running = conn.execute(
+            "SELECT total_distance_m, moderate_intensity_min, vigorous_intensity_min "
+            "FROM accepted_running_state_daily "
+            "WHERE as_of_date = ? AND user_id = ?",
+            (AS_OF.isoformat(), USER),
+        ).fetchone()
+    finally:
+        conn.close()
+
+    # Activity distance flows through; wellness null was overwritten.
+    assert running["total_distance_m"] == pytest.approx(6746.21)
+    # HR zone times [Z1=1312, Z2=254, Z3=550, Z4=282, Z5..Z7=0]
+    #   moderate = (Z2 + Z3) / 60 = 804 / 60 = 13.4 min
+    #   vigorous = (Z4 + Z5 + Z6 + Z7) / 60 = 282 / 60 = 4.7 min
+    assert running["moderate_intensity_min"] == pytest.approx(804 / 60.0)
+    assert running["vigorous_intensity_min"] == pytest.approx(282 / 60.0)
+
+
+def test_cli_clean_rolls_back_activity_insert_on_downstream_failure(tmp_path: Path):
+    """All activity inserts share the clean-projection transaction. A
+    broken follow-up projector shouldn't leave stranded running_activity
+    rows."""
+
+    db = _init_db(tmp_path)
+    # Deliberately bad activity payload: missing required raw_json.
+    bad_activity = _sample_activity()
+    del bad_activity["raw_json"]
+    evidence = _write_pull_payload_with_activity(tmp_path, activity=bad_activity)
+
+    out = StringIO()
+    with redirect_stdout(out):
+        rc = cli_main([
+            "clean",
+            "--evidence-json", str(evidence),
+            "--db-path", str(db),
+        ])
+    # Clean is fail-soft: it emits a stderr warning and still returns 0.
+    assert rc == 0
+
+    conn = open_connection(db)
+    try:
+        count = conn.execute(
+            "SELECT COUNT(*) FROM running_activity"
+        ).fetchone()[0]
+    finally:
+        conn.close()
+    assert count == 0
+
+
+def test_cli_clean_with_no_activities_leaves_running_activity_empty(tmp_path: Path):
+    """The existing wellness-only path must keep working when the pull has
+    no activities array."""
+
+    db = _init_db(tmp_path)
+    # _write_pull_payload — the pre-existing helper — emits no activities key.
+    evidence = _write_pull_payload(tmp_path)
+
+    rc = cli_main([
+        "clean",
+        "--evidence-json", str(evidence),
+        "--db-path", str(db),
+    ])
+    assert rc == 0
+
+    conn = open_connection(db)
+    try:
+        count = conn.execute(
+            "SELECT COUNT(*) FROM running_activity"
+        ).fetchone()[0]
+    finally:
+        conn.close()
+    assert count == 0

@@ -25,7 +25,10 @@ agent recommendations they can audit, reproduce, and keep local.
   explanation the agent can narrate verbatim.
 - **Auditable by construction.** Pulls, proposals, rule firings, synthesis,
   and final recommendations all land in typed tables. Inspect anytime with
-  `hai doctor`, `hai explain`, `hai stats`, or plain SQL.
+  `hai today` (end-user prose), `hai explain --operator` (dense audit
+  report), `hai doctor`, `hai stats`. Prefer these over reading the
+  SQLite file directly — they reconcile supersede chains and hide
+  schema churn, which plain SQL won't.
 
 ## Install
 
@@ -35,6 +38,7 @@ hai init --with-auth --with-first-pull               # scaffolds state + config 
                                                      # prompts for Garmin credentials,
                                                      # backfills the last 7 days
 hai daily                                            # tomorrow morning: pull → clean → propose → synthesize → commit
+hai today                                            # read today's plan in plain language
 hai stats                                            # local funnel: syncs, recent runs, daily streak
 ```
 
@@ -42,6 +46,63 @@ Prefer the non-interactive path? Run `hai init` on its own, then `hai auth
 garmin` separately. `hai init` is idempotent and safe to re-run. Full CLI
 surface in
 [`reporting/docs/agent_cli_contract.md`](reporting/docs/agent_cli_contract.md).
+
+**macOS Keychain note.** `hai auth garmin` and `hai auth intervals-icu`
+store credentials in the OS keyring. On macOS, the first time
+`hai pull --live` reads those credentials the system prompts you to
+allow access. Click **Always Allow** — otherwise every subsequent
+pull re-prompts and scripted runs (including `hai daily`) will hang
+waiting for a keyboard. The corresponding success messages from
+`hai auth` print a one-line stderr hint as a reminder.
+
+## Reading your plan
+
+`hai today` is the non-agent-mediated user surface — it reads the
+canonical plan for a date (resolving supersede chains automatically)
+and renders prose in the voice the `reporting` skill specifies:
+top-matter → 2–4 sentence summary → six per-domain sections → footer
+pointing at the next review.
+
+```bash
+hai today                         # today, markdown on TTY / plain elsewhere
+hai today --as-of 2026-04-23      # specific date
+hai today --domain recovery       # narrow to one domain
+hai today --format json           # machine-readable (same shape, no prose)
+```
+
+Defer domains (insufficient signal) surface a domain-specific
+follow-up question and an **unblock hint** naming the `hai intake …`
+command that would give tomorrow's plan the signal it needs — see
+[`reporting/plans/v0_1_4/D3_user_surface.md`](reporting/plans/v0_1_4/D3_user_surface.md)
+for the voice contract.
+
+For debug-level audit dumps, use `hai explain --operator` (dense
+field-by-field text) or `hai explain` (JSON). Both consume the same
+explain bundle `hai today` reads — they just render it differently.
+
+## Recording your day
+
+After tomorrow's `hai daily` schedules a review event for each rec,
+log how yesterday went:
+
+```bash
+hai review record --outcome-json <path> \
+                  --base-dir <base_dir> \
+                  --db-path <state.db>
+
+hai review summary --base-dir <base_dir> [--domain recovery]
+```
+
+Outcomes are append-only and **auto-re-link** when a plan has been
+superseded — if you recorded an outcome against the morning plan but
+re-authored the day after lunch, `hai review record` routes the
+outcome to the canonical leaf's matching-domain rec. See the
+`review-protocol` skill for the full payload shape.
+
+Manual intake surfaces (stress score, gym sessions, nutrition macros,
+readiness self-reports) all live under `hai intake <domain>`; they
+persist to their per-domain raw tables so the next `hai daily` picks
+them up automatically.
 
 ## Six domains in v1
 
@@ -81,7 +142,7 @@ pull / intake  →  projectors  →  accepted_*_state_daily tables
                + N recommendation_log (adapted)
                                         │
                                         ▼
-             hai review schedule / record / summary
+             hai today (read) / hai review record (write)
 ```
 
 - **Local state memory** — ``accepted_*_state_daily`` tables store the
@@ -155,9 +216,8 @@ hai intake gym|exercise|nutrition|stress|note|readiness ...
 # State
 hai state init | migrate | read | snapshot | reproject
 
-# Per-domain debug
-hai classify --domain <d> --evidence-json <p>
-hai policy   --domain <d> --evidence-json <p>
+# Per-domain debug: use `hai state snapshot --evidence-json <p>` —
+# emits classified_state + policy_result for every domain in one call.
 
 # Agent flow (use `hai daily` for the whole loop)
 hai daily                                       # morning orchestrator (pull→clean→reproject→propose→synthesize)
@@ -165,7 +225,6 @@ hai propose  --domain <d> --proposal-json <p>
 hai synthesize --as-of <d> --user-id <u>
 
 # Persistence + review
-hai writeback --recommendation-json <p>         # recovery-only legacy direct path
 hai review schedule | record | summary [--domain <d>]
 
 # Agent contract + audit
@@ -210,7 +269,7 @@ src/health_agent_infra/
 │   ├── recovery-readiness/  running-readiness/  sleep-quality/
 │   ├── stress-regulation/  strength-readiness/  nutrition-alignment/
 │   ├── daily-plan-synthesis/  intent-router/  expert-explainer/
-│   └── strength-intake/  merge-human-inputs/  writeback-protocol/
+│   └── strength-intake/  merge-human-inputs/  review-protocol/
 │       reporting/  safety/
 ├── evals/                          # packaged eval runner + scenarios
 └── data/garmin/export/              # committed CSV fixture
@@ -228,7 +287,7 @@ safety/                             # see safety/README.md
 ## What's proven
 
 - Six domains end-to-end: classify → policy → skill proposal → synthesis →
-  writeback → review.
+  review.
 - Ten X-rule evaluators across two phases with atomic transactional commits,
   each firing carrying a stable slug and a one-sentence `human_explanation`
   agents can narrate verbatim.
@@ -253,7 +312,7 @@ safety/                             # see safety/README.md
 - Idempotent synthesis with optional `--supersede` versioning.
 - 28 eval scenarios (18 domain + 10 synthesis) — all deterministic axes green.
 - **1489 tests** covering every band, every R-rule, every X-rule, atomic
-  transaction semantics, writeback invariants, skill-boundary contracts,
+  transaction semantics, proposal/synthesis invariants, skill-boundary contracts,
   capabilities-manifest coverage + determinism, planned-ledger round-trip,
   three-state explain render, and the new runtime_event_log + hai stats
   paths.

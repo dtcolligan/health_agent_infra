@@ -1094,17 +1094,35 @@ def evaluate_x9(
     """X9 (adjust): training intensity → nutrition target adjustments.
 
     v1 scope: operates only on ``nutrition`` drafts. For every draft in
-    the nutrition domain, if any training-domain draft (recovery or
-    running) carries a "hard" baseline action, append a note to the
-    nutrition ``action_detail`` bumping protein / carb targets.
+    the nutrition domain, if the user has **explicitly planned** a
+    session (``planned_session_type`` non-null on cleaned evidence) and
+    any training-domain draft (recovery / running / strength) carries a
+    "hard" baseline action, append a note to the nutrition
+    ``action_detail`` bumping protein / carb targets.
 
-    Until the nutrition domain lands, this evaluator returns ``[]``
-    because no nutrition draft can appear in the input. The machinery
-    exists so Phase B has at least one evaluator to exercise + test.
+    **Precondition added in v0.1.4 (acceptance criterion #7):** the
+    ``planned_session_type`` gate. Before the gate, X9 bumped nutrition
+    whenever a domain proposal defaulted to its hard baseline action,
+    even when the user hadn't stated what they were planning. That's
+    the opposite of conservative: "we don't know what you're doing, so
+    we're bumping your protein anyway." After the gate, if no readiness
+    intake has declared a planned session, X9 stays quiet.
+
+    ``planned_session_type`` is sourced from
+    ``snapshot.recovery.evidence`` (populated by ``hai clean`` from the
+    manual_readiness block) — the same field the recovery-readiness
+    skill keys on.
     """
 
     nutrition_drafts = [d for d in drafts if d.get("domain") == "nutrition"]
     if not nutrition_drafts:
+        return []
+
+    # Precondition: user has explicitly planned something today.
+    recovery_block = snapshot.get("recovery") or {}
+    evidence = recovery_block.get("evidence") or {}
+    planned_session_type = evidence.get("planned_session_type")
+    if not planned_session_type:
         return []
 
     # Phase 5 step 4: strength is now a first-class training domain and

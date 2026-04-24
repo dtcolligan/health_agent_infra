@@ -1,9 +1,9 @@
 """Live Intervals.icu pull adapter.
 
-Fetches per-day wellness data from the Intervals.icu REST API and normalises
-it into the same evidence dict shape the CSV and Garmin-live adapters emit,
-so ``hai pull --source intervals-icu`` is a drop-in substitute for
-downstream ``clean`` / projection code.
+Fetches per-day wellness data + per-session activity data from the
+Intervals.icu REST API and normalises both into the evidence dict shape
+the CSV and Garmin-live adapters emit, so ``hai pull --source intervals-icu``
+is a drop-in substitute for downstream ``clean`` / projection code.
 
 Intervals.icu is the recommended primary source: it holds a real OAuth
 authorisation from the user to Garmin, so we never touch Garmin's hostile
@@ -11,7 +11,7 @@ login endpoints ourselves. Auth is HTTP Basic with a fixed username
 ``"API_KEY"`` and the user's personal API key as the password (see
 https://forum.intervals.icu/t/api-access-to-intervals-icu/609).
 
-Evidence-shape contract (identical to the Garmin adapters):
+Evidence-shape contract (superset of the Garmin adapters):
 
     {
         "sleep": {record_id, duration_hours} | None,
@@ -21,12 +21,23 @@ Evidence-shape contract (identical to the Garmin adapters):
         "raw_daily_row": {...Garmin-shaped columns for as_of, None where
                           Intervals.icu does not provide the metric...}
                          | None,
+        "activities":   [IntervalsIcuActivity.as_dict(), ...]
+                        — per-session structural data (distance, HR zones,
+                        interval summaries, TRIMP). Empty list when the
+                        /activities endpoint returns nothing for the
+                        window.
     }
 
+Wellness is a daily-rollup stream; activities is the per-session stream
+that actually carries the session structure (HR zone times, interval
+blocks, TRIMP, warmup/cooldown splits). Running and strength domains
+consume activities first; wellness is the fallback when activity
+granularity is missing.
+
 The upstream client is library-agnostic: the adapter depends on an
-``IntervalsIcuClient`` Protocol with a single ``fetch_wellness_range``
-method. Tests inject a replay client; production code builds a real
-client via ``build_default_client(credentials)``.
+``IntervalsIcuClient`` Protocol with two methods — ``fetch_wellness_range``
+and ``fetch_activities_range``. Tests inject a replay client; production
+code builds a real client via ``build_default_client(credentials)``.
 """
 
 from __future__ import annotations
@@ -126,15 +137,117 @@ class IntervalsIcuError(RuntimeError):
     """
 
 
+@dataclass(frozen=True)
+class IntervalsIcuActivity:
+    """Structured per-session record from intervals.icu's /activities stream.
+
+    Fields map one-to-one to populated columns observed on a live Garmin
+    Connect-sourced run (see docs at the top of this module). Fields the
+    upstream record did not populate arrive as None; the full upstream
+    payload is preserved in ``raw_json`` as an escape hatch for
+    downstream skills that want fields we haven't typed yet.
+
+    ``activity_id`` is the intervals.icu primary key (e.g. ``"i142248964"``).
+    ``external_id`` is the upstream-of-intervals-icu id when present (e.g.
+    the Garmin Connect activity id). Both are string-typed because
+    intervals.icu returns them as strings and we don't want to silently
+    coerce 64-bit ids through float.
+    """
+
+    activity_id: str
+    user_id: str
+    as_of_date: str
+    start_date_utc: Optional[str]
+    start_date_local: Optional[str]
+    source: Optional[str]
+    external_id: Optional[str]
+    activity_type: Optional[str]
+    name: Optional[str]
+    distance_m: Optional[float]
+    moving_time_s: Optional[float]
+    elapsed_time_s: Optional[float]
+    average_hr: Optional[float]
+    max_hr: Optional[float]
+    athlete_max_hr: Optional[float]
+    hr_zone_times_s: Optional[list[int]]
+    hr_zones_bpm: Optional[list[int]]
+    interval_summary: Optional[list[str]]
+    trimp: Optional[float]
+    icu_training_load: Optional[float]
+    hr_load: Optional[float]
+    hr_load_type: Optional[str]
+    warmup_time_s: Optional[float]
+    cooldown_time_s: Optional[float]
+    lap_count: Optional[int]
+    average_speed_mps: Optional[float]
+    max_speed_mps: Optional[float]
+    pace_s_per_m: Optional[float]
+    average_cadence_spm: Optional[float]
+    average_stride_m: Optional[float]
+    calories: Optional[float]
+    total_elevation_gain_m: Optional[float]
+    total_elevation_loss_m: Optional[float]
+    feel: Optional[int]
+    icu_rpe: Optional[int]
+    session_rpe: Optional[float]
+    device_name: Optional[str]
+    raw_json: str
+
+    def as_dict(self) -> dict:
+        """Serialise to a JSON-safe dict for pull output + projection."""
+
+        return {
+            "activity_id": self.activity_id,
+            "user_id": self.user_id,
+            "as_of_date": self.as_of_date,
+            "start_date_utc": self.start_date_utc,
+            "start_date_local": self.start_date_local,
+            "source": self.source,
+            "external_id": self.external_id,
+            "activity_type": self.activity_type,
+            "name": self.name,
+            "distance_m": self.distance_m,
+            "moving_time_s": self.moving_time_s,
+            "elapsed_time_s": self.elapsed_time_s,
+            "average_hr": self.average_hr,
+            "max_hr": self.max_hr,
+            "athlete_max_hr": self.athlete_max_hr,
+            "hr_zone_times_s": list(self.hr_zone_times_s) if self.hr_zone_times_s is not None else None,
+            "hr_zones_bpm": list(self.hr_zones_bpm) if self.hr_zones_bpm is not None else None,
+            "interval_summary": list(self.interval_summary) if self.interval_summary is not None else None,
+            "trimp": self.trimp,
+            "icu_training_load": self.icu_training_load,
+            "hr_load": self.hr_load,
+            "hr_load_type": self.hr_load_type,
+            "warmup_time_s": self.warmup_time_s,
+            "cooldown_time_s": self.cooldown_time_s,
+            "lap_count": self.lap_count,
+            "average_speed_mps": self.average_speed_mps,
+            "max_speed_mps": self.max_speed_mps,
+            "pace_s_per_m": self.pace_s_per_m,
+            "average_cadence_spm": self.average_cadence_spm,
+            "average_stride_m": self.average_stride_m,
+            "calories": self.calories,
+            "total_elevation_gain_m": self.total_elevation_gain_m,
+            "total_elevation_loss_m": self.total_elevation_loss_m,
+            "feel": self.feel,
+            "icu_rpe": self.icu_rpe,
+            "session_rpe": self.session_rpe,
+            "device_name": self.device_name,
+            "raw_json": self.raw_json,
+        }
+
+
 class IntervalsIcuClient(Protocol):
     """Minimal upstream client contract the adapter consumes.
 
-    Implementations return a list of wellness records (dicts) for the
-    given inclusive date range. The adapter does not care about the
-    underlying HTTP library — tests inject a replay client.
+    Implementations return a list of records (dicts) for the given inclusive
+    date range. The adapter does not care about the underlying HTTP library —
+    tests inject a replay client.
     """
 
     def fetch_wellness_range(self, oldest: date, newest: date) -> list[dict]: ...
+    def fetch_activities_range(self, oldest: date, newest: date) -> list[dict]: ...
 
 
 @dataclass
@@ -156,14 +269,36 @@ class HttpIntervalsIcuClient:
         self._auth_header = "Basic " + base64.b64encode(token).decode("ascii")
 
     def fetch_wellness_range(self, oldest: date, newest: date) -> list[dict]:
-        qs = urllib.parse.urlencode(
-            {"oldest": oldest.isoformat(), "newest": newest.isoformat()}
+        return self._fetch_json_array(
+            path=(
+                f"/api/v1/athlete/"
+                f"{urllib.parse.quote(self.credentials.athlete_id, safe='')}"
+                f"/wellness.json"
+            ),
+            query={"oldest": oldest.isoformat(), "newest": newest.isoformat()},
+            endpoint_label="wellness",
         )
-        url = (
-            f"{self.base_url}/api/v1/athlete/"
-            f"{urllib.parse.quote(self.credentials.athlete_id, safe='')}"
-            f"/wellness.json?{qs}"
+
+    def fetch_activities_range(self, oldest: date, newest: date) -> list[dict]:
+        return self._fetch_json_array(
+            path=(
+                f"/api/v1/athlete/"
+                f"{urllib.parse.quote(self.credentials.athlete_id, safe='')}"
+                f"/activities"
+            ),
+            query={"oldest": oldest.isoformat(), "newest": newest.isoformat()},
+            endpoint_label="activities",
         )
+
+    def _fetch_json_array(
+        self,
+        *,
+        path: str,
+        query: dict[str, str],
+        endpoint_label: str,
+    ) -> list[dict]:
+        qs = urllib.parse.urlencode(query)
+        url = f"{self.base_url}{path}?{qs}"
         req = urllib.request.Request(
             url,
             headers={
@@ -176,21 +311,21 @@ class HttpIntervalsIcuClient:
                 body = resp.read().decode("utf-8")
         except urllib.error.HTTPError as exc:
             raise IntervalsIcuError(
-                f"Intervals.icu wellness fetch failed: HTTP {exc.code} {exc.reason}"
+                f"Intervals.icu {endpoint_label} fetch failed: HTTP {exc.code} {exc.reason}"
             ) from exc
         except urllib.error.URLError as exc:
             raise IntervalsIcuError(
-                f"Intervals.icu wellness fetch failed: {exc.reason}"
+                f"Intervals.icu {endpoint_label} fetch failed: {exc.reason}"
             ) from exc
         try:
             data = json.loads(body)
         except json.JSONDecodeError as exc:
             raise IntervalsIcuError(
-                "Intervals.icu wellness response was not valid JSON"
+                f"Intervals.icu {endpoint_label} response was not valid JSON"
             ) from exc
         if not isinstance(data, list):
             raise IntervalsIcuError(
-                "Intervals.icu wellness response was not a JSON array"
+                f"Intervals.icu {endpoint_label} response was not a JSON array"
             )
         return data
 
@@ -212,6 +347,7 @@ class IntervalsIcuAdapter:
 
     client: IntervalsIcuClient
     history_days: int = 14
+    user_id: str = "u_local_1"
     last_pull_partial: bool = field(default=False, init=False)
     last_pull_failed_days: list[str] = field(default_factory=list, init=False)
 
@@ -246,6 +382,10 @@ class IntervalsIcuAdapter:
         )
         raw_daily_row = _extract_raw_daily_row(records_by_date.get(as_of), as_of)
 
+        activities = self._fetch_activities_safe(
+            oldest=oldest, newest=as_of, user_id=self.user_id,
+        )
+
         if records_by_date.get(as_of) is None:
             self.last_pull_partial = True
             self.last_pull_failed_days.append(as_of.isoformat())
@@ -256,7 +396,30 @@ class IntervalsIcuAdapter:
             "hrv": hrv,
             "training_load": training_load,
             "raw_daily_row": raw_daily_row,
+            "activities": [a.as_dict() for a in activities],
         }
+
+    def _fetch_activities_safe(
+        self, *, oldest: date, newest: date, user_id: str,
+    ) -> list[IntervalsIcuActivity]:
+        """Fetch activities, parse, and swallow endpoint-absent errors.
+
+        A 404 or rejected activities endpoint should NOT fail the whole pull —
+        wellness is the primary signal and we want `hai pull` to keep working
+        even if an intervals.icu account has /activities disabled or the
+        adapter hits a transient upstream error on the activities endpoint.
+        The wellness-level partial flag still reflects wellness status only;
+        activities failures log into ``last_pull_failed_days`` via the
+        ``activities_endpoint`` sentinel so dogfooders can see the gap.
+        """
+
+        try:
+            raw = self.client.fetch_activities_range(oldest=oldest, newest=newest)
+        except IntervalsIcuError as exc:
+            self.last_pull_failed_days.append(f"activities_endpoint:{exc}")
+            return []
+
+        return _parse_activities(raw, user_id=user_id)
 
 
 def _index_records_by_date(records: Iterable[dict]) -> dict[date, dict]:
@@ -357,3 +520,129 @@ def _as_number(v: Any) -> Optional[float]:
     if isinstance(v, (int, float)):
         return float(v)
     return None
+
+
+def _as_int(v: Any) -> Optional[int]:
+    if isinstance(v, bool):
+        return None
+    if isinstance(v, int):
+        return v
+    if isinstance(v, float) and v.is_integer():
+        return int(v)
+    return None
+
+
+def _as_str_list(v: Any) -> Optional[list[str]]:
+    if not isinstance(v, list):
+        return None
+    return [str(x) for x in v]
+
+
+def _as_int_list(v: Any) -> Optional[list[int]]:
+    if not isinstance(v, list):
+        return None
+    out: list[int] = []
+    for x in v:
+        if isinstance(x, bool):
+            continue
+        if isinstance(x, int):
+            out.append(x)
+        elif isinstance(x, float):
+            out.append(int(x))
+        else:
+            return None
+    return out
+
+
+def _parse_activities(
+    records: Iterable[dict], *, user_id: str,
+) -> list[IntervalsIcuActivity]:
+    """Map the raw /activities JSON array into typed IntervalsIcuActivity.
+
+    Records missing an activity id or a usable date are skipped silently —
+    intervals.icu occasionally returns placeholder shells. The full upstream
+    record is preserved in ``raw_json`` so downstream skills can peek at
+    fields we haven't typed.
+    """
+
+    out: list[IntervalsIcuActivity] = []
+    for rec in records:
+        if not isinstance(rec, dict):
+            continue
+        activity_id = rec.get("id")
+        if not activity_id:
+            continue
+        as_of = _activity_as_of(rec)
+        if as_of is None:
+            continue
+        raw_json = json.dumps(rec, sort_keys=True, default=str)
+        out.append(
+            IntervalsIcuActivity(
+                activity_id=str(activity_id),
+                user_id=user_id,
+                as_of_date=as_of,
+                start_date_utc=_as_optional_str(rec.get("start_date")),
+                start_date_local=_as_optional_str(rec.get("start_date_local")),
+                source=_as_optional_str(rec.get("source")),
+                external_id=_as_optional_str(rec.get("external_id")),
+                activity_type=_as_optional_str(rec.get("type")),
+                name=_as_optional_str(rec.get("name")),
+                distance_m=_as_number(rec.get("distance")) or _as_number(rec.get("icu_distance")),
+                moving_time_s=_as_number(rec.get("moving_time")),
+                elapsed_time_s=_as_number(rec.get("elapsed_time")),
+                average_hr=_as_number(rec.get("average_heartrate")),
+                max_hr=_as_number(rec.get("max_heartrate")),
+                athlete_max_hr=_as_number(rec.get("athlete_max_hr")),
+                hr_zone_times_s=_as_int_list(rec.get("icu_hr_zone_times")),
+                hr_zones_bpm=_as_int_list(rec.get("icu_hr_zones")),
+                interval_summary=_as_str_list(rec.get("interval_summary")),
+                trimp=_as_number(rec.get("trimp")),
+                icu_training_load=_as_number(rec.get("icu_training_load")),
+                hr_load=_as_number(rec.get("hr_load")),
+                hr_load_type=_as_optional_str(rec.get("hr_load_type")),
+                warmup_time_s=_as_number(rec.get("icu_warmup_time")),
+                cooldown_time_s=_as_number(rec.get("icu_cooldown_time")),
+                lap_count=_as_int(rec.get("icu_lap_count")),
+                average_speed_mps=_as_number(rec.get("average_speed")),
+                max_speed_mps=_as_number(rec.get("max_speed")),
+                pace_s_per_m=_as_number(rec.get("pace")),
+                average_cadence_spm=_as_number(rec.get("average_cadence")),
+                average_stride_m=_as_number(rec.get("average_stride")),
+                calories=_as_number(rec.get("calories")),
+                total_elevation_gain_m=_as_number(rec.get("total_elevation_gain")),
+                total_elevation_loss_m=_as_number(rec.get("total_elevation_loss")),
+                feel=_as_int(rec.get("feel")),
+                icu_rpe=_as_int(rec.get("icu_rpe")),
+                session_rpe=_as_number(rec.get("session_rpe")),
+                device_name=_as_optional_str(rec.get("device_name")),
+                raw_json=raw_json,
+            )
+        )
+    out.sort(key=lambda a: (a.as_of_date, a.start_date_utc or "", a.activity_id))
+    return out
+
+
+def _activity_as_of(rec: dict) -> Optional[str]:
+    """Derive the civil date (activity's local day) from an activities record.
+
+    Prefers ``start_date_local`` (already in the athlete's local zone), falls
+    back to ``start_date`` (UTC), and last resort parses the numeric id.
+    Returns the ISO-8601 date string or None if nothing parseable.
+    """
+
+    for k in ("start_date_local", "start_date"):
+        v = rec.get(k)
+        if isinstance(v, str) and len(v) >= 10:
+            try:
+                return date.fromisoformat(v[:10]).isoformat()
+            except ValueError:
+                continue
+    return None
+
+
+def _as_optional_str(v: Any) -> Optional[str]:
+    if v is None:
+        return None
+    if isinstance(v, str):
+        return v if v else None
+    return str(v)

@@ -399,3 +399,70 @@ def test_daily_rerun_is_idempotent_on_review_events(tmp_path, capsys, monkeypatc
         assert review_count == 2
     finally:
         conn.close()
+
+
+# ---------------------------------------------------------------------------
+# D3 §hai daily hint — TTY-aware stderr pointer to `hai today`
+# ---------------------------------------------------------------------------
+
+
+def test_daily_emits_hai_today_hint_on_tty_stderr(tmp_path, capsys, monkeypatch):
+    """When stderr is an interactive TTY, `hai daily` appends a one-line
+    hint pointing at `hai today` so new users discover the user surface
+    without having to read docs.
+    """
+
+    import sys as _sys
+
+    db_path = _fresh_db(tmp_path)
+    monkeypatch.setenv("HAI_STATE_DB", str(db_path))
+    base_dir = tmp_path / "out"
+    _seed_proposals(db_path, ["recovery"])
+
+    monkeypatch.setattr(_sys.stderr, "isatty", lambda: True)
+
+    rc = _run_daily(
+        "--base-dir", str(base_dir),
+        "--as-of", AS_OF,
+        "--user-id", USER_ID,
+        "--db-path", str(db_path),
+        "--skip-pull",
+        "--domains", "recovery",
+    )
+    captured = capsys.readouterr()
+
+    assert rc == 0
+    assert "hai today" in captured.err
+    assert f"--as-of {AS_OF}" in captured.err
+    assert f"--user-id {USER_ID}" in captured.err
+    # Stdout JSON stays byte-stable regardless of TTY.
+    report = json.loads(captured.out)
+    assert report["overall_status"] == "complete"
+
+
+def test_daily_omits_hint_on_non_tty_stderr(tmp_path, capsys, monkeypatch):
+    """Scripted / piped callers (including CI, pytest) must get
+    byte-stable stderr — no hint when stderr isn't a TTY.
+    """
+
+    db_path = _fresh_db(tmp_path)
+    monkeypatch.setenv("HAI_STATE_DB", str(db_path))
+    base_dir = tmp_path / "out"
+    _seed_proposals(db_path, ["recovery"])
+
+    # Default capsys = non-TTY; no monkeypatching needed. Confirm for clarity.
+    import sys as _sys
+    assert not _sys.stderr.isatty()
+
+    rc = _run_daily(
+        "--base-dir", str(base_dir),
+        "--as-of", AS_OF,
+        "--user-id", USER_ID,
+        "--db-path", str(db_path),
+        "--skip-pull",
+        "--domains", "recovery",
+    )
+    captured = capsys.readouterr()
+
+    assert rc == 0
+    assert "hai today" not in captured.err

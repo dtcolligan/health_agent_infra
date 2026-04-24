@@ -186,17 +186,27 @@ def test_gate_2_skill_honours_capped_confidence():
 
 
 # ---------------------------------------------------------------------------
-# Gate 3 — emits only the frozen TrainingRecommendation shape
+# Gate 3 — emits only the frozen RecoveryProposal shape via `hai propose`
 # ---------------------------------------------------------------------------
+#
+# Pre-D2 this gate asserted TrainingRecommendation + `hai writeback`. The
+# v0.1.4 D2 contract unified the six domain skills around `hai propose`;
+# the recovery-readiness SKILL.md was rewritten to match. See
+# reporting/plans/v0_1_4/D2_intake_write_paths.md.
 
-def test_gate_3_skill_names_training_recommendation_schema():
+def test_gate_3_skill_names_recovery_proposal_schema():
     skill = _skill_text()
-    assert "TrainingRecommendation" in skill, (
-        "Skill output section must name the TrainingRecommendation schema "
+    assert "RecoveryProposal" in skill, (
+        "Skill output section must name the RecoveryProposal schema "
         "so the agent knows which frozen shape to emit."
     )
-    assert "hai writeback" in skill, (
-        "Skill must route output through hai writeback for validation."
+    assert "hai propose" in skill, (
+        "Skill must route output through hai propose for validation "
+        "(the legacy hai writeback path was retired in v0.1.4 D2)."
+    )
+    assert "hai writeback" not in skill, (
+        "Skill must not instruct agents to use the retired hai writeback "
+        "command. Retired in v0.1.4 D2."
     )
 
 

@@ -26,6 +26,14 @@ Schema: see ``core/capabilities/walker.py``. Exit codes follow
 taxonomy; the ``LEGACY_0_2`` sentinel is retained in the schema for
 forward-compatibility but is not currently emitted.
 
+**Per-command structured detail lives in the JSON manifest, not
+this markdown.** Every row below also carries a ``flags[]`` array
+(name / type / required / choices / default / help / aliases), and
+selected high-traffic commands opt in to ``output_schema`` (JSON
+shape per exit code) and ``preconditions`` (state that must exist
+before invocation). Agents should ``hai capabilities`` and read the
+JSON; this markdown is an at-a-glance overview for humans.
+
 ## Mutation classes
 
 | Value | Meaning |

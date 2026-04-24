@@ -52,6 +52,7 @@ def _snapshot(
     acwr_ratio=None,
     body_battery=None,
     all_day_stress=None,
+    planned_session_type: str | None = "hard",
 ):
     """Build a minimal snapshot matching the Phase-3 block layout.
 
@@ -61,6 +62,11 @@ def _snapshot(
     off `recovery.classified_state.sleep_debt_band` in this helper —
     Phase 3 step 5 will move it to `sleep.classified_state.sleep_debt_band`
     once the sleep-domain classifier lands.
+
+    ``planned_session_type`` defaults to ``"hard"`` so legacy X9 tests
+    that pre-date the v0.1.4 precondition (acceptance criterion #7) keep
+    asserting their original behaviour. Pass ``None`` to exercise the
+    "user hasn't planned anything" gate.
     """
 
     recovery: dict = {"classified_state": {}, "today": {}}
@@ -69,6 +75,8 @@ def _snapshot(
         recovery["classified_state"]["sleep_debt_band"] = sleep_debt_band
     if acwr_ratio is not None:
         recovery["today"]["acwr_ratio"] = acwr_ratio
+    if planned_session_type is not None:
+        recovery["evidence"] = {"planned_session_type": planned_session_type}
     if body_battery is not None:
         stress["today_body_battery"] = body_battery
         stress["today"]["body_battery_end_of_day"] = body_battery

@@ -125,6 +125,137 @@ def test_stats_reports_sync_freshness_per_source(tmp_path, capsys):
     assert fresh["garmin"]["mode"] == "csv"
 
 
+# ---------------------------------------------------------------------------
+# D4 #5 — cred-awareness. stats downgrades sync status to
+# `stale_credentials` when the most recent live sync's source is no
+# longer credentialed.
+# ---------------------------------------------------------------------------
+
+
+class _FakeKeyring:
+    def __init__(self):
+        self._data: dict[tuple[str, str], str] = {}
+
+    def get_password(self, service, username):
+        return self._data.get((service, username))
+
+    def set_password(self, service, username, password):
+        self._data[(service, username)] = password
+
+    def delete_password(self, service, username):
+        self._data.pop((service, username), None)
+
+
+def _seed_live_sync(db_path: Path, *, source: str) -> None:
+    conn = open_connection(db_path)
+    try:
+        sid = begin_sync(
+            conn, source=source, user_id="u_local_1",
+            mode="live", for_date=date(2026, 4, 21),
+        )
+        complete_sync(
+            conn, sid, rows_pulled=1, rows_accepted=1,
+            duplicates_skipped=0, status="ok",
+        )
+    finally:
+        conn.close()
+
+
+def test_stats_downgrades_to_stale_credentials_when_source_is_uncredentialed(
+    tmp_path, capsys, monkeypatch,
+):
+    """Garmin_live sync landed successfully in the past, but the
+    keyring is now empty — stats flags that entry as
+    `stale_credentials`. The next live pull will fail; surfacing that
+    in stats lets the user fix creds before the next `hai daily`."""
+
+    from health_agent_infra import cli as cli_mod
+    from health_agent_infra.core.pull.auth import CredentialStore
+
+    # Empty credential store — no keyring entries, no env vars.
+    empty = CredentialStore(backend=_FakeKeyring(), env={})
+    monkeypatch.setattr(
+        cli_mod.CredentialStore, "default", classmethod(lambda cls: empty),
+    )
+
+    db_path = _fresh_db(tmp_path)
+    _seed_live_sync(db_path, source="garmin_live")
+
+    rc = cli_main(_stats_argv(db_path, "--json"))
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+
+    entry = payload["sync_freshness"]["garmin_live"]
+    assert entry["status"] == "stale_credentials"
+    assert entry["credentials_available"] is False
+
+
+def test_stats_preserves_ok_status_when_credentials_still_present(
+    tmp_path, capsys, monkeypatch,
+):
+    """A fully-credentialed user sees the real sync status unchanged —
+    cred-awareness is a downgrade, never a side-grade."""
+
+    from health_agent_infra import cli as cli_mod
+    from health_agent_infra.core.pull.auth import CredentialStore
+
+    store = CredentialStore(backend=_FakeKeyring(), env={})
+    store.store_garmin("alice@example.com", "secret")
+    store.store_intervals_icu("i123456", "test_api_key")
+    monkeypatch.setattr(
+        cli_mod.CredentialStore, "default", classmethod(lambda cls: store),
+    )
+
+    db_path = _fresh_db(tmp_path)
+    _seed_live_sync(db_path, source="garmin_live")
+    _seed_live_sync(db_path, source="intervals_icu")
+
+    rc = cli_main(_stats_argv(db_path, "--json"))
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+
+    for source in ("garmin_live", "intervals_icu"):
+        entry = payload["sync_freshness"][source]
+        assert entry["status"] == "ok"
+        assert entry["credentials_available"] is True
+
+
+def test_stats_csv_source_is_not_flagged_as_stale(tmp_path, capsys, monkeypatch):
+    """The CSV fixture source doesn't need credentials — cred-awareness
+    must not flag it even if keyring is empty."""
+
+    from health_agent_infra import cli as cli_mod
+    from health_agent_infra.core.pull.auth import CredentialStore
+
+    empty = CredentialStore(backend=_FakeKeyring(), env={})
+    monkeypatch.setattr(
+        cli_mod.CredentialStore, "default", classmethod(lambda cls: empty),
+    )
+
+    db_path = _fresh_db(tmp_path)
+    conn = open_connection(db_path)
+    try:
+        sid = begin_sync(
+            conn, source="garmin", user_id="u_local_1",
+            mode="csv", for_date=date(2026, 4, 21),
+        )
+        complete_sync(
+            conn, sid, rows_pulled=1, rows_accepted=1,
+            duplicates_skipped=0, status="ok",
+        )
+    finally:
+        conn.close()
+
+    rc = cli_main(_stats_argv(db_path, "--json"))
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+
+    entry = payload["sync_freshness"]["garmin"]
+    assert entry["status"] == "ok"
+    # credentials_available is None for CSV (no live-cred concept).
+    assert entry["credentials_available"] is None
+
+
 def test_stats_reports_recent_events_after_daily_runs(tmp_path, capsys, monkeypatch):
     """A successful `hai daily` run writes a runtime_event_log row."""
 

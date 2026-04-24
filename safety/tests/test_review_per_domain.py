@@ -50,12 +50,15 @@ from health_agent_infra.core.schemas import (
 from health_agent_infra.core.state import (
     initialize_database,
     open_connection,
-)
-from health_agent_infra.core.writeback.recommendation import (
-    ALLOWED_RELATIVE_ROOT,
-    perform_writeback,
+    project_recommendation,
 )
 from health_agent_infra.domains.recovery.schemas import TrainingRecommendation
+
+
+# D2: hai writeback was retired in v0.1.4. Tests that used it as a
+# convenience seeder now use a plain tmp subdir — ``schedule_review``
+# and ``record_review_outcome`` auto-create the directory on first use.
+_WRITEBACK_ROOT_NAME = "writeback"
 
 
 AS_OF = date(2026, 4, 17)
@@ -138,9 +141,8 @@ def _init_db(tmp_path: Path) -> Path:
 
 
 def test_schedule_review_on_recovery_rec_persists_domain_recovery(tmp_path: Path):
-    base = tmp_path / ALLOWED_RELATIVE_ROOT
+    base = tmp_path / _WRITEBACK_ROOT_NAME
     rec = _recovery_rec()
-    perform_writeback(rec, base_dir=base, now=NOW)
 
     event = schedule_review(rec, base_dir=base)
 
@@ -157,9 +159,8 @@ def test_schedule_review_with_explicit_domain_override(tmp_path: Path):
     test fixture reusing the recovery builder for a running-shaped event.
     """
 
-    base = tmp_path / ALLOWED_RELATIVE_ROOT
+    base = tmp_path / _WRITEBACK_ROOT_NAME
     rec = _recovery_rec(user="u_override")
-    perform_writeback(rec, base_dir=base, now=NOW)
 
     event = schedule_review(rec, base_dir=base, domain="running")
 
@@ -175,7 +176,7 @@ def test_running_recommendation_domain_flows_through_duck_typed_schedule(tmp_pat
     also relies on for the running domain.
     """
 
-    base = tmp_path / ALLOWED_RELATIVE_ROOT
+    base = tmp_path / _WRITEBACK_ROOT_NAME
     base.mkdir(parents=True)
 
     class _RunningStub:
@@ -198,7 +199,7 @@ def test_running_recommendation_domain_flows_through_duck_typed_schedule(tmp_pat
 
 
 def test_record_review_outcome_inherits_domain_from_event(tmp_path: Path):
-    base = tmp_path / ALLOWED_RELATIVE_ROOT
+    base = tmp_path / _WRITEBACK_ROOT_NAME
     base.mkdir(parents=True)
 
     running_event = ReviewEvent(
@@ -224,7 +225,7 @@ def test_record_review_outcome_inherits_domain_from_event(tmp_path: Path):
 
 
 def test_record_review_outcome_respects_explicit_domain_override(tmp_path: Path):
-    base = tmp_path / ALLOWED_RELATIVE_ROOT
+    base = tmp_path / _WRITEBACK_ROOT_NAME
     base.mkdir(parents=True)
 
     event = ReviewEvent(
@@ -339,15 +340,15 @@ def test_cli_review_schedule_on_running_payload_projects_domain_running(
     """End-to-end: a running recommendation JSON feeds ``hai review schedule``
     and the DB ``review_event.domain`` is 'running', not the backfill default.
 
-    The recommendation is manually INSERTed into ``recommendation_log`` with
-    ``domain='running'`` because ``hai writeback`` is recovery-only in v1 and
-    would reject a non-recovery schema_version — a limit that Phase 2
-    step 5 deliberately does NOT widen (synthesis is the running-rec write
-    path). This keeps the test scoped to the review flow.
+    The recommendation is manually INSERTed into ``recommendation_log``
+    with ``domain='running'`` to satisfy the review_event FK. In
+    production, ``hai synthesize`` is the write path for every domain's
+    recommendations (v0.1.4 removed the legacy recovery-only
+    ``hai writeback``). This keeps the test scoped to the review flow.
     """
 
     db = _init_db(tmp_path)
-    base_dir = tmp_path / ALLOWED_RELATIVE_ROOT
+    base_dir = tmp_path / _WRITEBACK_ROOT_NAME
     base_dir.mkdir(parents=True)
 
     payload = _running_rec_payload()
@@ -421,7 +422,7 @@ def test_cli_review_record_on_running_payload_projects_domain_running(
     tmp_path: Path, capsys
 ):
     db = _init_db(tmp_path)
-    base_dir = tmp_path / ALLOWED_RELATIVE_ROOT
+    base_dir = tmp_path / _WRITEBACK_ROOT_NAME
     base_dir.mkdir(parents=True)
 
     payload = _running_rec_payload(user="u_run2")
@@ -526,7 +527,7 @@ def _write_outcome_line(base: Path, user: str, suffix: str, *, domain: str,
 def test_cli_review_summary_splits_mixed_domains_under_domain_filter(
     tmp_path: Path, capsys
 ):
-    base_dir = tmp_path / ALLOWED_RELATIVE_ROOT
+    base_dir = tmp_path / _WRITEBACK_ROOT_NAME
     base_dir.mkdir(parents=True)
 
     # 3 recovery + 2 running mixed in the same JSONL.
@@ -597,7 +598,7 @@ def test_cli_review_summary_legacy_rows_without_domain_field_count_as_recovery(
     JSONL reader mirrors that default so pre-Phase-2 outcomes stay visible
     under ``--domain recovery`` without any file rewrite."""
 
-    base_dir = tmp_path / ALLOWED_RELATIVE_ROOT
+    base_dir = tmp_path / _WRITEBACK_ROOT_NAME
     base_dir.mkdir(parents=True)
 
     legacy_payload = {

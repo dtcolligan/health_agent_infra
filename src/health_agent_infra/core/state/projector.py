@@ -65,10 +65,17 @@ from health_agent_infra.core.state.projectors.stress import (
 from health_agent_infra.core.state.projectors.strength import (
     project_accepted_resistance_training_state_daily,
 )
+from health_agent_infra.core.state.projectors.running_activity import (
+    aggregate_activities_to_daily_rollup,
+    project_activity,
+    read_activities_for_date,
+    read_activities_range,
+)
 from health_agent_infra.domains.recovery.schemas import TrainingRecommendation
 
 __all__ = [
     "ReprojectBaseDirError",
+    "aggregate_activities_to_daily_rollup",
     "delete_canonical_plan_cascade",
     "latest_nutrition_submission_id",
     "link_proposal_to_plan",
@@ -81,11 +88,13 @@ __all__ = [
     "project_accepted_running_state_daily",
     "project_accepted_sleep_state_daily",
     "project_accepted_stress_state_daily",
+    "project_activity",
     "project_bounded_recommendation",
     "project_context_note",
     "project_daily_plan",
     "project_gym_session",
     "project_gym_set",
+    "project_manual_readiness_raw",
     "project_nutrition_intake_raw",
     "project_proposal",
     "project_recommendation",
@@ -94,7 +103,10 @@ __all__ = [
     "project_source_daily_garmin",
     "project_stress_manual_raw",
     "project_x_rule_firing",
+    "read_activities_for_date",
+    "read_activities_range",
     "read_canonical_plan",
+    "read_latest_manual_readiness",
     "read_proposals_for_plan_key",
     "reproject_from_jsonl",
 ]
@@ -259,8 +271,9 @@ def project_review_outcome(
             followed_recommendation, self_reported_improvement, free_text,
             domain, jsonl_offset, source, ingest_actor, projected_at,
             completed, intensity_delta, duration_minutes,
-            pre_energy_score, post_energy_score, disagreed_firing_ids
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            pre_energy_score, post_energy_score, disagreed_firing_ids,
+            re_linked_from_recommendation_id, re_link_note
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             outcome.review_event_id,
@@ -281,6 +294,8 @@ def project_review_outcome(
             outcome.pre_energy_score,
             outcome.post_energy_score,
             disagreed_json,
+            outcome.re_linked_from_recommendation_id,
+            outcome.re_link_note,
         ),
     )
     conn.commit()
@@ -925,6 +940,119 @@ def project_stress_manual_raw(
 
 
 # ---------------------------------------------------------------------------
+# Manual readiness intake -> manual_readiness_raw (migration 015)
+# ---------------------------------------------------------------------------
+
+
+def project_manual_readiness_raw(
+    conn: sqlite3.Connection,
+    *,
+    submission_id: str,
+    user_id: str,
+    as_of_date: date,
+    soreness: str,
+    energy: str,
+    planned_session_type: str,
+    active_goal: Optional[str],
+    ingest_actor: str,
+    supersedes_submission_id: Optional[str] = None,
+    source: str = "user_manual",
+    commit_after: bool = True,
+) -> bool:
+    """Append-only insert into ``manual_readiness_raw`` (D2 + migration 015).
+
+    Idempotent on ``submission_id``: re-inserting the same id is a no-op
+    (returns False). Same-day correction goes through a NEW submission id
+    with ``supersedes_submission_id`` set; caller resolves the prior tail
+    before invoking.
+
+    CHECK constraints on soreness/energy enforce ``low|moderate|high``;
+    invalid bands raise ``sqlite3.IntegrityError`` rather than silently
+    persisting.
+    """
+
+    existing = conn.execute(
+        "SELECT 1 FROM manual_readiness_raw WHERE submission_id = ?",
+        (submission_id,),
+    ).fetchone()
+    if existing is not None:
+        return False
+
+    conn.execute(
+        """
+        INSERT INTO manual_readiness_raw (
+            submission_id, user_id, as_of_date,
+            soreness, energy, planned_session_type, active_goal,
+            source, ingest_actor, ingested_at,
+            supersedes_submission_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            submission_id, user_id, as_of_date.isoformat(),
+            soreness, energy, planned_session_type, active_goal,
+            source, ingest_actor, _now_iso(),
+            supersedes_submission_id,
+        ),
+    )
+    if commit_after:
+        conn.commit()
+    return True
+
+
+def read_latest_manual_readiness(
+    conn: sqlite3.Connection,
+    *,
+    user_id: str,
+    as_of_date: date,
+) -> Optional[dict]:
+    """Return the canonical (non-superseded) readiness row for ``(user, day)``.
+
+    Used by ``hai pull`` to auto-read same-day readiness when no
+    ``--manual-readiness-json`` override is passed (D2 §pull adapter
+    integration). Returns ``None`` when no row exists, when every row
+    for the day has been superseded (shouldn't happen in practice but
+    treated honestly), or when the table itself predates migration 015.
+
+    The "non-superseded leaf" selector uses a LEFT JOIN on
+    ``supersedes_submission_id`` — the tail of the chain is the row
+    whose ``submission_id`` no other row lists as its prior.
+    """
+
+    try:
+        row = conn.execute(
+            """
+            SELECT r.submission_id, r.user_id, r.as_of_date,
+                   r.soreness, r.energy, r.planned_session_type,
+                   r.active_goal, r.ingested_at
+            FROM manual_readiness_raw r
+            LEFT JOIN manual_readiness_raw s
+              ON s.supersedes_submission_id = r.submission_id
+            WHERE r.user_id = ? AND r.as_of_date = ?
+              AND s.submission_id IS NULL
+            ORDER BY r.ingested_at DESC
+            LIMIT 1
+            """,
+            (user_id, as_of_date.isoformat()),
+        ).fetchone()
+    except sqlite3.OperationalError:
+        # Pre-migration-015 DB: no table yet. Treat as "nothing persisted."
+        return None
+
+    if row is None:
+        return None
+
+    payload = {
+        "submission_id": row["submission_id"],
+        "soreness": row["soreness"],
+        "energy": row["energy"],
+        "planned_session_type": row["planned_session_type"],
+    }
+    if row["active_goal"]:
+        payload["active_goal"] = row["active_goal"]
+    return payload
+
+
+# ---------------------------------------------------------------------------
 # Note intake -> context_note (append-only, no accepted layer)
 # ---------------------------------------------------------------------------
 
@@ -1031,25 +1159,41 @@ def reproject_from_jsonl(conn: sqlite3.Connection, base_dir, *, allow_empty: boo
     nutrition_log = base / "nutrition_intake.jsonl"
     stress_log = base / "stress_manual.jsonl"
     notes_log = base / "context_notes.jsonl"
+    readiness_log = base / "readiness_manual.jsonl"
+
+    # Phase B (v0.1.4): proposal JSONLs land per-domain. Without this group
+    # the agent's `<domain>_proposals.jsonl` audit logs are decorative —
+    # rebuilding the DB never restores proposal_log. Codex flagged this as
+    # P1 #2 in the 2026-04-24 strategic report.
+    proposal_logs = {
+        domain: base / f"{domain}_proposals.jsonl"
+        for domain in (
+            "recovery", "running", "sleep", "strength", "stress", "nutrition",
+        )
+    }
 
     has_rec_group = any(p.exists() for p in (rec_log, events_log, outcomes_log))
     has_gym_group = gym_log.exists()
     has_nutrition_group = nutrition_log.exists()
     has_stress_group = stress_log.exists()
     has_notes_group = notes_log.exists()
+    has_readiness_group = readiness_log.exists()
+    has_proposals_group = any(p.exists() for p in proposal_logs.values())
 
     if not allow_empty and not (
         has_rec_group or has_gym_group or has_nutrition_group
-        or has_stress_group or has_notes_group
+        or has_stress_group or has_notes_group or has_readiness_group
+        or has_proposals_group
     ):
         raise ReprojectBaseDirError(
             f"no audit JSONL files found under {base}. Expected at least "
             f"one of: recommendation_log.jsonl, review_events.jsonl, "
             f"review_outcomes.jsonl, gym_sessions.jsonl, "
             f"nutrition_intake.jsonl, stress_manual.jsonl, "
-            f"context_notes.jsonl. Refusing to touch the projection "
-            f"tables. Pass allow_empty=True / --allow-empty-reproject to "
-            f"override."
+            f"context_notes.jsonl, readiness_manual.jsonl, "
+            f"<domain>_proposals.jsonl. Refusing to "
+            f"touch the projection tables. Pass allow_empty=True / "
+            f"--allow-empty-reproject to override."
         )
 
     counts = {
@@ -1061,6 +1205,9 @@ def reproject_from_jsonl(conn: sqlite3.Connection, base_dir, *, allow_empty: boo
         "stress_manual_raw": 0,
         "accepted_stress_manual_merged": 0,
         "context_notes": 0,
+        "manual_readiness_raw": 0,
+        "proposals": 0,
+        "proposals_skipped_invalid": 0,
     }
 
     conn.execute("BEGIN EXCLUSIVE")
@@ -1082,6 +1229,33 @@ def reproject_from_jsonl(conn: sqlite3.Connection, base_dir, *, allow_empty: boo
             # truncated together so replay repopulates both.
             conn.execute("DELETE FROM accepted_nutrition_state_daily")
             conn.execute("DELETE FROM nutrition_intake_raw")
+        if has_readiness_group:
+            # Readiness group: raw-only (no accepted layer to hygiene —
+            # readiness feeds into hai pull's manual_readiness block, not
+            # into a persisted accepted_readiness_state_daily). Simple
+            # truncate + replay mirrors the clean-projector semantics.
+            try:
+                conn.execute("DELETE FROM manual_readiness_raw")
+            except sqlite3.OperationalError:
+                # DB predates migration 015; skip silently — nothing to
+                # rebuild and the JSONL remains the audit boundary.
+                pass
+        if has_proposals_group:
+            # Proposals group (Phase B): rebuild proposal_log from the
+            # 6 per-domain JSONL audit logs. proposal_log has no inbound
+            # FK from synthesis-side tables (daily_plan stores its
+            # proposal_ids in JSON, not FK). Safe to truncate cleanly.
+            #
+            # Note: a fresh reproject also resets daily_plan.proposal_ids_json
+            # references logically — they remain in the JSON blob but won't
+            # join to the new proposal_log unless the proposal_ids replay
+            # produces the same chain (which it does for non-revised
+            # chains). The recommendation group rebuild already truncated
+            # daily_plan-touching tables when its JSONL is present, but
+            # daily_plan itself is NOT rebuilt by reproject — only by
+            # `hai synthesize`. Operators rebuilding the full DB should
+            # rerun synthesis after reproject.
+            conn.execute("DELETE FROM proposal_log")
         if has_stress_group:
             # Stress group (post-Phase-3): manual_stress_score now lives
             # on accepted_stress_state_daily, which is co-owned with the
@@ -1234,8 +1408,9 @@ def reproject_from_jsonl(conn: sqlite3.Connection, base_dir, *, allow_empty: boo
                     INSERT INTO review_outcome (
                         review_event_id, recommendation_id, user_id, recorded_at,
                         followed_recommendation, self_reported_improvement, free_text,
-                        domain, jsonl_offset, source, ingest_actor, projected_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        domain, jsonl_offset, source, ingest_actor, projected_at,
+                        re_linked_from_recommendation_id, re_link_note
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         data["review_event_id"],
@@ -1250,6 +1425,8 @@ def reproject_from_jsonl(conn: sqlite3.Connection, base_dir, *, allow_empty: boo
                         data.get("source", "user_manual"),
                         data.get("ingest_actor", "claude_agent_v1"),
                         _now_iso(),
+                        data.get("re_linked_from_recommendation_id"),
+                        data.get("re_link_note"),
                     ),
                 )
                 counts["review_outcomes"] += 1
@@ -1463,6 +1640,95 @@ def reproject_from_jsonl(conn: sqlite3.Connection, base_dir, *, allow_empty: boo
                 )
                 counts["context_notes"] += 1
 
+        if readiness_log.exists():
+            # Readiness replay: raw-only replay. No accepted layer, no
+            # merge step — ``hai pull`` auto-reads this table live per
+            # D2, so the replay just has to reconstruct the raw rows.
+            # Skipped quietly on pre-015 DBs (truncation above also
+            # swallowed the OperationalError).
+            for line_no, line in enumerate(
+                readiness_log.read_text(encoding="utf-8").splitlines(), start=1,
+            ):
+                if not line.strip():
+                    continue
+                data = json.loads(line)
+                try:
+                    conn.execute(
+                        """
+                        INSERT OR IGNORE INTO manual_readiness_raw (
+                            submission_id, user_id, as_of_date,
+                            soreness, energy, planned_session_type, active_goal,
+                            source, ingest_actor, ingested_at,
+                            supersedes_submission_id
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            data["submission_id"], data["user_id"], data["as_of_date"],
+                            data["soreness"], data["energy"],
+                            data["planned_session_type"], data.get("active_goal"),
+                            data.get("source", "user_manual"),
+                            data.get("ingest_actor", "claude_agent_v1"),
+                            data.get("submitted_at", _now_iso()),
+                            data.get("supersedes_submission_id"),
+                        ),
+                    )
+                except sqlite3.OperationalError:
+                    # DB predates migration 015 — nothing to do.
+                    break
+                counts["manual_readiness_raw"] += 1
+
+        if has_proposals_group:
+            # Replay each domain's proposal JSONL in append order. The
+            # JSONL preserves the agent's authoring sequence, so re-running
+            # `project_proposal(replace=True)` per line correctly rebuilds
+            # the D1 revision chain: first line on each chain key inserts
+            # at revision=1; subsequent lines on the same chain key insert
+            # at revision+1 with auto-generated proposal_id, and update the
+            # prior leaf's `superseded_by_proposal_id` forward pointer.
+            #
+            # Validation: every line is parsed via `validate_proposal_dict`
+            # before insertion. A line that fails validation is COUNTED as
+            # skipped (not raised) so a single corrupt line in a long log
+            # doesn't abort the whole reproject. Operators can grep the
+            # final counts to confirm `proposals_skipped_invalid == 0` for
+            # a clean restore.
+            from health_agent_infra.core.writeback.proposal import (
+                ProposalValidationError,
+                validate_proposal_dict,
+            )
+            for domain in (
+                "recovery", "running", "sleep",
+                "strength", "stress", "nutrition",
+            ):
+                jsonl_path = proposal_logs[domain]
+                if not jsonl_path.exists():
+                    continue
+                with jsonl_path.open("r", encoding="utf-8") as fh:
+                    for line in fh:
+                        line = line.strip()
+                        if not line:
+                            continue
+                        try:
+                            data = json.loads(line)
+                        except json.JSONDecodeError:
+                            counts["proposals_skipped_invalid"] += 1
+                            continue
+                        try:
+                            validate_proposal_dict(data, expected_domain=domain)
+                        except ProposalValidationError:
+                            counts["proposals_skipped_invalid"] += 1
+                            continue
+                        try:
+                            project_proposal(
+                                conn, data, replace=True, commit_after=False,
+                            )
+                        except ProposalReplaceRequired:
+                            # Cannot happen — replace=True is the explicit
+                            # override. Treated as defensive guard only.
+                            counts["proposals_skipped_invalid"] += 1
+                            continue
+                        counts["proposals"] += 1
+
         conn.commit()
     except Exception:
         conn.rollback()
@@ -1475,48 +1741,127 @@ def reproject_from_jsonl(conn: sqlite3.Connection, base_dir, *, allow_empty: boo
 # Proposal + DailyPlan + XRuleFiring projectors (Phase 2 step 4)
 # ---------------------------------------------------------------------------
 
-def project_proposal(
+class ProposalReplaceRequired(ValueError):
+    """Raised when a proposal is posted for a ``(for_date, user_id, domain)``
+    chain that already has a canonical leaf and ``replace=False``.
+
+    Per D1 (``reporting/plans/v0_1_4/D1_re_author_semantics.md``), silent
+    skip on duplicate is the correctness hole that lets agent re-authoring
+    disappear. The replacement is an explicit, loud rejection that the
+    CLI surfaces as exit code ``USER_INPUT``.
+    """
+
+    def __init__(
+        self,
+        *,
+        for_date: str,
+        user_id: str,
+        domain: str,
+        leaf_proposal_id: str,
+        leaf_revision: int,
+    ) -> None:
+        super().__init__(
+            f"existing canonical proposal {leaf_proposal_id!r} "
+            f"(revision {leaf_revision}) for ({for_date}, {user_id}, {domain}); "
+            f"use --replace to revise."
+        )
+        self.for_date = for_date
+        self.user_id = user_id
+        self.domain = domain
+        self.leaf_proposal_id = leaf_proposal_id
+        self.leaf_revision = leaf_revision
+
+
+# Fields that are runtime-assigned on each revision and therefore must be
+# stripped before comparing two payloads for semantic equality. Preserves
+# the "identical payload is a no-op under --replace" contract in D1 §
+# Idempotency under identical replay.
+_REVISION_VOLATILE_FIELDS: frozenset[str] = frozenset({"proposal_id"})
+
+
+def _canonical_payload_bytes(payload: dict | str) -> bytes:
+    """Canonicalise a proposal payload for semantic-equality comparison.
+
+    Accepts either a dict (freshly authored) or the JSON string stored
+    in ``payload_json``. Sorts keys, strips runtime-assigned fields
+    (``proposal_id`` changes per revision), and returns UTF-8 bytes.
+    """
+    if isinstance(payload, str):
+        data = json.loads(payload)
+    else:
+        data = dict(payload)
+    for field in _REVISION_VOLATILE_FIELDS:
+        data.pop(field, None)
+    return json.dumps(data, sort_keys=True).encode("utf-8")
+
+
+def _resolve_canonical_leaf(
+    conn: sqlite3.Connection,
+    *,
+    for_date: str,
+    user_id: str,
+    domain: str,
+) -> Optional[dict]:
+    """Return the canonical leaf row for a ``(for_date, user_id, domain)``
+    chain, or ``None`` if no proposal exists yet.
+
+    Canonical leaf = ``superseded_by_proposal_id IS NULL``.
+    """
+    row = conn.execute(
+        "SELECT proposal_id, revision, payload_json "
+        "FROM proposal_log "
+        "WHERE for_date = ? AND user_id = ? AND domain = ? "
+        "AND superseded_by_proposal_id IS NULL",
+        (for_date, user_id, domain),
+    ).fetchone()
+    if row is None:
+        return None
+    # sqlite3.Row supports both int-index and name access; normalise.
+    return {
+        "proposal_id": row["proposal_id"],
+        "revision": row["revision"],
+        "payload_json": row["payload_json"],
+    }
+
+
+def _insert_proposal_row(
     conn: sqlite3.Connection,
     proposal: dict,
     *,
-    source: str = "claude_agent_v1",
-    ingest_actor: str = "claude_agent_v1",
-    agent_version: Optional[str] = None,
-    produced_at: Optional[datetime] = None,
-    daily_plan_id: Optional[str] = None,
-    commit_after: bool = True,
-) -> bool:
-    """Insert a ``DomainProposal``-shaped dict into ``proposal_log``.
+    revision: int,
+    source: str,
+    ingest_actor: str,
+    agent_version: Optional[str],
+    produced_at: Optional[datetime],
+    daily_plan_id: Optional[str],
+    initial_superseded_by: Optional[str] = None,
+) -> None:
+    """Single INSERT into proposal_log for a proposal at given revision.
 
-    Idempotent on ``proposal_id``: re-running is a no-op and returns
-    ``False``. First-time insert returns ``True``.
+    Does not commit; caller owns transaction boundary. The revision
+    chain bookkeeping (superseded_by pointer updates) is done by the
+    caller where relevant.
 
-    ``daily_plan_id`` stays NULL until ``hai synthesize`` links it; the
-    synthesis transaction updates the row separately.
-
-    ``commit_after=False`` lets callers compose this write into a larger
-    transaction (used by :mod:`health_agent_infra.core.synthesis` where
-    proposal linking happens inside the same BEGIN/COMMIT as daily_plan
-    + recommendation insertion).
+    ``initial_superseded_by`` lets the revision flow seed the row with
+    a self-pointer so the migration 018 partial unique index doesn't
+    transiently see two canonical leaves during a multi-step revision
+    update. Defaults to None for fresh-chain inserts (revision=1).
     """
-
-    existing = conn.execute(
-        "SELECT 1 FROM proposal_log WHERE proposal_id = ?",
-        (proposal["proposal_id"],),
-    ).fetchone()
-    if existing is not None:
-        return False
-
-    produced_iso = produced_at.isoformat() if produced_at is not None else _now_iso()
-
+    produced_iso = (
+        produced_at.isoformat() if produced_at is not None else _now_iso()
+    )
+    superseded_at_initial = (
+        _now_iso() if initial_superseded_by is not None else None
+    )
     conn.execute(
         """
         INSERT INTO proposal_log (
             proposal_id, daily_plan_id, user_id, domain, for_date,
             schema_version, action, confidence, payload_json,
             source, ingest_actor, agent_version,
-            produced_at, validated_at, projected_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            produced_at, validated_at, projected_at,
+            revision, superseded_by_proposal_id, superseded_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             proposal["proposal_id"],
@@ -1534,7 +1879,138 @@ def project_proposal(
             produced_iso,
             _now_iso(),
             _now_iso(),
+            revision,
+            initial_superseded_by,
+            superseded_at_initial,
         ),
+    )
+
+
+def project_proposal(
+    conn: sqlite3.Connection,
+    proposal: dict,
+    *,
+    source: str = "claude_agent_v1",
+    ingest_actor: str = "claude_agent_v1",
+    agent_version: Optional[str] = None,
+    produced_at: Optional[datetime] = None,
+    daily_plan_id: Optional[str] = None,
+    replace: bool = False,
+    commit_after: bool = True,
+) -> bool:
+    """Insert or revise a ``DomainProposal``-shaped dict in ``proposal_log``.
+
+    Per D1 (``reporting/plans/v0_1_4/D1_re_author_semantics.md``):
+
+    - No existing canonical leaf for ``(for_date, user_id, domain)`` →
+      INSERT as revision=1, agent-authored ``proposal_id`` preserved.
+      Return ``True``.
+    - Existing canonical leaf, ``replace=False`` → raise
+      :class:`ProposalReplaceRequired`. No DB changes.
+    - Existing canonical leaf, ``replace=True``, payload semantically
+      identical to the leaf (``_canonical_payload_bytes`` equal) →
+      no-op, return ``False``. Preserves identical-replay idempotency.
+    - Existing canonical leaf, ``replace=True``, payload differs →
+      assign runtime proposal_id
+      ``prop_<for_date>_<user_id>_<domain>_<revision:02d>`` at
+      ``revision = leaf.revision + 1``, INSERT the new leaf, UPDATE
+      the old leaf's ``superseded_by_proposal_id`` forward pointer.
+      Both writes happen in the caller's transaction (``commit_after``
+      controls the COMMIT).
+
+    ``daily_plan_id`` stays NULL until ``hai synthesize`` links it;
+    the synthesis transaction updates the row separately. Under D1,
+    synthesis does **not** relink proposals on supersede — the leaf's
+    link to its original plan is preserved; the new plan references
+    proposals via ``proposal_ids_json``.
+    """
+    for_date = proposal["for_date"]
+    user_id = proposal["user_id"]
+    domain = proposal["domain"]
+
+    leaf = _resolve_canonical_leaf(
+        conn, for_date=for_date, user_id=user_id, domain=domain,
+    )
+
+    if leaf is None:
+        # Fresh chain: revision=1, agent-authored proposal_id preserved.
+        _insert_proposal_row(
+            conn,
+            proposal,
+            revision=1,
+            source=source,
+            ingest_actor=ingest_actor,
+            agent_version=agent_version,
+            produced_at=produced_at,
+            daily_plan_id=daily_plan_id,
+        )
+        if commit_after:
+            conn.commit()
+        return True
+
+    if not replace:
+        raise ProposalReplaceRequired(
+            for_date=for_date,
+            user_id=user_id,
+            domain=domain,
+            leaf_proposal_id=leaf["proposal_id"],
+            leaf_revision=leaf["revision"],
+        )
+
+    # Replace path. First check semantic equality — identical replay
+    # must not pollute the revision chain.
+    if _canonical_payload_bytes(proposal) == _canonical_payload_bytes(
+        leaf["payload_json"]
+    ):
+        if commit_after:
+            conn.commit()
+        return False
+
+    # Real revision: assign the new proposal_id, link the chain forward,
+    # then mark the new row as canonical leaf. The three-step ordering
+    # below preserves migration 018's partial unique index invariant
+    # (at most one canonical leaf per chain key) at every point in the
+    # transaction:
+    #
+    #   1. INSERT new row with ``superseded_by = new_proposal_id`` (self-
+    #      reference) — the row is committed but NOT a canonical leaf
+    #      because superseded_by IS NOT NULL. Index ignores it.
+    #   2. UPDATE old leaf's ``superseded_by`` to point at the new row.
+    #      Old row stops being a canonical leaf (NOT NULL). Index OK
+    #      with zero canonical leaves at this moment.
+    #   3. UPDATE new row's ``superseded_by`` back to NULL. Now it IS the
+    #      canonical leaf. Index OK with exactly one.
+    #
+    # An INSERT-then-UPDATE order without the self-pointer would trip
+    # the partial index in step 1 (two NULL rows momentarily exist).
+    new_revision = leaf["revision"] + 1
+    new_proposal_id = (
+        f"prop_{for_date}_{user_id}_{domain}_{new_revision:02d}"
+    )
+    proposal_for_new_leaf = dict(proposal, proposal_id=new_proposal_id)
+
+    _insert_proposal_row(
+        conn,
+        proposal_for_new_leaf,
+        revision=new_revision,
+        source=source,
+        ingest_actor=ingest_actor,
+        agent_version=agent_version,
+        produced_at=produced_at,
+        daily_plan_id=daily_plan_id,
+        initial_superseded_by=new_proposal_id,
+    )
+    conn.execute(
+        "UPDATE proposal_log SET "
+        "superseded_by_proposal_id = ?, superseded_at = ? "
+        "WHERE proposal_id = ?",
+        (new_proposal_id, _now_iso(), leaf["proposal_id"]),
+    )
+    conn.execute(
+        "UPDATE proposal_log SET "
+        "superseded_by_proposal_id = NULL, superseded_at = NULL "
+        "WHERE proposal_id = ?",
+        (new_proposal_id,),
     )
     if commit_after:
         conn.commit()
@@ -1853,19 +2329,28 @@ def mark_plan_superseded(
     superseded_by: str,
     commit_after: bool = True,
 ) -> None:
-    """Set ``daily_plan.superseded_by`` on a prior plan.
+    """Set ``daily_plan.superseded_by_plan_id`` (and the JSON attr, for
+    backward-compat reads) on a prior plan.
 
-    Used by ``hai synthesize --supersede`` to flip the pointer on the
-    prior canonical plan when intentionally versioning rather than
-    atomically replacing.
+    Used by ``hai synthesize --supersede`` when intentionally
+    versioning rather than atomically replacing.
+
+    Per D1 (``reporting/plans/v0_1_4/D1_re_author_semantics.md``) and
+    migration 014, the authoritative forward pointer is the
+    ``superseded_by_plan_id`` column. The
+    ``synthesis_meta_json.$.superseded_by`` attribute continues to be
+    written for the migration window so legacy reads keep working; it
+    can be retired in a later cleanup.
     """
 
     conn.execute(
         "UPDATE daily_plan SET "
+        "superseded_by_plan_id = ?, "
+        "superseded_at = ?, "
         "synthesis_meta_json = json_set(COALESCE(synthesis_meta_json, '{}'), "
         "'$.superseded_by', ?) "
         "WHERE daily_plan_id = ?",
-        (superseded_by, daily_plan_id),
+        (superseded_by, _now_iso(), superseded_by, daily_plan_id),
     )
     if commit_after:
         conn.commit()
@@ -1876,20 +2361,36 @@ def read_proposals_for_plan_key(
     *,
     for_date: str,
     user_id: str,
+    include_superseded: bool = False,
 ) -> list[dict]:
-    """Return all proposals in ``proposal_log`` for ``(for_date, user_id)``.
+    """Return proposals in ``proposal_log`` for ``(for_date, user_id)``.
 
-    Includes proposals not yet linked to any plan (``daily_plan_id``
-    NULL) and proposals linked to a prior plan (non-NULL). Synthesis
-    consumes the union — it re-links matching ones into the new plan.
+    Default (``include_superseded=False``) returns only canonical
+    leaves (``superseded_by_proposal_id IS NULL``). This is what
+    synthesis wants — the current per-domain proposal, not historical
+    revisions. Per D1, synthesis over a revised day reads the latest
+    leaf of each domain chain; older revisions are preserved for
+    audit but not re-synthesized into new plans.
+
+    ``include_superseded=True`` returns the full chain (leaves +
+    superseded rows) for audit surfaces. ``hai explain --plan-version
+    all`` uses this.
     """
 
-    rows = conn.execute(
-        "SELECT payload_json FROM proposal_log "
-        "WHERE for_date = ? AND user_id = ? "
-        "ORDER BY domain, proposal_id",
-        (for_date, user_id),
-    ).fetchall()
+    if include_superseded:
+        sql = (
+            "SELECT payload_json FROM proposal_log "
+            "WHERE for_date = ? AND user_id = ? "
+            "ORDER BY domain, revision, proposal_id"
+        )
+    else:
+        sql = (
+            "SELECT payload_json FROM proposal_log "
+            "WHERE for_date = ? AND user_id = ? "
+            "AND superseded_by_proposal_id IS NULL "
+            "ORDER BY domain, proposal_id"
+        )
+    rows = conn.execute(sql, (for_date, user_id)).fetchall()
     return [json.loads(r["payload_json"]) for r in rows]
 
 

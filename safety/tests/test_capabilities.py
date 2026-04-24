@@ -107,14 +107,27 @@ def test_manifest_schema_version_is_stable():
 
 
 def test_manifest_rows_have_stable_keys():
-    expected_keys = {
+    # Required keys every leaf row must carry. ``output_schema`` and
+    # ``preconditions`` are optional agent hints (WS-C) and are only
+    # emitted when an annotation supplied them — walked over via a
+    # subset check rather than strict equality.
+    required_keys = {
         "command", "description", "mutation", "idempotent",
-        "json_output", "exit_codes", "agent_safe",
+        "json_output", "exit_codes", "agent_safe", "flags",
     }
+    optional_keys = {"output_schema", "preconditions"}
+    allowed_keys = required_keys | optional_keys
     for row in walk_parser(build_parser()):
-        assert set(row) == expected_keys, (
-            f"row for {row.get('command')!r} has keys {set(row)}; "
-            f"expected {expected_keys}"
+        row_keys = set(row)
+        missing = required_keys - row_keys
+        extra = row_keys - allowed_keys
+        assert not missing, (
+            f"row for {row.get('command')!r} is missing required keys "
+            f"{sorted(missing)}"
+        )
+        assert not extra, (
+            f"row for {row.get('command')!r} has unexpected keys "
+            f"{sorted(extra)}; allowed: {sorted(allowed_keys)}"
         )
 
 

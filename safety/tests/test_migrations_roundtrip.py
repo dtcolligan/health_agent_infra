@@ -42,11 +42,22 @@ from health_agent_infra.core.state import (
     project_review_outcome,
     reproject_from_jsonl,
 )
-from health_agent_infra.core.writeback.recommendation import (
-    ALLOWED_RELATIVE_ROOT,
-    perform_writeback,
-)
 from health_agent_infra.domains.recovery.schemas import TrainingRecommendation
+
+
+# D2: hai writeback was retired in v0.1.4. Tests that seeded the JSONL
+# via perform_writeback now write the line directly — the reproject
+# path still consumes a real recommendation_log.jsonl.
+_WRITEBACK_ROOT_NAME = "writeback"
+
+
+def _append_recommendation_jsonl(
+    base_dir: Path, rec: TrainingRecommendation,
+) -> None:
+    base_dir.mkdir(parents=True, exist_ok=True)
+    log_path = base_dir / "recommendation_log.jsonl"
+    with log_path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(rec.to_dict(), sort_keys=True) + "\n")
 
 
 USER = "u_rt"
@@ -96,11 +107,11 @@ def _seed_db_from_jsonl_sources(
     recommendation: TrainingRecommendation,
     base_dir: Path,
 ) -> None:
-    """Seed DB1 the way the CLI does: perform_writeback emits JSONL +
-    project into DB; schedule + record review → JSONL + project."""
+    """Seed DB1 the way the CLI does: append to recommendation_log.jsonl
+    and project into DB; schedule + record review → JSONL + project."""
 
     initialize_database(db_path)
-    perform_writeback(recommendation, base_dir=base_dir, now=ISSUED_AT)
+    _append_recommendation_jsonl(base_dir, recommendation)
 
     conn = open_connection(db_path)
     try:
@@ -183,7 +194,7 @@ def test_two_fresh_dbs_have_identical_schema_and_migration_bookkeeping(tmp_path)
 
 
 def test_jsonl_reproject_onto_fresh_db_matches_original(tmp_path):
-    base_dir = tmp_path / ALLOWED_RELATIVE_ROOT
+    base_dir = tmp_path / _WRITEBACK_ROOT_NAME
     db_one = tmp_path / "one.db"
     db_two = tmp_path / "two.db"
 

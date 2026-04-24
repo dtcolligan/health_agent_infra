@@ -50,6 +50,10 @@ from pathlib import Path
 from typing import Any, Optional
 
 from health_agent_infra.core.config import load_thresholds
+from health_agent_infra.core.validate import (
+    RecommendationValidationError,
+    validate_recommendation_dict,
+)
 from health_agent_infra.core.schemas import (
     RECOMMENDATION_SCHEMA_VERSION,
     canonical_daily_plan_id,
@@ -179,7 +183,11 @@ _DEFAULT_REVIEW_QUESTIONS: dict[str, str] = {
     "downgrade_to_easy_aerobic": "Did the easy run yesterday leave you feeling better today?",
     "cross_train_instead": "Did the cross-training session suit your recovery?",
     "rest_day_recommended": "Did yesterday's rest day help your recovery?",
-    "defer_decision_insufficient_signal": "Did you decide on a session yesterday? How did it go?",
+    # NOTE: defer_decision_insufficient_signal is sourced per-domain from
+    # core.narration.templates.DEFER_REVIEW_QUESTION_TEMPLATES — see
+    # _default_review_question below. The recovery wording used to live
+    # here and leaked session-language into every non-recovery defer
+    # (D3 bug). Don't re-add it without changing the resolver.
     "escalate_for_user_review": "You had a persistent signal we flagged. Did you take any action?",
     # Sleep (Phase 3 step 5)
     "maintain_schedule": "Did sticking with your usual sleep schedule feel right last night?",
@@ -217,6 +225,19 @@ _DOMAIN_REVIEW_QUESTION_OVERRIDES: dict[tuple[str, str], str] = {
 
 
 def _default_review_question(action: str, domain: str = "recovery") -> str:
+    # D3 §defer review_question improvements — defer is sourced per
+    # domain so nutrition/stress/sleep/strength don't inherit recovery
+    # session-language. The narration module is the single source of
+    # truth for these templates so ``hai today``'s defer rendering and
+    # ``hai synthesize``'s persisted review_question stay aligned.
+    if action == "defer_decision_insufficient_signal":
+        from health_agent_infra.core.narration.templates import (
+            DEFER_REVIEW_QUESTION_TEMPLATES,
+        )
+        template = DEFER_REVIEW_QUESTION_TEMPLATES.get(domain)
+        if template is not None:
+            return template
+        # Unknown domain falls through to the generic text below.
     override = _DOMAIN_REVIEW_QUESTION_OVERRIDES.get((domain, action))
     if override is not None:
         return override
@@ -297,6 +318,44 @@ def _next_superseded_plan_id(
     return f"{canonical_id}_v{n}"
 
 
+def _resolve_canonical_leaf_plan_id(
+    conn: sqlite3.Connection,
+    *,
+    canonical_id: str,
+) -> Optional[str]:
+    """Walk the supersede chain from ``canonical_id`` to the leaf.
+
+    Per D1, ``--supersede`` must point the new plan's back-pointer at
+    the canonical **leaf** at time of synthesis, not the chain head.
+    v1→v2→v3 + a fourth supersede should produce v3.superseded_by=v4
+    (not v1.superseded_by=v4 overwriting the v1→v2 link).
+
+    Returns ``None`` when ``canonical_id`` doesn't exist — the caller
+    treats that as "no prior plan" and skips the mark-superseded step.
+    Defensive cycle-guard prevents infinite loops if a future bug
+    corrupts forward pointers.
+    """
+
+    current_id: Optional[str] = canonical_id
+    seen: set[str] = set()
+    while current_id is not None:
+        if current_id in seen:
+            return current_id
+        seen.add(current_id)
+        row = conn.execute(
+            "SELECT superseded_by_plan_id FROM daily_plan "
+            "WHERE daily_plan_id = ?",
+            (current_id,),
+        ).fetchone()
+        if row is None:
+            return None if current_id == canonical_id else current_id
+        next_id = row["superseded_by_plan_id"]
+        if next_id is None:
+            return current_id
+        current_id = next_id
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Main orchestration
 # ---------------------------------------------------------------------------
@@ -348,6 +407,29 @@ def run_synthesis(
             f"no proposals in proposal_log for (for_date={for_date_iso}, "
             f"user_id={user_id!r}). Call `hai propose` first."
         )
+
+    # Defensive guard (Phase A safety closure): under D1 revision
+    # semantics, ``read_proposals_for_plan_key`` already returns canonical
+    # leaves only — exactly one per (for_date, user_id, domain) chain key.
+    # If two ever land here the deterministic recommendation_id generator
+    # at ``_mechanical_draft`` would PK-collide on ``recommendation_log``
+    # mid-transaction. Catching it before the transaction starts keeps
+    # the rollback story clean (no partial commit possible) and surfaces
+    # any future regression in the canonical-leaf walker as a SynthesisError
+    # at the synthesis seam, not as a silent overwrite.
+    seen_chain_keys: dict[tuple[str, str, str], str] = {}
+    for p in proposals:
+        key = (p["for_date"], p["user_id"], p["domain"])
+        if key in seen_chain_keys:
+            raise SynthesisError(
+                f"multiple active proposals for chain key {key}: "
+                f"{seen_chain_keys[key]!r} and {p['proposal_id']!r}. "
+                f"Expected exactly one canonical leaf per (for_date, "
+                f"user_id, domain). This is a runtime invariant; either "
+                f"the canonical-leaf walker regressed or proposals were "
+                f"inserted out-of-band. Refusing to synthesize."
+            )
+        seen_chain_keys[key] = p["proposal_id"]
 
     # Phase A
     phase_a_firings = evaluate_phase_a(snapshot, proposals, thresholds)
@@ -415,6 +497,31 @@ def run_synthesis(
         mutated, _fired_b = apply_phase_b(draft, phase_b_firings)
         final_recommendations.append(mutated)
 
+    # Phase A safety closure (v0.1.4): every final recommendation must pass
+    # the runtime's banned-token + shape validator before any partial commit
+    # can persist. The legacy ``hai writeback`` path enforced this at its
+    # CLI seam; D2 retired writeback in v0.1.4 and the canonical synthesis
+    # path inherited the responsibility. Failing here raises a
+    # ``SynthesisError`` BEFORE ``BEGIN EXCLUSIVE``, so no daily_plan,
+    # recommendation_log, x_rule_firing, or proposal_log.daily_plan_id
+    # mutation can land — atomic rollback by construction.
+    #
+    # Coverage (per the Phase A brief):
+    #   - proposal-derived rationale (carried into final via _mechanical_draft)
+    #   - skill overlay rationale (applied via _overlay_skill_drafts above)
+    #   - skill overlay uncertainty (same path)
+    #   - action_detail (proposal + Phase B mutations)
+    #   - follow_up.review_question (curated template OR skill overlay)
+    for rec in final_recommendations:
+        try:
+            validate_recommendation_dict(rec)
+        except RecommendationValidationError as exc:
+            raise SynthesisError(
+                f"recommendation {rec.get('recommendation_id')!r} for domain "
+                f"{rec.get('domain')!r} failed safety validation "
+                f"(invariant={exc.invariant}): {exc}"
+            ) from exc
+
     proposal_ids = [p["proposal_id"] for p in proposals]
     recommendation_ids = [r["recommendation_id"] for r in final_recommendations]
     all_firings = [*phase_a_firings, *phase_b_firings]
@@ -441,18 +548,21 @@ def run_synthesis(
     conn.execute("BEGIN EXCLUSIVE")
     try:
         if supersede:
-            prior = conn.execute(
-                "SELECT daily_plan_id FROM daily_plan WHERE daily_plan_id = ?",
-                (canonical_id,),
-            ).fetchone()
-            if prior is not None:
+            # D1: --supersede marks the canonical *leaf* at time of
+            # synthesis (not the chain head) so v1→v2→v3 + another
+            # supersede produces v3.superseded_by=v4, preserving the
+            # v1→v2 link that would otherwise be overwritten.
+            leaf_id = _resolve_canonical_leaf_plan_id(
+                conn, canonical_id=canonical_id,
+            )
+            if leaf_id is not None:
                 mark_plan_superseded(
                     conn,
-                    daily_plan_id=canonical_id,
+                    daily_plan_id=leaf_id,
                     superseded_by=daily_plan_id,
                     commit_after=False,
                 )
-                superseded_prior = canonical_id
+                superseded_prior = leaf_id
         else:
             delete_canonical_plan_cascade(
                 conn, daily_plan_id=canonical_id, commit_after=False,
@@ -489,18 +599,31 @@ def run_synthesis(
                 commit_after=False,
             )
 
-        for proposal_id in proposal_ids:
-            link_proposal_to_plan(
-                conn,
-                proposal_id=proposal_id,
-                daily_plan_id=daily_plan_id,
-                commit_after=False,
-            )
+        # D1: only the canonical-replace path relinks proposals.
+        # ``--supersede`` intentionally leaves ``proposal_log.daily_plan_id``
+        # pointed at the plan that first consumed each proposal; the new
+        # leaf's join to its proposals lives in ``daily_plan.proposal_ids_json``.
+        # Explain reads via that array so both the superseded chain head
+        # and the new leaf render their full proposal set. (Fixes 2026-04-23
+        # bug #3: supersede orphaned the prior plan's proposals.)
+        if not supersede:
+            for proposal_id in proposal_ids:
+                link_proposal_to_plan(
+                    conn,
+                    proposal_id=proposal_id,
+                    daily_plan_id=daily_plan_id,
+                    commit_after=False,
+                )
 
-        # Planned-recommendation ledger rows: written last so both FK
-        # parents are populated — daily_plan by project_daily_plan above,
-        # proposal_log.daily_plan_id by link_proposal_to_plan immediately
-        # before this. The planned-row set is derived from the ORIGINAL
+        # Planned-recommendation ledger rows: written last so the
+        # daily_plan FK parent is populated (project_daily_plan above).
+        # On the canonical-replace path, proposal_log.daily_plan_id is
+        # also freshly linked by the loop just above. On the supersede
+        # path, proposals retain whatever linkage they already had
+        # (possibly NULL for proposals revised via ``hai propose --replace``
+        # since the last synth) — the planned-recommendation FK is to
+        # ``proposal_log(proposal_id)``, not to daily_plan_id, so writes
+        # still resolve. The planned-row set is derived from the ORIGINAL
         # (pre-mutation) proposals, so rollback semantics hold: if any
         # prior insert fails the planned rows never land.
         for planned_row in planned_rows:

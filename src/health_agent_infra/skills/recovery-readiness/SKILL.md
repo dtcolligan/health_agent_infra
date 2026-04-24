@@ -1,7 +1,7 @@
 ---
 name: recovery-readiness
-description: Produce a bounded TrainingRecommendation for today's session by consuming the runtime-computed `classified_state` + `policy_result` and applying judgment-only steps — action matrix, rationale prose, vendor cross-check, follow-up composition. The runtime already did every band, every score, and every policy rule; this skill does not re-derive them.
-allowed-tools: Read, Bash(hai state snapshot *), Bash(hai state read *), Bash(hai clean *), Bash(hai writeback *), Bash(hai review *)
+description: Produce a bounded RecoveryProposal for today's session by consuming the runtime-computed `classified_state` + `policy_result` and applying judgment-only steps — action matrix, rationale prose, vendor cross-check, follow-up composition. The runtime already did every band, every score, and every policy rule; this skill does not re-derive them.
+allowed-tools: Read, Bash(hai state snapshot *), Bash(hai state read *), Bash(hai clean *), Bash(hai propose *), Bash(hai review *)
 disable-model-invocation: false
 ---
 
@@ -83,17 +83,17 @@ Start with `classified_state.uncertainty` (already sorted + deduped). Append any
 
 ## Output
 
-Emit a `TrainingRecommendation` JSON and call `hai writeback --recommendation-json <path> --base-dir <root/recovery_readiness_v1>`. The writeback tool validates the shape; it is your determinism check.
+Emit a `RecoveryProposal` JSON and call `hai propose --domain recovery --proposal-json <path> --base-dir <root>`. The propose tool validates the shape and appends to `proposal_log`; it is your determinism check.
 
-`recommendation_id` = `rec_<for_date>_<user_id>_01` (idempotent on `(for_date, user_id)`; re-running on the same day does not produce a new row).
+`proposal_id` = `prop_<for_date>_<user_id>_recovery_01` on first write; revisions get `_02`, `_03`. Use `hai propose --replace` when revising the same day's proposal with new skill output — the runtime creates a new revision leaf and forward-links the prior one. Identical-payload replay under `--replace` is a no-op.
 
-Copy `snapshot.recovery.policy_result.policy_decisions` into the output's `policy_decisions` verbatim — the runtime decided them; you do not re-edit or add new ones.
+Copy `snapshot.recovery.policy_result.policy_decisions` into the output's `policy_decisions` verbatim. Synthesis owns downstream: `daily_plan_id`, `recommendation_id`, X-rule-applied `action_detail`, review scheduling. This skill emits one domain's bounded proposal and stops.
 
 ## Invariants
 
 - You never compute a band, a score, or a ratio. `classified_state` is the source of truth.
 - You never evaluate a policy rule (R1 – R6). `policy_result` is the source of truth; you honour `forced_action` and `capped_confidence`.
-- You never apply X-rule mutations. Synthesis owns that in Phase 2; this skill emits one domain's bounded recommendation.
-- You never emit an `action` outside the v1 enum. `hai writeback` enforces this.
+- You never apply X-rule mutations. Synthesis owns that in Phase 2; this skill emits one domain's bounded proposal.
+- You never emit an `action` outside the v1 enum. `hai propose` enforces this.
 - You never fabricate values for missing evidence; missing stays missing.
 - If a decision isn't reasoned in `rationale[]` or `policy_decisions[]`, it didn't happen.

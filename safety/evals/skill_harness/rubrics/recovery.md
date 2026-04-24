@@ -16,10 +16,11 @@ not assert on it). A single `fail` makes the scenario's correctness
 verdict `fail`.
 
 - **schema_valid** — the emitted dict passes
-  `core.validate.validate_recommendation_dict`. This check is the same
-  one `hai writeback` runs before persisting. A failure here means the
-  skill broke a hard runtime contract (required field missing, banned
-  token leaked, `review_at` outside the 24h window, etc.).
+  `core.validate.validate_recommendation_dict`. This is the same
+  validator `hai synthesize` applies before persisting. A failure
+  here means the skill broke a hard runtime contract (required field
+  missing, banned token leaked, `review_at` outside the 24h window,
+  etc.).
 - **action_matches** — the `action` enum value matches the scenario's
   `expected.action`. Exact string match.
 - **confidence_within_bound** — `confidence` is no higher than

@@ -170,7 +170,23 @@ def _classify_coverage(
     acwr_present: bool,
     hard_session_count_present: bool,
     recovery_adjacent_any_present: bool,
+    *,
+    activity_count_14d: Optional[int] = None,
 ) -> CoverageBand:
+    # Structural-activity relaxation (v0.1.4): when the intervals.icu
+    # /activities pull has delivered enough recent sessions, we know the
+    # user is actively running even if the 28-day distance-series baseline
+    # isn't fully populated. Three quality activities in the window is the
+    # lowest count where a weekly baseline derived from structural data
+    # beats "no baseline at all." This keeps the classifier from forcing a
+    # defer when the wearable clearly shows consistent running load.
+    if (
+        activity_count_14d is not None
+        and activity_count_14d >= 3
+        and weekly_mileage_present
+    ):
+        weekly_mileage_baseline_present = True
+
     # Insufficient: cannot establish a mileage trend at all.
     if not weekly_mileage_present or not weekly_mileage_baseline_present:
         return "insufficient"
@@ -305,6 +321,7 @@ def classify_running_state(
         recovery_adjacent_any_present=(
             tr_pct is not None or sleep_debt is not None or rhr is not None
         ),
+        activity_count_14d=running_signals.get("activity_count_14d"),
     )
 
     status = _running_readiness_status(

@@ -69,6 +69,8 @@ Start with `classified_state.uncertainty` (already sorted + deduped). Append any
 
 Sleep emits a `SleepProposal`, not a recommendation, so it has no `follow_up` field. Synthesis assigns review semantics per finalised plan. Skip this step.
 
+On `defer_decision_insufficient_signal`, synthesis uses the sleep-domain template `"Did anything shift in your sleep last night worth noting?"` (owned by `core.narration.templates.DEFER_REVIEW_QUESTION_TEMPLATES`).
+
 ## Output
 
 Emit a `SleepProposal` JSON and call `hai propose --domain sleep --proposal-json <path>`. The propose tool validates the shape and appends to `proposal_log`; it is your determinism check.

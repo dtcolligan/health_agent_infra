@@ -40,7 +40,7 @@ class TrainingRecommendation:
     """Agent-produced bounded recommendation.
 
     The agent composes this object from ``CleanedEvidence`` + ``RawSummary``
-    by following the recovery-readiness skill. ``hai writeback`` validates
+    by following the recovery-readiness skill. ``hai synthesize`` validates
     the shape before persisting — validation is the runtime's contract check
     on the agent's output.
     """

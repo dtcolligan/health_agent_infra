@@ -17,7 +17,7 @@ ships two things to an agent like Claude Code:
 - **A ``skills/`` directory** with fourteen markdown skills — one
   per domain, a synthesis skill, an authoritative `intent-router`
   skill (NL → CLI workflow mapping), an expert-explainer, plus
-  cross-cutting (merge-human-inputs, writeback-protocol, reporting,
+  cross-cutting (merge-human-inputs, review-protocol, reporting,
   safety).
 
 The runtime owns deterministic work (arithmetic, mechanical
@@ -93,8 +93,10 @@ Core orchestration in ``src/health_agent_infra/core/``:
 - ``state/snapshot.py`` — cross-domain bundle the agent reads.
 - ``state/projectors/*.py`` — one projector per domain turning raw
   evidence into ``accepted_*_state_daily`` rows.
-- ``writeback/proposal.py`` + ``writeback/recommendation.py`` —
-  the three determinism boundaries.
+- ``writeback/proposal.py`` — the `hai propose` determinism
+  boundary; `hai synthesize` is the other, inline in
+  ``synthesis.py``. (The legacy ``writeback/recommendation.py`` was
+  removed in v0.1.4 D2.)
 
 ## 5. Where the judgment lives
 
@@ -109,7 +111,7 @@ Twelve skills in ``skills/``:
 - ``strength-intake/`` — agent-mediated narration of gym sessions.
 - ``merge-human-inputs/`` — hybrid-intake router (shipped in
   Phase 7C.4, retained as-is).
-- ``writeback-protocol/``, ``reporting/``, ``safety/`` — cross-
+- ``review-protocol/``, ``reporting/``, ``safety/`` — cross-
   cutting.
 
 Skills land in ``~/.claude/skills/`` after ``hai setup-skills``

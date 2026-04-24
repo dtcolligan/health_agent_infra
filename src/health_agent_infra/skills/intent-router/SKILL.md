@@ -1,7 +1,7 @@
 ---
 name: intent-router
 description: Authoritative mapping from user natural-language intent to `hai` CLI workflow sequences. Reads the `hai capabilities --json` manifest as the source of truth for which commands exist, what they mutate, and what exit codes they return. Never mutates state itself — it composes invocations of other `hai` subcommands that cross the determinism boundaries. Always surfaces the proposed pipeline before any mutation command runs. Teaches the agent `hai` the way Claude already knows `gh`.
-allowed-tools: Read, Bash(hai capabilities *), Bash(hai state snapshot *), Bash(hai state read *), Bash(hai state reproject *), Bash(hai state init *), Bash(hai state migrate *), Bash(hai pull *), Bash(hai clean *), Bash(hai propose *), Bash(hai synthesize *), Bash(hai explain *), Bash(hai memory *), Bash(hai review *), Bash(hai intake *), Bash(hai daily *), Bash(hai doctor *), Bash(hai classify *), Bash(hai policy *), Bash(hai config show *), Bash(hai exercise search *), Bash(hai eval *), Bash(hai auth status *)
+allowed-tools: Read, Bash(hai capabilities *), Bash(hai state snapshot *), Bash(hai state read *), Bash(hai state reproject *), Bash(hai state init *), Bash(hai state migrate *), Bash(hai pull *), Bash(hai clean *), Bash(hai propose *), Bash(hai synthesize *), Bash(hai today *), Bash(hai explain *), Bash(hai memory *), Bash(hai review *), Bash(hai intake *), Bash(hai daily *), Bash(hai doctor *), Bash(hai config show *), Bash(hai exercise search *), Bash(hai eval *), Bash(hai auth status *)
 disable-model-invocation: false
 ---
 
@@ -44,9 +44,11 @@ hai capabilities
 
 This emits JSON with one row per leaf command, each carrying:
 `command`, `mutation`, `idempotent`, `json_output`, `exit_codes`,
-`agent_safe`, `description`. The manifest is generated from the
-argparse tree at runtime, so it always matches the `hai` build the
-user has installed — no mapping table to hand-maintain.
+`agent_safe`, `description`, `flags[]`, and — for commands that
+opt in — `output_schema` and `preconditions`. The manifest is
+generated from the argparse tree at runtime, so it always matches
+the `hai` build the user has installed — no mapping table to
+hand-maintain.
 
 Use the manifest to:
 - confirm a command exists before calling it,
@@ -54,7 +56,25 @@ Use the manifest to:
   confirmation" below),
 - know which exit codes to expect and how to classify failures,
 - refuse any command whose `agent_safe` is `false` (you are not a
-  human operator).
+  human operator),
+- read `flags[]` when composing an invocation so required args,
+  enum choices, and defaults come from the manifest rather than
+  your memory. Each flag entry carries `name`, `positional`,
+  `required`, `type`, `choices`, `default`, `help`, `action`,
+  `nargs`, and `aliases`.
+- check `preconditions` (when present) before chaining: they name
+  state that must exist (e.g. `state_db_initialized`,
+  `proposal_log_has_row_for_each_target_domain`). If an expected
+  precondition isn't satisfied, surface a setup step to the user
+  rather than running the command.
+- consult `output_schema` (when present) to anticipate the JSON
+  shape of a command's output before parsing it. This is
+  populated on the high-traffic commands (`hai today`, `hai
+  daily`, `hai synthesize`, `hai propose`, `hai review record`)
+  and grows with each release. A missing `output_schema` doesn't
+  mean the command has no JSON output — just that no canonical
+  shape has been declared yet; fall back to parsing from the
+  command's actual stdout.
 
 ## Intent taxonomy
 

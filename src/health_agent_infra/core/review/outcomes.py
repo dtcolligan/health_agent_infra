@@ -15,6 +15,8 @@ back to ``"recovery"`` — matching the migration-003 backfill default.
 from __future__ import annotations
 
 import json
+import sqlite3
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
@@ -23,6 +25,33 @@ from health_agent_infra.core.schemas import (
     ReviewEvent,
     ReviewOutcome,
 )
+
+
+@dataclass(frozen=True)
+class ReLinkResolution:
+    """Result of resolving a review outcome's target recommendation per D1.
+
+    Three effective cases:
+
+    - **Passthrough** — the target recommendation is on a canonical-leaf
+      plan. ``recommendation_id`` equals the caller's input; the two
+      ``re_link_*`` fields are ``None``; ``refuse`` is ``False``.
+    - **Re-linked** — the target recommendation is on a superseded plan
+      and the canonical leaf has a matching-domain rec for the same
+      ``for_date``. ``recommendation_id`` is the leaf rec id;
+      ``re_linked_from_recommendation_id`` is the caller's input;
+      ``re_link_note`` is a short human-readable message.
+    - **Refused** — the target recommendation is on a superseded plan
+      and the canonical leaf has no matching-domain rec. ``refuse`` is
+      ``True``; ``refusal_reason`` explains. The CLI converts this to
+      exit code ``USER_INPUT``.
+    """
+
+    recommendation_id: str
+    re_linked_from_recommendation_id: Optional[str] = None
+    re_link_note: Optional[str] = None
+    refuse: bool = False
+    refusal_reason: Optional[str] = None
 
 
 def schedule_review(
@@ -65,13 +94,16 @@ def persist_review_event(event: ReviewEvent, *, base_dir: Path) -> ReviewEvent:
     object or re-running recovery-specific validation.
     """
 
+    from health_agent_infra.core.privacy import secure_directory, secure_file
+
     base_dir = base_dir.resolve()
-    base_dir.mkdir(parents=True, exist_ok=True)
+    secure_directory(base_dir, create=True)
     events_path = base_dir / "review_events.jsonl"
 
     if not _event_already_written(events_path, event.review_event_id):
         with events_path.open("a", encoding="utf-8") as fh:
             fh.write(json.dumps(event.to_dict(), sort_keys=True) + "\n")
+    secure_file(events_path)
     return event
 
 
@@ -90,6 +122,8 @@ def record_review_outcome(
     pre_energy_score: Optional[int] = None,
     post_energy_score: Optional[int] = None,
     disagreed_firing_ids: Optional[list[str]] = None,
+    re_linked_from_recommendation_id: Optional[str] = None,
+    re_link_note: Optional[str] = None,
 ) -> ReviewOutcome:
     """Persist a user-supplied outcome for a previously scheduled review event.
 
@@ -101,11 +135,19 @@ def record_review_outcome(
     ``disagreed_firing_ids``) are all optional. Callers that don't
     populate them land NULL columns — which is how pre-M4 outcomes
     always looked, so the expansion is backward-compatible.
+
+    When the outcome is being recorded against a superseded plan's
+    recommendation, ``event.recommendation_id`` should already reflect
+    the re-linked (canonical leaf) id; the two ``re_link_*`` kwargs
+    capture the audit trail. That resolution happens in
+    :func:`resolve_review_relink` so this function stays a thin writer.
     """
+
+    from health_agent_infra.core.privacy import secure_directory, secure_file
 
     now = now or datetime.now(timezone.utc)
     base_dir = base_dir.resolve()
-    base_dir.mkdir(parents=True, exist_ok=True)
+    secure_directory(base_dir, create=True)
     outcomes_path = base_dir / "review_outcomes.jsonl"
 
     resolved_domain = domain if domain is not None else event.domain
@@ -124,11 +166,120 @@ def record_review_outcome(
         pre_energy_score=pre_energy_score,
         post_energy_score=post_energy_score,
         disagreed_firing_ids=disagreed_firing_ids,
+        re_linked_from_recommendation_id=re_linked_from_recommendation_id,
+        re_link_note=re_link_note,
     )
 
     with outcomes_path.open("a", encoding="utf-8") as fh:
         fh.write(json.dumps(outcome.to_dict(), sort_keys=True) + "\n")
+    secure_file(outcomes_path)
     return outcome
+
+
+def resolve_review_relink(
+    conn: sqlite3.Connection,
+    *,
+    recommendation_id: str,
+) -> ReLinkResolution:
+    """Resolve the effective recommendation id for a review outcome write.
+
+    Implements D1 §review record behavior. Reads three tables:
+
+    1. ``recommendation_log`` — locate the owning plan, domain, for_date.
+    2. ``daily_plan`` — test ``superseded_by_plan_id``; walk forward to
+       the canonical leaf.
+    3. ``recommendation_log`` again — find the leaf plan's
+       matching-domain recommendation for the same ``for_date``.
+
+    Returns one of three :class:`ReLinkResolution` shapes. Never raises;
+    every failure mode is encoded in the returned value so callers can
+    branch on ``refuse`` / ``re_linked_from_recommendation_id`` without
+    exception handling.
+
+    The cycle-guard on chain walking mirrors
+    :func:`_resolve_canonical_leaf_plan_id` in ``core/synthesis.py`` —
+    forward-link corruption would otherwise silently hang.
+    """
+
+    rec_row = conn.execute(
+        "SELECT daily_plan_id, domain, for_date "
+        "FROM recommendation_log WHERE recommendation_id = ?",
+        (recommendation_id,),
+    ).fetchone()
+    if rec_row is None:
+        # Unknown rec id — passthrough and let downstream writes surface
+        # the FK violation if any. Pre-D1 behavior for this edge case.
+        return ReLinkResolution(recommendation_id=recommendation_id)
+
+    owning_plan_id = rec_row["daily_plan_id"]
+    domain = rec_row["domain"]
+    for_date = rec_row["for_date"]
+    if owning_plan_id is None:
+        return ReLinkResolution(recommendation_id=recommendation_id)
+
+    leaf_id = _walk_plan_chain_to_leaf(conn, plan_id=owning_plan_id)
+    if leaf_id is None or leaf_id == owning_plan_id:
+        return ReLinkResolution(recommendation_id=recommendation_id)
+
+    leaf_rec_row = conn.execute(
+        "SELECT recommendation_id FROM recommendation_log "
+        "WHERE daily_plan_id = ? AND domain = ? AND for_date = ? "
+        "ORDER BY issued_at DESC LIMIT 1",
+        (leaf_id, domain, for_date),
+    ).fetchone()
+    if leaf_rec_row is None:
+        return ReLinkResolution(
+            recommendation_id=recommendation_id,
+            refuse=True,
+            refusal_reason=(
+                f"recommendation {recommendation_id} is on plan "
+                f"{owning_plan_id}, which has been superseded by {leaf_id}; "
+                f"the canonical leaf has no matching-domain recommendation "
+                f"({domain} for {for_date}). Refusing to create an orphaned "
+                f"outcome."
+            ),
+        )
+
+    leaf_rec_id = leaf_rec_row["recommendation_id"]
+    return ReLinkResolution(
+        recommendation_id=leaf_rec_id,
+        re_linked_from_recommendation_id=recommendation_id,
+        re_link_note=(
+            f"re-linked from {recommendation_id} to {leaf_rec_id}: "
+            f"owning plan {owning_plan_id} superseded by {leaf_id}."
+        ),
+    )
+
+
+def _walk_plan_chain_to_leaf(
+    conn: sqlite3.Connection,
+    *,
+    plan_id: str,
+) -> Optional[str]:
+    """Walk ``daily_plan.superseded_by_plan_id`` from ``plan_id`` to a leaf.
+
+    Returns the plan id whose ``superseded_by_plan_id`` is NULL, or
+    ``None`` if ``plan_id`` doesn't exist. Cycle-guarded.
+    """
+
+    current: Optional[str] = plan_id
+    seen: set[str] = set()
+    while current is not None:
+        if current in seen:
+            return current
+        seen.add(current)
+        row = conn.execute(
+            "SELECT superseded_by_plan_id FROM daily_plan "
+            "WHERE daily_plan_id = ?",
+            (current,),
+        ).fetchone()
+        if row is None:
+            return None if current == plan_id else current
+        next_id = row["superseded_by_plan_id"]
+        if next_id is None:
+            return current
+        current = next_id
+    return None
 
 
 def _event_already_written(path: Path, review_event_id: str) -> bool:

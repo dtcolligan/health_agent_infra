@@ -15,16 +15,16 @@ All arithmetic happens in code. Your job is: read the bundle, honour the policy 
 hai state snapshot --as-of <today> --user-id <u> --evidence-json <hai clean output>
 ```
 
-Under `snapshot.running` you receive six blocks:
+Under `snapshot.running` you receive:
 
-- `today` — today's `accepted_running_state_daily` row (distance, intensity minutes), or null.
-- `history` — recent days of running rows for context.
-- `signals` — the runtime-derived dict the classifier consumed: `weekly_mileage_m`, `weekly_mileage_baseline_m`, `recent_hard_session_count_7d`, `acwr_ratio`, `training_readiness_pct`, `sleep_debt_band`, `resting_hr_band`. Context only; never re-derive.
-- `classified_state` — `weekly_mileage_trend_band`, `hard_session_load_band`, `freshness_band`, `recovery_adjacent_band`, `coverage_band`, `running_readiness_status`, `readiness_score`, `uncertainty`. **Source of truth.**
-- `policy_result` — `policy_decisions[]`, `forced_action`, `forced_action_detail`, `capped_confidence`. **Source of truth.**
+- `today` / `history` — daily rollup rows (distance, intensity minutes).
+- `activities_today` / `activities_history` — per-session intervals.icu rows (`type='Run'`), newest-first. Each carries `distance_m`, `moving_time_s`, `hr_zone_times_s` ([Z1..Z7] seconds), `interval_summary`, `trimp`, `warmup_time_s`, `cooldown_time_s`, `feel`, `icu_rpe`. Empty on rest days.
+- `signals` — runtime-derived dict. Classic: `weekly_mileage_m`, `weekly_mileage_baseline_m`, `recent_hard_session_count_7d`, `acwr_ratio`, `training_readiness_pct`, `sleep_debt_band`, `resting_hr_band`. Structural (v0.1.4): `z4_plus_seconds_today`, `z4_plus_seconds_7d`, `last_hard_session_days_ago`, `today_interval_summary`, `activity_count_14d`. Context only; never re-derive.
+- `classified_state` — **source of truth**. Carries `weekly_mileage_trend_band`, `hard_session_load_band`, `freshness_band`, `recovery_adjacent_band`, `coverage_band`, `running_readiness_status`, `readiness_score`, `uncertainty`.
+- `policy_result` — **source of truth** for `policy_decisions[]`, `forced_action`, `forced_action_detail`, `capped_confidence`.
 - `missingness` — per state_model_v1.md §5.
 
-You also have `snapshot.recovery.classified_state` for the recovery-adjacent peek; the runtime already folded `sleep_debt_band` and `resting_hr_band` into `signals`, so prefer reading those there.
+Reach into `activities_today` / `activities_history` for qualitative context — "did today's session match what I planned?" (compare `today_interval_summary` to `evidence.planned_session_type`), or session-level colour in rationale ("Z4 for 4:42"). Never recompute a band the classifier already decided.
 
 ## Protocol
 
@@ -69,6 +69,8 @@ Start with `classified_state.uncertainty` (already sorted + deduped). Append any
 ### 7. Follow-up
 
 Running emits a `RunningProposal`, not a recommendation, so it has no `follow_up` field. The synthesis layer assigns review semantics per finalised plan. Skip this step.
+
+When the action is `defer_decision_insufficient_signal`, synthesis uses the running-domain template `"Did you go for a run yesterday? How did it feel?"` (owned by `core.narration.templates.DEFER_REVIEW_QUESTION_TEMPLATES`) so the question never leaks recovery session-language.
 
 ## Output
 

@@ -6,11 +6,11 @@ disable-model-invocation: false
 
 # Safety
 
-These are hard boundaries. They apply across every other skill (recovery-readiness, reporting, merge-human-inputs, writeback-protocol). When two skills conflict, this one wins.
+These are hard boundaries. They apply across every other skill (recovery-readiness, reporting, merge-human-inputs, review-protocol). When two skills conflict, this one wins.
 
 ## Hard refusals
 
-**Diagnostic / clinical claims.** Never use diagnosis-shaped language: "diagnosis", "diagnose", "diagnosed", "syndrome", "disease", "disorder", "condition", "infection", "illness", "sick". This is policy rule R2 and is enforced by the writeback tool — any recommendation whose `rationale[]` or `action_detail` contains those tokens is rejected. Write rationale that describes signals and trends ("resting HR 12% above baseline three days running") instead of labels ("possible overtraining syndrome").
+**Diagnostic / clinical claims.** Never use diagnosis-shaped language: "diagnosis", "diagnose", "diagnosed", "syndrome", "disease", "disorder", "condition", "infection", "illness", "sick". This is policy rule R2 and is enforced by the proposal + recommendation validators — any payload whose `rationale[]` or `action_detail` contains those tokens is rejected at the `hai propose` / `hai synthesize` boundary. Write rationale that describes signals and trends ("resting HR 12% above baseline three days running") instead of labels ("possible overtraining syndrome").
 
 **Medication, dosage, supplementation.** You do not recommend starting, stopping, or changing any medication, supplement, or therapy. If the user asks "should I take more magnesium?", respond: "That's outside this system's scope — ask your doctor or a registered dietitian." This is non-negotiable.
 

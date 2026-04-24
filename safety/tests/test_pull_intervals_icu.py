@@ -32,8 +32,10 @@ from health_agent_infra.core.pull.auth import IntervalsIcuCredentials
 from health_agent_infra.core.pull.intervals_icu import (
     RAW_DAILY_ROW_COLUMNS,
     HttpIntervalsIcuClient,
+    IntervalsIcuActivity,
     IntervalsIcuAdapter,
     IntervalsIcuError,
+    _parse_activities,
     build_default_client,
 )
 from health_agent_infra.core.pull.protocol import FlagshipPullAdapter
@@ -44,15 +46,30 @@ from health_agent_infra.core.pull.protocol import FlagshipPullAdapter
 # ---------------------------------------------------------------------------
 
 class ReplayWellnessClient:
-    """Returns pre-seeded wellness records. Records the queried range."""
+    """Returns pre-seeded wellness + activities records. Records the queried range."""
 
-    def __init__(self, records: list[dict]):
+    def __init__(
+        self,
+        records: list[dict],
+        *,
+        activities: list[dict] | None = None,
+        activities_error: IntervalsIcuError | None = None,
+    ):
         self._records = records
+        self._activities = list(activities or [])
+        self._activities_error = activities_error
         self.queried: list[tuple[date, date]] = []
+        self.queried_activities: list[tuple[date, date]] = []
 
     def fetch_wellness_range(self, oldest: date, newest: date) -> list[dict]:
         self.queried.append((oldest, newest))
         return list(self._records)
+
+    def fetch_activities_range(self, oldest: date, newest: date) -> list[dict]:
+        self.queried_activities.append((oldest, newest))
+        if self._activities_error is not None:
+            raise self._activities_error
+        return list(self._activities)
 
 
 def _wellness(d: date, **fields) -> dict:
@@ -73,7 +90,7 @@ def test_adapter_evidence_keys_match_canonical_contract():
     adapter = IntervalsIcuAdapter(client=client, history_days=0)
     pull = adapter.load(as_of)
     assert set(pull.keys()) == {
-        "sleep", "resting_hr", "hrv", "training_load", "raw_daily_row"
+        "sleep", "resting_hr", "hrv", "training_load", "raw_daily_row", "activities"
     }
 
 
@@ -432,3 +449,211 @@ def test_build_default_client_returns_http_client():
     creds = IntervalsIcuCredentials(athlete_id="i123", api_key="sekret")
     client = build_default_client(creds)
     assert isinstance(client, HttpIntervalsIcuClient)
+
+
+# ---------------------------------------------------------------------------
+# Activities parser — maps live-shape Garmin Connect run
+# ---------------------------------------------------------------------------
+
+GARMIN_RUN_SAMPLE: dict = {
+    "id": "i142248964",
+    "external_id": "22628799588",
+    "source": "GARMIN_CONNECT",
+    "start_date": "2026-04-23T10:21:28Z",
+    "start_date_local": "2026-04-23T11:21:28",
+    "type": "Run",
+    "name": "East Lothian Running",
+    "distance": 6746.21,
+    "moving_time": 2399,
+    "elapsed_time": 2400,
+    "average_heartrate": 155,
+    "max_heartrate": 182,
+    "athlete_max_hr": 202,
+    "icu_hr_zone_times": [1312, 254, 550, 282, 0, 0, 0],
+    "icu_hr_zones": [154, 163, 172, 182, 187, 192, 202],
+    "interval_summary": ["4x 9m29s 156bpm", "1x 2m7s 146bpm"],
+    "trimp": 67.496635,
+    "icu_training_load": 39,
+    "hr_load": 39,
+    "hr_load_type": "HRSS",
+    "icu_warmup_time": 300,
+    "icu_cooldown_time": 300,
+    "icu_lap_count": 5,
+    "average_speed": 2.81,
+    "max_speed": 3.667,
+    "pace": 2.8120925,
+    "average_cadence": 83.94948,
+    "average_stride": 1.0049231,
+    "calories": 520,
+    "total_elevation_gain": 23.436192,
+    "total_elevation_loss": 24.395403,
+    "feel": 3,
+    "icu_rpe": 7,
+    "session_rpe": 279,
+    "device_name": "Garmin Forerunner 265",
+}
+
+
+def test_parse_activities_maps_garmin_run_sample_faithfully():
+    parsed = _parse_activities([GARMIN_RUN_SAMPLE], user_id="u_local_1")
+    assert len(parsed) == 1
+    a = parsed[0]
+    assert a.activity_id == "i142248964"
+    assert a.user_id == "u_local_1"
+    assert a.as_of_date == "2026-04-23"  # derived from start_date_local
+    assert a.source == "GARMIN_CONNECT"
+    assert a.external_id == "22628799588"
+    assert a.activity_type == "Run"
+    assert a.distance_m == 6746.21
+    assert a.moving_time_s == 2399.0
+    assert a.hr_zone_times_s == [1312, 254, 550, 282, 0, 0, 0]
+    assert a.interval_summary == ["4x 9m29s 156bpm", "1x 2m7s 146bpm"]
+    assert a.trimp == pytest.approx(67.496635)
+    assert a.warmup_time_s == 300.0
+    assert a.cooldown_time_s == 300.0
+    assert a.lap_count == 5
+    assert a.device_name == "Garmin Forerunner 265"
+
+
+def test_parse_activities_uses_start_date_utc_when_local_missing():
+    rec = dict(GARMIN_RUN_SAMPLE)
+    rec.pop("start_date_local")
+    parsed = _parse_activities([rec], user_id="u_local_1")
+    assert parsed[0].as_of_date == "2026-04-23"
+
+
+def test_parse_activities_skips_records_without_id():
+    rec = dict(GARMIN_RUN_SAMPLE)
+    rec.pop("id")
+    assert _parse_activities([rec], user_id="u_local_1") == []
+
+
+def test_parse_activities_skips_records_without_parseable_date():
+    rec = dict(GARMIN_RUN_SAMPLE)
+    rec["start_date"] = "not a date"
+    rec["start_date_local"] = None
+    assert _parse_activities([rec], user_id="u_local_1") == []
+
+
+def test_parse_activities_distance_falls_back_to_icu_distance():
+    rec = dict(GARMIN_RUN_SAMPLE)
+    rec.pop("distance")
+    rec["icu_distance"] = 5000.0
+    parsed = _parse_activities([rec], user_id="u_local_1")
+    assert parsed[0].distance_m == 5000.0
+
+
+def test_parse_activities_preserves_raw_json_for_unmapped_fields():
+    rec = dict(GARMIN_RUN_SAMPLE)
+    rec["some_future_field"] = {"nested": [1, 2, 3]}
+    parsed = _parse_activities([rec], user_id="u_local_1")
+    raw = json.loads(parsed[0].raw_json)
+    assert raw["some_future_field"] == {"nested": [1, 2, 3]}
+
+
+def test_parse_activities_sorts_by_date_then_start_time_then_id():
+    a_later_day = dict(GARMIN_RUN_SAMPLE, id="i_z", start_date_local="2026-04-24T06:00:00", start_date="2026-04-24T05:00:00Z")
+    a_earlier = dict(GARMIN_RUN_SAMPLE, id="i_a", start_date_local="2026-04-23T08:00:00", start_date="2026-04-23T07:00:00Z")
+    a_midday = dict(GARMIN_RUN_SAMPLE, id="i_m", start_date_local="2026-04-23T12:00:00", start_date="2026-04-23T11:00:00Z")
+    parsed = _parse_activities([a_later_day, a_midday, a_earlier], user_id="u_local_1")
+    assert [a.activity_id for a in parsed] == ["i_a", "i_m", "i_z"]
+
+
+def test_parse_activities_as_dict_roundtrip_is_json_safe():
+    parsed = _parse_activities([GARMIN_RUN_SAMPLE], user_id="u_local_1")
+    blob = json.dumps(parsed[0].as_dict())  # must not raise
+    back = json.loads(blob)
+    assert back["activity_id"] == "i142248964"
+    assert back["hr_zone_times_s"] == [1312, 254, 550, 282, 0, 0, 0]
+
+
+# ---------------------------------------------------------------------------
+# Adapter — activities surface
+# ---------------------------------------------------------------------------
+
+def test_adapter_surfaces_activities_from_client():
+    as_of = date(2026, 4, 23)
+    client = ReplayWellnessClient(
+        [_wellness(as_of, restingHR=58)],
+        activities=[GARMIN_RUN_SAMPLE],
+    )
+    adapter = IntervalsIcuAdapter(client=client, history_days=0, user_id="u_local_1")
+    pull = adapter.load(as_of)
+    assert len(pull["activities"]) == 1
+    assert pull["activities"][0]["activity_id"] == "i142248964"
+    assert pull["activities"][0]["user_id"] == "u_local_1"
+    assert pull["activities"][0]["distance_m"] == 6746.21
+
+
+def test_adapter_queries_activities_over_same_window_as_wellness():
+    as_of = date(2026, 4, 17)
+    client = ReplayWellnessClient([], activities=[])
+    adapter = IntervalsIcuAdapter(client=client, history_days=7)
+    adapter.load(as_of)
+    assert client.queried_activities == [(as_of - timedelta(days=7), as_of)]
+
+
+def test_adapter_returns_empty_activities_on_endpoint_error():
+    """A failed /activities endpoint must not break the wellness pull."""
+    as_of = date(2026, 4, 17)
+    client = ReplayWellnessClient(
+        [_wellness(as_of, restingHR=58)],
+        activities_error=IntervalsIcuError("HTTP 404 Not Found"),
+    )
+    adapter = IntervalsIcuAdapter(client=client, history_days=0)
+    pull = adapter.load(as_of)
+    assert pull["activities"] == []
+    assert pull["raw_daily_row"] is not None
+    # Failure surfaces on telemetry so dogfooders can see the gap.
+    assert any(
+        s.startswith("activities_endpoint:") for s in adapter.last_pull_failed_days
+    )
+
+
+def test_adapter_defaults_user_id_to_u_local_1():
+    as_of = date(2026, 4, 17)
+    client = ReplayWellnessClient([], activities=[GARMIN_RUN_SAMPLE])
+    adapter = IntervalsIcuAdapter(client=client, history_days=0)
+    pull = adapter.load(as_of)
+    assert pull["activities"][0]["user_id"] == "u_local_1"
+
+
+# ---------------------------------------------------------------------------
+# HTTP client — /activities endpoint
+# ---------------------------------------------------------------------------
+
+def test_http_client_fetch_activities_assembles_url(local_server):
+    base_url, handler = local_server
+    client = HttpIntervalsIcuClient(
+        credentials=IntervalsIcuCredentials(athlete_id="i123", api_key="sekret"),
+        base_url=base_url,
+    )
+    client.fetch_activities_range(date(2026, 4, 16), date(2026, 4, 23))
+    assert handler.last_path.startswith("/api/v1/athlete/i123/activities?")
+    assert "oldest=2026-04-16" in handler.last_path
+    assert "newest=2026-04-23" in handler.last_path
+
+
+def test_http_client_fetch_activities_raises_on_error(local_server):
+    base_url, handler = local_server
+    handler.response_status = 500
+    handler.response_body = b"server error"
+    client = HttpIntervalsIcuClient(
+        credentials=IntervalsIcuCredentials(athlete_id="i123", api_key="sekret"),
+        base_url=base_url,
+    )
+    with pytest.raises(IntervalsIcuError) as exc_info:
+        client.fetch_activities_range(date(2026, 4, 17), date(2026, 4, 17))
+    assert "activities" in str(exc_info.value).lower()
+    assert "500" in str(exc_info.value)
+
+
+def test_http_client_fetch_activities_returns_parsed_array(local_server):
+    base_url, handler = local_server
+    handler.response_body = json.dumps([GARMIN_RUN_SAMPLE]).encode("utf-8")
+    client = HttpIntervalsIcuClient(
+        credentials=IntervalsIcuCredentials(athlete_id="i123", api_key="sekret"),
+        base_url=base_url,
+    )
+    records = client.fetch_activities_range(date(2026, 4, 23), date(2026, 4, 23))
+    assert records[0]["id"] == "i142248964"

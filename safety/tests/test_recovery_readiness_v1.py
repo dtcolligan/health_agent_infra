@@ -42,10 +42,6 @@ from health_agent_infra.core.schemas import (
     ReviewOutcome,
 )
 from health_agent_infra.domains.recovery.schemas import TrainingRecommendation
-from health_agent_infra.core.writeback.recommendation import (
-    ALLOWED_RELATIVE_ROOT,
-    perform_writeback,
-)
 
 
 AS_OF = date(2026, 4, 16)
@@ -207,34 +203,6 @@ def _sample_recommendation(user_id: str = "u_1") -> TrainingRecommendation:
     )
 
 
-def test_writeback_is_idempotent(tmp_path: Path):
-    base = tmp_path / ALLOWED_RELATIVE_ROOT
-    rec = _sample_recommendation()
-
-    first = perform_writeback(rec, base_dir=base, now=NOW)
-    second = perform_writeback(rec, base_dir=base, now=NOW)
-
-    assert first.recommendation_id == second.recommendation_id
-    log = (base / "recommendation_log.jsonl").read_text(encoding="utf-8").strip().splitlines()
-    assert len(log) == 1
-
-
-def test_writeback_locality_enforced_outside_allowed_root(tmp_path: Path):
-    bad_base = tmp_path / "not_the_allowed_root"
-    rec = _sample_recommendation()
-    with pytest.raises(ValueError):
-        perform_writeback(rec, base_dir=bad_base, now=NOW)
-
-
-def test_writeback_cli_shape_validation_accepts_valid_json():
-    from health_agent_infra.cli import _recommendation_from_dict
-
-    rec = _sample_recommendation()
-    rebuilt = _recommendation_from_dict(rec.to_dict())
-    assert rebuilt.recommendation_id == rec.recommendation_id
-    assert rebuilt.action == rec.action
-
-
 # ---------------------------------------------------------------------------
 # VALIDATOR — code-enforced boundary on agent-produced recommendation JSON.
 # One test per stable invariant id. Each constructs a minimally malformed
@@ -393,7 +361,7 @@ def _run_cli(argv: list[str], capsys) -> tuple[int, dict]:
     return rc, json.loads(out) if out.strip() else {}
 
 
-def test_intake_readiness_emits_valid_manual_readiness_dict(capsys):
+def test_intake_readiness_emits_valid_manual_readiness_dict(tmp_path: Path, capsys):
     rc, payload = _run_cli(
         [
             "intake", "readiness",
@@ -402,6 +370,7 @@ def test_intake_readiness_emits_valid_manual_readiness_dict(capsys):
             "--planned-session-type", "hard",
             "--active-goal", "strength_block",
             "--as-of", "2026-04-17",
+            "--base-dir", str(tmp_path / "intake"),
         ],
         capsys,
     )
@@ -413,13 +382,14 @@ def test_intake_readiness_emits_valid_manual_readiness_dict(capsys):
     assert payload["submission_id"].startswith("m_ready_2026-04-17_")
 
 
-def test_intake_readiness_active_goal_is_optional(capsys):
+def test_intake_readiness_active_goal_is_optional(tmp_path: Path, capsys):
     rc, payload = _run_cli(
         [
             "intake", "readiness",
             "--soreness", "low",
             "--energy", "low",
             "--planned-session-type", "rest",
+            "--base-dir", str(tmp_path / "intake"),
         ],
         capsys,
     )
@@ -427,7 +397,7 @@ def test_intake_readiness_active_goal_is_optional(capsys):
     assert "active_goal" not in payload  # absent when not supplied
 
 
-def test_intake_readiness_rejects_bad_soreness_enum(capsys):
+def test_intake_readiness_rejects_bad_soreness_enum(tmp_path: Path, capsys):
     from health_agent_infra.cli import main
     with pytest.raises(SystemExit) as exc:
         main([
@@ -435,6 +405,7 @@ def test_intake_readiness_rejects_bad_soreness_enum(capsys):
             "--soreness", "extreme",
             "--energy", "high",
             "--planned-session-type", "hard",
+            "--base-dir", str(tmp_path / "intake"),
         ])
     assert exc.value.code != 0  # argparse rejects before we ever produce JSON
 
@@ -454,6 +425,7 @@ def test_intake_readiness_output_feeds_hai_pull(tmp_path: Path, capsys):
         "--planned-session-type", "intervals",
         "--active-goal", "endurance_taper",
         "--as-of", "2026-04-08",
+        "--base-dir", str(tmp_path / "intake"),
     ])
     assert rc == 0
     intake_json = capsys.readouterr().out
@@ -502,9 +474,8 @@ def test_validator_rejects_empty_policy_decisions():
 # ---------------------------------------------------------------------------
 
 def test_schedule_and_record_review(tmp_path: Path):
-    base = tmp_path / ALLOWED_RELATIVE_ROOT
+    base = tmp_path / "writeback"
     rec = _sample_recommendation()
-    perform_writeback(rec, base_dir=base, now=NOW)
 
     event = schedule_review(rec, base_dir=base)
     assert event.review_event_id == rec.follow_up.review_event_id

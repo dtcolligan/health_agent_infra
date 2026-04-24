@@ -1,28 +1,85 @@
 ---
 name: merge-human-inputs
-description: Partition unstructured user narration into the typed `hai intake` commands the runtime expects. Use when the user volunteers information outside a form — readiness, gym sets, nutrition, subjective stress, or free-text context. You route; you do not interpret.
+description: Partition unstructured user narration into the typed `hai intake` commands the runtime expects. Use when the user volunteers information outside a form — readiness, gym sets, nutrition, subjective stress, or free-text context. Also drives the session-start gap-filling protocol: read `hai intake gaps`, compose ONE consolidated question, route the answer. You route; you do not interpret.
 allowed-tools: Read, Write, Bash(hai pull *), Bash(hai intake *)
 disable-model-invocation: false
 ---
 
 # Merge Human Inputs
 
-You take unstructured human input — narration, transcribed human speech, half-typed answers — and route it into typed `hai intake <kind>` calls. Two ground rules govern everything below:
+You take unstructured human input — narration, transcribed human speech, half-typed answers — and route it into typed `hai intake <kind>` calls. Three ground rules govern everything below:
 
 1. **Structured if it fits, free-text note otherwise.** If the user gives values that match a structured intake's required fields, use that intake. If they don't, log a note. Never invent numbers to fill a typed slot.
 2. **You partition, you do not interpret.** Classification (recovery state bands, action selection) belongs to the recovery-readiness skill. You move bytes from narration into the right intake command and ask for clarification when needed.
+3. **Ask once, not many times.** At session start, read `hai intake gaps` first and compose ONE consolidated question that covers every gating gap. Drip-feeding is a bug, not a feature.
+
+## Session-start gap-filling protocol
+
+**This runs before any domain-skill invocation.** It is the low-friction entry point: the agent learns what the runtime needs from the user, asks once, then produces recommendations.
+
+### Step 1 — enumerate gaps
+
+```bash
+hai intake gaps --as-of <today> --user-id <u> --evidence-json <hai clean output>
+```
+
+The JSON response carries:
+
+```json
+{
+  "gaps": [
+    {
+      "domain": "recovery",
+      "missing_field": "manual_checkin_missing",
+      "field_description": "morning self-report: soreness ..., energy ..., planned session ...",
+      "intake_command": "hai intake readiness",
+      "intake_args_template": "--soreness <low|moderate|high> --energy <low|moderate|high> --planned-session-type <str> [--active-goal <str>]",
+      "blocks_coverage": true,
+      "priority": 1
+    },
+    ...
+  ],
+  "gap_count": 4,
+  "gating_gap_count": 4
+}
+```
+
+When `gap_count` is 0, skip the rest of this protocol. Synthesize directly.
+
+### Step 2 — compose ONE natural question
+
+Read the `field_description` and `domain` of each gap (priority-1 first; defer priority-2 like nutrition to end-of-day if it's morning). Compose a single question in YOUR voice that covers the gating gaps in one exchange. Do NOT copy `field_description` verbatim — it's raw inventory, not conversation. Examples:
+
+- 4 gaps (recovery + strength + stress + nutrition): "Quick morning check-in: how's your soreness + energy (low/mod/high each), what are you training today, and how stressed are you feeling on 1–10? Nutrition we can log after dinner."
+- 1 gap (recovery only): "How's your body today — soreness, energy, and what are you planning?"
+- 0 gaps: don't ask anything.
+
+### Step 3 — parse the free-text answer
+
+Use the decision table below to route each piece of the user's answer to the right `hai intake <X>` command. If something is ambiguous, ask ONE targeted follow-up (never a wall).
+
+### Step 4 — retry synthesis
+
+After the intakes land, rerun `hai daily --skip-pull --supersede` so the updated evidence feeds synthesis. The plan supersedes cleanly via D1 revision semantics.
+
+### Session-end gap-fill (nutrition primarily)
+
+Priority-2 gaps (nutrition) belong at end-of-day, not morning. When the user says "I'm done eating for the day" or a similar cue, run `hai intake gaps` again; nutrition will still be open; log then synthesize-supersede.
+
+## Available intake surface
 
 ## Available intake surface
 
 | Command | Purpose | Required fields | Optional |
 |---|---|---|---|
+| `hai intake gaps` | **Read-only.** Enumerate user-closeable intake gaps in the snapshot; the agent reads this at session start to drive the consolidated-question protocol above. | `--as-of --user-id --evidence-json` | `--db-path` |
 | `hai intake readiness` | Subjective pre-session check (primary hot path) | `--soreness {low\|moderate\|high}` `--energy {low\|moderate\|high}` `--planned-session-type` | `--active-goal` `--as-of` |
 | `hai intake gym` | Resistance-training sets | `--session-id --exercise --set-number --weight-kg --reps` (or `--session-json`) | `--session-name --notes --rpe --tags --as-of` |
 | `hai intake nutrition` | Daily nutrition aggregate | `--calories --protein-g --carbs-g --fat-g` | `--hydration-l --meals-count --as-of` |
 | `hai intake stress` | Subjective stress (1–5) | `--score {1,2,3,4,5}` | `--tags --as-of` |
 | `hai intake note` | Free-text context (catchall) | `--text` | `--tags --recorded-at --as-of` |
 
-All of these accept `--user-id`, `--ingest-actor` (`hai_cli_direct` or `claude_agent_v1` — use `claude_agent_v1` when you mediate), `--base-dir`, and `--db-path`.
+All mutating intakes accept `--user-id`, `--ingest-actor` (`hai_cli_direct` or `claude_agent_v1` — use `claude_agent_v1` when you mediate), `--base-dir`, and `--db-path`.
 
 ## The hybrid rule (decision table)
 

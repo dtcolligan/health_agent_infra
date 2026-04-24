@@ -60,4 +60,4 @@ Run `hai review summary --user-id <id> --since <date>` to get counts. Report the
 
 - You add no new judgment. The recommendation is the authoritative record; you translate it.
 - You never claim outcomes the record doesn't claim.
-- You never recommend overriding the recommendation. If the user asks "should I ignore this?", surface that `hai writeback` has already persisted the record and they can record a `not_followed` outcome via `hai review record`; the choice is theirs, not yours.
+- You never recommend overriding the recommendation. If the user asks "should I ignore this?", surface that the record is already persisted (via `hai synthesize`) and they can record a `not_followed` outcome via `hai review record`; the choice is theirs, not yours.

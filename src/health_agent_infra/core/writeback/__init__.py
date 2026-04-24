@@ -1,9 +1,7 @@
-"""WRITEBACK layer — schema-validated bounded local persistence."""
+"""WRITEBACK layer — schema-validated bounded local persistence.
 
-from health_agent_infra.core.writeback.recommendation import (
-    ActionRecord,
-    ALLOWED_RELATIVE_ROOT,
-    perform_writeback,
-)
-
-__all__ = ["ActionRecord", "ALLOWED_RELATIVE_ROOT", "perform_writeback"]
+As of v0.1.4 D2 this package contains only the DomainProposal writeback
+path. The legacy recovery-only ``perform_writeback`` (`hai writeback`
+CLI) was removed; recommendations now reach ``recommendation_log``
+exclusively through the atomic ``hai synthesize`` commit.
+"""

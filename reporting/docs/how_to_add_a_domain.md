@@ -420,9 +420,11 @@ changes to any of them; if it seems to, pause and re-scope.
 - **`core/schemas.py :: BoundedRecommendation` / `DomainProposal`
   base shapes.** These are the write-surface contracts; every
   domain's schemas must *match* them, not *mutate* them.
-- **`hai writeback`.** It exists as the recovery-only legacy path.
-  New domains persist through `hai synthesize`, atomically with the
-  daily plan. Don't add writeback entry points per domain.
+- **`hai synthesize` is the only write path for recommendations.**
+  All six domains land in `recommendation_log` atomically inside the
+  synthesis transaction. (The legacy recovery-only `hai writeback`
+  direct path was removed in v0.1.4 D2.) Don't add per-domain
+  writeback entry points.
 - **Phase B write-surface guard.** `guard_phase_b_mutation` is the
   reason Phase B rules can't silently mutate `action`. Don't widen
   the guard — add a new Phase A rule instead.
@@ -489,8 +491,8 @@ A new domain is ready to land when all of the following are true:
    pipeline ASCII is updated if the domain added a new accepted
    table; `x_rules.md` reflects any new or extended X-rule.
 9. No runtime change was needed to `BoundedRecommendation` /
-   `DomainProposal` base shapes, `hai writeback` behaviour, the
-   synthesis transaction boundary, or the code-vs-skill boundary.
+   `DomainProposal` base shapes, the synthesis transaction boundary,
+   or the code-vs-skill boundary.
 10. `reporting/docs/domains/README.md`'s domain list still matches
     the shipping set — update it with the new domain and its
     short description.

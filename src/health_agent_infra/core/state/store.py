@@ -234,7 +234,14 @@ def initialize_database(db_path: Path) -> tuple[Path, list[tuple[int, str]]]:
 
     Returns ``(resolved_path, applied_migrations)`` where
     ``applied_migrations`` is empty if the DB was already at head.
+
+    Phase D (v0.1.4) privacy hardening: after the migration pass lands the
+    DB on disk, the parent directory is locked to 0o700 and every file
+    in it (DB + WAL + SHM + journal siblings) to 0o600 on POSIX. No-ops
+    on Windows. Best-effort on chmod failure (warn + continue).
     """
+
+    from health_agent_infra.core.privacy import secure_state_db
 
     conn = open_connection(db_path)
     try:
@@ -242,6 +249,7 @@ def initialize_database(db_path: Path) -> tuple[Path, list[tuple[int, str]]]:
         applied = apply_pending_migrations(conn)
     finally:
         conn.close()
+    secure_state_db(db_path)
     return db_path, applied
 
 

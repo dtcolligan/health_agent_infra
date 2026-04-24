@@ -68,6 +68,8 @@ Start with `classified_state.uncertainty` (already sorted + deduped). Append any
 
 Nutrition emits a `NutritionProposal`, not a recommendation, so it has no `follow_up` field. Synthesis assigns review semantics per finalised plan. Skip this step.
 
+On `defer_decision_insufficient_signal`, synthesis uses the nutrition-domain template `"How did yesterday's eating go? Anything worth logging as macros?"` (owned by `core.narration.templates.DEFER_REVIEW_QUESTION_TEMPLATES`).
+
 ## X9 post-adjust contract
 
 After synthesis commits the training recommendation, Phase B runs X9: if the final training action is a hard session, the runtime appends a protein/carb-target bump to the nutrition recommendation's `action_detail` — NOT to the `action`. This is runtime-owned; the skill must not second-guess it or fold its effect into the proposal. The proposal you emit is the pre-synthesis view; the X9 adjustment lives downstream, run by the runtime after synthesis.

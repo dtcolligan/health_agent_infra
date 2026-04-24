@@ -49,10 +49,12 @@ precedence. Synthesis does not privilege one domain over another.
 │              PROJECTORS — per-domain, deterministic                 │
 │                                                                     │
 │  core/state/projectors/{recovery, running, sleep,                   │
-│                          stress, strength, nutrition}.py            │
+│                          stress, strength, nutrition,               │
+│                          running_activity}.py                       │
 └─────────────────────────────┬───────────────────────────────────────┘
                               │
-                              ▼ (canonical accepted_*_state_daily tables)
+                              ▼ (canonical accepted_*_state_daily tables
+                                 + running_activity per-session rows)
 ┌─────────────────────────────────────────────────────────────────────┐
 │                     STATE SNAPSHOT                                  │
 │              hai state snapshot --as-of <date>                      │
@@ -190,6 +192,18 @@ the projector. Migrations 001–011 are live:
 - 011 planned_recommendation ledger (pre-X-rule aggregate, M8
   Phase 1) — closes the audit chain at the aggregate level so
   `planned ⊕ firings = adapted` is verifiable from rows alone
+- 012 runtime_event_log — per-invocation telemetry for `hai stats`
+- 013 proposal_log revision columns (D1 re-author semantics)
+- 014 daily_plan.superseded_by_plan_id forward-link
+- 015 manual_readiness_raw (D2 per-domain intake landing)
+- 016 review_outcome.re_linked_from_recommendation_id (D1 auto-re-link)
+- 017 running_activity — per-session structural data from the
+  intervals.icu `/activities` stream (HR zone times, interval
+  summaries, TRIMP, warmup/cooldown). Distinct from the daily rollup
+  in `accepted_running_state_daily`: activities are the source of
+  truth for session structure; the rollup is an aggregation over
+  today's activities (populated by `aggregate_activities_to_daily_rollup`
+  in `cmd_clean`)
 
 ## Agent-operable surfaces (M8)
 
@@ -258,7 +272,7 @@ src/health_agent_infra/
         daily-plan-synthesis/SKILL.md
         strength-intake/SKILL.md
         merge-human-inputs/SKILL.md
-        writeback-protocol/SKILL.md
+        review-protocol/SKILL.md
         safety/SKILL.md
         reporting/SKILL.md
 reporting/
@@ -292,17 +306,16 @@ hai intake readiness --soreness low|moderate|high --energy low|moderate|high
 
 hai state init | migrate | read | snapshot | reproject
 
-hai classify --domain recovery --evidence-json <p>  # debug: dump classified state (recovery only)
-hai policy   --domain recovery --evidence-json <p>  # debug: dump policy result (recovery only)
-# For the other five domains use the eval runner, which exercises every
-# classify + policy: `hai eval run --domain <d>`.
+hai state snapshot --evidence-json <p> --as-of <d> --user-id <u>
+# Emits classified_state + policy_result for every domain in one call.
+# (The legacy recovery-only `hai classify` / `hai policy` debug CLIs
+# were removed in v0.1.4 — see `reporting/plans/v0_1_4/adr_classify_policy_cli.md`.)
+# For multi-scenario sweeps use the eval runner: `hai eval run --domain <d>`.
 
 hai propose  --domain <d> --proposal-json <p> --base-dir <root>
 hai synthesize --as-of <d> --user-id <u>                        # six-domain atomic commit
 hai synthesize --as-of <d> --user-id <u> --bundle-only          # read-only skill seam
 hai synthesize --as-of <d> --user-id <u> --drafts-json <p>      # skill overlay pass
-
-hai writeback --recommendation-json <p> --base-dir <root>        # recovery-only legacy path
 
 hai explain --for-date <d> --user-id <u> [--text]                # read-only audit-chain reconstruction
 hai explain --daily-plan-id <id> [--text]                        # exact-plan form (incl. _v<N> variants)
@@ -318,7 +331,7 @@ hai setup-skills [--dest ~/.claude/skills] [--force]
 
 ## Determinism boundary
 
-Three places the runtime refuses to proceed without a valid contract:
+Two places the runtime refuses to proceed without a valid contract:
 
 1. **``hai propose``** — every DomainProposal is validated against
    ``core/writeback/proposal.py:validate_proposal_dict``:
@@ -329,21 +342,14 @@ Three places the runtime refuses to proceed without a valid contract:
 2. **``hai synthesize``** — refuses when no proposals reached
    proposal_log; rolls back the entire transaction on any failure;
    Phase B firings are guarded against writing anything other than
-   ``action_detail`` on a registered target domain.
+   ``action_detail`` on a registered target domain. Per-domain
+   BoundedRecommendation validation for all six domains happens inside
+   ``run_synthesis`` via ``project_bounded_recommendation``. (The
+   legacy recovery-only ``hai writeback`` direct path was removed in
+   v0.1.4 D2.)
 
-3. **``hai writeback``** — validates a ``TrainingRecommendation``
-   (recovery-only BoundedRecommendation schema) before appending to
-   the recovery JSONL audit. This is the legacy single-domain direct
-   path; for the five other domains, ``hai synthesize`` is the
-   canonical writer and atomically projects every recommendation
-   alongside the daily_plan + firings. Per-domain
-   BoundedRecommendation validation for running / sleep / stress /
-   strength / nutrition happens inside ``run_synthesis`` via
-   ``project_bounded_recommendation``, not through a direct CLI
-   surface.
-
-All three points reject-loudly with ``exit=2`` and named
-``invariant`` ids for programmatic recovery.
+Both points reject-loudly with ``exit=2`` and named ``invariant`` ids
+for programmatic recovery.
 
 ## How an agent uses this
 

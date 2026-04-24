@@ -70,8 +70,20 @@ both reference adapters:
     "hrv":              [{"date": str, "rmssd_ms":  float, "record_id": str}, ...],
     "training_load":    [{"date": str, "load":      float, "record_id": str}, ...],
     "raw_daily_row":    {...full per-day row keyed by source column names...} | None,
+    "activities":       [IntervalsIcuActivity.as_dict(), ...],  # optional, v0.1.4+
 }
 ```
+
+The sixth key, `activities`, is optional but recommended when the source
+exposes per-session data. `intervals.icu` is the reference example: its
+`/wellness.json` endpoint feeds `raw_daily_row` (HRV, RHR, sleep, load —
+daily rollups); its `/activities` endpoint feeds the per-session list
+(distance, HR zone times, interval structure, TRIMP). The adapter fetches
+both, emits both; `cmd_clean` aggregates today's activities into the
+daily rollup via `aggregate_activities_to_daily_rollup` so the existing
+per-domain classifiers see real numbers instead of nulls. When the source
+has no activity-level granularity, omit the key (or emit `[]`) — the
+clean pipeline treats its absence as "rollup is authoritative."
 
 Notes a new adapter must honour:
 
@@ -190,9 +202,9 @@ Whichever path you pick, preserve these invariants:
   adapter that wants a new column should add a migration, update the
   domain's accepted-state projector, and surface the field through
   `build_snapshot` — not reach into an existing projector.
-- **`hai propose` / `hai synthesize` / `hai writeback`.** These are
-  downstream write surfaces. A pull adapter never calls them; pull
-  ends at `raw_daily_row` + the clean stage.
+- **`hai propose` / `hai synthesize`.** These are downstream write
+  surfaces. A pull adapter never calls them; pull ends at
+  `raw_daily_row` + the clean stage.
 - **Skill files.** Skills under
   [`src/health_agent_infra/skills/`](../../src/health_agent_infra/skills/)
   do not reference adapters. Adding a source does not change

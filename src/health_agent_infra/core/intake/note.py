@@ -48,8 +48,11 @@ class ContextNote:
 
 
 def append_note_jsonl(note: ContextNote, *, base_dir: Path) -> Path:
-    base_dir.mkdir(parents=True, exist_ok=True)
+    from health_agent_infra.core.privacy import secure_directory, secure_file
+
+    secure_directory(base_dir, create=True)
     path = base_dir / CONTEXT_NOTES_JSONL
     with path.open("a", encoding="utf-8") as fh:
         fh.write(json.dumps(note.to_jsonl_line(), sort_keys=True) + "\n")
+    secure_file(path)
     return path

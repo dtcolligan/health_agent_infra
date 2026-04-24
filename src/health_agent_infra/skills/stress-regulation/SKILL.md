@@ -68,6 +68,8 @@ Start with `classified_state.uncertainty` (already sorted + deduped). Append any
 
 Stress emits a `StressProposal`, not a recommendation, so it has no `follow_up` field. Synthesis assigns review semantics per finalised plan. Skip this step.
 
+On `defer_decision_insufficient_signal`, synthesis uses the stress-domain template `"How were your stress levels yesterday?"` (owned by `core.narration.templates.DEFER_REVIEW_QUESTION_TEMPLATES`).
+
 ## Output
 
 Emit a `StressProposal` JSON and call `hai propose --domain stress --proposal-json <path>`. The propose tool validates the shape and appends to `proposal_log`; it is your determinism check.

@@ -158,7 +158,7 @@ def test_init_first_run_creates_config_db_and_skills(
     for required in {
         "recovery-readiness",
         "daily-plan-synthesis",
-        "writeback-protocol",
+        "review-protocol",
     }:
         assert required in copied_names
     assert skills_step["already_present"] == []

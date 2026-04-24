@@ -372,6 +372,165 @@ def test_synthesize_third_supersede_picks_v3(tmp_path):
         conn.close()
 
 
+def test_synthesize_supersede_targets_canonical_leaf_not_chain_head(tmp_path):
+    """D1 test #5: after v1 → v2, a third ``--supersede`` points v3's
+    back-pointer at v2 (the leaf at time of synthesis), not at the
+    canonical chain head.
+
+    The pre-fix bug overwrote ``v1.superseded_by_plan_id`` on every
+    supersede call, breaking the forward chain so ``hai explain --plan-version all``
+    skipped intermediate revisions. Regression test for that path.
+    """
+
+    db_path = _fresh_db(tmp_path)
+    proposal = _running_proposal()
+    _insert_proposal(db_path, proposal)
+
+    canonical = canonical_daily_plan_id(date(2026, 4, 17), "u_local_1")
+    v2_id = f"{canonical}_v2"
+    v3_id = f"{canonical}_v3"
+
+    conn = open_connection(db_path)
+    try:
+        run_synthesis(
+            conn, for_date=date(2026, 4, 17), user_id="u_local_1",
+            snapshot=_quiet_snapshot(),
+        )
+        second = run_synthesis(
+            conn, for_date=date(2026, 4, 17), user_id="u_local_1",
+            snapshot=_x1a_triggering_snapshot(), supersede=True,
+        )
+        assert second.daily_plan_id == v2_id
+        assert second.superseded_prior == canonical
+
+        third = run_synthesis(
+            conn, for_date=date(2026, 4, 17), user_id="u_local_1",
+            snapshot=_quiet_snapshot(), supersede=True,
+        )
+        assert third.daily_plan_id == v3_id
+        # Back-pointer must be v2 (the leaf at time-of-synth), not v1.
+        assert third.superseded_prior == v2_id
+
+        # Forward chain intact: v1 → v2 → v3 → NULL.
+        rows = conn.execute(
+            "SELECT daily_plan_id, superseded_by_plan_id "
+            "FROM daily_plan WHERE for_date = ? AND user_id = ? "
+            "ORDER BY daily_plan_id",
+            ("2026-04-17", "u_local_1"),
+        ).fetchall()
+        chain = {r["daily_plan_id"]: r["superseded_by_plan_id"] for r in rows}
+        assert chain == {canonical: v2_id, v2_id: v3_id, v3_id: None}
+    finally:
+        conn.close()
+
+
+def test_synthesize_supersede_does_not_relink_prior_plan_proposals(tmp_path):
+    """D1 test #7 root-cause: ``--supersede`` leaves
+    ``proposal_log.daily_plan_id`` pointed at whichever plan first
+    consumed each proposal.
+
+    Pre-fix, supersede re-linked proposals forward to the new plan,
+    which meant explain reads via the FK silently lost the superseded
+    plan's inputs. After the fix, the proposal row keeps its original
+    linkage; the new plan's join to its proposals lives in
+    ``daily_plan.proposal_ids_json``.
+    """
+
+    db_path = _fresh_db(tmp_path)
+    proposal = _running_proposal()
+    _insert_proposal(db_path, proposal)
+
+    canonical = canonical_daily_plan_id(date(2026, 4, 17), "u_local_1")
+
+    conn = open_connection(db_path)
+    try:
+        run_synthesis(
+            conn, for_date=date(2026, 4, 17), user_id="u_local_1",
+            snapshot=_quiet_snapshot(),
+        )
+        # After v1, the proposal is linked to v1.
+        prop_row = conn.execute(
+            "SELECT daily_plan_id FROM proposal_log WHERE proposal_id = ?",
+            (proposal["proposal_id"],),
+        ).fetchone()
+        assert prop_row["daily_plan_id"] == canonical
+
+        # Supersede → v2. Proposal row must keep pointing at v1.
+        run_synthesis(
+            conn, for_date=date(2026, 4, 17), user_id="u_local_1",
+            snapshot=_x1a_triggering_snapshot(), supersede=True,
+        )
+        prop_row = conn.execute(
+            "SELECT daily_plan_id FROM proposal_log WHERE proposal_id = ?",
+            (proposal["proposal_id"],),
+        ).fetchone()
+        assert prop_row["daily_plan_id"] == canonical, (
+            "supersede incorrectly relinked proposal_log.daily_plan_id "
+            "forward to the new leaf, orphaning the prior plan's proposals"
+        )
+
+        # Both plans store the proposal id in proposal_ids_json — that's
+        # the join key explain uses.
+        plan_rows = conn.execute(
+            "SELECT daily_plan_id, proposal_ids_json FROM daily_plan "
+            "WHERE for_date = ? AND user_id = ? "
+            "ORDER BY daily_plan_id",
+            ("2026-04-17", "u_local_1"),
+        ).fetchall()
+        stored_ids = {
+            r["daily_plan_id"]: json.loads(r["proposal_ids_json"])
+            for r in plan_rows
+        }
+        assert proposal["proposal_id"] in stored_ids[canonical]
+        assert proposal["proposal_id"] in stored_ids[f"{canonical}_v2"]
+    finally:
+        conn.close()
+
+
+def test_explain_resolves_superseded_plan_proposals_via_json_array(tmp_path):
+    """D1 test #7: ``hai explain <plan_v1>`` still shows the proposals
+    that fed v1, even after ``--supersede`` creates v2.
+
+    Asserts the explain bundle for the superseded plan resolves its
+    proposals — the whole point of switching from the FK-based load
+    path to the ``proposal_ids_json`` array stored on the plan row.
+    """
+
+    from health_agent_infra.core.explain import load_bundle_by_daily_plan_id
+
+    db_path = _fresh_db(tmp_path)
+    proposal = _running_proposal()
+    _insert_proposal(db_path, proposal)
+
+    canonical = canonical_daily_plan_id(date(2026, 4, 17), "u_local_1")
+    v2_id = f"{canonical}_v2"
+
+    conn = open_connection(db_path)
+    try:
+        run_synthesis(
+            conn, for_date=date(2026, 4, 17), user_id="u_local_1",
+            snapshot=_quiet_snapshot(),
+        )
+        run_synthesis(
+            conn, for_date=date(2026, 4, 17), user_id="u_local_1",
+            snapshot=_x1a_triggering_snapshot(), supersede=True,
+        )
+
+        v1_bundle = load_bundle_by_daily_plan_id(
+            conn, daily_plan_id=canonical,
+        )
+        v2_bundle = load_bundle_by_daily_plan_id(conn, daily_plan_id=v2_id)
+
+        v1_ids = {p.proposal_id for p in v1_bundle.proposals}
+        v2_ids = {p.proposal_id for p in v2_bundle.proposals}
+        assert proposal["proposal_id"] in v1_ids, (
+            "superseded plan's proposals went missing from explain"
+        )
+        assert proposal["proposal_id"] in v2_ids
+    finally:
+        conn.close()
+
+
 # ---------------------------------------------------------------------------
 # Atomicity — mid-synthesis failure leaves DB unchanged
 # ---------------------------------------------------------------------------
@@ -843,6 +1002,8 @@ def _x7_only_snapshot():
         "recovery": {
             "classified_state": {"sleep_debt_band": "none"},
             "today": {"acwr_ratio": 1.0},
+            # X9 precondition (v0.1.4 #7): user has explicitly planned a session.
+            "evidence": {"planned_session_type": "hard"},
         },
         "sleep": {"classified_state": {"sleep_debt_band": "none"}, "today": {}},
         "stress": {

@@ -12,6 +12,14 @@ Schema: see ``core/capabilities/walker.py``. Exit codes follow
 taxonomy; the ``LEGACY_0_2`` sentinel is retained in the schema for
 forward-compatibility but is not currently emitted.
 
+**Per-command structured detail lives in the JSON manifest, not
+this markdown.** Every row below also carries a ``flags[]`` array
+(name / type / required / choices / default / help / aliases), and
+selected high-traffic commands opt in to ``output_schema`` (JSON
+shape per exit code) and ``preconditions`` (state that must exist
+before invocation). Agents should ``hai capabilities`` and read the
+JSON; this markdown is an at-a-glance overview for humans.
+
 ## Mutation classes
 
 | Value | Meaning |
@@ -47,7 +55,7 @@ forward-compatibility but is not currently emitted.
 
 ## Commands
 
-*38 commands; hai 0.1.3.dev0; schema agent_cli_contract.v1*
+*37 commands; hai 0.1.5; schema agent_cli_contract.v1*
 
 | Command | Mutation | Idempotent | JSON | Agent-safe | Exit codes | Description |
 |---|---|---|---|---|---|---|
@@ -55,7 +63,6 @@ forward-compatibility but is not currently emitted.
 | ``hai auth intervals-icu`` | ``writes-credentials`` | ``yes`` | ``default`` | no | ``OK``, ``USER_INPUT`` | Store Intervals.icu credentials in the OS keyring. Interactive by default; operator-only (requires a live API key). |
 | ``hai auth status`` | ``read-only`` | ``n/a`` | ``default`` | yes | ``OK`` | Report whether Garmin and Intervals.icu credentials are configured. Presence only — never emits the secret itself. |
 | ``hai capabilities`` | ``read-only`` | ``n/a`` | ``opt-out`` | yes | ``OK`` | Emit the agent-CLI-contract manifest describing every subcommand's mutation class, idempotency, JSON output, and exit codes. The authoritative surface the routing skill consumes. |
-| ``hai classify`` | ``read-only`` | ``n/a`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Debug helper: run the per-domain classifier on a cleaned evidence JSON. |
 | ``hai clean`` | ``writes-state`` | ``yes`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Normalize pulled evidence into CleanedEvidence + RawSummary JSON and project accepted state rows. Best-effort projection when --db-path is absent. |
 | ``hai config init`` | ``writes-config`` | ``yes`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Scaffold a default thresholds.toml at the user-config path. |
 | ``hai config show`` | ``read-only`` | ``n/a`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Print the effective merged threshold configuration (defaults + overrides). |
@@ -66,6 +73,7 @@ forward-compatibility but is not currently emitted.
 | ``hai explain`` | ``read-only`` | ``n/a`` | ``opt-out`` | yes | ``OK``, ``USER_INPUT``, ``NOT_FOUND`` | Reconstruct the full audit chain (planned / adapted / firings / performed) for a committed plan. Strictly read-only — never recomputes runtime state. |
 | ``hai init`` | ``interactive`` | ``no`` | ``none`` | no | ``OK``, ``USER_INPUT`` | First-run wizard: state init, config scaffolding, auth setup. |
 | ``hai intake exercise`` | ``writes-state`` | ``yes`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Upsert an exercise taxonomy entry. |
+| ``hai intake gaps`` | ``read-only`` | ``yes`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Return the list of user-closeable intake gaps in the snapshot. Read-only; no side effects. |
 | ``hai intake gym`` | ``writes-state`` | ``no`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Record a gym session (sets + exercises) as typed human-input. |
 | ``hai intake note`` | ``writes-state`` | ``no`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Attach a free-text context note to a day. |
 | ``hai intake nutrition`` | ``writes-state`` | ``no`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Record a macros-only nutrition intake entry. |
@@ -74,8 +82,7 @@ forward-compatibility but is not currently emitted.
 | ``hai memory archive`` | ``writes-memory`` | ``yes`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Mark a user_memory entry archived (soft delete). The row itself stays for audit; read surfaces filter it out. |
 | ``hai memory list`` | ``read-only`` | ``n/a`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | List user_memory entries active at a given date, grouped by category. |
 | ``hai memory set`` | ``writes-memory`` | ``no`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Append a user_memory entry (goal / preference / constraint / context). Append-only — replace by archiving the old row and setting a new one. |
-| ``hai policy`` | ``read-only`` | ``n/a`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Debug helper: evaluate R-rules on a cleaned evidence JSON. |
-| ``hai propose`` | ``writes-state`` | ``no`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Validate a DomainProposal and append it to proposal_log. One of the three determinism boundaries the runtime enforces. |
+| ``hai propose`` | ``writes-state`` | ``yes-with-replace`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Validate a DomainProposal and append it to proposal_log. One of the three determinism boundaries the runtime enforces. |
 | ``hai pull`` | ``writes-sync-log`` | ``yes`` | ``default`` | yes | ``OK``, ``USER_INPUT``, ``TRANSIENT`` | Acquire Garmin evidence (CSV fixture by default, live via --live) for a date and emit cleaned evidence JSON. Writes a sync_run_log row; does not touch the main state tables. |
 | ``hai review record`` | ``writes-state`` | ``no`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Record a review_outcome against a review_event. Carries the migration-010 enrichment columns (completed, intensity_delta, pre/post_energy, disagreed_firing_ids). |
 | ``hai review schedule`` | ``writes-state`` | ``no`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Persist a pending review_event for a recommendation (used to schedule the next-day review question). |
@@ -88,4 +95,4 @@ forward-compatibility but is not currently emitted.
 | ``hai state snapshot`` | ``read-only`` | ``n/a`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Emit the cross-domain state snapshot the synthesis / skills layer consumes for a (for_date, user_id) pair. |
 | ``hai stats`` | ``read-only`` | ``n/a`` | ``opt-in`` | yes | ``OK``, ``USER_INPUT`` | Summarise sync_run_log (last pull per source) + runtime_event_log (recent commands, daily streak) from the user's local DB. No telemetry leaves the device. |
 | ``hai synthesize`` | ``writes-state`` | ``yes-with-supersede`` | ``default`` | yes | ``OK``, ``USER_INPUT``, ``INTERNAL`` | Run synthesis end-to-end inside one atomic SQLite transaction: daily_plan + x_rule_firings + planned_recommendation + recommendation_log. --supersede versions the plan instead of replacing it. |
-| ``hai writeback`` | ``writes-state`` | ``no`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Legacy recovery-only direct writeback path. Validates a TrainingRecommendation against the bounded schema and appends to the recovery audit log. Non-recovery domains go through hai synthesize instead. |
+| ``hai today`` | ``read-only`` | ``n/a`` | ``opt-in`` | yes | ``OK``, ``USER_INPUT`` | Render today's canonical plan in plain language — the non-agent-mediated user surface. Read-only. |
