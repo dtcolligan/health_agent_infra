@@ -336,6 +336,59 @@ def test_last_hard_session_days_ago_none_when_no_hard_session_in_window():
     assert sig["last_hard_session_days_ago"] is None
 
 
+def test_last_hard_session_days_ago_anchors_to_as_of_date_not_latest_activity():
+    """Codex r2 regression guard: when there is no activity today, the
+    function previously anchored the gap to the first historical activity
+    (→ yesterday's hard session = 0 days ago, off-by-one). Passing
+    ``as_of_date`` anchors correctly: yesterday's hard session = 1 day."""
+
+    yesterday = _activity(
+        as_of="2026-04-23",
+        hr_zone_times_s=[0, 0, 0, 1200, 0, 0, 0],  # hard
+    )
+    sig = derive_running_signals(
+        {}, running_today=None, running_history=[],
+        activities_today=[],  # NO activity today
+        activities_history=[yesterday],
+        as_of_date="2026-04-24",  # plan date
+    )
+    assert sig["last_hard_session_days_ago"] == 1
+
+
+def test_last_hard_session_days_ago_three_days_ago_no_activity_today():
+    """Same shape but a larger gap. No activity today; hard session three
+    days ago; plan date is today. Gap must be 3."""
+
+    three_days_ago = _activity(
+        as_of="2026-04-21",
+        hr_zone_times_s=[0, 0, 0, 800, 0, 0, 0],  # hard
+    )
+    sig = derive_running_signals(
+        {}, running_today=None, running_history=[],
+        activities_today=[],
+        activities_history=[three_days_ago],
+        as_of_date="2026-04-24",
+    )
+    assert sig["last_hard_session_days_ago"] == 3
+
+
+def test_last_hard_session_days_ago_falls_back_when_as_of_date_absent():
+    """Backwards compatibility: callers that don't pass as_of_date still
+    get the legacy anchor behaviour (gap from first-seen activity).
+    Existing tests rely on this path; no silent change."""
+
+    today_a = _activity(as_of="2026-04-23", hr_zone_times_s=[0, 100, 100, 0, 0, 0, 0])
+    hist_a = _activity(as_of="2026-04-20", activity_id="i_old",
+                       hr_zone_times_s=[0, 0, 0, 1200, 0, 0, 0])
+    sig = derive_running_signals(
+        {}, running_today=None, running_history=[],
+        activities_today=[today_a], activities_history=[hist_a],
+        # no as_of_date passed
+    )
+    # Legacy behaviour: today_iso = today_a.as_of_date = 2026-04-23 → gap = 3
+    assert sig["last_hard_session_days_ago"] == 3
+
+
 def test_today_interval_summary_is_first_non_empty():
     a = _activity(interval_summary=None)
     b = _activity(activity_id="i_b", interval_summary=["4x 9m29s 156bpm", "1x 2m7s 146bpm"])

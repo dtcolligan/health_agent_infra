@@ -729,6 +729,7 @@ def build_snapshot(
             recovery_classified=recovery_block["classified_state"],
             activities_today=running_block.get("activities_today"),
             activities_history=running_block.get("activities_history"),
+            as_of_date=as_of_date.isoformat(),
         )
         running_classified = classify_running_state(running_signals)
         # D4 cold-start context — lifts the forced defer when the user

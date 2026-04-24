@@ -49,6 +49,7 @@ def derive_running_signals(
     recovery_classified: Optional[dict[str, Any]] = None,
     activities_today: Optional[list[dict[str, Any]]] = None,
     activities_history: Optional[list[dict[str, Any]]] = None,
+    as_of_date: Optional[str] = None,
 ) -> dict[str, Any]:
     """Build a ``running_signals`` dict for ``classify_running_state``.
 
@@ -123,7 +124,7 @@ def derive_running_signals(
         activities_today, activities_history, window_days=7,
     )
     last_hard_days_ago = _last_hard_session_days_ago(
-        activities_today, activities_history,
+        activities_today, activities_history, as_of_date=as_of_date,
     )
     today_interval_summary = _first_non_empty_interval_summary(activities_today)
 
@@ -246,12 +247,23 @@ def _sum_z4_plus_seconds_window(
 def _last_hard_session_days_ago(
     activities_today: list[dict],
     activities_history: list[dict],
+    *,
+    as_of_date: Optional[str] = None,
 ) -> Optional[int]:
     """Return days-ago of the most recent hard session, or None.
 
     "Hard" means zone-4+ seconds >= _HARD_SESSION_Z4_PLUS_SECONDS for a
     single session. Walks today → history in recency order and returns
-    the first match's civil-day distance from today.
+    the first match's civil-day distance from the plan date.
+
+    **Codex r2 fix** — previously the function anchored the gap to the
+    first historical activity's date when no activity today existed.
+    That caused "yesterday's hard session" to report as
+    ``last_hard_session_days_ago = 0`` instead of 1 on days the user
+    didn't train. The anchor is now ``as_of_date`` (the snapshot's
+    plan date) whenever the caller provides it; the fallback to the
+    first activity's date is kept only for call sites that don't (yet)
+    pass it.
     """
 
     from datetime import date as date_cls
@@ -263,23 +275,32 @@ def _last_hard_session_days_ago(
         z4_plus = sum(int(v) for v in zt[3:] if isinstance(v, (int, float)))
         return z4_plus >= _HARD_SESSION_Z4_PLUS_SECONDS
 
-    # Today's activities count as days_ago=0.
-    if any(_hard(a) for a in activities_today):
-        return 0
-
-    # Find today's civil date to anchor the gap, using the first
-    # activity's date when present; fall back to the newest history row.
-    today_iso = None
-    if activities_today:
-        today_iso = activities_today[0].get("as_of_date")
-    elif activities_history:
-        today_iso = activities_history[0].get("as_of_date")
+    # Anchor the gap to the plan date when provided. Falls back to the
+    # first-seen activity's as_of_date only when as_of_date is absent,
+    # which is the legacy behaviour.
+    today_iso: Optional[str] = as_of_date
+    if today_iso is None:
+        if activities_today:
+            today_iso = activities_today[0].get("as_of_date")
+        elif activities_history:
+            today_iso = activities_history[0].get("as_of_date")
     if today_iso is None:
         return None
     try:
         today_date = date_cls.fromisoformat(today_iso)
     except ValueError:
         return None
+
+    # Today's activities count as days_ago=0 iff they land on today_date.
+    for a in activities_today:
+        if not _hard(a):
+            continue
+        try:
+            a_date = date_cls.fromisoformat(a.get("as_of_date", ""))
+        except ValueError:
+            continue
+        if a_date == today_date:
+            return 0
 
     for a in activities_history:
         if not _hard(a):
