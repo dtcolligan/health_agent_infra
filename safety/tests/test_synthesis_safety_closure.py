@@ -179,10 +179,15 @@ def test_banned_token_in_proposal_action_detail_rejects(db):
 
 
 def test_banned_token_in_proposal_uncertainty_rejects(db):
+    # Post-Codex-r2: matcher is whole-word, so `possible_disorder_present`
+    # (snake_case identifier) would NOT trip the regex (underscores are
+    # word-chars in \b). The realistic safety concern is banned words in
+    # prose — that's what the matcher is designed for and what this test
+    # pins. Snake_case identifiers aren't user-facing clinical claims.
     _seed(db, _make_proposal(
         "sleep",
         action="maintain_schedule",
-        uncertainty=["possible_disorder_present"],
+        uncertainty=["agent suspects a sleep disorder"],
     ))
     pre = _table_counts(db)
 
@@ -227,7 +232,7 @@ def test_banned_token_in_skill_overlay_uncertainty_rejects(db):
 
     skill_drafts = [{
         "recommendation_id": _rec_id("strength"),
-        "uncertainty": ["possible_chronic_disease_indicator"],
+        "uncertainty": ["agent reports a chronic disease flag"],
     }]
     with pytest.raises(SynthesisError) as exc_info:
         run_synthesis(
@@ -475,7 +480,7 @@ def test_validator_banned_token_in_uncertainty_field_only():
         "action_detail": None,
         "rationale": ["sleep_status=adequate"],
         "confidence": "moderate",
-        "uncertainty": ["possible_sleep_disorder_indicator"],  # banned
+        "uncertainty": ["suggests a possible sleep disorder"],  # banned prose
         "follow_up": {
             "review_at": "2026-04-25T08:00:00+00:00",
             "review_event_id": "rev_x",
@@ -763,3 +768,149 @@ def test_db_partial_unique_index_allows_superseded_revisions(db):
         "WHERE for_date = '2026-04-22' AND user_id = 'u_safety'"
     ).fetchall()
     assert len(rows) == 2
+
+
+# ---------------------------------------------------------------------------
+# Codex 2026-04-24 round-2 pushback: whole-word matching
+# ---------------------------------------------------------------------------
+#
+# The pre-fix matcher used raw substring checks, so the banned token
+# "condition" rejected legitimate running language like "conditional" and
+# "conditional_readiness". That would have blocked normal running proposals
+# at `hai propose`. The fix is a word-boundary regex (matches narration
+# voice module). These tests pin the behaviour so a future revert would
+# fail loudly.
+
+def test_whole_word_conditional_not_rejected_as_condition():
+    """`conditional` — legitimate running band — must not trip the
+    `condition` banned token."""
+
+    from health_agent_infra.core.writeback.proposal import (
+        ProposalValidationError,
+        validate_proposal_dict,
+    )
+    proposal = _make_proposal(
+        "running",
+        action="downgrade_intervals_to_tempo",
+        action_detail={
+            "target_zone": "tempo",
+            "reason_token": "conditional_readiness",
+        },
+        rationale=[
+            "running_readiness_status=conditional",
+            "recovery_adjacent=favourable",
+        ],
+    )
+    validate_proposal_dict(proposal, expected_domain="running")  # must not raise
+
+
+def test_whole_word_preconditions_not_rejected_as_condition():
+    """`preconditions` — would be common skill/rationale prose — must not
+    trip the `condition` banned token."""
+
+    from health_agent_infra.core.writeback.proposal import (
+        ProposalValidationError,
+        validate_proposal_dict,
+    )
+    proposal = _make_proposal(
+        "running",
+        rationale=[
+            "preconditions for the 4x4 intervals are met",
+            "freshness_band=neutral",
+        ],
+    )
+    validate_proposal_dict(proposal, expected_domain="running")  # must not raise
+
+
+def test_whole_word_standalone_condition_still_rejected():
+    """`condition` on its own IS still a banned token — the whole-word
+    fix preserves the original safety intent for actual clinical prose."""
+
+    from health_agent_infra.core.writeback.proposal import (
+        ProposalValidationError,
+        validate_proposal_dict,
+    )
+    proposal = _make_proposal(
+        "running",
+        rationale=["user has a condition that needs monitoring"],
+    )
+    with pytest.raises(ProposalValidationError) as exc_info:
+        validate_proposal_dict(proposal, expected_domain="running")
+    assert exc_info.value.invariant == "no_banned_tokens"
+
+
+def test_whole_word_sickle_and_sickness_handled_consistently():
+    """`sick` boundaries: `sickle` must not reject (different word);
+    `sick` as a standalone word must reject (clinical claim)."""
+
+    from health_agent_infra.core.writeback.proposal import (
+        ProposalValidationError,
+        validate_proposal_dict,
+    )
+
+    # "sickle" contains "sick" but is a different word — no rejection.
+    clean = _make_proposal(
+        "stress",
+        rationale=["mention of sickle cell research (general prose)"],
+    )
+    validate_proposal_dict(clean, expected_domain="stress")
+
+    # "I feel sick" — banned prose.
+    bad = _make_proposal(
+        "stress",
+        rationale=["user reports they feel sick today"],
+    )
+    with pytest.raises(ProposalValidationError) as exc_info:
+        validate_proposal_dict(bad, expected_domain="stress")
+    assert exc_info.value.invariant == "no_banned_tokens"
+
+
+def test_whole_word_matcher_case_insensitive():
+    """Case-insensitive matching preserved from pre-fix behaviour."""
+
+    from health_agent_infra.core.writeback.proposal import (
+        ProposalValidationError,
+        validate_proposal_dict,
+    )
+    proposal = _make_proposal(
+        "sleep",
+        action="maintain_schedule",
+        rationale=["User reports a DISEASE."],
+    )
+    with pytest.raises(ProposalValidationError) as exc_info:
+        validate_proposal_dict(proposal, expected_domain="sleep")
+    assert exc_info.value.invariant == "no_banned_tokens"
+
+
+def test_whole_word_matcher_recovers_recommendation_path_too():
+    """Recommendation surface (not just proposal surface) must also use
+    whole-word matching. Regression guard against a future drift where
+    only one of the two sides gets the fix."""
+
+    from health_agent_infra.core.validate import (
+        RecommendationValidationError,
+        validate_recommendation_dict,
+    )
+    rec = {
+        "schema_version": "running_recommendation.v1",
+        "recommendation_id": "rec_x",
+        "user_id": "u",
+        "issued_at": "2026-04-24T10:00:00+00:00",
+        "for_date": "2026-04-24",
+        "domain": "running",
+        "action": "downgrade_intervals_to_tempo",
+        "action_detail": {"reason_token": "conditional_readiness"},
+        "rationale": ["running_readiness_status=conditional"],
+        "confidence": "moderate",
+        "uncertainty": [],
+        "follow_up": {
+            "review_at": "2026-04-25T08:00:00+00:00",
+            "review_event_id": "rev_x",
+            "review_question": "How did the tempo session feel?",
+        },
+        "policy_decisions": [{"rule_id": "r1", "decision": "allow", "note": "n"}],
+        "bounded": True,
+    }
+    # Must pass — this was the regression that would have blocked real
+    # running proposals at hai propose / synthesis validation.
+    validate_recommendation_dict(rec)

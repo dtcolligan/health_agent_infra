@@ -258,8 +258,12 @@ def validate_proposal_dict(data: Any, *, expected_domain: Optional[str] = None) 
 # the proposal + recommendation safety surfaces stay in lockstep. Any
 # future addition to ``BANNED_TOKENS`` immediately covers proposals too.
 def _check_proposal_banned_tokens(data: dict) -> None:
+    # Import the compiled whole-word patterns from validate so proposal +
+    # recommendation surfaces stay in lockstep. The Codex 2026-04-24 round-2
+    # review caught a substring-match regression where `condition` rejected
+    # `conditional_readiness`; the word-boundary regex fixes it.
     from health_agent_infra.core.validate import (
-        BANNED_TOKENS,
+        _BANNED_TOKEN_PATTERNS,
         _flatten_text_values,
     )
 
@@ -287,9 +291,9 @@ def _check_proposal_banned_tokens(data: dict) -> None:
                 if note is not None:
                     parts.append(str(note))
 
-    haystack = " ".join(parts).lower()
-    for token in BANNED_TOKENS:
-        if token in haystack:
+    haystack = " ".join(parts)
+    for pattern, token in _BANNED_TOKEN_PATTERNS:
+        if pattern.search(haystack):
             raise ProposalValidationError(
                 "no_banned_tokens",
                 f"banned diagnosis-shaped token {token!r} found in proposal "
