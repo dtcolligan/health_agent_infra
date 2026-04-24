@@ -2749,8 +2749,9 @@ def cmd_state_snapshot(args: argparse.Namespace) -> int:
 def cmd_state_reproject(args: argparse.Namespace) -> int:
     """Rebuild projected tables from the JSONL audit logs under ``--base-dir``.
 
-    **Scoped by log group** (7C.1 patch). Only the table groups whose
-    audit JSONLs are present in ``--base-dir`` are touched:
+    **Scoped by log group** (7C.1 patch + Phase B v0.1.4 extension). Only
+    the table groups whose audit JSONLs are present in ``--base-dir`` are
+    touched:
 
       - ``recommendation_log.jsonl`` / ``review_events.jsonl`` /
         ``review_outcomes.jsonl`` → recommendation + review tables.
@@ -2758,6 +2759,15 @@ def cmd_state_reproject(args: argparse.Namespace) -> int:
         ``accepted_resistance_training_state_daily``.
       - ``nutrition_intake.jsonl`` → ``nutrition_intake_raw`` +
         ``accepted_nutrition_state_daily``.
+      - ``stress_manual.jsonl`` → ``stress_manual_raw`` plus surgical
+        re-merge into ``accepted_stress_state_daily``.
+      - ``context_notes.jsonl`` → ``context_notes`` table.
+      - ``readiness_manual.jsonl`` → ``manual_readiness_raw``.
+      - ``<domain>_proposals.jsonl`` (recovery, running, sleep, strength,
+        stress, nutrition) → ``proposal_log``. Replay preserves D1
+        revision chains in JSONL append order. Counts surface as
+        ``proposals`` (replayed) and ``proposals_skipped_invalid``
+        (corrupt or validation-failing lines, skipped not raised).
 
     Groups whose logs are absent are left alone. Replay happens inside
     one ``BEGIN EXCLUSIVE`` / ``COMMIT`` transaction; idempotent. Fail-

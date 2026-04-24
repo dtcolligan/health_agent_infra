@@ -1151,23 +1151,37 @@ def reproject_from_jsonl(conn: sqlite3.Connection, base_dir, *, allow_empty: boo
     notes_log = base / "context_notes.jsonl"
     readiness_log = base / "readiness_manual.jsonl"
 
+    # Phase B (v0.1.4): proposal JSONLs land per-domain. Without this group
+    # the agent's `<domain>_proposals.jsonl` audit logs are decorative —
+    # rebuilding the DB never restores proposal_log. Codex flagged this as
+    # P1 #2 in the 2026-04-24 strategic report.
+    proposal_logs = {
+        domain: base / f"{domain}_proposals.jsonl"
+        for domain in (
+            "recovery", "running", "sleep", "strength", "stress", "nutrition",
+        )
+    }
+
     has_rec_group = any(p.exists() for p in (rec_log, events_log, outcomes_log))
     has_gym_group = gym_log.exists()
     has_nutrition_group = nutrition_log.exists()
     has_stress_group = stress_log.exists()
     has_notes_group = notes_log.exists()
     has_readiness_group = readiness_log.exists()
+    has_proposals_group = any(p.exists() for p in proposal_logs.values())
 
     if not allow_empty and not (
         has_rec_group or has_gym_group or has_nutrition_group
         or has_stress_group or has_notes_group or has_readiness_group
+        or has_proposals_group
     ):
         raise ReprojectBaseDirError(
             f"no audit JSONL files found under {base}. Expected at least "
             f"one of: recommendation_log.jsonl, review_events.jsonl, "
             f"review_outcomes.jsonl, gym_sessions.jsonl, "
             f"nutrition_intake.jsonl, stress_manual.jsonl, "
-            f"context_notes.jsonl, readiness_manual.jsonl. Refusing to "
+            f"context_notes.jsonl, readiness_manual.jsonl, "
+            f"<domain>_proposals.jsonl. Refusing to "
             f"touch the projection tables. Pass allow_empty=True / "
             f"--allow-empty-reproject to override."
         )
@@ -1182,6 +1196,8 @@ def reproject_from_jsonl(conn: sqlite3.Connection, base_dir, *, allow_empty: boo
         "accepted_stress_manual_merged": 0,
         "context_notes": 0,
         "manual_readiness_raw": 0,
+        "proposals": 0,
+        "proposals_skipped_invalid": 0,
     }
 
     conn.execute("BEGIN EXCLUSIVE")
@@ -1214,6 +1230,22 @@ def reproject_from_jsonl(conn: sqlite3.Connection, base_dir, *, allow_empty: boo
                 # DB predates migration 015; skip silently — nothing to
                 # rebuild and the JSONL remains the audit boundary.
                 pass
+        if has_proposals_group:
+            # Proposals group (Phase B): rebuild proposal_log from the
+            # 6 per-domain JSONL audit logs. proposal_log has no inbound
+            # FK from synthesis-side tables (daily_plan stores its
+            # proposal_ids in JSON, not FK). Safe to truncate cleanly.
+            #
+            # Note: a fresh reproject also resets daily_plan.proposal_ids_json
+            # references logically — they remain in the JSON blob but won't
+            # join to the new proposal_log unless the proposal_ids replay
+            # produces the same chain (which it does for non-revised
+            # chains). The recommendation group rebuild already truncated
+            # daily_plan-touching tables when its JSONL is present, but
+            # daily_plan itself is NOT rebuilt by reproject — only by
+            # `hai synthesize`. Operators rebuilding the full DB should
+            # rerun synthesis after reproject.
+            conn.execute("DELETE FROM proposal_log")
         if has_stress_group:
             # Stress group (post-Phase-3): manual_stress_score now lives
             # on accepted_stress_state_daily, which is co-owned with the
@@ -1634,6 +1666,58 @@ def reproject_from_jsonl(conn: sqlite3.Connection, base_dir, *, allow_empty: boo
                     # DB predates migration 015 — nothing to do.
                     break
                 counts["manual_readiness_raw"] += 1
+
+        if has_proposals_group:
+            # Replay each domain's proposal JSONL in append order. The
+            # JSONL preserves the agent's authoring sequence, so re-running
+            # `project_proposal(replace=True)` per line correctly rebuilds
+            # the D1 revision chain: first line on each chain key inserts
+            # at revision=1; subsequent lines on the same chain key insert
+            # at revision+1 with auto-generated proposal_id, and update the
+            # prior leaf's `superseded_by_proposal_id` forward pointer.
+            #
+            # Validation: every line is parsed via `validate_proposal_dict`
+            # before insertion. A line that fails validation is COUNTED as
+            # skipped (not raised) so a single corrupt line in a long log
+            # doesn't abort the whole reproject. Operators can grep the
+            # final counts to confirm `proposals_skipped_invalid == 0` for
+            # a clean restore.
+            from health_agent_infra.core.writeback.proposal import (
+                ProposalValidationError,
+                validate_proposal_dict,
+            )
+            for domain in (
+                "recovery", "running", "sleep",
+                "strength", "stress", "nutrition",
+            ):
+                jsonl_path = proposal_logs[domain]
+                if not jsonl_path.exists():
+                    continue
+                with jsonl_path.open("r", encoding="utf-8") as fh:
+                    for line in fh:
+                        line = line.strip()
+                        if not line:
+                            continue
+                        try:
+                            data = json.loads(line)
+                        except json.JSONDecodeError:
+                            counts["proposals_skipped_invalid"] += 1
+                            continue
+                        try:
+                            validate_proposal_dict(data, expected_domain=domain)
+                        except ProposalValidationError:
+                            counts["proposals_skipped_invalid"] += 1
+                            continue
+                        try:
+                            project_proposal(
+                                conn, data, replace=True, commit_after=False,
+                            )
+                        except ProposalReplaceRequired:
+                            # Cannot happen — replace=True is the explicit
+                            # override. Treated as defensive guard only.
+                            counts["proposals_skipped_invalid"] += 1
+                            continue
+                        counts["proposals"] += 1
 
         conn.commit()
     except Exception:
