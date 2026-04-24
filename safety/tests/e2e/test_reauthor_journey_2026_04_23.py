@@ -254,6 +254,84 @@ def test_propose_stdout_shape_matches_agent_contract(e2e_env: E2EEnv) -> None:
     assert payload["user_id"] == USER_ID
 
 
+def test_propose_stdout_reflects_db_leaf_id_on_replace(e2e_env: E2EEnv) -> None:
+    """Codex r3 P2 regression: on `--replace`, `project_proposal`
+    auto-renames the new leaf to `prop_<date>_<user>_<domain>_<rev:02d>`
+    regardless of the agent-supplied proposal_id. The stdout payload
+    must echo the DB leaf's id + revision, not the pre-rename input.
+
+    Pre-r3-fix: the helper only did a direct lookup by the input id,
+    so stdout emitted the input id verbatim and `revision: null` (the
+    renamed DB row didn't match the lookup). Post-r3-fix: canonical-
+    leaf lookup by (for_date, user_id, domain) returns the real row.
+    """
+
+    agent_v1_id = "prop_agent_custom_v1"  # deliberately non-runtime shape
+    proposal_v1 = {
+        "schema_version": "recovery_proposal.v1",
+        "proposal_id": agent_v1_id,
+        "user_id": USER_ID,
+        "for_date": AS_OF,
+        "domain": "recovery",
+        "action": "proceed_with_planned_session",
+        "action_detail": None,
+        "confidence": "high",
+        "bounded": True,
+        "rationale": ["initial"],
+        "uncertainty": [],
+        "policy_decisions": [
+            {"rule_id": "require_min_coverage", "decision": "allow", "note": "ok"},
+        ],
+    }
+    v1_path = e2e_env.tmp_root / "prop_v1.json"
+    v1_path.write_text(json.dumps(proposal_v1))
+    v1_result = e2e_env.run_hai(
+        "propose", "--domain", "recovery",
+        "--proposal-json", str(v1_path),
+        "--base-dir", str(e2e_env.base_dir),
+    )
+    # Fresh chain: agent id preserved at rev=1.
+    assert v1_result["stdout_json"]["proposal_id"] == agent_v1_id
+    assert v1_result["stdout_json"]["revision"] == 1
+
+    # Now --replace with a new rationale. Agent can supply any id; the
+    # runtime renames to prop_<date>_<user>_recovery_02.
+    proposal_v2 = {**proposal_v1,
+                   "proposal_id": "prop_agent_custom_v2",
+                   "rationale": ["revised per new evidence"]}
+    v2_path = e2e_env.tmp_root / "prop_v2.json"
+    v2_path.write_text(json.dumps(proposal_v2))
+    v2_result = e2e_env.run_hai(
+        "propose", "--domain", "recovery",
+        "--proposal-json", str(v2_path),
+        "--base-dir", str(e2e_env.base_dir),
+        "--replace",
+    )
+
+    # The stdout must echo the DB leaf's id (runtime-renamed), not the
+    # agent-supplied id. Revision must be the real revision (2), not null.
+    expected_leaf_id = f"prop_{AS_OF}_{USER_ID}_recovery_02"
+    assert v2_result["stdout_json"]["proposal_id"] == expected_leaf_id, (
+        f"stdout proposal_id should be the DB-landed id {expected_leaf_id!r}, "
+        f"got {v2_result['stdout_json']['proposal_id']!r}"
+    )
+    assert v2_result["stdout_json"]["revision"] == 2
+    assert v2_result["stdout_json"]["superseded_by_proposal_id"] is None
+    # idempotency_key should also align with the DB leaf id — agents that
+    # dedupe by idempotency_key would otherwise mis-match across replace.
+    assert v2_result["stdout_json"]["idempotency_key"] == expected_leaf_id
+
+    # DB row confirms the rename.
+    db_row = e2e_env.sql_one(
+        "SELECT proposal_id, revision FROM proposal_log "
+        "WHERE for_date = ? AND user_id = ? AND domain = ? "
+        "AND superseded_by_proposal_id IS NULL",
+        AS_OF, USER_ID, "recovery",
+    )
+    assert db_row[0] == expected_leaf_id
+    assert db_row[1] == 2
+
+
 def test_explain_for_date_returns_canonical_leaf(e2e_env: E2EEnv) -> None:
     """Per D1, `hai explain --for-date` default resolves the leaf of the
     supersede chain via ``superseded_by_plan_id IS NULL``, not the chain

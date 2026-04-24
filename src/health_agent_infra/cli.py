@@ -970,18 +970,30 @@ def cmd_propose(args: argparse.Namespace) -> int:
 
     _dual_write_project(args.db_path, _project, "proposal")
 
-    # Post-write DB read for projection metadata (revision,
-    # superseded_by_proposal_id). Codex r2 review pushback: the agent
-    # contract documents these fields on the stdout payload; best-effort
-    # lookup here keeps the documented output and the real projection in
-    # lockstep without introducing a second round-trip for the
-    # DB-absent path (which falls back to revision=1, superseded_by=None).
+    # Post-write DB read for projection metadata (proposal_id as landed,
+    # revision, superseded_by_proposal_id). Codex r2/r3 pushback: the
+    # agent contract documents these fields on the stdout payload, and
+    # under D1 revision semantics the DB-landed proposal_id may differ
+    # from the input payload's id (project_proposal renames to
+    # `prop_<date>_<user>_<domain>_<rev:02d>` on revision). The lookup
+    # resolves the canonical leaf for (for_date, user_id, domain) so the
+    # stdout echoes what ACTUALLY landed, not the pre-rename input.
     projection_meta = _read_proposal_projection_meta(
-        args.db_path, proposal_id=data["proposal_id"],
+        args.db_path,
+        for_date=data["for_date"],
+        user_id=data["user_id"],
+        domain=data["domain"],
+        fallback_proposal_id=data["proposal_id"],
     )
     payload = record.to_dict()
     payload["for_date"] = data["for_date"]
     payload["user_id"] = data["user_id"]
+    # proposal_id echoes the DB leaf's id (post-rename on revision). On
+    # the DB-absent path, falls back to the input payload id (legacy
+    # single-source-of-truth was the JSONL's id).
+    if projection_meta.get("proposal_id") is not None:
+        payload["proposal_id"] = projection_meta["proposal_id"]
+        payload["idempotency_key"] = projection_meta["proposal_id"]
     payload["revision"] = projection_meta.get("revision")
     payload["superseded_by_proposal_id"] = projection_meta.get(
         "superseded_by_proposal_id",
@@ -991,10 +1003,15 @@ def cmd_propose(args: argparse.Namespace) -> int:
 
 
 def _read_proposal_projection_meta(
-    db_path_arg, *, proposal_id: str,
+    db_path_arg,
+    *,
+    for_date: str,
+    user_id: str,
+    domain: str,
+    fallback_proposal_id: str,
 ) -> dict[str, Any]:
-    """Return ``{revision, superseded_by_proposal_id}`` for a freshly
-    written proposal, or an empty dict when the DB is absent.
+    """Return the canonical-leaf projection metadata for a just-written
+    proposal, or an empty dict when the DB is absent.
 
     Best-effort: DB-absent + projection failures return ``{}`` so the
     ``hai propose`` command still emits a well-formed stdout payload
@@ -1004,9 +1021,17 @@ def _read_proposal_projection_meta(
 
     Under D1's revision semantics, the ``--replace`` path auto-generates
     a new proposal_id (``prop_..._<rev:02d>``), so the id we were
-    passed in ``data`` may no longer be the live row's id. The lookup
-    uses ``canonical leaf for (for_date, user_id, domain)`` semantics
-    to avoid a footgun on that path.
+    passed in ``data`` may no longer be the live row's id. Resolution
+    order:
+
+      1. Canonical leaf for ``(for_date, user_id, domain)`` — the
+         authoritative shape. Picks up both fresh inserts (rev=1) and
+         post-replace rows (rev≥2 with the runtime-assigned id).
+      2. Direct lookup on ``fallback_proposal_id`` — covers any edge
+         case where the canonical-leaf query returns no row but the
+         input id does (shouldn't happen by construction; kept as a
+         defensive fallback).
+      3. Empty dict — DB absent or both lookups miss.
     """
 
     from health_agent_infra.core.state import open_connection, resolve_db_path
@@ -1019,15 +1044,27 @@ def _read_proposal_projection_meta(
     except Exception:
         return {}
     try:
-        # First try direct lookup on the caller-provided id (fresh-chain
-        # path where the id didn't mutate).
+        leaf = conn.execute(
+            "SELECT proposal_id, revision, superseded_by_proposal_id "
+            "FROM proposal_log "
+            "WHERE for_date = ? AND user_id = ? AND domain = ? "
+            "  AND superseded_by_proposal_id IS NULL",
+            (for_date, user_id, domain),
+        ).fetchone()
+        if leaf is not None:
+            return {
+                "proposal_id": leaf["proposal_id"],
+                "revision": leaf["revision"],
+                "superseded_by_proposal_id": leaf["superseded_by_proposal_id"],
+            }
         row = conn.execute(
-            "SELECT revision, superseded_by_proposal_id FROM proposal_log "
-            "WHERE proposal_id = ?",
-            (proposal_id,),
+            "SELECT proposal_id, revision, superseded_by_proposal_id "
+            "FROM proposal_log WHERE proposal_id = ?",
+            (fallback_proposal_id,),
         ).fetchone()
         if row is not None:
             return {
+                "proposal_id": row["proposal_id"],
                 "revision": row["revision"],
                 "superseded_by_proposal_id": row["superseded_by_proposal_id"],
             }
