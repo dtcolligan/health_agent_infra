@@ -87,30 +87,49 @@ default.
 User wants today's evidence to be current on-device. Pipeline:
 
 ```
-hai pull --live --date <today>                 # writes-sync-log
+hai pull --date <today>                        # writes-sync-log
 hai clean --evidence-json <pull output>        # writes-state
-hai state reproject                            # writes-state; idempotent
+hai state reproject                            # writes-state; idempotent (refuses on synthesis-side rows; pass --cascade-synthesis if a full rebuild is intended)
 ```
 
-If `hai auth status` reports `configured=false`, stop and tell the
-user to run `hai auth garmin` themselves (operator-only per the
-manifest — you must not attempt it). A CSV-fixture pull (no `--live`)
-works without credentials; use it if the user explicitly asked for an
-offline run.
+Source resolution (v0.1.6+): explicit `--source` > legacy `--live`
+(= garmin_live; rate-limited and unreliable, prefer not to use) >
+`intervals_icu` when credentials are configured > `csv` fixture
+fallback. The supported live source is intervals.icu — set up auth
+with `hai auth intervals-icu`. Garmin Connect is best-effort.
+
+If `hai auth status` reports `configured=false` for both Garmin and
+intervals.icu, stop and tell the user to run `hai auth
+intervals-icu` themselves (operator-only per the manifest — you
+must not attempt it). A CSV-fixture pull (`--source csv`) works
+without credentials; use it for offline / test runs.
 
 ### 2. Daily planning — *"what should I do today?", "plan my day"*
 
-User wants today's recommendations. The happy path is the orchestrator:
+User wants today's recommendations. `hai daily` is the orchestrator
+the agent drives — it is NOT a one-shot. It runs the deterministic
+stages (pull → clean → snapshot → gaps → proposal_gate) and stops
+at the gate, which emits one of three statuses:
+
+- `awaiting_proposals` — zero proposals; agent must invoke the 6
+  per-domain readiness skills and post `DomainProposal` rows via
+  `hai propose --domain <d>`.
+- `incomplete` — some proposals, missing >=1 expected domain. The
+  hint names the missing domains. Agent posts the missing
+  proposals OR narrows `--domains` to scope the day.
+- `complete` — every expected domain has a proposal; synthesis
+  runs and the plan commits.
 
 ```
-hai daily                                      # runs pull → clean → reproject → propose → synthesize
+hai daily [--domains <csv>]                    # narrows the gate's expected set
+hai propose --domain <d> --proposal-json <p>   # one per missing domain
+hai daily [--domains <csv>] --skip-pull        # re-run to advance the gate
 ```
 
-If the user wants the two-pass skill-overlay flow (richer rationale),
-use the snapshot + per-domain skill + `hai synthesize --bundle-only`
-/ `--drafts-json` dance documented in `agent_integration.md`. Prefer
-`hai daily` by default — it's the same spine, less plumbing for the
-user.
+Two-pass skill-overlay flow (richer rationale): snapshot +
+per-domain skill + `hai synthesize --bundle-only` /
+`--drafts-json`, documented in `agent_integration.md`. Bundle-only
+refuses when `proposal_log` is empty for `(for_date, user_id)`.
 
 After the plan commits, narrate via the `reporting` skill. Do not
 compose rationale yourself.
@@ -138,23 +157,46 @@ per domain.
 
 ### 4. Outcome logging — *"I trained harder", "I skipped the run", "I slept badly"*
 
-User is reporting what happened. Route to `hai review record` with
-the migration-010 enrichment columns:
+User is reporting what happened. Route to `hai review record`. The
+core fields (review_event_id, recommendation_id, user_id, domain,
+followed_recommendation, self_reported_improvement, free_text) live
+inside an `--outcome-json` payload; the migration-010 enrichment
+columns are also available as CLI flags that override the JSON:
 
 ```
-hai review record --domain <d> \
-  --recommendation-id <rec_id> \
-  --followed-recommendation <0|1> \
-  [--intensity-delta lighter|same|harder] \
-  [--completed 0|1] \
+hai review record \
+  --outcome-json <path-to-outcome.json> \
+  [--completed yes|no] \
+  [--intensity-delta much_lighter|lighter|same|harder|much_harder] \
   [--duration-minutes <n>] \
-  [--pre-energy-score 1-5] [--post-energy-score 1-5] \
-  [--disagreed-firing-ids <csv>]
+  [--pre-energy 1|2|3|4|5] [--post-energy 1|2|3|4|5] \
+  [--disagreed-firings <csv>]
 ```
 
-Find `<rec_id>` from the most recent `hai explain` for that date +
-domain. If multiple recommendations exist (supersede chain), confirm
-with the user which one they're reporting on before writing.
+Outcome JSON minimum payload shape (from the `review-protocol` skill):
+
+```json
+{
+  "review_event_id": "rev_<date>_<user>_<rec_id>",
+  "recommendation_id": "rec_<date>_<user>_<domain>_<n>[_v<rev>]",
+  "user_id": "<user>",
+  "domain": "<recovery|running|sleep|stress|strength|nutrition>",
+  "followed_recommendation": true,
+  "self_reported_improvement": true,
+  "free_text": "optional"
+}
+```
+
+`followed_recommendation` and `self_reported_improvement` MUST be
+strict booleans (`true` / `false`), not `"yes"` / `1` / truthy strings —
+the v0.1.6 validator rejects non-boolean values with
+`invariant=followed_recommendation_must_be_bool` to prevent the
+JSONL-vs-SQLite truth fork.
+
+Find `<rec_id>` (and the matching `<review_event_id>`) from the most
+recent `hai explain` + the per-day review_events.jsonl for that date
++ domain. If multiple recommendations exist (supersede chain),
+confirm with the user which one they're reporting on before writing.
 
 For readiness self-reports ("I slept badly"), use `hai intake
 readiness` instead — that's per-day state, not a review outcome.
@@ -171,7 +213,7 @@ hai memory set --category <goal|preference|constraint|context> \
 
 To list or archive:
 ```
-hai memory list --as-of <today>
+hai memory list [--category <goal|preference|constraint|context>] [--include-archived]
 hai memory archive --memory-id <umem_id>
 ```
 

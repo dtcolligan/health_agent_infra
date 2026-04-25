@@ -46,7 +46,7 @@ Expand the rationale. Walk through the classification bands and name the specifi
 
 ## If the user asks about review history
 
-Run `hai review summary --user-id <id> --since <date>` to get counts. Report the breakdown:
+Run `hai review summary --user-id <id> [--domain <d>] [--base-dir <root>]` to get counts. Report the breakdown:
 
 > "Over the last 10 mornings you logged: 6 times you followed the recommendation and felt better, 2 times you followed and noticed no change, 1 time ambiguous, 1 time you didn't follow. I don't adjust my recommendations from this automatically — the raw counts are here for your read."
 

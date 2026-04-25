@@ -7,6 +7,7 @@ arrive in later phases. This module is not imported by any subcommand beyond
 
 from health_agent_infra.core.state.projector import (
     ReprojectBaseDirError,
+    ReprojectOrphansError,
     aggregate_activities_to_daily_rollup,
     delete_canonical_plan_cascade,
     latest_nutrition_submission_id,
@@ -52,8 +53,11 @@ from health_agent_infra.core.state.snapshot import (
 )
 from health_agent_infra.core.state.store import (
     DEFAULT_DB_PATH,
+    SchemaVersionGapError,
+    applied_schema_versions,
     apply_pending_migrations,
     current_schema_version,
+    detect_schema_version_gaps,
     initialize_database,
     migration_004_dry_run_diff,
     open_connection,
@@ -78,6 +82,10 @@ from health_agent_infra.core.state.runtime_event_log import (
 __all__ = [
     "DEFAULT_DB_PATH",
     "ReprojectBaseDirError",
+    "ReprojectOrphansError",
+    "SchemaVersionGapError",
+    "applied_schema_versions",
+    "detect_schema_version_gaps",
     "aggregate_activities_to_daily_rollup",
     "apply_pending_migrations",
     "available_domains",

@@ -355,6 +355,10 @@ def test_cli_intake_gaps_emits_expected_json_shape(tmp_path: Path):
     out = json.loads(buf.getvalue())
     assert out["as_of_date"] == "2026-04-24"
     assert out["user_id"] == "u_local_1"
+    # v0.1.6: explicit "computed: true" so callers can pattern-match
+    # on the field instead of guessing whether the empty list means
+    # "no gaps" or "we never ran detection."
+    assert out["computed"] is True
     assert isinstance(out["gaps"], list)
     assert out["gap_count"] == len(out["gaps"])
     assert out["gating_gap_count"] <= out["gap_count"]
@@ -364,6 +368,37 @@ def test_cli_intake_gaps_emits_expected_json_shape(tmp_path: Path):
     # surface since their blocks lack intake evidence.
     domains = {g["domain"] for g in out["gaps"]}
     assert "recovery" in domains
+
+
+def test_cli_intake_gaps_refuses_without_evidence_json(tmp_path: Path):
+    """v0.1.6 (B6): without --evidence-json the snapshot lacks
+    classified_state and compute_intake_gaps silently returns []. The
+    CLI must refuse with USER_INPUT instead of emitting a misleading
+    zero. Regression test for the bug observed in the 2026-04-25 user
+    session."""
+
+    from contextlib import redirect_stderr
+    from io import StringIO
+    from health_agent_infra.cli import main as cli_main
+    from health_agent_infra.core import exit_codes
+    from health_agent_infra.core.state import initialize_database
+
+    db = tmp_path / "state.db"
+    initialize_database(db)
+
+    err_buf = StringIO()
+    with redirect_stderr(err_buf):
+        rc = cli_main([
+            "intake", "gaps",
+            "--as-of", "2026-04-24",
+            "--user-id", "u_local_1",
+            "--db-path", str(db),
+            # Deliberately omit --evidence-json.
+        ])
+    assert rc == exit_codes.USER_INPUT
+    stderr = err_buf.getvalue()
+    assert "--evidence-json" in stderr
+    assert "misleading" in stderr or "indistinguishable" in stderr
 
 
 def test_cli_intake_gaps_fails_cleanly_when_db_missing(tmp_path: Path):

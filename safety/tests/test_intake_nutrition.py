@@ -55,8 +55,15 @@ def _init_intake_dirs(tmp_path: Path) -> tuple[Path, Path]:
 
 def _args(base: Path, db: Path, *, as_of: str = AS_OF.isoformat(),
           calories: float = 2200, protein: float = 180,
-          carbs: float = 260, fat: float = 70) -> list[str]:
-    return [
+          carbs: float = 260, fat: float = 70,
+          replace: bool = False) -> list[str]:
+    """Build argv for hai intake nutrition.
+
+    v0.1.7 W34 added a same-day supersede guard. Tests that
+    exercise correction chains pass ``replace=True`` to opt in.
+    """
+
+    argv = [
         "intake", "nutrition",
         "--calories", str(calories),
         "--protein-g", str(protein),
@@ -67,6 +74,9 @@ def _args(base: Path, db: Path, *, as_of: str = AS_OF.isoformat(),
         "--base-dir", str(base),
         "--db-path", str(db),
     ]
+    if replace:
+        argv.append("--replace")
+    return argv
 
 
 # ---------------------------------------------------------------------------
@@ -150,7 +160,9 @@ def test_intake_nutrition_second_run_stamps_supersedes_and_corrected_at(tmp_path
 
     base, db = _init_intake_dirs(tmp_path)
     assert cli_main(_args(base, db, calories=2200, protein=180)) == 0
-    assert cli_main(_args(base, db, calories=2400, protein=190)) == 0
+    # v0.1.7 W34: second same-day call needs --replace.
+    assert cli_main(_args(base, db, calories=2400, protein=190,
+                          replace=True)) == 0
 
     conn = open_connection(db)
     try:
@@ -188,8 +200,9 @@ def test_intake_nutrition_third_run_chains_correction(tmp_path: Path):
 
     base, db = _init_intake_dirs(tmp_path)
     assert cli_main(_args(base, db, calories=2200)) == 0
-    assert cli_main(_args(base, db, calories=2300)) == 0
-    assert cli_main(_args(base, db, calories=2400)) == 0
+    # v0.1.7 W34: corrections need --replace.
+    assert cli_main(_args(base, db, calories=2300, replace=True)) == 0
+    assert cli_main(_args(base, db, calories=2400, replace=True)) == 0
 
     conn = open_connection(db)
     try:
@@ -360,8 +373,10 @@ def test_intake_nutrition_db_absent_still_builds_correction_chain(tmp_path: Path
     missing_db = tmp_path / "no_db.db"
 
     # Two writes, no DB: JSONL captures them, projection silently skips.
+    # v0.1.7 W34: second same-day call needs --replace.
     assert cli_main(_args(base, missing_db, calories=2200)) == 0
-    assert cli_main(_args(base, missing_db, calories=2400)) == 0
+    assert cli_main(_args(base, missing_db, calories=2400,
+                          replace=True)) == 0
 
     # The JSONL now has two lines — inspect directly:
     lines = [
@@ -435,7 +450,8 @@ def test_intake_nutrition_chain_resolver_prefers_jsonl_over_db(tmp_path: Path):
 
     # Second write: resolver reads JSONL and correctly finds the first
     # submission to supersede, even though the DB is now empty.
-    assert cli_main(_args(base, db, calories=2300)) == 0
+    # v0.1.7 W34: explicit --replace required.
+    assert cli_main(_args(base, db, calories=2300, replace=True)) == 0
 
     lines = [
         json.loads(l) for l in
@@ -506,8 +522,10 @@ def test_intake_nutrition_zero_optional_fields_accepted(tmp_path: Path):
 def test_state_reproject_rebuilds_nutrition_tables_from_jsonl(tmp_path: Path):
     base, db = _init_intake_dirs(tmp_path)
     # Two days, two submissions per day (correction chain).
+    # v0.1.7 W34: same-day correction needs --replace.
     assert cli_main(_args(base, db, as_of="2026-04-17", calories=2200)) == 0
-    assert cli_main(_args(base, db, as_of="2026-04-17", calories=2400)) == 0
+    assert cli_main(_args(base, db, as_of="2026-04-17", calories=2400,
+                          replace=True)) == 0
     assert cli_main(_args(base, db, as_of="2026-04-18", calories=2100)) == 0
 
     rc = cli_main([

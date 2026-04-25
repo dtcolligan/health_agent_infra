@@ -83,6 +83,42 @@ def current_schema_version(conn: sqlite3.Connection) -> int:
     return int(row["v"])
 
 
+def applied_schema_versions(conn: sqlite3.Connection) -> set[int]:
+    """Return the SET of migration versions actually applied.
+
+    v0.1.6 (W20 / Codex C7): :func:`current_schema_version` returns
+    ``MAX(version)``, which can hide gaps. A DB that's been manually
+    edited or partially reset can look "current" while missing schema
+    objects from skipped lower versions. Callers that need integrity
+    (e.g. ``hai doctor``, ``apply_pending_migrations``) should use
+    this and check for the contiguous range ``{1..head}``.
+    """
+
+    _ensure_migrations_table(conn)
+    rows = conn.execute(
+        "SELECT version FROM schema_migrations"
+    ).fetchall()
+    return {int(r["version"]) for r in rows}
+
+
+def detect_schema_version_gaps(conn: sqlite3.Connection) -> list[int]:
+    """Return any migration versions in [1..head] that are NOT applied.
+
+    A non-empty result means the DB has gaps below its max version —
+    schema objects from those migrations are missing. Empty list means
+    the applied set is contiguous and the DB is internally consistent
+    with respect to the migration history.
+
+    See :func:`applied_schema_versions` for the underlying primitive.
+    """
+
+    applied = applied_schema_versions(conn)
+    if not applied:
+        return []
+    head = max(applied)
+    return sorted(v for v in range(1, head + 1) if v not in applied)
+
+
 def discover_migrations() -> list[tuple[int, str, str]]:
     """Return sorted list of ``(version, filename, sql_body)`` from packaged migrations.
 
@@ -171,9 +207,24 @@ def _split_sql_statements(sql: str) -> list[str]:
     return statements
 
 
+class SchemaVersionGapError(RuntimeError):
+    """Raised when ``apply_pending_migrations(..., strict=True)`` (or the
+    CLI ``hai state migrate``) detects gaps in the applied migration set.
+
+    v0.1.7 (W23): the legacy max-version skip logic in
+    :func:`apply_pending_migrations` would silently no-op on a DB whose
+    `schema_migrations` table has gaps (e.g. after manual edit / partial
+    restore). With ``strict=True``, the function refuses with this
+    exception so the caller can tell the operator to repair the DB
+    rather than silently leaving the gaps in place.
+    """
+
+
 def apply_pending_migrations(
     conn: sqlite3.Connection,
     migrations: Optional[list[tuple[int, str, str]]] = None,
+    *,
+    strict: bool = False,
 ) -> list[tuple[int, str]]:
     """Apply every migration whose version > ``current_schema_version``.
 
@@ -196,7 +247,22 @@ def apply_pending_migrations(
         migrations: optional iterable of ``(version, filename, sql_body)``
             tuples, overriding packaged discovery. Primarily a test seam so
             a deliberately broken migration can prove rollback behaviour.
+        strict: when True, raise :class:`SchemaVersionGapError` if the
+            applied migration set has gaps below MAX(version). Default
+            False preserves legacy behaviour (silent no-op on gappy DBs)
+            for backward compatibility; the CLI ``hai state migrate``
+            wraps this with its own gap check + USER_INPUT exit.
     """
+
+    if strict:
+        gaps = detect_schema_version_gaps(conn)
+        if gaps:
+            raise SchemaVersionGapError(
+                f"applied migration set has gaps below head: {gaps}. "
+                f"DB looks current by MAX(version) but is missing schema "
+                f"objects from those versions. Restore from backup or "
+                f"re-init."
+            )
 
     pending = migrations if migrations is not None else discover_migrations()
     applied_now: list[tuple[int, str]] = []

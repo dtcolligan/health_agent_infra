@@ -269,7 +269,17 @@ def test_daily_orchestrates_6_domains_happy_path(tmp_path, capsys, monkeypatch):
 # ---------------------------------------------------------------------------
 
 
-def test_daily_domain_subset_narrows_gate_report(tmp_path, capsys, monkeypatch):
+def test_daily_domain_subset_narrows_expected_and_blocks_when_incomplete(
+    tmp_path, capsys, monkeypatch,
+):
+    """v0.1.6 (B1 fix): the proposal gate is now "all expected domains
+    present," not "any proposals exist." `--domains recovery,sleep` +
+    seeded recovery+running yields `incomplete` (sleep missing) and
+    blocks synthesis with a remediation hint that names the missing
+    domain. The prior behaviour — silently committing a 1-of-N plan
+    as `complete` — was the structural bug Codex r2 confirmed at
+    `cli.py:3496`."""
+
     db_path = _fresh_db(tmp_path)
     monkeypatch.setenv("HAI_STATE_DB", str(db_path))
     base_dir = tmp_path / "out"
@@ -292,13 +302,47 @@ def test_daily_domain_subset_narrows_gate_report(tmp_path, capsys, monkeypatch):
     assert gate["expected"] == ["recovery", "sleep"]
     # Present lists what actually landed, not what was expected.
     assert gate["present"] == ["recovery", "running"]
-    # Missing is restricted to the --domains subset; 'running' does not
-    # appear here despite being outside the subset.
+    # Missing is restricted to the --domains subset; 'running' does
+    # not appear here despite being outside the subset.
     assert gate["missing"] == ["sleep"]
 
-    # Synthesis still ran because proposals were present — but over both
-    # recovery AND running, not just the subset. --domains is a report
-    # filter, not a synthesis filter.
+    # NEW gate semantic: synthesis is BLOCKED until every expected
+    # domain has a proposal. With `sleep` missing, status flips from
+    # the legacy `complete` to `incomplete`.
+    assert gate["status"] == "incomplete"
+    synthesize = report["stages"]["synthesize"]
+    assert synthesize["status"] == "skipped_awaiting_proposals"
+    assert "missing proposals" in synthesize["hint"]
+    assert "sleep" in synthesize["hint"]
+    assert report["overall_status"] == "incomplete"
+
+
+def test_daily_complete_when_every_expected_domain_present(
+    tmp_path, capsys, monkeypatch,
+):
+    """Happy path for the new gate: when every expected domain has a
+    proposal, gate.status is `complete` and synthesis runs as before."""
+
+    db_path = _fresh_db(tmp_path)
+    monkeypatch.setenv("HAI_STATE_DB", str(db_path))
+    base_dir = tmp_path / "out"
+
+    _seed_proposals(db_path, ["recovery", "sleep"])
+
+    rc = _run_daily(
+        "--base-dir", str(base_dir),
+        "--as-of", AS_OF,
+        "--user-id", USER_ID,
+        "--db-path", str(db_path),
+        "--skip-pull",
+        "--domains", "recovery,sleep",
+    )
+    report = _stdout_json(capsys)
+
+    assert rc == 0, report
+    gate = report["stages"]["proposal_gate"]
+    assert gate["status"] == "complete"
+    assert gate["missing"] == []
     synthesize = report["stages"]["synthesize"]
     assert synthesize["status"] == "ran"
     assert len(synthesize["recommendation_ids"]) == 2
@@ -358,12 +402,17 @@ def test_daily_rerun_is_idempotent_on_review_events(tmp_path, capsys, monkeypatc
     base_dir = tmp_path / "out"
     _seed_proposals(db_path, ["recovery", "sleep"])
 
+    # v0.1.6: scope expected_domains to the seeded subset so the new
+    # proposal-completeness gate can reach `complete`. Without
+    # `--domains`, the default expected set is all 6 and a 2-of-6
+    # plan would now (correctly) read as `incomplete`.
     argv = [
         "--base-dir", str(base_dir),
         "--as-of", AS_OF,
         "--user-id", USER_ID,
         "--db-path", str(db_path),
         "--skip-pull",
+        "--domains", "recovery,sleep",
     ]
 
     assert _run_daily(*argv) == 0

@@ -1118,7 +1118,36 @@ class ReprojectBaseDirError(Exception):
     """
 
 
-def reproject_from_jsonl(conn: sqlite3.Connection, base_dir, *, allow_empty: bool = False) -> dict:
+class ReprojectOrphansError(Exception):
+    """Raised when reproject would orphan synthesis-side rows that are
+    NOT JSONL-derived.
+
+    Background (v0.1.6 W1 / B5): ``planned_recommendation.proposal_id``
+    references ``proposal_log(proposal_id)`` (migration 011). The
+    reproject's recommendation-group + proposals-group deletes don't
+    cascade into ``planned_recommendation`` / ``daily_plan`` /
+    ``x_rule_firing`` (those tables are computed by ``hai synthesize``,
+    not by JSONL replay), so a naive truncate raises
+    ``sqlite3.IntegrityError`` mid-transaction. Rather than crash, the
+    reproject detects this BEFORE any destructive write and raises
+    this exception with a message naming the row counts and the opt-in
+    flag.
+
+    Callers who genuinely want to wipe synthesis-side state and replay
+    from JSONL pass ``cascade_synthesis=True`` (CLI:
+    ``--cascade-synthesis``). They will need to re-run
+    ``hai synthesize`` afterwards because the runtime cannot
+    reconstruct ``daily_plan`` / ``x_rule_firing`` /
+    ``planned_recommendation`` from JSONL alone — those tables are
+    Phase A + Phase B outputs of the synthesis transaction.
+    """
+
+
+def reproject_from_jsonl(
+    conn: sqlite3.Connection, base_dir, *,
+    allow_empty: bool = False,
+    cascade_synthesis: bool = False,
+) -> dict:
     """Rebuild projected tables from the JSONL audit logs under ``base_dir``.
 
     **Scoped truncation.** Tables are truncated and rebuilt per **log group**
@@ -1212,12 +1241,65 @@ def reproject_from_jsonl(conn: sqlite3.Connection, base_dir, *, allow_empty: boo
 
     conn.execute("BEGIN EXCLUSIVE")
     try:
+        # v0.1.6 (W1 / B5): orphan-prevention before any destructive
+        # delete. planned_recommendation FK references both proposal_log
+        # (migration 011) and daily_plan; x_rule_firing FK references
+        # daily_plan (migration 003). If the recommendation or proposals
+        # group is being rebuilt while those synthesis-side tables are
+        # populated, the destructive DELETEs trip
+        # `sqlite3.IntegrityError: FOREIGN KEY constraint failed`
+        # mid-transaction. Detect that BEFORE damage and either raise
+        # ReprojectOrphansError (default) or sweep the synthesis tables
+        # in dependency order (cascade_synthesis=True).
+        if has_rec_group or has_proposals_group:
+            synth_counts = {
+                "planned_recommendation": conn.execute(
+                    "SELECT COUNT(*) FROM planned_recommendation"
+                ).fetchone()[0],
+                "daily_plan": conn.execute(
+                    "SELECT COUNT(*) FROM daily_plan"
+                ).fetchone()[0],
+                "x_rule_firing": conn.execute(
+                    "SELECT COUNT(*) FROM x_rule_firing"
+                ).fetchone()[0],
+            }
+            if any(synth_counts.values()):
+                if not cascade_synthesis:
+                    conn.execute("ROLLBACK")
+                    raise ReprojectOrphansError(
+                        f"reproject would orphan synthesis-side rows "
+                        f"(planned_recommendation="
+                        f"{synth_counts['planned_recommendation']}, "
+                        f"daily_plan={synth_counts['daily_plan']}, "
+                        f"x_rule_firing={synth_counts['x_rule_firing']}). "
+                        f"These tables are NOT JSONL-derived — they're "
+                        f"computed by `hai synthesize`. Two options: "
+                        f"(a) if you only intended to refresh "
+                        f"accepted_*_state tables, you don't need "
+                        f"reproject — the intake commands project "
+                        f"incrementally; (b) if you do want a full "
+                        f"rebuild, pass --cascade-synthesis to delete "
+                        f"the synthesis tables, then re-run "
+                        f"`hai synthesize` afterwards to repopulate them."
+                    )
+                # Cascade: delete in dependency order. planned_recommendation
+                # FKs into proposal_log + daily_plan; x_rule_firing FKs into
+                # daily_plan. Delete the FK-bearers first; daily_plan is
+                # cleared inside the rec_group block below.
+                conn.execute("DELETE FROM planned_recommendation")
+                conn.execute("DELETE FROM x_rule_firing")
         if has_rec_group:
             # Recommendation group: outcomes FK -> events FK -> recs. Delete
             # in reverse dependency order, then replay in forward order.
             conn.execute("DELETE FROM review_outcome")
             conn.execute("DELETE FROM review_event")
             conn.execute("DELETE FROM recommendation_log")
+            if cascade_synthesis:
+                # daily_plan is computed by `hai synthesize`, not from
+                # JSONL. After cascade-cleanup of planned_recommendation
+                # + x_rule_firing above, daily_plan has no inbound FKs
+                # and can be safely cleared.
+                conn.execute("DELETE FROM daily_plan")
         if has_gym_group:
             # Gym group: gym_set FK -> gym_session. Accepted resistance
             # daily is derived and must be rebuilt alongside.
@@ -1242,19 +1324,24 @@ def reproject_from_jsonl(conn: sqlite3.Connection, base_dir, *, allow_empty: boo
                 pass
         if has_proposals_group:
             # Proposals group (Phase B): rebuild proposal_log from the
-            # 6 per-domain JSONL audit logs. proposal_log has no inbound
-            # FK from synthesis-side tables (daily_plan stores its
-            # proposal_ids in JSON, not FK). Safe to truncate cleanly.
+            # 6 per-domain JSONL audit logs.
+            #
+            # FK note: planned_recommendation.proposal_id REFERENCES
+            # proposal_log(proposal_id) (migration 011). The
+            # orphan-prevention block at the top of the transaction
+            # has already deleted planned_recommendation when
+            # cascade_synthesis=True, OR refused the reproject when
+            # synthesis-side rows would be stranded — so by the time
+            # we reach this DELETE, proposal_log has no live FK
+            # children blocking the truncate.
             #
             # Note: a fresh reproject also resets daily_plan.proposal_ids_json
             # references logically — they remain in the JSON blob but won't
             # join to the new proposal_log unless the proposal_ids replay
             # produces the same chain (which it does for non-revised
-            # chains). The recommendation group rebuild already truncated
-            # daily_plan-touching tables when its JSONL is present, but
-            # daily_plan itself is NOT rebuilt by reproject — only by
-            # `hai synthesize`. Operators rebuilding the full DB should
-            # rerun synthesis after reproject.
+            # chains). daily_plan itself is NOT rebuilt by reproject —
+            # only by `hai synthesize`. Operators rebuilding the full
+            # DB with --cascade-synthesis must rerun synthesis afterwards.
             conn.execute("DELETE FROM proposal_log")
         if has_stress_group:
             # Stress group (post-Phase-3): manual_stress_score now lives

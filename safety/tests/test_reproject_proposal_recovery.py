@@ -344,3 +344,137 @@ def test_replay_truncates_proposal_log_before_replaying(db, base_dir):
     ids = {r["proposal_id"] for r in rows}
     assert "prop_stale" not in ids
     assert len(ids) == 1
+
+
+# ---------------------------------------------------------------------------
+# 8. Orphan-prevention: refuse cleanly when synthesis-side tables would
+# be stranded by a destructive proposal_log / recommendation_log delete.
+# Regression for v0.1.6 W1 / B5 — the FK constraint failure observed in
+# the 2026-04-25 user session.
+# ---------------------------------------------------------------------------
+
+def _seed_synthesis_tables(db) -> None:
+    """Populate proposal_log + daily_plan + planned_recommendation to
+    reproduce the FK-failure conditions. Schemas mirror the head-of-tree
+    migrations 001–018 (verified against live DB schema)."""
+
+    db.execute(
+        """
+        INSERT INTO proposal_log (
+            proposal_id, daily_plan_id, user_id, domain, for_date,
+            schema_version, action, confidence, payload_json,
+            source, ingest_actor, agent_version,
+            produced_at, validated_at, projected_at, revision
+        ) VALUES (
+            'prop_seed', NULL, 'u_phaseb', 'recovery', '2026-04-22',
+            'recovery_proposal.v1', 'proceed_with_planned_session', 'high',
+            '{}', 'test', 'test', 'test',
+            '2026-04-22T00:00:00+00:00', '2026-04-22T00:00:00+00:00',
+            '2026-04-22T00:00:00+00:00', 1
+        )
+        """
+    )
+    db.execute(
+        """
+        INSERT INTO daily_plan (
+            daily_plan_id, user_id, for_date, synthesized_at,
+            recommendation_ids_json, proposal_ids_json, x_rules_fired_json,
+            source, ingest_actor, validated_at, projected_at
+        ) VALUES (
+            'plan_seed', 'u_phaseb', '2026-04-22',
+            '2026-04-22T00:00:00+00:00',
+            '[]', '["prop_seed"]', '[]',
+            'test', 'test',
+            '2026-04-22T00:00:00+00:00', '2026-04-22T00:00:00+00:00'
+        )
+        """
+    )
+    db.execute(
+        """
+        INSERT INTO planned_recommendation (
+            planned_id, daily_plan_id, proposal_id,
+            user_id, for_date, domain,
+            action, confidence, action_detail_json,
+            schema_version, source, ingest_actor, captured_at
+        ) VALUES (
+            'planned_seed', 'plan_seed', 'prop_seed',
+            'u_phaseb', '2026-04-22', 'recovery',
+            'proceed_with_planned_session', 'high', '{}',
+            'planned_recommendation.v1', 'test', 'test',
+            '2026-04-22T00:00:00+00:00'
+        )
+        """
+    )
+    db.commit()
+
+
+def test_reproject_refuses_when_synthesis_tables_would_be_orphaned(
+    db, base_dir,
+):
+    """Reproduces the 2026-04-25 user-session FK failure: a populated
+    planned_recommendation table FKs into proposal_log (migration 011),
+    so a naive `DELETE FROM proposal_log` raises sqlite3.IntegrityError
+    mid-transaction. After v0.1.6 W1, reproject detects this BEFORE
+    damage and raises ReprojectOrphansError naming the row counts +
+    pointing at --cascade-synthesis."""
+
+    from health_agent_infra.core.state import ReprojectOrphansError
+
+    _seed_synthesis_tables(db)
+
+    # Write a proposal JSONL so has_proposals_group is True and the
+    # destructive path would be reached.
+    _write_jsonl(base_dir, "recovery", _proposal(domain="recovery"))
+
+    with pytest.raises(ReprojectOrphansError) as exc_info:
+        reproject_from_jsonl(db, base_dir)
+
+    msg = str(exc_info.value)
+    assert "planned_recommendation=1" in msg
+    assert "daily_plan=1" in msg
+    assert "--cascade-synthesis" in msg
+
+    # Transaction was rolled back: synthesis tables still present.
+    assert db.execute(
+        "SELECT COUNT(*) FROM planned_recommendation"
+    ).fetchone()[0] == 1
+    assert db.execute(
+        "SELECT COUNT(*) FROM proposal_log"
+    ).fetchone()[0] == 1
+
+
+def test_reproject_with_cascade_synthesis_clears_orphans_and_replays(
+    db, base_dir,
+):
+    """Opt-in cascade: --cascade-synthesis deletes synthesis-side tables
+    in dependency order, then proceeds with the normal replay. Operator
+    must re-run `hai synthesize` afterwards to repopulate them."""
+
+    _seed_synthesis_tables(db)
+    _write_jsonl(base_dir, "recovery", _proposal(domain="recovery"))
+
+    counts = reproject_from_jsonl(db, base_dir, cascade_synthesis=True)
+    assert counts["proposals"] == 1
+
+    # Synthesis tables wiped.
+    assert db.execute(
+        "SELECT COUNT(*) FROM planned_recommendation"
+    ).fetchone()[0] == 0
+    assert db.execute(
+        "SELECT COUNT(*) FROM x_rule_firing"
+    ).fetchone()[0] == 0
+
+    # proposal_log replayed from JSONL: seed row gone, JSONL row present.
+    rows = db.execute("SELECT proposal_id FROM proposal_log").fetchall()
+    ids = {r["proposal_id"] for r in rows}
+    assert "prop_seed" not in ids
+    assert any(pid.startswith("prop_") for pid in ids)
+
+
+def test_reproject_succeeds_when_synthesis_tables_empty(db, base_dir):
+    """No orphan check needed when planned_recommendation / daily_plan /
+    x_rule_firing are empty — reproject behaves as before."""
+
+    _write_jsonl(base_dir, "recovery", _proposal(domain="recovery"))
+    counts = reproject_from_jsonl(db, base_dir)
+    assert counts["proposals"] == 1

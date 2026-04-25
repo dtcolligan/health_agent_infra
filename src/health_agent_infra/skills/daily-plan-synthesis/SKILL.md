@@ -1,7 +1,7 @@
 ---
 name: daily-plan-synthesis
 description: Reconcile per-domain proposals into a coherent daily plan by composing rationale and uncertainty across domains. The runtime already applied every Phase A X-rule mutation mechanically; this skill adds the human-legible joint narration on top. It never computes bands, evaluates R-rules, or applies X-rule mutations — those are runtime-owned.
-allowed-tools: Read, Bash(hai state snapshot *), Bash(hai synthesize --bundle-only *), Bash(hai synthesize --drafts-json *)
+allowed-tools: Read, Bash(hai state snapshot *), Bash(hai synthesize *)
 disable-model-invocation: false
 ---
 
@@ -102,3 +102,4 @@ The CLI overlays your edits onto the mechanical drafts, runs Phase B, validates 
 - You never emit an X-rule firing yourself. Firings come from `core/synthesis_policy.py`; skills never add to the firings list.
 - If a rationale line isn't traceable to a proposal band or a Phase A firing, delete it.
 - If a decision isn't reasoned in the final `rationale[]`, it didn't happen — and the operator will see the rationale, not your prose buffer.
+- v0.1.7: although `allowed-tools` grants `Bash(hai synthesize *)` (broadened in v0.1.7 W25 to avoid order-sensitive permission matching against constrained patterns), this skill MUST only invoke `hai synthesize --bundle-only` (read-only) and `hai synthesize --drafts-json <path>` (overlay commit). It MUST NOT invoke `hai synthesize --supersede` or any other write form — those are operator/agent-host concerns, not skill concerns.

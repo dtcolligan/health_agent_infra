@@ -170,6 +170,18 @@ def record_review_outcome(
         re_link_note=re_link_note,
     )
 
+    # v0.1.6 (Codex r3 P1): defense-in-depth. The CLI handler validates
+    # the outcome dict before calling this function, but direct Python
+    # callers can bypass that check. Re-validate the constructed
+    # ReviewOutcome via its dict form so the JSONL/SQLite truth-fork
+    # bug W12 was meant to close stays closed for every entry path.
+    # This raises ReviewOutcomeValidationError BEFORE the JSONL append,
+    # guaranteeing no partial-write contamination.
+    from health_agent_infra.core.writeback.outcome import (
+        validate_review_outcome_dict,
+    )
+    validate_review_outcome_dict(outcome.to_dict())
+
     with outcomes_path.open("a", encoding="utf-8") as fh:
         fh.write(json.dumps(outcome.to_dict(), sort_keys=True) + "\n")
     secure_file(outcomes_path)

@@ -3,9 +3,123 @@
 All notable changes to Health Agent Infra will be documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
-the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
+with the v0.x caveat that breaking changes can land in minor releases
+until v1.0.
 
-Per-release detail lives under `reporting/plans/<version>/release_notes.md`.
+Per-release detail lives under `reporting/plans/<version>/`.
+
+---
+
+## [0.1.7] — 2026-04-25
+
+### Added
+
+- **`hai daily --auto`** emits a versioned `next_actions[]` manifest
+  (`schema_version: next_actions.v1`) alongside the stage report
+  (W21). Each action carries a typed `kind`, `reason_code`,
+  `command_argv` (or `command_root` + `command_template`), `blocking`
+  / `safe_to_retry` hints, and an `after_success` routing pointer. An
+  agent can plan a fixture day end-to-end from the manifest alone —
+  proven by `safety/tests/test_daily_auto_manifest_fixture.py` (W35).
+- **`hai planned-session-types`** read-only command surfaces the
+  canonical vocabulary for `--planned-session-type` so agents can
+  discover the recognised tokens without README lookup (W33).
+- **`hai capabilities --json`** alias accepted (Codex r3 must-fix:
+  was previously argparse error 2 even though docs cited it).
+- **`hai state migrate`** now refuses on a DB with gaps in the
+  applied migration set (W23). New
+  `apply_pending_migrations(..., strict=True)` +
+  `SchemaVersionGapError` for library callers.
+- **Cold-start policy matrix** documented at
+  `reporting/docs/cold_start_policy_matrix.md` (W24) with a test
+  pinning the per-domain decisions.
+- **`runtime_event_log.context_json`** carries the daily
+  proposal-gate outcome so future telemetry surfaces can query
+  durable state (W21 prerequisite for W28).
+
+### Changed
+
+- **`hai intake nutrition`** now requires `--replace` to overwrite
+  an existing same-day row (W34). Same-day silent supersede was a
+  data-integrity footgun for agents treating the command as a
+  per-meal logger.
+- **`hai daily` capabilities annotation** correctly lists
+  `incomplete` as a possible `overall_status` (Codex r3 must-fix).
+- **`record_review_outcome`** validates the constructed payload
+  before the JSONL append — defence-in-depth so direct Python
+  callers can't bypass the v0.1.6 W12 validator (Codex r3 P1).
+- **`daily-plan-synthesis` skill** `allowed-tools` broadened from
+  flag-constrained patterns to `Bash(hai synthesize *)` (W25 +
+  Codex r2 W16). The flag-constrained patterns may have silently
+  blocked the skill's own examples under Claude Code's permission
+  matcher; broadening + a prose invariant is the safer fix.
+- **Source-default semantics** sweep across `hai daily` parser
+  help, `intent-router` skill, `agent_integration.md`, and the
+  generated capabilities manifest (W32). All now describe the
+  v0.1.6+ resolution chain consistently.
+- **README cheat sheet** rewritten to reflect every v0.1.6 +
+  v0.1.7 surface change.
+
+### Fixed
+
+- **`hai propose` race-path regression** (W26): when
+  `project_proposal` raises `ProposalReplaceRequired` past the
+  pre-flight canonical-leaf check, the handler returns
+  `USER_INPUT` with a clear "JSONL durable, run --replace or
+  reproject" stderr instead of silently logging success.
+- **Stale comments** in projector.py + expert-explainer skill +
+  intent-router rewritten (Codex r3 nits).
+
+### Skill ↔ CLI drift validator
+
+- Extended to inspect `allowed-tools` frontmatter for
+  order-sensitive permission patterns that may block their own
+  skill-body examples (W25 / Codex r2 W16).
+
+---
+
+## [0.1.6] — 2026-04-25
+
+### Major: post-audit-cycle release
+
+13 workstreams shipped against the consolidated punch list from
+three audit rounds (Codex r1 stale-branch + internal
+cross-validation + Codex r2 on the correct branch + Codex r3
+implementation review):
+
+- **W11** — `_load_json_arg` helper + `main()` exception guard. No
+  CLI handler can produce an uncaught Python traceback.
+- **W12** — Review-outcome validation: `core/writeback/outcome.py`
+  + `validate_review_outcome_dict`. Strict-bool
+  `followed_recommendation` enforcement closes the JSONL/SQLite
+  truth-fork bug.
+- **W10 + W4** — `hai daily` proposal-completeness gate. Three
+  statuses (`awaiting_proposals` / `incomplete` / `complete`).
+- **W2** — `hai intake gaps` refuses without `--evidence-json`,
+  emits `"computed": true` on OK path.
+- **W7** — `core/paths.py` — `--base-dir` is now optional
+  everywhere; defaults to `$HAI_BASE_DIR` or `~/.health_agent/`.
+- **W3 + W18** — `scripts/check_skill_cli_drift.py` validator + CI
+  gate. Fixed intent-router + reporting + expert-explainer drift.
+- **W1** — `ReprojectOrphansError` + `--cascade-synthesis` flag.
+- **W13** — `hai synthesize --bundle-only` refuses when
+  `proposal_log` is empty.
+- **W15** — `cmd_propose` does its own projection inline.
+  `ProposalReplaceRequired` is fatal `USER_INPUT`; other failures
+  fatal `INTERNAL`.
+- **W17** — `hai research topics` + `hai research search`. Removed
+  `Bash(python3 -c *)` from `expert-explainer`.
+- **W19** — Reproject contract: "deterministic modulo projection
+  timestamps."
+- **W20** — `applied_schema_versions` + `detect_schema_version_gaps`;
+  `hai doctor` warns on gaps below head.
+- **W5** — `intervals_icu` is the implicit default when configured.
+- **W9** — README rewrite: "Where your data lives," "How `hai daily`
+  actually completes," "Calibration timeline."
+
+Test count: 1844 → 1921 (+77 new tests). Zero locked broken
+behaviours remain. v0.1.7 lifts the count to 1943.
 
 ---
 
@@ -104,6 +218,8 @@ Phase A onboarding UX + local telemetry.
 
 Initial release.
 
+[0.1.7]: https://pypi.org/project/health-agent-infra/0.1.7/
+[0.1.6]: https://pypi.org/project/health-agent-infra/0.1.6/
 [0.1.5]: https://pypi.org/project/health-agent-infra/0.1.5/
 [0.1.4]: https://pypi.org/project/health-agent-infra/0.1.4/
 [0.1.3.dev0]: https://pypi.org/project/health-agent-infra/0.1.3.dev0/

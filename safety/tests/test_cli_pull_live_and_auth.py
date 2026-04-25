@@ -214,10 +214,16 @@ def test_pull_live_happy_path(monkeypatch, capsys):
     assert payload["pull"]["sleep"]["duration_hours"] == 7.5
 
 
-def test_pull_default_still_reads_csv(capsys):
-    """`hai pull` without --live uses the CSV adapter unchanged."""
+def test_pull_explicit_csv_source_uses_committed_fixture(capsys):
+    """`hai pull --source csv` uses the CSV adapter unchanged.
 
-    rc = cli_main(["pull", "--date", "2026-02-10"])
+    v0.1.6 W5 changed the *default* source resolution: when neither
+    --source nor --live is passed and intervals.icu credentials are
+    present, the default flips to intervals.icu (the supported live
+    source). This test pins the explicit-csv path that was previously
+    the unconditional default."""
+
+    rc = cli_main(["pull", "--date", "2026-02-10", "--source", "csv"])
     assert rc == 0
     payload = json.loads(capsys.readouterr().out)
     # CSV adapter reports source "garmin"; live reports "garmin_live".
@@ -226,6 +232,33 @@ def test_pull_default_still_reads_csv(capsys):
     assert set(payload["pull"].keys()) == {
         "sleep", "resting_hr", "hrv", "training_load", "raw_daily_row"
     }
+
+
+def test_pull_default_falls_back_to_csv_when_no_intervals_auth(
+    capsys, monkeypatch,
+):
+    """v0.1.6 W5: when intervals.icu credentials are NOT configured,
+    the default source resolution falls back to csv (preserving the
+    legacy behaviour for fresh installs / offline / test environments)."""
+
+    # Force the credential store to report no intervals.icu auth.
+    from health_agent_infra import cli as cli_mod
+
+    class _NoCreds:
+        @classmethod
+        def default(cls):
+            inst = cls()
+            return inst
+
+        def load_intervals_icu(self):
+            return None
+
+    monkeypatch.setattr(cli_mod, "CredentialStore", _NoCreds)
+
+    rc = cli_mod.main(["pull", "--date", "2026-02-10"])
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["source"] == "garmin"  # csv adapter
 
 
 def test_pull_live_wraps_adapter_error(monkeypatch, capsys):

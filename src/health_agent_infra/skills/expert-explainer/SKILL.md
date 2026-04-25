@@ -1,7 +1,7 @@
 ---
 name: expert-explainer
 description: Answer bounded questions about what a term means in this system, or why a runtime rule would fire, using only the allowlisted local source registry under `src/health_agent_infra/core/research/`. Read-only. Cite or abstain. Never mutates recommendations, never triages, never diagnoses.
-allowed-tools: Read, Bash(python3 -c *), Bash(hai explain *), Bash(hai state snapshot *)
+allowed-tools: Read, Bash(hai research topics *), Bash(hai research search *), Bash(hai explain *), Bash(hai state snapshot *)
 disable-model-invocation: false
 ---
 
@@ -45,11 +45,11 @@ section, and stop. Do not negotiate.
 
 ### 1. Identify the topic token
 
-Map the user's question to one topic token from `ALLOWLISTED_TOPICS`.
-You can see the current allowlist with:
+Map the user's question to one topic token from the allowlist. You
+can see the current allowlist with:
 
 ```
-python3 -c "from health_agent_infra.core.research import ALLOWLISTED_TOPICS; print(sorted(ALLOWLISTED_TOPICS))"
+hai research topics
 ```
 
 Today's tokens include `sleep_debt`, `body_battery`,
@@ -58,26 +58,22 @@ the allowlist, go straight to step 4 (abstain).
 
 ### 2. Retrieve
 
-Call the retrieval surface with the topic token only. Never attach
-user memory, accepted state, snapshot values, or free-text notes to
-the query — the surface refuses those payloads by design
-(`grounded_expert_scope.md` §3 rule 2).
+Call the retrieval surface with the topic token only. The CLI is
+the only retrieval seam this skill is permitted to call — the
+`allowed-tools` block does not grant arbitrary `python3 -c`,
+`WebFetch`, or shell-out, so the privacy invariant ("no network,
+local-only retrieval") is enforced by the permission matcher, not
+just by skill prose.
 
 ```
-python3 -c "
-import json
-from health_agent_infra.core.research import retrieve, RetrievalQuery
-result = retrieve(RetrievalQuery(topic='sleep_debt'))
-print(json.dumps({
-    'topic': result.topic,
-    'abstain_reason': result.abstain_reason,
-    'sources': [
-        {'source_id': s.source_id, 'title': s.title,
-         'source_class': s.source_class, 'origin_path': s.origin_path,
-         'excerpt': s.excerpt} for s in result.sources],
-}, indent=2))
-"
+hai research search --topic sleep_debt
 ```
+
+The CLI mirrors `core.research.retrieve` but exposes only the
+topic-token interface; the privacy-violation booleans
+(`user_context_sent`, `operator_initiated`) are not configurable
+through this surface, so any attempt to attach user state to a
+query is structurally impossible.
 
 ### 3. Compose — cite or abstain
 
@@ -130,9 +126,9 @@ knowledge. Do not attribute a claim to a source you did not retrieve.
 
 - **Read-only.** You never call `hai synthesize`, `hai propose`,
   `hai memory set`, or any other write surface. The
-  `allowed-tools` list pins this — `hai explain` and `hai state
-  snapshot` are the only `hai` subcommands you may invoke, and both
-  are read-only.
+  `allowed-tools` list pins this — `hai explain`, `hai state
+  snapshot`, `hai research topics`, and `hai research search` are
+  the only `hai` subcommands you may invoke, and all are read-only.
 - **Cite or abstain.** Every substantive claim has a citation or the
   whole answer is an abstain. There is no "partially cited" answer.
 - **No user context in retrieval queries.** `RetrievalQuery` carries

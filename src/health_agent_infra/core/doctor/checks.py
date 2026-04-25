@@ -86,6 +86,7 @@ def check_state_db(db_path: Path) -> dict[str, Any]:
 
     from health_agent_infra.core.state import (
         current_schema_version,
+        detect_schema_version_gaps,
         open_connection,
     )
     from health_agent_infra.core.state.store import discover_migrations
@@ -101,6 +102,12 @@ def check_state_db(db_path: Path) -> dict[str, Any]:
     conn = open_connection(db_path)
     try:
         current = current_schema_version(conn)
+        # v0.1.6 (W20 / Codex C7): MAX(version) can hide gaps below the
+        # head if the migrations table was manually edited or partially
+        # restored. Treat the applied set as a contiguous range and
+        # surface any gap as a warn — the DB might appear current but
+        # be missing schema objects from skipped lower versions.
+        applied_gaps = detect_schema_version_gaps(conn)
     finally:
         conn.close()
 
@@ -118,7 +125,22 @@ def check_state_db(db_path: Path) -> dict[str, Any]:
         "head_version": head,
         "size_bytes": size_bytes,
     }
-    if current < head:
+    if applied_gaps:
+        base.update({
+            "status": "warn",
+            "applied_gaps": applied_gaps,
+            "reason": (
+                f"applied migrations have gaps below head: "
+                f"{applied_gaps}"
+            ),
+            "hint": (
+                "the DB looks current by MAX(version) but is missing "
+                "schema objects from those versions; restore from a "
+                "known-good backup or run `hai state init` against a "
+                "fresh DB"
+            ),
+        })
+    elif current < head:
         base.update({
             "status": "warn",
             "pending_migrations": head - current,

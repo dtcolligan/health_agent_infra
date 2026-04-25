@@ -29,6 +29,7 @@ from typing import Any, Optional
 
 from health_agent_infra import __version__ as _PACKAGE_VERSION
 from health_agent_infra.core import exit_codes
+from health_agent_infra.core.paths import DEFAULT_BASE_DIR, resolve_base_dir
 from health_agent_infra.core.capabilities import (
     annotate_contract,
     build_manifest,
@@ -108,6 +109,51 @@ def _coerce_dt(value: str | None) -> datetime:
     return dt
 
 
+def _load_json_arg(
+    path_value: str | None, *, arg_name: str, command_label: str,
+) -> tuple[Any, int | None]:
+    """Load a CLI-provided JSON-file argument into a Python object.
+
+    Returns ``(data, None)`` on success or ``(None, exit_code)`` on
+    failure. The exit code is ``USER_INPUT`` for both missing-file and
+    malformed-JSON cases — both are caller-controlled inputs the
+    command can't proceed without. A clear stderr line names the
+    command, the flag, and the underlying error so an agent can route
+    on it without parsing prose.
+
+    This is the single consolidated implementation the v0.1.6 audit
+    surfaced as missing — every CLI handler that takes a
+    ``--*-json`` argument should route through here so bad paths /
+    malformed JSON exit cleanly with USER_INPUT instead of escaping
+    as an uncaught Python traceback.
+    """
+
+    if not path_value:
+        print(
+            f"{command_label}: {arg_name} is required.",
+            file=sys.stderr,
+        )
+        return None, exit_codes.USER_INPUT
+    try:
+        raw = Path(path_value).read_text(encoding="utf-8")
+    except OSError as exc:
+        print(
+            f"{command_label}: could not read {arg_name} "
+            f"({path_value}): {exc}",
+            file=sys.stderr,
+        )
+        return None, exit_codes.USER_INPUT
+    try:
+        return json.loads(raw), None
+    except json.JSONDecodeError as exc:
+        print(
+            f"{command_label}: {arg_name} is not valid JSON "
+            f"({path_value}): {exc}",
+            file=sys.stderr,
+        )
+        return None, exit_codes.USER_INPUT
+
+
 def _emit_json(obj: Any) -> None:
     def default(o):
         if is_dataclass(o):
@@ -170,7 +216,13 @@ def cmd_pull(args: argparse.Namespace) -> int:
 
     manual = None
     if args.manual_readiness_json:
-        manual = json.loads(Path(args.manual_readiness_json).read_text(encoding="utf-8"))
+        manual, err = _load_json_arg(
+            args.manual_readiness_json,
+            arg_name="--manual-readiness-json",
+            command_label="hai pull",
+        )
+        if err is not None:
+            return err
     elif args.use_default_manual_readiness:
         manual = default_manual_readiness(as_of)
     else:
@@ -461,14 +513,53 @@ def _build_intervals_icu_adapter(args: argparse.Namespace) -> IntervalsIcuAdapte
 
 
 def _resolve_pull_source(args: argparse.Namespace) -> str:
-    """Pick the pull source: explicit --source beats legacy --live beats default csv."""
+    """Pick the pull source.
+
+    Resolution order (v0.1.6 W5):
+
+      1. Explicit ``--source <s>`` — wins unconditionally.
+      2. Legacy ``--live`` flag — preserved for back-compat; equivalent
+         to ``--source garmin_live``.
+      3. Auto-default — when neither flag is passed: if intervals.icu
+         credentials are configured, use ``intervals_icu`` (the
+         maintainer's declared supported live source); else fall back
+         to ``csv`` (the committed fixture, useful for offline runs
+         and tests).
+
+    Garmin live is not in the auto-default chain because Garmin
+    Connect's login surface is rate-limited and unreliable for live
+    scraping (the 2026-04-25 user session reproduced 429s from
+    mobile + portal + Cloudflare in succession). Users who want
+    Garmin live must opt in explicitly via ``--source garmin_live``
+    or ``--live``.
+    """
 
     explicit = getattr(args, "source", None)
     if explicit is not None:
         return explicit
     if getattr(args, "live", False):
         return "garmin_live"
+    # Auto-default: intervals.icu when configured, else csv. Keep the
+    # check cheap (credential presence, no network) so this resolution
+    # adds no perceptible latency to commands that don't pull.
+    if _intervals_icu_configured():
+        return "intervals_icu"
     return "csv"
+
+
+def _intervals_icu_configured() -> bool:
+    """Return True when intervals.icu credentials are reachable.
+
+    Probes the credential store; never resolves a network host. Used
+    by ``_resolve_pull_source`` to make intervals.icu the implicit
+    default when the user has set up auth.
+    """
+
+    try:
+        store = CredentialStore.default()
+        return store.load_intervals_icu() is not None
+    except Exception:  # noqa: BLE001 — auth backend hiccup → fall back to csv
+        return False
 
 
 # ---------------------------------------------------------------------------
@@ -478,7 +569,13 @@ def _resolve_pull_source(args: argparse.Namespace) -> str:
 def cmd_clean(args: argparse.Namespace) -> int:
     from health_agent_infra.core.state import aggregate_activities_to_daily_rollup
 
-    pulled = json.loads(Path(args.evidence_json).read_text(encoding="utf-8"))
+    pulled, err = _load_json_arg(
+        args.evidence_json,
+        arg_name="--evidence-json",
+        command_label="hai clean",
+    )
+    if err is not None:
+        return err
     as_of = _coerce_date(pulled["as_of_date"])
     user_id = pulled["user_id"]
     pull = pulled["pull"]
@@ -911,7 +1008,13 @@ def cmd_propose(args: argparse.Namespace) -> int:
         validate_proposal_dict,
     )
 
-    data = json.loads(Path(args.proposal_json).read_text(encoding="utf-8"))
+    data, err = _load_json_arg(
+        args.proposal_json,
+        arg_name="--proposal-json",
+        command_label="hai propose",
+    )
+    if err is not None:
+        return err
     try:
         validate_proposal_dict(data, expected_domain=args.domain)
     except ProposalValidationError as exc:
@@ -953,22 +1056,59 @@ def cmd_propose(args: argparse.Namespace) -> int:
 
     # JSONL audit first (per the pre-D1 contract — append-only audit is
     # the durability boundary; DB is a queryable projection).
-    record = perform_proposal_writeback(data, base_dir=Path(args.base_dir))
+    record = perform_proposal_writeback(data, base_dir=resolve_base_dir(args.base_dir))
 
-    # DB projection: ProposalReplaceRequired is the one exception class
-    # whose semantics demand a hard CLI failure rather than a stderr
-    # warning. Every other projector exception stays best-effort.
-    def _project(conn) -> None:
+    # DB projection. v0.1.6 (W15 / Codex C2): cmd_propose handles its
+    # own projection inline rather than routing through
+    # `_dual_write_project`, because the swallowing pattern in that
+    # helper would let `ProposalReplaceRequired` (a thin race window
+    # past the pre-flight check) AND any other unexpected projection
+    # failure fall through silently. With the inline handling here:
+    #   - DB-absent → JSONL is durable; print the legacy stderr note
+    #     and return OK with a `db_projection_skipped` flag in the
+    #     stdout payload.
+    #   - ProposalReplaceRequired → fatal USER_INPUT exit (rare race).
+    #   - Any other projection exception → INTERNAL exit with a clear
+    #     "JSONL written, DB out of sync — run `hai state reproject`"
+    #     message. The audit chain has not silently forked.
+    db_projection_status: str
+    if not db_path.exists():
+        print(
+            f"note: state DB projection skipped ({db_path} not found). "
+            f"JSONL audit record is durable. Run `hai state init` to "
+            f"enable DB dual-write.",
+            file=sys.stderr,
+        )
+        db_projection_status = "skipped_db_absent"
+    else:
+        conn = open_connection(db_path)
         try:
-            project_proposal(conn, data, replace=args.replace)
-        except ProposalReplaceRequired:
-            # This should not happen after the pre-flight check above,
-            # but guard for the thin race window (concurrent writer).
-            # Re-raise so _dual_write_project surfaces it as a warning;
-            # the user can rerun with --replace if appropriate.
-            raise
-
-    _dual_write_project(args.db_path, _project, "proposal")
+            try:
+                project_proposal(conn, data, replace=args.replace)
+                db_projection_status = "ok"
+            except ProposalReplaceRequired as exc:
+                print(
+                    f"propose rejected: projection raised "
+                    f"ProposalReplaceRequired (concurrent writer race "
+                    f"past the pre-flight canonical-leaf check): {exc}. "
+                    f"JSONL audit record IS durable but DB is out of "
+                    f"sync; rerun with --replace or run "
+                    f"`hai state reproject` to reconcile.",
+                    file=sys.stderr,
+                )
+                return exit_codes.USER_INPUT
+            except Exception as exc:  # noqa: BLE001
+                print(
+                    f"propose: DB projection FAILED ({type(exc).__name__}: "
+                    f"{exc}). JSONL audit record IS durable at "
+                    f"{record.writeback_path} but the SQLite projection "
+                    f"is now out of sync. Run `hai state reproject` to "
+                    f"replay the JSONL into the DB.",
+                    file=sys.stderr,
+                )
+                return exit_codes.INTERNAL
+        finally:
+            conn.close()
 
     # Post-write DB read for projection metadata (proposal_id as landed,
     # revision, superseded_by_proposal_id). Codex r2/r3 pushback: the
@@ -988,6 +1128,12 @@ def cmd_propose(args: argparse.Namespace) -> int:
     payload = record.to_dict()
     payload["for_date"] = data["for_date"]
     payload["user_id"] = data["user_id"]
+    # v0.1.6 (W15): db_projection_status surfaces the dual-write
+    # outcome on every successful exit. Agents can pattern-match on
+    # this without reparsing stderr: "ok" means JSONL + SQLite agree;
+    # "skipped_db_absent" means JSONL is durable and a future
+    # `hai state reproject` will reconcile.
+    payload["db_projection_status"] = db_projection_status
     # proposal_id echoes the DB leaf's id (post-rename on revision). On
     # the DB-absent path, falls back to the input payload id (legacy
     # single-source-of-truth was the JSONL's id).
@@ -1112,8 +1258,33 @@ def cmd_synthesize(args: argparse.Namespace) -> int:
                 file=sys.stderr,
             )
             return exit_codes.USER_INPUT
+        # v0.1.6 (W13 / B4): bundle-only is the post-proposal skill
+        # seam, not a pre-proposal inspection surface. Without
+        # proposals in proposal_log there's nothing for the synthesis
+        # skill to overlay rationale onto, and emitting an empty
+        # bundle would silently bypass the same "no proposals"
+        # contract `hai synthesize` enforces on the commit path.
+        # Refuse explicitly so the agent gets a governed USER_INPUT
+        # instead of a misleading empty payload.
+        from health_agent_infra.core.state import (
+            read_proposals_for_plan_key,
+        )
         conn = open_connection(db_path)
         try:
+            existing = read_proposals_for_plan_key(
+                conn, for_date=for_date.isoformat(), user_id=user_id,
+            )
+            if not existing:
+                print(
+                    f"hai synthesize rejected: --bundle-only requires "
+                    f"at least one DomainProposal in proposal_log for "
+                    f"({for_date}, {user_id}), but none were found. "
+                    f"Bundle-only is the post-proposal skill overlay "
+                    f"seam — post proposals via `hai propose --domain "
+                    f"<d>` first, then re-run.",
+                    file=sys.stderr,
+                )
+                return exit_codes.USER_INPUT
             bundle = build_synthesis_bundle(
                 conn, for_date=for_date, user_id=user_id,
             )
@@ -1655,7 +1826,13 @@ def cmd_review_schedule(args: argparse.Namespace) -> int:
 
     from health_agent_infra.core.state import project_review_event
 
-    data = json.loads(Path(args.recommendation_json).read_text(encoding="utf-8"))
+    data, err = _load_json_arg(
+        args.recommendation_json,
+        arg_name="--recommendation-json",
+        command_label="hai review schedule",
+    )
+    if err is not None:
+        return err
     follow_up = data["follow_up"]
     domain = data.get("domain", "recovery")
     event = ReviewEvent(
@@ -1666,7 +1843,7 @@ def cmd_review_schedule(args: argparse.Namespace) -> int:
         review_question=follow_up["review_question"],
         domain=domain,
     )
-    persist_review_event(event, base_dir=Path(args.base_dir))
+    persist_review_event(event, base_dir=resolve_base_dir(args.base_dir))
 
     _dual_write_project(
         args.db_path,
@@ -1685,7 +1862,26 @@ def cmd_review_record(args: argparse.Namespace) -> int:
         resolve_db_path,
     )
 
-    data = json.loads(Path(args.outcome_json).read_text(encoding="utf-8"))
+    from health_agent_infra.core.writeback.outcome import (
+        ReviewOutcomeValidationError,
+        validate_review_outcome_dict,
+    )
+
+    data, err = _load_json_arg(
+        args.outcome_json,
+        arg_name="--outcome-json",
+        command_label="hai review record",
+    )
+    if err is not None:
+        return err
+    try:
+        validate_review_outcome_dict(data)
+    except ReviewOutcomeValidationError as exc:
+        print(
+            f"hai review record rejected: invariant={exc.invariant}: {exc}",
+            file=sys.stderr,
+        )
+        return exit_codes.USER_INPUT
     domain = data.get("domain", "recovery")
     original_recommendation_id = data["recommendation_id"]
 
@@ -1783,7 +1979,7 @@ def cmd_review_record(args: argparse.Namespace) -> int:
 
     outcome = record_review_outcome(
         event,
-        base_dir=Path(args.base_dir),
+        base_dir=resolve_base_dir(args.base_dir),
         followed_recommendation=data["followed_recommendation"],
         self_reported_improvement=data.get("self_reported_improvement"),
         free_text=data.get("free_text"),
@@ -1809,7 +2005,7 @@ def cmd_review_record(args: argparse.Namespace) -> int:
 
 
 def cmd_review_summary(args: argparse.Namespace) -> int:
-    outcomes_path = Path(args.base_dir) / "review_outcomes.jsonl"
+    outcomes_path = resolve_base_dir(args.base_dir) / "review_outcomes.jsonl"
     domain_filter = getattr(args, "domain", None)
     if not outcomes_path.exists():
         _emit_json(summarize_review_history([], domain=domain_filter))
@@ -1890,7 +2086,7 @@ def cmd_intake_gym(args: argparse.Namespace) -> int:
         parse_bulk_session_json,
     )
 
-    base_dir = Path(args.base_dir).expanduser()
+    base_dir = resolve_base_dir(args.base_dir)
 
     if args.session_json:
         try:
@@ -2263,7 +2459,7 @@ def cmd_intake_nutrition(args: argparse.Namespace) -> int:
     suffix = issued_at.strftime("%H%M%S%f")
     submission_id = f"m_nut_{as_of.isoformat()}_{suffix}"
 
-    base_dir = Path(args.base_dir).expanduser()
+    base_dir = resolve_base_dir(args.base_dir)
 
     # Auto-detect supersedes chain from the JSONL (the durable boundary).
     # Reading from the DB would be faster but would break correction chains
@@ -2273,6 +2469,27 @@ def cmd_intake_nutrition(args: argparse.Namespace) -> int:
     supersedes_id = _resolve_prior_nutrition_submission(
         base_dir=base_dir, as_of_date=as_of, user_id=args.user_id,
     )
+
+    # v0.1.7 (W34 / Codex r2 W6 revived): nutrition is a daily total,
+    # not per-meal. A second same-day write supersedes the prior row
+    # silently — fine when the user is correcting a typo, dangerous
+    # when the agent (or a confused operator) is treating the command
+    # as a per-meal logger. Refuse with USER_INPUT unless --replace is
+    # explicit so the supersede is always conscious.
+    if supersedes_id is not None and not args.replace:
+        print(
+            f"hai intake nutrition: refusing to silently supersede an "
+            f"existing nutrition row for ({as_of.isoformat()}, "
+            f"{args.user_id}). The prior submission "
+            f"({supersedes_id}) would become a superseded entry in "
+            f"the JSONL chain. Nutrition is a DAILY TOTAL — log it "
+            f"once at end of day, not per-meal. If you genuinely "
+            f"intend to correct the prior row, re-run with --replace. "
+            f"If you wanted a per-meal scratchpad, use `hai intake "
+            f"note --tags nutrition,<meal>` instead.",
+            file=sys.stderr,
+        )
+        return exit_codes.USER_INPUT
 
     submission = NutritionSubmission(
         submission_id=submission_id,
@@ -2440,7 +2657,7 @@ def cmd_intake_stress(args: argparse.Namespace) -> int:
             tags = None
 
     as_of = _coerce_date(args.as_of)
-    base_dir = Path(args.base_dir).expanduser()
+    base_dir = resolve_base_dir(args.base_dir)
     issued_at = datetime.now(timezone.utc)
     suffix = issued_at.strftime("%H%M%S%f")
     submission_id = f"m_stress_{as_of.isoformat()}_{suffix}"
@@ -2578,7 +2795,7 @@ def cmd_intake_note(args: argparse.Namespace) -> int:
 
     as_of = _coerce_date(args.as_of)
     recorded_at = _coerce_dt(args.recorded_at) if args.recorded_at else datetime.now(timezone.utc)
-    base_dir = Path(args.base_dir).expanduser()
+    base_dir = resolve_base_dir(args.base_dir)
 
     suffix = datetime.now(timezone.utc).strftime("%H%M%S%f")
     note_id = f"note_{as_of.isoformat()}_{suffix}"
@@ -2683,7 +2900,7 @@ def cmd_intake_readiness(args: argparse.Namespace) -> int:
     )
 
     as_of = _coerce_date(args.as_of)
-    base_dir = Path(args.base_dir).expanduser()
+    base_dir = resolve_base_dir(args.base_dir)
     issued_at = datetime.now(timezone.utc)
     suffix = issued_at.strftime("%H%M%S%f")
     submission_id = f"m_ready_{as_of.isoformat()}_{suffix}"
@@ -2740,10 +2957,15 @@ def cmd_intake_readiness(args: argparse.Namespace) -> int:
 def cmd_intake_gaps(args: argparse.Namespace) -> int:
     """Emit the list of user-closeable intake gaps for the snapshot.
 
-    Read-only. Builds a full snapshot (bundled with evidence when
-    --evidence-json is passed), runs it through ``compute_intake_gaps``,
-    and prints the result as JSON. The agent consumes this at session
-    start and composes one consolidated question.
+    Read-only. ``--evidence-json`` is required: without the cleaned
+    bundle, ``build_snapshot`` produces a lean snapshot that lacks
+    per-domain ``classified_state``, and ``compute_intake_gaps`` then
+    silently returns ``[]``. That zero is indistinguishable from a true
+    "no gaps" answer — a footgun that bit a real user session in
+    2026-04-25 (see ``reporting/plans/v0_1_6/PLAN.md`` B6). The CLI
+    refuses with USER_INPUT in that case rather than emit the
+    misleading shape; the OK path emits ``"computed": true`` so callers
+    can pattern-match on the field instead of guessing.
     """
 
     from health_agent_infra.core.intake.gaps import compute_intake_gaps
@@ -2765,15 +2987,26 @@ def cmd_intake_gaps(args: argparse.Namespace) -> int:
         )
         return exit_codes.USER_INPUT
 
-    evidence_bundle = None
-    if args.evidence_json:
-        evidence, raw_summary, err = _load_cleaned_bundle(args.evidence_json)
-        if err is not None:
-            print(f"hai intake gaps: {err}", file=sys.stderr)
-            return exit_codes.USER_INPUT
-        evidence_bundle = {
-            "cleaned_evidence": evidence, "raw_summary": raw_summary,
-        }
+    if not args.evidence_json:
+        print(
+            "hai intake gaps: --evidence-json is required for gap "
+            "detection. Without it the snapshot lacks per-domain "
+            "classified_state, so no uncertainty tokens are available "
+            "and the gap detector can only return an empty list — which "
+            "is indistinguishable from a true zero. Run `hai pull` then "
+            "`hai clean --evidence-json <pull output>` and pass the "
+            "cleaned-evidence JSON to this command.",
+            file=sys.stderr,
+        )
+        return exit_codes.USER_INPUT
+
+    evidence, raw_summary, err = _load_cleaned_bundle(args.evidence_json)
+    if err is not None:
+        print(f"hai intake gaps: {err}", file=sys.stderr)
+        return exit_codes.USER_INPUT
+    evidence_bundle = {
+        "cleaned_evidence": evidence, "raw_summary": raw_summary,
+    }
 
     conn = open_connection(db_path)
     try:
@@ -2788,6 +3021,7 @@ def cmd_intake_gaps(args: argparse.Namespace) -> int:
     _emit_json({
         "as_of_date": as_of.isoformat(),
         "user_id": user_id,
+        "computed": True,
         "gaps": [g.to_dict() for g in gaps],
         "gap_count": len(gaps),
         "gating_gap_count": sum(1 for g in gaps if g.blocks_coverage),
@@ -2989,6 +3223,7 @@ def cmd_state_reproject(args: argparse.Namespace) -> int:
 
     from health_agent_infra.core.state import (
         ReprojectBaseDirError,
+        ReprojectOrphansError,
         open_connection,
         reproject_from_jsonl,
         resolve_db_path,
@@ -3002,7 +3237,7 @@ def cmd_state_reproject(args: argparse.Namespace) -> int:
         )
         return exit_codes.USER_INPUT
 
-    base_dir = Path(args.base_dir)
+    base_dir = resolve_base_dir(args.base_dir)
     if not base_dir.exists():
         print(f"base-dir not found at {base_dir}", file=sys.stderr)
         return exit_codes.USER_INPUT
@@ -3011,9 +3246,14 @@ def cmd_state_reproject(args: argparse.Namespace) -> int:
     try:
         try:
             counts = reproject_from_jsonl(
-                conn, base_dir, allow_empty=args.allow_empty_reproject,
+                conn, base_dir,
+                allow_empty=args.allow_empty_reproject,
+                cascade_synthesis=args.cascade_synthesis,
             )
         except ReprojectBaseDirError as exc:
+            print(f"reproject refused: {exc}", file=sys.stderr)
+            return exit_codes.USER_INPUT
+        except ReprojectOrphansError as exc:
             print(f"reproject refused: {exc}", file=sys.stderr)
             return exit_codes.USER_INPUT
     finally:
@@ -3037,6 +3277,7 @@ def cmd_state_migrate(args: argparse.Namespace) -> int:
     from health_agent_infra.core.state import (
         apply_pending_migrations,
         current_schema_version,
+        detect_schema_version_gaps,
         open_connection,
         resolve_db_path,
     )
@@ -3050,6 +3291,23 @@ def cmd_state_migrate(args: argparse.Namespace) -> int:
         return exit_codes.USER_INPUT
     conn = open_connection(db_path)
     try:
+        # v0.1.7 (W23 / Codex r3 P2): refuse to migrate a DB with gaps
+        # in the applied migration set. The legacy max-version skip
+        # logic in `apply_pending_migrations` would silently no-op on
+        # such a DB, leaving the gaps in place. Doctor warns about
+        # gaps but doesn't repair them; migrate is the natural enforcer.
+        gaps = detect_schema_version_gaps(conn)
+        if gaps:
+            print(
+                f"hai state migrate: refusing to migrate a DB with "
+                f"gaps in the applied migration set (missing versions: "
+                f"{gaps}). The DB looks current by MAX(version) but is "
+                f"missing schema objects from those versions. Restore "
+                f"from a known-good backup or run `hai state init` "
+                f"against a fresh DB. Re-run `hai doctor` to confirm.",
+                file=sys.stderr,
+            )
+            return exit_codes.USER_INPUT
         before = current_schema_version(conn)
         applied = apply_pending_migrations(conn)
         after = current_schema_version(conn)
@@ -3374,12 +3632,16 @@ def cmd_daily(args: argparse.Namespace) -> int:
     with runtime_event(
         db_path_resolved, command="daily", user_id=user_id,
     ) as evt:
-        rc = _run_daily(args)
+        rc = _run_daily(args, runtime_event_dict=evt)
         evt["exit_code"] = rc
     return rc
 
 
-def _run_daily(args: argparse.Namespace) -> int:
+def _run_daily(
+    args: argparse.Namespace,
+    *,
+    runtime_event_dict: Optional[dict] = None,
+) -> int:
     """Orchestrate the morning sequence over the existing runtime surfaces.
 
     Stages: pull → clean → snapshot → proposal-gate → synthesize →
@@ -3414,7 +3676,7 @@ def _run_daily(args: argparse.Namespace) -> int:
 
     as_of = _coerce_date(args.as_of)
     user_id = args.user_id
-    base_dir = Path(args.base_dir).resolve()
+    base_dir = resolve_base_dir(args.base_dir).resolve()
     base_dir.mkdir(parents=True, exist_ok=True)
 
     db_path = resolve_db_path(args.db_path)
@@ -3493,23 +3755,77 @@ def _run_daily(args: argparse.Namespace) -> int:
         )
         present_domains = sorted({p["domain"] for p in proposals})
         missing_expected = sorted(set(expected_domains) - set(present_domains))
-        gate_ok = bool(proposals)
+        # v0.1.6 (B1 fix): the gate is "all expected domains present,"
+        # not "any proposals at all." A 1-of-6 plan is no longer
+        # silently `complete` — synthesis is blocked until the agent
+        # supplies proposals for every expected domain (or narrows
+        # `expected_domains` via `--domains`). Three statuses:
+        #   - awaiting_proposals: zero proposals
+        #   - incomplete:         some proposals, missing >=1 expected
+        #   - complete:           every expected domain present
+        if not proposals:
+            gate_status = "awaiting_proposals"
+        elif missing_expected:
+            gate_status = "incomplete"
+        else:
+            gate_status = "complete"
+        gate_ok = gate_status == "complete"
         report["stages"]["proposal_gate"] = {
-            "status": "complete" if gate_ok else "awaiting_proposals",
+            "status": gate_status,
             "expected": sorted(expected_domains),
             "present": present_domains,
             "missing": missing_expected,
         }
+        # v0.1.7 (W21 telemetry / Codex r2 gap L): persist the gate
+        # outcome to runtime_event_log.context_json so W28's funnel
+        # can query past `incomplete` / `awaiting_proposals` / complete
+        # days from durable state instead of reconstructing from
+        # transient stdout.
+        if runtime_event_dict is not None:
+            runtime_event_dict["context"] = {
+                "stage": "proposal_gate",
+                "overall_status": gate_status,
+                "expected_domains": sorted(expected_domains),
+                "present_domains": present_domains,
+                "missing_domains": missing_expected,
+            }
         if not gate_ok:
-            report["stages"]["synthesize"] = {
-                "status": "skipped_awaiting_proposals",
-                "hint": (
+            if gate_status == "awaiting_proposals":
+                hint = (
                     "Agent must post DomainProposal rows via `hai propose` "
                     "for the expected domains, then rerun `hai daily`."
-                ),
+                )
+            else:
+                hint = (
+                    f"Synthesis blocked: missing proposals for "
+                    f"{missing_expected}. Either post DomainProposal rows "
+                    f"for those domains via `hai propose`, OR narrow the "
+                    f"expected set via `hai daily --domains <csv>`."
+                )
+            report["stages"]["synthesize"] = {
+                "status": "skipped_awaiting_proposals",
+                "hint": hint,
             }
             report["stages"]["reviews"] = {"status": "skipped"}
-            report["overall_status"] = "awaiting_proposals"
+            report["overall_status"] = gate_status
+            # v0.1.7 W21: when --auto, attach the typed next_actions
+            # manifest so an agent can route on it without prose-parsing.
+            if getattr(args, "auto", False):
+                from health_agent_infra.core.intake.next_actions import (
+                    build_next_actions_payload,
+                )
+                gaps_for_manifest = (
+                    report["stages"].get("gaps", {}).get("gaps") or []
+                )
+                report["next_actions_manifest"] = build_next_actions_payload(
+                    for_date=as_of.isoformat(),
+                    user_id=user_id,
+                    overall_status=gate_status,
+                    expected_domains=sorted(expected_domains),
+                    present_domains=present_domains,
+                    missing_domains=missing_expected,
+                    intake_gaps=gaps_for_manifest,
+                )
             _emit_json(report)
             return exit_codes.OK
 
@@ -3556,6 +3872,23 @@ def _run_daily(args: argparse.Namespace) -> int:
         conn.close()
 
     report["overall_status"] = "complete"
+    # v0.1.7 W21: emit the next_actions manifest in --auto mode even on
+    # the complete path; the terminal action is `narrate_ready` so the
+    # agent knows to invoke the reporting skill (and later record
+    # outcomes via `hai review record`).
+    if getattr(args, "auto", False):
+        from health_agent_infra.core.intake.next_actions import (
+            build_next_actions_payload,
+        )
+        report["next_actions_manifest"] = build_next_actions_payload(
+            for_date=as_of.isoformat(),
+            user_id=user_id,
+            overall_status="complete",
+            expected_domains=sorted(expected_domains),
+            present_domains=sorted({p["domain"] for p in proposals}),
+            missing_domains=[],
+            intake_gaps=[],
+        )
     _emit_json(report)
     # D3 §hai daily hint — when stderr is an interactive TTY, surface
     # `hai today` as the next step so new users discover the user
@@ -4245,6 +4578,77 @@ def _register_eval_subparser(sub: argparse._SubParsersAction) -> None:
 
 
 # ---------------------------------------------------------------------------
+# hai research — bounded local-only retrieval surface (v0.1.6 W17)
+# ---------------------------------------------------------------------------
+# Replaces the `python3 -c "from health_agent_infra.core.research import ..."`
+# pattern the expert-explainer skill was using. Codex r2 (C4) flagged that
+# `Bash(python3 -c *)` in the skill's allowed-tools is broader than the
+# skill's "no network, local-only" privacy invariant: an agent obeying
+# allowed-tools could legally `python3 -c "import urllib.request; ..."`
+# without violating the permission grant. Moving retrieval onto a typed
+# CLI shrinks the privacy boundary to a single, audit-traceable surface.
+
+
+def cmd_research_topics(args: argparse.Namespace) -> int:
+    """List the allowlisted research topics. Read-only, agent-safe."""
+
+    from health_agent_infra.core.research import ALLOWLISTED_TOPICS
+
+    _emit_json({"topics": sorted(ALLOWLISTED_TOPICS)})
+    return exit_codes.OK
+
+
+def cmd_research_search(args: argparse.Namespace) -> int:
+    """Retrieve sources for one allowlisted topic. Read-only,
+    agent-safe, no network. Mirrors :func:`retrieve` but exposes
+    only the topic-token interface — never accepts user state, never
+    flips the privacy-violation booleans."""
+
+    from health_agent_infra.core.research import (
+        RetrievalQuery,
+        retrieve,
+    )
+
+    query = RetrievalQuery(topic=args.topic)
+    result = retrieve(query)
+    payload = {
+        "topic": result.topic,
+        "abstain_reason": result.abstain_reason,
+        "sources": [
+            {
+                "source_id": s.source_id,
+                "title": s.title,
+                "source_class": s.source_class,
+                "origin_path": s.origin_path,
+                "excerpt": s.excerpt,
+            }
+            for s in result.sources
+        ],
+    }
+    _emit_json(payload)
+    return exit_codes.OK
+
+
+# ---------------------------------------------------------------------------
+# hai planned-session-types (v0.1.7 W33)
+# ---------------------------------------------------------------------------
+# Read-only surface that exposes the canonical planned_session_type
+# vocabulary an agent / user should pass to `hai intake readiness
+# --planned-session-type`. The list is documentation, not enforcement —
+# per-domain classifiers do substring matching — but having a
+# machine-discoverable canonical set lets agents avoid free-text drift.
+
+
+def cmd_planned_session_types(args: argparse.Namespace) -> int:
+    from health_agent_infra.core.intake.planned_session_vocabulary import (
+        vocabulary_payload,
+    )
+
+    _emit_json(vocabulary_payload())
+    return exit_codes.OK
+
+
+# ---------------------------------------------------------------------------
 # hai capabilities — emit the agent contract manifest
 # ---------------------------------------------------------------------------
 
@@ -4286,19 +4690,22 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Use a neutral manual readiness default (for offline runs)")
     p_pull.add_argument("--live", action="store_true",
                         help="Legacy flag: equivalent to --source garmin_live. "
-                             "Default (no --live and no --source) reads the "
-                             "committed CSV export.")
+                             "Garmin Connect is rate-limited and unreliable "
+                             "for live scraping; prefer `--source "
+                             "intervals_icu` (the maintainer's declared "
+                             "supported live source as of v0.1.6).")
     p_pull.add_argument(
         "--source",
         choices=("csv", "garmin_live", "intervals_icu"),
         default=None,
         help="Evidence source. csv reads the committed fixture; garmin_live "
-             "scrapes Garmin Connect (rate-limited, unreliable); "
-             "intervals_icu pulls from Intervals.icu's wellness API — "
-             "stable and the best live option today, but scoped to "
-             "what that service exposes (HRV + RHR + sleep + load; no "
-             "per-session running granularity yet). Defaults to csv "
-             "unless --live is also set.",
+             "scrapes Garmin Connect (best-effort: rate-limited, "
+             "unreliable); intervals_icu pulls from Intervals.icu's "
+             "wellness API — stable and the supported live source "
+             "today, but scoped to what that service exposes "
+             "(HRV + RHR + sleep + load; no per-session running "
+             "granularity yet). Default (v0.1.6): intervals_icu when "
+             "credentials are configured, else csv.",
     )
     p_pull.add_argument("--history-days", type=int, default=14,
                         help="Trailing window size for resting_hr / hrv / "
@@ -4318,9 +4725,13 @@ def build_parser() -> argparse.ArgumentParser:
         exit_codes=("OK", "USER_INPUT", "TRANSIENT"),
         agent_safe=True,
         description=(
-            "Acquire Garmin evidence (CSV fixture by default, live via "
-            "--live) for a date and emit cleaned evidence JSON. Writes a "
-            "sync_run_log row; does not touch the main state tables."
+            "Acquire evidence for a date and emit cleaned evidence JSON. "
+            "Source resolution (v0.1.6): explicit `--source` > legacy "
+            "`--live` (= garmin_live) > intervals.icu when credentials "
+            "are configured > csv fixture fallback. Garmin live is "
+            "best-effort (rate-limited); intervals.icu is the supported "
+            "live source. Writes a sync_run_log row; does not touch the "
+            "main state tables."
         ),
     )
 
@@ -4434,8 +4845,9 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Domain whose proposal is being written")
     p_prop.add_argument("--proposal-json", required=True,
                         help="Path to a JSON file matching DomainProposal shape")
-    p_prop.add_argument("--base-dir", required=True,
-                        help="Writeback root; <domain>_proposals.jsonl will be appended here")
+    p_prop.add_argument("--base-dir", required=False, default=None,
+                        help="Writeback root; <domain>_proposals.jsonl will be appended here. "
+                             "Default: $HAI_BASE_DIR or ~/.health_agent.")
     p_prop.add_argument("--db-path", default=None,
                         help="State DB path (default: `$HAI_STATE_DB` or `~/.local/share/health_agent_infra/state.db`)")
     p_prop.add_argument(
@@ -4813,7 +5225,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_rs = review_sub.add_parser("schedule", help="Persist a pending review event for a recommendation")
     p_rs.add_argument("--recommendation-json", required=True)
-    p_rs.add_argument("--base-dir", required=True)
+    p_rs.add_argument("--base-dir", required=False, default=None,
+                      help="Writeback root for review_events.jsonl. "
+                           "Default: $HAI_BASE_DIR or ~/.health_agent.")
     p_rs.add_argument("--db-path", default=None,
                       help="State DB path (default: `$HAI_STATE_DB` or `~/.local/share/health_agent_infra/state.db`)")
     p_rs.set_defaults(func=cmd_review_schedule)
@@ -4832,7 +5246,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_rr = review_sub.add_parser("record", help="Record a review outcome")
     p_rr.add_argument("--outcome-json", required=True)
-    p_rr.add_argument("--base-dir", required=True)
+    p_rr.add_argument("--base-dir", required=False, default=None,
+                      help="Writeback root for review_outcomes.jsonl. "
+                           "Default: $HAI_BASE_DIR or ~/.health_agent.")
     p_rr.add_argument("--db-path", default=None,
                       help="State DB path (default: `$HAI_STATE_DB` or `~/.local/share/health_agent_infra/state.db`)")
     # M4 enrichment flags. All optional; each overrides the same key in
@@ -4909,7 +5325,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     p_rsum = review_sub.add_parser("summary", help="Summarize outcome history counts")
-    p_rsum.add_argument("--base-dir", required=True)
+    p_rsum.add_argument("--base-dir", required=False, default=None,
+                        help="Writeback root to read review_outcomes.jsonl from. "
+                             "Default: $HAI_BASE_DIR or ~/.health_agent.")
     p_rsum.add_argument("--user-id", default=None)
     p_rsum.add_argument("--domain", default=None,
                         help="Restrict counts to a single domain "
@@ -4967,8 +5385,9 @@ def build_parser() -> argparse.ArgumentParser:
                       choices=("hai_cli_direct", "claude_agent_v1"),
                       help="Transport identity. 'hai_cli_direct' for typed-by-user; "
                            "'claude_agent_v1' when the agent mediates.")
-    p_ig.add_argument("--base-dir", required=True,
-                      help="Intake root (where gym_sessions.jsonl will be appended)")
+    p_ig.add_argument("--base-dir", required=False, default=None,
+                      help="Intake root (where gym_sessions.jsonl will be appended). "
+                           "Default: $HAI_BASE_DIR or ~/.health_agent.")
     p_ig.add_argument("--db-path", default=None,
                       help="State DB path (default: `$HAI_STATE_DB` or `~/.local/share/health_agent_infra/state.db`)")
     p_ig.set_defaults(func=cmd_intake_gym)
@@ -5040,10 +5459,18 @@ def build_parser() -> argparse.ArgumentParser:
     p_in.add_argument("--user-id", default="u_local_1")
     p_in.add_argument("--ingest-actor", default="hai_cli_direct",
                       choices=("hai_cli_direct", "claude_agent_v1"))
-    p_in.add_argument("--base-dir", required=True,
-                      help="Intake root (nutrition_intake.jsonl lands here)")
+    p_in.add_argument("--base-dir", required=False, default=None,
+                      help="Intake root (nutrition_intake.jsonl lands here). "
+                           "Default: $HAI_BASE_DIR or ~/.health_agent.")
     p_in.add_argument("--db-path", default=None,
                       help="State DB path (same semantics as other intake cmds)")
+    p_in.add_argument("--replace", action="store_true",
+                      help="v0.1.7 W34: required when an existing same-day "
+                           "nutrition row exists. Without it, hai intake "
+                           "nutrition refuses with USER_INPUT to prevent "
+                           "silent supersede chains. Nutrition is a daily "
+                           "total, not per-meal — use this flag only when "
+                           "deliberately correcting the prior daily entry.")
     p_in.set_defaults(func=cmd_intake_nutrition)
     annotate_contract(
         p_in,
@@ -5071,8 +5498,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_is.add_argument("--user-id", default="u_local_1")
     p_is.add_argument("--ingest-actor", default="hai_cli_direct",
                       choices=("hai_cli_direct", "claude_agent_v1"))
-    p_is.add_argument("--base-dir", required=True,
-                      help="Intake root (stress_manual.jsonl lands here)")
+    p_is.add_argument("--base-dir", required=False, default=None,
+                      help="Intake root (stress_manual.jsonl lands here). "
+                           "Default: $HAI_BASE_DIR or ~/.health_agent.")
     p_is.add_argument("--db-path", default=None)
     p_is.set_defaults(func=cmd_intake_stress)
     annotate_contract(
@@ -5100,8 +5528,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_inote.add_argument("--user-id", default="u_local_1")
     p_inote.add_argument("--ingest-actor", default="hai_cli_direct",
                          choices=("hai_cli_direct", "claude_agent_v1"))
-    p_inote.add_argument("--base-dir", required=True,
-                         help="Intake root (context_notes.jsonl lands here)")
+    p_inote.add_argument("--base-dir", required=False, default=None,
+                         help="Intake root (context_notes.jsonl lands here). "
+                              "Default: $HAI_BASE_DIR or ~/.health_agent.")
     p_inote.add_argument("--db-path", default=None)
     p_inote.set_defaults(func=cmd_intake_note)
     annotate_contract(
@@ -5123,15 +5552,21 @@ def build_parser() -> argparse.ArgumentParser:
     p_ir.add_argument("--energy", required=True, choices=ENERGY_CHOICES,
                       help="Subjective energy band: low | moderate | high")
     p_ir.add_argument("--planned-session-type", required=True,
-                      help="Planned session type (free text; e.g. easy, moderate, hard, intervals, race, rest)")
+                      help="Planned session type. Free text per the "
+                           "loose substring matching in per-domain "
+                           "classifiers, but agents should prefer the "
+                           "canonical vocabulary discoverable via "
+                           "`hai planned-session-types --json` (e.g. "
+                           "easy_z2, intervals_4x4, strength_sbd, rest).")
     p_ir.add_argument("--active-goal", default=None,
                       help="Optional active training goal (free text)")
     p_ir.add_argument("--as-of", default=None,
                       help="As-of date the intake pertains to (ISO-8601, default today UTC)")
     p_ir.add_argument("--user-id", default="u_local_1",
                       help="User this intake attaches to (default: u_local_1)")
-    p_ir.add_argument("--base-dir", required=True,
-                      help="Intake root (readiness_manual.jsonl lands here)")
+    p_ir.add_argument("--base-dir", required=False, default=None,
+                      help="Intake root (readiness_manual.jsonl lands here). "
+                           "Default: $HAI_BASE_DIR or ~/.health_agent.")
     p_ir.add_argument("--db-path", default=None,
                       help="State DB path (defaults to HAI_STATE_DB or ~/.health_agent/state.db)")
     p_ir.add_argument("--ingest-actor", default="hai_cli_direct",
@@ -5169,11 +5604,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_igaps.add_argument(
         "--evidence-json", default=None,
         help=(
-            "Optional path to `hai clean` output. When present, the "
-            "snapshot is expanded with per-domain classified_state + "
-            "policy_result before gap detection. When absent, gaps "
-            "cannot be computed (snapshots without classified_state "
-            "carry no uncertainty tokens)."
+            "Required: path to `hai clean` output. The snapshot is "
+            "expanded with per-domain classified_state + policy_result "
+            "before gap detection; without this, the gap detector has "
+            "no uncertainty tokens to read and the command refuses with "
+            "USER_INPUT (rather than returning a misleading zero)."
         ),
     )
     p_igaps.add_argument("--db-path", default=None, help="State DB path.")
@@ -5290,8 +5725,9 @@ def build_parser() -> argparse.ArgumentParser:
              "log groups present under --base-dir (recommendation/review, "
              "gym, nutrition).",
     )
-    p_sr.add_argument("--base-dir", required=True,
-                      help="Writeback/intake root. Recognised audit files: "
+    p_sr.add_argument("--base-dir", required=False, default=None,
+                      help="Writeback/intake root. Default: $HAI_BASE_DIR or "
+                           "~/.health_agent. Recognised audit files: "
                            "recommendation_log.jsonl, review_events.jsonl, "
                            "review_outcomes.jsonl, gym_sessions.jsonl, "
                            "nutrition_intake.jsonl. Only the groups whose "
@@ -5302,6 +5738,14 @@ def build_parser() -> argparse.ArgumentParser:
                       help="Allow reproject to truncate the projection tables even when "
                            "the base-dir contains none of the expected JSONL audit logs. "
                            "Refuses by default to guard against typo-driven data loss.")
+    p_sr.add_argument("--cascade-synthesis", action="store_true",
+                      help="Permit reproject to delete synthesis-side rows "
+                           "(planned_recommendation, daily_plan, x_rule_firing) when "
+                           "they would otherwise block the rebuild via FK constraints. "
+                           "Refuses by default because those tables are not "
+                           "JSONL-derived — they're computed by `hai synthesize`. "
+                           "If you pass this flag, re-run `hai synthesize` afterwards "
+                           "to repopulate them.")
     p_sr.set_defaults(func=cmd_state_reproject)
     annotate_contract(
         p_sr,
@@ -5312,7 +5756,10 @@ def build_parser() -> argparse.ArgumentParser:
         agent_safe=True,
         description=(
             "Rebuild the accepted_*_state_daily tables from the raw "
-            "evidence JSONL. Deterministic projection — safe to re-run."
+            "evidence JSONL. Deterministic modulo projection timestamps "
+            "— content/keys/links replay identically across runs, but "
+            "projected_at / corrected_at columns reflect the wall-clock "
+            "of the rebuild. Safe to re-run."
         ),
     )
 
@@ -5325,9 +5772,10 @@ def build_parser() -> argparse.ArgumentParser:
             "proposals are not yet in proposal_log."
         ),
     )
-    p_daily.add_argument("--base-dir", required=True,
+    p_daily.add_argument("--base-dir", required=False, default=None,
                          help="Writeback/intake root. review_events.jsonl "
-                              "is appended here after synthesis.")
+                              "is appended here after synthesis. "
+                              "Default: $HAI_BASE_DIR or ~/.health_agent.")
     p_daily.add_argument("--as-of", default=None,
                          help="Civil date to orchestrate for, ISO-8601. "
                               "Default: today UTC.")
@@ -5338,14 +5786,17 @@ def build_parser() -> argparse.ArgumentParser:
                               "`~/.local/share/health_agent_infra/state.db`).")
     p_daily.add_argument("--live", action="store_true",
                          help="Legacy flag: equivalent to --source garmin_live. "
-                              "Default (no --live and no --source) uses the "
-                              "committed CSV adapter.")
+                              "Garmin Connect's login surface is rate-limited "
+                              "and unreliable for live scraping; prefer "
+                              "`--source intervals_icu` (the v0.1.6+ "
+                              "supported live source).")
     p_daily.add_argument(
         "--source",
         choices=("csv", "garmin_live", "intervals_icu"),
         default=None,
         help="Evidence source for the pull stage. Same semantics as "
-             "`hai pull --source`. Defaults to csv unless --live is set.",
+             "`hai pull --source`. Default (v0.1.6+): intervals_icu "
+             "when credentials are configured, else csv.",
     )
     p_daily.add_argument("--history-days", type=int, default=14,
                          help="Trailing window for live pull series "
@@ -5356,10 +5807,17 @@ def build_parser() -> argparse.ArgumentParser:
     p_daily.add_argument("--domains", default=None,
                          help="Optional CSV subset of expected domains "
                               "(recovery, running, sleep, stress, "
-                              "strength, nutrition). Filters the "
-                              "proposal-gate expected-vs-present report "
-                              "only; synthesis still runs over whatever "
-                              "proposals are present in proposal_log.")
+                              "strength, nutrition). Default: all 6. "
+                              "Narrows the proposal-completeness gate: "
+                              "synthesis is blocked until every domain "
+                              "in this set has a proposal. Use this to "
+                              "say `I'm only planning for these N "
+                              "domains today` and unblock the gate "
+                              "without posting unused proposals. "
+                              "Synthesis still runs over every proposal "
+                              "present in proposal_log for (for_date, "
+                              "user_id), which may be a superset of "
+                              "this list if other domains were proposed.")
     p_daily.add_argument("--agent-version", default="claude_agent_v1",
                          help="Agent version string stamped on "
                               "committed rows.")
@@ -5369,6 +5827,17 @@ def build_parser() -> argparse.ArgumentParser:
     p_daily.add_argument("--skip-reviews", action="store_true",
                          help="Skip review-event scheduling after "
                               "synthesis.")
+    p_daily.add_argument("--auto", action="store_true",
+                         help="v0.1.7 W21: emit a versioned "
+                              "next_actions[] manifest alongside the "
+                              "stage report. Each action carries a "
+                              "concrete command_argv, kind, "
+                              "reason_code, blocking, safe_to_retry, "
+                              "and after_success routing — so an "
+                              "agent can drive the full daily loop "
+                              "without consulting the intent-router "
+                              "skill prose. Schema is "
+                              "next_actions.v1.")
     p_daily.set_defaults(func=cmd_daily)
     annotate_contract(
         p_daily,
@@ -5378,12 +5847,17 @@ def build_parser() -> argparse.ArgumentParser:
         exit_codes=("OK", "USER_INPUT"),
         agent_safe=True,
         description=(
-            "Morning orchestrator: pull → clean → reproject → propose → "
-            "synthesize → daily_plan in one invocation."
+            "Morning orchestrator: deterministic stages run end-to-end "
+            "(pull → clean → snapshot → gaps → proposal_gate). The "
+            "agent then invokes the 6 per-domain readiness skills, "
+            "posts DomainProposal rows via `hai propose --domain <d>`, "
+            "and re-runs `hai daily` to advance the gate to `complete` "
+            "and trigger synthesis. `--domains <csv>` narrows the "
+            "expected set for partial-day planning."
         ),
         preconditions=[
             "state_db_initialized",
-            "garmin_credentials_optional",
+            "intervals_icu_or_garmin_credentials_optional",
         ],
         output_schema={
             "OK": {
@@ -5393,12 +5867,20 @@ def build_parser() -> argparse.ArgumentParser:
                     "expected_domains", "stages", "overall_status",
                 ],
                 "overall_status_values": [
-                    "complete", "awaiting_proposals", "failed",
+                    "complete", "incomplete", "awaiting_proposals",
+                    "failed",
                 ],
                 "notes": (
-                    "When overall_status=awaiting_proposals the agent "
-                    "must post DomainProposal rows via hai propose for "
-                    "each missing domain, then rerun."
+                    "v0.1.6: the proposal gate has three pre-synthesis "
+                    "statuses. `awaiting_proposals` = zero proposals; "
+                    "`incomplete` = some proposals but missing >=1 "
+                    "expected domain (synthesis blocked, hint names "
+                    "the missing domains); `complete` = every expected "
+                    "domain has a proposal (synthesis runs). On the "
+                    "first two, the agent must post the missing "
+                    "DomainProposal rows OR narrow `--domains` and "
+                    "rerun. `failed` is reserved for synthesis errors "
+                    "after the gate."
                 ),
             },
         },
@@ -5623,6 +6105,85 @@ def build_parser() -> argparse.ArgumentParser:
 
     _register_eval_subparser(sub)
 
+    # v0.1.6 W17: bounded local-only retrieval CLI replacing the
+    # `python3 -c` pattern in expert-explainer's allowed-tools.
+    p_research = sub.add_parser(
+        "research",
+        help="Bounded local-only retrieval against the allowlisted "
+             "research source registry. Read-only; no network.",
+    )
+    research_sub = p_research.add_subparsers(
+        dest="research_command", required=True,
+    )
+    p_rt = research_sub.add_parser(
+        "topics",
+        help="List the allowlisted research topics.",
+    )
+    p_rt.set_defaults(func=cmd_research_topics)
+    annotate_contract(
+        p_rt,
+        mutation="read-only",
+        idempotent="yes",
+        json_output="default",
+        exit_codes=("OK",),
+        agent_safe=True,
+        description=(
+            "List the allowlisted topics the bounded retrieval surface "
+            "recognises. Read-only."
+        ),
+    )
+
+    p_rs = research_sub.add_parser(
+        "search",
+        help="Retrieve sources for one allowlisted topic. "
+             "Read-only; no network.",
+    )
+    p_rs.add_argument(
+        "--topic", required=True,
+        help="Topic token (must be on the allowlist; see "
+             "`hai research topics`).",
+    )
+    p_rs.set_defaults(func=cmd_research_search)
+    annotate_contract(
+        p_rs,
+        mutation="read-only",
+        idempotent="yes",
+        json_output="default",
+        exit_codes=("OK",),
+        agent_safe=True,
+        description=(
+            "Retrieve sources for one allowlisted research topic. "
+            "Mirrors core.research.retrieve but exposes only the "
+            "topic-token interface — the privacy-violation booleans "
+            "are not configurable. Read-only; no network."
+        ),
+    )
+
+    # v0.1.7 W33: machine-discoverable planned_session_type vocabulary.
+    p_psv = sub.add_parser(
+        "planned-session-types",
+        help="Emit the canonical vocabulary for the "
+             "--planned-session-type field on `hai intake readiness`. "
+             "Read-only; the per-domain classifiers do substring "
+             "matching, but this list is the canonical set agents "
+             "should prefer.",
+    )
+    p_psv.set_defaults(func=cmd_planned_session_types)
+    annotate_contract(
+        p_psv,
+        mutation="read-only",
+        idempotent="yes",
+        json_output="default",
+        exit_codes=("OK",),
+        agent_safe=True,
+        description=(
+            "Emit the canonical planned_session_type vocabulary "
+            "(token + classifier_substring + description per "
+            "entry). Source registry: "
+            "core/intake/planned_session_vocabulary.py."
+        ),
+    )
+
     p_caps = sub.add_parser(
         "capabilities",
         help="Emit the agent-CLI-contract manifest (JSON by default, "
@@ -5632,6 +6193,18 @@ def build_parser() -> argparse.ArgumentParser:
         "--markdown", action="store_true",
         help="Render the manifest as the contract markdown doc on stdout "
              "instead of JSON. Used by the doc regenerator.",
+    )
+    # v0.1.6 (Codex r3 P1 fix): the README, intent-router skill, and
+    # generated contract preamble all instruct agents to invoke
+    # `hai capabilities --json`. JSON is the default emit, but until
+    # this flag landed, passing `--json` exited argparse error 2 — a
+    # silent agent footgun. Accept `--json` as a no-op alias for the
+    # default JSON output.
+    p_caps.add_argument(
+        "--json", action="store_true",
+        help="No-op alias: JSON is already the default emit. Provided "
+             "so agents and docs can pass `--json` explicitly without "
+             "argparse rejecting the flag.",
     )
     p_caps.set_defaults(func=cmd_capabilities)
     annotate_contract(
@@ -5654,7 +6227,38 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv if argv is not None else sys.argv[1:])
-    return args.func(args)
+    try:
+        return args.func(args)
+    except SystemExit:
+        # argparse error path uses SystemExit(2); pass through unchanged.
+        raise
+    except KeyboardInterrupt:
+        # Ctrl-C — exit cleanly without a traceback.
+        print("\nhai: interrupted by user", file=sys.stderr)
+        return exit_codes.USER_INPUT
+    except Exception as exc:
+        # Top-level safety net (added in v0.1.6 per Codex r2 / internal
+        # audit). No CLI handler should escape as a raw Python traceback;
+        # an agent calling `hai` should always see one of the documented
+        # exit codes (`reporting/docs/cli_exit_codes.md`). When this
+        # path fires it indicates either a missed local guard in a
+        # handler (file it as a bug) or a genuine internal invariant
+        # tripping (also a bug). We surface the exception type + message
+        # on stderr but suppress the traceback by default; rerun with
+        # `HAI_DEBUG_TRACEBACK=1` to see the full trace.
+        import os as _os
+        import traceback as _traceback
+        if _os.environ.get("HAI_DEBUG_TRACEBACK"):
+            _traceback.print_exc(file=sys.stderr)
+        print(
+            f"hai: internal error ({type(exc).__name__}): {exc}",
+            file=sys.stderr,
+        )
+        print(
+            "hai: rerun with HAI_DEBUG_TRACEBACK=1 for the full traceback.",
+            file=sys.stderr,
+        )
+        return exit_codes.INTERNAL
 
 
 if __name__ == "__main__":

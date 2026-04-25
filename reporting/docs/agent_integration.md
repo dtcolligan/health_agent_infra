@@ -49,9 +49,11 @@ scopes the CLI subcommands it may invoke — e.g., the
 Typical daily loop:
 
 1. User: "Plan my day."
-2. Agent invokes ``hai pull`` (or ``hai pull --live`` when a Garmin
-   live-pull is configured) and any needed ``hai intake *``
-   commands.
+2. Agent invokes ``hai pull`` and any needed ``hai intake *``
+   commands. Source resolution (v0.1.6+): explicit ``--source`` >
+   legacy ``--live`` (= garmin_live; rate-limited) > intervals.icu
+   when credentials are configured > csv fixture fallback. The
+   supported live source is intervals.icu.
 3. Agent runs ``hai clean`` + ``hai state reproject`` to refresh
    accepted state.
 4. Agent reads ``hai state snapshot --as-of <date> --user-id <u>``.
@@ -73,7 +75,16 @@ Typical daily loop:
 7. Agent uses the ``reporting`` skill to narrate the synthesised
    plan back to the user.
 8. Next morning: agent records outcomes via ``hai review record
-   --domain <d>``.
+   --outcome-json <path>``. The outcome payload is a typed JSON
+   document carrying ``review_event_id``, ``recommendation_id``,
+   ``user_id``, ``domain``, ``followed_recommendation`` (strict bool),
+   ``self_reported_improvement`` (strict bool or null), plus the
+   migration-010 enrichment fields. The review-record validator
+   rejects non-boolean ``followed_recommendation`` /
+   ``self_reported_improvement`` values with named invariants
+   (``followed_recommendation_must_be_bool``, etc.) — an agent that
+   passes ``"yes"`` instead of ``true`` will see a governed
+   ``USER_INPUT`` exit, not a silent JSONL/SQLite truth fork.
 
 ## Claude Agent SDK
 
@@ -110,14 +121,29 @@ determinism boundaries.
    ``forbidden_fields_absent``, ``domain_supported``, ``domain_match``,
    ``schema_version``, ``action_enum``, ``confidence_enum``,
    ``bounded_true``, ``policy_decisions_present``, ``for_date_iso``.
-   Violations exit 2 with a named ``invariant=<id>`` stderr tag.
+   Violations exit ``USER_INPUT`` with a named ``invariant=<id>``
+   stderr tag.
 
 2. **``hai synthesize``** — refuses with ``SynthesisError`` when
    no proposals exist for the (for_date, user_id). Rolls back the
    entire transaction on any failure inside. Phase B firings are
    passed through a write-surface guard that rejects any attempt
    to mutate ``action`` or touch a domain not registered in
-   ``PHASE_B_TARGETS``.
+   ``PHASE_B_TARGETS``. The ``--bundle-only`` post-proposal
+   skill-overlay seam refuses with ``USER_INPUT`` when no proposals
+   exist for the (for_date, user_id) — bundle-only is not a
+   pre-proposal inspection surface.
+
+3. **``hai review record``** (v0.1.6) — validates the outcome
+   payload against
+   ``core/writeback/outcome.py :: validate_review_outcome_dict``.
+   Checked invariants include ``required_fields_present``,
+   ``followed_recommendation_must_be_bool`` (strict bool, not
+   truthy strings/ints), ``self_reported_improvement_must_be_bool_or_null``,
+   ``intensity_delta_enum``, ``pre_energy_score_in_range``,
+   ``post_energy_score_in_range``. Validation runs at both the CLI
+   and the ``record_review_outcome`` library entry point — direct
+   Python callers cannot bypass it.
 
 Recommendations reach ``recommendation_log`` exclusively through
 ``hai synthesize``. (The legacy recovery-only ``hai writeback`` direct
@@ -126,6 +152,16 @@ path was removed in v0.1.4 D2; use ``hai propose --domain recovery`` +
 
 Nothing persists until its determinism check passes. Callers can
 pattern-match on the ``invariant`` id without parsing prose.
+
+The ``hai daily`` orchestrator surfaces a fourth gate (proposal
+completeness) that is not a determinism boundary in the schema
+sense, but functions like one: it refuses to advance to synthesis
+until every domain in ``expected_domains`` has a proposal in
+``proposal_log``. Three statuses: ``awaiting_proposals`` (zero),
+``incomplete`` (some, missing >=1), ``complete`` (all). The
+``incomplete`` status carries a ``hint`` field naming the missing
+domains so the agent knows exactly which DomainProposal rows to
+post (or whether to narrow ``--domains`` to scope the day).
 
 ## What an agent should NOT do
 
@@ -149,14 +185,19 @@ subcommands as MCP tools is tracked as Phase 7 scope.
 
 ## Where tools expect paths
 
-- ``hai pull`` reads from
+- ``hai pull`` source resolution (v0.1.6+): explicit ``--source`` >
+  legacy ``--live`` (= garmin_live; rate-limited and unreliable) >
+  intervals.icu when credentials are configured > csv fixture
+  fallback. intervals.icu is the supported live source; configure
+  with ``hai auth intervals-icu``. The csv fixture lives at
   ``src/health_agent_infra/data/garmin/export/daily_summary_export.csv``
-  by default (CSV fixture). ``hai pull --live`` uses keyring-stored
-  Garmin credentials.
+  for offline / test runs.
 - ``hai state snapshot`` / ``hai state reproject`` default to
-  ``platformdirs`` user-data path; override via ``--db-path``.
-- ``hai propose`` / ``hai review`` take ``--base-dir`` for JSONL
-  audit logs; the default is ``~/.local/share/hai/``.
+  ``~/.local/share/health_agent_infra/state.db`` (override via
+  ``--db-path`` or ``$HAI_STATE_DB``).
+- ``hai propose`` / ``hai review`` / ``hai intake *`` take
+  ``--base-dir`` for JSONL audit logs; v0.1.6+ default is
+  ``~/.health_agent/`` (override via ``$HAI_BASE_DIR``).
 - ``hai setup-skills`` defaults to ``~/.claude/skills/``. Override
   via ``--dest``.
 - ``hai config show`` prints the effective thresholds (defaults
