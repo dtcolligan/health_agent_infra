@@ -1,34 +1,53 @@
 # Health Agent Infra
 
-**A governed local agent runtime for personal health data.**
-Claude Code + Garmin today; MCP-portable and multi-source on the roadmap.
+Health Agent Infra is a local-first governance layer for personal-health
+agents. It combines deterministic policy, typed state ledgers, packaged
+skills, and a review loop so an LLM can help operate over health data
+without owning the rules, state, or commit path.
 
-A Claude Code agent reads your own health data, emits per-domain proposals
-bounded by codified rules, and commits auditable recommendations you review
-the next day. Every decision is logged to a local SQLite database on your
-machine; nothing leaves your device.
+Six domains - recovery, running, sleep, stress, strength, nutrition - are
+classified by Python, bounded by policy rules, narrated by markdown skills,
+and committed atomically to a local SQLite database.
 
-**For** technical users comfortable with a CLI who use Claude Code and want
-agent recommendations they can audit, reproduce, and keep local.
+[![PyPI](https://img.shields.io/pypi/v/health-agent-infra)](https://pypi.org/project/health-agent-infra/)
+[![Tests](https://img.shields.io/badge/tests-2081_collected-green)](safety/tests/)
+[![Python](https://img.shields.io/badge/python-3.11+-blue)](pyproject.toml)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-- **Local-first.** State lives in a SQLite file under your home directory. No
-  cloud, no account, no remote telemetry.
-- **Governed, not generative.** Python owns mechanical decisions
-  (classification bands, policy rules, transactional commits); markdown
-  skills own rationale and uncertainty. Skills never change an action; code
-  never writes prose.
-- **Agent-operable by contract.** Every CLI subcommand carries
-  machine-readable contract metadata (mutation class, idempotency, exit
-  codes) that an agent reads via `hai capabilities --json`. An authoritative
-  `intent-router` skill maps natural-language intent to deterministic
-  workflows; every X-rule firing carries a stable slug plus a sentence-form
-  explanation the agent can narrate verbatim.
-- **Auditable by construction.** Pulls, proposals, rule firings, synthesis,
-  and final recommendations all land in typed tables. Inspect anytime with
-  `hai today` (end-user prose), `hai explain --operator` (dense audit
-  report), `hai doctor`, `hai stats`. Prefer these over reading the
-  SQLite file directly — they reconcile supersede chains and hide
-  schema churn, which plain SQL won't.
+## What this is
+
+A Claude Code agent reads a governed snapshot of your wearable and intake
+data, emits per-domain proposals bounded by code-owned rules, and commits
+auditable recommendations you review the next day. The runtime owns
+mechanical decisions: classification bands, R-rules, X-rules, validation,
+and transactional commits. Skills own rationale, uncertainty, and
+clarification. **Skills never change an action; code never writes prose.**
+
+The package stores state locally and has no telemetry path. Pull commands
+only call the configured data source, currently intervals.icu or Garmin
+Connect. If you drive the runtime with a hosted LLM agent, any context you
+send to that host is governed by that host's data policy; Health Agent Infra
+does not control the model provider.
+
+**For** technical users comfortable with a CLI who want agent
+recommendations they can audit, reproduce, and keep under local control.
+
+- **Local-first runtime.** State lives in SQLite under your home directory.
+  No account, no daemon, no hosted backend.
+- **Governed, not generative.** Python owns deterministic policy; skills
+  only narrate and ask for clarification over already-constrained actions.
+- **Agent-operable by contract.** `hai capabilities --json` exposes every
+  subcommand's mutation class, idempotency, JSON behavior, exit codes, and
+  agent-safe flag. The `intent-router` skill maps natural-language intent to
+  that contract.
+- **Auditable by construction.** Pulls, accepted state, proposals, X-rule
+  firings, final recommendations, and review outcomes persist in typed
+  tables. Inspect with `hai today`, `hai explain --operator`, `hai doctor`,
+  and `hai stats`; these surfaces reconcile supersede chains and hide schema
+  churn that raw SQL will not.
+
+v0.1.8 closed four external audit rounds before release. The release-by-
+release audit index is in [AUDIT.md](AUDIT.md).
 
 ## Install
 
@@ -37,432 +56,216 @@ pipx install health-agent-infra                # or: pip install -e .
 hai init --with-auth --with-first-pull         # scaffolds state + config + skills,
                                                 # prompts for credentials,
                                                 # backfills the last 7 days
-hai daily                                       # tomorrow morning: orchestrates the
-                                                # deterministic stages (pull → clean
-                                                # → snapshot → gaps); the agent then
-                                                # invokes the 6 per-domain skills,
-                                                # posts proposals, and re-runs to
-                                                # synthesize. See "How `hai daily`
-                                                # actually completes" below.
+hai daily                                       # orchestrates pull -> clean ->
+                                                # snapshot -> gaps -> proposal gate;
+                                                # the agent then posts proposals
 hai today                                       # read today's plan in plain language
-hai stats                                       # local funnel: syncs, recent runs, daily streak
 ```
 
-**`--source` defaults (v0.1.6).** When neither `--source` nor `--live`
-is passed, `hai pull` and `hai daily` resolve to **`intervals_icu`**
-when intervals.icu credentials are configured (the supported live
-source as of v0.1.6), else fall back to `csv` (the committed fixture,
-useful offline). Garmin Connect's login surface is rate-limited and
-unreliable for live scraping; pass `--source garmin_live` only if you
-explicitly want it. Set up intervals.icu auth with `hai auth
-intervals-icu`.
+`--source` defaults to `intervals_icu` when credentials are configured, else
+`csv` for the committed fixture. Garmin Connect live scraping remains
+best-effort and rate-limited; use `--source garmin_live` only when you
+explicitly want it. Set up intervals.icu auth with:
 
-Prefer the non-interactive path? Run `hai init` on its own, then `hai
-auth intervals-icu` (or `hai auth garmin`) separately. `hai init` is
-idempotent and safe to re-run. Full CLI surface in
-[`reporting/docs/agent_cli_contract.md`](reporting/docs/agent_cli_contract.md).
+```bash
+hai auth intervals-icu
+```
 
-**macOS Keychain note.** `hai auth garmin` and `hai auth intervals-icu`
-store credentials in the OS keyring. On macOS, the first time `hai
-pull` reads those credentials the system prompts you to allow access.
-Click **Always Allow** — otherwise every subsequent pull re-prompts
-and scripted runs (including `hai daily`) will hang waiting for a
-keyboard.
+On macOS, credentials are stored in the OS keyring. The first `hai pull`
+may ask for access; choose **Always Allow** if you want scripted runs such
+as `hai daily` to continue without hanging on a prompt.
+
+Full agent wiring notes live in
+[`reporting/docs/agent_integration.md`](reporting/docs/agent_integration.md).
 
 ## Where your data lives
 
-Everything stays on your machine. Three locations matter:
+Everything the runtime stores stays on your machine. Three locations matter:
 
 | What | Default path | Override |
 |---|---|---|
-| **State DB** (the SQLite file with all accepted state, proposals, plans, recommendations, reviews) | `~/.local/share/health_agent_infra/state.db` | `$HAI_STATE_DB` env var, or `--db-path` on any subcommand |
-| **Writeback / intake JSONL** (raw intakes, per-domain proposals, review events — append-only audit trail) | `~/.health_agent/` | `$HAI_BASE_DIR` env var, or `--base-dir` on any subcommand that writes (optional in v0.1.6) |
-| **Config** (thresholds.toml — bands, R-rule thresholds, X-rule parameters) | platform-specific user config dir (macOS: `~/Library/Application Support/hai/thresholds.toml`; Linux: `~/.config/hai/thresholds.toml`) | scaffold a fresh one with `hai config init --path <p>` |
+| State DB | `~/.local/share/health_agent_infra/state.db` | `$HAI_STATE_DB`, `--db-path` |
+| Intake / proposal JSONL | `~/.health_agent/` | `$HAI_BASE_DIR`, `--base-dir` |
+| Config (`thresholds.toml`) | macOS: `~/Library/Application Support/hai/`; Linux: `~/.config/hai/` | `hai config init --path <p>` |
 
-The state DB path is hardcoded to the XDG-style
-`~/.local/share/health_agent_infra/state.db` on every platform (see
-`core/state/store.py:DEFAULT_DB_PATH`). The base-dir default is
-`~/.health_agent/` (see `core/paths.py:DEFAULT_BASE_DIR`). Confirm
-your resolved paths with `hai doctor` — it prints state DB, schema
-version, sources, and skill installation status in one shot.
-
-`hai doctor` also catches a class of subtle drift the v0.1.6 release
-hardened against: a DB that looks "current" by `MAX(version)` but
-has gaps in the applied migration set (e.g. after a manual edit or
-partial restore). The check warns when the applied set is not the
-contiguous range `[1..head]`.
+Run `hai doctor` to confirm resolved paths, schema version, source
+freshness, and skill installation status. It also warns when the applied
+migration set has gaps even if `MAX(version)` looks current.
 
 ## How `hai daily` actually completes
 
-`hai daily` is the orchestrator the agent drives, **not** a single
-end-to-end command that finishes on its own. Run from a fresh state,
-the deterministic stages run to completion and then stop at the
-proposal gate:
+`hai daily` is the orchestrator the agent drives, not a single command that
+finishes the full judgment loop alone:
 
-1. **`pull`** — fetch evidence from the configured source.
-2. **`clean`** — normalize into typed evidence + raw summary.
-3. **`snapshot`** — build the per-domain bundle the skills consume.
-4. **`gaps`** — enumerate user-closeable intake gaps (only when
-   `--evidence-json` made it through; the structured response carries
-   `"computed": true` so an agent can pattern-match without guessing).
-5. **`proposal_gate`** — three statuses: `awaiting_proposals` (zero
-   proposals), `incomplete` (some proposals, missing ≥1 expected
-   domain), `complete` (every expected domain present).
+1. `pull` fetches evidence from the configured source.
+2. `clean` normalizes evidence into typed state rows.
+3. `snapshot` builds the per-domain bundle skills consume.
+4. `gaps` enumerates user-closeable intake gaps.
+5. `proposal_gate` reports `awaiting_proposals`, `incomplete`, or
+   `complete`.
 
-The first time you hit `awaiting_proposals` or `incomplete`, the
-agent must invoke the per-domain readiness skills, post a
-`DomainProposal` per domain via `hai propose --domain <d>`, then
-re-run `hai daily`. The `proposal_gate.status` is the documented
-contract field the agent watches for; the accompanying `hint` names
-exactly what's missing.
-
-`--domains <csv>` narrows the gate's expected set so an agent
-planning a partial day (e.g. "today's sleep + recovery only") can
-unblock without posting unused proposals. Synthesis still runs over
-every proposal present in `proposal_log`.
-
-The skill-driven completion is documented in
+When the gate is not `complete`, the agent invokes the per-domain readiness
+skills, posts one `DomainProposal` per expected domain with
+`hai propose --domain <d>`, then re-runs `hai daily`. `--domains <csv>`
+narrows the expected set for partial-day runs. The full contract is in
 [`reporting/docs/agent_integration.md`](reporting/docs/agent_integration.md).
 
 ## Reading your plan
 
-`hai today` is the non-agent-mediated user surface — it reads the
-canonical plan for a date (resolving supersede chains automatically)
-and renders prose in the voice the `reporting` skill specifies:
-top-matter → 2–4 sentence summary → six per-domain sections → footer
-pointing at the next review.
+`hai today` is the non-agent-mediated user surface. It resolves supersede
+chains and renders the canonical plan for a date:
 
 ```bash
 hai today                         # today, markdown on TTY / plain elsewhere
 hai today --as-of 2026-04-23      # specific date
 hai today --domain recovery       # narrow to one domain
-hai today --format json           # machine-readable (same shape, no prose)
+hai today --format json           # machine-readable
 ```
 
-Defer domains (insufficient signal) surface a domain-specific
-follow-up question and an **unblock hint** naming the `hai intake …`
-command that would give tomorrow's plan the signal it needs — see
-[`reporting/plans/v0_1_4/D3_user_surface.md`](reporting/plans/v0_1_4/D3_user_surface.md)
-for the voice contract.
-
-For debug-level audit dumps, use `hai explain --operator` (dense
-field-by-field text) or `hai explain` (JSON). Both consume the same
-explain bundle `hai today` reads — they just render it differently.
+For dense audit output, use `hai explain --operator` or `hai explain`.
+Both reconstruct the plan from persisted rows; they do not recompute the
+runtime state.
 
 ## Recording your day
 
-After tomorrow's `hai daily` schedules a review event for each rec,
-log how yesterday went:
+After the next day's run schedules review events, record how yesterday went:
 
 ```bash
-hai review record --outcome-json <path>           # --base-dir + --db-path
-                                                   # default to $HAI_BASE_DIR /
-                                                   # $HAI_STATE_DB
-
-hai review summary [--domain recovery]            # same defaults
+hai review record --outcome-json <path>
+hai review summary [--domain recovery]
 ```
 
-Outcomes are append-only and **auto-re-link** when a plan has been
-superseded — if you recorded an outcome against the morning plan but
-re-authored the day after lunch, `hai review record` routes the
-outcome to the canonical leaf's matching-domain rec. See the
-`review-protocol` skill for the full payload shape.
+Outcomes are append-only and re-link when a plan has been superseded. If
+you recorded an outcome against the morning plan but re-authored the day
+after lunch, `hai review record` routes the outcome to the canonical leaf's
+matching-domain recommendation.
 
-`followed_recommendation` and `self_reported_improvement` MUST be
-strict booleans (`true` / `false`), not `"yes"` / `1` / truthy
-strings. The v0.1.6 review-outcome validator rejects non-boolean
-values with a named invariant (`followed_recommendation_must_be_bool`)
-to prevent the JSONL-vs-SQLite truth fork that earlier releases were
-silent about.
+`followed_recommendation` and `self_reported_improvement` must be strict
+booleans (`true` / `false`), not `"yes"`, `1`, or truthy strings.
 
-Manual intake surfaces (stress score, gym sessions, nutrition macros,
-readiness self-reports) all live under `hai intake <domain>`; they
-persist to their per-domain raw tables so the next `hai daily` picks
-them up automatically. `--base-dir` is optional on every intake
-command (defaults to `$HAI_BASE_DIR` or `~/.health_agent/`).
+Manual intake lives under:
 
-**Nutrition is a daily total, not per-meal.** `hai intake nutrition`
-records one row per `(as_of_date, user_id)`. Re-calling within the
-same day creates a supersede chain — log it once at end of day. If
-you want to keep notes between meals, use `hai intake note --tags
-nutrition,lunch` as a scratchpad and sum at the end.
+```bash
+hai intake gym|exercise|nutrition|stress|note|readiness ...
+```
 
-**Planned-session vocabulary.** The `--planned-session-type` field on
-`hai intake readiness` is free text, but the per-domain classifiers
-match against a canonical vocabulary: `easy_z2`, `intervals_4x4`,
-`tempo`, `long`, `race`, `strength_sbd`, `strength_*` (back_biceps /
-push / pull / etc.), `rest`. Strings outside this set classify as
-"other" with reduced specificity.
+Nutrition is a daily total, not per-meal. Re-calling within the same day
+creates a supersede chain; log it once at the end of the day.
 
 ## Six domains in v1
 
-**recovery · running · sleep · stress · strength · nutrition**
+**recovery - running - sleep - stress - strength - nutrition**
 
-Each domain ships its own schemas, classification bands, policy rules, and a
-readiness skill, and is wired into the synthesis X-rule catalogue that
-reconciles across domains. Nutrition is macros-only in v1 — see
+Each domain ships schemas, classification bands, policy rules, and a
+readiness skill. Synthesis reconciles proposals through 10 X-rule
+evaluators across two phases. Nutrition is macros-only in v1; see
 [`reporting/docs/non_goals.md`](reporting/docs/non_goals.md).
 
 ## Calibration timeline
 
-The system needs history to do its job. A fresh install produces
-recommendations on day one, but several rules can't fire meaningfully
-until baselines have formed. The day numbers below are not arbitrary —
-each one corresponds to a specific window length the runtime depends
-on. Code-derived markers cite the file; the rest are reasoned.
+A fresh install can produce recommendations on day one, but several signals
+need history before they carry much meaning:
 
-| Window | What works | Why this number |
-|---|---|---|
-| **Days 1–14** | Cold-start mode for running / strength / stress (`cold_start_relaxation` rule softens R-coverage blocks). The volume-spike-on-first-strength-session escalation is the canonical artifact — review it but expect to consciously override several flags. | Code-derived: `COLD_START_THRESHOLD_DAYS = 14` in `core/state/snapshot.py:35`, gating `cold_start_relaxation` in `domains/{running,strength,stress}/policy.py`. |
-| **Day 14** | Cold-start window closes — recommendations stop being softened by `cold_start_relaxation`. HRV + RHR rolling baselines stabilize. Sleep's chronic-deprivation rule has enough nights to fire on real signal. | Code-derived: same constant; chosen so a 7-day trailing window has at least one full validated week plus a buffer. |
-| **Days 14–28** | Recovery, sleep, and stress recommendations become genuinely calibrated against your trailing-7d trend. Manual stress baseline forms; the `sustained_very_high_stress_escalation` rule's 5-day window is reliably full. | Reasoned: per-domain trailing-7d signals require ~2 windows of overlap before "your normal" is stable enough to compare against. |
-| **Day 28** | ACWR's chronic-load denominator is full (`domains/running/signals.py:167` slices a 28-day window). Strength `volume_ratio` (7d ÷ 28d week-mean, `domains/strength/signals.py:51,80`) stops mechanically reading as 4× on every session. Running freshness detection works for real. | Code-derived: 28-day windows appear literally in the running + strength signal layers. |
-| **Day 60+** | Trend bands (`sleep_timing_consistency`, `weekly_mileage_trend`) start carrying real signal. | Reasoned: a trend band compares two consecutive ~28-day windows; you need ~60 days before the second window has enough days *outside* the first to differ meaningfully. |
-| **~Day 90** | Steady state. Remaining uncertainty is structural, not history-bounded. | Reasoned: ~3 months covers enough variance across training cycles, recovery patterns, and life events that the trailing distributions characterize "your normal" rather than "your last fortnight." |
+| Window | What works |
+|---|---|
+| Days 1-14 | Cold-start mode for running, strength, and stress. Expect to review flags consciously. |
+| Day 14 | Cold-start window closes. HRV and RHR rolling baselines begin to stabilize. |
+| Days 14-28 | Recovery, sleep, and stress become more calibrated against trailing-7d trend. |
+| Day 28 | ACWR's chronic-load denominator is full. Strength `volume_ratio` stops mechanically reading as 4x. |
+| Day 60+ | Trend bands start carrying real signal. |
+| Around day 90 | Steady state; remaining uncertainty is structural rather than history-bounded. |
 
-**Cold-start asymmetry across domains.** Only running, strength, and
-stress have a `cold_start_relaxation` rule; recovery, sleep, and
-nutrition do not. Nutrition non-relaxation is intentional and tested
-(`safety/tests/test_nutrition_cold_start_non_relaxation.py`):
-nutrition keeps deferring on insufficient evidence rather than
-relaxing into a low-confidence guess.
+Code-derived marker: `COLD_START_THRESHOLD_DAYS = 14` in
+`src/health_agent_infra/core/state/snapshot.py`. Cold-start relaxation is
+asymmetric by design: running, strength, and stress can soften some
+coverage blocks; recovery, sleep, and nutrition do not. Nutrition keeps
+deferring on insufficient evidence rather than relaxing into a
+low-confidence guess.
 
-**Permanent caveats — not fixable by accumulating history:**
+Permanent caveats:
 
-- `sleep_efficiency_unavailable`, `body_battery_unavailable`,
-  `garmin_all_day_stress_unavailable` — intervals.icu doesn't expose
-  these signals, and intervals.icu is the supported pull source for
-  the foreseeable future (Garmin Connect's login surface is
-  rate-limited and unreliable for live scraping).
-- `micronutrients_unavailable_at_source` — v1 nutrition is
-  macros-only by design; see
-  [`reporting/docs/non_goals.md`](reporting/docs/non_goals.md).
+- intervals.icu does not expose sleep efficiency, body battery, or Garmin
+  all-day stress.
+- v1 nutrition is macros-only, so micronutrient coverage is unavailable at
+  source.
 
-If you hit a cold-start escalation in your first week (e.g.
-`volume_spike_detected` after your first logged strength session),
-that's expected: the rule is comparing 7-day load to a 28-day
-baseline of zero. Review the escalation, judge whether the underlying
-signal is real, and override consciously rather than ignoring.
-Cold-start escalations are usually logging artifacts, not real
-warnings.
+## What the system refuses to do
 
-## Local-first runtime at a glance
+- No medical claims or diagnosis-shaped language.
+- No autonomous training-plan or diet-plan generation.
+- No state mutation without the relevant validated CLI path and, for
+  agent-proposed intent/target activation, explicit user commit.
+- No package telemetry or hosted state backend.
+- No skill-side arithmetic for bands, scores, R-rules, or X-rules.
 
-```
-pull / intake  →  projectors  →  accepted_*_state_daily tables
-                                        │
-                                        ▼
-                         hai state snapshot --as-of <date>
-                                        │
-                                        ▼
-                 domain skills emit DomainProposal × 6
-                                        │ hai propose
-                                        ▼
-                              proposal_log
-                                        │
-                                        ▼
-   Phase A X-rules (X1–X7) → runtime applies mutations to drafts
-                                        │
-                                        ▼
-             daily-plan-synthesis skill overlays rationale
-                                        │
-                                        ▼
-         Phase B X-rules (X9) → action_detail adjustments
-                                        │
-                                        ▼
-  ATOMIC COMMIT: daily_plan + x_rule_firings
-               + planned_recommendation (pre-X-rule aggregate)
-               + N recommendation_log (adapted)
-                                        │
-                                        ▼
-             hai today (read) / hai review record (write)
-```
-
-- **Local state memory** — ``accepted_*_state_daily`` tables store the
-  canonical per-domain day-level state the runtime reasons over.
-- **Decision memory** — ``proposal_log`` (per-domain planned intent),
-  ``planned_recommendation`` (aggregate pre-X-rule plan), ``daily_plan`` +
-  ``x_rule_firing`` + ``recommendation_log`` (aggregate adapted plan)
-  preserve the full audit chain: what was originally planned, how X-rules
-  mutated it, and what was finally committed.
-- **Outcome memory** — ``review_event`` and ``review_outcome`` record how
-  the plan went, so the history of decisions and outcomes stays on-device.
-- **Agent contract surface** — ``hai capabilities --json`` emits a
-  machine-readable manifest of every subcommand; the markdown mirror lives
-  at
-  [``reporting/docs/agent_cli_contract.md``](reporting/docs/agent_cli_contract.md).
-  The ``intent-router`` skill is authoritative for NL → CLI mapping against
-  that contract.
-
-See [`reporting/docs/architecture.md`](reporting/docs/architecture.md) for
-the full pipeline and the code-vs-skill boundary.
-
-## Roadmap
-
-- **Runtime portability via MCP.** Expose the agent-safe CLI surface as an
-  MCP server so any agentic runtime (Claude Code, Codex, others) can drive
-  it. Today the project is Claude Code–native; the CLI contract is already
-  annotated agent-safe vs. interactive, which maps cleanly onto MCP tool
-  schemas.
-- **Multi-source wearables.** Apple Health, Oura, Whoop. The adapter
-  protocol (`core/pull/protocol.py`) is already source-agnostic; the
-  per-domain evidence contract needs to broaden before additional sources
-  land. Community adapters welcome — see
-  [`reporting/docs/how_to_add_a_pull_adapter.md`](reporting/docs/how_to_add_a_pull_adapter.md).
-- **Skill-narration eval harness.** Live-mode pilot shipped (Phase E +
-  M8 Phase 4); broader scenario coverage still to come. See
-  `safety/evals/skill_harness_blocker.md`.
-
-## What this is not
-
-- Not a medical device, not hosted, not multi-user, not an ML loop. See
-  [`reporting/docs/non_goals.md`](reporting/docs/non_goals.md).
-- Not meal-level nutrition in v1 — macros only.
-- Not an MCP server yet (see Roadmap).
-- Not an MCP-wrapper-integrated or skill-harness-eval-complete release yet.
-
-## Dig deeper
-
-1. **Positioning & role map** — [`reporting/docs/personal_health_agent_positioning.md`](reporting/docs/personal_health_agent_positioning.md)
-2. **Query taxonomy** — [`reporting/docs/query_taxonomy.md`](reporting/docs/query_taxonomy.md)
-3. **Memory model** — [`reporting/docs/memory_model.md`](reporting/docs/memory_model.md)
-4. **Architecture overview** — [`reporting/docs/architecture.md`](reporting/docs/architecture.md)
-5. **Explainability surface (three-state audit)** — [`reporting/docs/explainability.md`](reporting/docs/explainability.md)
-6. **Agent CLI contract (generated manifest)** — [`reporting/docs/agent_cli_contract.md`](reporting/docs/agent_cli_contract.md)
-7. **X-rule catalogue + sentence explanations** — [`reporting/docs/x_rules.md`](reporting/docs/x_rules.md)
-8. **Non-goals (scope discipline)** — [`reporting/docs/non_goals.md`](reporting/docs/non_goals.md)
-9. **State schema** — [`reporting/docs/state_model_v1.md`](reporting/docs/state_model_v1.md)
-10. **10-minute reading tour** — [`reporting/docs/tour.md`](reporting/docs/tour.md)
-11. **Extension path — pull adapter** — [`reporting/docs/how_to_add_a_pull_adapter.md`](reporting/docs/how_to_add_a_pull_adapter.md)
-12. **Extension path — new domain** — [`reporting/docs/how_to_add_a_domain.md`](reporting/docs/how_to_add_a_domain.md)
-13. **Agent-operable runtime plan (M8 cycle)** — [`reporting/plans/agent_operable_runtime_plan.md`](reporting/plans/agent_operable_runtime_plan.md)
-14. **Eval capture** — [`reporting/artifacts/flagship_loop_proof/2026-04-18-multi-domain-evals/`](reporting/artifacts/flagship_loop_proof/2026-04-18-multi-domain-evals/)
+Full scope boundaries are in
+[`reporting/docs/non_goals.md`](reporting/docs/non_goals.md) and
+[SECURITY.md](SECURITY.md).
 
 ## CLI surface
 
-```
+```bash
 # Evidence + intake
 hai pull [--source intervals_icu|garmin_live|csv] --date <d>
-                                                # default: intervals.icu when configured, else csv
-hai clean --evidence-json <p>                   # raw → CleanedEvidence + RawSummary
+hai clean --evidence-json <p>
 hai intake gym|exercise|nutrition|stress|note|readiness ...
-                                                # --base-dir optional in v0.1.6
-                                                # ($HAI_BASE_DIR or ~/.health_agent/)
 
-# State
+# Agent flow
+hai daily [--domains <csv>]
+hai propose --domain <d> --proposal-json <p>
+hai synthesize --as-of <d> --user-id <u>
+hai synthesize --bundle-only
+
+# State + audit
 hai state init | migrate | read | snapshot | reproject [--cascade-synthesis]
+hai capabilities [--json | --markdown]
+hai explain --for-date <d> --user-id <u>
+hai today | hai doctor | hai stats
 
-# Per-domain debug: use `hai state snapshot --evidence-json <p>` —
-# emits classified_state + policy_result for every domain in one call.
+# Review, memory, intent, targets
+hai review schedule | record | summary
+hai memory set | list | archive
+hai intent training add-session | training list | sleep set-window | list | archive
+hai target set | list | archive
 
-# Agent flow — `hai daily` is the orchestrator the agent drives, not a one-shot.
-# It runs pull → clean → snapshot → gaps → proposal_gate. The gate emits
-# `awaiting_proposals` / `incomplete` / `complete`; the agent posts the
-# missing DomainProposal rows and re-runs to advance the gate. See
-# "How `hai daily` actually completes" above and reporting/docs/agent_integration.md.
-hai daily [--domains <csv>]                     # narrows the gate's expected set
-hai propose  --domain <d> --proposal-json <p>   # determinism boundary #1
-hai synthesize --as-of <d> --user-id <u>        # determinism boundary #2
-hai synthesize --bundle-only                    # post-proposal skill-overlay seam
-
-# Persistence + review
-hai review schedule --recommendation-json <p>
-hai review record --outcome-json <p>            # determinism boundary #3
-                                                # followed_recommendation MUST be strict bool
-hai review summary [--domain <d>] [--user-id <u>]
-
-# Agent contract + audit
-hai capabilities [--json | --markdown]          # JSON manifest (default), markdown for the doc
-hai explain --for-date <d> --user-id <u>        # three-state audit: planned → adapted → performed
-hai memory set | list | archive                 # explicit user memory (goals, preferences, constraints)
-hai research topics                             # bounded local-only retrieval (no network)
-hai research search --topic <t>
-
-# Ops
-hai init [--with-auth] [--with-first-pull]      # first-run wizard (idempotent)
-hai doctor [--json]                             # runtime health + per-source freshness
-hai stats [--json]                              # local funnel (sync + command history, daily streak)
-
-# Auth + config + helpers
-hai auth garmin | status
-hai config init | show
-hai exercise search --query <free-text>
-
-# Evals
+# Ops + research + evals
+hai auth intervals-icu | garmin | status
+hai config init | show | validate | diff
+hai planned-session-types
+hai research topics | search --topic <t>
 hai eval run --domain <d> | --synthesis [--json]
-
-hai setup-skills                                # copy packaged skills into ~/.claude/skills/
+hai setup-skills
 ```
 
-## Repo layout
+The authoritative surface is `hai capabilities --markdown` or
+[`reporting/docs/agent_cli_contract.md`](reporting/docs/agent_cli_contract.md).
 
-For a one-page orientation of every top-level entry (active vs historical vs
-generated) see [`REPO_MAP.md`](REPO_MAP.md). The package itself:
+## Roadmap
 
-```
-src/health_agent_infra/
-├── cli.py                          # hai dispatcher
-├── core/
-│   ├── schemas.py  validate.py  config.py
-│   ├── synthesis.py  synthesis_policy.py
-│   ├── writeback/  state/  clean/  pull/  review/
-│   ├── memory/  explain/  research/
-│   └── intake/
-├── domains/
-│   ├── recovery/  running/  sleep/  stress/  strength/  nutrition/
-│   └── each: schemas.py classify.py policy.py [+ signals/intake]
-├── skills/
-│   ├── recovery-readiness/  running-readiness/  sleep-quality/
-│   ├── stress-regulation/  strength-readiness/  nutrition-alignment/
-│   ├── daily-plan-synthesis/  intent-router/  expert-explainer/
-│   └── strength-intake/  merge-human-inputs/  review-protocol/
-│       reporting/  safety/
-├── evals/                          # packaged eval runner + scenarios
-└── data/garmin/export/              # committed CSV fixture
-reporting/                          # see reporting/README.md
-├── docs/                            # architecture, x_rules, non_goals, ...
-├── artifacts/flagship_loop_proof/   # eval runner captures
-├── plans/                           # post-v0.1 roadmap + historical phase docs
-└── experiments/                     # frozen Phase 0.5 / 2.5 prototypes
-safety/                             # see safety/README.md
-├── tests/                           # 1489 unit + contract + integration
-├── evals/                           # eval-doc reference + skill-harness pilot
-└── scripts/                         # legacy pre-rebuild demo shim
-```
+Now / Next / Later lives in [ROADMAP.md](ROADMAP.md). The detailed,
+audited release plan is
+[`reporting/plans/multi_release_roadmap.md`](reporting/plans/multi_release_roadmap.md).
 
-## What's proven
+## Where to read next
 
-- Six domains end-to-end: classify → policy → skill proposal → synthesis →
-  review.
-- Ten X-rule evaluators across two phases with atomic transactional commits,
-  each firing carrying a stable slug and a one-sentence `human_explanation`
-  agents can narrate verbatim.
-- Three-state audit chain: `proposal_log` → `planned_recommendation`
-  (aggregate pre-X-rule intent, migration 011) → `daily_plan` +
-  `recommendation_log` → `review_outcome`. `hai explain` renders all three
-  states from persisted rows alone.
-- Agent CLI contract: every subcommand annotated with mutation class,
-  idempotency, JSON output, exit codes, agent-safe flag; machine-readable
-  manifest at `hai capabilities --json`; markdown mirror at
-  [`reporting/docs/agent_cli_contract.md`](reporting/docs/agent_cli_contract.md).
-  Every handler on the stable exit-code taxonomy.
-- Authoritative `intent-router` skill consumes the manifest as the NL → CLI
-  mapping surface; deliberately scoped so mutation commands are previewed
-  before they run.
-- Skill-harness pilot: 7 frozen recovery scenarios, 6 with hand-authored
-  reference transcripts scoring 2.0/2.0 on the token-presence rubric;
-  live-mode backend opt-in via `HAI_SKILL_HARNESS_LIVE=1`.
-- Local onboarding + engagement telemetry (migration 012 `runtime_event_log`)
-  surfaced via `hai stats`. No data leaves the device.
-- Garmin live pull via OS keyring (`hai auth garmin` + `hai pull --live`).
-- Idempotent synthesis with optional `--supersede` versioning.
-- 28 eval scenarios (18 domain + 10 synthesis) — all deterministic axes green.
-- **1489 tests** covering every band, every R-rule, every X-rule, atomic
-  transaction semantics, proposal/synthesis invariants, skill-boundary contracts,
-  capabilities-manifest coverage + determinism, planned-ledger round-trip,
-  three-state explain render, and the new runtime_event_log + hai stats
-  paths.
+- [ARCHITECTURE.md](ARCHITECTURE.md) - one-page architecture
+- [AUDIT.md](AUDIT.md) - release audit index
+- [HYPOTHESES.md](HYPOTHESES.md) - five falsifiable hypotheses
+- [ROADMAP.md](ROADMAP.md) - Now / Next / Later
+- [CONTRIBUTING.md](CONTRIBUTING.md) - code-vs-skill contribution rules
+- [REPO_MAP.md](REPO_MAP.md) - every top-level entry classified
+- [SECURITY.md](SECURITY.md) - vulnerability reporting and scope of trust
+- [`reporting/docs/architecture.md`](reporting/docs/architecture.md) - full pipeline
+- [`reporting/docs/non_goals.md`](reporting/docs/non_goals.md) - scope discipline
+- [`reporting/docs/x_rules.md`](reporting/docs/x_rules.md) - X-rule catalogue
+- [`reporting/docs/tour.md`](reporting/docs/tour.md) - 10-minute reading tour
 
-## Contributing
+## Citing this work
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md).
+See [CITATION.cff](CITATION.cff). If you are writing about the project's
+claims rather than the package itself, use [HYPOTHESES.md](HYPOTHESES.md)
+as the canonical statement of the bets and their falsification criteria.
+
+## License
+
+MIT. See [LICENSE](LICENSE).

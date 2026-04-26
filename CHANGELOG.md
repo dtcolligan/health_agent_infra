@@ -482,6 +482,7 @@ Phase A onboarding UX + local telemetry.
 
 Initial release.
 
+[0.1.8]: https://pypi.org/project/health-agent-infra/0.1.8/
 [0.1.7]: https://pypi.org/project/health-agent-infra/0.1.7/
 [0.1.6]: https://pypi.org/project/health-agent-infra/0.1.6/
 [0.1.5]: https://pypi.org/project/health-agent-infra/0.1.5/

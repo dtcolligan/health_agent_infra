@@ -14,8 +14,16 @@ guided read.
 | [`reporting/`](reporting/) | active docs + proof + plans + frozen prototypes | All non-runtime narrative material. See [`reporting/README.md`](reporting/README.md) for the four-subdir map. |
 | [`safety/`](safety/) | active tests + active evals + legacy scripts | All test and eval material plus a small set of legacy scripts. See [`safety/README.md`](safety/README.md) for the layout, including the symlinks into local generated data. |
 | [`merge_human_inputs/`](merge_human_inputs/) | docs + examples bucket (intentional historical anchor) | Not a Python module. Holds a README and example payloads for the human-input intake surface. The bucket name is preserved as a mental-model anchor from the original eight-bucket framing; the typed-intake logic itself is now an agent concern owned by the `merge-human-inputs` skill. See [`merge_human_inputs/README.md`](merge_human_inputs/README.md). |
-| [`README.md`](README.md) | active docs | Product overview, install, CLI surface, repo layout, what's proven. |
-| [`STATUS.md`](STATUS.md) | active docs | Current shipped phase, what's tested, what's deferred. |
+| [`README.md`](README.md) | active docs | Product overview, install, CLI surface, roadmap pointers. |
+| [`CHANGELOG.md`](CHANGELOG.md) | active docs | Public release history. |
+| [`AGENTS.md`](AGENTS.md) | active docs | Agent-facing operating contract for Codex, Claude Code, and similar coding agents. |
+| [`CLAUDE.md`](CLAUDE.md) | active docs | Claude Code shim that imports `AGENTS.md` and adds Claude-specific notes. |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | active docs | One-page architecture and links to deep docs. |
+| [`AUDIT.md`](AUDIT.md) | active docs | Release-by-release audit-cycle index. |
+| [`HYPOTHESES.md`](HYPOTHESES.md) | active docs | Five falsifiable roadmap hypotheses. |
+| [`ROADMAP.md`](ROADMAP.md) | active docs | Now / Next / Later roadmap. |
+| [`SECURITY.md`](SECURITY.md) | active docs | Vulnerability reporting and scope of trust. |
+| [`CITATION.cff`](CITATION.cff) | active docs | Citation metadata; DOI placeholders await manual Zenodo registration. |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | active docs | Code-vs-skill mental model, how to add runtime code or a skill, before-PR checks. |
 | [`LICENSE`](LICENSE) | active | MIT. |
 | `pyproject.toml`, `uv.lock` | active runtime | Packaging + lock. |
@@ -43,27 +51,27 @@ checked-in repo shape.
 | You want to | Start at |
 |---|---|
 | Understand what the project is | [`README.md`](README.md) |
-| Know what is shipped right now | [`STATUS.md`](STATUS.md) |
+| Know what is shipped right now | [`CHANGELOG.md`](CHANGELOG.md) and [`AUDIT.md`](AUDIT.md) |
 | Take the guided 10-minute tour | [`reporting/docs/tour.md`](reporting/docs/tour.md) |
 | Read the architecture | [`reporting/docs/architecture.md`](reporting/docs/architecture.md) |
 | See how `hai explain` works (three-state audit) | [`reporting/docs/explainability.md`](reporting/docs/explainability.md) |
 | Read the agent CLI contract | [`reporting/docs/agent_cli_contract.md`](reporting/docs/agent_cli_contract.md) |
 | Add runtime code or a skill | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
-| See the current-cycle plan (M8 agent-operable runtime) | [`reporting/plans/agent_operable_runtime_plan.md`](reporting/plans/agent_operable_runtime_plan.md) |
-| See the prior cycle plan (post-v0.1) | [`reporting/plans/post_v0_1_roadmap.md`](reporting/plans/post_v0_1_roadmap.md) |
+| See the forward roadmap | [`ROADMAP.md`](ROADMAP.md) and [`reporting/plans/multi_release_roadmap.md`](reporting/plans/multi_release_roadmap.md) |
 | Inspect proof / eval captures | [`reporting/artifacts/`](reporting/artifacts/) |
 | See what was tried and discarded before v1 | [`reporting/experiments/`](reporting/experiments/) |
 
 ## Active vs historical at a glance
 
 - **Active runtime**: `src/health_agent_infra/`.
-- **Active docs**: `README.md`, `STATUS.md`, `CONTRIBUTING.md`,
-  `REPO_MAP.md`, everything directly under `reporting/docs/`
+- **Active docs**: `README.md`, `CHANGELOG.md`, `AGENTS.md`, `CLAUDE.md`,
+  `ARCHITECTURE.md`, `AUDIT.md`, `HYPOTHESES.md`, `ROADMAP.md`,
+  `SECURITY.md`, `CITATION.cff`, `CONTRIBUTING.md`, `REPO_MAP.md`,
+  everything directly under `reporting/docs/`
   (including `agent_cli_contract.md` — generated from `hai
   capabilities --json`),
-  `reporting/plans/agent_operable_runtime_plan.md` (the M8 cycle
-  plan), `reporting/plans/post_v0_1_roadmap.md` (superseded but
-  retained for historical context),
+  `reporting/plans/multi_release_roadmap.md` (canonical forward
+  roadmap),
   `reporting/plans/launch_notes.md`,
   `reporting/plans/skill_harness_rfc.md`.
 - **Active proof**:
@@ -78,6 +86,8 @@ checked-in repo shape.
   `reporting/plans/phase_0_findings.md`,
   `reporting/plans/phase_0_5_synthesis_prototype.md`,
   `reporting/plans/phase_2_5_retrieval_gate.md`,
+  `reporting/plans/agent_operable_runtime_plan.md`,
+  `reporting/plans/post_v0_1_roadmap.md`,
   `reporting/plans/phase_2_5_independent_eval.md`,
   `safety/scripts/`.
 

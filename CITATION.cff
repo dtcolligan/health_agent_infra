@@ -1,0 +1,53 @@
+cff-version: 1.2.0
+message: "If you use this software in research, please cite it as below."
+title: "Health Agent Infra: A governed runtime for personal-health agents"
+abstract: >-
+  A local-first governance layer for personal-health agents. It combines
+  deterministic policy, typed state ledgers, packaged skills, and a review
+  loop so an LLM can help operate over health data without owning the rules,
+  state, or commit path.
+type: software
+authors:
+  - given-names: Dom
+    family-names: Colligan
+repository-code: "https://github.com/dtcolligan/health_agent_infra"
+url: "https://github.com/dtcolligan/health_agent_infra"
+license: MIT
+keywords:
+  - personal-health
+  - LLM-agents
+  - runtime-enforcement
+  - local-first
+  - deterministic-policy
+  - intervals.icu
+  - garmin
+  - claude-code
+version: "0.1.8"
+date-released: "2026-04-25"
+# Once a Zenodo DOI is registered, uncomment and fill in:
+# identifiers:
+#   - type: doi
+#     value: "10.5281/zenodo.XXXXXXX"
+#     description: "Concept DOI for all versions"
+#   - type: doi
+#     value: "10.5281/zenodo.YYYYYYY"
+#     description: "DOI for v0.1.8"
+references:
+  - type: article
+    title: "AgentSpec: Customizable Runtime Enforcement for Agentic LLMs"
+    year: 2025
+    identifiers:
+      - type: other
+        value: "arXiv:2503.18666"
+        description: "arXiv preprint"
+  - type: article
+    title: "Personal Health Insight Agent"
+    journal: "Nature Communications"
+    year: 2025
+  - type: article
+    title: "SePA: Search-enhanced Predictive Agent for Personalized Health Coaching"
+    year: 2025
+    identifiers:
+      - type: other
+        value: "arXiv:2509.04752"
+        description: "arXiv preprint"

@@ -67,8 +67,9 @@ Never:
 
 1. `uv run pytest safety/tests -q`
 2. If you touched packaging or versioning: `uv run python -m build --wheel --sdist`
-3. If you touched docs: make sure `README.md`, `STATUS.md`, and the
-   active docs under `reporting/docs/` still agree.
+3. If you touched docs: make sure `README.md`, `CHANGELOG.md`,
+   `ROADMAP.md`, `AUDIT.md`, and the active docs under `reporting/docs/`
+   still agree.
 4. If you touched a skill: verify the corresponding skill-boundary
    tests still pass.
 5. If you touched a migration/projector/schema: verify the relevant
@@ -95,8 +96,9 @@ Never:
 Start with these:
 
 - `README.md`
-- `STATUS.md`
 - `REPO_MAP.md` — one-page orientation of every top-level entry
+- `ROADMAP.md`
+- `AUDIT.md`
 - `reporting/docs/architecture.md`
 - `reporting/docs/non_goals.md`
 - `reporting/docs/tour.md`
