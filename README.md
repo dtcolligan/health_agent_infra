@@ -1,6 +1,6 @@
 # Health Agent Infra
 
-Health Agent Infra is a local-first governance layer for personal-health
+Health Agent Infra is a local-first governance runtime for personal-health
 agents. It combines deterministic policy, typed state ledgers, packaged
 skills, and a review loop so an LLM can help operate over health data
 without owning the rules, state, or commit path.
