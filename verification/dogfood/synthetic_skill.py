@@ -24,8 +24,12 @@ from pathlib import Path
 from typing import Any, Optional
 
 
-# Per-domain action enums match ``core/validate.ALLOWED_ACTIONS_BY_DOMAIN``.
-# Update this table when the runtime adds new action tokens.
+# Per-domain action enums must stay in sync with
+# ``core/validate.ALLOWED_ACTIONS_BY_DOMAIN``. v0.1.11 W-S (Codex
+# F-CDX-IR-06): the harness no longer hardcodes the enum surface.
+# A drift contract test (`test_persona_harness_contract.py`)
+# asserts every default + status-mapped action below is in the
+# domain's authoritative enum.
 
 _DOMAIN_DEFAULT_ACTION = {
     "recovery": "proceed_with_planned_session",
@@ -35,6 +39,30 @@ _DOMAIN_DEFAULT_ACTION = {
     "strength": "proceed_with_planned_session",
     "nutrition": "maintain_targets",
 }
+
+
+def _verify_default_actions_against_runtime() -> None:
+    """Boot-time assertion that every default action is a valid token.
+
+    Runs at import time so a renamed action surfaces as a clear
+    ImportError rather than a downstream ``hai propose`` validation
+    failure. Mirrors the W-S contract test but at the harness's own
+    boundary.
+    """
+    from health_agent_infra.core.validate import ALLOWED_ACTIONS_BY_DOMAIN
+
+    for domain, action in _DOMAIN_DEFAULT_ACTION.items():
+        if action not in ALLOWED_ACTIONS_BY_DOMAIN.get(domain, frozenset()):
+            raise ImportError(
+                f"persona harness drift: domain={domain!r} default "
+                f"action {action!r} is not in "
+                f"ALLOWED_ACTIONS_BY_DOMAIN[{domain!r}]. "
+                f"Update verification/dogfood/synthetic_skill.py "
+                f"or the validator enum."
+            )
+
+
+_verify_default_actions_against_runtime()
 
 # Status field per domain → action token (must be a valid action enum)
 _STATUS_TO_ACTION = {

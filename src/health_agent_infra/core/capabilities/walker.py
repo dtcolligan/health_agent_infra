@@ -500,6 +500,13 @@ def build_manifest(
 
     Separate from :func:`walk_parser` so the envelope (schema_version,
     version, generator) can evolve independently of the per-command rows.
+
+    v0.1.11 W-S (Codex F-DEMO-02 fold-in): adds a top-level
+    ``domain_proposal_contracts`` block enumerating each domain's
+    proposal schema_version + action enum + required fields. Agents
+    composing proposals from scratch can read this rather than greping
+    schemas.py or mimicking past JSONL rows. Backwards-compatible
+    additive — does NOT freeze the manifest schema (W30 preserved).
     """
 
     return {
@@ -507,7 +514,52 @@ def build_manifest(
         "hai_version": hai_version or _PACKAGE_VERSION,
         "generated_by": "core.capabilities.walker.build_manifest",
         "commands": walk_parser(parser),
+        "domain_proposal_contracts": _build_domain_proposal_contracts(),
     }
+
+
+def _build_domain_proposal_contracts() -> dict[str, Any]:
+    """Per-domain proposal contract block (v0.1.11 W-S / F-DEMO-02).
+
+    Sources from ``core.validate.ALLOWED_ACTIONS_BY_DOMAIN`` (the
+    validator enum) and from ``core.intake.next_actions._DOMAIN_PROPOSAL_SCHEMAS``
+    (the existing schema-version registry the agent already
+    consumes). One primitive, two consumers (validator + manifest)
+    — drift surfaces in the W-S contract test.
+    """
+
+    from health_agent_infra.core.validate import (
+        ALLOWED_ACTIONS_BY_DOMAIN,
+    )
+    from health_agent_infra.core.intake.next_actions import (
+        _DOMAIN_PROPOSAL_SCHEMAS,
+    )
+
+    schema_versions = _DOMAIN_PROPOSAL_SCHEMAS
+
+    # Required fields are the same across domains (DomainProposal
+    # envelope). Documenting once at the top-level block; the
+    # per-domain entries surface action_enum + schema_version.
+    required_fields = [
+        "schema_version",
+        "proposal_id",
+        "user_id",
+        "for_date",
+        "domain",
+        "action",
+        "rationale",
+        "confidence",
+        "policy_decisions",
+    ]
+
+    out: dict[str, Any] = {}
+    for domain in sorted(ALLOWED_ACTIONS_BY_DOMAIN.keys()):
+        out[domain] = {
+            "schema_version": schema_versions[domain],
+            "action_enum": sorted(ALLOWED_ACTIONS_BY_DOMAIN[domain]),
+            "required_fields": required_fields,
+        }
+    return out
 
 
 # ---------------------------------------------------------------------------
