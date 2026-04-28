@@ -248,7 +248,14 @@ def open_session(
 
     marker_id = _generate_marker_id()
     if scratch_root is None:
-        scratch_root = Path("/tmp") / f"hai_demo_{marker_id}"
+        # nosec B108 - /tmp is the documented demo-scratch root for
+        # v0.1.11 W-Va. The path is namespaced by `marker_id` (which
+        # contains crypto-random hex from secrets.token_hex), so two
+        # demo sessions cannot collide. The scratch root never holds
+        # production secrets — it's a per-session DB + JSONL slop.
+        # Tests pin scratch_root to tmp_path explicitly; this default
+        # only runs when the user invokes `hai demo start` directly.
+        scratch_root = Path("/tmp") / f"hai_demo_{marker_id}"  # nosec B108
 
     scratch_root.mkdir(parents=True, exist_ok=False)
 

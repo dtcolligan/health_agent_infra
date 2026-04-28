@@ -11,6 +11,84 @@ Per-release detail lives under `reporting/plans/<version>/`.
 
 ---
 
+## [0.1.11] - 2026-04-28
+
+> **Theme.** Audit-chain integrity (W-E + W-F release-blockers)
+> + the `hai demo` mode introduced for safe demos and onboarding
+> + 7 demo-run findings absorbed from the 2026-04-28 live demo.
+
+> **Cycle pattern note.** First release shipped under the D14
+> pre-cycle Codex plan-audit pattern. Plan-audit settled at round
+> 4 (PLAN_COHERENT) with 18 findings closed before any code
+> changed. See `reporting/plans/v0_1_11/codex_plan_audit_response*.md`.
+
+### Added
+
+- **`hai demo {start, end, cleanup}`** (W-Va, release-blocker) —
+  isolated demo sessions with multi-resolver override. Real
+  `~/.health_agent` tree, real `state.db`, and real
+  `thresholds.toml` stay byte-identical for the duration of any
+  demo session. Fail-closed marker contract.
+- **`hai doctor --deep`** (W-X) — live-API auth probe via the
+  new `Probe` protocol. `LiveProbe` for real mode; `FixtureProbe`
+  with hard no-network assertion in demo mode.
+- **`hai intake gaps --from-state-snapshot`** (W-W) — derive gaps
+  from latest accepted state without fresh wearable evidence.
+  48h staleness gate. Single-read-transaction contract.
+- **`--as-of` canonical alias on `hai pull` + `hai explain`** (W-Y).
+- **State-fingerprint primitive** on `daily_plan` (W-E,
+  release-blocker; migration 022). Re-run with same state is
+  no-op; with different state auto-supersedes with `_v<N>`.
+- **Capabilities manifest exposes `domain_proposal_contracts`**
+  (W-S, F-DEMO-02). Backwards-compatible additive (W30 preserved).
+- **R-volume-spike minimum-coverage gate** (W-B) — closes the
+  false-spike-on-first-session-back pattern that hit 6 personas +
+  Dom's real state in the 2026-04-28 demo.
+- **Persona matrix expanded 8 → 12** (W-O): P9 older female
+  endurance, P10 adolescent recreational, P11 elevated-stress
+  hybrid, P12 vacation-returner.
+- **Property-based tests for the policy DSL** (W-P).
+- **Persona harness drift guards** (W-S, F-CDX-IR-06).
+- **`reporting/docs/demo_flow.md`** (W-Z).
+
+### Changed
+
+- **`hai {daily, synthesize} --supersede`** on a date with no
+  canonical plan now exits USER_INPUT (W-F, release-blocker).
+- **`hai daily` re-run against changed state** auto-supersedes
+  with `_v<N>` instead of overwriting the canonical (W-E).
+- **Running rollup provenance** (W-R): rollup-derived rows stamp
+  `derivation_path='running_sessions'` and populate
+  `session_count` + `total_duration_s`.
+
+### Fixed
+
+- **Mypy correctness errors** (W-H1, F-A-03/06/07/11): 39 → 21
+  errors (remaining 21 stylistic-class, deferred to v0.1.12).
+- **Bandit security findings**: B608 (16 sites) + B310 + B108
+  audited site-by-site with rationale. `bandit -ll` on `src/`: 0
+  unsuppressed.
+
+### Deferred (named to v0.1.12)
+
+- **W-Vb** (`hai demo` polish: persona fixtures + archive +
+  cleanup polish) — per the named-defer ship-gate.
+- **W-N broader gate** — `-W error::Warning` cleanup is a multi-
+  day systemic refactor.
+- **F-A-04 / F-A-05 + remaining mypy stylistic** errors deferred
+  to v0.1.12 W-H2.
+
+### Settled decisions added to AGENTS.md
+
+- **D13** — Threshold-injection seam is trusted-by-design.
+- **D14** — Pre-cycle Codex plan-audit is permanent pattern.
+
+### Test surface
+
+2202 → 2347 passing (+145 across 13 new test files). 0 regressions.
+
+---
+
 ## [0.1.10] - 2026-04-28
 
 > **Theme.** Persona harness, running-activity rollup wire, and
