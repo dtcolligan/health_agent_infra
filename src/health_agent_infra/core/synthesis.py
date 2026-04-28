@@ -569,6 +569,22 @@ def run_synthesis(
 
     canonical_id = canonical_daily_plan_id(for_date, user_id)
     if supersede:
+        # v0.1.11 W-F (Codex F-DEMO-05 + maintainer Q-A: option b):
+        # --supersede on a date with no canonical plan is a programming
+        # error. Pre-v0.1.11 this minted an orphan _v2 unreachable via
+        # `hai today` / `hai explain --for-date`. Refuse with USER_INPUT
+        # rather than silently fall through to first-version semantics.
+        canonical_exists = conn.execute(
+            "SELECT 1 FROM daily_plan WHERE daily_plan_id = ?",
+            (canonical_id,),
+        ).fetchone()
+        if canonical_exists is None:
+            raise SynthesisError(
+                f"--supersede requires an existing canonical plan for "
+                f"({for_date.isoformat()}, {user_id}); none found "
+                f"(canonical id would be {canonical_id!r}). Re-run "
+                f"without --supersede to write the first-version plan."
+            )
         daily_plan_id = _next_superseded_plan_id(conn, canonical_id=canonical_id)
         plan_version_suffix = daily_plan_id[len(canonical_id):]  # e.g. "_v2"
     else:
