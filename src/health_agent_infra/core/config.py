@@ -448,6 +448,16 @@ DEFAULT_THRESHOLDS: dict[str, Any] = {
             # the running R-acwr-spike threshold so cross-domain
             # escalations coincide at the same volume signal.
             "r_volume_spike_min_ratio": 1.5,
+            # v0.1.11 W-B: minimum-coverage gate. R-volume-spike only
+            # fires when sessions_last_28d >= this threshold. Below it,
+            # the rule yields to the require_min_coverage block path
+            # so users with sparse-but-regular training don't trigger
+            # the spike escalation on their first session back. Default
+            # 8 = ~2 sessions/week sustained over 4 weeks. Resolved
+            # via ``core.config.coerce_int`` per D12; bool-as-int
+            # silent coercion is rejected at validate-time. Codex
+            # F-PLAN-10 demanded this explicitly.
+            "r_volume_spike_min_sessions_last_28d": 8,
         },
         "nutrition": {
             # Phase 5 step 2 — macros-only v1. R-extreme-deficiency:

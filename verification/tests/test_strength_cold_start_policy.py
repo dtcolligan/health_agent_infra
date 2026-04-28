@@ -129,17 +129,60 @@ def test_missing_context_preserves_legacy_defer():
 
 
 # ---------------------------------------------------------------------------
-# Volume spike still escalates under cold-start
+# Volume spike yields under sparse history (v0.1.11 W-B)
 # ---------------------------------------------------------------------------
 
 
-def test_volume_spike_escalates_under_cold_start():
-    """Safety — even with cold-start + strength intent, a volume
-    spike ratio forces escalation. Cold-start only lifts coverage
-    gate, not the spike rule."""
+def test_volume_spike_yields_under_sparse_history_per_W_B():
+    """v0.1.11 W-B revised contract (per Codex F-PLAN-10): the
+    R-volume-spike rule no longer fires when ``sessions_last_28d``
+    is below ``r_volume_spike_min_sessions_last_28d`` (default 8).
+    Sparse-history users with cold_start=True have None or low
+    sessions_last_28d, so the spike rule yields rather than
+    escalating an entirely reasonable resume-of-training session.
 
+    Pre-W-B behaviour was the inverse: cold-start coverage was the
+    only gate, and a volume_ratio above 1.5 escalated regardless of
+    history depth. That over-escalated every "first session back"
+    pattern across 6+ personas and Dom's real state in the
+    2026-04-28 demo run."""
+
+    # sessions_last_28d=None (cold-start signal absent) → yields.
     result = evaluate_strength_policy(
         _classified(coverage_band="insufficient", volume_ratio=2.0),
         cold_start_context=_ctx(planned_session_type="strength_legs"),
+    )
+    assert result.forced_action != "escalate_for_user_review"
+
+    # sessions_last_28d=2 (sparse) → yields.
+    result = evaluate_strength_policy(
+        _classified(
+            coverage_band="insufficient",
+            volume_ratio=4.0,
+        ),
+        cold_start_context=_ctx(planned_session_type="strength_legs"),
+    )
+    assert result.forced_action != "escalate_for_user_review"
+
+
+def test_volume_spike_still_escalates_with_sufficient_history():
+    """Once sessions_last_28d >= threshold (default 8), spikes
+    escalate normally. The W-B gate yields the rule for sparse
+    users; users with established history still get the escalation."""
+    classified = ClassifiedStrengthState(
+        recent_volume_band="very_high",
+        freshness_band_by_group={},
+        coverage_band="full",
+        strength_status="progressing",
+        strength_score=0.7,
+        volume_ratio=2.5,
+        sessions_last_7d=2,
+        sessions_last_28d=10,  # >= threshold
+        unmatched_exercise_tokens=(),
+        uncertainty=(),
+    )
+    result = evaluate_strength_policy(
+        classified,
+        cold_start_context=None,
     )
     assert result.forced_action == "escalate_for_user_review"

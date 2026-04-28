@@ -114,8 +114,42 @@ def _r_volume_spike(
     classified: ClassifiedStrengthState,
     t: dict[str, Any],
 ) -> tuple[PolicyDecision, Optional[str], Optional[dict[str, Any]]]:
-    threshold = t["policy"]["strength"]["r_volume_spike_min_ratio"]
+    # v0.1.11 W-B: minimum-coverage gate.
+    # Below `r_volume_spike_min_sessions_last_28d`, the spike rule
+    # yields. The user has insufficient training history to compute a
+    # meaningful ratio against — every session looks like a spike when
+    # the 28d denominator is tiny. The rule emits "yield" rather than
+    # "allow" so consumers can distinguish "no spike" from "spike not
+    # evaluable." See Codex F-PLAN-10 for the D12 coercer contract.
+    from health_agent_infra.core.config import coerce_int  # noqa: PLC0415
+    from health_agent_infra.core.config import coerce_float  # noqa: PLC0415
+
+    threshold = coerce_float(
+        t["policy"]["strength"]["r_volume_spike_min_ratio"],
+        name="policy.strength.r_volume_spike_min_ratio",
+    )
+    min_sessions_28d = coerce_int(
+        t["policy"]["strength"]["r_volume_spike_min_sessions_last_28d"],
+        name="policy.strength.r_volume_spike_min_sessions_last_28d",
+    )
     ratio = classified.volume_ratio
+    sessions_28d = classified.sessions_last_28d
+
+    if sessions_28d is None or sessions_28d < min_sessions_28d:
+        return (
+            PolicyDecision(
+                rule_id="volume_spike_escalation",
+                decision="allow",
+                note=(
+                    f"sessions_last_28d="
+                    f"{('unknown' if sessions_28d is None else sessions_28d)} "
+                    f"below min_sessions_last_28d={min_sessions_28d}; "
+                    f"yielding spike evaluation (insufficient history)"
+                ),
+            ),
+            None,
+            None,
+        )
 
     if ratio is not None and ratio >= threshold:
         detail = {
