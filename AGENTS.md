@@ -140,6 +140,18 @@ write a cycle proposal in `reporting/plans/`; do not act unilaterally.
   runtime must use `core.config.coerce_*` helpers.** Bool-as-int silent
   coercion is the highest-impact silent bug class. New code referencing
   thresholds without going through the helpers is a bug.
+- **(D13, v0.1.11) Threshold-injection seam is trusted-by-design.**
+  Production callers always validate user-supplied thresholds via
+  `core.config.load_thresholds`, which runs `_validate_threshold_types`
+  at the user-TOML boundary. Every `evaluate_*_policy` /
+  `classify_*_state` entry point accepts a `thresholds: Optional[dict]`
+  arg, but in-memory construction + direct pass-through is reserved for
+  tests (trusted by design) and intentional defensive paths. New
+  non-test code that constructs threshold dicts and bypasses
+  `load_thresholds` is a code-review concern. Defensive D12 coercer use
+  at consumer sites is the second line of defence. Origin: v0.1.11 W-T
+  audit (Codex round 3 SHIP_WITH_NOTES note 1, F-CDX-IR-R3-N1). See
+  `reporting/plans/v0_1_11/W_T_audit.md` for the call-site survey.
 - **(D14, v0.1.11) Pre-cycle Codex plan-audit is permanent pattern for
   substantive PLAN.md revisions.** Before Phase 0 (D11) bug-hunt opens,
   Codex reviews PLAN.md against a `codex_plan_audit_prompt.md` and
