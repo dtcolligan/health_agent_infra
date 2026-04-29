@@ -4849,12 +4849,19 @@ def _run_daily(
         )
         return exit_codes.USER_INPUT
 
+    # v0.1.12 W-FBC partial closure: surface --re-propose-all in the
+    # report so a downstream caller (and the persona harness) can
+    # observe the flag round-trip. Today the flag's runtime effect is
+    # scoped to the recovery domain via the carryover-uncertainty
+    # token in synthesis; v0.1.13 W-FBC-2 lifts to all six domains.
+    re_propose_all_requested = bool(getattr(args, "re_propose_all", False))
     report: dict[str, Any] = {
         "as_of_date": as_of.isoformat(),
         "user_id": user_id,
         "base_dir": str(base_dir),
         "db_path": str(db_path),
         "expected_domains": sorted(expected_domains),
+        "re_propose_all_requested": re_propose_all_requested,
         "stages": {},
     }
 
@@ -8103,6 +8110,17 @@ def build_parser() -> argparse.ArgumentParser:
     p_daily.add_argument("--supersede", action="store_true",
                          help="Keep prior canonical plan and write a "
                               "fresh _v<N> id. Default is atomic replace.")
+    p_daily.add_argument(
+        "--re-propose-all", action="store_true", dest="re_propose_all",
+        help=(
+            "v0.1.12 W-FBC (partial closure of F-B-04): mark every "
+            "domain's existing proposal_log entry as needing fresh "
+            "skill judgment for this synthesis pass. Today the flag "
+            "has runtime effect only on the recovery domain (the "
+            "one-domain prototype); v0.1.13 W-FBC-2 lifts enforcement "
+            "to all six. See reporting/docs/supersede_domain_coverage.md."
+        ),
+    )
     p_daily.add_argument("--skip-reviews", action="store_true",
                          help="Skip review-event scheduling after "
                               "synthesis.")
