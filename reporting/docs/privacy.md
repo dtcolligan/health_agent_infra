@@ -56,9 +56,15 @@ ACLs manually.
 the OS keychain (macOS Keychain, GNOME Keyring, KWallet). They never
 land in the state DB or any JSONL.
 
-There is no `hai auth --remove` command in v0.1.8. To remove credentials,
-delete them directly from your OS's keychain UI or keychain CLI under the
-service names `hai_garmin` and `hai_intervals_icu`.
+As of v0.1.12 you can remove credentials with
+`hai auth remove --source <garmin|intervals-icu|all>`. The command is
+idempotent and only touches keyring entries — env-var-supplied
+credentials are never modified. Behind the scenes it calls the
+existing `clear_garmin()` / `clear_intervals_icu()` helpers in
+`core/pull/auth.py`, so the keyring service names match
+`hai auth garmin` / `hai auth intervals-icu` storage. If you'd
+prefer to remove via your OS's keychain UI directly, the service
+names are `hai_garmin` and `hai_intervals_icu`.
 
 ## Inspecting your data
 
@@ -113,11 +119,13 @@ rm -rf ~/.health_agent
 That leaves no health data on your machine. The next `hai state init`
 starts a fresh DB.
 
-There is no first-class "forget one day" command in v0.1.8. The JSONL audit
-logs are append-only by design; to truly remove one day's intake/review/proposal
-history, edit the relevant JSONL lines yourself and then run
-`hai state reproject --base-dir <dir>` to rebuild the DB. The system favours
-auditability over forgetability; this is a deliberate tradeoff.
+There is no first-class "forget one day" command yet. The JSONL audit
+logs are append-only by design; to truly remove one day's
+intake/review/proposal history, edit the relevant JSONL lines yourself
+and then run `hai state reproject --base-dir <dir>` to rebuild the DB.
+The system favours auditability over forgetability; this is a
+deliberate tradeoff. A first-class single-day forget command is on the
+v0.1.13 onboarding cycle backlog.
 
 ## Migrating to a new machine
 

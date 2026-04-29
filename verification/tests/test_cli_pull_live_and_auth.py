@@ -162,6 +162,82 @@ def test_auth_status_env_only(monkeypatch, capsys):
 
 
 # ---------------------------------------------------------------------------
+# hai auth remove (v0.1.12 W-PRIV)
+# ---------------------------------------------------------------------------
+
+def test_auth_remove_garmin_clears_keyring(monkeypatch, capsys):
+    store = _fake_store()
+    store.store_garmin("alice@example.com", "s3cret")
+    monkeypatch.setattr(cli_mod.CredentialStore, "default", classmethod(lambda cls: store))
+
+    rc = cli_main(["auth", "remove", "--source", "garmin"])
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["removed"] == ["garmin"]
+    # Keyring is empty; load_garmin returns None.
+    assert store.load_garmin() is None
+    assert payload["garmin"]["credentials_available"] is False
+
+
+def test_auth_remove_intervals_icu_clears_keyring(monkeypatch, capsys):
+    store = _fake_store()
+    store.store_intervals_icu("athlete-99", "key-shh")
+    monkeypatch.setattr(cli_mod.CredentialStore, "default", classmethod(lambda cls: store))
+
+    rc = cli_main(["auth", "remove", "--source", "intervals-icu"])
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["removed"] == ["intervals_icu"]
+    assert store.load_intervals_icu() is None
+
+
+def test_auth_remove_all_clears_both(monkeypatch, capsys):
+    store = _fake_store()
+    store.store_garmin("alice@example.com", "s3cret")
+    store.store_intervals_icu("athlete-99", "key-shh")
+    monkeypatch.setattr(cli_mod.CredentialStore, "default", classmethod(lambda cls: store))
+
+    rc = cli_main(["auth", "remove", "--source", "all"])
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["removed"] == ["garmin", "intervals_icu"]
+    assert store.load_garmin() is None
+    assert store.load_intervals_icu() is None
+
+
+def test_auth_remove_idempotent_on_empty_keyring(monkeypatch, capsys):
+    """Removing absent credentials is a no-op, not an error.
+    Closes the privacy-doc claim that ``hai auth remove`` is
+    idempotent."""
+
+    store = _fake_store()
+    monkeypatch.setattr(cli_mod.CredentialStore, "default", classmethod(lambda cls: store))
+
+    rc = cli_main(["auth", "remove", "--source", "all"])
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["removed"] == ["garmin", "intervals_icu"]
+    # Status still reports no credentials.
+    assert payload["garmin"]["credentials_available"] is False
+    assert payload["intervals_icu"]["credentials_available"] is False
+
+
+def test_auth_remove_does_not_touch_env_vars(monkeypatch, capsys):
+    """Env-var credentials are intentionally outside the removal
+    surface. The privacy doc says so; this test enforces."""
+
+    store = _fake_store(env={EMAIL_ENV_VAR: "env@example.com", PASSWORD_ENV_VAR: "envpw"})
+    monkeypatch.setattr(cli_mod.CredentialStore, "default", classmethod(lambda cls: store))
+
+    rc = cli_main(["auth", "remove", "--source", "garmin"])
+    assert rc == 0
+    # Env-supplied credentials still resolvable after the remove.
+    creds = store.load_garmin()
+    assert creds is not None
+    assert creds.password == "envpw"
+
+
+# ---------------------------------------------------------------------------
 # hai pull --live
 # ---------------------------------------------------------------------------
 

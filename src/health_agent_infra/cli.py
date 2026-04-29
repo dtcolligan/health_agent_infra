@@ -1200,6 +1200,38 @@ def cmd_auth_status(args: argparse.Namespace) -> int:
     return exit_codes.OK
 
 
+def cmd_auth_remove(args: argparse.Namespace) -> int:
+    """Remove credentials from the OS keyring. Idempotent.
+
+    Origin: v0.1.12 W-PRIV (PLAN.md §2.7) — closes the privacy-doc
+    discrepancy that referenced a removal command which did not yet
+    exist in the CLI surface, despite the underlying ``clear_garmin``
+    / ``clear_intervals_icu`` helpers already living in
+    ``core/pull/auth.py``.
+
+    ``--source`` accepts ``garmin``, ``intervals-icu``, or ``all``.
+    Env-var-supplied credentials are never touched (keyring only).
+    """
+
+    store = _credential_store_for(args)
+    source = args.source
+    cleared: list[str] = []
+    if source in ("garmin", "all"):
+        store.clear_garmin()
+        cleared.append("garmin")
+    if source in ("intervals-icu", "all"):
+        store.clear_intervals_icu()
+        cleared.append("intervals_icu")
+
+    _emit_json({
+        "backend": _backend_kind(store),
+        "removed": cleared,
+        "garmin": store.garmin_status(),
+        "intervals_icu": store.intervals_icu_status(),
+    })
+    return exit_codes.OK
+
+
 def _credential_store_for(args: argparse.Namespace) -> CredentialStore:
     # Tests set ``_credential_store_override`` via monkeypatching to inject
     # a backend; production falls through to the real keyring + env.
@@ -6572,6 +6604,35 @@ def build_parser() -> argparse.ArgumentParser:
         description=(
             "Report whether Garmin and Intervals.icu credentials are "
             "configured. Presence only — never emits the secret itself."
+        ),
+    )
+
+    p_auth_remove = auth_sub.add_parser(
+        "remove",
+        help="Remove stored credentials from the OS keyring (idempotent)",
+    )
+    p_auth_remove.add_argument(
+        "--source",
+        required=True,
+        choices=("garmin", "intervals-icu", "all"),
+        help=(
+            "Which credential set to remove. 'all' removes both Garmin "
+            "and Intervals.icu keyring entries. Env-var-supplied "
+            "credentials are never touched."
+        ),
+    )
+    p_auth_remove.set_defaults(func=cmd_auth_remove)
+    annotate_contract(
+        p_auth_remove,
+        mutation="writes-credentials",
+        idempotent="yes",
+        json_output="default",
+        exit_codes=("OK",),
+        agent_safe=False,
+        description=(
+            "Remove stored credentials from the OS keyring. "
+            "Idempotent — removing absent credentials is a no-op. "
+            "Env-var-supplied credentials are never touched."
         ),
     )
 
