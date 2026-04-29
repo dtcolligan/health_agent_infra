@@ -59,6 +59,7 @@ where = ["src"]
   "domains/strength/*.csv",
   "evals/scenarios/**/*.json",
   "evals/rubrics/*.md",
+  "demo/fixtures/*.json",
 ]
 
 [tool.pytest.ini_options]

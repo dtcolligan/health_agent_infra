@@ -1,0 +1,14 @@
+{
+  "schema_version": "demo_persona_fixture.v0",
+  "persona_slug": "p1_dom_baseline",
+  "description": "Skeleton fixture authored at v0.1.12 W-Vb. End-to-end persona-replay (proposals pre-populated so `hai daily` reaches synthesis) is deferred to v0.1.13.",
+  "v0_1_12_scope": "skeleton-only",
+  "v0_1_13_scope_pending": [
+    "domain_proposals (one per of recovery|running|sleep|strength|stress|nutrition)",
+    "intake_seed (readiness, nutrition, stress, gym sessions)",
+    "memory_seed (body comp, target kcal/protein)"
+  ],
+  "domain_proposals": [],
+  "intake_seed": {},
+  "memory_seed": {}
+}

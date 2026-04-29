@@ -90,6 +90,9 @@ class DemoMarker:
     config_path: Path
     persona: Optional[str]
     started_at: str
+    # v0.1.12 W-Vb: optional record of fixture-application result
+    # when --persona is set. None for blank/no-persona sessions.
+    fixture_application: Optional[dict] = None
 
     def to_dict(self) -> dict:
         return {
@@ -101,6 +104,7 @@ class DemoMarker:
             "config_path": str(self.config_path),
             "persona": self.persona,
             "started_at": self.started_at,
+            "fixture_application": self.fixture_application,
         }
 
 
@@ -191,6 +195,7 @@ def get_active_marker() -> Optional[DemoMarker]:
         config_path=Path(data["config_path"]),
         persona=data.get("persona"),
         started_at=data["started_at"],
+        fixture_application=data.get("fixture_application"),
     )
 
 
@@ -281,6 +286,38 @@ def open_session(
     )
     initialize_database(db_path)
 
+    # v0.1.12 W-Vb partial-closure: when --persona is set, load the
+    # packaged fixture and apply it. v0.1.12 ships skeleton-only
+    # fixtures (apply_fixture returns a no-op result with the
+    # "deferred_to: v0.1.13" marker); v0.1.13 W-Vb extends fixtures
+    # to full persona-replay (proposals pre-populated, hai daily
+    # reaches synthesis end-to-end).
+    fixture_application: Optional[dict] = None
+    if persona is not None:
+        # Lazy import: avoid demo.fixtures becoming a hot-path
+        # dependency for the no-persona blank-session flow.
+        from health_agent_infra.core.demo.fixtures import (  # noqa: PLC0415
+            DemoFixtureError,
+            apply_fixture,
+            load_fixture,
+        )
+        try:
+            fixture_data = load_fixture(persona)
+            fixture_application = apply_fixture(
+                fixture_data,
+                db_path=db_path,
+                base_dir_path=base_dir_path,
+            )
+        except DemoFixtureError as exc:
+            # Non-fatal at v0.1.12 scope: log and continue with blank
+            # demo behaviour. v0.1.13 may upgrade this to fatal.
+            fixture_application = {
+                "applied": False,
+                "scope": "error",
+                "persona_slug": persona,
+                "error": str(exc),
+            }
+
     marker = DemoMarker(
         schema_version=DEMO_MARKER_SCHEMA_VERSION,
         marker_id=marker_id,
@@ -290,6 +327,7 @@ def open_session(
         config_path=config_path,
         persona=persona,
         started_at=datetime.now(timezone.utc).isoformat(),
+        fixture_application=fixture_application,
     )
 
     marker_path.parent.mkdir(parents=True, exist_ok=True)
