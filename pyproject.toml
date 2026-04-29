@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "health_agent_infra"
-version = "0.1.11"
+version = "0.1.12"
 description = "Governed runtime + skills for a multi-domain personal health agent (recovery, running, sleep, stress, strength, nutrition)."
 readme = "README.md"
 requires-python = ">=3.11"

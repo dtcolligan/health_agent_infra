@@ -11,6 +11,108 @@ Per-release detail lives under `reporting/plans/<version>/`.
 
 ---
 
+## [0.1.12] - 2026-04-29
+
+> **Theme.** Carry-over closure + trust repair. No release-blocker
+> workstream by design. Ten workstreams across docs / governance
+> / per-domain code / mypy / demo packaging.
+>
+> **Tier (per CP3 D15 introduced this cycle):** substantive.
+>
+> **D14 plan-audit:** PLAN_COHERENT at round 4, matching the
+> v0.1.11 empirical 10 → 5 → 3 → 0 settling signature across 4
+> rounds (18 findings cumulative). All six cycle proposals
+> (CP1-CP6) accepted.
+>
+> **Phase 0 (D11) bug-hunt:** internal sweep + audit-chain probe
+> + persona matrix all clean. Two findings absorbed (mypy +1/+1
+> drift; W-N audit count 49+1 with deliberate fork to v0.1.13).
+> Pre-implementation gate fired green.
+
+### Added
+
+- **`hai auth remove [--source garmin|intervals-icu|all]`**
+  (W-PRIV) — subcommand on the existing `auth` namespace. Closes
+  the privacy-doc claim that no removal command existed.
+  Idempotent; only touches keyring (env-var creds untouched).
+- **`hai today --verbose`** (W-FCC) — surfaces the
+  `strength_status` enum surface as a footer. Closes F-C-05.
+  Live classified-state-of-the-day rendering deferred to
+  v0.1.13.
+- **`hai daily --re-propose-all`** (W-FBC, partial closure of
+  F-B-04) — surfaces the override flag in the daily report JSON;
+  full multi-domain runtime enforcement deferred to v0.1.13
+  W-FBC-2 per Codex F-PLAN-R2-04.
+- **`STRENGTH_STATUS_VALUES`** constant + capabilities-manifest
+  `enum_surface` annotation on `hai today` (W-FCC).
+- **Packaged demo-fixture path + loader** (W-Vb partial closure,
+  reconciliation C3) at `src/health_agent_infra/demo/fixtures/`
+  + `core/demo/fixtures.py`. Wheel-install-reachable via
+  `importlib.resources`. End-to-end persona-replay deferred to
+  v0.1.13.
+- **Six cycle proposals (CP1-CP6)** at
+  `reporting/plans/v0_1_12/cycle_proposals/CP{1..6}.md`.
+  CP1+CP2 paired AGENTS.md edit (lift cli.py-split + manifest-
+  freeze deferrals). CP3 four-tier cycle-weight classification
+  (D15). CP4 staged MCP-exposure plan (extends Wave 3). CP5
+  v0.2.0 single-substantial-with-shadow shape. CP6 §6.3 framing
+  edit (authored v0.1.12, applied v0.1.13).
+- **`reporting/docs/supersede_domain_coverage.md`** (W-FBC) —
+  policy decision doc.
+
+### Changed
+
+- **D13 consumer-site symmetry** (W-D13-SYM) — recovery, running,
+  sleep, stress `policy.py` now wrap every `t["policy"][...]`
+  read in `coerce_int / coerce_float`. AST contract test prevents
+  regression.
+- **Mypy clean baseline** (W-H2) — 22 errors → 0 across 12 files
+  (target was ≤5).
+- **AGENTS.md "Settled Decisions"** updated per CP1+CP2 (W29/W30
+  scheduled, no longer deferred) + CP3 (D15 four-tier
+  classification added). Ship-time freshness checklist appended
+  to "Release Cycle Expectation."
+- **strategic_plan_v1.md** Wave 3 row extended with MCP staging
+  (CP4); Wave 2 theme extended with shadow-by-default judge
+  framing (CP5).
+- **tactical_plan_v0_1_x.md** §3 rebaselined to actual carry-over
+  scope; §6 v0.2.0 reshaped per CP5 (W58D + W58J split,
+  `HAI_W58_JUDGE_MODE` flag).
+- **ROADMAP.md** rewritten Now/Next per CP4 + CP5.
+- **AUDIT.md** added v0.1.10 + v0.1.11 entries.
+- **success_framework_v1.md** §3.5 anti-gaming note on defer rate
+  (reconciliation C9).
+- **`reporting/docs/privacy.md`** updated for `hai auth remove`
+  and "forget one day" deferral.
+
+### Carry-over closure (v0.1.11 named-defers)
+
+| Item | Disposition |
+|---|---|
+| W-Vb (demo polish) | partial-closure; persona-replay → v0.1.13 |
+| W-H2 (mypy stylistic) | closed (22 → 0) |
+| W-N broader gate | named-deferred to v0.1.13 W-N-broader |
+| F-A-04 / F-A-05 | closed (W-H2 covers) |
+| F-B-04 (supersede coverage) | partial-closure (W-FBC); multi-domain → v0.1.13 W-FBC-2 |
+| F-C-05 (strength_status surface) | closed (W-FCC) |
+
+### Deferred (named-deferred to next cycle)
+
+- **W-N-broader** (49 sqlite3 connection-lifecycle leaks) →
+  v0.1.13.
+- **W-Vb persona-replay end-to-end** → v0.1.13.
+- **W-FBC-2 multi-domain F-B-04 closure** → v0.1.13.
+- **CP6 §6.3 strategic-plan edit application** → v0.1.13.
+
+### Settled decisions added
+
+- **D15 (v0.1.12) Cycle-weight tiering** — substantive / hardening
+  / doc-only / hotfix. RELEASE_PROOF declares chosen tier.
+- D14 confirmed at the v0.1.11 4-round halving signature for the
+  second time — empirically validated norm.
+
+---
+
 ## [0.1.11] - 2026-04-28
 
 > **Theme.** Audit-chain integrity (W-E + W-F release-blockers)
