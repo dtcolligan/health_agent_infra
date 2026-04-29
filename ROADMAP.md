@@ -17,21 +17,32 @@ This file is a high-level pointer; for actual scope, read those plans.
   DSL; demo isolation contract shipped (boundary-stop replay). Closed four
   D14 plan-audit rounds + four implementation-review rounds. See
   [`reporting/plans/v0_1_11/RELEASE_PROOF.md`](reporting/plans/v0_1_11/RELEASE_PROOF.md).
-- **v0.1.12 in flight.** Carry-over closure + trust repair: demo persona-
-  replay (W-Vb), mypy stylistic class (W-H2), `-W error::Warning` gate
-  (W-N-broader), D13 consumer-site symmetry (W-D13-SYM), privacy doc +
-  `hai auth remove` (W-PRIV), supersede-policy design + recovery prototype
-  (W-FBC; full multi-domain closure deferred to v0.1.13 W-FBC-2),
-  `strength_status` enum surface (W-FCC), public-doc freshness sweep
-  (W-AC), carry-over register (W-CARRY), six cycle proposals (W-CP). See
-  [`reporting/plans/v0_1_12/PLAN.md`](reporting/plans/v0_1_12/PLAN.md).
+- **v0.1.12 in flight.** Carry-over closure + trust repair.
+  **Closed:** mypy stylistic class (W-H2, 22 → 0), D13 consumer-
+  site symmetry (W-D13-SYM), privacy doc + `hai auth remove`
+  (W-PRIV), `strength_status` enum surface (W-FCC), public-doc
+  freshness sweep (W-AC), carry-over register (W-CARRY), six
+  cycle proposals (W-CP).
+  **Partial closure:** demo packaged-fixture path + skeleton
+  loader (W-Vb; persona-replay end-to-end deferred to v0.1.13
+  W-Vb), supersede-policy design + `--re-propose-all` flag
+  (W-FBC; recovery prototype + multi-domain enforcement deferred
+  to v0.1.13 W-FBC-2).
+  **Fork-deferred:** `-W error::Warning` broader gate (W-N-broader;
+  49 + 1 sqlite3 leak sites deferred to v0.1.13 W-N-broader; v0.1.12
+  ships v0.1.11 narrow gate unchanged).
+  See [`reporting/plans/v0_1_12/PLAN.md`](reporting/plans/v0_1_12/PLAN.md).
 
 ## Next
 
-- **v0.1.13 — onboarding + cli.py-split prep.** Trusted-first-value gate
-  + acceptance-matrix (5 paths × required result), declarative persona
-  expected-actions (W-AK), regulated-claim lint (W-LINT), W-29-prep
-  cli.py boundary audit (per CP1), W-FBC-2 multi-domain F-B-04 closure.
+- **v0.1.13 — onboarding + cli.py-split prep + carried v0.1.12 residuals.**
+  Trusted-first-value gate + acceptance-matrix (5 paths × required result),
+  declarative persona expected-actions (W-AK), regulated-claim lint (W-LINT),
+  W-29-prep cli.py boundary audit (per CP1), W-FBC-2 (recovery prototype +
+  multi-domain F-B-04 closure, inherited from v0.1.12 partial), W-Vb
+  persona-replay end-to-end (proposal pre-population + clean-wheel synthesis
+  test, inherited from v0.1.12 partial), W-N-broader broader-warning gate
+  (49 + 1 sqlite3 leak sites, fork-inherited from v0.1.12).
 - **v0.1.14 — eval substrate + cli.py split.** W-29 mechanical cli.py
   split (1 main + 1 shared + 11 handler-group, conditional on v0.1.13
   prep verdict), L2 W-DOMAIN-SYNC scoped contract test, judge-adversarial

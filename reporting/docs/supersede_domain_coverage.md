@@ -1,8 +1,12 @@
 # Supersede domain-coverage policy (F-B-04)
 
-**Status:** v0.1.12 W-FBC — design + recovery prototype + override flag.
-**Multi-domain closure:** deferred to v0.1.13 W-FBC-2 (named-defer per
-PLAN.md §1.3 and Codex F-PLAN-R2-04).
+**Status:** v0.1.12 W-FBC — design doc + `--re-propose-all` flag
+(CLI parser + capabilities + report-surface field only).
+**Recovery prototype + multi-domain closure:** both deferred to
+v0.1.13 W-FBC-2 (named-defer per PLAN.md §1.3 + Codex F-PLAN-R2-04
++ F-IR-01 + F-IR-R2-01). Originally framed as v0.1.12 deliverable;
+synthesis-side wiring did not land — artifact set realigned at
+implementation review rounds 1 + 2.
 **Author:** v0.1.12 cycle.
 
 ---

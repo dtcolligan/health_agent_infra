@@ -126,13 +126,18 @@ ordering by dependency:
    subcommand.
 6. **W-FCC** (1d) — strength_status enum surface in capabilities
    + `hai today --verbose`.
-7. **W-FBC** (1-2d) — F-B-04 design doc + recovery prototype +
-   `--re-propose-all` flag.
+7. **W-FBC** (0.5-1d, partial closure per F-IR-01) — F-B-04 design
+   doc + `--re-propose-all` flag (CLI parser + capabilities +
+   report-surface field). Recovery prototype + multi-domain
+   enforcement deferred to v0.1.13 W-FBC-2.
 8. **W-H2** (2-3d) — mypy stylistic class.
-9. **W-N-broader** (3-4d) — resource-warning sweep across all
-   sqlite3 sites; CI gate command.
-10. **W-Vb** (3-4d) — demo persona-replay + fixture-packaging
-    path. Heaviest single workstream.
+9. **W-N-broader** (fork-deferred at workstream-start audit) —
+   ship a smoke-gate + named-defer the broader fix to v0.1.13
+   W-N-broader (49 + 1 sqlite3 leak sites; multi-day per-site
+   refactor exceeded workstream budget).
+10. **W-Vb** (3-4d, partial closure per F-IR-02) — packaged-fixture
+    path + skeleton-loader + `open_session()` integration.
+    Persona-replay end-to-end deferred to v0.1.13 W-Vb.
 
 W-CARRY can be partially-authored at cycle open with placeholders
 filled in as work lands.

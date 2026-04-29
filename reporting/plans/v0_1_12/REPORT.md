@@ -77,7 +77,7 @@ Each deferral is explicit, with destination cycle:
 |---|---|---|
 | W-Vb persona-replay end-to-end | v0.1.13 W-Vb | The v0.1.12 cycle ships the packaging path; constructing valid `DomainProposal` rows for each persona is the v0.1.13 deliverable |
 | W-N-broader (49 sqlite3 connection-lifecycle leaks) | v0.1.13 W-N-broader | Audit-time fork decision: multi-day per-site refactor exceeds the workstream budget |
-| W-FBC-2 (F-B-04 multi-domain enforcement) | v0.1.13 | Per Codex F-PLAN-R2-04: v0.1.12 delivers design + recovery prototype + flag; multi-domain runtime enforcement is W-FBC-2 |
+| W-FBC-2 (F-B-04 recovery prototype + multi-domain enforcement) | v0.1.13 | Per Codex F-PLAN-R2-04 + F-IR-01 + F-IR-R2-01: v0.1.12 delivers design doc + `--re-propose-all` flag (CLI parser + capabilities + report-surface only). Both the recovery prototype (synthesis-side carryover-uncertainty token + persona scenario tests) and the multi-domain rollout are v0.1.13 W-FBC-2 work. |
 | CP6 §6.3 strategic-plan edit application | v0.1.13 strategic-plan rev | Per CP6 acceptance gate: proposal authored at v0.1.12, applied at v0.1.13 alongside other tactical adjustments |
 
 The cycle's honesty contract — every named-defer has a destination
@@ -115,10 +115,15 @@ extension (not a new D-entry).
   audit_findings.md F-PHASE0-02, and RELEASE_PROOF §2.2.
 
 - **Partial closures with named residuals beat all-or-nothing
-  scope.** W-Vb shipped the packaging path without persona-replay;
-  W-FBC shipped design + recovery prototype without multi-domain
-  enforcement. Both are honest about what they delivered and
-  what's left; both inherit the next cycle.
+  scope.** W-Vb shipped the packaging path + skeleton-loader
+  without persona-replay end-to-end; W-FBC shipped design + flag
+  plumbing without the recovery prototype or multi-domain
+  enforcement (the prototype was originally framed as a v0.1.12
+  deliverable but the synthesis-side wiring did not land — IR
+  rounds 1 + 2 caught the mismatch and the artifact set was
+  realigned to match the shipped reality). Both partial closures
+  inherit v0.1.13. Honest naming + accurate destination beats
+  over-committed delivery.
 
 - **Codex round-2 catches the round-1 revisions' second-order
   bugs.** F-PLAN-R2-01 (W-Vb persona+blank conflict),

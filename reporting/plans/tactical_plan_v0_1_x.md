@@ -263,12 +263,12 @@ calendar weeks from open.
 |---|---|---|
 | **W-AC** | Public-doc freshness sweep + ship-checklist | 0.5d |
 | **W-CARRY** | Carry-over register | 0.5d |
-| **W-Vb** | `hai demo` persona-replay + fixture-packaging path | 3-4d |
-| **W-H2** | Mypy stylistic-class fixes (≤ 5 errors target) | 2-3d |
-| **W-N-broader** | `-W error::Warning` gate (Phase 0 audit: 49 + 1 error → ≤ 80 branch → full broader gate ships) | 3-4d |
+| **W-Vb** *(partial closure)* | `hai demo` packaged-fixture path + skeleton-loader integration. Persona-replay end-to-end (proposal pre-population so `hai daily` reaches synthesis) deferred to v0.1.13 W-Vb per F-IR-02. | 3-4d |
+| **W-H2** | Mypy stylistic-class fixes (target ≤ 5 errors; achieved 0) | 2-3d |
+| **W-N-broader** *(fork-deferred)* | `-W error::Warning` gate audit: 49 + 1 sqlite3 leak sites surfaced. Audit-time fork to ">150-branch behaviour deliberately" — v0.1.12 ships v0.1.11 narrow `PytestUnraisableExceptionWarning` gate unchanged; broader-gate fix deferred to v0.1.13 W-N-broader. | 3-4d |
 | **W-D13-SYM** | D13-symmetry contract test + `coerce_*` fix in 4 domain `policy.py` files | 0.5-1d |
 | **W-PRIV** | Privacy doc updates + `hai auth remove` subcommand | 0.5-1d |
-| **W-FBC** | F-B-04 design + recovery prototype + `--re-propose-all` (multi-domain closure deferred to v0.1.13 W-FBC-2) | 1-2d |
+| **W-FBC** *(partial closure)* | F-B-04 design doc + `--re-propose-all` flag (CLI parser + capabilities + report-surface field only). **Recovery prototype + multi-domain runtime enforcement deferred to v0.1.13 W-FBC-2** per F-IR-01 (synthesis-side wiring did not land at v0.1.12 ship). | 0.5-1d |
 | **W-FCC** | F-C-05 `strength_status` enum surface in capabilities + `hai today --verbose` | 1d |
 | **W-CP** | Six cycle proposals CP1-CP6 (governance docs) | 1d |
 
@@ -276,8 +276,12 @@ calendar weeks from open.
 
 - All ship gates green per
   [`reporting/plans/v0_1_12/PLAN.md`](v0_1_12/PLAN.md) §3.
-- v0.1.11 named-defers closed or partial-closed with residual
-  named (F-B-04 → W-FBC-2 / v0.1.13).
+- v0.1.11 named-defers closed or partial-closed with each
+  residual named in §4 (this plan) and
+  [`reporting/plans/v0_1_12/RELEASE_PROOF.md`](v0_1_12/RELEASE_PROOF.md)
+  §5. v0.1.12 inherits *three* residuals to v0.1.13:
+  W-FBC-2 (F-B-04 recovery prototype + multi-domain), W-Vb
+  persona-replay end-to-end, and W-N-broader broader-warning gate.
 - CP1-CP5 deltas applied to AGENTS.md / strategic plan / tactical
   plan at v0.1.12 ship; CP6 application deferred to v0.1.13
   strategic-plan rev.
@@ -320,7 +324,7 @@ contract change, broader test gate.
 | W-id | Title | Effort | Source |
 |---|---|---|---|
 | **W-29-prep** | cli.py boundary audit (boundary-table verification + parser/capabilities regression test scaffold) | 0.5d | CP1 |
-| **W-FBC-2** | F-B-04 multi-domain closure — recovery prototype (synthesis-side `--re-propose-all` carryover-uncertainty token + persona-style scenario tests P1/P5/P9), then multi-domain rollout to all 6 domains; per-domain fingerprint primitive if option B/C chosen at design | 3-4d | Codex F-PLAN-R2-04 + F-IR-01 (recovery prototype originally framed as v0.1.12 deliverable; reframed as v0.1.13 inheritance after synthesis-side wiring did not land) |
+| **W-FBC-2** | F-B-04 — full closure inherited from v0.1.12 W-FBC partial. v0.1.13 ships: (1) recovery prototype: synthesis-side `--re-propose-all` enforcement on the recovery domain with the `recovery_proposal_carryover_under_re_propose_all` carryover-uncertainty token + persona-style scenario tests P1/P5/P9; (2) multi-domain rollout to all 6 domains; (3) per-domain fingerprint primitive if option B/C is chosen at design. | 3-4d | Codex F-PLAN-R2-04 + F-IR-01 + F-IR-R2-01 (the v0.1.12 cycle delivered design doc + flag plumbing only; both the recovery prototype and the multi-domain enforcement carry to v0.1.13) |
 | **W-Vb** (persona-replay end-to-end) | Author full-shape persona fixtures (DomainProposal seeds across all 6 domains per persona) + flip `apply_fixture()` to the proposal-write branch; wire so `hai demo start --persona <slug>` + `hai daily` reaches `synthesized`; clean-wheel build-install-subprocess test | 3-4d | F-IR-02 (loader + skeleton fixtures shipped at v0.1.12; full replay deferred) |
 | **W-N-broader** | `-W error::Warning` gate fix — audit each of the 49 + 1 sqlite3 connection-lifecycle leak sites surfaced by the v0.1.12 Phase 0 audit; close conn correctly on every CLI command + helper path; restore the broader-gate ship target | 4-6d | F-IR-03 (v0.1.12 fork-deferred at audit time per cycle-budget reasoning; v0.1.13 inherits the 49 + 1 site count as hard input) |
 | **W-LINT** | Regulated-claim lint (FDA general-wellness boundary — block "abnormal HRV", "clinical-grade marker", "risk score", "biomarker", etc. in user-facing prose) | 1-2d | Reconciliation C2 |

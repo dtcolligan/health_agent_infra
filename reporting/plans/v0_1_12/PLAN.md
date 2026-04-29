@@ -58,11 +58,19 @@
 **Trust repair, not feature push.** Three things this cycle is for:
 
 1. Close-or-honestly-partial-close every named-deferred item from
-   v0.1.11 (W-Vb, W-H2, W-N broader gate, F-A-04, F-A-05,
-   F-B-04 *design+prototype only — multi-domain closure deferred
-   to v0.1.13 W-FBC-2*, F-C-05). Where a deferred item cannot
+   v0.1.11. **Closed:** W-H2 (mypy 22 → 0), F-A-04, F-A-05
+   (subsumed by W-H2), F-C-05 (W-FCC). **Partial closure:** W-Vb
+   ships the packaged-fixture path + skeleton-loader; persona-
+   replay end-to-end deferred to v0.1.13 W-Vb. F-B-04 ships the
+   design doc + `--re-propose-all` flag (CLI parser +
+   capabilities + report-surface only); recovery prototype +
+   multi-domain enforcement deferred to v0.1.13 W-FBC-2 per
+   F-IR-01. **Fork-deferred:** W-N broader gate (49 + 1 leak
+   sites) deferred to v0.1.13 W-N-broader; v0.1.12 ships the
+   v0.1.11 narrow gate unchanged. Where a deferred item cannot
    close fully in this cycle, the residual is named explicitly
-   in §1.3 with a destination cycle (per Codex F-PLAN-R2-04).
+   in §1.3 with a destination cycle (per Codex F-PLAN-R2-04 +
+   F-IR-01 + F-IR-02 + F-IR-03 + F-IR-R2-01 + F-IR-R2-02).
 2. Repair trust surfaces — public docs that no longer match the
    shipped product, a packaging bug that breaks the demo on a clean
    wheel install, and an asymmetry in the D13 threshold-injection
@@ -91,7 +99,7 @@ sweep (~3-4 days).
 | **W-N-broader** | `-W error::Warning` gate (47 ResourceWarning sites) | correctness | `core/state/store.py` + every raw `sqlite3.Connection` site | v0.1.11 named-defer | 3-4d |
 | **W-D13-SYM** | D13-symmetry contract test + fix | trusted-seam | `domains/{recovery,running,sleep,stress}/policy.py`, `verification/tests/test_d13_symmetry_contract.py` (new) | L1 | 0.5-1d |
 | **W-PRIV** | Privacy doc updates + `hai auth remove` subcommand | trust | `reporting/docs/privacy.md`, `cli.py`, `core/capabilities/walker.py` | C4 | 0.5-1d |
-| **W-FBC** | F-B-04 design + recovery prototype (multi-domain closure deferred to v0.1.13 W-FBC-2 per Codex F-PLAN-R2-04) | audit-chain | `core/synthesis.py`, `cli.py` (`--re-propose-all`), `core/capabilities/walker.py`, `reporting/docs/supersede_domain_coverage.md` (new), `verification/tests/test_supersede_domain_coverage.py` (new) | v0.1.11 named-defer | 1-2d |
+| **W-FBC** (partial closure per F-IR-01) | F-B-04 design doc + `--re-propose-all` flag (CLI parser + capabilities + report-surface field). **Recovery prototype + multi-domain runtime enforcement deferred to v0.1.13 W-FBC-2** per F-IR-01 (originally framed as v0.1.12 deliverable; synthesis-side wiring did not land — artifact set realigned at implementation review) | audit-chain | `cli.py` (`--re-propose-all` flag + report-surface field), `core/capabilities/walker.py`, `reporting/docs/supersede_domain_coverage.md` (new) | v0.1.11 named-defer | 0.5-1d |
 | **W-FCC** | F-C-05 — `strength_status` enum surfaceability | UX | `core/capabilities/walker.py`, `cli.py` today handler | v0.1.11 named-defer | 1d |
 | **W-CP** | Cycle proposals CP1-CP6 (governance docs) | governance | `reporting/plans/v0_1_12/cycle_proposals/CP{1..6}.md` (new) | D1-D4 + L3 | 1d |
 
@@ -110,7 +118,7 @@ fails if more than two named-defers slip a second time.
 | W-29-prep cli.py boundary audit (half-day) | v0.1.13 | per CP1 |
 | W-29 cli.py mechanical split (1 main + 1 shared + 11 handler-group, <2500 each) | v0.1.14 | per CP1, conditional on prep verdict |
 | L2 W-DOMAIN-SYNC scoped contract test (single truth table + expected-subset assertions; not all 8 named tables are six-domain registries — `_DOMAIN_ACTION_REGISTRY` is intentionally Phase-A-only) | v0.1.14 | per reconciliation action 12 (re-scoped per Codex F-PLAN-09) |
-| **W-FBC-2** — F-B-04 multi-domain closure (full supersede policy implementation across all six domains; per-domain fingerprint primitive if option B/C chosen at v0.1.12 design) | v0.1.13 | per Codex F-PLAN-R2-04 — v0.1.12 W-FBC delivers design + recovery prototype only |
+| **W-FBC-2** — F-B-04 recovery prototype (synthesis-side `--re-propose-all` carryover-uncertainty token + persona-style scenario tests P1/P5/P9), then multi-domain rollout to all six domains; per-domain fingerprint primitive if option B/C chosen at design | v0.1.13 | per Codex F-PLAN-R2-04 + F-IR-01 — v0.1.12 W-FBC delivers design + flag (parser + capabilities + report-surface) only; both the recovery prototype and the multi-domain enforcement carry to v0.1.13 |
 | A12 judge-adversarial fixtures | v0.1.14 | folds into W-AI per reconciliation action 14 |
 | A2 / W-AL calibration scaffold (schema/report shape only) | v0.1.14 | real correlation work to v0.5+ |
 | W52 weekly review + W53 insight ledger + C8 evidence-card schema + C5 deterministic claim-block + W58 LLM-judge **shadow-by-default** with `HAI_W58_JUDGE_MODE` feature flag (memory-poisoning fixtures land alongside) | v0.2.0 | per CP5 — single substantial release; flag flip to blocking happens within v0.2.0 (or v0.2.0.x patch) once shadow-mode evidence supports it. Not a release boundary. |
@@ -188,7 +196,7 @@ Items (from v0.1.11 RELEASE_PROOF §5):
 | W-N broader gate | in-cycle (W-N-broader here) |
 | F-A-04 | in-cycle (W-H2 covers) |
 | F-A-05 | in-cycle (W-H2 covers) |
-| F-B-04 | partial-closure in v0.1.12 (W-FBC: design doc + recovery prototype + `--re-propose-all` override flag) → multi-domain closure deferred to v0.1.13 W-FBC-2 (per Codex F-PLAN-R2-04) |
+| F-B-04 | partial-closure in v0.1.12 (W-FBC: design doc + `--re-propose-all` flag — CLI parser + capabilities + report-surface only) → recovery prototype + multi-domain enforcement deferred to v0.1.13 W-FBC-2 (per Codex F-PLAN-R2-04 + F-IR-01) |
 | F-C-05 | in-cycle (W-FCC here) |
 | W52 / W53 / W58 | defer-with-reason → v0.2.0+ per CP5 |
 
@@ -207,7 +215,15 @@ Plus implicit carry-overs from the reconciliation:
 disposition row in the register. Every reconciliation §6 item
 flagged as v0.1.12 has a row.
 
-### 2.3 W-Vb — `hai demo` persona-replay + fixture-packaging path
+### 2.3 W-Vb — `hai demo` packaged-fixture path + skeleton loader (partial closure per F-IR-02)
+
+> **v0.1.12 partial-closure scope (F-IR-02).** This workstream
+> ships the packaged-fixture path and a skeleton-loader; persona-
+> replay end-to-end (proposal pre-population so `hai daily` reaches
+> synthesis) is **deferred to v0.1.13 W-Vb**. Original section
+> heading was "persona-replay + fixture-packaging path" but the
+> first-half framing turned out to be optimistic; renamed at IR
+> round 2 per F-IR-R2-02.
 
 **Current state (verified by Codex F-PLAN-06 against
 `cli.py:8530-8537`, `core/demo/session.py:226-230`,
@@ -358,6 +374,15 @@ gate. W-N owns:
 | ≤ 80 | `uv run pytest verification/tests -W error::Warning -q` | full broader gate ships in v0.1.12 |
 | 80-150 | `uv run pytest verification/tests -W error::ResourceWarning::sqlite3 -q` | v0.1.12 ships sqlite3-only ResourceWarning gate; W-N-broader-2 (v0.1.13) carries the residual `Warning` categories; named-defer in `v0_1_12/RELEASE_PROOF.md` §5 |
 | > 150 | `uv run pytest verification/tests -W error::pytest.PytestUnraisableExceptionWarning -q` | v0.1.12 keeps v0.1.11 narrow gate; entire broader-gate work carries to v0.1.13 W-N-broader; named-defer recorded |
+
+**Branch chosen at v0.1.12 ship: the >150-branch behaviour
+deliberately**, despite audit count being ≤ 80 (49 + 1). The
+threshold was a budget heuristic; the actual constraint is that
+49 connection-lifecycle bugs is multi-day per-site refactor work
+that exceeded the workstream budget. v0.1.12 ships the v0.1.11
+narrow `PytestUnraisableExceptionWarning` gate unchanged; the
+broader-gate fix (49 + 1 leak sites) is named-deferred to
+v0.1.13 W-N-broader as inherited backlog.
 
 **Audit result + fork decision (v0.1.12, 2026-04-29).** Audit
 returned **49 fail + 1 error** under the broader gate. All
@@ -841,30 +866,36 @@ implicit-approval framing per Codex F-PLAN-04).
   Decisions" — substantive enough that the D14 plan-audit may
   surface revisions to one or more. **Budget 2-4 D14 rounds for
   this PLAN.md** per the v0.1.11 empirical norm.
-- **Demo-flow contract change.** W-Vb changes the demo contract
-  from "stops at boundary" (v0.1.11 isolation-replay) to "reaches
-  synthesis" (v0.1.12 persona-replay). The v0.1.11 boundary-stop
-  transcript stays in v0_1_11/RELEASE_PROOF as historical proof;
-  v0.1.12's RELEASE_PROOF documents the new transcript.
+- **Demo-flow contract change (deferred).** Originally framed
+  as v0.1.12 W-Vb extending the demo contract from "stops at
+  boundary" (v0.1.11 isolation-replay) to "reaches synthesis."
+  Per F-IR-02, the contract change is **deferred to v0.1.13
+  W-Vb** alongside the persona-replay end-to-end work. v0.1.12
+  ships the packaged-fixture path + skeleton-loader; v0.1.11
+  boundary-stop transcript remains canonical for v0.1.12. The
+  contract flips at v0.1.13 ship.
 - **F-B-04 partial-closure scope** (revised post-Codex F-PLAN-07
-  round 1 + F-PLAN-R2-04 round 2). Per-domain fingerprint
-  primitive does not exist today. v0.1.12 W-FBC delivers
-  *partial closure* — design doc + recovery prototype + override
-  flag. **Full multi-domain F-B-04 closure is named-deferred to
+  round 1 + F-PLAN-R2-04 round 2 + F-IR-01 round 1). Per-domain
+  fingerprint primitive does not exist today. v0.1.12 W-FBC
+  delivers *partial closure* — design doc + `--re-propose-all`
+  flag (CLI parser + capabilities + report-surface field) only;
+  no synthesis-side runtime effect, no recovery prototype, no
+  carryover-uncertainty token. **Recovery prototype + full
+  multi-domain F-B-04 closure are named-deferred to
   v0.1.13 W-FBC-2** (see §1.3 and §2.2 W-CARRY). Risk: claiming
-  full closure here would overstate what the cycle delivers;
-  Codex round 2 caught this. Risk on the partial closure: the
-  one-domain prototype may not surface compute-cost issues that
-  emerge only in multi-domain production state — budget revisit
-  at v0.1.13 W-FBC-2 design.
-- **W-Vb harness/packaged fixture sync.** Packaged fixtures live
-  at `src/health_agent_infra/demo/fixtures/`; harness fixtures
-  live at `verification/dogfood/personas/`. Drift between them
-  means demo and persona-test surfaces describe different state.
-  Mitigation: `test_demo_persona_replay.py` asserts the demo's
-  pre-populated proposals match the harness's expected actions
-  for the same persona. Long-term: consolidation is a v0.1.14+
-  question.
+  full closure here would overstate what the cycle delivers; the
+  D14 plan-audit caught the over-commit, and the IR rounds caught
+  the residual artifact mismatch — the v0.1.13 W-FBC-2 inheritance
+  is the honest deliverable destination.
+- **W-Vb harness/packaged fixture sync (forward-compat).**
+  Packaged fixtures live at `src/health_agent_infra/demo/fixtures/`
+  (skeleton-only at v0.1.12); harness fixtures live at
+  `verification/dogfood/personas/`. When v0.1.13 W-Vb authors
+  full-shape persona fixtures, drift between them would mean
+  demo and persona-test surfaces describe different state. v0.1.13
+  W-Vb's deliverable will include a sync assertion; v0.1.12's
+  skeleton fixtures are too minimal for drift to matter today.
+  Long-term: consolidation is a v0.1.14+ question.
 - **CP6 framing-edit blast radius.** L3 strategic-plan §6.3 is
   publicly read; the rephrasing is honest but visible. Codex
   D14 may push back on wording. Treat the edit as iterable in

@@ -208,7 +208,7 @@ extended to record the empirical confirmation.
 |---|---|---|
 | W-Vb persona-replay end-to-end | v0.1.13 W-Vb | partial-closure split per PLAN.md §2.3 — v0.1.12 ships packaging path, v0.1.13 ships proposal pre-population |
 | W-N-broader (49 sqlite3 leaks) | v0.1.13 W-N-broader | audit-time fork decision per PLAN.md §2.5 — multi-day per-site refactor exceeds workstream budget |
-| W-FBC-2 (F-B-04 multi-domain) | v0.1.13 | partial-closure split per Codex F-PLAN-R2-04 — v0.1.12 ships design doc + recovery prototype + flag, v0.1.13 ships full multi-domain enforcement |
+| W-FBC-2 (F-B-04 recovery prototype + multi-domain) | v0.1.13 | partial-closure split per Codex F-PLAN-R2-04 + F-IR-01 + F-IR-R2-01 — v0.1.12 ships design doc + `--re-propose-all` flag (CLI parser + capabilities + report-surface only); v0.1.13 ships the recovery prototype (synthesis-side carryover-uncertainty token + persona-style scenario tests) AND the multi-domain rollout. Both runtime surfaces inherit v0.1.13. |
 | CP6 §6.3 framing edit application | v0.1.13 strategic-plan rev | per CP6 acceptance gate — proposal authored this cycle, edit applied next |
 
 ---
