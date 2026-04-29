@@ -51,10 +51,20 @@ from dataclasses import dataclass, field
 from datetime import date, timedelta
 from typing import Any, Iterable, Optional, Protocol
 
+from health_agent_infra import __version__ as _PACKAGE_VERSION
 from health_agent_infra.core.pull.auth import IntervalsIcuCredentials
 
 
 DEFAULT_BASE_URL = "https://intervals.icu"
+
+# Cloudflare's bot protection on the intervals.icu zone (error 1010,
+# "browser_signature_banned") rejects urllib's default UA. A project-
+# identifying User-Agent clears the heuristic and is the conventional
+# shape for a programmatic API client. Empirically observed 2026-04-29.
+DEFAULT_USER_AGENT = (
+    f"health-agent-infra/{_PACKAGE_VERSION} "
+    "(+https://github.com/dtcolligan/health-agent-infra)"
+)
 
 
 # Canonical raw-daily-row columns mirroring the Garmin CSV export header.
@@ -263,6 +273,7 @@ class HttpIntervalsIcuClient:
     credentials: IntervalsIcuCredentials
     base_url: str = DEFAULT_BASE_URL
     timeout_seconds: float = 30.0
+    user_agent: str = DEFAULT_USER_AGENT
 
     def __post_init__(self) -> None:
         token = f"API_KEY:{self.credentials.api_key}".encode("utf-8")
@@ -304,6 +315,7 @@ class HttpIntervalsIcuClient:
             headers={
                 "Authorization": self._auth_header,
                 "Accept": "application/json",
+                "User-Agent": self.user_agent,
             },
         )
         try:

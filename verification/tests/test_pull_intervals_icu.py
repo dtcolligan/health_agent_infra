@@ -333,6 +333,7 @@ class _RecordingHandler(BaseHTTPRequestHandler):
     # Class-level state so test can inspect after teardown.
     last_path: str = ""
     last_auth_header: str = ""
+    last_user_agent: str = ""
     response_status: int = 200
     response_body: bytes = b"[]"
 
@@ -342,6 +343,7 @@ class _RecordingHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         type(self).last_path = self.path
         type(self).last_auth_header = self.headers.get("Authorization", "")
+        type(self).last_user_agent = self.headers.get("User-Agent", "")
         self.send_response(type(self).response_status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(type(self).response_body)))
@@ -356,6 +358,7 @@ def local_server():
     # Reset state between tests.
     _RecordingHandler.last_path = ""
     _RecordingHandler.last_auth_header = ""
+    _RecordingHandler.last_user_agent = ""
     _RecordingHandler.response_status = 200
     _RecordingHandler.response_body = b"[]"
 
@@ -380,6 +383,31 @@ def test_http_client_uses_basic_auth_with_literal_api_key_username(local_server)
 
     expected = "Basic " + base64.b64encode(b"API_KEY:sekret").decode("ascii")
     assert handler.last_auth_header == expected
+
+
+def test_http_client_sends_project_user_agent(local_server):
+    # Cloudflare's bot protection on intervals.icu rejects urllib's default
+    # UA with error 1010 (browser_signature_banned). The adapter must send a
+    # project-identifying User-Agent on every request.
+    base_url, handler = local_server
+    client = HttpIntervalsIcuClient(
+        credentials=IntervalsIcuCredentials(athlete_id="i123", api_key="sekret"),
+        base_url=base_url,
+    )
+    client.fetch_wellness_range(date(2026, 4, 17), date(2026, 4, 17))
+    assert handler.last_user_agent.startswith("health-agent-infra/")
+    assert "Python-urllib" not in handler.last_user_agent
+
+
+def test_http_client_user_agent_is_overridable(local_server):
+    base_url, handler = local_server
+    client = HttpIntervalsIcuClient(
+        credentials=IntervalsIcuCredentials(athlete_id="i123", api_key="sekret"),
+        base_url=base_url,
+        user_agent="custom-agent/1.0",
+    )
+    client.fetch_activities_range(date(2026, 4, 17), date(2026, 4, 17))
+    assert handler.last_user_agent == "custom-agent/1.0"
 
 
 def test_http_client_assembles_wellness_range_url(local_server):
