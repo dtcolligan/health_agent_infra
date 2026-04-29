@@ -1,48 +1,61 @@
 # Roadmap
 
-Now, next, and later. The current release-by-release plan lives in
-[`reporting/plans/tactical_plan_v0_1_x.md`](reporting/plans/tactical_plan_v0_1_x.md)
-and the longer-horizon strategy in
+Now, next, and later. **The release-by-release plan of record lives in
+[`reporting/plans/tactical_plan_v0_1_x.md`](reporting/plans/tactical_plan_v0_1_x.md)**
+(next 6-8 releases) and the longer-horizon strategy in
 [`reporting/plans/strategic_plan_v1.md`](reporting/plans/strategic_plan_v1.md).
 The earlier
 [`reporting/plans/historical/multi_release_roadmap.md`](reporting/plans/historical/multi_release_roadmap.md)
 is superseded as of 2026-04-27.
 
+This file is a high-level pointer; for actual scope, read those plans.
+
 ## Now
 
-- **v0.1.8 current.** Plan-aware feedback visibility. Intent + target +
-  data-quality ledgers, code-owned review-summary tokens, `hai stats`
-  outcomes/baselines/funnel/data-quality modes, config validate + diff,
-  `hai daily --auto --explain`, and synthesis-skill scoring. Closed four
-  audit rounds; see [AUDIT.md](AUDIT.md).
-- **v0.1.9 next.** Weekly review, insight proposal ledger, and an LLM
-  factuality gate with an agent-judge negotiation loop. Also carries the
-  v0.1.8 backlog notes: global threshold-runtime type hardening and pytest
-  unraisable warning cleanup.
+- **v0.1.11 shipped (2026-04-28).** Audit-cycle deferred items closed;
+  persona matrix expanded 8 → 12; property-based testing for the policy
+  DSL; demo isolation contract shipped (boundary-stop replay). Closed four
+  D14 plan-audit rounds + four implementation-review rounds. See
+  [`reporting/plans/v0_1_11/RELEASE_PROOF.md`](reporting/plans/v0_1_11/RELEASE_PROOF.md).
+- **v0.1.12 in flight.** Carry-over closure + trust repair: demo persona-
+  replay (W-Vb), mypy stylistic class (W-H2), `-W error::Warning` gate
+  (W-N-broader), D13 consumer-site symmetry (W-D13-SYM), privacy doc +
+  `hai auth remove` (W-PRIV), supersede-policy design + recovery prototype
+  (W-FBC; full multi-domain closure deferred to v0.1.13 W-FBC-2),
+  `strength_status` enum surface (W-FCC), public-doc freshness sweep
+  (W-AC), carry-over register (W-CARRY), six cycle proposals (W-CP). See
+  [`reporting/plans/v0_1_12/PLAN.md`](reporting/plans/v0_1_12/PLAN.md).
 
 ## Next
 
-- **v0.2 - visualization artifacts + BCTO.** Artifact ledger, reproducible
-  chart/report commands, and Behaviour Change Technique Ontology tags on
-  recommendations.
-- **v0.3 - extension contracts + data-quality drift detection.** Domain and
-  adapter contribution contracts, vendor algorithm drift detection,
-  per-metric calibration progress, multi-source reconciliation blocks, and
-  first-run UX triad (`hai init`, `hai demo`, `hai next-step --json`).
-- **v0.4 - runtime portability + cryptographic provenance.** MCP server over
-  governed proposal/stat surfaces, encrypted state DB, signed append-only
-  audit log, and optional local-LLM pathway.
-- **v0.5 - personal evidence ledger + N-of-1 substrate.** Experiment ledger
-  and deterministic single-user analysis substrate. This starts the clock
-  for v0.6; the estimator needs at least 90 days of accumulated triples.
+- **v0.1.13 — onboarding + cli.py-split prep.** Trusted-first-value gate
+  + acceptance-matrix (5 paths × required result), declarative persona
+  expected-actions (W-AK), regulated-claim lint (W-LINT), W-29-prep
+  cli.py boundary audit (per CP1), W-FBC-2 multi-domain F-B-04 closure.
+- **v0.1.14 — eval substrate + cli.py split.** W-29 mechanical cli.py
+  split (1 main + 1 shared + 11 handler-group, conditional on v0.1.13
+  prep verdict), L2 W-DOMAIN-SYNC scoped contract test, judge-adversarial
+  fixtures (W-AI), W-AL calibration scaffold (schema/report shape only).
+- **v0.2.0 — weekly review + insight ledger + factuality gate.** W52
+  weekly review with source-row locators, W53 insight ledger, W58
+  deterministic claim-block (blocking from day 1), W58 LLM judge ships
+  shadow-by-default with `HAI_W58_JUDGE_MODE` flag (flip to blocking
+  within v0.2.0 or v0.2.0.x once shadow evidence supports). W-30
+  capabilities-manifest schema freeze as last act of cycle (per CP2).
+- **v0.3+ — MCP staging.** v0.3 plans MCP server (read-surface design +
+  threat-model artifact + provenance import contract). v0.4 prereqs
+  land (least-privilege scope model + threat-model completion). v0.4-or-
+  v0.5 ships MCP read surface. **No write surface ever.** Per CP4.
+- **v0.5+ — calibration substrate.** Read-only UI decision-checkpoint
+  (per existing strategic plan).
 
 ## Later
 
-- **v0.6 - personal-evidence estimator.** Reads 90+ days of v0.5 triples and
-  produces per-user effect estimates with explicit uncertainty.
-- **v0.7 - governed adaptation.** LLM proposes structured threshold
+- **v0.6 — personal-evidence estimator.** Reads 90+ days of v0.5 triples
+  and produces per-user effect estimates with explicit uncertainty.
+- **v0.7 — governed adaptation.** LLM proposes structured threshold
   mutations citing estimator output; user approves or rejects.
-- **v1.0 - stable contract.** Acceptance requires at least three months of
+- **v1.0 — stable contract.** Acceptance requires at least three months of
   zero-incident operation after v0.7.
 
 ## Explicitly Out Of Scope

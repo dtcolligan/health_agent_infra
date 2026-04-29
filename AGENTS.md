@@ -121,8 +121,12 @@ write a cycle proposal in `reporting/plans/`; do not act unilaterally.
   was validation/diff/auditability, not re-implementation.
 - **W47 is cut.** Keep release-proof/changelog discipline, but do not add a
   working-tree-sensitive changelog test.
-- **W29 / W30 deferred.** Do not split `cli.py`. Do not freeze the
-  capabilities manifest schema yet.
+- **W29 / W30 scheduled.** cli.py split scheduled for v0.1.14
+  conditional on v0.1.13 boundary-audit verdict (parser /
+  capabilities regression test mandatory regardless).
+  Capabilities-manifest schema freeze scheduled for v0.2.0 after
+  W52 / W58 schema additions land. (Origin: v0.1.12 CP1 + CP2,
+  paired acceptance.)
 - **Garmin Connect is not the default live source.** Login is rate-limited
   and unreliable. Default to intervals.icu when configured.
 - **Nutrition v1 is macros-only.**
@@ -179,7 +183,31 @@ write a cycle proposal in `reporting/plans/`; do not act unilaterally.
   demo-isolation + audit-chain-integrity work). Future cycles should
   budget 2-4 rounds rather than expecting one-shot coherence. All
   four rounds were cheap relative to catching the same bugs during
-  implementation.
+  implementation. **v0.1.12 confirmed the 10 → 5 → 3 → 0 settling
+  signature** at the same 4-round shape (18 cumulative findings) —
+  the pattern is now twice-empirically-validated for substantive
+  PLANs.
+- **(D15, v0.1.12) Cycle-weight tiering.** Substantive / hardening
+  / doc-only / hotfix.
+
+  - **Substantive** (≥1 release-blocker workstream, ≥3 governance
+    or audit-chain edits, OR ≥10 days estimated): full Phase 0
+    bug-hunt (D11) + multi-round D14 plan-audit until
+    `PLAN_COHERENT` (empirical norm 2-4 rounds).
+  - **Hardening** (correctness/security only, no governance, ≤1
+    week): abbreviated Phase 0 (internal sweep + audit-chain
+    probe; persona matrix optional); single-round D14 plan-audit
+    target.
+  - **Doc-only** (no code change, no test surface change): may
+    skip Phase 0 + D14. RELEASE_PROOF still required if version
+    bumps.
+  - **Hotfix** (reverts, single-bug fixes, named-defer
+    propagation, no scope expansion): may skip Phase 0 + D14.
+    Lightweight RELEASE_PROOF.
+
+  RELEASE_PROOF.md declares the chosen tier as the first line
+  of the document. Future audit-cycle retros cite the tier
+  annotation. Origin: v0.1.12 CP3.
 
 ## Release Cycle Expectation
 
@@ -211,6 +239,33 @@ pre-cycle plan-audit phase (D14):
 Do not ship a substantive release without release proof. Smaller doc-only
 changes can be scoped by Dom, but do not silently weaken the audit
 convention.
+
+### Ship-time freshness checklist (v0.1.12 W-AC / reconciliation A8)
+
+Before declaring a substantive release shipped, verify every line below.
+Drift in any of these is the trust hazard a second user hits first:
+
+- [ ] `ROADMAP.md` "Now" section names the just-shipped version + the
+  current in-flight version. No "v0.1.X current" string for an older X.
+- [ ] `AUDIT.md` has a new entry for the just-shipped cycle (round table +
+  outcome verdict + RELEASE_PROOF link). v0.1.10/v0.1.11/etc. cannot
+  silently fall off the index.
+- [ ] `README.md` "Now/Next" or equivalent reflects current state.
+  Historical "v0.1.X added Y" prose can stay.
+- [ ] `HYPOTHESES.md` references current strategic plan, not a
+  superseded roadmap.
+- [ ] `reporting/plans/README.md` reading-order index marks the just-
+  shipped cycle as shipped (not "in flight").
+- [ ] `reporting/plans/tactical_plan_v0_1_x.md` next-cycle row reflects
+  the just-authored next-cycle PLAN, not the pre-revision shape.
+- [ ] `success_framework_v1.md` and `risks_and_open_questions.md` —
+  spot-check for stale references to deferred items that have since
+  shipped or moved.
+
+`verification/tests/test_doc_freshness_assertions.py` (added v0.1.12)
+catches version-tag drift in the most common offenders mechanically.
+The checklist above covers the human-judgement freshness items the
+test cannot mechanise.
 
 ## Test Commands
 
@@ -249,8 +304,8 @@ CI runs `verification/tests/`. The suite includes docs and skill/CLI drift check
 - Do not open a PR or push autonomously.
 - Do not add a wearable source until the per-domain evidence contract is
   broadened.
-- Do not split `cli.py` or freeze the capabilities manifest schema in this
-  cycle.
+- Do not split `cli.py` or freeze the capabilities manifest schema before
+  their scheduled cycles (v0.1.14 / v0.2.0). (Origin: v0.1.12 CP1 + CP2.)
 - Do not add micronutrient or food-taxonomy features.
 - Do not treat raw SQLite reads as the normal inspection surface; use
   `hai today`, `hai explain`, and `hai doctor`.
