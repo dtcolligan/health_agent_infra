@@ -191,13 +191,13 @@ Items (from v0.1.11 RELEASE_PROOF §5):
 
 | Item | Disposition |
 |---|---|
-| W-Vb | in-cycle (W-Vb here) |
-| W-H2 | in-cycle (W-H2 here) |
-| W-N broader gate | in-cycle (W-N-broader here) |
+| W-Vb | partial-closure → v0.1.13 W-Vb (v0.1.12 ships packaged-fixture path + skeleton-loader; persona-replay end-to-end deferred per F-IR-02) |
+| W-H2 | in-cycle (W-H2 covers; mypy 22 → 0) |
+| W-N broader gate | fork-deferred → v0.1.13 W-N-broader (v0.1.12 ships v0.1.11 narrow gate unchanged; 49 + 1 sqlite3 leak sites named-deferred per audit-time fork) |
 | F-A-04 | in-cycle (W-H2 covers) |
 | F-A-05 | in-cycle (W-H2 covers) |
 | F-B-04 | partial-closure in v0.1.12 (W-FBC: design doc + `--re-propose-all` flag — CLI parser + capabilities + report-surface only) → recovery prototype + multi-domain enforcement deferred to v0.1.13 W-FBC-2 (per Codex F-PLAN-R2-04 + F-IR-01) |
-| F-C-05 | in-cycle (W-FCC here) |
+| F-C-05 | in-cycle (W-FCC covers) |
 | W52 / W53 / W58 | defer-with-reason → v0.2.0+ per CP5 |
 
 Plus implicit carry-overs from the reconciliation:
