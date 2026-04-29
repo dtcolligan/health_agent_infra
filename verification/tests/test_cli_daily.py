@@ -515,3 +515,86 @@ def test_daily_omits_hint_on_non_tty_stderr(tmp_path, capsys, monkeypatch):
 
     assert rc == 0
     assert "hai today" not in captured.err
+
+
+# ---------------------------------------------------------------------------
+# W-FBC partial closure — --re-propose-all flag plumbing (v0.1.12)
+# ---------------------------------------------------------------------------
+
+def test_daily_re_propose_all_flag_round_trips_through_report(
+    tmp_path, capsys, monkeypatch,
+):
+    """The --re-propose-all flag must surface as
+    ``re_propose_all_requested`` in the daily report JSON. Today the
+    runtime effect is partial (recovery prototype only, per
+    reporting/docs/supersede_domain_coverage.md); the report-side
+    surface is the v0.1.12 contract that v0.1.13 W-FBC-2 will extend.
+    """
+    db_path = _fresh_db(tmp_path)
+    monkeypatch.setenv("HAI_STATE_DB", str(db_path))
+    base_dir = tmp_path / "out"
+
+    rc = _run_daily(
+        "--base-dir", str(base_dir),
+        "--as-of", AS_OF,
+        "--user-id", USER_ID,
+        "--db-path", str(db_path),
+        "--skip-pull",
+        "--re-propose-all",
+    )
+    report = _stdout_json(capsys)
+
+    assert rc == 0
+    assert report["re_propose_all_requested"] is True
+
+
+def test_daily_re_propose_all_absent_defaults_to_false(
+    tmp_path, capsys, monkeypatch,
+):
+    """Without --re-propose-all, the report records
+    ``re_propose_all_requested: false`` — so the option-A-default
+    policy is observable without the flag, not just under it."""
+
+    db_path = _fresh_db(tmp_path)
+    monkeypatch.setenv("HAI_STATE_DB", str(db_path))
+    base_dir = tmp_path / "out"
+
+    rc = _run_daily(
+        "--base-dir", str(base_dir),
+        "--as-of", AS_OF,
+        "--user-id", USER_ID,
+        "--db-path", str(db_path),
+        "--skip-pull",
+    )
+    report = _stdout_json(capsys)
+
+    assert rc == 0
+    assert report["re_propose_all_requested"] is False
+
+
+def test_daily_re_propose_all_capabilities_surfaced(monkeypatch, tmp_path):
+    """The flag must appear in `hai capabilities --json` so an agent
+    consumer can discover the override without reading source. This is
+    the contract that v0.1.13 W-FBC-2 inherits."""
+
+    import json
+    import subprocess
+
+    result = subprocess.run(
+        ["uv", "run", "hai", "capabilities", "--json"],
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd="/Users/domcolligan/health_agent_infra",
+    )
+    manifest = json.loads(result.stdout)
+    daily = next(
+        (r for r in manifest["commands"] if r["command"] == "hai daily"),
+        None,
+    )
+    assert daily is not None, "hai daily missing from capabilities manifest"
+
+    flag_names = [f["name"] for f in daily.get("flags", [])]
+    assert "--re-propose-all" in flag_names, (
+        f"hai daily flags missing --re-propose-all; got {flag_names}"
+    )
