@@ -40,9 +40,13 @@ Per-release detail lives under `reporting/plans/<version>/`.
   Live classified-state-of-the-day rendering deferred to
   v0.1.13.
 - **`hai daily --re-propose-all`** (W-FBC, partial closure of
-  F-B-04) — surfaces the override flag in the daily report JSON;
-  full multi-domain runtime enforcement deferred to v0.1.13
-  W-FBC-2 per Codex F-PLAN-R2-04.
+  F-B-04) — flag accepted by the parser; round-trips through the
+  daily report JSON as `re_propose_all_requested: bool`;
+  capabilities-manifest-listed. **Report-surface only at v0.1.12;
+  recovery prototype + multi-domain runtime enforcement deferred
+  to v0.1.13 W-FBC-2** per F-IR-01 (originally framed as v0.1.12
+  deliverable; synthesis-side wiring did not land — artifact set
+  realigned at implementation review).
 - **`STRENGTH_STATUS_VALUES`** constant + capabilities-manifest
   `enum_surface` annotation on `hai today` (W-FCC).
 - **Packaged demo-fixture path + loader** (W-Vb partial closure,

@@ -56,40 +56,50 @@ in a runtime that has not yet enforced option A across all domains
 This cycle delivers:
 
 1. **This document** — names the chosen policy with rationale.
-2. **The `--re-propose-all` CLI flag** on `hai daily`. Always
-   accepted; capabilities-surfaced. Today the flag has *partial*
-   runtime effect: the recovery domain (the one-domain prototype)
-   honors it; the other five domains pass through unchanged. v0.1.13
-   W-FBC-2 lifts the enforcement to all six.
-3. **Recovery prototype:** when `--re-propose-all` is set and the
-   recovery proposal in `proposal_log` for the target `for_date` was
-   authored before the current `now` minus a threshold (default: 1
-   minute, treats anything older as "carried over from a prior run"),
-   synthesis emits a `recovery_proposal_carryover_under_re_propose_all`
-   uncertainty token in the canonical recommendation row.
-4. **Tests covering three persona scenarios**:
+2. **The `--re-propose-all` CLI flag** on `hai daily`. Accepted by
+   the parser; round-trips through the daily report JSON as
+   `re_propose_all_requested: bool`; capabilities-manifest-listed.
+   **Runtime effect at v0.1.12: report-surface only.** No
+   synthesis-side enforcement. No recovery prototype. No per-
+   domain carryover token. The flag is the *contract* that
+   v0.1.13 W-FBC-2 will fill in.
+
+This is the honest correction at implementation review (F-IR-01,
+2026-04-29). The v0.1.12 cycle originally framed (b) as a recovery
+prototype with a `recovery_proposal_carryover_under_re_propose_all`
+uncertainty token + persona-style scenario tests. The synthesis-
+side wiring did not land; the artifact set was patched at ship to
+match shipped reality rather than retro-implementing in a hot
+fix.
+
+## Forward-compat to v0.1.13 W-FBC-2
+
+W-FBC-2 ships, in order:
+
+1. **Recovery prototype** — when `--re-propose-all` is set and
+   recovery's `proposal_log` entry for the target `for_date` was
+   authored before the current `now` minus a freshness threshold
+   (default: 1 minute), synthesis emits a
+   `recovery_proposal_carryover_under_re_propose_all` uncertainty
+   token in the canonical recommendation row.
+2. **Persona scenario tests** for the recovery prototype:
    - P1 (Dom baseline) — morning fresh-state supersede; flag set;
      fresh proposals authored within session; no carryover token.
    - P5 (female multi-sport) — thin-history with state delta;
      flag set; recovery proposal NOT re-authored; carryover token
      fires for recovery.
    - P9 (older female endurance) — supersede-after-intake-change
-     baseline; flag absent; no carryover token regardless of
-     timing (default policy stays implicit).
-
-## Forward-compat to v0.1.13 W-FBC-2
-
-W-FBC-2 lifts:
-
-- Option-A enforcement to all six domains, not just recovery.
-- If option B is chosen at W-FBC-2 design, the per-domain
-  fingerprint primitive is the additional surface that ships there
-  (the v0.1.12 fingerprint is global; per-domain requires breaking
-  out the upstream state surfaces by domain).
+     baseline; flag absent; no carryover token.
+3. **Multi-domain enforcement** — option-A behaviour propagates
+   to all six domains.
+4. **If option B is chosen** at W-FBC-2 design instead of A,
+   the per-domain fingerprint primitive ships alongside (the
+   v0.1.12 fingerprint is global; per-domain requires breaking
+   out the upstream state surfaces by domain).
 
 The acceptance gate for W-FBC-2 is multi-domain coverage in the
-persona matrix — every domain emits the carryover signal under the
-same conditions.
+persona matrix — every domain emits the carryover signal under
+the same conditions.
 
 ## What this document is not
 

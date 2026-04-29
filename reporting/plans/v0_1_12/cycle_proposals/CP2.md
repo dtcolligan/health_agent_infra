@@ -74,7 +74,9 @@ The freeze locks the manifest's top-level schema (`schema_version
 ## Acceptance gate
 
 - `accepted`: AGENTS.md edit applied at v0.1.12 ship paired with
-  CP1. Tactical plan updated.
+  CP1. Tactical plan updated. **Editorial convention (per F-IR-04
+  round 1):** origin parenthetical addition allowed — see CP1
+  acceptance gate for the convention.
 - `accepted-with-revisions`: revised text applied; AGENTS.md
   edit deferred until revisions land.
 - `rejected`: AGENTS.md unchanged for the manifest-freeze

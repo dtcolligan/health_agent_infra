@@ -90,7 +90,13 @@ shipped. Three resolutions per Q2 (chat 2026-04-29):
 ## Acceptance gate
 
 - `accepted`: AGENTS.md gains D15; v0.1.12 RELEASE_PROOF
-  declares `tier: substantive`.
+  declares `tier: substantive`. **Editorial convention (per
+  F-IR-04 round 1):** the applied D15 entry may carry editorial
+  refinements over the proposal text — formatted backticks
+  around `PLAN_COHERENT`, condensed RELEASE_PROOF wording, and a
+  trailing `Origin: v0.1.12 CP3.` provenance line. The CP names
+  the *replacement text core*; the editorial polish is allowed
+  under the `accepted` gate.
 - `accepted-with-revisions`: revised D15 applied; v0.1.12
   RELEASE_PROOF declares per revised text.
 - `rejected`: AGENTS.md unchanged; v0.1.12 RELEASE_PROOF omits

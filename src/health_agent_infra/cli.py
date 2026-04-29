@@ -8124,12 +8124,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_daily.add_argument(
         "--re-propose-all", action="store_true", dest="re_propose_all",
         help=(
-            "v0.1.12 W-FBC (partial closure of F-B-04): mark every "
-            "domain's existing proposal_log entry as needing fresh "
-            "skill judgment for this synthesis pass. Today the flag "
-            "has runtime effect only on the recovery domain (the "
-            "one-domain prototype); v0.1.13 W-FBC-2 lifts enforcement "
-            "to all six. See reporting/docs/supersede_domain_coverage.md."
+            "v0.1.12 W-FBC (partial closure of F-B-04): set the "
+            "report-surface field `re_propose_all_requested: true` "
+            "on the daily JSON output. **No synthesis-side runtime "
+            "effect at v0.1.12** — the flag's contract is honoured "
+            "but enforcement (recovery prototype + multi-domain "
+            "carryover-uncertainty token) is deferred to v0.1.13 "
+            "W-FBC-2. See reporting/docs/supersede_domain_coverage.md."
         ),
     )
     p_daily.add_argument("--skip-reviews", action="store_true",
@@ -8680,10 +8681,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--persona",
         default=None,
         help=(
-            "Persona slug to pre-populate the scratch root with (W-Vb "
-            "scope). v0.1.11 W-Va opens an unpopulated session; the "
-            "flag is accepted for forward-compat but no fixture is "
-            "loaded yet."
+            "Persona slug. v0.1.12 W-Vb (partial closure): the "
+            "packaged skeleton fixture for the slug loads from "
+            "`health_agent_infra.demo.fixtures.<slug>` and the demo "
+            "marker records a `fixture_application` entry, but "
+            "proposal pre-population (so `hai daily` reaches "
+            "synthesis) is deferred to v0.1.13 W-Vb. Use "
+            "`--blank` for an explicitly-empty session."
         ),
     )
     p_demo_start.add_argument(

@@ -19,7 +19,7 @@ chain artifacts a future cycle will reference.
 | W-N-broader | **fork-deferred** | Audit returned 49 fail + 1 error; deliberate fork to >150-branch behaviour. v0.1.12 ships v0.1.11 narrow gate unchanged; broader-gate fix **named-deferred to v0.1.13 W-N-broader** |
 | W-D13-SYM | shipped | recovery + running + sleep + stress `policy.py` use coercer helpers; AST contract test (7 tests) green |
 | W-PRIV | shipped | `hai auth remove [--source ...]` subcommand; privacy doc updated; 5 new tests |
-| W-FBC | **partial-closure** | Design doc + recovery prototype + `--re-propose-all` flag + 3 tests; **multi-domain closure named-deferred to v0.1.13 W-FBC-2** |
+| W-FBC | **partial-closure** (revised post F-IR-01) | Design doc + `--re-propose-all` flag (CLI parser + capabilities + report-surface) + 3 flag-plumbing tests in `test_cli_daily.py`. **Recovery prototype + multi-domain runtime enforcement named-deferred to v0.1.13 W-FBC-2** — originally framed as v0.1.12 deliverable, synthesis-side wiring did not land, artifact set realigned at implementation review |
 | W-FCC | shipped | `STRENGTH_STATUS_VALUES` constant; capabilities `enum_surface`; `hai today --verbose` footer; 2 contract tests |
 | W-CP | shipped | 6 cycle-proposal docs at `cycle_proposals/CP{1..6}.md`; CP1-CP5 deltas applied at ship; CP6 application deferred to v0.1.13 strategic-plan rev |
 
@@ -244,7 +244,7 @@ Next concrete actions:
 | `hai demo start --blank` (boundary-stop, v0.1.11 surface) | ✓ Unchanged from v0.1.11 ship; isolation contract still holds |
 | `hai auth remove --source garmin` (W-PRIV new surface) | ✓ Removes keyring entries idempotently; env-var creds untouched |
 | `hai today --verbose` (W-FCC new surface) | ✓ Prepends classified-state footer; capabilities row exposes enum |
-| `hai daily --re-propose-all` (W-FBC partial closure) | ✓ Flag accepted; round-trips through report JSON as `re_propose_all_requested: true` |
+| `hai daily --re-propose-all` (W-FBC partial closure) | ✓ Flag accepted; round-trips through report JSON as `re_propose_all_requested: true`. **Report-surface only at v0.1.12** — no synthesis-side runtime effect (recovery prototype + multi-domain enforcement deferred to v0.1.13 W-FBC-2 per F-IR-01) |
 
 Full persona-matrix re-run (12 personas, 0 findings, 0 crashes)
 verified during Phase 0; no regression vs v0.1.11.
