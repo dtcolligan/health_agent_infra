@@ -16,12 +16,12 @@ item flagged for v0.1.12 has a row with disposition.
 
 | Item | Disposition | W-id / cycle | Notes |
 |---|---|---|---|
-| **W-Vb** (`hai demo` polish — persona fixture loading + packaging path) | in-cycle | W-Vb (v0.1.12) | Demo persona-replay flow + fixture-packaging fix. PLAN §2.3. |
-| **W-H2** (mypy stylistic class) | in-cycle | W-H2 (v0.1.12) | 21 (v0.1.11 ship) → 22 (Phase 0 audit) → ≤ 5 (v0.1.12 target). PLAN §2.4. |
-| **W-N broader gate** (`-W error::Warning` catch-all) | in-cycle | W-N-broader (v0.1.12) | Phase 0 audit count: 49 + 1 error → ≤ 80 branch → full broader gate ships. PLAN §2.5. |
+| **W-Vb** (`hai demo` polish — persona fixture loading + packaging path) | **partial-closure** | W-Vb (v0.1.12) → W-Vb (v0.1.13) | v0.1.12 ships packaged-fixture path + skeleton-loader + open_session() integration; **persona-replay end-to-end (proposal pre-population so `hai daily` reaches synthesis) named-deferred to v0.1.13 W-Vb** per F-IR-02. PLAN §2.3. |
+| **W-H2** (mypy stylistic class) | in-cycle | W-H2 (v0.1.12) | 21 (v0.1.11 ship) → 22 (Phase 0 audit) → 0 (target was ≤ 5; beat by 5). PLAN §2.4. |
+| **W-N broader gate** (`-W error::Warning` catch-all) | **fork-deferred** | W-N-broader (v0.1.13) | Phase 0 audit count: 49 + 1 error. Audit-time fork to ">150-branch behaviour deliberately" — v0.1.12 ships v0.1.11 narrow gate unchanged; entire broader-gate fix named-deferred to v0.1.13 W-N-broader (49 sqlite3 connection-lifecycle leak sites is multi-day per-site refactor work). PLAN §2.5. |
 | **F-A-04** (mypy class — Literal abuse class) | in-cycle | W-H2 covers | Subset of W-H2 mypy work. |
 | **F-A-05** (mypy class — pandas-import-untyped) | in-cycle | W-H2 covers | Subset of W-H2 mypy work. |
-| **F-B-04** (domain-coverage drift across supersession) | **partial-closure** | W-FBC (v0.1.12) → W-FBC-2 (v0.1.13) | v0.1.12 delivers design doc + recovery prototype + `--re-propose-all` override. **Full multi-domain closure deferred to v0.1.13 W-FBC-2** (per Codex F-PLAN-R2-04 + R3-03). PLAN §2.8. |
+| **F-B-04** (domain-coverage drift across supersession) | **partial-closure** | W-FBC (v0.1.12) → W-FBC-2 (v0.1.13) | v0.1.12 delivers design doc + `--re-propose-all` flag (CLI parser + capabilities + report-surface). **Recovery prototype + multi-domain runtime enforcement deferred to v0.1.13 W-FBC-2** per F-IR-01 (originally framed as v0.1.12 deliverable; synthesis-side wiring did not land — artifact set realigned at implementation review). PLAN §2.8. |
 | **F-C-05** (`strength_status` enum surfaceability) | in-cycle | W-FCC (v0.1.12) | Expose enum via capabilities + `hai today --verbose`. PLAN §2.9. |
 | **W52 / W53 / W58** (weekly review + insight ledger + factuality gate) | defer-with-reason | v0.2.0 | Strategic plan Wave 2. CP5 reshapes to single-substantial v0.2.0 with shadow-by-default LLM judge flag. |
 
@@ -33,7 +33,7 @@ item flagged for v0.1.12 has a row with disposition.
 | **A8** (ship-time freshness checklist) | in-cycle | W-AC (v0.1.12) | Append checklist subsection to AGENTS.md "Release Cycle Expectation." PLAN §2.1. |
 | **C9** (defer-rate anti-gaming note) | in-cycle | W-AC (v0.1.12) | One-line edit to `success_framework_v1.md`. PLAN §2.1. |
 | **F-FS-02** (carry-over register — this doc) | in-cycle | W-CARRY (v0.1.12) | This document. |
-| **C3** (W-Vb fixture-packaging fix) | in-cycle | W-Vb (v0.1.12) | Packaged fixture path under `src/health_agent_infra/demo/fixtures/`. PLAN §2.3. |
+| **C3** (W-Vb fixture-packaging fix) | in-cycle | W-Vb (v0.1.12) | Packaged fixture path under `src/health_agent_infra/demo/fixtures/`. PLAN §2.3. (Persona-replay end-to-end deferred to v0.1.13 W-Vb per F-IR-02; C3 itself — packaging path — closed in v0.1.12.) |
 | **L1** (D13 consumer-site symmetry) | in-cycle | W-D13-SYM (v0.1.12) | Add `coerce_*` to recovery + running + sleep + stress `policy.py`; AST contract test. PLAN §2.6. |
 | **C4** (privacy doc gaps + `hai auth remove`) | in-cycle | W-PRIV (v0.1.12) | Subcommand `hai auth remove [--source ...]` (Codex F-PLAN-R2-03 grammar fix). Path: `core/pull/auth.py:171` + `:261`. PLAN §2.7. |
 

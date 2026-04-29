@@ -82,7 +82,12 @@ boundaries are clean; v0.1.14 mechanical split implements.
 ## Acceptance gate
 
 - `accepted`: AGENTS.md edit applied at v0.1.12 ship paired with
-  CP2 acceptance. Tactical plan updated.
+  CP2 acceptance. Tactical plan updated. **Editorial convention
+  (per F-IR-04 round 1):** the maintainer may append a short
+  `(Origin: v0.1.12 CP1 + CP2.)` parenthetical to the applied
+  AGENTS.md text for traceability. The CP doc names the
+  *replacement text core*; provenance parentheticals are
+  editorial additions allowed under the `accepted` gate.
 - `accepted-with-revisions`: revised text applied; AGENTS.md
   edit deferred until revisions land.
 - `rejected`: AGENTS.md unchanged for the cli.py portion. If

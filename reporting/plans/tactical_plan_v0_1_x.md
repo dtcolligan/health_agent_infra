@@ -315,12 +315,14 @@ contract change, broader test gate.
 | **W-AF** | Public README quickstart smoke test (CI-runnable) | 1 day |
 | **W-AG** | `hai today` cold-start prose — different language for day-1 vs day-30 users | 1 day |
 
-**Added at v0.1.12 ship per CP1 + reconciliation §6 + Codex F-PLAN-R2-04:**
+**Added at v0.1.12 ship per CP1 + reconciliation §6 + Codex F-PLAN-R2-04 + Codex implementation review F-IR-01/02/03:**
 
 | W-id | Title | Effort | Source |
 |---|---|---|---|
 | **W-29-prep** | cli.py boundary audit (boundary-table verification + parser/capabilities regression test scaffold) | 0.5d | CP1 |
-| **W-FBC-2** | F-B-04 multi-domain closure (full supersede policy across all 6 domains; per-domain fingerprint primitive if option B/C chosen at v0.1.12 W-FBC) | 2-3d | Codex F-PLAN-R2-04 |
+| **W-FBC-2** | F-B-04 multi-domain closure — recovery prototype (synthesis-side `--re-propose-all` carryover-uncertainty token + persona-style scenario tests P1/P5/P9), then multi-domain rollout to all 6 domains; per-domain fingerprint primitive if option B/C chosen at design | 3-4d | Codex F-PLAN-R2-04 + F-IR-01 (recovery prototype originally framed as v0.1.12 deliverable; reframed as v0.1.13 inheritance after synthesis-side wiring did not land) |
+| **W-Vb** (persona-replay end-to-end) | Author full-shape persona fixtures (DomainProposal seeds across all 6 domains per persona) + flip `apply_fixture()` to the proposal-write branch; wire so `hai demo start --persona <slug>` + `hai daily` reaches `synthesized`; clean-wheel build-install-subprocess test | 3-4d | F-IR-02 (loader + skeleton fixtures shipped at v0.1.12; full replay deferred) |
+| **W-N-broader** | `-W error::Warning` gate fix — audit each of the 49 + 1 sqlite3 connection-lifecycle leak sites surfaced by the v0.1.12 Phase 0 audit; close conn correctly on every CLI command + helper path; restore the broader-gate ship target | 4-6d | F-IR-03 (v0.1.12 fork-deferred at audit time per cycle-budget reasoning; v0.1.13 inherits the 49 + 1 site count as hard input) |
 | **W-LINT** | Regulated-claim lint (FDA general-wellness boundary — block "abnormal HRV", "clinical-grade marker", "risk score", "biomarker", etc. in user-facing prose) | 1-2d | Reconciliation C2 |
 | **W-AK** | Declarative persona expected-actions (pulled forward from v0.1.14; precondition for v0.1.14 W58 prep) | 1d | Reconciliation A5 |
 | **CP6 application** | Apply strategic plan §6.3 framing edit per `reporting/plans/v0_1_12/cycle_proposals/CP6.md` | 0.25d | CP6 deferred application |

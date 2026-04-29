@@ -162,9 +162,17 @@ Plus reconciliation A8 (ship-time freshness checklist) + C9
   checklist.
 - `success_framework_v1.md` has the anti-gaming line.
 - A new test (`verification/tests/test_doc_freshness_assertions.py`)
-  scans docs for version-tag drift against the package version
-  string (`importlib.metadata.version("health-agent-infra")`) and
-  fails on any doc that names an older version as "current."
+  **mechanises the canonical `**vX.Y.Z current.**` ROADMAP.md
+  pattern only** — the historical offender. It does not scan
+  every public doc; the AGENTS.md "Ship-time freshness checklist"
+  (added this cycle) is the human-judgement layer for the
+  remaining surfaces (README, AUDIT, HYPOTHESES,
+  reporting/plans/README, tactical/strategic/risks/success-
+  framework). v0.1.13+ may extend the test to cover additional
+  patterns once they're identified, but the v0.1.12 contract is
+  "test the historical offender + checklist the rest" (per
+  F-IR-05 disposition — narrow guard with explicit-rationale
+  scope, not a full-coverage scanner).
 
 ### 2.2 W-CARRY — Carry-over register
 
@@ -220,23 +228,30 @@ csv` returns `overall_status: "awaiting_proposals"` because no
 install fails with `ModuleNotFoundError` was inferred, not
 reproduced; corrected.
 
-**Two coupled deliveries (order matters: (a) before (b)).**
+**v0.1.12 partial-closure scope (revised post F-IR-02).** v0.1.12
+W-Vb ships **(a) only**; (b) — proposal pre-population so the
+demo reaches synthesis — is **named-deferred to v0.1.13 W-Vb**
+(see §1.3) and not claimed shipped here.
 
-**(a) Packaged-fixture path + loader.** Add
+**(a) Packaged-fixture path + skeleton loader.** Add
 `src/health_agent_infra/demo/fixtures/` packaged module tree with
-persona-state fixtures (one JSON per persona slug). Update
+**skeleton** persona-state fixtures (one JSON per persona slug,
+each marked `v0_1_12_scope: skeleton-only`). Update
 `pyproject.toml` package-data to include the fixture tree. Build
 a runtime fixture loader at
 `src/health_agent_infra/core/demo/fixtures.py` with
-packaged-resource path resolution (`importlib.resources` or
-equivalent).
+packaged-resource path resolution (`importlib.resources`).
+`apply_fixture()` returns a deferred-to-v0.1.13 marker rather
+than mutating state — the marker documents the partial-closure
+status to the demo viewer.
 
-**(b) Persona fixture loading wired into `open_session()`.**
-Extend `open_session()` to load fixtures and pre-populate
-proposals so the demo reaches synthesis. After W-Vb:
-`hai demo start --persona p1` opens the demo session AND seeds
-proposals; `hai daily` reaches `synthesized`; `hai today`
-renders a populated plan.
+**(b) Persona fixture loading reaches synthesis** — **deferred to
+v0.1.13 W-Vb** per F-IR-02. The full path requires authoring
+valid `DomainProposal` rows for each persona-slug across all six
+domains and wiring them into `open_session()`. v0.1.12's loader
+infrastructure is the foundation v0.1.13 inherits; v0.1.13 W-Vb
+swaps `v0_1_12_scope: skeleton-only` to `full` and routes
+`apply_fixture()` through the proposal-write path.
 
 **Note (Codex F-PLAN-R2-01).** Current CLI semantics
 (`cli.py:6346-6350`) set `persona = None` whenever `--blank` is
@@ -262,33 +277,41 @@ modes, two spellings, no overload of `--blank` semantics.
 **Tests.**
 
 - `verification/tests/test_demo_fixtures_packaging.py` (new) —
-  builds wheel via `python -m build` in tmpdir, installs into
-  clean venv, runs `hai demo start --persona p1` as subprocess,
-  asserts `overall_status == "synthesized"` after `hai daily`,
-  and `hai today` returns 0. **Proves both that package data is
-  included and that persona-replay works.** Separate test
-  invocation under `--blank` (no persona) confirms boundary-stop
-  semantics are preserved (regression guard against
-  F-PLAN-R2-01).
-- `verification/tests/test_demo_persona_replay.py` (new) —
-  exercises persona-replay flow against scratch state with
-  isolation contract preserved (real `~/.health_agent` and real
-  `state.db` byte-identical before / after).
+  asserts the packaged-fixture path is reachable via
+  `importlib.resources`; `load_fixture("p1_dom_baseline")` parses
+  the skeleton; `apply_fixture()` returns the deferred-to-v0.1.13
+  marker; `slug_or_none()` normalises blank/whitespace inputs.
+  Six tests, all green. **Does not** invoke a clean-wheel build-
+  install-subprocess loop (deferred to v0.1.13 W-Vb when proposal
+  pre-population lands and end-to-end synthesis can be asserted).
 
-**Acceptance.**
+**Acceptance (v0.1.12 partial closure).**
 
-- `pip install dist/*.whl && hai demo start --persona p1 &&
-  hai daily ... && hai today` reaches synthesis on a clean
-  venv.
-- Separate invocation `hai demo start --blank` retains current
-  empty-session boundary-stop semantics (regression guard for
-  F-PLAN-R2-01).
-- `pyproject.toml` package-data lists the fixture tree.
-- Persona-replay flow byte-identical-isolation contract preserved
-  (subprocess test).
-- W-Z § A becomes canonical when this lands; v0.1.11 boundary-stop
-  transcript stays in `v0_1_11/RELEASE_PROOF.md` as historical
-  proof for the v0.1.11 surface.
+- `pyproject.toml` package-data lists the fixture tree under
+  `demo/fixtures/*.json`.
+- A built wheel ships `health_agent_infra/demo/fixtures/<slug>.json`
+  (manually verified at the v0.1.12 ship via `uvx wheel unpack`;
+  the contract test asserts `importlib.resources` reachability).
+- Loader exists at `core/demo/fixtures.py` and is wired into
+  `open_session()` via the lazy import. Unknown persona slug does
+  not crash the demo flow — `DemoFixtureError` is caught and
+  recorded as `{"applied": false, "scope": "error", ...}` on the
+  marker.
+- Boundary-stop demo (`hai demo start --blank`) unchanged from
+  v0.1.11; isolation surface contract intact (verified by the
+  v0.1.11 `test_demo_isolation_surfaces.py` still green).
+- **v0.1.11 boundary-stop transcript stays canonical** for
+  v0.1.12. v0.1.13 W-Vb ships full persona-replay; the canonical
+  transcript flips at that point.
+
+**Deferred to v0.1.13 W-Vb (named-defer per F-IR-02 + §1.3).**
+
+- Authoring full-shape (non-skeleton) persona fixtures.
+- `apply_fixture()` proposal-write branch (the `scope: full`
+  branch the v0.1.12 loader names but does not exercise).
+- Clean-wheel build-install-subprocess test that asserts
+  `hai daily` reaches synthesis end-to-end and `hai today`
+  renders a populated plan.
 
 ### 2.4 W-H2 — Mypy stylistic class
 
@@ -471,10 +494,12 @@ cannot be implemented across all six domains in this cycle —
 v0.1.12's prior option-B framing was over-committed.
 
 **Reframe to design-first (Codex F-PLAN-07 round 1 + F-PLAN-R2-04
-round 2).** v0.1.12 W-FBC delivers a *partial closure* of F-B-04:
-the policy decision, a one-domain prototype, and an override flag.
-**Multi-domain closure is named-deferred to v0.1.13 W-FBC-2** (see
-§1.3) — v0.1.12 does not claim to close F-B-04 fully. v0.1.12
+round 2 + F-IR-01 round 1).** v0.1.12 W-FBC delivers a *partial
+closure* of F-B-04: the policy decision, the override flag
+plumbing, and a report-surface field. **All runtime enforcement
+(recovery prototype + multi-domain) is named-deferred to v0.1.13
+W-FBC-2** (see §1.3) — v0.1.12 does not claim to close F-B-04
+fully and does not honour the flag at the synthesis layer. v0.1.12
 W-FBC delivers:
 
 (a) **Policy decision documented.** A new
@@ -488,43 +513,40 @@ primitive needed, slightly more compute. Option B's per-domain
 fingerprint primitive is treated as v0.1.13 W-FBC-2 work if
 chosen.
 
-(b) **One-domain prototype.** Implement the policy for one
-domain (recovery — smallest surface) end-to-end through
-`hai daily --supersede`. Validates the approach without
-committing all six.
+(b) **`--re-propose-all` override flag** on `hai daily`. Accepted
+by the parser; surfaced in the daily report JSON as
+`re_propose_all_requested: bool`; capabilities-manifest-listed.
+This is a CLI / capabilities change. **Runtime effect at v0.1.12:
+report-surface only** — no synthesis-side enforcement, no
+recovery prototype, no per-domain carryover token. The flag is
+the contract; v0.1.13 W-FBC-2 fills in the enforcement.
 
-(c) **`--re-propose-all` override flag.** Add to `hai daily`
-regardless of policy choice — escape hatch for the maintainer.
-This *is* a CLI/capabilities change.
-
-(d) **Named persona scenarios.** P1 (morning fresh-state), P5
-(thin-history with state delta), P9 (supersede after intake
-change).
+(c) **Recovery prototype + multi-domain enforcement → v0.1.13
+W-FBC-2** (deferred per F-IR-01). Originally framed as v0.1.12
+deliverable (b); revised at implementation review when the
+synthesis-side wiring did not land. The honest scope correction
+is documented here rather than in a hot fix.
 
 **Files.**
 
-- `core/synthesis.py` — supersede-policy implementation for the
-  chosen option; recovery as the prototype domain.
-- `cli.py` — `--re-propose-all` flag on `hai daily`.
+- `cli.py` — `--re-propose-all` flag on `hai daily` + report
+  surface.
 - `core/capabilities/walker.py` — new flag in capabilities.
 - `reporting/docs/supersede_domain_coverage.md` (new) — policy
-  decision doc.
-- `verification/tests/test_supersede_domain_coverage.py` (new) —
-  exercises P1, P5, P9 against the prototype domain.
+  decision doc, written for the option-A default + W-FBC-2
+  destination.
 
 **Acceptance.**
 
 - Policy decision doc exists with rationale.
-- One-domain prototype (recovery) passes
-  `test_supersede_domain_coverage.py` against P1, P5, P9.
-- `--re-propose-all` override surfaced in capabilities;
-  documented behaviour.
-- **Full multi-domain rollout is deferred to v0.1.13 W-FBC-2 for
-  the chosen policy** (Codex F-PLAN-R3-03 — unconditional
-  regardless of A/B/C). v0.1.12 only proves the design and the
-  one-domain prototype. If option B/C is selected, W-FBC-2 also
-  owns the per-domain fingerprint primitive (the additional
-  B/C-specific surface).
+- `--re-propose-all` flag accepted; round-trips through the
+  daily report JSON; surfaced in capabilities. Three flag-
+  plumbing tests in `test_cli_daily.py` (round-trip, default-
+  false, capabilities-row-present).
+- **Recovery prototype + multi-domain rollout deferred to v0.1.13
+  W-FBC-2** (Codex F-PLAN-R3-03 + F-IR-01 — unconditional
+  regardless of A/B/C choice). v0.1.12 proves the design + the
+  override-flag contract only.
 
 ### 2.9 W-FCC — F-C-05 `strength_status` enum surfaceability
 
@@ -794,7 +816,7 @@ implicit-approval framing per Codex F-PLAN-04).
 | Bandit | 0 unsuppressed Medium/High at `bandit -ll` (unchanged from v0.1.11) |
 | Pytest warning gate (W-N-broader) | **`uv run pytest verification/tests -W error::pytest.PytestUnraisableExceptionWarning -q` exits 0** (v0.1.11 narrow gate, unchanged). Audit-time fork chose the >150-branch behaviour deliberately: 49 fail + 1 error under broader gate is multi-day per-site refactor work. Entire broader-gate fix deferred to v0.1.13 W-N-broader as named-defer in RELEASE_PROOF §5. See §2.5 for the audit transcript + fork rationale. |
 | Capabilities | byte-identical across runs (unchanged); `hai capabilities --markdown` reflects strength_status surface (W-FCC) and `hai auth remove` subcommand (W-PRIV) |
-| Demo regression | **`hai demo start --persona p1` reaches synthesis end-to-end on a clean wheel install** (Codex F-PLAN-R2-01: `--blank` removed — current CLI semantics make `--blank` mutually exclusive with persona); `hai today` renders populated plan; isolation contract byte-identical preserved; separate `hai demo start --blank` invocation regression-tested for empty-session boundary-stop semantics (W-Vb) |
+| Demo regression (v0.1.12 partial closure per F-IR-02) | **Packaged-fixture path reachable** via `importlib.resources` (proves wheel-shipped); `hai demo start --persona p1_dom_baseline` opens the demo session, loads the skeleton fixture, and records a `fixture_application: {"applied": false, "scope": "skeleton-only", "deferred_to": "v0.1.13"}` marker; `hai demo start --blank` retains v0.1.11 boundary-stop semantics; isolation surface contract from v0.1.11 still green (`test_demo_isolation_surfaces.py`). End-to-end synthesis-reaching demo deferred to v0.1.13 W-Vb. (W-Vb partial closure) |
 | D13 symmetry | contract test green; all six domain `policy.py` files use `coerce_*` helpers (W-D13-SYM) |
 | Doc freshness | every public-facing doc reflects v0.1.11-shipped state; freshness-assertion test green (W-AC) |
 | Carry-over register | every line in `v0_1_11/RELEASE_PROOF.md` §5 has disposition row; every reconciliation §6 v0.1.12 item has a row (W-CARRY) |
