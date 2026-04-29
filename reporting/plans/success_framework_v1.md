@@ -186,6 +186,14 @@ or (b) classifier assumptions the user shape doesn't fit.
 - v0.2+: per-domain ≤ 0.3 for users with >30 days history.
 - v1.0: per-domain ≤ 0.15 for active users.
 
+**Anti-gaming note (v0.1.12 reconciliation C9).** A *lower* defer
+rate is not better if it comes from false confidence. The
+calibration-substrate work in Wave 4+ (per
+`eval_strategy/v1.md`) will pair defer rate with calibration
+score — a recommendation that fires confidently but turns out
+wrong is worse than one that defers honestly. Do not optimise
+this metric in isolation.
+
 **Source:** Aggregate over `recommendation_log` rows.
 
 **Phase:** 1+.

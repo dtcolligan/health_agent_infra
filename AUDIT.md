@@ -4,6 +4,34 @@ Health Agent Infra uses structured Codex review before substantive releases.
 The review is not a badge; the artifact is the value. This file indexes the
 existing release-cycle audit records so they are visible from the repo root.
 
+## v0.1.11 - 2026-04-28
+
+Audit-cycle deferred items closed (W-B/E/F/H/K/L/N/Q/R), persona matrix
+expanded 8 → 12, property-based tests for the policy DSL, demo isolation
+contract shipped (boundary-stop replay). Settled D13 (threshold-injection
+seam trusted-by-design) + D14 (pre-cycle Codex plan-audit pattern).
+
+| Round | Audit prompt | Codex response | Maintainer response |
+|---|---|---|---|
+| Plan-audit 1-4 | [`codex_plan_audit_prompt.md`](reporting/plans/v0_1_11/codex_plan_audit_prompt.md) | [`codex_plan_audit_response.md`](reporting/plans/v0_1_11/codex_plan_audit_response.md) (+ rounds 2-4) | rounds 1-4 |
+| Implementation review 1-4 | (D14-revised PLAN.md) | rounds 1-4 | rounds 1-4 |
+
+**Outcome:** `SHIP` in implementation round 4. 19 of 20 W-ids shipped;
+W-Vb named-deferred to v0.1.12. Test surface: 2347 passed, 2 skipped
+(+145 vs v0.1.10). Release proof:
+[`reporting/plans/v0_1_11/RELEASE_PROOF.md`](reporting/plans/v0_1_11/RELEASE_PROOF.md).
+
+## v0.1.10 - 2026-04-27
+
+Pre-PLAN bug-hunt phase introduced (D11), persona harness landed, mypy +
+bandit correctness pass, write-surface guard. First cycle to run a
+structured audit phase before plan authoring.
+
+**Outcome:** `SHIP_WITH_NOTES`. Audit findings consolidated to
+[`reporting/plans/v0_1_10/audit_findings.md`](reporting/plans/v0_1_10/audit_findings.md);
+all `in-scope` findings absorbed; deferred items carry to v0.1.11. Release
+proof: [`reporting/plans/v0_1_10/RELEASE_PROOF.md`](reporting/plans/v0_1_10/RELEASE_PROOF.md).
+
 ## v0.1.9 - 2026-04-26
 
 Hardening and governance closure after parallel Codex + Claude reviews of

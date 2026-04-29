@@ -436,10 +436,16 @@ contract holds.
 ### Wave 2 — Weekly review + insight ledger (v0.2, ~4-8 weeks post Wave 1)
 
 **Theme.** Make the runtime useful beyond one day. W52 weekly
-review + W53 insight proposal ledger. Was scoped as v0.1.9 in the
+review + W53 insight proposal ledger + W58 factuality gate
+(deterministic claim-block from day 1; LLM-judge layer ships
+shadow-by-default with feature-flag flip to blocking once
+shadow-mode evidence supports it). Was scoped as v0.1.9 in the
 2026-04-25 roadmap; v0.1.9 cut to hardening only, so it slips here.
 
 **Evidence anchor:** Roadmap §4 v0.1.9 (entire scope migrates).
+v0.1.12 CP5 reshape: single substantial v0.2.0 with shadow-by-
+default LLM judge, not the 3-release split the reconciliation
+initially recommended.
 
 ### Wave 3 — MCP surface + extension contract (v0.3–v0.4, ~3-4 months)
 
@@ -449,6 +455,35 @@ portability) in the 2026-04-25 roadmap. Sequence preserved.
 
 **Evidence anchor:** Roadmap §4 v0.3 + v0.4. PHIA + Bloom integration
 prior art.
+
+**Staging within Wave 3 (added v0.1.12 CP4).**
+
+- **v0.3** — *plans* MCP server. Read-surface design only (no
+  write surface). Threat-model artifact authored at
+  `reporting/docs/mcp_threat_model.md`. Provenance import
+  contract drafted (extends the agent-CLI capabilities manifest
+  with provenance fields per imported row).
+- **v0.4** — *prereqs land*. Least-privilege read-scope model
+  documented (per-table read scopes, no cross-table joins
+  exposed). Threat-model doc completes with mitigations for
+  resource audience validation, confused-deputy risk, token-
+  passthrough risk, SSRF risk. Provenance contract enforced
+  through one full domain end-to-end (recovery is the smallest
+  surface).
+- **v0.4-or-v0.5** — *ships* MCP read surface. Gated on the
+  prereqs above. **No write surface ever.** All mutating CLI
+  commands (`hai propose`, `hai daily`, `hai review record`,
+  `hai intent commit`, `hai target commit`, all `hai intake *`)
+  remain agent-CLI-only (W57 invariant preserved at the MCP
+  boundary).
+
+**Security gate (non-negotiable).** No MCP read surface ships
+before the threat-model artifact, the least-privilege scope
+model, and the one-domain provenance proof are all in place.
+Sources for threat-model authoring (verify current at v0.4):
+
+- <https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization>
+- <https://modelcontextprotocol.io/specification/2025-06-18/basic/security_best_practices>
 
 ### Wave 4 — N-of-1 substrate + estimator (v0.5–v0.6, requires ≥ 90d v0.5 substrate)
 

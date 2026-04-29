@@ -246,39 +246,50 @@ calendar weeks from open.
 
 ---
 
-## 3. v0.1.12 — Type-checker + security + UX polish
+## 3. v0.1.12 — Carry-over closure + trust repair
 
-> **Theme.** Bring the type-checker baseline to strict-clean.
-> Continue tightening UX edge cases that surfaced through v0.1.11
-> persona work. End-state: project passes `mypy --strict` modulo
-> documented exceptions; CLI surface ergonomics improved without
-> capability-manifest schema change.
+> **Theme (rebaselined 2026-04-29 per W-AC freshness sweep + post-
+> reconciliation rescope).** Trust repair, not feature push. Close
+> v0.1.11 named-defers; fix stale public docs + a packaging bug;
+> document six cycle proposals (CP1-CP6) that the v0.1.13+ roadmap
+> depends on. **The authoritative scope of record is
+> [`reporting/plans/v0_1_12/PLAN.md`](v0_1_12/PLAN.md)** (D14 plan-
+> audit closed at `PLAN_COHERENT` round 4). This section
+> summarises; the PLAN holds the contract.
 
 ### 3.1 In scope
 
 | W-id | Title | Effort |
 |---|---|---|
-| **W-H2** | Mypy stylistic-class fixes (Literal abuse, redefinition, scenario type confusion) | 2-3 days |
-| **W-S** | `hai today` rendering — surface state-change indicator | 1-2 days |
-| **W-T** | `hai intake gym --session-json` schema docs + alias coverage tests | 0.5 day |
-| **W-U** | F-B-04 supersession-kind decision + implementation | 2-3 days |
-| **W-V** | F-C-05 strength_status enum in capabilities manifest | 1 day |
-| **W-W** | `hai capabilities --json` schema validation + drift test | 1 day |
-| **W-X** | `hai stats --data-quality` ergonomics + persona-aware output | 1-2 days |
-| **W-Y** | Persona harness integration into CI smoke (subset, not full matrix) | 1 day |
-| **W-Z** | Configuration documentation refresh — every threshold's effect on persona behaviour | 1-2 days |
+| **W-AC** | Public-doc freshness sweep + ship-checklist | 0.5d |
+| **W-CARRY** | Carry-over register | 0.5d |
+| **W-Vb** | `hai demo` persona-replay + fixture-packaging path | 3-4d |
+| **W-H2** | Mypy stylistic-class fixes (≤ 5 errors target) | 2-3d |
+| **W-N-broader** | `-W error::Warning` gate (Phase 0 audit: 49 + 1 error → ≤ 80 branch → full broader gate ships) | 3-4d |
+| **W-D13-SYM** | D13-symmetry contract test + `coerce_*` fix in 4 domain `policy.py` files | 0.5-1d |
+| **W-PRIV** | Privacy doc updates + `hai auth remove` subcommand | 0.5-1d |
+| **W-FBC** | F-B-04 design + recovery prototype + `--re-propose-all` (multi-domain closure deferred to v0.1.13 W-FBC-2) | 1-2d |
+| **W-FCC** | F-C-05 `strength_status` enum surface in capabilities + `hai today --verbose` | 1d |
+| **W-CP** | Six cycle proposals CP1-CP6 (governance docs) | 1d |
 
 ### 3.2 Acceptance
 
-- `mypy --strict` on `src/health_agent_infra/`: 0 errors OR all
-  remaining documented in `mypy_strict_baseline.md`.
-- Capabilities-manifest drift test catches any inconsistency.
-- Persona harness subset (2 personas) runs in CI under 60s.
-- All v0.1.10/v0.1.11 deferred items closed.
+- All ship gates green per
+  [`reporting/plans/v0_1_12/PLAN.md`](v0_1_12/PLAN.md) §3.
+- v0.1.11 named-defers closed or partial-closed with residual
+  named (F-B-04 → W-FBC-2 / v0.1.13).
+- CP1-CP5 deltas applied to AGENTS.md / strategic plan / tactical
+  plan at v0.1.12 ship; CP6 application deferred to v0.1.13
+  strategic-plan rev.
 
 ### 3.3 Effort estimate
 
-10-14 days of focused work.
+13-20 days single-contributor.
+
+### 3.4 Tier (CP3, D15)
+
+`substantive` — multiple cycle-proposal docs, demo packaging
+contract change, broader test gate.
 
 ---
 
@@ -303,6 +314,16 @@ calendar weeks from open.
 | **W-AE** | `hai doctor` expansion — onboarding-readiness check + gap diagnostics | 1-2 days |
 | **W-AF** | Public README quickstart smoke test (CI-runnable) | 1 day |
 | **W-AG** | `hai today` cold-start prose — different language for day-1 vs day-30 users | 1 day |
+
+**Added at v0.1.12 ship per CP1 + reconciliation §6 + Codex F-PLAN-R2-04:**
+
+| W-id | Title | Effort | Source |
+|---|---|---|---|
+| **W-29-prep** | cli.py boundary audit (boundary-table verification + parser/capabilities regression test scaffold) | 0.5d | CP1 |
+| **W-FBC-2** | F-B-04 multi-domain closure (full supersede policy across all 6 domains; per-domain fingerprint primitive if option B/C chosen at v0.1.12 W-FBC) | 2-3d | Codex F-PLAN-R2-04 |
+| **W-LINT** | Regulated-claim lint (FDA general-wellness boundary — block "abnormal HRV", "clinical-grade marker", "risk score", "biomarker", etc. in user-facing prose) | 1-2d | Reconciliation C2 |
+| **W-AK** | Declarative persona expected-actions (pulled forward from v0.1.14; precondition for v0.1.14 W58 prep) | 1d | Reconciliation A5 |
+| **CP6 application** | Apply strategic plan §6.3 framing edit per `reporting/plans/v0_1_12/cycle_proposals/CP6.md` | 0.25d | CP6 deferred application |
 
 ### 4.2 Acceptance
 
@@ -345,6 +366,18 @@ assumptions failing" can be run cleanly.
 | **W-AM** | Adversarial scenario fixtures — explicit "should escalate" cases | 1-2 days |
 | **W-AN** | `hai eval run --scenario-set <set>` CLI surface for batch eval | 1-2 days |
 
+**Added at v0.1.12 ship per CP1 + reconciliation §6 + Codex F-PLAN-09:**
+
+| W-id | Title | Effort | Source |
+|---|---|---|---|
+| **W-29** | cli.py mechanical split (1 main + 1 shared + 11 handler-group, <2500 each) — conditional on v0.1.13 W-29-prep verdict; parser/capabilities regression test mandatory | 3-4d | CP1 |
+| **W-DOMAIN-SYNC** | Scoped contract test (single truth table + expected-subset assertions; not all 8 named tables are six-domain registries — `_DOMAIN_ACTION_REGISTRY` is intentionally Phase-A-only) | 0.5d | Reconciliation L2 + Codex F-PLAN-09 |
+
+**Note:** A12 judge-adversarial fixtures fold into W-AI (above), and
+A2/W-AL calibration scaffold ships schema/report-shape only;
+real correlation work defers to v0.5+ per reconciliation
+action 15.
+
 ### 5.2 Acceptance
 
 - Scenario fixtures grow from current ~50 → 120+.
@@ -370,16 +403,33 @@ assumptions failing" can be run cleanly.
 ### 6.1 In scope
 
 Lifted from `historical/multi_release_roadmap.md` § 4 v0.1.9 (cut),
-now v0.2.0:
+now v0.2.0. **Reshaped at v0.1.12 per CP5 (single substantial
+release with shadow-by-default LLM judge):**
 
 - **W52: `hai review weekly --week YYYY-Www [--json|--markdown]`.**
   Code-owned aggregation across accepted state, intent, target,
   recommendation, X-rule firing, review outcome, data quality.
+  **Source-row locators required for every quantitative claim**
+  (carrier: `recommendation_evidence_card.v1` schema per
+  reconciliation C8).
 - **W53: Insight proposal ledger** (`insight_proposal` + `insight`
   tables).
-- **W58: LLM-judge factuality gate for weekly review** with
-  agent-judge negotiation loop. Local Prometheus-2-7B (or
-  comparable) pinned by SHA. Builds on v0.1.14's harness.
+- **W58D: Deterministic factuality gate.** Every quoted
+  quantitative claim in weekly-review prose must resolve to a
+  source-row locator. Blocking from day 1. No LLM in this layer.
+- **W58J: LLM judge layer.** Residual judgment on causal framing,
+  missing uncertainty, overconfident tone. Local Prometheus-2-7B
+  (or comparable) pinned by SHA. Builds on v0.1.14's harness.
+  Ships **shadow-by-default** with `HAI_W58_JUDGE_MODE = shadow |
+  blocking` env flag. Logs every shadow-mode judgement to
+  `judge_decision_log` table for evidence accumulation. Flag flip
+  to blocking happens within v0.2.0 (or v0.2.0.x patch) once
+  shadow-mode evidence shows ≤ 5% false-block rate over ≥ 50
+  weekly reviews. Memory-poisoning fixtures land alongside shadow
+  mode.
+- **W-30: capabilities-manifest schema freeze** as the last act
+  of the cycle, after W52/W58D/W58J schema additions land
+  (per CP2).
 
 ### 6.2 Acceptance
 
@@ -387,9 +437,13 @@ now v0.2.0:
   output byte-stable.
 - Insight proposal ledger has migration + CLI + snapshot
   integration + capability manifest entry.
-- Factuality judge runs on every weekly review, blocks delivery
-  when ≥ 1 unsupported quantitative claim is found, judge model
-  SHA + score logged with the review.
+- Factuality judge: deterministic claim-block (W58D) enforces
+  from day 1. LLM judge (W58J) ships shadow-by-default; logs
+  every decision to `judge_decision_log`; flag-flip threshold
+  + procedure documented in v0.2.0 PLAN. Memory-poisoning
+  fixtures present.
+- Capabilities-manifest schema frozen as last cycle act
+  (W-30 / per CP2).
 - Test count grows ≥ 30 vs v0.1.14.
 
 ### 6.3 Effort estimate
