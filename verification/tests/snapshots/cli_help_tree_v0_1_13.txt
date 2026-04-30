@@ -16,7 +16,7 @@ hai doctor: --as-of,--db-path,--deep,--help,--json,--skills-dest,--thresholds-pa
 hai eval run: --domain,--help,--json,--synthesis
 hai exercise search: --db-path,--help,--limit,--query
 hai explain: --as-of,--daily-plan-id,--db-path,--for-date,--help,--operator,--plan-version,--text,--user-id
-hai init: --db-path,--force,--help,--history-days,--skills-dest,--skip-skills,--thresholds-path,--user-id,--with-auth,--with-first-pull
+hai init: --db-path,--force,--guided,--help,--history-days,--skills-dest,--skip-skills,--thresholds-path,--user-id,--with-auth,--with-first-pull
 hai intake exercise: --aliases,--category,--db-path,--equipment,--exercise-id,--help,--name,--primary-muscle-group,--secondary-muscle-groups
 hai intake gaps: --allow-stale-snapshot,--as-of,--db-path,--evidence-json,--from-state-snapshot,--help,--user-id
 hai intake gym: --as-of,--base-dir,--db-path,--exercise,--help,--ingest-actor,--notes,--reps,--rpe,--session-id,--session-json,--session-name,--set-number,--user-id,--weight-kg

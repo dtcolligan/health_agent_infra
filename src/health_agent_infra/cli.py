@@ -5392,6 +5392,19 @@ def cmd_init(args: argparse.Namespace) -> int:
             credentials_available=creds_now,
         )
 
+    # 7. W-AA (v0.1.13) — guided onboarding: prompts for intervals.icu
+    # creds, authors initial intent + target rows, runs a first pull
+    # via the intervals.icu adapter, and surfaces today's plan. Each
+    # step is naturally idempotent so a Ctrl-C mid-flow leaves state
+    # consistent and a re-run reaches the first incomplete step.
+    if getattr(args, "guided", False):
+        report["steps"]["guided"] = _run_guided_onboarding(
+            args,
+            db_path=resolved,
+            user_id=getattr(args, "user_id", "u_local_1"),
+            history_days=int(getattr(args, "history_days", 1) or 1),
+        )
+
     _emit_json(report)
     return exit_codes.OK
 
@@ -5553,6 +5566,180 @@ def _run_first_pull_backfill(
         "approx_api_calls": 5 * history_days,
         "source": source_name,
         "projected_raw_daily": bool(projected),
+    }
+
+
+def _run_guided_onboarding(
+    args: argparse.Namespace,
+    *,
+    db_path: Path,
+    user_id: str,
+    history_days: int,
+) -> dict[str, Any]:
+    """W-AA (v0.1.13) — orchestrator wrapper for `hai init --guided`.
+
+    Threads the runtime-side helpers (intervals.icu adapter,
+    `hai today` rendering, credential store) into the
+    `core.init.run_guided_onboarding` orchestrator. Test injection
+    points are deliberately narrow: the orchestrator owns prompts
+    + idempotency; the CLI side owns the adapter + render code.
+    """
+
+    from health_agent_infra.core.init import (
+        StdinPrompts,
+        run_guided_onboarding,
+    )
+
+    # Test seam: tests can attach a `_guided_prompts_override` to args
+    # to skip stdin/getpass entirely. Production callers always go
+    # through StdinPrompts.
+    prompts = getattr(args, "_guided_prompts_override", None) or StdinPrompts()
+
+    # Test seam: tests can attach a `_guided_pull_runner_override` to
+    # bypass the live intervals.icu adapter. Production callers go
+    # through `_daily_pull_and_project`.
+    pull_runner = getattr(args, "_guided_pull_runner_override", None) or (
+        lambda **kw: _onboarding_default_pull_runner(args, **kw)
+    )
+
+    today_renderer = getattr(args, "_guided_today_renderer_override", None) or (
+        lambda **kw: _onboarding_default_today_renderer(args, **kw)
+    )
+
+    credential_store = _credential_store_for(args)
+
+    try:
+        result = run_guided_onboarding(
+            db_path=db_path,
+            user_id=user_id,
+            history_days=history_days,
+            prompts=prompts,
+            credential_store=credential_store,
+            pull_runner=pull_runner,
+            today_renderer=today_renderer,
+        )
+    except KeyboardInterrupt:
+        # Step is mid-prompt or mid-DB-write; the latter is wrapped in
+        # `conn.commit()` so SQLite's transaction guarantees keep state
+        # consistent. Surface a partial report so the JSON envelope is
+        # honest about where the flow stopped.
+        return {
+            "status": "interrupted",
+            "hint": (
+                "Onboarding interrupted; rerun `hai init --guided` to "
+                "resume from the first incomplete step."
+            ),
+        }
+
+    return result.to_dict()
+
+
+def _onboarding_default_pull_runner(
+    args: argparse.Namespace,
+    *,
+    db_path: Path,
+    user_id: str,
+    as_of: date,
+    history_days: int,
+) -> dict[str, Any]:
+    """Production pull runner — calls `_daily_pull_and_project` with
+    `--source intervals_icu` semantics."""
+
+    pull_args = argparse.Namespace(
+        live=False,
+        source="intervals_icu",
+        db_path=str(db_path),
+        user_id=user_id,
+        history_days=history_days,
+        _credential_store_override=getattr(
+            args, "_credential_store_override", None,
+        ),
+    )
+
+    try:
+        source_name, projected, _ = _daily_pull_and_project(
+            pull_args, as_of=as_of, user_id=user_id, db_path=db_path,
+        )
+    except IntervalsIcuError as exc:
+        return {
+            "status": "failed",
+            "error_class": type(exc).__name__,
+            "error": str(exc),
+            "hint": (
+                "Run `hai doctor --deep` to classify the failure into "
+                "one of {OK, CAUSE_1_CLOUDFLARE_UA, CAUSE_2_CREDS, "
+                "NETWORK, OTHER}. See "
+                "reporting/docs/intervals_icu_403_triage.md."
+            ),
+        }
+    except RuntimeError as exc:
+        return {
+            "status": "failed",
+            "error_class": "RuntimeError",
+            "error": str(exc),
+        }
+
+    return {
+        "status": "ok",
+        "source": source_name,
+        "for_date": as_of.isoformat(),
+        "projected_raw_daily": bool(projected),
+        "history_days": history_days,
+    }
+
+
+def _onboarding_default_today_renderer(
+    args: argparse.Namespace,
+    *,
+    db_path: Path,
+    user_id: str,
+    as_of: date,
+) -> dict[str, Any]:
+    """Production today-renderer — reads the canonical leaf for the
+    target date and reports whether a plan is present + the streak
+    state. Does NOT print to stdout (the cmd_init JSON report is the
+    single output stream); the user runs `hai today` separately to
+    actually see the rendered prose."""
+
+    from health_agent_infra.core.explain import (
+        ExplainNotFoundError,
+        load_bundle_for_date,
+    )
+    from health_agent_infra.core.state import open_connection
+
+    conn = open_connection(db_path)
+    try:
+        try:
+            bundle = load_bundle_for_date(
+                conn, for_date=as_of, user_id=user_id, plan_version="latest",
+            )
+        except ExplainNotFoundError:
+            return {
+                "status": "no_plan_yet",
+                "for_date": as_of.isoformat(),
+                "hint": (
+                    "ask your agent to plan today, or run "
+                    "`hai daily` after proposals are posted."
+                ),
+            }
+        try:
+            streak_days = _daily_streak_from_events(conn)
+        except Exception:  # noqa: BLE001
+            streak_days = None
+    finally:
+        conn.close()
+
+    plan_id = (
+        bundle.get("daily_plan", {}).get("plan_id")
+        if isinstance(bundle, dict)
+        else None
+    )
+    return {
+        "status": "plan_ready",
+        "for_date": as_of.isoformat(),
+        "plan_id": plan_id,
+        "streak_days": streak_days,
+        "hint": "run `hai today` to read the plan in plain language.",
     }
 
 
@@ -8316,7 +8503,9 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "First-run setup: scaffold thresholds, init state DB + apply "
             "migrations, copy skills, report Garmin auth status. "
-            "Idempotent; safe to rerun."
+            "Pass --guided for the full first-time-user onboarding flow "
+            "(prompts for intervals.icu creds + intent/target authoring "
+            "+ first wellness pull). Idempotent; safe to rerun."
         ),
     )
     p_init.add_argument("--thresholds-path", default=None,
@@ -8354,6 +8543,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_init.add_argument("--user-id", default="u_local_1",
                         help="User id to record against the backfill's "
                              "sync_run_log rows (default: u_local_1).")
+    p_init.add_argument("--guided", action="store_true",
+                        help="Run the full first-time-user onboarding flow "
+                             "(W-AA): after the non-interactive setup, prompt "
+                             "for intervals.icu credentials, author initial "
+                             "intent + target rows, run a first wellness "
+                             "pull, and surface today's plan. Idempotent; "
+                             "skips steps that already have state.")
     p_init.set_defaults(func=cmd_init)
     annotate_contract(
         p_init,
