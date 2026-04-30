@@ -4,6 +4,54 @@ Health Agent Infra uses structured Codex review before substantive releases.
 The review is not a badge; the artifact is the value. This file indexes the
 existing release-cycle audit records so they are visible from the repo root.
 
+## v0.1.13 - 2026-04-30
+
+Largest cycle in the v0.1.x track at 17 workstreams. Three parallel themes:
+close v0.1.12 named-deferred items (W-Vb persona-replay end-to-end ship-set,
+W-N-broader 50-site sqlite3 leak fix, W-FBC-2 multi-domain F-B-04 closure,
+CP6 §6.3 strategic-plan edit), ship the originally-planned onboarding scope
+(W-AA `hai init --guided`, W-AB `hai capabilities --human`, W-AC README
+rewrite, W-AD USER_INPUT prose, W-AE `hai doctor --deep`, W-AF README smoke,
+W-AG `hai today` cold-start prose), land governance prerequisites
+(W-29-prep cli.py boundary audit, W-LINT regulated-claim lint, W-AK
+declarative persona expected-actions, W-A1C7 acceptance matrix). Cycle-order
+inversion: IR ran *before* RELEASE_PROOF authoring. **Tier:** substantive.
+
+| Round | Codex response | Maintainer response |
+|---|---|---|
+| Plan-audit 1-5 | [`codex_plan_audit_response.md`](reporting/plans/v0_1_13/codex_plan_audit_response.md) (+ rounds 2-5; settled at PLAN_COHERENT round 5 with 11 → 7 → 3 → 1-nit → 0 signature) | rounds 1-5 |
+| Implementation review 1-3 | [`codex_implementation_review_response.md`](reporting/plans/v0_1_13/codex_implementation_review_response.md) (round 1 SHIP_WITH_FIXES, 6 findings) → [`codex_implementation_review_round_2_response.md`](reporting/plans/v0_1_13/codex_implementation_review_round_2_response.md) (round 2 SHIP_WITH_FIXES, 2 findings) → [`codex_implementation_review_round_3_response.md`](reporting/plans/v0_1_13/codex_implementation_review_round_3_response.md) (round 3 SHIP, 0 findings) | [`codex_implementation_review_round_1_response.md`](reporting/plans/v0_1_13/codex_implementation_review_round_1_response.md) → [`codex_implementation_review_round_2_response_response.md`](reporting/plans/v0_1_13/codex_implementation_review_round_2_response_response.md) |
+
+**Outcome:** `SHIP` in implementation round 3. 16 of 17 W-ids closed-this-cycle;
+1 partial-closure (W-Vb, P1+P4+P5 ship-set with 9-persona residual fork-deferred
+to v0.1.14 W-Vb-3). Test surface: 2493 passed, 3 skipped (+109 vs v0.1.12).
+Broader-warning gate (`-W error::Warning`) restored as the v0.1.13 ship target.
+Release proof:
+[`reporting/plans/v0_1_13/RELEASE_PROOF.md`](reporting/plans/v0_1_13/RELEASE_PROOF.md).
+Report: [`reporting/plans/v0_1_13/REPORT.md`](reporting/plans/v0_1_13/REPORT.md).
+
+## v0.1.12 - 2026-04-29
+
+Carry-over closure + trust repair. No release-blocker workstream by design.
+Ten workstreams across docs / governance / per-domain code / mypy / demo
+packaging. Settled D15 (cycle-weight tiering: substantive / hardening /
+doc-only / hotfix). Six cycle proposals (CP1-CP6) authored.
+
+| Round | Codex response | Maintainer response |
+|---|---|---|
+| Plan-audit 1-4 | [`codex_plan_audit_response.md`](reporting/plans/v0_1_12/codex_plan_audit_response.md) (+ rounds 2-4; settled at PLAN_COHERENT round 4 with 10 → 5 → 3 → 0 signature) | rounds 1-4 |
+| Implementation review 1-2 | [`codex_implementation_review_response.md`](reporting/plans/v0_1_12/codex_implementation_review_response.md) (round 1 SHIP_WITH_FIXES) → round 2 SHIP_WITH_NOTES | rounds 1-2 |
+
+**Outcome:** `SHIP_WITH_NOTES` in implementation round 2. 8 of 10 W-ids
+shipped, 2 partial-closures (W-Vb, W-FBC), 1 named-fork (W-N-broader). Test
+surface: 2384 passed, 2 skipped (+37 vs v0.1.11). Release proof:
+[`reporting/plans/v0_1_12/RELEASE_PROOF.md`](reporting/plans/v0_1_12/RELEASE_PROOF.md).
+Report: [`reporting/plans/v0_1_12/REPORT.md`](reporting/plans/v0_1_12/REPORT.md).
+
+A v0.1.12.1 hotfix shipped 2026-04-29 to address a Cloudflare User-Agent
+block on the intervals.icu pull adapter (W-CF-UA). See
+[`reporting/plans/v0_1_12_1/RELEASE_PROOF.md`](reporting/plans/v0_1_12_1/RELEASE_PROOF.md).
+
 ## v0.1.11 - 2026-04-28
 
 Audit-cycle deferred items closed (W-B/E/F/H/K/L/N/Q/R), persona matrix

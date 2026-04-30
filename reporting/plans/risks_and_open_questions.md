@@ -301,8 +301,9 @@ becomes ornamental rather than load-bearing.
 **Mitigation:**
 - Cap persona count when marginal-yield is zero (per
   `eval_strategy/v1.md` § 7.3).
-- v0.1.14 W-AK adds explicit `expected_actions` to formalise
-  expected behaviour.
+- v0.1.13 W-AK shipped explicit `expected_actions` declarations
+  on every persona file (per IR r1 F-IR-03 closure), formalising
+  expected behaviour as the per-persona ground-truth shape.
 - Persona spec is declarative (Python dataclass), not procedural;
   cheap to author.
 
@@ -550,7 +551,8 @@ substrate accumulates calibration data, both eval surfaces are
 weak simultaneously. The bug-finding signal goes dark.
 
 **Mitigation:** persona harness must stay live through Wave 4.
-v0.1.14 W-AK formalises persona expectations to make rot detectable.
+v0.1.13 W-AK shipped per-persona inline `expected_actions`
+declarations, making expectation rot detectable at harness run.
 
 ---
 

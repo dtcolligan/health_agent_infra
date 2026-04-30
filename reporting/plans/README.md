@@ -1,7 +1,7 @@
 # Planning Tree — Reading Order Index
 
-> **Last updated:** 2026-04-29 (post-v0.1.11 ship + folder
-> reorganisation).
+> **Last updated:** 2026-04-30 (post-v0.1.13 ship; v0.1.14 next-cycle
+> placeholder).
 
 This is the orientation guide to the `reporting/plans/` tree.
 Read this when you're returning cold and need to find the right
@@ -17,7 +17,7 @@ reporting/plans/
 ├── eval_strategy/v1.md                ← active eval methodology
 ├── success_framework_v1.md            ← active value-measurement
 ├── risks_and_open_questions.md        ← active risk + decision register
-├── v0_1_4/ … v0_1_11/                 ← per-cycle artifacts (frozen post-ship)
+├── v0_1_4/ … v0_1_13/                 ← per-cycle artifacts (frozen post-ship)
 ├── post_v0_1_10/                      ← between-cycles work (demo, Phase 4 audit)
 ├── future_strategy_2026-04-29/        ← Claude/Codex deep strategy review
 ├── historical/                        ← 9 superseded planning docs
@@ -43,12 +43,12 @@ If you only have time for one: `strategic_plan_v1.md`.
 **Read in order:**
 
 1. `tactical_plan_v0_1_x.md` § 2 — current release-in-flight.
-2. `v0_1_11/PLAN.md` (or whichever cycle is open) — workstream
+2. `v0_1_13/PLAN.md` (or whichever cycle is open) — workstream
    contracts.
-3. `v0_1_11/BACKLOG.md` — items deferred from prior cycle.
-4. `v0_1_10/audit_findings.md` — last release's findings list.
+3. `v0_1_13/CARRY_OVER.md` — items deferred to/from this cycle.
+4. `v0_1_13/audit_findings.md` — last release's Phase 0 findings list.
 
-If you only have time for one: `v0_1_11/PLAN.md`.
+If you only have time for one: the open cycle's `PLAN.md`.
 
 ## I want to know how we evaluate correctness.
 
@@ -110,6 +110,11 @@ Cycle directories preserve their own history:
 - `v0_1_9/` — hardening + governance closure (B1-B8).
 - `v0_1_10/` — pre-PLAN audit pattern + persona harness.
 - `v0_1_11/` — audit-cycle deferred items + persona expansion (shipped 2026-04-28).
+- `v0_1_12/` — carry-over closure + trust repair (shipped 2026-04-29).
+- `v0_1_12_1/` — Cloudflare User-Agent hotfix (shipped 2026-04-29).
+- `v0_1_13/` — onboarding + W-Vb/W-N-broader/W-FBC-2 closure +
+  governance prerequisites (shipped 2026-04-30, **largest cycle in
+  the v0.1.x track at 17 W-ids**).
 
 Each cycle directory typically contains:
 - `PLAN.md` — cycle scope.

@@ -12,41 +12,35 @@ This file is a high-level pointer; for actual scope, read those plans.
 
 ## Now
 
-- **v0.1.11 shipped (2026-04-28).** Audit-cycle deferred items closed;
-  persona matrix expanded 8 → 12; property-based testing for the policy
-  DSL; demo isolation contract shipped (boundary-stop replay). Closed four
-  D14 plan-audit rounds + four implementation-review rounds. See
-  [`reporting/plans/v0_1_11/RELEASE_PROOF.md`](reporting/plans/v0_1_11/RELEASE_PROOF.md).
-- **v0.1.12 in flight.** Carry-over closure + trust repair.
-  **Closed:** mypy stylistic class (W-H2, 22 → 0), D13 consumer-
-  site symmetry (W-D13-SYM), privacy doc + `hai auth remove`
-  (W-PRIV), `strength_status` enum surface (W-FCC), public-doc
-  freshness sweep (W-AC), carry-over register (W-CARRY), six
-  cycle proposals (W-CP).
-  **Partial closure:** demo packaged-fixture path + skeleton
-  loader (W-Vb; persona-replay end-to-end deferred to v0.1.13
-  W-Vb), supersede-policy design + `--re-propose-all` flag
-  (W-FBC; recovery prototype + multi-domain enforcement deferred
-  to v0.1.13 W-FBC-2).
-  **Fork-deferred:** `-W error::Warning` broader gate (W-N-broader;
-  49 + 1 sqlite3 leak sites deferred to v0.1.13 W-N-broader; v0.1.12
-  ships v0.1.11 narrow gate unchanged).
-  See [`reporting/plans/v0_1_12/PLAN.md`](reporting/plans/v0_1_12/PLAN.md).
+- **v0.1.13 shipped (2026-04-30).** Largest cycle in the v0.1.x track
+  at 17 workstreams. Closed all v0.1.12 named-deferred items
+  (W-Vb persona-replay end-to-end for P1+P4+P5 ship-set, W-N-broader
+  50-site sqlite3 leak fix, W-FBC-2 multi-domain F-B-04 closure with
+  per-domain carryover-uncertainty token, CP6 §6.3 strategic-plan
+  edit). Shipped the originally-planned onboarding scope (`hai init
+  --guided`, `hai capabilities --human`, `hai doctor --deep`,
+  `hai today` cold-start prose, README rewrite + smoke test, every
+  USER_INPUT exit code carries actionable next-step prose). Landed
+  governance prerequisites (W-29-prep cli.py boundary audit,
+  W-LINT regulated-claim lint, W-AK declarative persona
+  expected-actions, W-A1C7 acceptance matrix). D14 settled at
+  round 5 with the 11 → 7 → 3 → 1-nit → 0 signature; Codex IR
+  closed at round 3 with 6 → 2 → 0 (cleaner than the empirical
+  norm). See
+  [`reporting/plans/v0_1_13/RELEASE_PROOF.md`](reporting/plans/v0_1_13/RELEASE_PROOF.md).
+- **v0.1.14 in flight (next cycle).** Eval substrate + cli.py
+  mechanical split + W-Vb-3 (9 non-ship-set personas residual).
 
 ## Next
 
-- **v0.1.13 — onboarding + cli.py-split prep + carried v0.1.12 residuals.**
-  Trusted-first-value gate + acceptance-matrix (5 paths × required result),
-  declarative persona expected-actions (W-AK), regulated-claim lint (W-LINT),
-  W-29-prep cli.py boundary audit (per CP1), W-FBC-2 (recovery prototype +
-  multi-domain F-B-04 closure, inherited from v0.1.12 partial), W-Vb
-  persona-replay end-to-end (proposal pre-population + clean-wheel synthesis
-  test, inherited from v0.1.12 partial), W-N-broader broader-warning gate
-  (49 + 1 sqlite3 leak sites, fork-inherited from v0.1.12).
-- **v0.1.14 — eval substrate + cli.py split.** W-29 mechanical cli.py
-  split (1 main + 1 shared + 11 handler-group, conditional on v0.1.13
-  prep verdict), L2 W-DOMAIN-SYNC scoped contract test, judge-adversarial
-  fixtures (W-AI), W-AL calibration scaffold (schema/report shape only).
+- **v0.1.14 — eval substrate + cli.py split + W-Vb-3 residual.** W-29
+  mechanical cli.py split (1 main + 1 shared + 11 handler-group,
+  conditional on v0.1.13 W-29-prep verdict — green; the boundary
+  table is in `reporting/docs/cli_boundary_table.md`), W-Vb-3
+  persona-replay extension to the 9 non-ship-set personas
+  (P2/P3/P6/P7/P8/P9/P10/P11/P12), L2 W-DOMAIN-SYNC scoped
+  contract test, judge-adversarial fixtures (W-AI), W-AL
+  calibration scaffold (schema/report shape only).
 - **v0.2.0 — weekly review + insight ledger + factuality gate.** W52
   weekly review with source-row locators, W53 insight ledger, W58
   deterministic claim-block (blocking from day 1), W58 LLM judge ships

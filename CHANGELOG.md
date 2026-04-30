@@ -11,6 +11,193 @@ Per-release detail lives under `reporting/plans/<version>/`.
 
 ---
 
+## [0.1.13] - 2026-04-30
+
+> **Theme.** Largest cycle in the v0.1.x track at 17 workstreams.
+> Three parallel themes: close v0.1.12 named-deferred items
+> (W-Vb persona-replay end-to-end, W-N-broader 50-site sqlite3
+> leak fix, W-FBC-2 multi-domain F-B-04 closure, CP6 application);
+> ship the originally-planned onboarding scope (W-AA through
+> W-AG); land governance prerequisites for v0.1.14 + v0.2.0
+> (W-29-prep, W-LINT, W-AK, W-A1C7).
+>
+> **Tier (per CP3 D15):** substantive.
+>
+> **D14 plan-audit:** PLAN_COHERENT at round 5 with the
+> 11 → 7 → 3 → 1-nit → 0 settling signature (22 findings
+> cumulative; thrice-validated halving head). Mild deviation
+> from the 4-round empirical norm reflects the 17-W-id scope.
+>
+> **Phase 0 (D11) bug-hunt:** internal sweep + audit-chain probe
+> + persona matrix all clean. One in-scope finding (F-PHASE0-01,
+> W-N-broader baseline -1 drift, absorbed by W-N-broader). Pre-
+> implementation gate fired green.
+>
+> **Codex IR chain:** SHIP at round 3 with the 6 → 2 → 0 settling
+> shape (8 findings cumulative). Round 1 SHIP_WITH_FIXES, round 2
+> SHIP_WITH_FIXES, round 3 SHIP outright. Both round-2 findings
+> were doc/lint surfaces; no correctness-bug shape across any
+> round.
+
+### Added
+
+- **`hai init --guided`** (W-AA) — 7-step interactive onboarding
+  orchestrator. Walks thresholds + state DB + skills + intervals.icu
+  auth + initial intent/target rows + first wellness pull +
+  `hai today` surface. Each step idempotent; KeyboardInterrupt
+  mid-flow surfaces `USER_INPUT` exit code with actionable
+  next-step prose. Operator demo SLO target ≤5 min wall-clock
+  documented in `reporting/docs/onboarding_slo.md` (target, not
+  CI gate, per F-PLAN-08).
+- **`hai capabilities --human`** (W-AB) — workflow-grouped
+  one-page rendering of the CLI surface. Existing `--json` and
+  `--markdown` modes unchanged.
+- **`hai doctor --deep`** (W-AE) — live intervals.icu probe-pull
+  classified into 5 outcome classes: `OK`, `CAUSE_1_CLOUDFLARE_UA`,
+  `CAUSE_2_CREDS`, `NETWORK`, `OTHER`. Each carries a specific
+  actionable next-step. Documented at
+  `reporting/docs/intervals_icu_403_triage.md`. Closes the
+  original F-DEMO-01 detection gap (W-CF-UA fixed the symptom in
+  v0.1.12.1).
+- **`hai daily --re-propose-all` runtime semantics** (W-FBC-2,
+  full F-B-04 closure across 6 domains). Per-domain
+  `<domain>_proposal_carryover_under_re_propose_all` token in the
+  recommendation's `uncertainty[]` when the proposal envelope is
+  older than `RE_PROPOSE_ALL_FRESHNESS_THRESHOLD` (60s default).
+  Token surfaces in `hai today` markdown / plain / JSON +
+  `hai explain`. Option A default per
+  `reporting/docs/supersede_domain_coverage.md`; option B
+  per-domain fingerprint primitive NOT shipped (runtime is
+  domain-agnostic via `_carryover_token_for_domain()`); option C
+  remains out-of-v0.1.x scope per F-PLAN-07.
+- **`hai today` cold-start prose** (W-AG) — different framing
+  for day-1 users (no streak history) vs day-30+ established
+  users. Threshold corrected to 30 days at IR r1 F-IR-01 from
+  a transient 7-day implementation drift.
+- **Regulated-claim lint** (W-LINT) at
+  `core/lint/regulated_claims.py`. Static + runtime helpers;
+  banned terms ("abnormal HRV", "clinical-grade", "biomarker",
+  "risk score", "diagnose", "diagnosis", "disease",
+  "medical advice", "treatment", "therapy", "cure"). Four-
+  constraint exception path (allowlisted skill `expert-explainer`
+  + provenance citation + quoted/attributed context + CLI-
+  rendering boundary always strict per F-PLAN-09 constraint 4).
+  `META_DOCUMENT_ALLOWLIST` (safety / reporting / expert-explainer)
+  bounds the meta-document pragma per IR r1 F-IR-04 closure.
+- **Persona-replay end-to-end for P1+P4+P5 ship-set** (W-Vb).
+  `apply_fixture()` flipped from boundary-stop to proposal-write
+  branch; full DomainProposal seeds for each ship-set persona
+  across all 6 domains. Clean-wheel build-install-subprocess test
+  at `test_demo_clean_wheel_persona_replay.py` asserts the wheel
+  ships fixtures correctly. The 9 non-ship-set personas
+  (P2/P3/P6/P7/P8/P9/P10/P11/P12) are honestly fork-deferred to
+  v0.1.14 W-Vb-3.
+- **Declarative persona expected-actions** (W-AK). Three public
+  helpers in `personas/base.py`:
+  `established_expected_actions()`, `day_one_expected_actions()`,
+  `established_forbidden_actions()`. Each of the 12 packaged
+  personas declares an inline `expected_actions=` keyword in its
+  own file. P11 overrides stress to legitimately allow escalation
+  per the W-O elevated-stress scenario; P8 uses the day-1
+  conservative-only shape. Base-class auto-derive retained as
+  safety net only.
+- **Trusted-first-value acceptance matrix** (W-A1C7) at
+  `test_acceptance_matrix.py` — codifies the gate-language
+  contract as a contract test.
+- **README quickstart smoke test** (W-AF) — parses `bash
+  quickstart` fenced block from README; runs each command in a
+  temp dir with stubbed intervals.icu fixture. Catches README
+  drift within one CI build of any README change.
+- **`reporting/docs/cli_boundary_table.md`** (W-29-prep) —
+  derived live from `hai capabilities --json`, names the proposed
+  v0.1.14 W-29 mechanical-split handler-group assignment per
+  subcommand. Three legitimate post-baseline snapshot
+  regenerations recorded (45319da freeze → 03fab4f W-AA `--guided`
+  → bd11be3 W-FBC-2 `--re-propose-all` help text).
+- **`reporting/docs/onboarding_slo.md`** — operator demo SLO
+  reference (manual demo protocol per F-PLAN-08).
+- **`reporting/docs/intervals_icu_403_triage.md`** — in-tree
+  triage doc for `hai doctor --deep`.
+
+### Changed
+
+- **README.md** rewritten for orientation → quickstart →
+  troubleshooting (W-AC). Test-count surface tracks the actual
+  gate result (2493 at v0.1.13 ship).
+- **Every `USER_INPUT` exit-code site in `cli.py`** carries
+  actionable next-step prose (W-AD). New
+  `test_user_input_messages_actionable.py` AST-walks every
+  USER_INPUT raise. W-AA's USER_INPUT exit on guided-onboarding
+  interrupt/partial paths added the same interlock at IR r1.
+- **Pytest broader-warning gate** (`-W error::Warning`) restored
+  as the v0.1.13 ship target (W-N-broader). 50 sqlite3
+  connection-lifecycle + 1 file-handle + 1 HTTPError leak sites
+  closed via structural `try/finally` + context-manager fixes;
+  no `nosec`/`noqa`/`type: ignore` shortcuts.
+- **`strategic_plan_v1.md` §6.3** updated to the 4-element
+  load-bearing-whole framing per `v0_1_12/cycle_proposals/CP6.md`
+  (CP6 application). v0.1.10-update line preserved unchanged
+  per CP6 acceptance gate.
+- **`run_synthesis()`** signature gained `re_propose_all: bool`
+  parameter; existing callers unaffected.
+
+### Fixed
+
+- **F-IR-01 W-AG threshold drift.** `_STREAK_ESTABLISHED_THRESHOLD`
+  shipped at 7 against PLAN-contracted 30. Corrected to 30; tests
+  re-baselined to 30/29 boundaries + 45 for format-consistency.
+- **F-IR-02 `hai init --guided` exit code.** Pre-fix returned `OK`
+  even when guided flow reported `interrupted` or `partial` — a
+  user-facing false green for CI / doctor / agent callers.
+  Mapped both to `USER_INPUT` exit code with actionable stderr
+  prose; `ok_with_skips` retained as `OK` (intentional user
+  skip is not an error).
+- **F-IR-03 W-AK persona declarations.** Initial implementation
+  satisfied PLAN's per-persona contract via base-class fallback
+  only. Added inline `expected_actions=` declarations to all 12
+  packaged persona files; new
+  `test_every_persona_file_declares_expected_actions_inline`
+  asserts the inline declaration.
+- **F-IR-04 `META_DOCUMENT_PRAGMA` wholesale loophole.** Pre-fix,
+  any text containing the magic comment bypassed the static
+  scan. Bounded to `META_DOCUMENT_ALLOWLIST` = {safety, reporting,
+  expert-explainer}; pragma alone is now insufficient for bypass.
+  Negative test asserts arbitrary skills with the pragma still
+  scan.
+- **F-IR-05 W-29-prep snapshot provenance gap.**
+  `cli_boundary_table.md` + CARRY_OVER §2 W-29-prep row now name
+  all three legitimate post-W-29-prep snapshot regenerations
+  (45319da → 03fab4f → bd11be3); v0.1.14 W-29's go/no-go
+  provenance is corrected.
+- **F-IR-R2-01 ruff F541** on three non-interpolating f-string
+  literals in `cli.py` introduced by the W-AA/W-AD interlock fix
+  at IR r1.
+- **Carry-over closure (v0.1.12 RELEASE_PROOF §5):**
+
+| Item | Disposition |
+|---|---|
+| W-Vb persona-replay end-to-end | partial-closure → v0.1.14 W-Vb-3 (P1+P4+P5 ship-set closed) |
+| W-N-broader (49 sqlite3 leaks) | closed-this-cycle (50 sites + 2 ancillary) |
+| W-FBC-2 (multi-domain F-B-04) | closed-this-cycle (option A, all 6 domains) |
+| CP6 §6.3 strategic-plan edit | closed-this-cycle (verbatim application) |
+
+### Notes
+
+- 16 of 17 W-ids closed-this-cycle; 1 partial-closure (W-Vb,
+  9-persona residual fork-deferred to v0.1.14 W-Vb-3 with explicit
+  destination cycle); 1 pre-cycle ship (W-CF-UA, catalogue
+  completeness only — shipped in v0.1.12.1 hotfix, cherry-picked
+  to this branch for code+test parity).
+- No new Settled Decisions (D-entries) this cycle. D14's
+  empirical-settling shape commentary is now thrice-validated
+  across substantive cycles.
+- No new SQLite migrations.
+- Cycle-order inversion: IR ran *before* RELEASE_PROOF / REPORT /
+  CHANGELOG authoring, allowing Codex's findings to shape the
+  ship artifacts directly. Worth carrying to v0.1.14 by default.
+
+---
+
 ## [0.1.12] - 2026-04-29
 
 > **Theme.** Carry-over closure + trust repair. No release-blocker

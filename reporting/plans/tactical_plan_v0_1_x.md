@@ -33,9 +33,10 @@
 |---|---|---|---|---|
 | **v0.1.10** | Pre-PLAN audit + persona harness + correctness | shipped 2026-04-27 | shipped | none (substrate) |
 | **v0.1.11** | Audit-cycle deferred items (W-B/E/F/H/K/L/N) + persona expansion | 2026-04-28 | 2026-05-15 | v0.1.10 (audit findings input) |
-| **v0.1.12** | Mypy strict baseline + bandit closure + state-change UX | post-v0.1.11 + 1-2 weeks | 2026-06 | v0.1.11 (W-B coverage gate must land first) |
-| **v0.1.13** | Public surface hardening + first-time-user onboarding | post-v0.1.12 + 1-2 weeks | 2026-Q3 early | v0.1.12 (mypy clean + W-E supersession) |
-| **v0.1.14** | Eval expansion + LLM-judge factuality gate scaffolding | post-v0.1.13 + 2-3 weeks | 2026-Q3 mid | v0.1.13 (CLI surface stable) |
+| **v0.1.12** | Carry-over closure + trust repair (10 W-ids) | shipped 2026-04-29 | shipped | v0.1.11 |
+| **v0.1.12.1** | Cloudflare User-Agent hotfix (W-CF-UA) | shipped 2026-04-29 | shipped | v0.1.12 |
+| **v0.1.13** | Public surface hardening + first-time-user onboarding + W-Vb/W-N-broader/W-FBC-2 closure (17 W-ids — largest in track) | shipped 2026-04-30 | shipped | v0.1.12 |
+| **v0.1.14** | Eval substrate + cli.py mechanical split (W-29) + W-Vb-3 (9-persona residual) + judge-adversarial fixtures | next | 2026-Q3 mid | v0.1.13 (CLI surface stable + W-29-prep verdict green) |
 | **v0.2.0** | Weekly review + insight proposal ledger + W58 factuality gate | post-v0.1.14 + 2-4 weeks | 2026-Q3 late / Q4 | v0.1.14 (judge harness) |
 
 **Total v0.1.x → v0.2.0 horizon:** 6-9 months from 2026-04-27.
@@ -299,13 +300,21 @@ contract change, broader test gate.
 
 ## 4. v0.1.13 — Public-surface hardening + onboarding
 
+> **Status.** **Shipped 2026-04-30.** All 17 workstreams disposed
+> (16 closed-this-cycle + 1 partial-closure W-Vb with 9-persona
+> residual fork-deferred to v0.1.14 W-Vb-3). Codex IR closed at
+> SHIP round 3 with the 6 → 2 → 0 settling shape. See
+> `v0_1_13/RELEASE_PROOF.md` and `v0_1_13/REPORT.md` for
+> canonical post-ship narrative; this section is preserved as
+> the cycle's pre-ship contract for historical traceability.
+>
 > **Theme.** Make first-time-user experience credible. The
 > maintainer's daily-driver experience is well-tuned; new-user UX
 > has rough edges (state init, credential auth, intake discovery).
 > v0.1.13 closes those without changing the runtime contract.
-> End-state: `pipx install health-agent-infra && hai init` produces
-> a working setup in under 5 minutes for a recreational athlete
-> with intervals.icu.
+> End-state: `pipx install health-agent-infra && hai init --guided`
+> produces a working setup in under 5 minutes for a recreational
+> athlete with intervals.icu.
 
 ### 4.1 In scope
 
@@ -387,36 +396,45 @@ assumptions failing" can be run cleanly.
 | **W-AH** | Scenario fixture expansion: 30+ new per-domain scenarios | 3-4 days |
 | **W-AI** | Ground-truth labelling methodology + maintainer review tool | 2-3 days |
 | **W-AJ** | LLM-judge harness scaffold (no model invocation yet) | 2-3 days |
-| **W-AK** | Per-persona expected-behaviour assertions in dogfood harness | 2 days |
 | **W-AL** | Calibration eval — confidence vs. ground truth correlation | 2 days |
 | **W-AM** | Adversarial scenario fixtures — explicit "should escalate" cases | 1-2 days |
 | **W-AN** | `hai eval run --scenario-set <set>` CLI surface for batch eval | 1-2 days |
 
-**Added at v0.1.12 ship per CP1 + reconciliation §6 + Codex F-PLAN-09:**
+**Inherited from v0.1.13 (carry-over closure shape):**
 
 | W-id | Title | Effort | Source |
 |---|---|---|---|
-| **W-29** | cli.py mechanical split (1 main + 1 shared + 11 handler-group, <2500 each) — conditional on v0.1.13 W-29-prep verdict; parser/capabilities regression test mandatory | 3-4d | CP1 |
+| **W-29** | cli.py mechanical split (1 main + 1 shared + 11 handler-group, <2500 each) — gated by v0.1.13 W-29-prep verdict (green; boundary table at `reporting/docs/cli_boundary_table.md`); parser/capabilities byte-stability regression test must hold across the split | 3-4d | CP1 |
+| **W-Vb-3** | Persona-replay extension to the 9 non-ship-set personas (P2/P3/P6/P7/P8/P9/P10/P11/P12). v0.1.13 W-Vb closed P1+P4+P5; long-term universe is all 12 personas in the matrix. May further partial-close (e.g., 3-at-a-time) at the v0.1.14 author's discretion; the destination cycle owns the full residual | 4-6d | v0.1.13 RELEASE_PROOF §5 + CARRY_OVER §4; F-PLAN-06 + F-PLAN-R2-02 + F-PLAN-R3-02 |
 | **W-DOMAIN-SYNC** | Scoped contract test (single truth table + expected-subset assertions; not all 8 named tables are six-domain registries — `_DOMAIN_ACTION_REGISTRY` is intentionally Phase-A-only) | 0.5d | Reconciliation L2 + Codex F-PLAN-09 |
 
-**Note:** A12 judge-adversarial fixtures fold into W-AI (above), and
-A2/W-AL calibration scaffold ships schema/report-shape only;
-real correlation work defers to v0.5+ per reconciliation
-action 15.
+**Note (changes from earlier draft):**
+- **W-AK** was pulled forward to v0.1.13 per the CP1 reconciliation
+  (shipped + revised at IR r1 F-IR-03). The per-persona declarative
+  ground-truth contract is in place; v0.1.14 W58 prep can build on it.
+- A12 judge-adversarial fixtures fold into W-AI; A2/W-AL ships
+  schema/report-shape only, with real correlation work deferred to
+  v0.5+ per reconciliation action 15.
 
 ### 5.2 Acceptance
 
 - Scenario fixtures grow from current ~50 → 120+.
 - Per-persona expected-behaviour table in dogfood harness covers
-  all 12 personas across all 6 domains.
+  all 12 personas across all 6 domains. (v0.1.13 W-AK shipped the
+  declarative shape; v0.1.14 W-AH expands the assertion coverage.)
 - LLM-judge harness has clean invocation interface; v0.2.0 W58 just
   needs to plug in the model.
 - Calibration eval reports confidence-vs-truth correlation per
   domain.
+- W-29 mechanical split preserves the v0.1.13 capabilities snapshot
+  byte-for-byte.
+- W-Vb-3 closes the 9-persona residual or honestly partial-closes
+  with a v0.1.15 destination.
 
 ### 5.3 Effort estimate
 
-13-18 days. Largest release in the v0.1.x track.
+15-22 days (with W-29 + W-Vb-3 inherited from v0.1.13). Substantial
+cycle but smaller than v0.1.13's 22.5-32.5 day envelope.
 
 ---
 

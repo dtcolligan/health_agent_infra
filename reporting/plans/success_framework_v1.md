@@ -120,7 +120,7 @@ back up.
 **Target:** 100%. Any break is a v0.1.x release-blocker.
 
 **Source:** Audit-chain probe (Phase B in v0.1.10 PRE_AUDIT_PLAN).
-Automate as part of `hai doctor` in v0.1.13 (W-AE).
+Automated as part of `hai doctor` in v0.1.13 (W-AE shipped 2026-04-30).
 
 **Phase:** 1+ (always measurable).
 
@@ -129,7 +129,10 @@ Automate as part of `hai doctor` in v0.1.13 (W-AE).
 **What:** Fraction of personas (P1-P12 in v0.1.11) that:
 - Run without crashes.
 - Produce action recommendations matching declared
-  `expected_actions` (post-v0.1.14 W-AK).
+  `expected_actions` (W-AK shipped at v0.1.13 with inline
+  per-persona declarations on every `p<N>_<slug>.py` file
+  per IR r1 F-IR-03 closure; v0.1.14 W-AH expands assertion
+  coverage further).
 
 **Why it matters:** Catches classifier-assumption bugs that hide
 behind the maintainer's specific user shape (single-user dogfood
@@ -137,7 +140,8 @@ limitation).
 
 **Target:**
 - v0.1.10: ≥ 0.7 (informally, given findings detector heuristics).
-- v0.1.11+: ≥ 0.95 (with explicit expected_actions in v0.1.14).
+- v0.1.11+: ≥ 0.95 (with explicit `expected_actions`; shipped at
+  v0.1.13 W-AK).
 - v1.0: 1.0.
 
 **Source:** `verification/dogfood/runner.py` `summary.json`
