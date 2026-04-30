@@ -194,6 +194,11 @@ def check_auth_intervals_icu(
 
     v0.1.11 W-X: ``probe_result`` adds a ``probe`` sub-dict and may
     flip the row to ``fail`` when the probe rejects.
+
+    v0.1.13 W-AE: when ``probe_result`` carries an ``outcome_class``,
+    surface it on the row alongside an actionable ``next_step`` from
+    `OUTCOME_NEXT_STEPS`. The class string is the contract surface
+    that `reporting/docs/intervals_icu_403_triage.md` references.
     """
 
     status = store.intervals_icu_status()
@@ -210,12 +215,24 @@ def check_auth_intervals_icu(
     out: dict[str, Any] = {"status": "ok", "credentials_source": source}
     if probe_result is not None:
         out["probe"] = probe_result.to_dict()
+        outcome_class = getattr(probe_result, "outcome_class", None)
+        if outcome_class is not None:
+            from health_agent_infra.core.doctor.probe import OUTCOME_NEXT_STEPS
+
+            out["outcome_class"] = outcome_class
+            out["next_step"] = OUTCOME_NEXT_STEPS.get(
+                outcome_class, OUTCOME_NEXT_STEPS["OTHER"],
+            )
         if not probe_result.ok:
             out["status"] = "fail"
             out["reason"] = (
                 f"intervals.icu --deep probe failed: "
                 f"{probe_result.error_message or 'unknown error'}"
             )
+            # Outcome-class-specific hint takes precedence over the
+            # generic "probe failed" hint when classification ran.
+            if outcome_class is not None:
+                out["hint"] = out["next_step"]
     return out
 
 
@@ -402,6 +419,178 @@ def check_today(
     }
 
 
+def check_onboarding_readiness(
+    db_path: Path,
+    *,
+    user_id: str,
+    as_of_date: date,
+) -> dict[str, Any]:
+    """W-AE (v0.1.13): does this user look like they have completed onboarding?
+
+    Three preconditions for a user to get value from `hai daily`:
+      1. At least one active intent row (something to plan against).
+      2. At least one active target row (a measurable to compare to).
+      3. At least one successful wellness pull (signal to score).
+
+    Each missing piece surfaces a separate `missing` reason + actionable
+    hint. The row's overall status is `warn` when anything is missing
+    (these are friendly warnings, not failures — a fresh install hits
+    all three).
+    """
+
+    if not db_path.exists():
+        return {
+            "status": "warn",
+            "reason": "state DB not initialised",
+            "hint": "run `hai init`",
+        }
+
+    from health_agent_infra.core.intent import list_active_intent
+    from health_agent_infra.core.state import open_connection
+    from health_agent_infra.core.state.sync_log import (
+        latest_successful_sync_per_source,
+    )
+    from health_agent_infra.core.target import list_active_target
+
+    missing: list[str] = []
+    hints: list[str] = []
+
+    conn = open_connection(db_path)
+    try:
+        try:
+            intent_rows = list_active_intent(
+                conn, user_id=user_id, as_of_date=as_of_date,
+            )
+            target_rows = list_active_target(
+                conn, user_id=user_id, as_of_date=as_of_date,
+            )
+            sync_rows = latest_successful_sync_per_source(conn, user_id=user_id)
+        except sqlite3.OperationalError as exc:
+            return {
+                "status": "warn",
+                "reason": f"schema read failed: {exc}",
+                "hint": "run `hai state migrate`",
+            }
+    finally:
+        conn.close()
+
+    intent_count = len(intent_rows)
+    target_count = len(target_rows)
+    wellness_sources = [s for s in sync_rows if s in {"intervals_icu", "garmin"}]
+    has_wellness_pull = any(sync_rows.get(s) for s in wellness_sources)
+
+    if intent_count == 0:
+        missing.append("intent")
+        hints.append(
+            "no active intent rows — run `hai intent training add-session` "
+            "or `hai intent sleep set-window` to author a goal",
+        )
+    if target_count == 0:
+        missing.append("target")
+        hints.append(
+            "no active target rows — run `hai target set` to commit a "
+            "measurable wellness target",
+        )
+    if not has_wellness_pull:
+        missing.append("wellness_pull")
+        hints.append(
+            "no successful wellness pull yet — run `hai pull --source "
+            "intervals_icu` (preferred) or `hai pull --source garmin`",
+        )
+
+    base: dict[str, Any] = {
+        "intent_count": intent_count,
+        "target_count": target_count,
+        "has_wellness_pull": has_wellness_pull,
+    }
+    if missing:
+        base["status"] = "warn"
+        base["missing"] = missing
+        # First missing piece dominates the hint; full list also
+        # surfaced under `missing` so a renderer can show them all.
+        base["hint"] = hints[0]
+        base["all_hints"] = hints
+    else:
+        base["status"] = "ok"
+    return base
+
+
+def check_intake_gaps(
+    db_path: Path,
+    *,
+    user_id: str,
+    as_of_date: date,
+) -> dict[str, Any]:
+    """W-AE (v0.1.13): list user-closeable intake gaps for today.
+
+    Builds the snapshot the synthesis layer would consume and runs the
+    same `compute_intake_gaps` the agent surfaces via
+    `hai intake gaps`. Failures are non-fatal — gap detection is a
+    diagnostic; if it can't run, the row reports `unknown` rather
+    than blocking the doctor report.
+    """
+
+    if not db_path.exists():
+        return {
+            "status": "warn",
+            "reason": "state DB not initialised",
+            "hint": "run `hai init`",
+        }
+
+    try:
+        from health_agent_infra.core.intake.gaps import (
+            compute_intake_gaps_from_state_snapshot,
+        )
+    except ImportError:
+        return {"status": "ok", "gaps": [], "reason": "gap detection unavailable"}
+
+    try:
+        gap_payload = compute_intake_gaps_from_state_snapshot(
+            db_path=db_path,
+            user_id=user_id,
+            as_of_date=as_of_date,
+            allow_stale=True,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return {
+            "status": "warn",
+            "reason": f"gap detection failed: {type(exc).__name__}: {exc}",
+            "hint": "re-run `hai doctor` after `hai state migrate`",
+        }
+
+    gap_rows = gap_payload.get("gaps", []) or []
+    blocking = [g for g in gap_rows if g.get("blocks_coverage", True)]
+    base: dict[str, Any] = {
+        "gap_count": gap_payload.get("gap_count", len(gap_rows)),
+        "blocking_gap_count": gap_payload.get(
+            "gating_gap_count", len(blocking),
+        ),
+        "gaps": [
+            {
+                "domain": g.get("domain"),
+                "missing_field": g.get("missing_field"),
+                "blocks_coverage": g.get("blocks_coverage", True),
+                "intake_command": g.get("intake_command"),
+            }
+            for g in gap_rows
+        ],
+    }
+    if blocking:
+        base["status"] = "warn"
+        first = blocking[0]
+        cmd = first.get("intake_command")
+        domain = first.get("domain")
+        missing = first.get("missing_field")
+        base["hint"] = (
+            f"close {missing!r} in domain {domain!r}: run `{cmd}`"
+            if cmd
+            else f"close the {missing!r} gap in domain {domain!r}"
+        )
+    else:
+        base["status"] = "ok"
+    return base
+
+
 # ---------------------------------------------------------------------------
 # Orchestrator
 # ---------------------------------------------------------------------------
@@ -468,6 +657,12 @@ def build_report(
         "domains": check_domains(domain_names),
         "sources": check_sources(db_path, user_id=user_id, as_of_date=as_of),
         "today": check_today(db_path, user_id=user_id, as_of_date=as_of),
+        "onboarding_readiness": check_onboarding_readiness(
+            db_path, user_id=user_id, as_of_date=as_of,
+        ),
+        "intake_gaps": check_intake_gaps(
+            db_path, user_id=user_id, as_of_date=as_of,
+        ),
     }
 
     overall = worst_status([c["status"] for c in checks.values()])

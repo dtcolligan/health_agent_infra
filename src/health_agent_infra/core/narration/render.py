@@ -55,6 +55,7 @@ def render_today(
     format: str = "markdown",
     domain_filter: Optional[str] = None,
     cold_start_by_domain: Optional[dict[str, dict[str, Any]]] = None,
+    streak_days: Optional[int] = None,
 ) -> str:
     """Render an explain bundle as the ``hai today`` user surface.
 
@@ -78,6 +79,13 @@ def render_today(
 
     When the dict is None or a domain is absent, the renderer behaves
     exactly as pre-D4 (no cold-start framing).
+
+    ``streak_days`` is the v0.1.13 W-AG hook for cold-start prose.
+    When None, behaves exactly as pre-W-AG. When 0, the renderer
+    surfaces "first plan" framing in top-matter + footer. When ≥7,
+    it surfaces "X-day streak" framing. Mid-range (1-6) keeps
+    pre-W-AG voice — the user is mid-onboarding and either framing
+    would feel forced.
     """
 
     if format == "json":
@@ -92,6 +100,7 @@ def render_today(
         use_markdown=use_markdown,
         domain_filter=domain_filter,
         cold_start_by_domain=cold_start_by_domain or {},
+        streak_days=streak_days,
     )
 
 
@@ -138,9 +147,12 @@ def _render_prose(
     use_markdown: bool,
     domain_filter: Optional[str],
     cold_start_by_domain: dict[str, dict[str, Any]],
+    streak_days: Optional[int] = None,
 ) -> str:
     lines: list[str] = []
-    lines.extend(_render_top_matter(bundle, use_markdown=use_markdown))
+    lines.extend(_render_top_matter(
+        bundle, use_markdown=use_markdown, streak_days=streak_days,
+    ))
     lines.extend(_render_summary(bundle, domain_filter=domain_filter))
 
     rendered_any = False
@@ -188,7 +200,9 @@ def _render_prose(
     )
 
     lines.append("")
-    lines.extend(_render_footer(bundle, use_markdown=use_markdown))
+    lines.extend(_render_footer(
+        bundle, use_markdown=use_markdown, streak_days=streak_days,
+    ))
     return "\n".join(lines) + "\n"
 
 
@@ -236,8 +250,33 @@ def _render_cold_start_footers(
     return lines
 
 
-def _render_top_matter(bundle: ExplainBundle, *, use_markdown: bool) -> list[str]:
-    header = f"Today, {bundle.plan.for_date} — your plan"
+# W-AG (v0.1.13): streak threshold above which "X-day streak" framing
+# kicks in. Below 7 the user is still onboarding; the streak phrase
+# would feel premature. Above 7 the streak is a real signal worth
+# surfacing.
+_STREAK_ESTABLISHED_THRESHOLD = 7
+
+
+def _render_top_matter(
+    bundle: ExplainBundle,
+    *,
+    use_markdown: bool,
+    streak_days: Optional[int] = None,
+) -> list[str]:
+    if streak_days is not None and streak_days == 0:
+        # Day-1 / cold-start framing. The user has either never run
+        # `hai daily` successfully OR hasn't yet today.
+        header = f"Today, {bundle.plan.for_date} — your first plan"
+    elif (
+        streak_days is not None
+        and streak_days >= _STREAK_ESTABLISHED_THRESHOLD
+    ):
+        header = (
+            f"Today, {bundle.plan.for_date} — your plan "
+            f"({streak_days}-day streak)"
+        )
+    else:
+        header = f"Today, {bundle.plan.for_date} — your plan"
     if use_markdown:
         return [f"# {header}"]
     return [header, "=" * len(header)]
@@ -327,14 +366,33 @@ def _render_missing_domain(
     return [line, "-" * len(line)]
 
 
-def _render_footer(bundle: ExplainBundle, *, use_markdown: bool) -> list[str]:
-    footer = (
+def _render_footer(
+    bundle: ExplainBundle,
+    *,
+    use_markdown: bool,
+    streak_days: Optional[int] = None,
+) -> list[str]:
+    base = (
         f"Recorded as plan {bundle.plan.daily_plan_id}. "
         f"Run `hai review record` tomorrow morning to log how today went."
     )
-    if use_markdown:
-        return [footer]
-    return [footer]
+    if streak_days is not None and streak_days == 0:
+        base = (
+            f"Recorded as plan {bundle.plan.daily_plan_id}. "
+            f"This is your first plan — confidence will sharpen as the "
+            f"system sees more of your training. Run `hai daily` again "
+            f"tomorrow to keep the chain going."
+        )
+    elif (
+        streak_days is not None
+        and streak_days >= _STREAK_ESTABLISHED_THRESHOLD
+    ):
+        base = (
+            f"Recorded as plan {bundle.plan.daily_plan_id}. "
+            f"Run `hai review record` tomorrow morning to log how today "
+            f"went and keep your {streak_days}-day streak going."
+        )
+    return [base]
 
 
 def _rationale_prose(rationale: list[str]) -> str:

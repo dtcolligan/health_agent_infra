@@ -761,72 +761,51 @@ def _synthesise_findings(
             }
         )
 
-    # Action sanity per persona
+    # Action sanity per persona — W-AK (v0.1.13) declarative checks.
+    # Pre-W-AK behaviour was ad-hoc (hardcoded "escalate is wrong on
+    # thin history"); the spec now declares per-domain whitelists +
+    # blacklists so the contract is auditable on the persona file.
     actions = result.actions_per_domain
+    expected = spec.expected_actions or {}
+    forbidden = spec.forbidden_actions or {}
 
-    # Strength: persona with no strength history but planned strength today
-    # should not produce a 'rest' or 'escalate_for_user_review' purely on
-    # volume_spike with a near-zero baseline (B2 from morning briefing).
-    if spec.weekly_strength_count > 0 and spec.today_planned_session.startswith("strength"):
-        strength_action = actions.get("strength")
-        if strength_action == "escalate_for_user_review":
+    for domain, action in actions.items():
+        # Whitelist check — if the persona declared an expected list
+        # for this domain, the action must be in it.
+        whitelist = expected.get(domain)
+        if whitelist and action not in whitelist:
             findings.append(
                 {
-                    "kind": "strength_volume_spike_on_thin_history_suspect",
-                    "severity": "band-miscalibration",
-                    "persona_history_days": spec.history_days,
-                    "weekly_strength_count": spec.weekly_strength_count,
-                    "actual_action": strength_action,
+                    "kind": "action_outside_persona_whitelist",
+                    "severity": "action-mismatch",
+                    "domain": domain,
+                    "actual_action": action,
+                    "expected_actions": list(whitelist),
                     "note": (
-                        "Strength escalation on a persona with regular weekly "
-                        "training pattern likely reproduces B2 — R-volume-spike "
-                        "fires without minimum-coverage gate."
+                        f"Persona {spec.persona_id!r} declares "
+                        f"expected_actions[{domain!r}] = {sorted(whitelist)}; "
+                        f"actual action {action!r} is not in that whitelist."
                     ),
                 }
             )
 
-    # Nutrition: full-day nutrition logged should NOT escalate to extreme deficiency
-    if spec.recorded_nutrition_history and spec.daily_kcal_target:
-        today_nut = next(
-            (n for n in spec.recorded_nutrition_history if n.date_offset_days == 0),
-            None,
-        )
-        if today_nut and abs(today_nut.calories - spec.daily_kcal_target) < 500:
-            nut_action = actions.get("nutrition")
-            if nut_action == "escalate_for_user_review":
-                findings.append(
-                    {
-                        "kind": "nutrition_escalation_on_full_day_within_target",
-                        "severity": "band-miscalibration",
-                        "logged_kcal": today_nut.calories,
-                        "target_kcal": spec.daily_kcal_target,
-                        "delta_kcal": today_nut.calories - spec.daily_kcal_target,
-                        "actual_action": nut_action,
-                        "note": (
-                            "Persona logged a full day within ±500 kcal of target "
-                            "but nutrition still escalated — possible threshold "
-                            "or partial-day-detection bug."
-                        ),
-                    }
-                )
-
-    # Day-1 cold-start: every domain should defer cleanly, not crash or
-    # produce a 'proceed' on no signal.
-    if spec.history_days == 0:
-        for domain, action in actions.items():
-            if action not in {"defer_decision_insufficient_signal", "maintain_routine", "maintain_schedule", "rest"}:
-                findings.append(
-                    {
-                        "kind": "day1_unexpected_action",
-                        "severity": "action-mismatch",
-                        "domain": domain,
-                        "actual_action": action,
-                        "note": (
-                            "Day-1 fresh install should produce defer or "
-                            "conservative actions, not high-confidence proceed."
-                        ),
-                    }
-                )
+        # Blacklist check — declared forbidden actions must not fire.
+        blacklist = forbidden.get(domain)
+        if blacklist and action in blacklist:
+            findings.append(
+                {
+                    "kind": "action_in_persona_blacklist",
+                    "severity": "action-mismatch",
+                    "domain": domain,
+                    "actual_action": action,
+                    "forbidden_actions": list(blacklist),
+                    "note": (
+                        f"Persona {spec.persona_id!r} declares "
+                        f"forbidden_actions[{domain!r}] = {sorted(blacklist)}; "
+                        f"actual action {action!r} is in that blacklist."
+                    ),
+                }
+            )
 
     return findings
 

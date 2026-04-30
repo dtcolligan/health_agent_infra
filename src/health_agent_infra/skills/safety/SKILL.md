@@ -3,6 +3,7 @@ name: safety
 description: Fail-closed boundaries for the health agent. Defines what the system must not claim, when to refuse, and how to handle ambiguous or unsafe signal.
 disable-model-invocation: false
 ---
+<!-- regulated-claim-lint: meta-document -->
 
 # Safety
 

@@ -331,13 +331,33 @@ contract change, broader test gate.
 | **W-AK** | Declarative persona expected-actions (pulled forward from v0.1.14; precondition for v0.1.14 W58 prep) | 1d | Reconciliation A5 |
 | **CP6 application** | Apply strategic plan §6.3 framing edit per `reporting/plans/v0_1_12/cycle_proposals/CP6.md` | 0.25d | CP6 deferred application |
 
-### 4.2 Acceptance
+### 4.2 Acceptance — trusted-first-value matrix (5 paths × required result)
 
-- Time-from-install-to-first-recommendation < 5 min for fresh user
-  with intervals.icu credentials.
+Per W-A1C7 (this cycle), the v0.1.13 onboarding gate is no longer
+the ambiguous time-to-recommendation phrasing inherited from earlier
+drafts. The contract is a five-path matrix: **trusted first value =
+the agent reaches one of five honest end-states, none of which
+fabricate against missing input.** Each path has an explicit
+required result codified in
+`verification/tests/test_acceptance_matrix.py`:
+
+| Path | Trigger | Required result |
+|---|---|---|
+| **1. Blank demo** | `hai demo start --blank && hai daily` | Honest "no proposals yet" boundary — `daily` exits without crashing and does NOT fabricate a plan. |
+| **2. Persona demo** | `hai demo start --persona <ship-set-slug> && hai daily` | Reaches `synthesized` for P1+P4+P5 (W-Vb ship-set) with non-empty proposal_log + committed daily_plan. The 9 non-ship-set personas are fork-deferred to v0.1.14 W-Vb-3. |
+| **3. Real intervals.icu pull** | `hai auth intervals-icu` + `hai pull --source intervals_icu` + `hai daily` | Reaches a real plan when credentials work AND watch has synced today's data. Documented degraded states (e.g. Cloudflare UA-block, stale watch) surface via `hai doctor --deep` (W-AE) and route to one of the four CAUSE classes; do not silently produce an under-data plan. |
+| **4. Host-agent propose-and-synthesize** | Agent calls `hai propose --domain <d>` for each of 6 domains, then `hai synthesize` | Produces a synthesized daily_plan with audit-chain integrity (proposal_log → planned_recommendation → daily_plan reconciles via `hai explain`). |
+| **5. Failure path** | `hai daily` on a fresh-init DB with no intent / target / pull | USER_INPUT-class exit code with actionable next-step (W-AD); does NOT crash, does NOT silently produce a plan, does NOT escalate phantom signal. |
+
+Adjacent acceptance still in scope:
+
 - 100% of CLI exit codes carry actionable next-step prose for
-  USER_INPUT class.
-- `hai doctor` flags all common onboarding gaps.
+  USER_INPUT class (W-AD).
+- `hai doctor` flags all common onboarding gaps (W-AE).
+- Operator demo SLO (target, not ship-gate): new-user
+  `pipx install` → `hai init` → trusted-first-value path under 5 min
+  on broadband + modern hardware. Documented in
+  `reporting/docs/onboarding_slo.md` as a manual demo protocol.
 
 ### 4.3 Effort estimate
 

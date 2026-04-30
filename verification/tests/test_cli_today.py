@@ -152,8 +152,14 @@ def test_hai_today_green_day_renders_all_six_domains_in_markdown(tmp_path: Path)
 
     rc, out, err = _run_today(db, "--format", "markdown")
     assert rc == 0, err
-    # Top matter + date.
-    assert "# Today, 2026-04-23 — your plan" in out
+    # Top matter + date. v0.1.13 W-AG: a fresh DB with no prior
+    # successful `hai daily` runs has streak=0, which engages the
+    # "your first plan" framing. Match either form so the assertion
+    # tolerates both pre-W-AG and post-W-AG fixtures.
+    assert (
+        "# Today, 2026-04-23 — your plan" in out
+        or "# Today, 2026-04-23 — your first plan" in out
+    )
     # All 6 domain headers rendered, in canonical order.
     domain_positions = []
     for domain in ("Recovery", "Sleep", "Running", "Strength", "Stress", "Nutrition"):

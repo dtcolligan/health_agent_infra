@@ -406,9 +406,29 @@ positioning.
 
 ### 6.3 Ship the credible artifact
 
-The R-rule + X-rule policy DSL is the thing no competitor has and
-academia (AgentSpec, policy-as-prompt, Bloom's structured mutations)
-is converging toward. It is publishable prior art. Treat it as one.
+The defensible substrate is a **load-bearing whole** of four
+elements, no one of which is the moat alone:
+
+1. **The governance contract + audit chain.** Three-state
+   `proposal_log → planned_recommendation → daily_plan`
+   reconciliation; every recommendation cites its evidence
+   chain back to the source rows.
+2. **The skill-overlay invariant.** `_overlay_skill_drafts`
+   whitelists 3 keys, raises on anything else; no skill imports
+   in runtime code. This keeps judgment-prose authorship
+   bounded — skills cannot mutate the recommendation surface.
+3. **The Phase B write-surface guard.** `guard_phase_b_mutation`
+   enforces that Phase B (skill-overlay drafting) cannot reach
+   the daily-plan write path.
+4. **The R-rule + X-rule policy DSL.** Competent engineering
+   that names the policy decisions in code. AgentSpec + policy-
+   as-prompt + Bloom's structured mutations are converging
+   toward similar shapes; the DSL is publishable prior art
+   alongside (1)-(3), not above them.
+
+All four are publishable. The contribution is that they hold
+together as a single contract, not that any one of them is
+novel theory.
 
 **v0.1.10 update:** The pre-PLAN bug-hunt pattern + persona harness
 are also publishable — "structured pre-release audit with synthetic

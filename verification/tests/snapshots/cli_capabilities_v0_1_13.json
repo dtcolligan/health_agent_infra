@@ -1,0 +1,4696 @@
+{
+  "commands": [
+    {
+      "agent_safe": false,
+      "command": "hai auth garmin",
+      "description": "Store Garmin credentials in the OS keyring. Interactive by default; operator-only (requires a live password).",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Garmin account email (prompts if omitted)",
+          "name": "--email",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Read the Garmin password from a single line on stdin (for non-interactive use)",
+          "name": "--password-stdin",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Read the Garmin password from the named environment variable",
+          "name": "--password-env",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "yes",
+      "json_output": "default",
+      "mutation": "writes-credentials"
+    },
+    {
+      "agent_safe": false,
+      "command": "hai auth intervals-icu",
+      "description": "Store Intervals.icu credentials in the OS keyring. Interactive by default; operator-only (requires a live API key).",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Intervals.icu athlete id (prompts if omitted)",
+          "name": "--athlete-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Read the Intervals.icu API key from a single line on stdin (for non-interactive use)",
+          "name": "--api-key-stdin",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Read the Intervals.icu API key from the named environment variable",
+          "name": "--api-key-env",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "yes",
+      "json_output": "default",
+      "mutation": "writes-credentials"
+    },
+    {
+      "agent_safe": false,
+      "command": "hai auth remove",
+      "description": "Remove stored credentials from the OS keyring. Idempotent \u2014 removing absent credentials is a no-op. Env-var-supplied credentials are never touched.",
+      "exit_codes": [
+        "OK"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "garmin",
+            "intervals-icu",
+            "all"
+          ],
+          "default": null,
+          "help": "Which credential set to remove. 'all' removes both Garmin and Intervals.icu keyring entries. Env-var-supplied credentials are never touched.",
+          "name": "--source",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        }
+      ],
+      "idempotent": "yes",
+      "json_output": "default",
+      "mutation": "writes-credentials"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai auth status",
+      "description": "Report whether Garmin and Intervals.icu credentials are configured. Presence only \u2014 never emits the secret itself.",
+      "exit_codes": [
+        "OK"
+      ],
+      "flags": [],
+      "idempotent": "n/a",
+      "json_output": "default",
+      "mutation": "read-only"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai capabilities",
+      "description": "Emit the agent-CLI-contract manifest describing every subcommand's mutation class, idempotency, JSON output, and exit codes. The authoritative surface the routing skill consumes.",
+      "exit_codes": [
+        "OK"
+      ],
+      "flags": [
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Render the manifest as the contract markdown doc on stdout instead of JSON. Used by the doc regenerator.",
+          "name": "--markdown",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Render a one-page user-readable overview grouped by workflow stage. Skips the schema-annotation columns; for the agent-facing manifest use --json (default).",
+          "name": "--human",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "No-op alias: JSON is already the default emit. Provided so agents and docs can pass `--json` explicitly without argparse rejecting the flag.",
+          "name": "--json",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        }
+      ],
+      "idempotent": "n/a",
+      "json_output": "opt-out",
+      "mutation": "read-only"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai clean",
+      "description": "Normalize pulled evidence into CleanedEvidence + RawSummary JSON and project accepted state rows. Best-effort projection when --db-path is absent.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Path to a JSON file produced by `hai pull`",
+          "name": "--evidence-json",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "State DB path (default: $HAI_STATE_DB or platform default). If the DB is absent, projection is skipped with a stderr note; stdout is unchanged.",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "yes",
+      "json_output": "default",
+      "mutation": "writes-state"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai config diff",
+      "description": "Diff user thresholds.toml against DEFAULT_THRESHOLDS, leaf by leaf.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Override source path.",
+          "name": "--path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "n/a",
+      "json_output": "default",
+      "mutation": "read-only"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai config init",
+      "description": "Scaffold a default thresholds.toml at the user-config path.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Override destination path (default: platformdirs user_config_dir)",
+          "name": "--path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Overwrite an existing thresholds.toml",
+          "name": "--force",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        }
+      ],
+      "idempotent": "yes",
+      "json_output": "default",
+      "mutation": "writes-config"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai config show",
+      "description": "Print the effective merged threshold configuration (defaults + overrides).",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Override source path (default: platformdirs user_config_dir)",
+          "name": "--path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "n/a",
+      "json_output": "default",
+      "mutation": "read-only"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai config validate",
+      "description": "Validate user thresholds.toml against DEFAULT_THRESHOLDS shape.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Override source path.",
+          "name": "--path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Treat unknown leaf keys as blocking errors.",
+          "name": "--strict",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        }
+      ],
+      "idempotent": "n/a",
+      "json_output": "default",
+      "mutation": "read-only"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai daily",
+      "description": "Morning orchestrator: deterministic stages run end-to-end (pull \u2192 clean \u2192 snapshot \u2192 gaps \u2192 proposal_gate). The agent then invokes the 6 per-domain readiness skills, posts DomainProposal rows via `hai propose --domain <d>`, and re-runs `hai daily` to advance the gate to `complete` and trigger synthesis. `--domains <csv>` narrows the expected set for partial-day planning.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Writeback/intake root. review_events.jsonl is appended here after synthesis. Default: $HAI_BASE_DIR or ~/.health_agent.",
+          "name": "--base-dir",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Civil date to orchestrate for, ISO-8601. Default: today UTC.",
+          "name": "--as-of",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "u_local_1",
+          "help": "User whose daily pipeline to orchestrate.",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "State DB path (default: `$HAI_STATE_DB` or `~/.local/share/health_agent_infra/state.db`).",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Legacy flag: equivalent to --source garmin_live. Garmin Connect's login surface is rate-limited and unreliable for live scraping; prefer `--source intervals_icu` (the v0.1.6+ supported live source).",
+          "name": "--live",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "csv",
+            "garmin_live",
+            "intervals_icu"
+          ],
+          "default": null,
+          "help": "Evidence source for the pull stage. Same semantics as `hai pull --source`. Default (v0.1.6+): intervals_icu when credentials are configured, else csv.",
+          "name": "--source",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": 14,
+          "help": "Trailing window for live pull series (matches `hai pull --history-days`).",
+          "name": "--history-days",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Skip the pull + clean stages. Assumes state already populated for --as-of.",
+          "name": "--skip-pull",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Optional CSV subset of expected domains (recovery, running, sleep, stress, strength, nutrition). Default: all 6. Narrows the proposal-completeness gate: synthesis is blocked until every domain in this set has a proposal. Use this to say `I'm only planning for these N domains today` and unblock the gate without posting unused proposals. Synthesis still runs over every proposal present in proposal_log for (for_date, user_id), which may be a superset of this list if other domains were proposed.",
+          "name": "--domains",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "claude_agent_v1",
+          "help": "Agent version string stamped on committed rows.",
+          "name": "--agent-version",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Keep prior canonical plan and write a fresh _v<N> id. Default is atomic replace.",
+          "name": "--supersede",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "v0.1.12 W-FBC (partial closure of F-B-04): set the report-surface field `re_propose_all_requested: true` on the daily JSON output. **No synthesis-side runtime effect at v0.1.12** \u2014 the flag's contract is honoured but enforcement (recovery prototype + multi-domain carryover-uncertainty token) is deferred to v0.1.13 W-FBC-2. See reporting/docs/supersede_domain_coverage.md.",
+          "name": "--re-propose-all",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Skip review-event scheduling after synthesis.",
+          "name": "--skip-reviews",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "v0.1.7 W21: emit a versioned next_actions[] manifest alongside the stage report. Each action carries a concrete command_argv, kind, reason_code, blocking, safe_to_retry, and after_success routing \u2014 so an agent can drive the full daily loop without consulting the intent-router skill prose. Schema is next_actions.v1.",
+          "name": "--auto",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "v0.1.8 W43: with --auto, attach a per-stage explain block to the JSON output (pull / clean / snapshot / gaps / proposal_gate / synthesize). Reads already-computed data; never recomputes, mutates, or fabricates fields.",
+          "name": "--explain",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        }
+      ],
+      "idempotent": "yes-with-supersede",
+      "json_output": "default",
+      "mutation": "writes-state",
+      "output_schema": {
+        "OK": {
+          "json_keys": [
+            "as_of_date",
+            "user_id",
+            "base_dir",
+            "db_path",
+            "expected_domains",
+            "stages",
+            "overall_status"
+          ],
+          "notes": "v0.1.6: the proposal gate has three pre-synthesis statuses. `awaiting_proposals` = zero proposals; `incomplete` = some proposals but missing >=1 expected domain (synthesis blocked, hint names the missing domains); `complete` = every expected domain has a proposal (synthesis runs). On the first two, the agent must post the missing DomainProposal rows OR narrow `--domains` and rerun. `failed` is reserved for synthesis errors after the gate.",
+          "overall_status_values": [
+            "complete",
+            "incomplete",
+            "awaiting_proposals",
+            "failed"
+          ],
+          "shape": "JSON report of the orchestration run."
+        }
+      },
+      "preconditions": [
+        "state_db_initialized",
+        "intervals_icu_or_garmin_credentials_optional"
+      ]
+    },
+    {
+      "agent_safe": true,
+      "command": "hai demo cleanup",
+      "description": "Remove an orphan / corrupt demo marker so the CLI can return to normal mode. Allowed even when the marker is invalid (the fail-closed escape hatch).",
+      "exit_codes": [
+        "OK"
+      ],
+      "flags": [],
+      "idempotent": "yes",
+      "json_output": "default",
+      "mutation": "writes-state"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai demo end",
+      "description": "Close the active demo session. Removes the marker so subsequent CLI invocations route to real persistence. v0.1.11 W-Va leaves the scratch root in place; W-Vb adds archive-on-end behaviour.",
+      "exit_codes": [
+        "OK"
+      ],
+      "flags": [],
+      "idempotent": "yes",
+      "json_output": "default",
+      "mutation": "writes-state"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai demo start",
+      "description": "Open a new demo session. Creates a scratch root at /tmp/hai_demo_<id>/ with state.db, health_agent_root/, and config/thresholds.toml. Writes a marker file at the demo-session location ($XDG_CACHE_HOME/hai/ or ~/.cache/hai/). Refuses with USER_INPUT if a session is already active.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Persona slug. v0.1.12 W-Vb (partial closure): the packaged skeleton fixture for the slug loads from `health_agent_infra.demo.fixtures.<slug>` and the demo marker records a `fixture_application` entry, but proposal pre-population (so `hai daily` reaches synthesis) is deferred to v0.1.13 W-Vb. Use `--blank` for an explicitly-empty session.",
+          "name": "--persona",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Force an empty session (no persona). Default behaviour today.",
+          "name": "--blank",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        }
+      ],
+      "idempotent": "no",
+      "json_output": "default",
+      "mutation": "writes-state"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai doctor",
+      "description": "Report runtime health: DB present, migrations up to date, per-source freshness, today's accepted counts.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Override thresholds TOML path (default: platformdirs user_config_dir).",
+          "name": "--thresholds-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Override state DB path (default: $HAI_STATE_DB or platform default).",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "/Users/domcolligan/.claude/skills",
+          "help": "Skills destination to inspect (default: ~/.claude/skills/).",
+          "name": "--skills-dest",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "u_local_1",
+          "help": "Which user's sync history + today counts to report. Default: u_local_1.",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Anchor date for freshness + today counts, ISO-8601. Default: today (UTC).",
+          "name": "--as-of",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Emit the structured report dict as JSON instead of the human-readable text view.",
+          "name": "--json",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Run live API probes against the configured credential surfaces (intervals.icu wellness fetch, etc.). Closes the diagnostic-trust gap Codex F-DEMO-01 surfaced \u2014 a present credential is not the same as an accepted credential. Default off so the cheap path stays cheap. Routes to a fixture stub (no network) when a demo session is active (W-X / Q-3 + W-Va integration).",
+          "name": "--deep",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        }
+      ],
+      "idempotent": "n/a",
+      "json_output": "opt-in",
+      "mutation": "read-only"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai eval run",
+      "description": "Execute frozen deterministic eval scenarios for a domain (--domain) or the synthesis layer (--synthesis). Read-only \u2014 scores scenarios, never writes state. USER_INPUT when a scenario fails its rubric; INTERNAL if the runner itself crashes.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT",
+        "INTERNAL"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "nutrition",
+            "recovery",
+            "running",
+            "sleep",
+            "strength",
+            "stress"
+          ],
+          "default": null,
+          "help": "Run domain-level (classify + policy) scenarios for this domain",
+          "name": "--domain",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Run synthesis-level (X-rule + run_synthesis) scenarios",
+          "name": "--synthesis",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Emit machine-readable JSON instead of human-readable text",
+          "name": "--json",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        }
+      ],
+      "idempotent": "n/a",
+      "json_output": "opt-in",
+      "mutation": "read-only"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai exercise search",
+      "description": "Rank top exercise-taxonomy matches for a free-text query.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Free-text exercise name to resolve",
+          "name": "--query",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": 10,
+          "help": "Max hits to return (default 10)",
+          "name": "--limit",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Path to state DB (default: platformdirs user_data_dir)",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "n/a",
+      "json_output": "default",
+      "mutation": "read-only"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai explain",
+      "description": "Reconstruct the full audit chain (planned / adapted / firings / performed) for a committed plan. Strictly read-only \u2014 never recomputes runtime state.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT",
+        "NOT_FOUND"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Exact plan id to explain (e.g. 'plan_2026-04-17_u_local_1' or its '_v<N>' supersession variants). Mutually exclusive with --for-date / --user-id.",
+          "name": "--daily-plan-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [
+            "--as-of"
+          ],
+          "choices": null,
+          "default": null,
+          "help": "Civil date of the canonical plan to explain, ISO-8601. Pair with --user-id. `--as-of` is the canonical alias; `--for-date` retained for backwards compatibility (deprecated, removed in v0.1.13).",
+          "name": "--for-date",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "User whose canonical plan to explain. Pair with --for-date.",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Render the bundle as a dense plain-text operator report instead of JSON. For end-user prose, use `hai today`.",
+          "name": "--operator",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Deprecated alias for --operator. Will be removed in a future release; update scripts to use --operator.",
+          "name": "--text",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "latest",
+            "first",
+            "all"
+          ],
+          "default": "latest",
+          "help": "Which plan in a supersede chain to explain when --for-date is used. 'latest' (default) resolves the canonical leaf. 'first' returns the chain head. 'all' emits the full chain as a JSON array (or sequential text blocks with --text). Incompatible with --daily-plan-id, which already pins a specific plan. See reporting/plans/v0_1_4/D1_re_author_semantics.md.",
+          "name": "--plan-version",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "State DB path (default: `$HAI_STATE_DB` or `~/.local/share/health_agent_infra/state.db`)",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "n/a",
+      "json_output": "opt-out",
+      "mutation": "read-only"
+    },
+    {
+      "agent_safe": false,
+      "command": "hai init",
+      "description": "First-run wizard: state init, config scaffolding, auth setup.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Override thresholds TOML destination (default: platformdirs user_config_dir).",
+          "name": "--thresholds-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Override state DB path (default: $HAI_STATE_DB or platform default).",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "/Users/domcolligan/.claude/skills",
+          "help": "Destination for skills/ (default: ~/.claude/skills/).",
+          "name": "--skills-dest",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Skip copying skills (useful when the agent harness is not Claude Code).",
+          "name": "--skip-skills",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Overwrite an existing thresholds TOML and existing skills directories of the same name.",
+          "name": "--force",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "After the non-interactive setup, prompt for Garmin credentials and store them in the OS keyring (equivalent to running `hai auth garmin` afterward). Requires a TTY.",
+          "name": "--with-auth",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "After setup (and --with-auth, if used), do a single live-adapter pull for today so `hai daily` has state to reason over. One network call, configurable history window via --history-days. Requires Garmin creds.",
+          "name": "--with-first-pull",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": 1,
+          "help": "How many days of historical context the first-pull adapter fetches (default: 1 \u2192 ~5 Garmin API calls). Larger windows give richer baselines but risk rate-limiting: each extra day adds ~5 API calls. Ignored without --with-first-pull.",
+          "name": "--history-days",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "u_local_1",
+          "help": "User id to record against the backfill's sync_run_log rows (default: u_local_1).",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "no",
+      "json_output": "none",
+      "mutation": "interactive"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai intake exercise",
+      "description": "Upsert an exercise taxonomy entry.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Canonical display name for the new lift",
+          "name": "--name",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Primary muscle group label stored on the taxonomy row",
+          "name": "--primary-muscle-group",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "compound",
+            "isolation"
+          ],
+          "default": null,
+          "help": "Taxonomy category: compound | isolation",
+          "name": "--category",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "barbell",
+            "dumbbell",
+            "cable",
+            "bodyweight",
+            "machine",
+            "kettlebell"
+          ],
+          "default": null,
+          "help": "Equipment bucket used in exercise search",
+          "name": "--equipment",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Optional explicit taxonomy id. Defaults to a deterministic snake_case slug of --name",
+          "name": "--exercise-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Optional comma- or pipe-separated aliases",
+          "name": "--aliases",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Optional comma- or pipe-separated secondary groups",
+          "name": "--secondary-muscle-groups",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "State DB path (default: platformdirs user_data_dir)",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "yes",
+      "json_output": "default",
+      "mutation": "writes-state"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai intake gaps",
+      "description": "Return the list of user-closeable intake gaps in the snapshot. Read-only; no side effects.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Civil date to inspect, ISO-8601. Default: today UTC.",
+          "name": "--as-of",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "u_local_1",
+          "help": "User whose snapshot to inspect (default: u_local_1).",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Path to `hai clean` output. Pull-evidence path. The snapshot is expanded with per-domain classified_state + policy_result before gap detection. Mutually exclusive with --from-state-snapshot.",
+          "name": "--evidence-json",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "v0.1.11 W-W: derive gaps from the latest accepted state without fresh evidence. The session-start protocol fallback when `hai pull` is broken or skipped. Refuses if the latest successful pull is older than the staleness threshold (default 48h, configurable via thresholds.toml gap_detection.snapshot_staleness_max_hours). Pass --allow-stale-snapshot to override. Output gaps carry `derived_from: state_snapshot` and `snapshot_read_at`.",
+          "name": "--from-state-snapshot",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Override the staleness gate. Each gap then carries a `staleness_warning` field for audit-chain clarity.",
+          "name": "--allow-stale-snapshot",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "State DB path.",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "yes",
+      "json_output": "default",
+      "mutation": "read-only"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai intake gym",
+      "description": "Record a gym session (sets + exercises) as typed human-input.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Stable identifier for the session; multiple invocations with the same id accumulate sets under one session",
+          "name": "--session-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Human-readable label (e.g. 'Bench day')",
+          "name": "--session-name",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Free-text notes for the session header",
+          "name": "--notes",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Exercise name for this set (e.g. 'Bench Press')",
+          "name": "--exercise",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "1-based set ordinal within the session",
+          "name": "--set-number",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Weight lifted in kilograms (omit for bodyweight)",
+          "name": "--weight-kg",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "float"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Reps completed in this set",
+          "name": "--reps",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Rate of perceived exertion (1-10). Optional.",
+          "name": "--rpe",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "float"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Path to a JSON file with {session_id, session_name?, as_of_date?, notes?, sets: [...]}. Bulk alternative to per-set flags.",
+          "name": "--session-json",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Civil date this session belongs to (ISO-8601, default today UTC)",
+          "name": "--as-of",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "u_local_1",
+          "help": "",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "hai_cli_direct",
+            "claude_agent_v1"
+          ],
+          "default": "hai_cli_direct",
+          "help": "Transport identity. 'hai_cli_direct' for typed-by-user; 'claude_agent_v1' when the agent mediates.",
+          "name": "--ingest-actor",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Intake root (where gym_sessions.jsonl will be appended). Default: $HAI_BASE_DIR or ~/.health_agent.",
+          "name": "--base-dir",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "State DB path (default: `$HAI_STATE_DB` or `~/.local/share/health_agent_infra/state.db`)",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "no",
+      "json_output": "default",
+      "mutation": "writes-state"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai intake note",
+      "description": "Attach a free-text context note to a day.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Free-text note body. Cannot be empty.",
+          "name": "--text",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Comma-separated tags",
+          "name": "--tags",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Optional ISO-8601 timestamp; defaults to now UTC",
+          "name": "--recorded-at",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Civil date this note belongs to (default today UTC)",
+          "name": "--as-of",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "u_local_1",
+          "help": "",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "hai_cli_direct",
+            "claude_agent_v1"
+          ],
+          "default": "hai_cli_direct",
+          "help": "",
+          "name": "--ingest-actor",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Intake root (context_notes.jsonl lands here). Default: $HAI_BASE_DIR or ~/.health_agent.",
+          "name": "--base-dir",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "no",
+      "json_output": "default",
+      "mutation": "writes-state"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai intake nutrition",
+      "description": "Record a macros-only nutrition intake entry.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Total calories consumed that day",
+          "name": "--calories",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "float"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Total protein in grams",
+          "name": "--protein-g",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "float"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Total carbohydrates in grams",
+          "name": "--carbs-g",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "float"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Total fat in grams",
+          "name": "--fat-g",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "float"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Total hydration in litres. Optional.",
+          "name": "--hydration-l",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "float"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Number of distinct meals. Optional.",
+          "name": "--meals-count",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Civil date this intake belongs to (ISO-8601, default today UTC)",
+          "name": "--as-of",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "u_local_1",
+          "help": "",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "hai_cli_direct",
+            "claude_agent_v1"
+          ],
+          "default": "hai_cli_direct",
+          "help": "",
+          "name": "--ingest-actor",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Intake root (nutrition_intake.jsonl lands here). Default: $HAI_BASE_DIR or ~/.health_agent.",
+          "name": "--base-dir",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "State DB path (same semantics as other intake cmds)",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "v0.1.7 W34: required when an existing same-day nutrition row exists. Without it, hai intake nutrition refuses with USER_INPUT to prevent silent supersede chains. Nutrition is a daily total, not per-meal \u2014 use this flag only when deliberately correcting the prior daily entry.",
+          "name": "--replace",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        }
+      ],
+      "idempotent": "no",
+      "json_output": "default",
+      "mutation": "writes-state"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai intake readiness",
+      "description": "Record a manual readiness self-report entry.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "low",
+            "moderate",
+            "high"
+          ],
+          "default": null,
+          "help": "Subjective soreness band: low | moderate | high",
+          "name": "--soreness",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "low",
+            "moderate",
+            "high"
+          ],
+          "default": null,
+          "help": "Subjective energy band: low | moderate | high",
+          "name": "--energy",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Planned session type. Free text per the loose substring matching in per-domain classifiers, but agents should prefer the canonical vocabulary discoverable via `hai planned-session-types --json` (e.g. easy_z2, intervals_4x4, strength_sbd, rest).",
+          "name": "--planned-session-type",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Optional active training goal (free text)",
+          "name": "--active-goal",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "As-of date the intake pertains to (ISO-8601, default today UTC)",
+          "name": "--as-of",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "u_local_1",
+          "help": "User this intake attaches to (default: u_local_1)",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Intake root (readiness_manual.jsonl lands here). Default: $HAI_BASE_DIR or ~/.health_agent.",
+          "name": "--base-dir",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "State DB path (defaults to HAI_STATE_DB or ~/.health_agent/state.db)",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "hai_cli_direct",
+            "claude_agent_v1"
+          ],
+          "default": "hai_cli_direct",
+          "help": "Transport identity for provenance (default: hai_cli_direct)",
+          "name": "--ingest-actor",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "no",
+      "json_output": "default",
+      "mutation": "writes-state"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai intake stress",
+      "description": "Record a manual stress observation (used when Garmin stress is absent).",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "default": null,
+          "help": "Subjective stress band: 1=very low, 5=very high",
+          "name": "--score",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "int"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Comma-separated tags (e.g. 'work,deadline')",
+          "name": "--tags",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Civil date this score belongs to (ISO-8601, default today UTC)",
+          "name": "--as-of",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "u_local_1",
+          "help": "",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "hai_cli_direct",
+            "claude_agent_v1"
+          ],
+          "default": "hai_cli_direct",
+          "help": "",
+          "name": "--ingest-actor",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Intake root (stress_manual.jsonl lands here). Default: $HAI_BASE_DIR or ~/.health_agent.",
+          "name": "--base-dir",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "no",
+      "json_output": "default",
+      "mutation": "writes-state"
+    },
+    {
+      "agent_safe": false,
+      "command": "hai intent archive",
+      "description": "Archive a W49 intent row (status='archived'). Marked NOT agent-safe: archiving an active or proposed row IS user-state deactivation per AGENTS.md W57. Agents that proposed the row must NOT auto-archive it; only an explicit user invocation may run this command.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Override state DB path (default: $HAI_STATE_DB or platform default).",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "u_local_1",
+          "help": "User scope (default: u_local_1).",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Intent id to archive.",
+          "name": "--intent-id",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Required for non-interactive callers (e.g. agents). Confirms the W57 user-gated mutation. Interactive stdin invocations are accepted without --confirm.",
+          "name": "--confirm",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        }
+      ],
+      "idempotent": "yes-with-supersede",
+      "json_output": "default",
+      "mutation": "writes-state"
+    },
+    {
+      "agent_safe": false,
+      "command": "hai intent commit",
+      "description": "Promote a proposed intent row to active. Marked NOT agent-safe: agents that proposed the row must NOT auto-promote it; only an explicit user invocation may run this command.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Override state DB path (default: $HAI_STATE_DB or platform default).",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "u_local_1",
+          "help": "User scope (default: u_local_1).",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Intent id to promote (must currently be 'proposed').",
+          "name": "--intent-id",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Required for non-interactive callers (e.g. agents). Confirms the W57 user-gated mutation. Interactive stdin invocations are accepted without --confirm.",
+          "name": "--confirm",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        }
+      ],
+      "idempotent": "yes-with-supersede",
+      "json_output": "default",
+      "mutation": "writes-state"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai intent list",
+      "description": "List intent rows from the W49 ledger; default-active.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Override state DB path (default: $HAI_STATE_DB or platform default).",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "u_local_1",
+          "help": "User scope (default: u_local_1).",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Civil date to test active-window membership against (default: today).",
+          "name": "--as-of",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Restrict to a single v1 domain.",
+          "name": "--domain",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Return every intent row, not just active.",
+          "name": "--all",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "When --all is set, filter by status.",
+          "name": "--status",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "n/a",
+      "json_output": "default",
+      "mutation": "read-only"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai intent sleep set-window",
+      "description": "Insert a sleep-window intent into the W49 intent ledger.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Override state DB path (default: $HAI_STATE_DB or platform default).",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "u_local_1",
+          "help": "User scope (default: u_local_1).",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "ISO civil date the intent's window starts on.",
+          "name": "--scope-start",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "ISO civil date the window ends on (defaults to scope-start for day-scoped intent).",
+          "name": "--scope-end",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "day",
+            "week",
+            "date_range"
+          ],
+          "default": "day",
+          "help": "Window type. Default: day.",
+          "name": "--scope-type",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "proposed",
+            "active"
+          ],
+          "default": "active",
+          "help": "Initial row status. Agent-proposed rows MUST land as 'proposed' and require explicit user confirm before flipping to 'active'.",
+          "name": "--status",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "low",
+            "normal",
+            "high"
+          ],
+          "default": "normal",
+          "help": "",
+          "name": "--priority",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "fixed",
+            "flexible",
+            "optional"
+          ],
+          "default": "flexible",
+          "help": "",
+          "name": "--flexibility",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "",
+          "help": "Why this intent exists (free text; goes into the audit trail).",
+          "name": "--reason",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "user_authored",
+          "help": "Provenance: 'user_authored' (default) or 'agent_proposed'.",
+          "name": "--source",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "cli",
+          "help": "What inserted the row (default: cli).",
+          "name": "--ingest-actor",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Optional JSON-encoded structured detail (action, distance, weights, etc.).",
+          "name": "--payload-json",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "sleep",
+          "help": "Defaults to sleep; override only if you really mean it.",
+          "name": "--domain",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "sleep_window",
+          "help": "Override intent_type (default: sleep_window).",
+          "name": "--intent-type",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "no",
+      "json_output": "default",
+      "mutation": "writes-state"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai intent training add-session",
+      "description": "Insert a user-authored training-session intent into the W49 intent ledger.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Override state DB path (default: $HAI_STATE_DB or platform default).",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "u_local_1",
+          "help": "User scope (default: u_local_1).",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "ISO civil date the intent's window starts on.",
+          "name": "--scope-start",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "ISO civil date the window ends on (defaults to scope-start for day-scoped intent).",
+          "name": "--scope-end",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "day",
+            "week",
+            "date_range"
+          ],
+          "default": "day",
+          "help": "Window type. Default: day.",
+          "name": "--scope-type",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "proposed",
+            "active"
+          ],
+          "default": "active",
+          "help": "Initial row status. Agent-proposed rows MUST land as 'proposed' and require explicit user confirm before flipping to 'active'.",
+          "name": "--status",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "low",
+            "normal",
+            "high"
+          ],
+          "default": "normal",
+          "help": "",
+          "name": "--priority",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "fixed",
+            "flexible",
+            "optional"
+          ],
+          "default": "flexible",
+          "help": "",
+          "name": "--flexibility",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "",
+          "help": "Why this intent exists (free text; goes into the audit trail).",
+          "name": "--reason",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "user_authored",
+          "help": "Provenance: 'user_authored' (default) or 'agent_proposed'.",
+          "name": "--source",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "cli",
+          "help": "What inserted the row (default: cli).",
+          "name": "--ingest-actor",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Optional JSON-encoded structured detail (action, distance, weights, etc.).",
+          "name": "--payload-json",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "running",
+            "strength"
+          ],
+          "default": "running",
+          "help": "Training domain (default: running).",
+          "name": "--domain",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "training_session",
+          "help": "Override intent_type (default: training_session).",
+          "name": "--intent-type",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "no",
+      "json_output": "default",
+      "mutation": "writes-state"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai intent training list",
+      "description": "List training intent rows from the W49 ledger.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Override state DB path (default: $HAI_STATE_DB or platform default).",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "u_local_1",
+          "help": "User scope (default: u_local_1).",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Civil date to test active-window membership against (default: today).",
+          "name": "--as-of",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Return every training intent row, not just active.",
+          "name": "--all",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "When --all is set, filter by status.",
+          "name": "--status",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "n/a",
+      "json_output": "default",
+      "mutation": "read-only"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai memory archive",
+      "description": "Mark a user_memory entry archived (soft delete). The row itself stays for audit; read surfaces filter it out.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Memory id to archive.",
+          "name": "--memory-id",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "yes",
+      "json_output": "default",
+      "mutation": "writes-memory"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai memory list",
+      "description": "List user_memory entries active at a given date, grouped by category.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Restrict to one user (default: every user).",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "constraint",
+            "context",
+            "goal",
+            "preference"
+          ],
+          "default": null,
+          "help": "Restrict to one category (default: every category).",
+          "name": "--category",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Also return archived entries (default: exclude).",
+          "name": "--include-archived",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "n/a",
+      "json_output": "default",
+      "mutation": "read-only"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai memory set",
+      "description": "Append a user_memory entry (goal / preference / constraint / context). Append-only \u2014 replace by archiving the old row and setting a new one.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "constraint",
+            "context",
+            "goal",
+            "preference"
+          ],
+          "default": null,
+          "help": "Memory kind: goal | preference | constraint | context.",
+          "name": "--category",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Durable content (e.g. 'build strength through June', 'no early-morning hard runs'). Non-empty.",
+          "name": "--value",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Optional short handle within the category (e.g. 'primary_goal', 'injury_left_knee').",
+          "name": "--key",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Optional scoping domain (recovery | running | sleep | stress | strength | nutrition). Global if omitted.",
+          "name": "--domain",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "u_local_1",
+          "help": "User the memory attaches to (default: u_local_1).",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Optional explicit memory_id (default: deterministic `umem_<user>_<category>_<timestamp>`).",
+          "name": "--memory-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "user_manual",
+          "help": "Fact origin (default: user_manual).",
+          "name": "--source",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "hai_cli_direct",
+            "claude_agent_v1"
+          ],
+          "default": "hai_cli_direct",
+          "help": "Transport identity (default: hai_cli_direct).",
+          "name": "--ingest-actor",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "State DB path (default: `$HAI_STATE_DB` or `~/.local/share/health_agent_infra/state.db`).",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "no",
+      "json_output": "default",
+      "mutation": "writes-memory"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai planned-session-types",
+      "description": "Emit the canonical planned_session_type vocabulary (token + classifier_substring + description per entry). Source registry: core/intake/planned_session_vocabulary.py.",
+      "exit_codes": [
+        "OK"
+      ],
+      "flags": [],
+      "idempotent": "yes",
+      "json_output": "default",
+      "mutation": "read-only"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai propose",
+      "description": "Validate a DomainProposal and append it to proposal_log. One of the three determinism boundaries the runtime enforces.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "nutrition",
+            "recovery",
+            "running",
+            "sleep",
+            "strength",
+            "stress"
+          ],
+          "default": null,
+          "help": "Domain whose proposal is being written",
+          "name": "--domain",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Path to a JSON file matching DomainProposal shape",
+          "name": "--proposal-json",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Writeback root; <domain>_proposals.jsonl will be appended here. Default: $HAI_BASE_DIR or ~/.health_agent.",
+          "name": "--base-dir",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "State DB path (default: `$HAI_STATE_DB` or `~/.local/share/health_agent_infra/state.db`)",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Revise an existing canonical proposal for (for_date, user_id, domain). Without --replace, a second propose for the same chain key exits USER_INPUT. With --replace, a new revision is inserted and the prior leaf's superseded_by_proposal_id is updated in a single transaction. If the new payload is byte-identical to the current leaf, --replace is a no-op. See reporting/plans/v0_1_4/D1_re_author_semantics.md.",
+          "name": "--replace",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        }
+      ],
+      "idempotent": "yes-with-replace",
+      "json_output": "default",
+      "mutation": "writes-state",
+      "output_schema": {
+        "OK": {
+          "json_keys": [
+            "proposal_id",
+            "domain",
+            "for_date",
+            "user_id",
+            "revision",
+            "superseded_by_proposal_id"
+          ],
+          "notes": "revision=1 on first-write; >1 after --replace. superseded_by_proposal_id is NULL on the canonical leaf.",
+          "shape": "JSON confirmation of the persisted proposal."
+        }
+      },
+      "preconditions": [
+        "state_db_initialized",
+        "proposal_json_validates_against_domain_schema"
+      ]
+    },
+    {
+      "agent_safe": true,
+      "command": "hai pull",
+      "description": "Acquire evidence for a date and emit cleaned evidence JSON. Source resolution (v0.1.6): explicit `--source` > legacy `--live` (= garmin_live) > intervals.icu when credentials are configured > csv fixture fallback. Garmin live is best-effort (rate-limited); intervals.icu is the supported live source. Writes a sync_run_log row; does not touch the main state tables.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT",
+        "TRANSIENT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [
+            "--as-of"
+          ],
+          "choices": null,
+          "default": null,
+          "help": "Civil date, ISO-8601 (default today UTC). `--as-of` is the canonical alias; `--date` retained for backwards compatibility (deprecated, removed in v0.1.13).",
+          "name": "--date",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "u_local_1",
+          "help": "",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Path to a JSON file with manual readiness fields",
+          "name": "--manual-readiness-json",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Use a neutral manual readiness default (for offline runs)",
+          "name": "--use-default-manual-readiness",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Legacy flag: equivalent to --source garmin_live. Garmin Connect is rate-limited and unreliable for live scraping; prefer `--source intervals_icu` (the maintainer's declared supported live source as of v0.1.6).",
+          "name": "--live",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "csv",
+            "garmin_live",
+            "intervals_icu"
+          ],
+          "default": null,
+          "help": "Evidence source. csv reads the committed fixture; garmin_live scrapes Garmin Connect (best-effort: rate-limited, unreliable); intervals_icu pulls from Intervals.icu's wellness API \u2014 stable and the supported live source today, but scoped to what that service exposes (HRV + RHR + sleep + load; no per-session running granularity yet). Default (v0.1.6): intervals_icu when credentials are configured, else csv.",
+          "name": "--source",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": 14,
+          "help": "Trailing window size for resting_hr / hrv / training_load series (live pull only). Matches the CSV adapter default.",
+          "name": "--history-days",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "State DB path for sync_run_log writes. Best-effort \u2014 if the DB is absent, the pull still runs but the sync row is skipped. Default: `$HAI_STATE_DB` or `~/.local/share/health_agent_infra/state.db`.",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "yes",
+      "json_output": "default",
+      "mutation": "writes-sync-log"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai research search",
+      "description": "Retrieve sources for one allowlisted research topic. Mirrors core.research.retrieve but exposes only the topic-token interface \u2014 the privacy-violation booleans are not configurable. Read-only; no network.",
+      "exit_codes": [
+        "OK"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Topic token (must be on the allowlist; see `hai research topics`).",
+          "name": "--topic",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        }
+      ],
+      "idempotent": "yes",
+      "json_output": "default",
+      "mutation": "read-only"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai research topics",
+      "description": "List the allowlisted topics the bounded retrieval surface recognises. Read-only.",
+      "exit_codes": [
+        "OK"
+      ],
+      "flags": [],
+      "idempotent": "yes",
+      "json_output": "default",
+      "mutation": "read-only"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai review record",
+      "description": "Record a review_outcome against a review_event. Carries the migration-010 enrichment columns (completed, intensity_delta, pre/post_energy, disagreed_firing_ids).",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "",
+          "name": "--outcome-json",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Writeback root for review_outcomes.jsonl. Default: $HAI_BASE_DIR or ~/.health_agent.",
+          "name": "--base-dir",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "State DB path (default: `$HAI_STATE_DB` or `~/.local/share/health_agent_infra/state.db`)",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "yes",
+            "no"
+          ],
+          "default": null,
+          "help": "Whether the user completed the recommended session.",
+          "name": "--completed",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "much_lighter",
+            "lighter",
+            "same",
+            "harder",
+            "much_harder"
+          ],
+          "default": null,
+          "help": "Intensity the user applied relative to the recommendation. Ordinals used by summary aggregation: much_lighter=-2, lighter=-1, same=0, harder=1, much_harder=2.",
+          "name": "--intensity-delta",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Actual session duration in whole minutes.",
+          "name": "--duration-minutes",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "default": null,
+          "help": "Self-reported energy score before the session, 1\u20135.",
+          "name": "--pre-energy",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "default": null,
+          "help": "Self-reported energy score after the session, 1\u20135.",
+          "name": "--post-energy",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Comma-separated x_rule_firing.firing_id list the user marked as 'should not have fired'. Empty string records an explicit empty list (the question was asked, no disagreement).",
+          "name": "--disagreed-firings",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "no",
+      "json_output": "default",
+      "mutation": "writes-state",
+      "output_schema": {
+        "OK": {
+          "json_keys": [
+            "review_event_id",
+            "recommendation_id",
+            "user_id",
+            "domain",
+            "followed_recommendation",
+            "self_reported_improvement",
+            "re_linked_from_recommendation_id",
+            "re_link_note"
+          ],
+          "notes": "When the target rec's plan has been superseded, recommendation_id is the leaf rec and re_linked_from_recommendation_id is the original. Refusal (leaf has no matching-domain rec) exits USER_INPUT with no write.",
+          "shape": "JSON confirmation of the persisted outcome."
+        }
+      },
+      "preconditions": [
+        "review_event_exists_for_event_id",
+        "recommendation_exists_for_recommendation_id"
+      ]
+    },
+    {
+      "agent_safe": true,
+      "command": "hai review schedule",
+      "description": "Persist a pending review_event for a recommendation (used to schedule the next-day review question).",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "",
+          "name": "--recommendation-json",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Writeback root for review_events.jsonl. Default: $HAI_BASE_DIR or ~/.health_agent.",
+          "name": "--base-dir",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "State DB path (default: `$HAI_STATE_DB` or `~/.local/share/health_agent_infra/state.db`)",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "no",
+      "json_output": "default",
+      "mutation": "writes-state"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai review summary",
+      "description": "Summarize review_outcome counts (followed / not-followed, per-domain tallies).",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Writeback root to read review_outcomes.jsonl from. Default: $HAI_BASE_DIR or ~/.health_agent.",
+          "name": "--base-dir",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Restrict counts to a single domain (e.g. 'recovery' or 'running'). Omitted = all domains.",
+          "name": "--domain",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "n/a",
+      "json_output": "default",
+      "mutation": "read-only"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai setup-skills",
+      "description": "Copy the packaged skills/ tree to ~/.claude/skills/ so Claude Code discovers them.",
+      "exit_codes": [
+        "OK"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "/Users/domcolligan/.claude/skills",
+          "help": "",
+          "name": "--dest",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Overwrite existing skill directories of the same name",
+          "name": "--force",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        }
+      ],
+      "idempotent": "yes",
+      "json_output": "default",
+      "mutation": "writes-skills-dir"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai state init",
+      "description": "Create the local SQLite state DB and apply all pending migrations. Idempotent \u2014 safe to call repeatedly.",
+      "exit_codes": [
+        "OK"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Path to state.db (default: $HAI_STATE_DB or ~/.local/share/health_agent_infra/state.db)",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "yes",
+      "json_output": "default",
+      "mutation": "writes-state"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai state migrate",
+      "description": "Apply any pending schema migrations to an already-initialized state DB.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Path to state.db (default: $HAI_STATE_DB or ~/.local/share/health_agent_infra/state.db)",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "yes",
+      "json_output": "default",
+      "mutation": "writes-state"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai state read",
+      "description": "Read a per-domain accepted-state row for a given date.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "One of: recovery, running, gym, nutrition, stress, notes, recommendations, reviews, goals",
+          "name": "--domain",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Inclusive civil-date lower bound, ISO-8601",
+          "name": "--since",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Inclusive civil-date upper bound (default: same as --since)",
+          "name": "--until",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Filter to a single user (default: no filter)",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "n/a",
+      "json_output": "default",
+      "mutation": "read-only"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai state reproject",
+      "description": "Rebuild the accepted_*_state_daily tables from the raw evidence JSONL. Deterministic modulo projection timestamps \u2014 content/keys/links replay identically across runs, but projected_at / corrected_at columns reflect the wall-clock of the rebuild. Safe to re-run.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Writeback/intake root. Default: $HAI_BASE_DIR or ~/.health_agent. Recognised audit files: recommendation_log.jsonl, review_events.jsonl, review_outcomes.jsonl, gym_sessions.jsonl, nutrition_intake.jsonl. Only the groups whose files are present get truncated and rebuilt.",
+          "name": "--base-dir",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "State DB path (default: $HAI_STATE_DB or platform default)",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Allow reproject to truncate the projection tables even when the base-dir contains none of the expected JSONL audit logs. Refuses by default to guard against typo-driven data loss.",
+          "name": "--allow-empty-reproject",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Permit reproject to delete synthesis-side rows (planned_recommendation, daily_plan, x_rule_firing) when they would otherwise block the rebuild via FK constraints. Refuses by default because those tables are not JSONL-derived \u2014 they're computed by `hai synthesize`. If you pass this flag, re-run `hai synthesize` afterwards to repopulate them.",
+          "name": "--cascade-synthesis",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        }
+      ],
+      "idempotent": "yes",
+      "json_output": "default",
+      "mutation": "writes-state"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai state snapshot",
+      "description": "Emit the cross-domain state snapshot the synthesis / skills layer consumes for a (for_date, user_id) pair.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Civil date to snapshot, ISO-8601",
+          "name": "--as-of",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "User whose state to snapshot",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": 14,
+          "help": "Days of history to include (default: 14)",
+          "name": "--lookback-days",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Optional path to a `hai clean` output JSON. When present, the recovery block is expanded to the full Phase 1 bundle shape (evidence + raw_summary + classified_state + policy_result). When absent, the recovery block keeps its v1.0 shape.",
+          "name": "--evidence-json",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "n/a",
+      "json_output": "default",
+      "mutation": "read-only"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai stats",
+      "description": "Summarise sync_run_log (last pull per source) + runtime_event_log (recent commands, daily streak) from the user's local DB. With --outcomes, emits the code-owned review-outcome summary (W48) instead. No telemetry leaves the device.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Override state DB path (default: $HAI_STATE_DB or platform default).",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "u_local_1",
+          "help": "Whose sync freshness to report. Default: u_local_1.",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": 7,
+          "help": "Number of recent runtime_event_log rows to include (default: 7).",
+          "name": "--limit",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Emit the structured report dict as JSON instead of the human-readable text view.",
+          "name": "--json",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Mode: emit the code-owned review-outcome summary (W48) instead of the default sync/events report. Combine with --domain and --since to narrow the window.",
+          "name": "--outcomes",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "recovery",
+            "running",
+            "sleep",
+            "stress",
+            "strength",
+            "nutrition"
+          ],
+          "default": null,
+          "help": "Restrict --outcomes view to a single v1 domain. Omit to receive the per-domain breakdown plus aggregate roll-up.",
+          "name": "--domain",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Override the rolling window for --outcomes / --data-quality (days). Default: 7 for outcomes; for data-quality, the most recent N days are returned.",
+          "name": "--since",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Mode: emit the data-quality ledger view (W51). Combine with --domain and --since to narrow.",
+          "name": "--data-quality",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Mode: emit observed values, configured thresholds, resulting bands, coverage, missingness, and cold-start state for each v1 domain (W40).",
+          "name": "--baselines",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Mode: emit the daily-pipeline funnel \u2014 per-day overall_status, missing-domain frequency, and proposal-gate counts (W46).",
+          "name": "--funnel",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        }
+      ],
+      "idempotent": "n/a",
+      "json_output": "opt-in",
+      "mutation": "read-only"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai synthesize",
+      "description": "Run synthesis end-to-end inside one atomic SQLite transaction: daily_plan + x_rule_firings + planned_recommendation + recommendation_log. --supersede versions the plan instead of replacing it.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT",
+        "INTERNAL"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Civil date to synthesize for, ISO-8601 YYYY-MM-DD",
+          "name": "--as-of",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "User whose proposals to reconcile",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Optional JSON array of skill-authored draft recommendations. When present, overlays rationale + uncertainty + review_question onto the mechanical drafts. action / action_detail / confidence are runtime-owned after Phase A and cannot be changed by the skill.",
+          "name": "--drafts-json",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Keep the prior canonical plan and write a fresh suffixed plan id. Default is atomic replacement.",
+          "name": "--supersede",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Emit the synthesis bundle (snapshot + proposals + Phase A firings) as JSON and exit. Read-only \u2014 does not commit. This is the skill seam: the daily-plan-synthesis skill reads the bundle, composes a rationale overlay, and feeds it back via a second call with --drafts-json.",
+          "name": "--bundle-only",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "claude_agent_v1",
+          "help": "Agent version string to record on every row (not part of the canonical plan idempotency key)",
+          "name": "--agent-version",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "CSV-encoded expected-domain set (e.g. 'recovery,running'). When provided, synthesis refuses to commit unless every named domain has a canonical-leaf proposal in proposal_log. When omitted, defaults to the v1 six-domain set (recovery, running, sleep, stress, strength, nutrition). Pass --domains '' to bypass the gate entirely (matches pre-v0.1.9 permissive behavior \u2014 discouraged for agent calls).",
+          "name": "--domains",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "State DB path (default: `$HAI_STATE_DB` or `~/.local/share/health_agent_infra/state.db`)",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "yes-with-supersede",
+      "json_output": "default",
+      "mutation": "writes-state",
+      "output_schema": {
+        "OK": {
+          "json_keys": [
+            "daily_plan_id",
+            "recommendation_ids",
+            "proposal_ids",
+            "phase_a_firings",
+            "phase_b_firings",
+            "superseded_prior"
+          ],
+          "notes": "superseded_prior is NULL on canonical-replace commits and set to the prior leaf's daily_plan_id when --supersede was passed.",
+          "shape": "JSON SynthesisResult confirmation."
+        }
+      },
+      "preconditions": [
+        "state_db_initialized",
+        "proposal_log_has_row_for_each_target_domain",
+        "state_snapshot_available_for_as_of"
+      ]
+    },
+    {
+      "agent_safe": false,
+      "command": "hai target archive",
+      "description": "Archive a W50 target row (status='archived'). Marked NOT agent-safe: archiving an active or proposed row IS user-state deactivation per AGENTS.md W57. Agents that proposed the row must NOT auto-archive it; only an explicit user invocation may run this command.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Override state DB path.",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "u_local_1",
+          "help": "User scope (default: u_local_1).",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Target id to archive.",
+          "name": "--target-id",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Required for non-interactive callers (e.g. agents). Confirms the W57 user-gated mutation. Interactive stdin invocations are accepted without --confirm.",
+          "name": "--confirm",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        }
+      ],
+      "idempotent": "yes-with-supersede",
+      "json_output": "default",
+      "mutation": "writes-state"
+    },
+    {
+      "agent_safe": false,
+      "command": "hai target commit",
+      "description": "Promote a proposed target row to active. Marked NOT agent-safe: agents that proposed the row must NOT auto-promote it; only an explicit user invocation may run this command.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Override state DB path.",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "u_local_1",
+          "help": "User scope (default: u_local_1).",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Target id to promote (must currently be 'proposed').",
+          "name": "--target-id",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Required for non-interactive callers (e.g. agents). Confirms the W57 user-gated mutation. Interactive stdin invocations are accepted without --confirm.",
+          "name": "--confirm",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        }
+      ],
+      "idempotent": "yes-with-supersede",
+      "json_output": "default",
+      "mutation": "writes-state"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai target list",
+      "description": "List target rows from the W50 ledger; default-active.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Override state DB path.",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "u_local_1",
+          "help": "User scope (default: u_local_1).",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Civil date to test active-window membership against (default: today).",
+          "name": "--as-of",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Restrict to a single wellness domain.",
+          "name": "--domain",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Restrict to a single target_type.",
+          "name": "--target-type",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "When --all is set, filter by status.",
+          "name": "--status",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Return every target row, not just active.",
+          "name": "--all",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        }
+      ],
+      "idempotent": "n/a",
+      "json_output": "default",
+      "mutation": "read-only"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai target set",
+      "description": "Insert a wellness target into the W50 target ledger. Wellness support, not a medical prescription.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Override state DB path.",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "u_local_1",
+          "help": "User scope (default: u_local_1).",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Wellness domain the target belongs to (e.g. nutrition, sleep, running).",
+          "name": "--domain",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "hydration_ml",
+            "protein_g",
+            "calories_kcal",
+            "sleep_duration_h",
+            "sleep_window",
+            "training_load",
+            "other"
+          ],
+          "default": null,
+          "help": "One of the v1 target types.",
+          "name": "--target-type",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Scalar target value (number or string). Use --value-json for richer structures.",
+          "name": "--value",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "JSON-encoded structured value (overrides --value when both are present).",
+          "name": "--value-json",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Unit string (e.g. 'ml', 'g', 'kcal', 'h').",
+          "name": "--unit",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Optional lower acceptable bound.",
+          "name": "--lower-bound",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "float"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Optional upper acceptable bound.",
+          "name": "--upper-bound",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "float"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "ISO civil date the target becomes active.",
+          "name": "--effective-from",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "ISO civil date the target stops being active (open-ended when omitted).",
+          "name": "--effective-to",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "ISO civil date the target should be reviewed.",
+          "name": "--review-after",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "proposed",
+            "active"
+          ],
+          "default": "active",
+          "help": "Initial row status. Agent-proposed rows MUST land as 'proposed'.",
+          "name": "--status",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "",
+          "help": "Why this target exists.",
+          "name": "--reason",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "user_authored",
+          "help": "'user_authored' (default) or 'agent_proposed'.",
+          "name": "--source",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "cli",
+          "help": "What inserted the row (default: cli).",
+          "name": "--ingest-actor",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "no",
+      "json_output": "default",
+      "mutation": "writes-state"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai today",
+      "description": "Render today's canonical plan in plain language \u2014 the non-agent-mediated user surface. Read-only.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Civil date to read, ISO-8601. Default: today UTC.",
+          "name": "--as-of",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "u_local_1",
+          "help": "User whose plan to read (default: u_local_1).",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "markdown",
+            "plain",
+            "json"
+          ],
+          "default": null,
+          "help": "Output format. Defaults to 'markdown' on a TTY, 'plain' otherwise. 'json' emits the structured section shape.",
+          "name": "--format",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "recovery",
+            "running",
+            "sleep",
+            "strength",
+            "stress",
+            "nutrition"
+          ],
+          "default": null,
+          "help": "Narrow output to a single domain section.",
+          "name": "--domain",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "State DB path (same semantics as other state commands).",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Print classified-state internals alongside the plan. Currently surfaces strength_status; v0.1.13+ may extend.",
+          "name": "--verbose",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        }
+      ],
+      "idempotent": "n/a",
+      "json_output": "opt-in",
+      "mutation": "read-only",
+      "output_schema": {
+        "OK": {
+          "enum_surface": {
+            "strength_status": [
+              "progressing",
+              "maintaining",
+              "undertrained",
+              "overreaching",
+              "unknown"
+            ]
+          },
+          "json_keys": [
+            "as_of_date",
+            "user_id",
+            "daily_plan_id",
+            "top_matter",
+            "summary",
+            "sections"
+          ],
+          "notes": "JSON format only emitted when --format json.",
+          "shape": "one of markdown|plain text (default) or a JSON object with top_matter + summary + sections[].",
+          "verbose_surface": "When --verbose is passed, a 'classified state' footer is prepended showing strength_status (one of the values in enum_surface.strength_status) and other internal classifier outputs as v0.1.13+ extends."
+        }
+      },
+      "preconditions": [
+        "state_db_initialized",
+        "daily_plan_exists_for_as_of"
+      ]
+    }
+  ],
+  "domain_proposal_contracts": {
+    "nutrition": {
+      "action_enum": [
+        "defer_decision_insufficient_signal",
+        "escalate_for_user_review",
+        "increase_hydration",
+        "increase_protein_intake",
+        "maintain_targets",
+        "reduce_calorie_deficit"
+      ],
+      "required_fields": [
+        "schema_version",
+        "proposal_id",
+        "user_id",
+        "for_date",
+        "domain",
+        "action",
+        "rationale",
+        "confidence",
+        "policy_decisions"
+      ],
+      "schema_version": "nutrition_proposal.v1"
+    },
+    "recovery": {
+      "action_enum": [
+        "defer_decision_insufficient_signal",
+        "downgrade_hard_session_to_zone_2",
+        "downgrade_session_to_mobility_only",
+        "escalate_for_user_review",
+        "proceed_with_planned_session",
+        "rest_day_recommended"
+      ],
+      "required_fields": [
+        "schema_version",
+        "proposal_id",
+        "user_id",
+        "for_date",
+        "domain",
+        "action",
+        "rationale",
+        "confidence",
+        "policy_decisions"
+      ],
+      "schema_version": "recovery_proposal.v1"
+    },
+    "running": {
+      "action_enum": [
+        "cross_train_instead",
+        "defer_decision_insufficient_signal",
+        "downgrade_intervals_to_tempo",
+        "downgrade_to_easy_aerobic",
+        "escalate_for_user_review",
+        "proceed_with_planned_run",
+        "rest_day_recommended"
+      ],
+      "required_fields": [
+        "schema_version",
+        "proposal_id",
+        "user_id",
+        "for_date",
+        "domain",
+        "action",
+        "rationale",
+        "confidence",
+        "policy_decisions"
+      ],
+      "schema_version": "running_proposal.v1"
+    },
+    "sleep": {
+      "action_enum": [
+        "defer_decision_insufficient_signal",
+        "earlier_bedtime_target",
+        "maintain_schedule",
+        "prioritize_wind_down",
+        "sleep_debt_repayment_day"
+      ],
+      "required_fields": [
+        "schema_version",
+        "proposal_id",
+        "user_id",
+        "for_date",
+        "domain",
+        "action",
+        "rationale",
+        "confidence",
+        "policy_decisions"
+      ],
+      "schema_version": "sleep_proposal.v1"
+    },
+    "strength": {
+      "action_enum": [
+        "defer_decision_insufficient_signal",
+        "downgrade_to_moderate_load",
+        "downgrade_to_technique_or_accessory",
+        "escalate_for_user_review",
+        "proceed_with_planned_session",
+        "rest_day_recommended"
+      ],
+      "required_fields": [
+        "schema_version",
+        "proposal_id",
+        "user_id",
+        "for_date",
+        "domain",
+        "action",
+        "rationale",
+        "confidence",
+        "policy_decisions"
+      ],
+      "schema_version": "strength_proposal.v1"
+    },
+    "stress": {
+      "action_enum": [
+        "add_low_intensity_recovery",
+        "defer_decision_insufficient_signal",
+        "escalate_for_user_review",
+        "maintain_routine",
+        "schedule_decompression_time"
+      ],
+      "required_fields": [
+        "schema_version",
+        "proposal_id",
+        "user_id",
+        "for_date",
+        "domain",
+        "action",
+        "rationale",
+        "confidence",
+        "policy_decisions"
+      ],
+      "schema_version": "stress_proposal.v1"
+    }
+  },
+  "generated_by": "core.capabilities.walker.build_manifest",
+  "hai_version": "0.1.12",
+  "schema_version": "agent_cli_contract.v1"
+}

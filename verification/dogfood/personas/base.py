@@ -158,6 +158,37 @@ class PersonaSpec:
     recorded_cross_history: list[CrossSession] = field(default_factory=list)
     recorded_nutrition_history: list[NutritionDay] = field(default_factory=list)
 
+    # ----- W-AK (v0.1.13): declarative expected actions per domain ------
+    # Keys: domain names ('recovery', 'running', 'sleep', 'stress',
+    # 'strength', 'nutrition'). Values: list of action tokens that ARE
+    # acceptable. Empty list or absent key = no constraint.
+    # The harness records a finding when the actual action is not in
+    # the whitelist for that domain. v0.1.14 W58 prep depends on these
+    # being declared so the factuality gate has a ground-truth shape
+    # to compare against.
+    expected_actions: dict[str, list[str]] = field(default_factory=dict)
+
+    # Action tokens that must NOT fire per domain. Used for negative
+    # assertions like "don't escalate nutrition when the day's logged
+    # intake is within 500 kcal of target". The harness records a
+    # finding when the actual action is in the forbidden list.
+    forbidden_actions: dict[str, list[str]] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        # W-AK (v0.1.13): every persona ends up with a populated
+        # expected_actions / forbidden_actions dict. Personas that
+        # already declared an inline override keep theirs; the rest
+        # inherit a scenario-shaped default. Frozen dataclass requires
+        # `object.__setattr__` to mutate post-init.
+        if not self.expected_actions:
+            object.__setattr__(
+                self, "expected_actions", _derive_default_expected_actions(self),
+            )
+        if not self.forbidden_actions:
+            object.__setattr__(
+                self, "forbidden_actions", _derive_default_forbidden_actions(self),
+            )
+
     def expected_bmr_kcal(self) -> float:
         """Mifflin-St Jeor, regardless of sex constant."""
         const = 5 if self.sex_at_birth == "male" else -161
@@ -177,6 +208,79 @@ class PersonaSpec:
             "very_active": 1.9,
         }
         return self.expected_bmr_kcal() * multipliers[self.activity_level]
+
+
+# ---------------------------------------------------------------------------
+# W-AK: declarative expected-actions defaults
+# ---------------------------------------------------------------------------
+
+# Lazy-imported from the runtime so the persona harness defaults
+# auto-update when a new action token is added to a domain policy.
+# Importing at module top-level would create a circular dependency
+# (runtime → persona → runtime via tests).
+def _all_allowed_actions_by_domain() -> dict[str, frozenset[str]]:
+    from health_agent_infra.core.validate import ALLOWED_ACTIONS_BY_DOMAIN
+    return {d: frozenset(actions) for d, actions in ALLOWED_ACTIONS_BY_DOMAIN.items()}
+
+
+def _derive_default_expected_actions(spec: "PersonaSpec") -> dict[str, list[str]]:
+    """Sensible per-domain whitelist of acceptable actions.
+
+    Default policy:
+      * Day-1 personas (history_days == 0): every domain is restricted
+        to defer / maintain / rest. No proceed / downgrade / escalate.
+      * Established personas: every domain accepts the full known
+        action set EXCEPT escalate_for_user_review. Escalation is the
+        "agent gives up and asks the human" action; for a persona with
+        a coherent scenario, that should be a finding.
+
+    Per-persona overrides are encoded inline in each
+    `personas/p<N>_*.py` file when the scenario expects something
+    sharper (e.g. an intentional-stress persona whose sleep domain may
+    legitimately escalate).
+    """
+
+    if spec.history_days == 0:
+        # Day-1 fresh install — every domain conservative-only.
+        return {
+            "recovery":  ["defer_decision_insufficient_signal"],
+            "running":   ["defer_decision_insufficient_signal"],
+            "sleep":     ["maintain_schedule", "defer_decision_insufficient_signal"],
+            "stress":    ["maintain_routine", "defer_decision_insufficient_signal"],
+            "strength":  ["defer_decision_insufficient_signal"],
+            "nutrition": ["defer_decision_insufficient_signal"],
+        }
+
+    # Established persona — accept everything but escalation.
+    allowed = _all_allowed_actions_by_domain()
+    return {
+        domain: sorted(tokens - {"escalate_for_user_review"})
+        for domain, tokens in allowed.items()
+    }
+
+
+def _derive_default_forbidden_actions(spec: "PersonaSpec") -> dict[str, list[str]]:
+    """Sensible per-domain blacklist of actions that must NOT fire.
+
+    Default forbidden set is `escalate_for_user_review` per domain for
+    established personas. For day-1 personas, escalation is also
+    forbidden by the empty-positive whitelist above — the negative
+    field stays empty for them so the assertions are non-redundant.
+    """
+
+    if spec.history_days == 0:
+        return {}
+
+    # Only blacklist `escalate_for_user_review` on domains that can
+    # actually emit it. The sleep domain (per
+    # `ALLOWED_ACTIONS_BY_DOMAIN`) has no escalation action; including
+    # it would surface as an unknown-token drift in the contract test.
+    allowed = _all_allowed_actions_by_domain()
+    return {
+        domain: ["escalate_for_user_review"]
+        for domain, tokens in allowed.items()
+        if "escalate_for_user_review" in tokens
+    }
 
 
 # ---------------------------------------------------------------------------

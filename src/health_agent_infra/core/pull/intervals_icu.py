@@ -144,7 +144,23 @@ class IntervalsIcuError(RuntimeError):
     Covers auth failure, network error, malformed response, and HTTP
     non-2xx returns. The error message is operator-facing; no secret
     material ever appears in it.
+
+    `http_status` and `body` are captured on the HTTPError path so
+    `hai doctor --deep` can classify the failure (e.g. distinguish a
+    Cloudflare UA-block from a credential rotation by inspecting the
+    response body). Both attributes are None for non-HTTP failures.
     """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        http_status: Optional[int] = None,
+        body: Optional[str] = None,
+    ) -> None:
+        super().__init__(message)
+        self.http_status = http_status
+        self.body = body
 
 
 @dataclass(frozen=True)
@@ -328,8 +344,20 @@ class HttpIntervalsIcuClient:
             with urllib.request.urlopen(req, timeout=self.timeout_seconds) as resp:  # nosec B310
                 body = resp.read().decode("utf-8")
         except urllib.error.HTTPError as exc:
+            # Capture body so `hai doctor --deep` can classify the
+            # failure cause. Cloudflare UA-blocks emit JSON that mentions
+            # "cloudflare_error"/"error_code":1010; intervals.icu auth
+            # failures emit their own auth-shaped JSON; W-AE
+            # (v0.1.13) reads this to distinguish the two.
+            try:
+                body_bytes = exc.read()
+                body_text: Optional[str] = body_bytes.decode("utf-8", errors="replace")
+            except Exception:  # noqa: BLE001
+                body_text = None
             raise IntervalsIcuError(
-                f"Intervals.icu {endpoint_label} fetch failed: HTTP {exc.code} {exc.reason}"
+                f"Intervals.icu {endpoint_label} fetch failed: HTTP {exc.code} {exc.reason}",
+                http_status=exc.code,
+                body=body_text,
             ) from exc
         except urllib.error.URLError as exc:
             raise IntervalsIcuError(

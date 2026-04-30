@@ -288,16 +288,39 @@ def test_doctor_happy_path_after_init_returns_ok(
     tmp_path, capsys, fake_stored_store,
 ):
     # `hai init` scaffolds everything except auth; we injected credentials
-    # via fake_stored_store so the doctor pass is fully green.
+    # via fake_stored_store so the existing pre-W-AE infrastructure
+    # checks are fully green. v0.1.13 W-AE adds two new checks
+    # (onboarding_readiness, intake_gaps) that honestly warn on a
+    # fresh init — the user has credentials + DB but no intent rows,
+    # no targets, and no wellness pulls yet. Those warnings are the
+    # workstream's whole point; this test asserts the *infrastructure*
+    # surface is green, and the *user-progress* surface honestly warns.
     cli_main(_init_argv(tmp_path))
     capsys.readouterr()
 
     rc = cli_main(_doctor_argv(tmp_path))
-    assert rc == 0
+    assert rc == 0  # warns must not gate
     report = _stdout_json(capsys)
-    assert report["overall_status"] == "ok"
-    assert all(c["status"] == "ok" for c in report["checks"].values())
-    assert report["checks"]["auth_garmin"]["credentials_source"] == "keyring"
+    checks = report["checks"]
+
+    # Infrastructure checks: all green (the original pre-W-AE contract).
+    infra_checks = (
+        "config", "state_db", "auth_garmin", "auth_intervals_icu",
+        "skills", "domains", "sources", "today",
+    )
+    for name in infra_checks:
+        assert checks[name]["status"] == "ok", (
+            f"infrastructure check {name!r} is "
+            f"{checks[name]['status']!r}, expected 'ok'"
+        )
+    assert checks["auth_garmin"]["credentials_source"] == "keyring"
+
+    # User-progress checks (W-AE): honestly warn on fresh init.
+    assert checks["onboarding_readiness"]["status"] == "warn"
+    assert "intent" in checks["onboarding_readiness"]["missing"]
+    assert checks["intake_gaps"]["status"] == "warn"
+    # Overall rolls up to warn because of the user-progress surface.
+    assert report["overall_status"] == "warn"
 
 
 def test_doctor_malformed_config_returns_fail_exit_two(

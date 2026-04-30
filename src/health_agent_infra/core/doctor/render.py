@@ -55,6 +55,12 @@ def _render_check(name: str, result: dict[str, Any]) -> list[str]:
     if name == "today":
         body.extend(_render_today(result))
         return body
+    if name == "intake_gaps":
+        body.extend(_render_intake_gaps(result))
+        return body
+    if name == "onboarding_readiness":
+        body.extend(_render_onboarding_readiness(result))
+        return body
 
     for key, value in result.items():
         if key == "status":
@@ -64,6 +70,12 @@ def _render_check(name: str, result: dict[str, Any]) -> list[str]:
             continue
         if key == "missing" and isinstance(value, list):
             body.append(f"  missing: {', '.join(value)}")
+            continue
+        if key == "all_hints" and isinstance(value, list):
+            # Hide redundant list dump — `hint` already shows the first.
+            continue
+        if key == "probe" and isinstance(value, dict):
+            body.extend(_render_probe(value))
             continue
         body.append(f"  {key}: {value}")
     return body
@@ -87,6 +99,64 @@ def _render_sources(result: dict[str, Any]) -> list[str]:
             f"  {source}: last={info.get('last_successful_sync_at')} "
             f"stale={stale_str}"
         )
+    return lines
+
+
+def _render_onboarding_readiness(result: dict[str, Any]) -> list[str]:
+    """One row per readiness signal + a single hint line."""
+
+    if "reason" in result:
+        lines = [f"  reason: {result['reason']}"]
+        if "hint" in result:
+            lines.append(f"  hint: {result['hint']}")
+        return lines
+    lines = [
+        f"  intent_count: {result.get('intent_count')}",
+        f"  target_count: {result.get('target_count')}",
+        f"  has_wellness_pull: {result.get('has_wellness_pull')}",
+    ]
+    missing = result.get("missing") or []
+    if missing:
+        lines.append(f"  missing: {', '.join(missing)}")
+    if "hint" in result:
+        lines.append(f"  hint: {result['hint']}")
+    return lines
+
+
+def _render_intake_gaps(result: dict[str, Any]) -> list[str]:
+    """One block per gap with the runnable command, then the headline hint."""
+
+    if "reason" in result:
+        lines = [f"  reason: {result['reason']}"]
+        if "hint" in result:
+            lines.append(f"  hint: {result['hint']}")
+        return lines
+    gap_count = result.get("gap_count", 0)
+    blocking = result.get("blocking_gap_count", 0)
+    lines = [f"  gap_count: {gap_count} (blocking: {blocking})"]
+    for gap in result.get("gaps") or []:
+        domain = gap.get("domain")
+        missing_field = gap.get("missing_field")
+        cmd = gap.get("intake_command")
+        marker = "(blocking)" if gap.get("blocks_coverage", True) else "(advisory)"
+        lines.append(f"    - {domain}/{missing_field} {marker}")
+        if cmd:
+            lines.append(f"      run: {cmd}")
+    if "hint" in result:
+        lines.append(f"  hint: {result['hint']}")
+    return lines
+
+
+def _render_probe(probe: dict[str, Any]) -> list[str]:
+    """Probe sub-dict: surface outcome class + http_status + first-line body."""
+
+    lines: list[str] = []
+    if probe.get("outcome_class"):
+        lines.append(f"  probe.outcome_class: {probe['outcome_class']}")
+    if probe.get("http_status") is not None:
+        lines.append(f"  probe.http_status: {probe['http_status']}")
+    if probe.get("error_message"):
+        lines.append(f"  probe.error_message: {probe['error_message']}")
     return lines
 
 

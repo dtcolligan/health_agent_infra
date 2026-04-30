@@ -4,6 +4,7 @@ description: Answer bounded questions about what a term means in this system, or
 allowed-tools: Read, Bash(hai research topics *), Bash(hai research search *), Bash(hai explain *), Bash(hai state snapshot *)
 disable-model-invocation: false
 ---
+<!-- regulated-claim-lint: meta-document -->
 
 # Expert Explainer
 

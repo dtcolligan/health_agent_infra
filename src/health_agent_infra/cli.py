@@ -34,7 +34,10 @@ from health_agent_infra.core.capabilities import (
     annotate_contract,
     build_manifest,
 )
-from health_agent_infra.core.capabilities.render import render_markdown
+from health_agent_infra.core.capabilities.render import (
+    render_human,
+    render_markdown,
+)
 from health_agent_infra.core.clean import build_raw_summary, clean_inputs
 from health_agent_infra.core.config import (
     ConfigError,
@@ -199,14 +202,25 @@ def cmd_pull(args: argparse.Namespace) -> int:
             adapter = _build_live_adapter(args)
         except GarminLiveError as exc:
             _close_sync_row_failed(args.db_path, sync_id, exc)
-            print(f"live pull error: {exc}", file=sys.stderr)
+            print(
+                f"live pull error: {exc}\n"
+                f"Check credentials with `hai auth status`; if those look "
+                f"OK, run `hai doctor --deep` to probe the live API.",
+                file=sys.stderr,
+            )
             return exit_codes.USER_INPUT
     else:  # intervals_icu
         try:
             adapter = _build_intervals_icu_adapter(args)
         except IntervalsIcuError as exc:
             _close_sync_row_failed(args.db_path, sync_id, exc)
-            print(f"intervals.icu pull error: {exc}", file=sys.stderr)
+            print(
+                f"intervals.icu pull error: {exc}\n"
+                f"Check credentials with `hai auth status`; run "
+                f"`hai doctor --deep` to classify the live-API "
+                f"failure (see `reporting/docs/intervals_icu_403_triage.md`).",
+                file=sys.stderr,
+            )
             return exit_codes.USER_INPUT
 
     try:
@@ -1812,6 +1826,15 @@ def cmd_today(args: argparse.Namespace) -> int:
         cold_start_by_domain = _cold_start_flags(
             conn, user_id=args.user_id, as_of_date=as_of,
         )
+        # W-AG (v0.1.13): consecutive-day `hai daily` streak. Threaded
+        # through render_today for day-1 vs day-30 prose differentiation.
+        # Read inside the same conn open block to avoid a second open.
+        try:
+            streak_days = _daily_streak_from_events(conn)
+        except Exception:  # noqa: BLE001
+            # Defensive: streak read failure must never block the plan
+            # surface. Pre-W-AG behaviour (streak=None) is the fallback.
+            streak_days = None
     finally:
         conn.close()
 
@@ -1820,7 +1843,31 @@ def cmd_today(args: argparse.Namespace) -> int:
         format=fmt,
         domain_filter=args.domain,
         cold_start_by_domain=cold_start_by_domain,
+        streak_days=streak_days,
     )
+
+    # W-LINT (v0.1.13): runtime regulated-claim check at the CLI
+    # rendering boundary. Strict regime regardless of source-skill
+    # provenance (F-PLAN-09 constraint 4) — even an allowlisted skill
+    # whose SKILL.md passes static lint cannot surface a regulated
+    # term in rendered prose. JSON format is exempt because it is the
+    # agent-facing structured surface, not user-facing text.
+    if fmt != "json":
+        from health_agent_infra.core.lint import (
+            RegulatedClaimError,
+            runtime_check,
+        )
+        try:
+            runtime_check(output)
+        except RegulatedClaimError as exc:
+            print(
+                f"hai today: regulated-claim lint blocked the rendered "
+                f"output (this is a code bug; the rationale prose passed "
+                f"validation but contains a banned phrase). Details:\n"
+                f"{exc}",
+                file=sys.stderr,
+            )
+            return exit_codes.USER_INPUT
 
     # W-FCC (v0.1.12 / F-C-05): when --verbose is set, prepend a
     # "classified state" footer surfacing internal classifier outputs.
@@ -3423,8 +3470,11 @@ def cmd_intake_stress(args: argparse.Namespace) -> int:
 
     if args.score is None or args.score not in (1, 2, 3, 4, 5):
         # argparse choices already enforces, but defensive:
-        print("intake stress: --score must be one of {1,2,3,4,5}",
-              file=sys.stderr)
+        print(
+            "intake stress: --score must be one of {1,2,3,4,5}; "
+            "rerun with `--score <n>` where n is in that range.",
+            file=sys.stderr,
+        )
         return exit_codes.USER_INPUT
 
     tags: Optional[list[str]] = None
@@ -3561,7 +3611,11 @@ def cmd_intake_note(args: argparse.Namespace) -> int:
     )
 
     if not args.text or not args.text.strip():
-        print("intake note: --text must be a non-empty string", file=sys.stderr)
+        print(
+            "intake note: --text must be a non-empty string; "
+            "rerun with `--text \"<your note>\"`.",
+            file=sys.stderr,
+        )
         return exit_codes.USER_INPUT
 
     tags: Optional[list[str]] = None
@@ -4188,7 +4242,12 @@ def cmd_config_show(args: argparse.Namespace) -> int:
     try:
         merged = load_thresholds(path=path)
     except ConfigError as exc:
-        print(f"config error: {exc}", file=sys.stderr)
+        print(
+            f"config error: {exc}\n"
+            f"Edit the thresholds file or regenerate it via "
+            f"`hai config init --force`.",
+            file=sys.stderr,
+        )
         return exit_codes.USER_INPUT
     effective_path = path if path is not None else user_config_path()
     _emit_json({
@@ -4346,7 +4405,11 @@ def cmd_config_validate(args: argparse.Namespace) -> int:
         with path.open("rb") as fh:
             user_overrides = tomllib.load(fh)
     except tomllib.TOMLDecodeError as exc:
-        sys.stderr.write(f"hai config validate: malformed TOML at {path}: {exc}\n")
+        sys.stderr.write(
+            f"hai config validate: malformed TOML at {path}: {exc}\n"
+            f"Edit the file to fix the syntax, or regenerate it via "
+            f"`hai config init --force`.\n"
+        )
         _emit_json({
             "source_path": str(path),
             "source_exists": True,
@@ -4440,7 +4503,11 @@ def cmd_config_diff(args: argparse.Namespace) -> int:
     try:
         merged = load_thresholds(path=path)
     except ConfigError as exc:
-        sys.stderr.write(f"hai config diff: {exc}\n")
+        sys.stderr.write(
+            f"hai config diff: {exc}\n"
+            f"Edit the thresholds file to fix the schema, or regenerate it "
+            f"via `hai config init --force`.\n"
+        )
         return exit_codes.USER_INPUT
 
     if not path.exists():
@@ -4456,7 +4523,11 @@ def cmd_config_diff(args: argparse.Namespace) -> int:
         with path.open("rb") as fh:
             user_overrides = tomllib.load(fh)
     except tomllib.TOMLDecodeError as exc:
-        sys.stderr.write(f"hai config diff: malformed TOML at {path}: {exc}\n")
+        sys.stderr.write(
+            f"hai config diff: malformed TOML at {path}: {exc}\n"
+            f"Edit the file to fix the syntax, or regenerate via "
+            f"`hai config init --force`.\n"
+        )
         return exit_codes.USER_INPUT
 
     diffs: list[dict[str, Any]] = []
@@ -5135,7 +5206,13 @@ def cmd_setup_skills(args: argparse.Namespace) -> int:
     copied: list[str] = []
     with _skills_source() as skills_source:
         if not skills_source.exists():
-            print(f"skills/ not found at {skills_source}", file=sys.stderr)
+            print(
+                f"skills/ not found at {skills_source}\n"
+                f"Reinstall the package (`pipx install --force "
+                f"health-agent-infra`) and retry; the bundled skills "
+                f"directory is missing from the wheel.",
+                file=sys.stderr,
+            )
             return exit_codes.USER_INPUT
         for skill_dir in skills_source.iterdir():
             if not skill_dir.is_dir():
@@ -6401,7 +6478,12 @@ def cmd_capabilities(args: argparse.Namespace) -> int:
     """
 
     manifest = build_manifest(build_parser())
-    if getattr(args, "markdown", False):
+    if getattr(args, "human", False):
+        # New-user-facing one-page overview. Workflow-grouped, no
+        # schema jargon. JSON manifest stays the agent-facing
+        # authoritative surface.
+        print(render_human(manifest), end="")
+    elif getattr(args, "markdown", False):
         # Text form for operator-facing review; the --json form stays the
         # canonical machine-readable surface.
         print(render_markdown(manifest), end="")
@@ -6436,7 +6518,12 @@ def cmd_demo_start(args: argparse.Namespace) -> int:
     try:
         marker = open_session(persona=persona)
     except DemoMarkerError as exc:
-        print(f"hai demo start: {exc}", file=sys.stderr)
+        print(
+            f"hai demo start: {exc}\n"
+            f"If a stale demo session is active, run `hai demo end` "
+            f"first; if the marker is corrupt, run `hai demo cleanup`.",
+            file=sys.stderr,
+        )
         return exit_codes.USER_INPUT
 
     print(
@@ -8624,13 +8711,20 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_caps = sub.add_parser(
         "capabilities",
-        help="Emit the agent-CLI-contract manifest (JSON by default, "
-             "--markdown for the human-readable form)",
+        help="Emit the agent-CLI-contract manifest (JSON by default; "
+             "--markdown for the contract doc; --human for a "
+             "new-user one-page overview)",
     )
     p_caps.add_argument(
         "--markdown", action="store_true",
         help="Render the manifest as the contract markdown doc on stdout "
              "instead of JSON. Used by the doc regenerator.",
+    )
+    p_caps.add_argument(
+        "--human", action="store_true",
+        help="Render a one-page user-readable overview grouped by "
+             "workflow stage. Skips the schema-annotation columns; "
+             "for the agent-facing manifest use --json (default).",
     )
     # v0.1.6 (Codex r3 P1 fix): the README, intent-router skill, and
     # generated contract preamble all instruct agents to invoke

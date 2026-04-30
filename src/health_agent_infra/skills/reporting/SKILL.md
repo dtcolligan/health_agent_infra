@@ -4,6 +4,7 @@ description: Narrate a TrainingRecommendation (and optionally its supporting sta
 allowed-tools: Read, Bash(hai review *)
 disable-model-invocation: false
 ---
+<!-- regulated-claim-lint: meta-document -->
 
 # Reporting
 

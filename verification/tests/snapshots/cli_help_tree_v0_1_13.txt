@@ -1,0 +1,56 @@
+hai auth garmin: --email,--help,--password-env,--password-stdin
+hai auth intervals-icu: --api-key-env,--api-key-stdin,--athlete-id,--help
+hai auth remove: --help,--source
+hai auth status: --help
+hai capabilities: --help,--human,--json,--markdown
+hai clean: --db-path,--evidence-json,--help
+hai config diff: --help,--path
+hai config init: --force,--help,--path
+hai config show: --help,--path
+hai config validate: --help,--path,--strict
+hai daily: --agent-version,--as-of,--auto,--base-dir,--db-path,--domains,--explain,--help,--history-days,--live,--re-propose-all,--skip-pull,--skip-reviews,--source,--supersede,--user-id
+hai demo cleanup: --help
+hai demo end: --help
+hai demo start: --blank,--help,--persona
+hai doctor: --as-of,--db-path,--deep,--help,--json,--skills-dest,--thresholds-path,--user-id
+hai eval run: --domain,--help,--json,--synthesis
+hai exercise search: --db-path,--help,--limit,--query
+hai explain: --as-of,--daily-plan-id,--db-path,--for-date,--help,--operator,--plan-version,--text,--user-id
+hai init: --db-path,--force,--help,--history-days,--skills-dest,--skip-skills,--thresholds-path,--user-id,--with-auth,--with-first-pull
+hai intake exercise: --aliases,--category,--db-path,--equipment,--exercise-id,--help,--name,--primary-muscle-group,--secondary-muscle-groups
+hai intake gaps: --allow-stale-snapshot,--as-of,--db-path,--evidence-json,--from-state-snapshot,--help,--user-id
+hai intake gym: --as-of,--base-dir,--db-path,--exercise,--help,--ingest-actor,--notes,--reps,--rpe,--session-id,--session-json,--session-name,--set-number,--user-id,--weight-kg
+hai intake note: --as-of,--base-dir,--db-path,--help,--ingest-actor,--recorded-at,--tags,--text,--user-id
+hai intake nutrition: --as-of,--base-dir,--calories,--carbs-g,--db-path,--fat-g,--help,--hydration-l,--ingest-actor,--meals-count,--protein-g,--replace,--user-id
+hai intake readiness: --active-goal,--as-of,--base-dir,--db-path,--energy,--help,--ingest-actor,--planned-session-type,--soreness,--user-id
+hai intake stress: --as-of,--base-dir,--db-path,--help,--ingest-actor,--score,--tags,--user-id
+hai intent archive: --confirm,--db-path,--help,--intent-id,--user-id
+hai intent commit: --confirm,--db-path,--help,--intent-id,--user-id
+hai intent list: --all,--as-of,--db-path,--domain,--help,--status,--user-id
+hai intent sleep set-window: --db-path,--domain,--flexibility,--help,--ingest-actor,--intent-type,--payload-json,--priority,--reason,--scope-end,--scope-start,--scope-type,--source,--status,--user-id
+hai intent training add-session: --db-path,--domain,--flexibility,--help,--ingest-actor,--intent-type,--payload-json,--priority,--reason,--scope-end,--scope-start,--scope-type,--source,--status,--user-id
+hai intent training list: --all,--as-of,--db-path,--help,--status,--user-id
+hai memory archive: --db-path,--help,--memory-id
+hai memory list: --category,--db-path,--help,--include-archived,--user-id
+hai memory set: --category,--db-path,--domain,--help,--ingest-actor,--key,--memory-id,--source,--user-id,--value
+hai planned-session-types: --help
+hai propose: --base-dir,--db-path,--domain,--help,--proposal-json,--replace
+hai pull: --as-of,--date,--db-path,--help,--history-days,--live,--manual-readiness-json,--source,--use-default-manual-readiness,--user-id
+hai research search: --help,--topic
+hai research topics: --help
+hai review record: --base-dir,--completed,--db-path,--disagreed-firings,--duration-minutes,--help,--intensity-delta,--outcome-json,--post-energy,--pre-energy
+hai review schedule: --base-dir,--db-path,--help,--recommendation-json
+hai review summary: --base-dir,--domain,--help,--user-id
+hai setup-skills: --dest,--force,--help
+hai state init: --db-path,--help
+hai state migrate: --db-path,--help
+hai state read: --db-path,--domain,--help,--since,--until,--user-id
+hai state reproject: --allow-empty-reproject,--base-dir,--cascade-synthesis,--db-path,--help
+hai state snapshot: --as-of,--db-path,--evidence-json,--help,--lookback-days,--user-id
+hai stats: --baselines,--data-quality,--db-path,--domain,--funnel,--help,--json,--limit,--outcomes,--since,--user-id
+hai synthesize: --agent-version,--as-of,--bundle-only,--db-path,--domains,--drafts-json,--help,--supersede,--user-id
+hai target archive: --confirm,--db-path,--help,--target-id,--user-id
+hai target commit: --confirm,--db-path,--help,--target-id,--user-id
+hai target list: --all,--as-of,--db-path,--domain,--help,--status,--target-type,--user-id
+hai target set: --db-path,--domain,--effective-from,--effective-to,--help,--ingest-actor,--lower-bound,--reason,--review-after,--source,--status,--target-type,--unit,--upper-bound,--user-id,--value,--value-json
+hai today: --as-of,--db-path,--domain,--format,--help,--user-id,--verbose

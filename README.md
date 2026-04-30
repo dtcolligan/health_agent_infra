@@ -11,7 +11,7 @@ boundary that lets an LLM work over health data without owning the policy
 engine, the database, or the final write path.
 
 [![PyPI](https://img.shields.io/pypi/v/health-agent-infra)](https://pypi.org/project/health-agent-infra/)
-[![Tests](https://img.shields.io/badge/tests-2135_collected-green)](verification/tests/)
+[![Tests](https://img.shields.io/badge/tests-2455_passing-green)](verification/tests/)
 [![Python](https://img.shields.io/badge/python-3.11+-blue)](pyproject.toml)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
@@ -45,11 +45,11 @@ agent without handing the model unchecked authority over personal health data.
 | Surface | Shipped shape |
 |---|---|
 | Domains | 6: recovery, running, sleep, stress, strength, nutrition |
-| Skills | 14 packaged markdown skills, including `intent-router` and `expert-explainer` |
-| CLI contract | 52 annotated `hai` commands with mutation class, idempotency, JSON mode, exit codes, and agent-safety metadata |
-| State | 21 SQLite migrations, local-only by default |
+| Skills | 15 packaged markdown skills, including `intent-router` and `expert-explainer` |
+| CLI contract | 56 annotated `hai` commands with mutation class, idempotency, JSON mode, exit codes, and agent-safety metadata |
+| State | 22 SQLite migrations, local-only by default |
 | Synthesis | 10 X-rule evaluators across two phases, committed in one transaction |
-| Verification | 2135 collected tests, 28 packaged deterministic eval scenarios |
+| Verification | 2455 passing tests, 12-persona harness, 5-path trusted-first-value acceptance matrix |
 
 ## Why it is different
 
@@ -71,9 +71,10 @@ agent without handing the model unchecked authority over personal health data.
   and `hai stats`; these surfaces reconcile supersede chains and hide schema
   churn that raw SQL will not.
 
-v0.1.9 closed a focused hardening review on top of the v0.1.8
-four-round Codex audit baseline. The
-release-by-release audit index is in [AUDIT.md](AUDIT.md).
+v0.1.13 ships public-surface hardening + onboarding (`hai capabilities --human`,
+`hai doctor --deep` with 5-class probe-pull classification, `hai today` cold-start
+prose, regulated-claim lint, declarative persona expected-actions, trusted-first-value
+acceptance matrix). The release-by-release audit index is in [AUDIT.md](AUDIT.md).
 
 ## What the loop looks like
 
@@ -121,22 +122,26 @@ but the intended daily loop is natural language first: tell the agent what
 you want, let it inspect `hai capabilities`, and let it invoke the right
 validated command.
 
-```bash
+```bash quickstart
 pipx install health-agent-infra                # or: pip install -e .
 hai init                                       # scaffolds state + config + skills
 hai auth intervals-icu                         # preferred live source
-hai daily                                       # orchestrates pull -> clean ->
-                                                # snapshot -> gaps -> proposal gate;
-                                                # the agent then posts proposals
-hai today                                       # read today's plan in plain language
+hai capabilities --human                       # one-page overview of every command
+hai doctor                                     # check setup; --deep probes the live API
+hai daily                                      # orchestrates pull -> clean ->
+                                               # snapshot -> gaps -> proposal gate;
+                                               # the agent then posts proposals
+hai today                                      # read today's plan in plain language
 ```
 
 `--source` defaults to `intervals_icu` when credentials are configured, else
 `csv` for the committed fixture. Garmin Connect live scraping remains
 best-effort and rate-limited; use `--source garmin_live` only when you
-explicitly want it. The shortcut `hai init --with-auth --with-first-pull`
-exists, but in v0.1.9 it is the Garmin-first-pull wizard, not the
-intervals.icu setup path.
+explicitly want it.
+
+Run `hai capabilities --human` (v0.1.13+) for a one-page workflow-grouped
+overview of every `hai` command. The agent-facing JSON manifest is
+`hai capabilities --json`.
 
 On macOS, credentials are stored in the OS keyring. The first `hai pull`
 may ask for access; choose **Always Allow** if you want scripted runs such
@@ -158,6 +163,45 @@ Everything the runtime stores stays on your machine. Three locations matter:
 Run `hai doctor` to confirm resolved paths, schema version, source
 freshness, and skill installation status. It also warns when the applied
 migration set has gaps even if `MAX(version)` looks current.
+
+## Troubleshooting
+
+The five most common gotchas a new user hits, in order:
+
+1. **`hai today` says "no plan for <date>"** — `hai daily` hasn't run yet
+   today, or the proposal gate stopped at `awaiting_proposals` because the
+   agent didn't post per-domain proposals. Run `hai daily` (let the agent
+   drive it conversationally), or check `hai stats --funnel` to see where
+   the pipeline stalled.
+
+2. **`hai pull` returns HTTP 403** — two distinct root causes look
+   identical at the `IntervalsIcuError` boundary. Run `hai doctor --deep`
+   (v0.1.13+) — it classifies the failure into one of five outcome
+   classes:
+   - `CAUSE_1_CLOUDFLARE_UA` — Cloudflare bot-protection blocked the
+     request at the edge (the credentials never reached intervals.icu).
+     Patched in v0.1.12.1; if it re-fires, file an issue.
+   - `CAUSE_2_CREDS` — intervals.icu rejected the credentials. Run
+     `hai auth intervals-icu` to refresh.
+   - `NETWORK` — DNS / TCP / TLS layer; verify connectivity.
+   - `OTHER` — unclassified; consult
+     [`reporting/docs/intervals_icu_403_triage.md`](reporting/docs/intervals_icu_403_triage.md).
+
+3. **`hai doctor` says auth is OK but pulls fail** — the default `hai
+   doctor` checks credential *presence* in the keyring, not whether the
+   live API accepts them. Always run `hai doctor --deep` before a demo
+   or after rotating keys; the deep check makes one live API call.
+
+4. **A USER_INPUT exit with no useful message** — every USER_INPUT exit
+   should print an actionable next-step (v0.1.13 W-AD audit pinned this
+   surface). If you hit one without a hint, the message itself is a bug
+   — file an issue.
+
+5. **`hai today` looks confident but you have only a few days of data** —
+   the cold-start window is the first 14 days for running, strength, and
+   stress; recovery and sleep continue to defer when signal is thin.
+   Bands and trends carry real signal around day 90. The plan calibration
+   table below is the durable reference.
 
 ## Reading your plan
 
