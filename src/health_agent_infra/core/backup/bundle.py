@@ -190,8 +190,40 @@ def restore_backup(
             f"to bring the bundle's data forward."
         )
 
-    state_db_path.parent.mkdir(parents=True, exist_ok=True)
+    # F-IR-04: validate every manifest jsonl_files entry is a plain
+    # filename ending in `.jsonl`. The bundle is untrusted input on
+    # restore; without this check, a malicious manifest entry like
+    # `../outside.jsonl` would write outside base_dir.
+    for entry in manifest.jsonl_files:
+        if (
+            not isinstance(entry, str)
+            or entry == ""
+            or Path(entry).name != entry
+            or not entry.endswith(".jsonl")
+        ):
+            raise BackupError(
+                f"bundle manifest contains an unsafe jsonl_files entry "
+                f"{entry!r}. Entries must be plain filenames ending in "
+                f"`.jsonl` (no path separators, no `..`, no absolute "
+                f"paths). Restore refusing rather than risk writing "
+                f"outside base_dir."
+            )
+
+    # F-IR-05: clear stale `*.jsonl` files at the destination so
+    # restore is a true point-in-time restore. Existing JSONL files
+    # not present in the bundle's manifest would otherwise leak
+    # between backups (older state.db + newer audit logs is incoherent).
     base_dir.mkdir(parents=True, exist_ok=True)
+    bundle_logs = set(manifest.jsonl_files)
+    for existing in sorted(base_dir.iterdir()) if base_dir.exists() else []:
+        if (
+            existing.is_file()
+            and existing.suffix == ".jsonl"
+            and existing.name not in bundle_logs
+        ):
+            existing.unlink()
+
+    state_db_path.parent.mkdir(parents=True, exist_ok=True)
 
     with tarfile.open(bundle_path, "r:gz") as tf:
         # state.db
@@ -207,7 +239,7 @@ def restore_backup(
         with state_db_path.open("wb") as out:
             out.write(db_fh.read())
 
-        # JSONL files
+        # JSONL files (already validated above for safe basenames).
         for basename in manifest.jsonl_files:
             arcname = f"{_JSONL_DIR_IN_BUNDLE}/{basename}"
             try:
@@ -217,7 +249,16 @@ def restore_backup(
             jl_fh = tf.extractfile(jl_member)
             if jl_fh is None:
                 continue
-            with (base_dir / basename).open("wb") as out:
+            dest = (base_dir / basename).resolve()
+            # Defence-in-depth: ensure resolved dest stays under base_dir.
+            try:
+                dest.relative_to(base_dir.resolve())
+            except ValueError as exc:
+                raise BackupError(
+                    f"bundle restore would write outside base_dir "
+                    f"({dest} not under {base_dir.resolve()}); refusing"
+                ) from exc
+            with dest.open("wb") as out:
                 out.write(jl_fh.read())
 
     return manifest

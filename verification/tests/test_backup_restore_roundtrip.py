@@ -233,3 +233,141 @@ def test_export_jsonl_skips_malformed_lines(tmp_path):
     out = io.StringIO()
     count = export_jsonl(base_dir=base_dir, output_stream=out)
     assert count == 2  # 2 valid lines; 1 malformed dropped
+
+
+# ---------------------------------------------------------------------------
+# F-IR-04: malicious-bundle path-traversal refusal
+# ---------------------------------------------------------------------------
+
+def _build_malicious_bundle(tmp_path, jsonl_entry: str):
+    """Build a bundle whose manifest declares an unsafe jsonl_files entry.
+
+    Used to verify ``restore_backup`` refuses traversal attempts.
+    """
+
+    import tarfile
+    import tempfile
+
+    src_db = tmp_path / "src" / "state.db"
+    src_db.parent.mkdir(parents=True, exist_ok=True)
+    head = _seed_state_db_with_one_row(src_db)
+    src_audit = tmp_path / "src" / "audit"
+    src_audit.mkdir(parents=True, exist_ok=True)
+
+    bundle = tmp_path / "malicious.tar.gz"
+    bad_manifest = {
+        "bundle_format_version": "1",
+        "hai_version": "0.1.14-malicious",
+        "schema_version": head,
+        "created_at": "2026-05-01T00:00:00+00:00",
+        "state_db_size_bytes": src_db.stat().st_size,
+        "jsonl_files": [jsonl_entry],
+    }
+    with tarfile.open(bundle, "w:gz") as tf:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False, encoding="utf-8"
+        ) as mfh:
+            json.dump(bad_manifest, mfh, sort_keys=True)
+            mfh_path = Path(mfh.name)
+        try:
+            tf.add(mfh_path, arcname="manifest.json")
+        finally:
+            mfh_path.unlink(missing_ok=True)
+        tf.add(src_db, arcname="state.db")
+    return bundle, head
+
+
+def test_restore_refuses_jsonl_entry_with_path_traversal(tmp_path):
+    bundle, head = _build_malicious_bundle(tmp_path, "../outside.jsonl")
+    with pytest.raises(BackupError, match="unsafe jsonl_files"):
+        restore_backup(
+            bundle_path=bundle,
+            state_db_path=tmp_path / "dst" / "state.db",
+            base_dir=tmp_path / "dst" / "audit",
+            expected_schema_version=head,
+        )
+
+
+def test_restore_refuses_jsonl_entry_with_absolute_path(tmp_path):
+    bundle, head = _build_malicious_bundle(tmp_path, "/etc/evil.jsonl")
+    with pytest.raises(BackupError, match="unsafe jsonl_files"):
+        restore_backup(
+            bundle_path=bundle,
+            state_db_path=tmp_path / "dst" / "state.db",
+            base_dir=tmp_path / "dst" / "audit",
+            expected_schema_version=head,
+        )
+
+
+def test_restore_refuses_jsonl_entry_with_separator(tmp_path):
+    bundle, head = _build_malicious_bundle(tmp_path, "nested/log.jsonl")
+    with pytest.raises(BackupError, match="unsafe jsonl_files"):
+        restore_backup(
+            bundle_path=bundle,
+            state_db_path=tmp_path / "dst" / "state.db",
+            base_dir=tmp_path / "dst" / "audit",
+            expected_schema_version=head,
+        )
+
+
+def test_restore_refuses_jsonl_entry_without_jsonl_extension(tmp_path):
+    bundle, head = _build_malicious_bundle(tmp_path, "credentials.txt")
+    with pytest.raises(BackupError, match="unsafe jsonl_files"):
+        restore_backup(
+            bundle_path=bundle,
+            state_db_path=tmp_path / "dst" / "state.db",
+            base_dir=tmp_path / "dst" / "audit",
+            expected_schema_version=head,
+        )
+
+
+# ---------------------------------------------------------------------------
+# F-IR-05: stale-extra-log clearing for point-in-time restore
+# ---------------------------------------------------------------------------
+
+def test_restore_clears_stale_jsonl_files_not_in_bundle(tmp_path):
+    """Restore is a point-in-time operation. Stale audit logs at the
+    destination that are not present in the bundle's manifest must be
+    removed; otherwise an older state.db + newer JSONL leftovers
+    silently mix two timelines."""
+
+    src_db = tmp_path / "src" / "state.db"
+    src_db.parent.mkdir(parents=True, exist_ok=True)
+    head = _seed_state_db_with_one_row(src_db)
+    src_audit = tmp_path / "src" / "audit"
+    _seed_jsonl(src_audit)  # writes recommendation_log.jsonl + review_outcomes.jsonl
+
+    bundle = tmp_path / "bundle.tar.gz"
+    make_backup(
+        state_db_path=src_db,
+        base_dir=src_audit,
+        dest=bundle,
+        hai_version="0.1.14-test",
+    )
+
+    dst_db = tmp_path / "dst" / "state.db"
+    dst_audit = tmp_path / "dst" / "audit"
+    dst_audit.mkdir(parents=True, exist_ok=True)
+    # Pre-populate destination with a NEWER stale log not in the bundle.
+    stale = dst_audit / "stale_extra.jsonl"
+    stale.write_text(
+        json.dumps({"stale": True}) + "\n", encoding="utf-8"
+    )
+    # Also place a non-jsonl file that should NOT be cleared.
+    keepsake = dst_audit / "config.toml"
+    keepsake.write_text("# keep me\n", encoding="utf-8")
+
+    restore_backup(
+        bundle_path=bundle,
+        state_db_path=dst_db,
+        base_dir=dst_audit,
+        expected_schema_version=head,
+    )
+
+    # Bundle's logs are present.
+    assert (dst_audit / "recommendation_log.jsonl").exists()
+    assert (dst_audit / "review_outcomes.jsonl").exists()
+    # Stale jsonl is gone.
+    assert not stale.exists()
+    # Non-jsonl is untouched.
+    assert keepsake.exists()

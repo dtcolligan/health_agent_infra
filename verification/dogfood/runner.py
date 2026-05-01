@@ -814,28 +814,52 @@ def _preflight_demo_session_check() -> None:
     """v0.1.14 W-FRESH-EXT (F-PHASE0-01 absorption): refuse to run if a
     demo-session marker is active.
 
-    A stale demo-session marker (from a maintainer dogfooding `hai
-    demo start ...` and not running `hai demo end` before invoking
-    the persona harness) silently sandboxes the first persona's
-    `hai propose` calls into the demo's scratch root rather than
-    the persona's DB. v0.1.14 Phase 0 caught this on a fresh sweep;
+    A demo-session marker (whether orphan or valid) makes
+    ``resolve_db_path`` / ``resolve_base_dir`` redirect every persona's
+    ``hai propose`` / ``hai intake`` / ``hai synthesize`` calls into the
+    demo's scratch state. v0.1.14 Phase 0 caught this on a fresh sweep;
     the runner pre-flight prevents recurrence.
 
-    Raises ``SystemExit(2)`` if the cleanup hook reports any orphan
-    markers were removed (i.e., a marker was active and we just
-    cleared it; refuse rather than continue silently because we
-    don't know if a downstream test still depends on the stale
-    state). Returns silently otherwise.
+    F-IR-03 (Codex IR round 1): the original implementation only
+    refused on orphan markers, missing the high-risk **valid active
+    marker** case. The fix below refuses on any active marker
+    (orphan or valid), naming both kinds in the failure message.
+
+    Raises ``SystemExit(2)`` if any demo session is active. Returns
+    silently otherwise.
     """
 
-    from health_agent_infra.core.demo.session import cleanup_orphans
+    from health_agent_infra.core.demo.session import (
+        cleanup_orphans,
+        get_active_marker,
+        is_demo_active,
+    )
 
+    if is_demo_active():
+        marker = get_active_marker()
+        marker_id = marker.marker_id if marker is not None else "<unparseable>"
+        print(
+            f"verification/dogfood/runner: refusing to start with an "
+            f"active demo session (marker_id={marker_id}). The persona "
+            f"harness's `hai propose` / `hai intake` calls would be "
+            f"silently routed to the demo's scratch state. End the demo "
+            f"session via `hai demo end` (if you started it deliberately) "
+            f"or `hai demo cleanup` (if it's stale), then re-run.",
+            file=sys.stderr,
+        )
+        raise SystemExit(2)
+
+    # Even when no marker is active by reading the marker file, sweep
+    # for unreadable / partially-written markers; refuse if cleanup
+    # finds any. This catches the narrow "marker file got corrupted"
+    # path that `is_demo_active` returns False for.
     cleaned = cleanup_orphans()
     if cleaned:
         print(
-            f"verification/dogfood/runner: refusing to start with active "
-            f"demo-session marker(s) cleared: {cleaned}. Re-run after "
-            f"confirming no live demo session needed those scratch dirs.",
+            f"verification/dogfood/runner: refusing to start with stale "
+            f"demo-session marker(s) just cleaned: {cleaned}. Re-run "
+            f"after confirming no live demo session needed those "
+            f"scratch dirs.",
             file=sys.stderr,
         )
         raise SystemExit(2)

@@ -273,23 +273,29 @@ def _seed_recovery_evidence(conn: sqlite3.Connection) -> None:
 def test_resolve_locator_returns_row_when_present(tmp_path):
     db_path = tmp_path / "state.db"
     conn = open_connection(db_path)
-    apply_pending_migrations(conn)
-    _seed_recovery_evidence(conn)
+    try:
+        apply_pending_migrations(conn)
+        _seed_recovery_evidence(conn)
 
-    resolved = resolve_locator(conn, _VALID_LOCATOR)
-    assert resolved is not None
-    assert resolved["resting_hr"] == 67.0
-    assert resolved["as_of_date"] == "2026-04-30"
-    assert resolved["user_id"] == "u_local_1"
+        resolved = resolve_locator(conn, _VALID_LOCATOR)
+        assert resolved is not None
+        assert resolved["resting_hr"] == 67.0
+        assert resolved["as_of_date"] == "2026-04-30"
+        assert resolved["user_id"] == "u_local_1"
+    finally:
+        conn.close()
 
 
 def test_resolve_locator_returns_none_when_row_missing(tmp_path):
     db_path = tmp_path / "state.db"
     conn = open_connection(db_path)
-    apply_pending_migrations(conn)
-    # Don't seed.
-    resolved = resolve_locator(conn, _VALID_LOCATOR)
-    assert resolved is None
+    try:
+        apply_pending_migrations(conn)
+        # Don't seed.
+        resolved = resolve_locator(conn, _VALID_LOCATOR)
+        assert resolved is None
+    finally:
+        conn.close()
 
 
 # ---------------------------------------------------------------------------
@@ -299,11 +305,14 @@ def test_resolve_locator_returns_none_when_row_missing(tmp_path):
 def test_migration_023_adds_evidence_locators_column(tmp_path):
     db_path = tmp_path / "state.db"
     conn = open_connection(db_path)
-    apply_pending_migrations(conn)
-    cols = {row[1] for row in conn.execute(
-        "PRAGMA table_info(recommendation_log)"
-    ).fetchall()}
-    assert "evidence_locators_json" in cols
+    try:
+        apply_pending_migrations(conn)
+        cols = {row[1] for row in conn.execute(
+            "PRAGMA table_info(recommendation_log)"
+        ).fetchall()}
+        assert "evidence_locators_json" in cols
+    finally:
+        conn.close()
 
 
 # ---------------------------------------------------------------------------
@@ -317,37 +326,161 @@ def test_project_recommendation_writes_evidence_locators_json_column(tmp_path):
 
     db_path = tmp_path / "state.db"
     conn = open_connection(db_path)
-    apply_pending_migrations(conn)
-    _seed_recovery_evidence(conn)
+    try:
+        apply_pending_migrations(conn)
+        _seed_recovery_evidence(conn)
 
-    rec = {
-        "schema_version": "recovery_recommendation.v1",
-        "recommendation_id": "rec_2026-04-30_u_local_1_recovery_01",
-        "user_id": "u_local_1",
-        "for_date": "2026-04-30",
-        "domain": "recovery",
-        "action": "escalate_for_user_review",
-        "action_detail": {
-            "reason_token": "resting_hr_spike_3_days_running",
-        },
-        "rationale": ["Resting HR elevated 3 days running."],
-        "confidence": "moderate",
-        "uncertainty": [],
-        "policy_decisions": [],
-        "bounded": True,
-        "issued_at": datetime.now(timezone.utc).isoformat(),
-        "evidence_locators": [_VALID_LOCATOR],
-    }
-    project_bounded_recommendation(conn, rec)
+        rec = {
+            "schema_version": "recovery_recommendation.v1",
+            "recommendation_id": "rec_2026-04-30_u_local_1_recovery_01",
+            "user_id": "u_local_1",
+            "for_date": "2026-04-30",
+            "domain": "recovery",
+            "action": "escalate_for_user_review",
+            "action_detail": {
+                "reason_token": "resting_hr_spike_3_days_running",
+            },
+            "rationale": ["Resting HR elevated 3 days running."],
+            "confidence": "moderate",
+            "uncertainty": [],
+            "policy_decisions": [],
+            "bounded": True,
+            "issued_at": datetime.now(timezone.utc).isoformat(),
+            "evidence_locators": [_VALID_LOCATOR],
+        }
+        project_bounded_recommendation(conn, rec)
 
-    row = conn.execute(
-        "SELECT evidence_locators_json FROM recommendation_log "
-        "WHERE recommendation_id = ?",
-        (rec["recommendation_id"],),
-    ).fetchone()
-    assert row is not None
-    assert row[0] is not None
-    parsed = json.loads(row[0])
-    assert isinstance(parsed, list)
-    assert len(parsed) == 1
-    assert parsed[0]["table"] == "accepted_recovery_state_daily"
+        row = conn.execute(
+            "SELECT evidence_locators_json FROM recommendation_log "
+            "WHERE recommendation_id = ?",
+            (rec["recommendation_id"],),
+        ).fetchone()
+        assert row is not None
+        assert row[0] is not None
+        parsed = json.loads(row[0])
+        assert isinstance(parsed, list)
+        assert len(parsed) == 1
+        assert parsed[0]["table"] == "accepted_recovery_state_daily"
+    finally:
+        conn.close()
+
+
+# ---------------------------------------------------------------------------
+# F-IR-02: end-to-end live wiring snapshot → policy_result.evidence_locators
+# ---------------------------------------------------------------------------
+
+def test_build_snapshot_emits_evidence_locators_on_r6_spike(tmp_path):
+    """v0.1.14 W-PROV-1 F-IR-02: an R6 spike firing on the live snapshot
+    path must surface ``evidence_locators`` under
+    ``snapshot.recovery.policy_result``. The recovery skill copies them
+    onto the proposal verbatim per SKILL.md."""
+
+    from datetime import date
+
+    from health_agent_infra.core.state.snapshot import build_snapshot
+
+    db_path = tmp_path / "state.db"
+    conn = open_connection(db_path)
+    try:
+        apply_pending_migrations(conn)
+        _seed_recovery_evidence(conn)  # 3 spike days @ rhr 65/66/67
+
+        evidence_bundle = {
+            "cleaned_evidence": {
+                "as_of_date": "2026-04-30",
+                "user_id": "u_local_1",
+                "sleep_hours": 7.0,
+                "resting_hr": 67.0,
+                "hrv_ms": 48.0,
+                "soreness_self_report": "moderate",
+            },
+            "raw_summary": {
+                "as_of_date": "2026-04-30",
+                "user_id": "u_local_1",
+                "resting_hr_baseline": 55.0,
+                "resting_hr_ratio_vs_baseline": 1.22,
+                "hrv_ratio_vs_baseline": 0.85,
+                "trailing_7d_training_load": 110.0,
+                "training_load_baseline": 95.0,
+                "training_load_ratio_vs_baseline": 1.16,
+                "resting_hr_spike_days": 3,
+            },
+        }
+
+        snapshot = build_snapshot(
+            conn,
+            as_of_date=date(2026, 4, 30),
+            user_id="u_local_1",
+            evidence_bundle=evidence_bundle,
+        )
+
+        recovery_policy = snapshot["recovery"]["policy_result"]
+        assert recovery_policy["forced_action"] == "escalate_for_user_review"
+        # The load-bearing assertion: live wiring surfaces locators.
+        assert "evidence_locators" in recovery_policy, (
+            "snapshot.recovery.policy_result must include "
+            "evidence_locators when R6 spike fires (F-IR-02)"
+        )
+        locators = recovery_policy["evidence_locators"]
+        assert len(locators) == 3
+        days = sorted(loc["pk"]["as_of_date"] for loc in locators)
+        assert days == ["2026-04-28", "2026-04-29", "2026-04-30"]
+        for loc in locators:
+            assert loc["table"] == "accepted_recovery_state_daily"
+            assert loc["column"] == "resting_hr"
+            # row_version must be drawn from the actual DB row, not
+            # fabricated.
+            assert loc["row_version"].startswith("2026-04-")
+    finally:
+        conn.close()
+
+
+def test_build_snapshot_omits_evidence_locators_when_no_r6_spike(tmp_path):
+    """Non-spike R6 firings (or no R6 firing at all) must NOT surface
+    ``evidence_locators`` on the snapshot — the field is absent
+    rather than empty."""
+
+    from datetime import date
+
+    from health_agent_infra.core.state.snapshot import build_snapshot
+
+    db_path = tmp_path / "state.db"
+    conn = open_connection(db_path)
+    try:
+        apply_pending_migrations(conn)
+        _seed_recovery_evidence(conn)
+
+        evidence_bundle = {
+            "cleaned_evidence": {
+                "as_of_date": "2026-04-30",
+                "user_id": "u_local_1",
+                "sleep_hours": 8.0,
+                "resting_hr": 55.0,
+                "hrv_ms": 60.0,
+                "soreness_self_report": "low",
+            },
+            "raw_summary": {
+                "as_of_date": "2026-04-30",
+                "user_id": "u_local_1",
+                "resting_hr_baseline": 55.0,
+                "resting_hr_ratio_vs_baseline": 1.0,
+                "hrv_ratio_vs_baseline": 1.0,
+                "trailing_7d_training_load": 95.0,
+                "training_load_baseline": 95.0,
+                "training_load_ratio_vs_baseline": 1.0,
+                "resting_hr_spike_days": 0,
+            },
+        }
+
+        snapshot = build_snapshot(
+            conn,
+            as_of_date=date(2026, 4, 30),
+            user_id="u_local_1",
+            evidence_bundle=evidence_bundle,
+        )
+
+        recovery_policy = snapshot["recovery"]["policy_result"]
+        # No spike → no locators surface.
+        assert "evidence_locators" not in recovery_policy
+    finally:
+        conn.close()

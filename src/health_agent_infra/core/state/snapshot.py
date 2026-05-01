@@ -742,7 +742,21 @@ def build_snapshot(
         # fields it can't compute without ratios), but the audit
         # surface stays honest about what raw inputs were available.
         recovery_classified = classify_recovery_state(cleaned, raw_summary)
-        recovery_policy = evaluate_recovery_policy(recovery_classified, raw_summary)
+        # v0.1.14 W-PROV-1 (F-IR-02): build the accepted_state_versions
+        # map for the recovery R6 spike-window so the policy evaluator
+        # can emit source-row locators when R6 fires. Map shape:
+        # {as_of_date_iso: row_version_iso}. Missing days are silently
+        # skipped by the locator builder.
+        recovery_state_versions = _accepted_recovery_state_versions(
+            conn, user_id=user_id, end_date=as_of_date, lookback_days=7,
+        )
+        recovery_policy = evaluate_recovery_policy(
+            recovery_classified,
+            raw_summary,
+            for_date_iso=as_of_date.isoformat(),
+            user_id=user_id,
+            accepted_state_versions=recovery_state_versions,
+        )
         if evidence_bundle is not None:
             recovery_block["evidence"] = cleaned
             recovery_block["raw_summary"] = raw_summary
@@ -1287,15 +1301,59 @@ def _user_memory_block(
     return bundle_to_dict(bundle)
 
 
+def _accepted_recovery_state_versions(
+    conn: Any,
+    *,
+    user_id: str,
+    end_date: date,
+    lookback_days: int = 7,
+) -> dict[str, str]:
+    """v0.1.14 W-PROV-1 (F-IR-02): map of {as_of_date: row_version}
+    for the trailing window of accepted_recovery_state_daily rows.
+
+    The recovery policy evaluator uses this map to emit source-row
+    locators when R6 fires with the resting_hr_spike reason token —
+    the trailing N days are exactly the rows that contributed to
+    the spike count. ``row_version`` is the row's ``projected_at``
+    column (per source_row_provenance.md "row_version" semantics).
+    """
+
+    from datetime import timedelta
+
+    start = (end_date - timedelta(days=lookback_days)).isoformat()
+    end = end_date.isoformat()
+    rows = conn.execute(
+        "SELECT as_of_date, projected_at "
+        "FROM accepted_recovery_state_daily "
+        "WHERE user_id = ? AND as_of_date BETWEEN ? AND ? "
+        "ORDER BY as_of_date DESC",
+        (user_id, start, end),
+    ).fetchall()
+    out: dict[str, str] = {}
+    for row in rows:
+        as_of = row["as_of_date"] if hasattr(row, "keys") else row[0]
+        version = row["projected_at"] if hasattr(row, "keys") else row[1]
+        if as_of and version:
+            out[as_of] = version
+    return out
+
+
 def _policy_to_dict(policy: Any) -> dict[str, Any]:
     """Convert a {Recovery,Running}PolicyResult frozen dataclass to a plain dict.
 
     Both per-domain results carry the same field set
     (``policy_decisions`` + ``forced_action`` + ``forced_action_detail`` +
     ``capped_confidence``); a single helper handles both.
+
+    v0.1.14 W-PROV-1 (F-IR-02): if the policy carries
+    ``evidence_locators`` (recovery R6 spike firing), surface them
+    on the snapshot dict so the recovery skill can copy them
+    verbatim onto the proposal as ``evidence_locators``. Other
+    policy results (running, future per-domain emitters) leave
+    the field absent.
     """
 
-    return {
+    out: dict[str, Any] = {
         "policy_decisions": [
             {"rule_id": d.rule_id, "decision": d.decision, "note": d.note}
             for d in policy.policy_decisions
@@ -1304,6 +1362,10 @@ def _policy_to_dict(policy: Any) -> dict[str, Any]:
         "forced_action_detail": policy.forced_action_detail,
         "capped_confidence": policy.capped_confidence,
     }
+    locators = getattr(policy, "evidence_locators", None)
+    if locators:
+        out["evidence_locators"] = [dict(loc) for loc in locators]
+    return out
 
 
 def _merge_policy_uncertainty(

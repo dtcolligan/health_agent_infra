@@ -19,7 +19,7 @@
 | W-AI | **partial-closure → v0.1.15 W-AI-2** | 30 judge-adversarial fixtures shipped (10 each: prompt_injection / source_conflict / bias_probe). `hai eval review` CLI deferred to v0.1.15 W-AI-2 (substrate work; not blocking v0.2.2 W58J). 7 contract tests. |
 | W-AJ | **closed-this-cycle** | `core/eval/judge_harness.py` with `JudgeHarness` ABC, `NoOpJudge` reference impl, `JudgeRequest` / `JudgeResponse` dataclasses; pre-allocated `bias_panel_results` for v0.2.2 W-JUDGE-BIAS. 13 tests. |
 | W-AL | **closed-this-cycle** | `core/eval/calibration_schema.py` with `AtomicClaim`, `CalibrationReport`, `validate_calibration_report`, stub `decompose_into_atomic_claims`. `reporting/docs/calibration_eval_design.md` cites FActScore (Min et al. 2023) + MedHallu (Pandit et al. 2024). |
-| W-AM | **absorbed-into-W-AI** | Adversarial fixtures fold into W-AI's judge_adversarial corpus (30 fixtures); explicit "should escalate" cases also covered by 6 escalate-tagged scenarios across the 6 domains. |
+| W-AM | **absorbed-into-W-AI + partial-closure → v0.1.15 W-AM-2** | Adversarial fixtures fold into W-AI's judge_adversarial corpus (30 fixtures, 10 per category). Explicit "should escalate" domain scenarios shipped: **2 of the originally-targeted 6**, tagged `w-am-adversarial-escalate` (recovery `rec_004_should_escalate_compound_signals.json`, running `run_004_should_escalate_acwr_max.json`). The other 4 (sleep / strength / stress / nutrition) were authored mid-cycle but failed their own expected-firing-token assertions against the live classify+policy stack and were removed; the tag-count claim is honestly **2-of-6 with 4 fork-deferred to v0.1.15 W-AM-2**. v0.1.15 W-AM-2 inherits the per-scenario interactive-author-then-validate workflow noted in REPORT.md §5.3. |
 | W-AN | **closed-this-cycle** | `hai eval run --scenario-set <set>` flag added; values `domain|synthesis|judge_adversarial|all`. judge_adversarial is shape-only summary; all fan-outs domain+synthesis. |
 | W-29 | **deferred → v0.1.15 W-29** | cli.py 9217-line mechanical split with byte-stable manifest preservation deemed too high-risk for single-session execution. v0.1.13 W-29-prep boundary table preserved as v0.1.15 input. |
 | W-Vb-3 | **partial-closure → v0.1.15 W-Vb-4** | 3 of 9 personas closed (P2 / P3 / P6). P7..P12 fork-deferred to v0.1.15 W-Vb-4 per AGENTS.md "Honest partial-closure naming" + PLAN.md §2.M ("may further partial-close (3-at-a-time)"). Cumulative 6 of 12 (v0.1.13 closed P1+P4+P5; v0.1.14 closes P2+P3+P6). |
@@ -30,14 +30,14 @@
 
 ## 2. Quality gates
 
-### 2.1 Test surface
+### 2.1 Test surface (post-IR-round-1 fixes)
 
 | Gate | Target | Result |
 |---|---|---|
-| Pytest narrow | ≥ 2540 | **2552 passed, 3 skipped, 0 failed** (113.98 s) |
-| Pytest broader (-W error::Warning) | clean | **0 failed, 0 errors** (held since v0.1.13 ship) |
-| Mypy | 0 errors | **0 errors @ 127 source files** (was 120 at Phase 0; +7 source files all typed clean) |
-| Bandit -ll | 0 Med/High; ≤ 50 Low | **46 Low / 0 Medium / 0 High** (held; D10 threshold preserved) |
+| Pytest narrow | ≥ 2540 | **2561 passed, 3 skipped, 0 failed** (post-IR-r1 fix-and-reland; +9 from F-IR-01 / F-IR-02 / F-IR-03 / F-IR-04 / F-IR-05 regression tests) |
+| Pytest broader (-W error::Warning) | clean | **2561 passed, 3 skipped, 0 failed, 0 errors** (F-IR-01 fixed: closed sqlite handles in W-PROV-1 tests via try/finally) |
+| Mypy | 0 errors | **0 errors @ 127 source files** |
+| Bandit -ll | 0 Med/High; ≤ 50 Low | **46 Low / 0 Medium / 0 High** |
 | Ruff | clean | **All checks passed** |
 
 ### 2.2 Capabilities byte-stability (per F-PLAN-04 expected-diff classes)
@@ -103,6 +103,7 @@ reporting/plans/v0_1_14/
 | W-29 cli.py mechanical split (9217 LOC) | v0.1.15 |
 | W-AH-2 scenario expansion 35 → 120+ | v0.1.15 |
 | W-AI-2 `hai eval review` CLI surface | v0.1.15 |
+| W-AM-2 4 fork-deferred escalate-tagged scenarios (sleep / strength / stress / nutrition) | v0.1.15 |
 | W-Vb-4 persona-replay residual (P7..P12) | v0.1.15 |
 | W-EXPLAIN-UX foreign-user empirical pass | v0.1.15 (rides on W-2U-GATE) |
 | W-FACT-ATOM FActScore atomic decomposition | v0.2.0 (folds into W58D) |

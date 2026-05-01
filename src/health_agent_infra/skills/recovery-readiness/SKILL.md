@@ -20,7 +20,7 @@ Under `snapshot.recovery` you receive five blocks:
 - `evidence` — cleaned inputs (`sleep_hours`, `resting_hr`, `hrv_ms`, `soreness_self_report`, `planned_session_type`, `active_goal`, …).
 - `raw_summary` — deltas / ratios / coverage fractions. Context only; never re-derive.
 - `classified_state` — `sleep_debt_band`, `resting_hr_band`, `hrv_band`, `training_load_band`, `soreness_band`, `coverage_band`, `recovery_status`, `readiness_score`, `uncertainty`. **Source of truth.**
-- `policy_result` — `policy_decisions[]`, `forced_action`, `forced_action_detail`, `capped_confidence`. **Source of truth.**
+- `policy_result` — `policy_decisions[]`, `forced_action`, `forced_action_detail`, `capped_confidence`, and (v0.1.14 W-PROV-1) optional `evidence_locators[]` when an R-rule that emits source-row provenance fired (today: R6 `resting_hr_spike_3_days_running`). **Source of truth.**
 - `missingness` — per state_model_v1.md §5.
 
 ## Protocol
@@ -87,7 +87,7 @@ Emit a `RecoveryProposal` JSON and call `hai propose --domain recovery --proposa
 
 `proposal_id` = `prop_<for_date>_<user_id>_recovery_01` on first write; revisions get `_02`, `_03`. Use `hai propose --replace` when revising the same day's proposal with new skill output — the runtime creates a new revision leaf and forward-links the prior one. Identical-payload replay under `--replace` is a no-op.
 
-Copy `snapshot.recovery.policy_result.policy_decisions` into the output's `policy_decisions` verbatim. Synthesis owns downstream: `daily_plan_id`, `recommendation_id`, X-rule-applied `action_detail`, review scheduling. This skill emits one domain's bounded proposal and stops.
+Copy `snapshot.recovery.policy_result.policy_decisions` into the output's `policy_decisions` verbatim. **v0.1.14 W-PROV-1:** if `snapshot.recovery.policy_result.evidence_locators` is present (R6 spike firing), copy that list verbatim into the proposal's `evidence_locators` field — do NOT derive locators yourself; the runtime computed them. If the field is absent, omit `evidence_locators` from the proposal. Synthesis owns downstream: `daily_plan_id`, `recommendation_id`, X-rule-applied `action_detail`, review scheduling, and locator carry-forward to `recommendation_log.evidence_locators_json`. This skill emits one domain's bounded proposal and stops.
 
 ## Invariants
 
