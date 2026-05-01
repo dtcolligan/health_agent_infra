@@ -51,7 +51,8 @@ v0.1.14 baseline. Codex correctly flagged that
 `tactical_plan_v0_1_x.md:394-409` names a 9-W-id baseline (W-AH,
 W-AI, W-AJ, W-AL, W-AM, W-AN as in-scope plus inherited W-29,
 W-Vb-3, W-DOMAIN-SYNC). With the 5 P0/P1 additions, v0.1.14 grows to
-**~14 W-ids / 30-40 days / 4-5 D14 rounds expected**. Original 23-29
+**~14 W-ids / 32-45 days / 4-5 D14 rounds expected** (revised from
+30-40 per v0.1.14 D14 F-PLAN-R2-01 + F-PLAN-R3-01). Original 23-29
 day estimate was undercounted.
 
 ### 3.B — v0.2.0 split shape (F-RES-03 → F-RES-R2-01)
@@ -198,7 +199,8 @@ After this reconciliation, the work tree opens onto:
    - `CP-W30-SPLIT.md` — destination depends on Path A (v0.2.3) vs
      Path B (v0.2.0.x).
 5. **v0.1.14 PLAN.md authoring** with the reconciled scope (14
-   W-ids, 30-40 days, ≤5 D14 rounds expected).
+   W-ids, 32-45 days, ≤5 D14 rounds expected — sizing revised per
+   v0.1.14 D14 F-PLAN-R2-01).
 6. **D14 plan-audit on the new PLAN.md** (the standard cycle
    discipline takes over from here).
 

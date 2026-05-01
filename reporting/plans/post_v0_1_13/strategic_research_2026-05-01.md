@@ -42,7 +42,9 @@ Verdict by question:
    v0.1.14's tactical-plan baseline (W-AH/W-AI/W-AJ/W-AL/W-AM/W-AN +
    inherited W-29/W-Vb-3/W-DOMAIN-SYNC, ~9 W-ids, 15-22 days) is
    *under-counted* in the report's earlier draft. With the 5 P0
-   additions surfaced here, v0.1.14 grows to ~14 W-ids / 30-40 days.
+   additions surfaced here, v0.1.14 grows to ~14 W-ids / 32-45 days
+   (revised from initial 30-40 estimate per v0.1.14 D14
+   F-PLAN-R2-01 + F-PLAN-R3-01 sizing-propagation closures).
    v0.2.0 carries weekly review + insight ledger + judge shadow + W-30
    schema freeze in one cycle — CP5 settled "single substantial
    release" on W52↔W58 design-coupling grounds, but the reconciliation
@@ -724,7 +726,8 @@ review. This is part of operating discipline, not new code.
 v0.1.13 (shipped 2026-04-30) — onboarding + governance prereqs
                 |
                 v
-v0.1.14 (target Q3 mid; ~14 W-ids; 30-40 days)
+v0.1.14 (target Q3 mid; ~14 W-ids; 32-45 days — superseded from
+30-40 per v0.1.14 D14 F-PLAN-R2-01)
   Tactical-plan baseline (per tactical_plan_v0_1_x.md:394-409):
     W-AH                   scenario fixture expansion (3-4d)
     W-AI                   ground-truth labelling methodology (2-3d)
@@ -831,7 +834,9 @@ Tactical-plan effort: **15-22 days for the 9-W-id baseline**
 **Cycle tier classification (D15):**
 
 Substantive. **14 W-ids total** (9 baseline + 5 P0/P1 additions),
-**26-36 days estimated effort, round to 30-40 days with contingency**.
+**26-36 days estimated effort, round to 32-45 days with contingency**
+(per v0.1.14 D14 F-PLAN-02 + F-PLAN-R2-01: arithmetic 31.5-44.5;
+honest envelope 32-45).
 Larger than v0.1.10 (~10 W-ids) but smaller than v0.1.13 (17 W-ids).
 **D14 settling expectation: 4-5 rounds, unknown empirical settling
 shape for "pre-PLAN-revision new-W-id density"; do not assume the
@@ -1430,7 +1435,8 @@ ID | Cycle | Acceptance criteria | Files likely touched | Cost (days)
 - W-AH (3-4d), W-AI (2-3d), W-AJ (2-3d), W-AL (2d), W-AM (1-2d),
   W-AN (1-2d) — eval-substrate set, 11-16 days.
 
-**v0.1.14 cycle estimate:** **30-40 days** (1 maintainer; 14 W-ids
+**v0.1.14 cycle estimate:** **32-45 days** (revised from 30-40 per
+v0.1.14 D14 F-PLAN-R2-01; arithmetic 31.5-44.5) (1 maintainer; 14 W-ids
 total: 9 baseline + 5 P0/P1 additions). Cycle tier: substantive. D14
 expectation: 4-5 rounds (empirical settling shape unknown for this
 new-W-id density; do not assume 4-round norm). Original draft's
