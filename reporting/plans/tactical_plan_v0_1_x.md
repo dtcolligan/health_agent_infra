@@ -20,10 +20,15 @@
 2. v0.1.11 — Audit-cycle deferred items + persona expansion
 3. v0.1.12 — Type-checker + security + UX polish
 4. v0.1.13 — Public-surface hardening + onboarding
-5. v0.1.14 — Eval expansion + LLM-judge prep
-6. v0.2.0 — Weekly review + insight ledger + factuality gate
-7. Cross-cutting workstreams (run alongside any release)
-8. v0.1.x release pattern playbook
+5. v0.1.14 — Eval expansion + LLM-judge prep + second-user gate (post-v0.1.13 reconciled)
+6. v0.2.0 — Weekly review + deterministic factuality (Path A)
+7. v0.2.1 — Insight ledger (Path A)
+8. v0.2.2 — LLM judge shadow-by-default (Path A)
+9. v0.2.3 — Judge promotion to blocking + capabilities freeze (Path A)
+10. Cross-cutting workstreams (run alongside any release)
+11. v0.1.x release pattern playbook
+12. Risk-driven scope cuts
+13. Provenance + evolution
 
 ---
 
@@ -36,12 +41,16 @@
 | **v0.1.12** | Carry-over closure + trust repair (10 W-ids) | shipped 2026-04-29 | shipped | v0.1.11 |
 | **v0.1.12.1** | Cloudflare User-Agent hotfix (W-CF-UA) | shipped 2026-04-29 | shipped | v0.1.12 |
 | **v0.1.13** | Public surface hardening + first-time-user onboarding + W-Vb/W-N-broader/W-FBC-2 closure (17 W-ids — largest in track) | shipped 2026-04-30 | shipped | v0.1.12 |
-| **v0.1.14** | Eval substrate + cli.py mechanical split (W-29) + W-Vb-3 (9-persona residual) + judge-adversarial fixtures | next | 2026-Q3 mid | v0.1.13 (CLI surface stable + W-29-prep verdict green) |
-| **v0.2.0** | Weekly review + insight proposal ledger + W58 factuality gate | post-v0.1.14 + 2-4 weeks | 2026-Q3 late / Q4 | v0.1.14 (judge harness) |
+| **v0.1.14** | Eval substrate + cli.py split + W-Vb-3 + W-2U-GATE / W-PROV-1 / W-EXPLAIN-UX / W-BACKUP / W-FRESH-EXT (post-v0.1.13 reconciled, 14 W-ids) | next | 2026-Q3 mid | v0.1.13 (CLI surface stable + W-29-prep verdict green) |
+| **v0.2.0** | Weekly review (W52) + deterministic factuality (W58D) + 4 doc-only adjuncts (Path A) | post-v0.1.14 + 2-4 weeks | 2026-Q3 late / Q4 | v0.1.14 (W-PROV-1 + W-AJ judge harness) |
+| **v0.2.1** | Insight ledger (W53) (Path A) | post-v0.2.0 + 2-3 weeks | 2026-Q4 | v0.2.0 |
+| **v0.2.2** | LLM judge shadow-by-default (W58J + W-JUDGE-BIAS) (Path A) | post-v0.2.1 + 2-3 weeks | 2026-Q4 / 2027-Q1 | v0.2.1 |
+| **v0.2.3** | Judge promotion to blocking + W-30 capabilities-manifest schema freeze (Path A) | post-v0.2.2 + ≥50 shadow runs | 2027-Q1 | v0.2.2 (≥50 shadow runs accumulated) |
 
-**Total v0.1.x → v0.2.0 horizon:** 6-9 months from 2026-04-27.
-This puts v0.2.0 ship at late 2026-Q3 to 2026-Q4 — consistent with
-strategic plan §7 Wave-2 timing.
+**Total v0.1.x → v0.2.3 horizon:** 9-12 months from 2026-04-27.
+The 4-release Path A split honors reconciliation C6 (one schema
+group per release) per CP-PATH-A (post-v0.1.13 OQ-B answered Path
+A 2026-05-01).
 
 **No hard schedule.** Each release ships when its acceptance
 criteria are met; the timeline is a planning aid, not a commitment.
@@ -381,23 +390,41 @@ assumptions failing" can be run cleanly.
 
 ---
 
-## 5. v0.1.14 — Eval expansion + LLM-judge prep
+## 5. v0.1.14 — Eval expansion + LLM-judge prep + second-user gate
 
 > **Theme.** Build the eval substrate for v0.2.0's W58 factuality
-> gate. Expand scenario fixtures, add ground-truth methodology, prep
-> the local-LLM judge harness without lighting it up.
-> End-state: eval surface is rich enough that v0.2.0 W58 is a
-> wire-up release, not a build-and-ship.
+> gate, AND empirically prove the v0.1.13 onboarding test surface
+> against a foreign user, AND land the source-row provenance type
+> W52 will require. Expanded post-v0.1.13 strategic research
+> (CP-2U-GATE-FIRST + 4 P0 additions). 14 W-ids total.
 
 ### 5.1 In scope
+
+**P0 additions (post-v0.1.13 strategic research; W-2U-GATE first
+per CP-2U-GATE-FIRST):**
+
+| W-id | Title | Effort |
+|---|---|---|
+| **W-2U-GATE** | Foreign-machine onboarding empirical proof (one recorded session by a non-maintainer; remediation list filed). Sequenced first; if it surfaces a structural blocker, cycle reshapes. Candidate: TBD | 2-3 days |
+| **W-PROV-1** | Source-row locator type + 1-domain demo (recovery R-rule cites source rows; `hai explain` renders them; roundtrip test). Migration 023. Foundation for v0.2.0 W52. | 3-4 days |
+| **W-EXPLAIN-UX** | `hai explain` confusion-vs-clarity review. Add P13 low-domain-knowledge persona; foreign user reads sample output; structured findings doc filed. | 2 days |
+| **W-BACKUP** | `hai backup` / `hai restore` / `hai export` canonical paths + `reporting/docs/recovery.md` | 3-4 days |
+
+**P1 addition:**
+
+| W-id | Title | Effort |
+|---|---|---|
+| **W-FRESH-EXT** | Extend `test_doc_freshness_assertions.py` to flag stale W-id references in informal doc sections (catches the C-DRIFT-02/03/04 class) | 1 day |
+
+**Tactical-plan baseline (eval substrate):**
 
 | W-id | Title | Effort |
 |---|---|---|
 | **W-AH** | Scenario fixture expansion: 30+ new per-domain scenarios | 3-4 days |
 | **W-AI** | Ground-truth labelling methodology + maintainer review tool | 2-3 days |
 | **W-AJ** | LLM-judge harness scaffold (no model invocation yet) | 2-3 days |
-| **W-AL** | Calibration eval — confidence vs. ground truth correlation | 2 days |
-| **W-AM** | Adversarial scenario fixtures — explicit "should escalate" cases | 1-2 days |
+| **W-AL** | Calibration eval — schema/report shape (FActScore-aware); correlation work deferred to v0.5+ per reconciliation A2 | 2 days |
+| **W-AM** | Adversarial scenario fixtures — explicit "should escalate" cases (judge-adversarial corpus) | 1-2 days |
 | **W-AN** | `hai eval run --scenario-set <set>` CLI surface for batch eval | 1-2 days |
 
 **Inherited from v0.1.13 (carry-over closure shape):**
@@ -415,102 +442,215 @@ assumptions failing" can be run cleanly.
 - A12 judge-adversarial fixtures fold into W-AI; A2/W-AL ships
   schema/report-shape only, with real correlation work deferred to
   v0.5+ per reconciliation action 15.
+- Post-v0.1.13 strategic research (Codex audit-chain rounds 1+2,
+  closed at REPORT_SOUND_WITH_REVISIONS) added 5 P0/P1 W-ids;
+  cycle is now 14 W-ids with W-2U-GATE first per CP-2U-GATE-FIRST.
 
 ### 5.2 Acceptance
 
+- W-2U-GATE: one foreign user reaches `synthesized` without
+  maintainer intervention; remediation list filed.
+- W-PROV-1: schema design doc + 1-domain demo + roundtrip test.
+- W-EXPLAIN-UX: P13 persona added; foreign-user review filed.
+- W-BACKUP: roundtrip test (backup → wipe → restore → identical
+  `hai today` / `hai explain` output) passes in CI.
+- W-FRESH-EXT: `test_doc_freshness_assertions.py` rejects stale
+  W-id references in informal-section sites.
 - Scenario fixtures grow from current ~50 → 120+.
 - Per-persona expected-behaviour table in dogfood harness covers
   all 12 personas across all 6 domains. (v0.1.13 W-AK shipped the
   declarative shape; v0.1.14 W-AH expands the assertion coverage.)
 - LLM-judge harness has clean invocation interface; v0.2.0 W58 just
   needs to plug in the model.
-- Calibration eval reports confidence-vs-truth correlation per
-  domain.
+- Calibration eval schema (FActScore-aware) + report shape; no
+  correlation work.
 - W-29 mechanical split preserves the v0.1.13 capabilities snapshot
   byte-for-byte.
 - W-Vb-3 closes the 9-persona residual or honestly partial-closes
   with a v0.1.15 destination.
+- D14 verdict `PLAN_COHERENT` within ≤5 rounds; if it exceeds 5,
+  maintainer re-scopes.
 
 ### 5.3 Effort estimate
 
-15-22 days (with W-29 + W-Vb-3 inherited from v0.1.13). Substantial
-cycle but smaller than v0.1.13's 22.5-32.5 day envelope.
+**30-40 days** (14 W-ids: 9 baseline + 5 P0/P1 additions). Cycle
+tier: substantive. Larger than v0.1.10 (~10 W-ids) but smaller than
+v0.1.13 (17 W-ids). D14 expectation: 4-5 rounds; original 23-29 day
+estimate (pre-Codex-audit) under-counted the eval-substrate
+baseline.
+
+**Contingency clause:** if W-2U-GATE surfaces a structural blocker
+(e.g., the foreign user cannot complete `hai init --guided`),
+v0.1.14 reshapes around the fix; downstream work moves to v0.1.15
+without prejudice.
 
 ---
 
-## 6. v0.2.0 — Weekly review + insight ledger + factuality gate
+## 6. v0.2.0 — Weekly review + deterministic factuality
 
-> **Theme.** Make the runtime useful beyond one day. Original v0.1.9
-> scope (cut to hardening); now lands as v0.2.0. Detail in strategic
-> plan § 7 Wave 2.
+> **Theme.** Make claims about the past week deterministically
+> checkable. Lifts W52 + W58D from CP5; W53 / W58J / W-30 split
+> across v0.2.1-v0.2.3 per CP-PATH-A (post-v0.1.13 strategic
+> research; reconciliation C6; OQ-B answered Path A 2026-05-01).
+> Detail in strategic plan § 7 Wave 2.
 
 ### 6.1 In scope
-
-Lifted from `historical/multi_release_roadmap.md` § 4 v0.1.9 (cut),
-now v0.2.0. **Reshaped at v0.1.12 per CP5 (single substantial
-release with shadow-by-default LLM judge):**
 
 - **W52: `hai review weekly --week YYYY-Www [--json|--markdown]`.**
   Code-owned aggregation across accepted state, intent, target,
   recommendation, X-rule firing, review outcome, data quality.
-  **Source-row locators required for every quantitative claim**
+  Source-row locators required for every quantitative claim
   (carrier: `recommendation_evidence_card.v1` schema per
-  reconciliation C8).
-- **W53: Insight proposal ledger** (`insight_proposal` + `insight`
-  tables).
+  reconciliation C8). Builds on v0.1.14 W-PROV-1.
 - **W58D: Deterministic factuality gate.** Every quoted
   quantitative claim in weekly-review prose must resolve to a
   source-row locator. Blocking from day 1. No LLM in this layer.
-- **W58J: LLM judge layer.** Residual judgment on causal framing,
-  missing uncertainty, overconfident tone. Local Prometheus-2-7B
-  (or comparable) pinned by SHA. Builds on v0.1.14's harness.
-  Ships **shadow-by-default** with `HAI_W58_JUDGE_MODE = shadow |
-  blocking` env flag. Logs every shadow-mode judgement to
-  `judge_decision_log` table for evidence accumulation. Flag flip
-  to blocking happens within v0.2.0 (or v0.2.0.x patch) once
-  shadow-mode evidence shows ≤ 5% false-block rate over ≥ 50
-  weekly reviews. Memory-poisoning fixtures land alongside shadow
-  mode.
-- **W-30: capabilities-manifest schema freeze** as the last act
-  of the cycle, after W52/W58D/W58J schema additions land
-  (per CP2).
+- **W-FACT-ATOM:** FActScore-shaped atomic-claim decomposition
+  (folds into W58D).
+- **Doc-only adjuncts:** W-MCP-THREAT (per CP-MCP-THREAT-FORWARD),
+  W-COMP-LANDSCAPE (`reporting/docs/competitive_landscape.md`),
+  W-NOF1-METHOD (`reporting/docs/n_of_1_methodology.md`),
+  W-2U-GATE-2 (second foreign-machine onboarding session).
+
+**Schema group:** weekly-review tables + claim-block (one group;
+honors reconciliation C6).
 
 ### 6.2 Acceptance
 
-- Weekly review runs deterministically over fixture weeks,
-  output byte-stable.
-- Insight proposal ledger has migration + CLI + snapshot
-  integration + capability manifest entry.
-- Factuality judge: deterministic claim-block (W58D) enforces
-  from day 1. LLM judge (W58J) ships shadow-by-default; logs
-  every decision to `judge_decision_log`; flag-flip threshold
-  + procedure documented in v0.2.0 PLAN. Memory-poisoning
-  fixtures present.
-- Capabilities-manifest schema frozen as last cycle act
-  (W-30 / per CP2).
+- Weekly review runs deterministically over fixture weeks, output
+  byte-stable.
+- W58D blocks unsupported claims; tested against a corpus of
+  known-good and known-bad examples.
+- W-MCP-THREAT artifact filed; OWASP MCP Top 10 mapping verified
+  against primary source per CP-MCP-THREAT-FORWARD.
 - Test count grows ≥ 30 vs v0.1.14.
 
 ### 6.3 Effort estimate
 
-15-20 days. Last v0.1.x-style release; v0.2 is a major version
-bump because the schema changes (new tables) are ledger-shape
-mutations, not pure additions.
+18-24 days. Cycle tier: substantive. v0.2 is a major version bump
+because the schema changes (new tables) are ledger-shape mutations,
+not pure additions.
 
 ### 6.4 Strategic context
 
-v0.2.0 is the gateway to Wave 3 (MCP + extension contracts) per
-strategic plan §7. After v0.2.0 ships and weekly reviews accumulate
+v0.2.0 is the gateway to v0.2.1-v0.2.3 (the rest of Wave 2 per Path
+A) and ultimately to Wave 3 (MCP + extension contracts) per
+strategic plan §7. After v0.2.3 ships and weekly reviews accumulate
 ~3 months of clean data, v0.3+ can begin.
 
 ---
 
-## 7. Cross-cutting workstreams (run alongside any release)
+## 7. v0.2.1 — Insight ledger
+
+> **Theme.** Persist multi-week insights with provenance. One
+> schema group only.
+
+### 7.1 In scope
+
+- **W53: Insight proposal ledger** (`insight_proposal` + `insight`
+  tables). Insight rows persist with provenance; `hai insights`
+  lists; user commit gates promotion to durable insight.
+
+**Schema group:** insight ledger (one group; honors C6).
+
+### 7.2 Acceptance
+
+- Insight proposal ledger has migration + CLI + snapshot integration
+  + capability manifest entry.
+- User-commit gating tested (agent-proposed insight cannot promote
+  without explicit user step).
+- Test count grows ≥ 15 vs v0.2.0.
+
+### 7.3 Effort estimate
+
+8-12 days. Cycle tier: hardening (single substantive workstream).
+
+---
+
+## 8. v0.2.2 — LLM judge shadow-by-default
+
+> **Theme.** Add LLM judgment as a shadow layer over W58D's
+> deterministic gate.
+
+### 8.1 In scope
+
+- **W58J: LLM judge layer.** Residual judgment on causal framing,
+  missing uncertainty, overconfident tone. Local Prometheus-2-7B
+  (or comparable) pinned by SHA. Builds on v0.1.14's W-AJ harness.
+  Ships **shadow-by-default** with `HAI_W58_JUDGE_MODE = shadow |
+  blocking` env flag. Logs every shadow-mode judgement to
+  `judge_decision_log` table for evidence accumulation.
+- **W-JUDGE-BIAS:** bias test panel covering position bias,
+  verbosity bias, score-rubric-order bias, reference-answer bias,
+  self-consistency. Thresholds proposed per HAI strategic-research
+  §13 E-3; validated locally per shadow-mode runs (CALM literature
+  informs the categories; numeric gates are HAI-proposed, not
+  literature-derived). Memory-poisoning fixtures land alongside
+  shadow mode.
+
+**Schema group:** judge log (`judge_decision_log` table; one group;
+honors C6).
+
+### 8.2 Acceptance
+
+- W58J runs shadow-by-default; logs every shadow decision.
+- W-JUDGE-BIAS test panel runs against shadow-mode output;
+  thresholds proposed per E-3 and validated locally.
+- Memory-poisoning fixtures present (per reconciliation A12).
+- Test count grows ≥ 20 vs v0.2.1.
+
+### 8.3 Effort estimate
+
+8-12 days. Cycle tier: substantive.
+
+---
+
+## 9. v0.2.3 — Judge promotion to blocking + capabilities freeze
+
+> **Theme.** Flip W58J from shadow to blocking + freeze the
+> capabilities manifest schema.
+
+### 9.1 In scope
+
+- **W58J flip from shadow to blocking.** Conditional on
+  W-JUDGE-BIAS panel passing (HAI-proposed thresholds met across
+  ≥ 50 shadow-mode weekly reviews per CP5's original criterion).
+  Maintainer cannot manually override (the bias panel is the
+  override criterion).
+- **W-30: capabilities-manifest schema freeze** as the last act
+  of the v0.2.x sequence, after W52 (v0.2.0), W53 (v0.2.1), and
+  W58J (v0.2.2) schema additions have all landed (per CP2 +
+  CP-W30-SPLIT).
+
+**Schema group:** none (flag flip + manifest pin).
+
+### 9.2 Acceptance
+
+- W-JUDGE-BIAS panel passing for ≥ 50 shadow-mode runs.
+- W58J flag flips; existing tests pass under blocking mode.
+- Capabilities-manifest schema frozen; new fields require migration
+  + version bump + explicit override.
+
+### 9.3 Effort estimate
+
+5-8 days. Cycle tier: hardening.
+
+### 9.4 Total Path A v0.2.x effort
+
+39-56 days across four cycles. Larger than CP5's 15-20 day single-
+release estimate but distributes audit surface across four D14
+plan-audits (each smaller than a single 5-6 round D14 on a
+3-schema-group cycle). Estimated D14 rounds per cycle: 3-4 each.
+
+---
+
+## 10. Cross-cutting workstreams (run alongside any release)
 
 These are "always available, never the headline" workstreams. Pick
 them up when a primary workstream blocks or when the release has
 slack capacity.
 
-### 7.1 Documentation freshness
+### 10.1 Documentation freshness
 
 - AGENTS.md kept current — every release adds a "settled decisions"
   delta if any.
@@ -518,7 +658,7 @@ slack capacity.
 - REPO_MAP.md update when directory structure changes.
 - CHANGELOG.md entry per release (already disciplined).
 
-### 7.2 Refactor backlog
+### 10.2 Refactor backlog
 
 - W29 (cli.py split) — deferred per D4. Revisit when cli.py
   exceeds 10kloc OR when external integration arrives.
@@ -527,7 +667,7 @@ slack capacity.
 - W57 architectural delete-vs-archive review — periodically
   audit that no path bypasses the archive discipline.
 
-### 7.3 Performance regression watch
+### 10.3 Performance regression watch
 
 - `hai daily` end-to-end < 1s for typical state DB.
 - `hai today` rendering < 200ms.
@@ -536,13 +676,13 @@ slack capacity.
 If any of these regress, open a PR with a regression-test
 attached, not a fix-and-go.
 
-### 7.4 Security posture
+### 10.4 Security posture
 
 - Quarterly dep audit (`pip-audit`).
 - Annual review of credential storage paths.
 - Secret-handling smoke test in CI.
 
-### 7.5 External-eyes pulses
+### 10.5 External-eyes pulses
 
 - Once per major version, run a Codex audit of the entire
   `src/health_agent_infra/` for findings the maintainer + Claude
@@ -552,7 +692,7 @@ attached, not a fix-and-go.
 
 ---
 
-## 8. v0.1.x release pattern playbook
+## 11. v0.1.x release pattern playbook
 
 The four-round audit cycle is now standardised. Each release follows:
 
@@ -601,7 +741,7 @@ didn't, what to keep, what to change next cycle.
 
 ---
 
-## 9. Risk-driven scope cuts
+## 12. Risk-driven scope cuts
 
 If maintainer bandwidth tightens, scope-cut order (lowest-
 strategic-cost first):
@@ -619,7 +759,7 @@ W53, W58 from v0.2.0 (strategic Wave 2 anchor).
 
 ---
 
-## 10. Provenance + evolution
+## 13. Provenance + evolution
 
 **Authored:** 2026-04-27 by Claude in extended planning session.
 

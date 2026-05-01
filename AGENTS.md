@@ -124,9 +124,11 @@ write a cycle proposal in `reporting/plans/`; do not act unilaterally.
 - **W29 / W30 scheduled.** cli.py split scheduled for v0.1.14
   conditional on v0.1.13 boundary-audit verdict (parser /
   capabilities regression test mandatory regardless).
-  Capabilities-manifest schema freeze scheduled for v0.2.0 after
-  W52 / W58 schema additions land. (Origin: v0.1.12 CP1 + CP2,
-  paired acceptance.)
+  Capabilities-manifest schema freeze scheduled for **v0.2.3**
+  after all v0.2.x schema additions land (W52 v0.2.0, W53 v0.2.1,
+  W58J v0.2.2). (Origin: v0.1.12 CP1 + CP2, paired acceptance;
+  v0.2.x destination updated by post-v0.1.13 CP-PATH-A +
+  CP-W30-SPLIT, OQ-B answered Path A 2026-05-01.)
 - **Garmin Connect is not the default live source.** Login is rate-limited
   and unreliable. Default to intervals.icu when configured.
 - **Nutrition v1 is macros-only.**
@@ -394,10 +396,30 @@ CI runs `verification/tests/`. The suite includes docs and skill/CLI drift check
 - Do not add a wearable source until the per-domain evidence contract is
   broadened.
 - Do not split `cli.py` or freeze the capabilities manifest schema before
-  their scheduled cycles (v0.1.14 / v0.2.0). (Origin: v0.1.12 CP1 + CP2.)
+  their scheduled cycles (v0.1.14 / v0.2.3). (Origin: v0.1.12 CP1 + CP2;
+  v0.2.x destination updated by post-v0.1.13 CP-W30-SPLIT.)
 - Do not add micronutrient or food-taxonomy features.
 - Do not treat raw SQLite reads as the normal inspection surface; use
   `hai today`, `hai explain`, and `hai doctor`.
+- Do not anchor a data path on Strava — directly or via an upstream
+  that proxies Strava data. Strava's Nov 2024 API agreement
+  prohibits AI/ML use of Strava data; intervals.icu was specifically
+  named. (Origin: post-v0.1.13 strategic research §15 D-4 +
+  CP-DO-NOT-DO-ADDITIONS.)
+- Do not ship a mechanism that auto-loads MCP servers from project
+  files (e.g., `.claude/settings.json` referencing a hai-managed MCP
+  server). HAI runs inside Claude Code; CVE-2025-59536 /
+  CVE-2026-21852 (Check Point) demonstrate the project-file
+  autoload + token-exfiltration chain. Manual install + local stdio
+  is the only allowed exposure path. (Origin: post-v0.1.13
+  strategic research §17 Sc-5 + CP-DO-NOT-DO-ADDITIONS.)
+- Do not allow automatic threshold mutation by an LLM agent without
+  an explicit user-commit step. The v0.7 governed-adaptation
+  surface requires user approval per recommendation; any drift
+  toward "the agent retunes thresholds based on outcomes" is a
+  hidden learning loop, prohibited by ROADMAP.md "Explicitly Out
+  Of Scope" + W57 governance invariant. (Origin: post-v0.1.13
+  strategic research §18 + CP-DO-NOT-DO-ADDITIONS.)
 
 ## When In Doubt
 

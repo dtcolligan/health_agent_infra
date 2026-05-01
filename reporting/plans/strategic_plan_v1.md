@@ -453,19 +453,33 @@ contract holds.
 
 **Evidence anchor:** v0.1.10 audit findings + tactical plan v0.1.x.
 
-### Wave 2 — Weekly review + insight ledger (v0.2, ~4-8 weeks post Wave 1)
+### Wave 2 — Weekly review + insight ledger + factuality gate (v0.2.0–v0.2.3, Path A)
 
 **Theme.** Make the runtime useful beyond one day. W52 weekly
-review + W53 insight proposal ledger + W58 factuality gate
-(deterministic claim-block from day 1; LLM-judge layer ships
-shadow-by-default with feature-flag flip to blocking once
-shadow-mode evidence supports it). Was scoped as v0.1.9 in the
-2026-04-25 roadmap; v0.1.9 cut to hardening only, so it slips here.
+review + W58 deterministic factuality gate ship together in v0.2.0
+(W52↔W58 design coupling preserved per CP5). W53 insight ledger,
+W58 LLM-judge shadow-by-default, judge promotion to blocking, and
+W-30 capabilities-manifest schema freeze split across v0.2.1 /
+v0.2.2 / v0.2.3 to honor reconciliation C6 (one conceptual schema
+group per release). Was scoped as v0.1.9 in the 2026-04-25 roadmap;
+v0.1.9 cut to hardening only, so it slipped here.
 
 **Evidence anchor:** Roadmap §4 v0.1.9 (entire scope migrates).
-v0.1.12 CP5 reshape: single substantial v0.2.0 with shadow-by-
-default LLM judge, not the 3-release split the reconciliation
-initially recommended.
+v0.1.12 CP5 settled W52↔W58 design coupling for v0.2.0;
+post-v0.1.13 strategic research + Codex audit-chain rounds 1+2
+surfaced reconciliation C6 (one schema group per release) as a
+constraint CP5 did not engage with. CP-PATH-A (post-v0.1.13)
+splits v0.2.x into 4 releases honoring both:
+
+- **v0.2.0** — W52 + W58D + 4 doc-only adjuncts (W-MCP-THREAT,
+  W-COMP-LANDSCAPE, W-NOF1-METHOD, W-2U-GATE-2). One schema group.
+- **v0.2.1** — W53 insight ledger only. One schema group.
+- **v0.2.2** — W58J LLM judge shadow-by-default + W-JUDGE-BIAS bias
+  panel. One schema group.
+- **v0.2.3** — W58J flip to blocking + W-30 capabilities-manifest
+  schema freeze. No new schema.
+
+Path A total v0.2.x effort: 39-56 days across four cycles.
 
 ### Wave 3 — MCP surface + extension contract (v0.3–v0.4, ~3-4 months)
 
@@ -476,13 +490,20 @@ portability) in the 2026-04-25 roadmap. Sequence preserved.
 **Evidence anchor:** Roadmap §4 v0.3 + v0.4. PHIA + Bloom integration
 prior art.
 
-**Staging within Wave 3 (added v0.1.12 CP4).**
+**Staging within Wave 3 (added v0.1.12 CP4; revised
+post-v0.1.13 CP-MCP-THREAT-FORWARD).**
 
+- **v0.2.0** — *threat-model artifact authored* at
+  `reporting/docs/mcp_threat_model.md` as a doc-only adjunct
+  workstream (W-MCP-THREAT). Catalogues each OWASP MCP Top 10
+  risk against HAI's planned read-surface; maps to existing
+  invariants; names residual risks. Cited CVEs:
+  CVE-2025-59536/21852/6514/53109/53110, plus arXiv 2511.20920
+  synthesis. Pre-requisite for v0.3 PLAN-audit.
 - **v0.3** — *plans* MCP server. Read-surface design only (no
-  write surface). Threat-model artifact authored at
-  `reporting/docs/mcp_threat_model.md`. Provenance import
-  contract drafted (extends the agent-CLI capabilities manifest
-  with provenance fields per imported row).
+  write surface). Design consumes the v0.2.0 threat-model as input.
+  Provenance import contract drafted (extends the agent-CLI
+  capabilities manifest with provenance fields per imported row).
 - **v0.4** — *prereqs land*. Least-privilege read-scope model
   documented (per-table read scopes, no cross-table joins
   exposed). Threat-model doc completes with mitigations for

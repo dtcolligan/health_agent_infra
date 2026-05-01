@@ -28,29 +28,39 @@ This file is a high-level pointer; for actual scope, read those plans.
   closed at round 3 with 6 → 2 → 0 (cleaner than the empirical
   norm). See
   [`reporting/plans/v0_1_13/RELEASE_PROOF.md`](reporting/plans/v0_1_13/RELEASE_PROOF.md).
-- **v0.1.14 in flight (next cycle).** Eval substrate + cli.py
-  mechanical split + W-Vb-3 (9 non-ship-set personas residual).
+- **v0.1.14 in flight (next cycle, post-v0.1.13 strategic research
+  reconciled — 14 W-ids).** Eval substrate (W-AH/W-AI/W-AJ/W-AL/W-AM/
+  W-AN) + inherited W-29 / W-Vb-3 / W-DOMAIN-SYNC + 5 P0/P1 additions
+  from post-v0.1.13 strategic research (W-2U-GATE foreign-machine
+  onboarding empirical proof, W-PROV-1 source-row locator,
+  W-EXPLAIN-UX `hai explain` UX review, W-BACKUP backup/restore/
+  export, W-FRESH-EXT doc-freshness extension). W-2U-GATE sequenced
+  first per CP-2U-GATE-FIRST.
 
 ## Next
 
-- **v0.1.14 — eval substrate + cli.py split + W-Vb-3 residual.** W-29
-  mechanical cli.py split (1 main + 1 shared + 11 handler-group,
-  conditional on v0.1.13 W-29-prep verdict — green; the boundary
-  table is in `reporting/docs/cli_boundary_table.md`), W-Vb-3
-  persona-replay extension to the 9 non-ship-set personas
-  (P2/P3/P6/P7/P8/P9/P10/P11/P12), L2 W-DOMAIN-SYNC scoped
-  contract test, judge-adversarial fixtures (W-AI), W-AL
-  calibration scaffold (schema/report shape only).
-- **v0.2.0 — weekly review + insight ledger + factuality gate.** W52
-  weekly review with source-row locators, W53 insight ledger, W58
-  deterministic claim-block (blocking from day 1), W58 LLM judge ships
-  shadow-by-default with `HAI_W58_JUDGE_MODE` flag (flip to blocking
-  within v0.2.0 or v0.2.0.x once shadow evidence supports). W-30
-  capabilities-manifest schema freeze as last act of cycle (per CP2).
-- **v0.3+ — MCP staging.** v0.3 plans MCP server (read-surface design +
-  threat-model artifact + provenance import contract). v0.4 prereqs
-  land (least-privilege scope model + threat-model completion). v0.4-or-
-  v0.5 ships MCP read surface. **No write surface ever.** Per CP4.
+- **v0.1.14 — eval substrate + cli.py split + W-Vb-3 + 5 P0/P1
+  additions (14 W-ids, 30-40 days).** Detailed scope in
+  `reporting/plans/tactical_plan_v0_1_x.md` §5; full PLAN under
+  D14 plan-audit before opening.
+- **v0.2.0 — weekly review + deterministic factuality (Path A
+  release 1 of 4).** W52 weekly review with source-row locators
+  (uses v0.1.14 W-PROV-1), W58D deterministic claim-block (blocking
+  from day 1), W-FACT-ATOM atomic decomposition, plus 4 doc-only
+  adjuncts (W-MCP-THREAT, W-COMP-LANDSCAPE, W-NOF1-METHOD,
+  W-2U-GATE-2). One schema group per release (honors C6).
+- **v0.2.1 — insight ledger (Path A release 2 of 4).** W53 only;
+  one schema group.
+- **v0.2.2 — LLM judge shadow-by-default (Path A release 3 of 4).**
+  W58J + W-JUDGE-BIAS bias panel. One schema group.
+- **v0.2.3 — judge promotion to blocking + W-30 capabilities-
+  manifest schema freeze (Path A release 4 of 4).** No new schema.
+- **v0.3+ — MCP staging.** v0.2.0 W-MCP-THREAT artifact (per
+  CP-MCP-THREAT-FORWARD) precedes v0.3 design. v0.3 plans MCP
+  server (read-surface design + provenance import contract). v0.4
+  prereqs land (least-privilege scope model + threat-model
+  completion). v0.4-or-v0.5 ships MCP read surface. **No write
+  surface ever.** Per CP4.
 - **v0.5+ — calibration substrate.** Read-only UI decision-checkpoint
   (per existing strategic plan).
 
@@ -77,17 +87,27 @@ Full non-goals are in
 ## Dependency Chain
 
 ```text
-v0.1.9 weekly review
-    -> v0.2 artifacts/BCTO
-    -> v0.3 extension contracts + data-quality drift + first-run UX
-    -> v0.4 MCP/provenance
-    -> v0.5 N-of-1 substrate
-         -> 90+ days of accumulated triples
-         -> v0.6 estimator
-             -> v0.7 governed adaptation
-                 -> 3+ months zero-incident
-                 -> v1.0 stable contract
+v0.1.13 onboarding + governance prereqs (shipped 2026-04-30)
+    -> v0.1.14 eval substrate + cli.py split + W-Vb-3 + 5 P0/P1 additions (14 W-ids)
+        -> v0.2.0 W52 weekly review + W58D deterministic factuality (Path A 1/4)
+            -> v0.2.1 W53 insight ledger (Path A 2/4)
+                -> v0.2.2 W58J LLM judge shadow + W-JUDGE-BIAS panel (Path A 3/4)
+                    -> v0.2.3 W58J promote to blocking + W-30 capabilities freeze (Path A 4/4)
+                        -> v0.3 MCP plan (consumes v0.2.0 W-MCP-THREAT artifact)
+                            -> v0.4 MCP prereqs (least-privilege scope + threat-model done)
+                                -> v0.4-or-v0.5 MCP read surface ships
+                                -> v0.5 N-of-1 substrate (read-only UI decision-checkpoint)
+                                     -> 90+ days of accumulated triples
+                                     -> v0.6 personal-evidence estimator
+                                         -> v0.7 governed adaptation
+                                             -> 3+ months zero-incident
+                                             -> v1.0 stable contract
 ```
+
+The Path A 4-release v0.2.x split (CP-PATH-A) honors reconciliation
+C6 (one conceptual schema group per release). See
+`reporting/plans/post_v0_1_13/cycle_proposals/CP-PATH-A.md` for the
+full rationale.
 
 The five bets behind this sequence are in [HYPOTHESES.md](HYPOTHESES.md).
 If a falsification signal fires, the affected release gets re-scoped before

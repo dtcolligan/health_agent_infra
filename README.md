@@ -45,7 +45,7 @@ agent without handing the model unchecked authority over personal health data.
 | Surface | Shipped shape |
 |---|---|
 | Domains | 6: recovery, running, sleep, stress, strength, nutrition |
-| Skills | 15 packaged markdown skills, including `intent-router` and `expert-explainer` |
+| Skills | 14 packaged markdown skills, including `intent-router` and `expert-explainer` |
 | CLI contract | 56 annotated `hai` commands with mutation class, idempotency, JSON mode, exit codes, and agent-safety metadata |
 | State | 22 SQLite migrations, local-only by default |
 | Synthesis | 10 X-rule evaluators across two phases, committed in one transaction |

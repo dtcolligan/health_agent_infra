@@ -1,7 +1,8 @@
 # Planning Tree — Reading Order Index
 
-> **Last updated:** 2026-04-30 (post-v0.1.13 ship; v0.1.14 next-cycle
-> placeholder).
+> **Last updated:** 2026-05-01 (post-v0.1.13 strategic research +
+> Codex audit-chain rounds 1+2 closed; CPs applied; v0.1.14 PLAN.md
+> drafted under D14 plan-audit).
 
 This is the orientation guide to the `reporting/plans/` tree.
 Read this when you're returning cold and need to find the right
@@ -18,7 +19,9 @@ reporting/plans/
 ├── success_framework_v1.md            ← active value-measurement
 ├── risks_and_open_questions.md        ← active risk + decision register
 ├── v0_1_4/ … v0_1_13/                 ← per-cycle artifacts (frozen post-ship)
+├── v0_1_14/                           ← in-flight cycle (PLAN drafted; D14 plan-audit pending)
 ├── post_v0_1_10/                      ← between-cycles work (demo, Phase 4 audit)
+├── post_v0_1_13/                      ← post-v0.1.13 strategic research + audit chain + CPs
 ├── future_strategy_2026-04-29/        ← Claude/Codex deep strategy review
 ├── historical/                        ← 9 superseded planning docs
 └── docs_overhaul/                     ← docs-overhaul review record
@@ -115,6 +118,9 @@ Cycle directories preserve their own history:
 - `v0_1_13/` — onboarding + W-Vb/W-N-broader/W-FBC-2 closure +
   governance prerequisites (shipped 2026-04-30, **largest cycle in
   the v0.1.x track at 17 W-ids**).
+- `v0_1_14/` — eval substrate + cli.py split + W-Vb-3 + 5 P0/P1
+  additions from post-v0.1.13 strategic research (14 W-ids; PLAN.md
+  drafted 2026-05-01; D14 plan-audit pending).
 
 Each cycle directory typically contains:
 - `PLAN.md` — cycle scope.
@@ -136,6 +142,28 @@ The 2026-04-29 deep strategy review lives in
 - `review_codex.md` — Codex's three-pass review (2005 lines).
 
 The reconciliation drives the v0.1.12+ planning refresh.
+
+## I want to read the post-v0.1.13 strategic research (May 2026).
+
+The 2026-05-01 post-v0.1.13 strategic research lives in
+`post_v0_1_13/`:
+
+- `strategic_research_2026-05-01.md` — 21-section operational
+  research report (Codex-audited 2 rounds, closed
+  REPORT_SOUND_WITH_REVISIONS). Start here if you only have time
+  for one.
+- `reconciliation.md` — consolidates the audit chain + per-finding
+  dispositions. Read after the report.
+- `cycle_proposals/CP-*.md` — five CPs authored from the report:
+  CP-2U-GATE-FIRST, CP-MCP-THREAT-FORWARD, CP-DO-NOT-DO-ADDITIONS,
+  CP-PATH-A, CP-W30-SPLIT.
+- Audit-chain artifacts: `codex_research_audit_prompt.md` (rounds
+  1+2) + `codex_research_audit_response.md` (rounds 1+2) +
+  `codex_research_audit_round_N_response.md` (maintainer
+  dispositions).
+
+The research drives v0.1.14 PLAN.md scope and the v0.2.0-v0.2.3
+Path A 4-release split.
 
 ## Historical / superseded docs (preserve provenance, do not act on)
 
