@@ -125,10 +125,12 @@ write a cycle proposal in `reporting/plans/`; do not act unilaterally.
   conditional on v0.1.13 boundary-audit verdict (parser /
   capabilities regression test mandatory regardless).
   Capabilities-manifest schema freeze scheduled for **v0.2.3**
-  after all v0.2.x schema additions land (W52 v0.2.0, W53 v0.2.1,
-  W58J v0.2.2). (Origin: v0.1.12 CP1 + CP2, paired acceptance;
-  v0.2.x destination updated by post-v0.1.13 CP-PATH-A +
-  CP-W30-SPLIT, OQ-B answered Path A 2026-05-01.)
+  after all v0.2.x schema additions land (**W52 + W58D claim-block
+  (v0.2.0), W53 (v0.2.1), W58J (v0.2.2)**). (Origin: v0.1.12 CP1 +
+  CP2, paired acceptance; v0.2.x destination updated by
+  post-v0.1.13 CP-PATH-A + CP-W30-SPLIT, OQ-B answered Path A
+  2026-05-01; W58D claim-block added to v0.2.0 schema-group list
+  per v0.1.14 D14 round 1 F-PLAN-10.)
 - **Garmin Connect is not the default live source.** Login is rate-limited
   and unreliable. Default to intervals.icu when configured.
 - **Nutrition v1 is macros-only.**

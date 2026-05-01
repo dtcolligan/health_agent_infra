@@ -2,7 +2,12 @@
 
 **Cycle:** v0.2.0 PLAN authoring upcoming (final ship destination v0.2.3).
 **Author:** Claude (delegated by maintainer; OQ-B 2026-05-01).
-**Codex verdict:** *not yet authored* (CP draft, pre-acceptance).
+**Codex verdict:** applied at v0.1.14 D14 round 1
+(PLAN_COHERENT_WITH_REVISIONS); AGENTS.md D4 + "Do Not Do" line
+updated 2026-05-01 pre-cycle. F-PLAN-10 surfaced that the D4 schema-
+group list omitted W58D claim-block from v0.2.0; corrected at
+v0.1.14 D14 round 1 (W52 + W58D claim-block ship together in v0.2.0,
+followed by W53 v0.2.1 and W58J v0.2.2 before W-30 v0.2.3).
 **Application timing:** at v0.2.0 PLAN.md authoring — companion to
 CP-PATH-A; updates AGENTS.md D4 + tactical_plan_v0_1_x.md to place
 W-30 at v0.2.3 (Path A) instead of "last act of v0.2.0" (CP2 + CP5).

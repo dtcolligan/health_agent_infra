@@ -37,11 +37,14 @@ prove the v0.1.13 onboarding test surface against a foreign user;
 and close the v0.1.13-deferred mechanical workstreams (W-29 cli.py
 split, W-Vb-3 9-persona residual, W-DOMAIN-SYNC contract test).
 
-End-state: v0.2.0 W52/W58D becomes a wire-up release, not a
-build-and-ship; the runtime has been validated by a non-maintainer;
-`hai backup` / `hai restore` / `hai export` give second users a
-recovery path; cli.py is split per the v0.1.13 W-29-prep boundary
-table without breaking byte-stability of the capabilities snapshot.
+End-state: **v0.2.0 starts with the source-row primitive + judge
+harness in tree, reducing design risk** (v0.2.0 W52/W58D still ships
+weekly-review aggregation + deterministic claim-block + claim corpus
+in 18-24 days — *not* a wire-up release; F-PLAN-01 corrected). The
+runtime has been validated by a non-maintainer; `hai backup` /
+`hai restore` / `hai export` give second users a recovery path;
+cli.py is split per the v0.1.13 W-29-prep boundary table without
+breaking byte-stability of the capabilities snapshot.
 
 ### 1.2 Workstream catalogue (14 W-ids)
 
@@ -66,7 +69,9 @@ reshapes around the fix.
 | §2.M | W-Vb-3 | Persona-replay extension (9 non-ship-set personas) | 4-6 d | inherited | v0.1.13 RELEASE_PROOF §5 + F-PLAN-06/R2-02/R3-02 |
 | §2.N | W-DOMAIN-SYNC | Scoped contract test (single truth table) | 0.5 d | inherited | reconciliation L2 + Codex F-PLAN-09 |
 
-**Total:** 14 W-ids; 30-40 days; substantive tier.
+**Total:** 14 W-ids; **32-45 days** (matches §5 arithmetic
+31.5-44.5; F-PLAN-02 corrected the original 30-40 round-down);
+substantive tier.
 
 ### 1.3 Sequencing constraint (per CP-2U-GATE-FIRST)
 
@@ -92,6 +97,30 @@ remediation:
 6. Eval substrate W-AH/W-AI/W-AJ/W-AL/W-AM/W-AN (parallelizable).
 7. W-Vb-3 (parallelizable with eval substrate).
 8. W-FRESH-EXT (last; doc-fix sweep aware of all changes).
+
+### 1.3.1 Candidate-absence procedure (per F-PLAN-03)
+
+W-2U-GATE has a hard external dependency on a non-maintainer
+candidate. The OQ-I placeholder ("TBD") must resolve before Phase 0
+can open. Procedure:
+
+- **Hard rule:** named candidate must be on file by **Phase 0 gate**
+  (not D14 close — D14 audits the PLAN, not coordination state).
+  "On file" means: maintainer has identified the candidate, contacted
+  them, and confirmed availability for the recorded session.
+- **If no candidate by Phase 0 gate**, three options — maintainer
+  chooses:
+  1. **Hold the cycle.** Defer Phase 0 until a candidate surfaces;
+     v0.1.14 holds at PLAN-authored / D14-passed state.
+  2. **Defer W-2U-GATE to v0.1.15** with named destination; v0.1.14
+     opens without it. W-EXPLAIN-UX foreign-user review uses a
+     maintainer-substitute reader (or also defers to v0.1.15
+     without prejudice). Cycle reshapes around the absence.
+  3. **Re-author PLAN.md** (rescope around the absence) and re-run
+     D14. Use this path if the maintainer believes W-2U-GATE
+     should not be sequenced first under the absence (e.g., if
+     candidate availability is a long horizon and v0.1.14 should
+     proceed on substrate work first).
 
 ### 1.4 Deferrals (named, with destination)
 
@@ -126,7 +155,8 @@ risk; if W-2U-GATE surfaces a structural blocker, the cycle reshapes.
 **Workstream:**
 - One recorded foreign-machine onboarding session by a non-
   maintainer (candidate: TBD — placeholder per OQ-I; maintainer
-  surfaces the candidate before W-2U-GATE opens).
+  surfaces the candidate by Phase 0 gate per §1.3.1; if no
+  candidate by Phase 0 gate, §1.3.1 procedure fires).
 - Capture: terminal recording, time-to-`synthesized`, every place
   the user paused, every place they had to ask the maintainer.
 - Output artifact: `reporting/docs/second_user_onboarding_2026-XX.md`
@@ -134,15 +164,19 @@ risk; if W-2U-GATE surfaces a structural blocker, the cycle reshapes.
   P0/P1/P2 per §1.3).
 
 **Acceptance:**
-- One full session reaches `synthesized` without maintainer
-  intervention (the load-bearing acceptance criterion).
+- One full session reaches `synthesized` **with at most one brief
+  in-session question to the maintainer** (the load-bearing
+  acceptance criterion; "brief" = a single clarifying question that
+  doesn't require the maintainer to operate the keyboard or read
+  the user's screen). Multiple interventions or any maintainer
+  keyboard time = failure.
 - Remediation list filed and triaged.
 - If P0 items surface, they are addressed before any §2.F-§2.K
   eval-substrate W-id ships.
 
 **Risk:** structural blocker (P0 remediation surfaces) reshapes the
 cycle. Treat as a *good outcome* — better to surface now than after
-v0.1.14 ships unproven.
+v0.1.14 ships unproven. Candidate-absence path: §1.3.1.
 
 ### §2.B — W-PROV-1: source-row locator type + 1-domain demo (P0)
 
@@ -205,18 +239,29 @@ only works if the refusal is legible.
 - `reporting/docs/explain_ux_review_2026-XX.md` (new).
 
 **Acceptance:**
-- P13 persona added to `ALL_PERSONAS`; persona matrix re-runs clean
-  (13 personas, 0 findings).
-- Foreign-user review session captured; structured findings filed.
-- Remediation recommendations folded into v0.2.0 W52 weekly-review
-  prose design (carried forward, not implemented in v0.1.14).
+- P13 persona added to `ALL_PERSONAS`; **matrix-only coverage for
+  v0.1.14** (per F-PLAN-06; no demo-replay coverage required —
+  W-Vb-3 owns P2-P12 demo-replay residual exclusively).
+  Persona matrix re-runs clean (13 personas, 0 findings;
+  matrix-clean = each persona reaches a synthesized plan or
+  expected-defer state without crashes; no demo-replay assertion
+  for P13).
+- Foreign-user review session captured; structured findings filed
+  in `explain_ux_review_2026-XX.md`.
+- The findings doc **must contain a section titled "v0.2.0 W52
+  prose obligations"** — each remediation listed as a structured
+  item with: issue / proposed prose change / acceptance hook
+  (per F-PLAN-05). v0.2.0 W52 PLAN authoring consumes this section
+  and either implements or explicitly defers each item.
 
 ### §2.D — W-BACKUP: `hai backup` / `hai restore` / `hai export` (P0)
 
-**Why P0.** A second user *will* corrupt their state.db within 90
-days. Without a canonical recovery path, the response will be "I
-guess I'll start over" — losing the audit chain and the H1
-falsifier.
+**Why P0.** A second user is likely to need a recovery path; without
+one, state corruption or migration mistakes can break the audit
+chain. privacy.md currently gives manual file-copy / deletion
+guidance but no canonical `hai backup` / `hai restore` / `hai export`
+command exists. (F-PLAN-12 corrected the original 90-day claim; the
+gap is real even without quantification.)
 
 **Workstream:**
 - `hai backup [--dest path]` writes a versioned tarball containing
@@ -335,12 +380,14 @@ at `reporting/docs/cli_boundary_table.md`).
 ### §2.M — W-Vb-3: persona-replay extension (inherited)
 
 Per F-PLAN-06 + F-PLAN-R2-02 + F-PLAN-R3-02 (v0.1.13 deferred
-items). 9 non-ship-set personas (P2/P3/P6/P7/P8/P9/P10/P11/P12).
+items). **Owns the 9-persona residual exclusively
+(P2/P3/P6/P7/P8/P9/P10/P11/P12); P13 (added by §2.C W-EXPLAIN-UX)
+is matrix-only and out of scope for W-Vb-3 demo-replay coverage.**
 
 **Acceptance:** 9 personas reach `synthesized` via demo replay;
 `expected_actions` declarative contract enforced. May further
 partial-close (e.g., 3-at-a-time) if the cycle shape requires;
-v0.1.14 owns the full residual.
+v0.1.14 owns the full residual for the P2-P12 set only.
 
 ### §2.N — W-DOMAIN-SYNC: scoped contract test (inherited)
 
@@ -363,8 +410,8 @@ and exempted explicitly.
 | Mypy | 0 errors | `uvx mypy src/health_agent_infra` |
 | Bandit | 0 Medium/High; Low ≤ 50 | `uvx bandit -ll -r src/health_agent_infra` |
 | Ruff | All checks pass | `uvx ruff check src/health_agent_infra` |
-| Capabilities byte-stability | snapshot accepts only documented surface changes (W-29 split, W-BACKUP commands, W-PROV-1 surface) | `test_cli_parser_capabilities_regression.py` |
-| Persona matrix | 13 personas (P1..P12 + P13), 0 findings | `verification/dogfood/runner.py` |
+| Capabilities byte-stability | split into expected-diff classes (per F-PLAN-04): **byte-identical** (zero diff) for W-29 mechanical split; **named parser/capabilities surface change accepted** for W-AN (`hai eval run --scenario-set`), W-BACKUP (`backup` / `restore` / `export` subparsers), and W-PROV-1 (locator type in proposal/recommendation rendering only — not a parser change). Regression test must fail any other diff. | `test_cli_parser_capabilities_regression.py` |
+| Persona matrix | 13 personas (P1..P12 + P13), 0 findings, **matrix-clean** (no demo-replay assertion for P13 per F-PLAN-06; W-Vb-3 owns P2-P12 demo-replay) | `verification/dogfood/runner.py` |
 | W-2U-GATE artifact | `reporting/docs/second_user_onboarding_2026-XX.md` exists | manual review |
 | W-EXPLAIN-UX artifact | `reporting/docs/explain_ux_review_2026-XX.md` exists | manual review |
 | W-BACKUP roundtrip | backup → wipe → restore → identical state | CI |
@@ -380,19 +427,20 @@ and exempted explicitly.
 
 | Risk | Trigger | Mitigation |
 |---|---|---|
-| W-2U-GATE surfaces structural P0 blocker | Foreign user cannot reach `synthesized` | Cycle reshapes around fix per §1.3; downstream work moves to v0.1.15 without prejudice; treat as good outcome |
+| W-2U-GATE surfaces structural P0 blocker | Foreign user cannot reach `synthesized` | Cycle reshapes around fix per §1.3 sequencing constraint; downstream work moves to v0.1.15 without prejudice; treat as good outcome |
+| W-2U-GATE candidate doesn't materialize | OQ-I unresolved by Phase 0 gate | §1.3.1 candidate-absence procedure: hold cycle / defer W-2U-GATE to v0.1.15 / re-author PLAN + re-D14. Maintainer chooses |
 | W-PROV-1 schema design needs major change | Recovery R-rule demo reveals locator type insufficient (e.g., needs to span multiple tables) | v0.1.14 splits into substrate (W-PROV-1 only) + features (rest); v0.2.0 W52 absorbs the redesign |
-| W-29 split breaks capabilities snapshot | Byte-stability regression test fails post-split | W-29-prep boundary table + green verdict already cleared this; rollback the split if regression appears at IR |
-| W-Vb-3 partial-closes again | Same shape as v0.1.13 (3-at-a-time) | Honest partial-closure naming with v0.1.15 destination per AGENTS.md "Honest partial-closure naming" pattern |
-| W-EXPLAIN-UX foreign user unavailable | OQ-I candidate falls through | Use W-2U-GATE candidate for both; or defer W-EXPLAIN-UX to v0.1.15 if neither resolves |
-| Cycle exceeds 40-day budget | Cumulative effort overruns | Re-scope: defer one of W-AM / W-AN / W-FRESH-EXT to v0.1.15; substrate W-ids (W-2U-GATE / W-PROV-1 / W-BACKUP / W-29) are non-negotiable |
-| D14 exceeds 5 rounds | New finding-density at round N > N-1 | Per §1.3 acceptance criterion: maintainer re-scopes before implementation; surface to Codex why the cycle is settling slower than the empirical norm |
+| W-29 split breaks capabilities snapshot | Byte-stability regression test fails post-split | W-29-prep boundary table + green verdict already cleared this; rollback the split if regression appears at IR. Note §3 ship-gate diff classes: W-29 must be **byte-identical** (zero diff allowed) |
+| W-Vb-3 partial-closes again | Same shape as v0.1.13 (3-at-a-time) | Honest partial-closure naming with v0.1.15 destination per AGENTS.md "Honest partial-closure naming" pattern; W-Vb-3 owns P2-P12 only (per F-PLAN-06) |
+| W-EXPLAIN-UX foreign user unavailable | OQ-I candidate falls through | Use W-2U-GATE candidate for both; or defer W-EXPLAIN-UX to v0.1.15 if neither resolves; covered by §1.3.1 |
+| Cycle exceeds 45-day budget | Cumulative effort overruns 32-45 envelope | Re-scope: defer one of W-AM / W-AN / W-FRESH-EXT to v0.1.15; substrate W-ids (W-2U-GATE / W-PROV-1 / W-BACKUP / W-29) are non-negotiable |
+| D14 exceeds 5 rounds | New finding-density at round N > N-1 | Per §1.3 sequencing constraint + §1.3.1 candidate-absence procedure: maintainer re-scopes before implementation; surface to Codex why the cycle is settling slower than the empirical norm |
 
 ---
 
 ## 5. Effort estimate
 
-**30-40 days, 1 maintainer, substantive cycle tier.**
+**32-45 days, 1 maintainer, substantive cycle tier.**
 
 Breakdown:
 - P0 additions: 11-14 days (W-2U-GATE 2-3 + W-PROV-1 3-4 +
@@ -404,12 +452,16 @@ Breakdown:
 - Cycle overhead (D14 plan-audit, Phase 0 bug-hunt, IR rounds,
   RELEASE_PROOF authoring, ship-time freshness sweep): 2-4 days.
 
-Total: 31.5 - 44.5 days; round to **30-40 days** with contingency.
+Total: **31.5-44.5 days**; reported as **32-45 days** to match the
+arithmetic honestly (F-PLAN-02 corrected the original 30-40
+round-down). If the cycle trends past 45 days, the §4 risks register
+"Cycle exceeds 45-day budget" mitigation fires: defer one of
+W-AM / W-AN / W-FRESH-EXT to v0.1.15.
 
-D14 expectation: **4-5 rounds**. Per F-RES-R2-02 acceptance: if it
-exceeds 5 rounds, maintainer re-scopes. v0.1.13's 5-round settling
-on 17 W-ids is the prior; v0.1.14's 14 W-ids should fall in the
-4-5 range.
+D14 expectation: **4-5 rounds**. Per the cycle's §3 ship-gate
+acceptance: if it exceeds 5 rounds, maintainer re-scopes. v0.1.13's
+5-round settling on 17 W-ids is the prior; v0.1.14's 14 W-ids should
+fall in the 4-5 range.
 
 ---
 
@@ -449,17 +501,24 @@ Maintainer reads `audit_findings.md`. Findings tagged
 tagged `aborts-cycle` may end the cycle. Implementation does not
 start until this gate fires.
 
-### CPs to apply at v0.1.14 ship
+### CP application status (per F-PLAN-11)
 
-- **CP-2U-GATE-FIRST** — formalises W-2U-GATE precedence; applies at
-  v0.1.14 PLAN authoring (this PLAN already implements it).
-- **CP-MCP-THREAT-FORWARD** — pulls W-MCP-THREAT to v0.2.0;
-  strategic_plan_v1.md Wave 3 staging update at v0.1.14 ship.
-- **CP-DO-NOT-DO-ADDITIONS** — applied to AGENTS.md 2026-05-01
-  (pre-cycle); recorded here for provenance.
-- **CP-PATH-A** + **CP-W30-SPLIT** — applied to AGENTS.md +
-  tactical_plan_v0_1_x.md 2026-05-01 (pre-cycle); recorded here for
-  provenance.
+| CP | Status | Application target |
+|---|---|---|
+| **CP-2U-GATE-FIRST** | implemented-in-PLAN | PLAN §1.3 + §1.3.1 + §2.A |
+| **CP-MCP-THREAT-FORWARD** | applied-pre-cycle 2026-05-01 | strategic_plan_v1.md Wave 3 staging |
+| **CP-DO-NOT-DO-ADDITIONS** | applied-pre-cycle 2026-05-01 | AGENTS.md "Do Not Do" (3 new bullets) |
+| **CP-PATH-A** | applied-pre-cycle 2026-05-01 | tactical_plan_v0_1_x.md §6/§7/§8/§9 + ROADMAP.md + strategic_plan_v1.md Wave 2 |
+| **CP-W30-SPLIT** | applied-pre-cycle 2026-05-01 | AGENTS.md D4 + "Do Not Do" line |
+
+All five CP files' `Codex verdict:` status fields update post-D14
+round 1 to "applied at v0.1.14 D14 round 1
+(PLAN_COHERENT_WITH_REVISIONS); revisions per F-PLAN-07/08/09/10
+applied to source documents in lockstep."
+
+CP-MCP-THREAT-FORWARD is **already applied** pre-cycle to
+strategic_plan_v1.md Wave 3 (F-PLAN-11 corrected the original
+"lands at v0.1.14 ship" wording).
 
 ---
 

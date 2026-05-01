@@ -2,7 +2,11 @@
 
 **Cycle:** v0.1.14 (PLAN authoring upcoming).
 **Author:** Claude (delegated by maintainer).
-**Codex verdict:** *not yet authored* (CP draft, pre-acceptance).
+**Codex verdict:** applied at v0.1.14 D14 round 1
+(PLAN_COHERENT_WITH_REVISIONS); implemented in v0.1.14 PLAN.md §1.3
++ §1.3.1 + §2.A. Revisions per F-PLAN-03 added the §1.3.1
+candidate-absence procedure; F-PLAN-06 clarified W-Vb-3 vs
+W-EXPLAIN-UX P13 boundary.
 **Application timing:** at v0.1.14 PLAN.md authoring — inserts a new
 workstream as §2.A of the new PLAN; tactical_plan_v0_1_x.md §5.1
 gains a new row; strategic_plan_v1.md gains a §11 footnote on

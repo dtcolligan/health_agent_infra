@@ -521,7 +521,9 @@ post-v0.1.13 CP-MCP-THREAT-FORWARD).**
 **Security gate (non-negotiable).** No MCP read surface ships
 before the threat-model artifact, the least-privilege scope
 model, and the one-domain provenance proof are all in place.
-Sources for threat-model authoring (verify current at v0.4):
+Sources for threat-model authoring (verify current at v0.2.0
+authoring per CP-MCP-THREAT-FORWARD; refresh at v0.4 prereq
+completion when mitigations land):
 
 - <https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization>
 - <https://modelcontextprotocol.io/specification/2025-06-18/basic/security_best_practices>
@@ -577,7 +579,7 @@ for v0.1.x or v0.2; they are decision-points for v0.3+.
 | **Oura adapter** | Same shape, ring-specific sleep + readiness scores. | v0.4 |
 | **Apple Health** | Aggregator-not-source — Apple Health pulls in everything else. Sourcing chain matters: Apple Health is downstream of vendor adapters. | v0.4 + careful scoping |
 | **CGM / continuous glucose** | Adds a metabolic axis the project does not currently model. Dietary recommendation interaction is non-trivial; could violate no-clinical-claims. | Defer; revisit at v0.7 |
-| **Manual fitness apps (Strava, Hevy, MyFitnessPal)** | Already partially supported via `hai intake gym|nutrition`; importer for Strava activities + MyFitnessPal totals would broaden manual surface. | v0.3 — small-scope, high-utility |
+| **Manual fitness apps (Hevy, MyFitnessPal)** | Already partially supported via `hai intake gym|nutrition`; importer for MyFitnessPal totals would broaden manual surface. **Strava is explicitly prohibited** per AGENTS.md "Do Not Do" — Strava's Nov 2024 ToS bans AI/ML use of Strava data; intervals.icu was specifically named as a partner in conflict. Reopening would require a formal CP overriding the prohibition (per v0.1.14 D14 round 1 F-PLAN-09 — CP-DO-NOT-DO-ADDITIONS application missed this expansion-table sweep at v0.1.14 pre-cycle). | v0.3 — small-scope, high-utility (Hevy / MyFitnessPal only) |
 
 ### 8.3 New surfaces
 

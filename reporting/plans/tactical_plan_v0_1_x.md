@@ -1,4 +1,4 @@
-# Tactical Plan — v0.1.11 through v0.2.0
+# Tactical Plan — v0.1.11 through v0.2.3
 
 > **Status.** Authored 2026-04-27 by Claude. Companion to
 > `strategic_plan_v1.md`. Covers concrete workstreams across the
@@ -511,9 +511,15 @@ without prejudice.
   W-COMP-LANDSCAPE (`reporting/docs/competitive_landscape.md`),
   W-NOF1-METHOD (`reporting/docs/n_of_1_methodology.md`),
   W-2U-GATE-2 (second foreign-machine onboarding session).
+- **W-EXPLAIN-UX carry-forward consumption.** v0.2.0 W52 PLAN
+  authoring must reference v0.1.14's
+  `reporting/docs/explain_ux_review_2026-XX.md` "v0.2.0 W52 prose
+  obligations" section and either implement each remediation item
+  or explicitly defer with a named cycle destination (per
+  v0.1.14 PLAN F-PLAN-05).
 
-**Schema group:** weekly-review tables + claim-block (one group;
-honors reconciliation C6).
+**Schema group:** weekly-review tables + W58D claim-block (one
+conceptual group; honors reconciliation C6).
 
 ### 6.2 Acceptance
 
@@ -523,6 +529,9 @@ honors reconciliation C6).
   known-good and known-bad examples.
 - W-MCP-THREAT artifact filed; OWASP MCP Top 10 mapping verified
   against primary source per CP-MCP-THREAT-FORWARD.
+- W-EXPLAIN-UX carry-forward: each prose-obligations item from
+  v0.1.14 review doc has been implemented or explicitly deferred
+  in v0.2.0 PLAN.
 - Test count grows ≥ 30 vs v0.1.14.
 
 ### 6.3 Effort estimate
@@ -618,9 +627,11 @@ honors C6).
   Maintainer cannot manually override (the bias panel is the
   override criterion).
 - **W-30: capabilities-manifest schema freeze** as the last act
-  of the v0.2.x sequence, after W52 (v0.2.0), W53 (v0.2.1), and
-  W58J (v0.2.2) schema additions have all landed (per CP2 +
-  CP-W30-SPLIT).
+  of the v0.2.x sequence, after **W52/W58D claim-block (v0.2.0),
+  W53 (v0.2.1), and W58J (v0.2.2)** schema additions have all
+  landed (per CP2 + CP-W30-SPLIT; F-PLAN-10 corrected the original
+  list to include W58D claim-block as part of the v0.2.0 schema
+  group).
 
 **Schema group:** none (flag flip + manifest pin).
 
@@ -696,7 +707,7 @@ attached, not a fix-and-go.
 
 The four-round audit cycle is now standardised. Each release follows:
 
-### 8.1 Phase 0 — Pre-PLAN bug hunt (NEW v0.1.10 pattern)
+### 11.1 Phase 0 — Pre-PLAN bug hunt (NEW v0.1.10 pattern)
 
 For substantive releases. Optional for doc-only or small-scope.
 
@@ -708,7 +719,7 @@ For substantive releases. Optional for doc-only or small-scope.
 
 Output: structured findings list informs PLAN.md scope.
 
-### 8.2 Phase 1 — PLAN.md authoring
+### 11.2 Phase 1 — PLAN.md authoring
 
 Per-workstream contract per `v0_1_10/PLAN.md` template:
 - W-id + title + severity + effort
@@ -717,24 +728,24 @@ Per-workstream contract per `v0_1_10/PLAN.md` template:
 - Acceptance criteria
 - Dependencies
 
-### 8.3 Phase 2 — Codex audit round 1
+### 11.3 Phase 2 — Codex audit round 1
 
 External audit of PLAN.md + working tree state. Verdict: SHIP /
 SHIP_WITH_NOTES / DO_NOT_SHIP.
 
-### 8.4 Phase 3 — Maintainer response + implementation rounds
+### 11.4 Phase 3 — Maintainer response + implementation rounds
 
 Each Codex finding gets one of: fix, defer with reason,
 disagreement with reason. Implementation rounds continue until
 verdict is SHIP.
 
-### 8.5 Phase 4 — RELEASE_PROOF.md + ship
+### 11.5 Phase 4 — RELEASE_PROOF.md + ship
 
 Full pytest log + persona harness re-run + per-workstream
 acceptance check. CHANGELOG.md updated. Wheel built. PyPI publish
 gated on maintainer review.
 
-### 8.6 Phase 5 — Post-ship retro
+### 11.6 Phase 5 — Post-ship retro
 
 Brief retro section appended to CHANGELOG entry: what worked, what
 didn't, what to keep, what to change next cycle.
@@ -754,8 +765,10 @@ strategic-cost first):
    personas instead of all 4.
 5. v0.1.13 ENTIRELY — skip; jump straight to v0.1.14 eval expansion.
 
-DO NOT cut: any of W-B, W-E, W-F, W-H1 (correctness floor); W52,
-W53, W58 from v0.2.0 (strategic Wave 2 anchor).
+DO NOT cut: any of W-B, W-E, W-F, W-H1 (correctness floor); W52 +
+W58D from v0.2.0 (Wave 2 substrate anchor); W53 from v0.2.1; W58J
+from v0.2.2 (per Path A; W52/W58D coupling preserved per CP5
+substance, downstream split per reconciliation C6).
 
 ---
 
@@ -774,9 +787,10 @@ W53, W58 from v0.2.0 (strategic Wave 2 anchor).
 section becomes "shipped" with a 1-paragraph retro, and v0.1.12
 becomes the "in-flight" detail.
 
-**Boundary:** this doc covers v0.1.11 → v0.2.0. v0.3+ is in the
-strategic plan as wave-level themes; tactical detail will be
-authored when v0.2.0 ships.
+**Boundary:** this doc covers v0.1.11 → v0.2.3 (Path A 4-release
+Wave 2 split per CP-PATH-A). v0.3+ is in the strategic plan as
+wave-level themes; tactical detail will be authored when v0.2.3
+ships.
 
 ---
 

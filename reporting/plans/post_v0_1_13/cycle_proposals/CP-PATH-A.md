@@ -2,7 +2,13 @@
 
 **Cycle:** v0.2.0 PLAN authoring upcoming.
 **Author:** Claude (delegated by maintainer; OQ-B 2026-05-01).
-**Codex verdict:** *not yet authored* (CP draft, pre-acceptance).
+**Codex verdict:** applied at v0.1.14 D14 round 1
+(PLAN_COHERENT_WITH_REVISIONS); tactical_plan §6/§7/§8/§9 split
+applied 2026-05-01 pre-cycle. F-PLAN-07 surfaced stale propagation
+gaps from the application: title still "v0.1.11 through v0.2.0",
+§11 subheads still 8.x, §12 risk-cut text still claimed "W53 from
+v0.2.0", §13 boundary still "v0.1.11 → v0.2.0" — all corrected at
+v0.1.14 D14 round 1.
 **Application timing:** at v0.2.0 PLAN.md authoring — replaces
 tactical_plan_v0_1_x.md §6 v0.2.0 single-release shape with a
 4-release sequence (v0.2.0 / v0.2.1 / v0.2.2 / v0.2.3); revisits

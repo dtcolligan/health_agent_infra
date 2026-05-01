@@ -2,7 +2,12 @@
 
 **Cycle:** v0.1.14 (or doc-only hotfix earlier).
 **Author:** Claude (delegated by maintainer).
-**Codex verdict:** *not yet authored* (CP draft, pre-acceptance).
+**Codex verdict:** applied at v0.1.14 D14 round 1
+(PLAN_COHERENT_WITH_REVISIONS); 3 bullets applied to AGENTS.md
+"Do Not Do" 2026-05-01 pre-cycle. F-PLAN-09 surfaced a missed
+expansion-table sweep: strategic_plan §8.2 still listed Strava as
+v0.3 importer candidate; corrected at v0.1.14 D14 round 1 to
+"Hevy / MyFitnessPal only; Strava prohibited."
 **Application timing:** at v0.1.14 PLAN.md authoring or as a v0.1.13.x
 doc-only hotfix — adds three bullets to AGENTS.md §"Do Not Do" (lines
 384-400).

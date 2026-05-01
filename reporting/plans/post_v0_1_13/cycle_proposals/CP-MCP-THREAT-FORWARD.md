@@ -2,7 +2,11 @@
 
 **Cycle:** v0.2.0 (PLAN authoring upcoming).
 **Author:** Claude (delegated by maintainer).
-**Codex verdict:** *not yet authored* (CP draft, pre-acceptance).
+**Codex verdict:** applied at v0.1.14 D14 round 1
+(PLAN_COHERENT_WITH_REVISIONS); strategic_plan_v1.md Wave 3 staging
+delta applied 2026-05-01 pre-cycle. F-PLAN-08 corrected the source-
+list verification timing ("verify current at v0.4" → "verify
+current at v0.2.0 authoring; refresh at v0.4 prereq completion").
 **Application timing:** at v0.2.0 PLAN.md authoring — adds
 W-MCP-THREAT as a doc-only adjunct workstream; updates
 strategic_plan_v1.md Wave 3 staging language to require the threat-
