@@ -41,7 +41,8 @@
 | **v0.1.12** | Carry-over closure + trust repair (10 W-ids) | shipped 2026-04-29 | shipped | v0.1.11 |
 | **v0.1.12.1** | Cloudflare User-Agent hotfix (W-CF-UA) | shipped 2026-04-29 | shipped | v0.1.12 |
 | **v0.1.13** | Public surface hardening + first-time-user onboarding + W-Vb/W-N-broader/W-FBC-2 closure (17 W-ids — largest in track) | shipped 2026-04-30 | shipped | v0.1.12 |
-| **v0.1.14** | Eval substrate + cli.py split + W-Vb-3 + W-2U-GATE / W-PROV-1 / W-EXPLAIN-UX / W-BACKUP / W-FRESH-EXT (post-v0.1.13 reconciled, 14 W-ids) | next | 2026-Q3 mid | v0.1.13 (CLI surface stable + W-29-prep verdict green) |
+| **v0.1.14** | Eval substrate + cli.py split + W-Vb-3 + W-PROV-1 / W-EXPLAIN-UX / W-BACKUP / W-FRESH-EXT (post-v0.1.13 reconciled, 13 W-ids; W-2U-GATE deferred to v0.1.15 at pre-implementation gate per §1.3.1 path 2) | open (Phase 0 fired green 2026-05-01; W-PROV-1 first) | 2026-Q3 mid | v0.1.13 (CLI surface stable + W-29-prep verdict green) |
+| **v0.1.15** | W-2U-GATE (foreign-machine onboarding empirical proof — carry-forward from v0.1.14 pre-implementation gate defer) + scope TBD per v0.1.15 cycle authoring | post-v0.1.14 | 2026-Q3 late | v0.1.14 (W-PROV-1 substrate landed) |
 | **v0.2.0** | Weekly review (W52) + deterministic factuality (W58D) + 4 doc-only adjuncts (Path A) | post-v0.1.14 + 2-4 weeks | 2026-Q3 late / Q4 | v0.1.14 (W-PROV-1 + W-AJ judge harness) |
 | **v0.2.1** | Insight ledger (W53) (Path A) | post-v0.2.0 + 2-3 weeks | 2026-Q4 | v0.2.0 |
 | **v0.2.2** | LLM judge shadow-by-default (W58J + W-JUDGE-BIAS) (Path A) | post-v0.2.1 + 2-3 weeks | 2026-Q4 / 2027-Q1 | v0.2.1 |
@@ -393,28 +394,30 @@ assumptions failing" can be run cleanly.
 ## 5. v0.1.14 — Eval expansion + LLM-judge prep + second-user gate
 
 > **Theme.** Build the eval substrate for v0.2.0's W58 factuality
-> gate, AND empirically prove the v0.1.13 onboarding test surface
-> against a foreign user, AND land the source-row provenance type
-> W52 will require. Expanded post-v0.1.13 strategic research
-> (CP-2U-GATE-FIRST + 4 P0 additions). 14 W-ids total.
+> gate, AND land the source-row provenance type W52 will require,
+> AND ship the second-user recovery path. Expanded post-v0.1.13
+> strategic research (CP-2U-GATE-FIRST + 4 P0 additions, **with
+> W-2U-GATE deferred to v0.1.15** at the 2026-05-01
+> pre-implementation gate per §1.3.1 path 2 — no foreign-user
+> candidate on file at gate). 13 W-ids total (post-defer).
 
 ### 5.1 In scope
 
-**P0 additions (post-v0.1.13 strategic research; W-2U-GATE first
-per CP-2U-GATE-FIRST):**
+**P0 additions (post-v0.1.13 strategic research; W-PROV-1 first
+post-defer per `pre_implementation_gate_decision.md`):**
 
 | W-id | Title | Effort |
 |---|---|---|
-| **W-2U-GATE** | Foreign-machine onboarding empirical proof (one recorded session by a non-maintainer; remediation list filed). Sequenced first; if it surfaces a structural blocker, cycle reshapes. Candidate: TBD | 2-3 days |
-| **W-PROV-1** | Source-row locator type + 1-domain demo (recovery R-rule cites source rows; `hai explain` renders them; roundtrip test). Migration 023. Foundation for v0.2.0 W52. | 3-4 days |
-| **W-EXPLAIN-UX** | `hai explain` confusion-vs-clarity review. Add P13 low-domain-knowledge persona; foreign user reads sample output; structured findings doc filed. | 2 days |
+| ~~**W-2U-GATE**~~ | **Deferred to v0.1.15** at pre-implementation gate per §1.3.1 path 2 (no foreign-user candidate on file). Sequencing intent of CP-2U-GATE-FIRST carries forward to v0.1.15. | 2-3 days → v0.1.15 |
+| **W-PROV-1** | Source-row locator type + 1-domain demo (recovery R-rule cites source rows; `hai explain` renders them; roundtrip test). Migration 023. Foundation for v0.2.0 W52. **Sequenced first post-defer.** | 3-4 days |
+| **W-EXPLAIN-UX** | `hai explain` confusion-vs-clarity review. Add P13 low-domain-knowledge persona; **maintainer-substitute reader** reviews sample output (foreign-user review carries forward to v0.1.15 W-2U-GATE per §1.3.1 path 2); structured findings doc filed. | 2 days |
 | **W-BACKUP** | `hai backup` / `hai restore` / `hai export` canonical paths + `reporting/docs/recovery.md` | 3-4 days |
 
 **P1 addition:**
 
 | W-id | Title | Effort |
 |---|---|---|
-| **W-FRESH-EXT** | Extend `test_doc_freshness_assertions.py` to flag stale W-id references in informal doc sections (catches the C-DRIFT-02/03/04 class) | 1 day |
+| **W-FRESH-EXT** | Extend `test_doc_freshness_assertions.py` to flag stale W-id references in informal doc sections (catches the C-DRIFT-02/03/04 class); plus persona-runner demo-session pre-flight cleanup (F-PHASE0-01 absorption) | 1.5 days |
 
 **Tactical-plan baseline (eval substrate):**
 
@@ -444,18 +447,25 @@ per CP-2U-GATE-FIRST):**
   v0.5+ per reconciliation action 15.
 - Post-v0.1.13 strategic research (Codex audit-chain rounds 1+2,
   closed at REPORT_SOUND_WITH_REVISIONS) added 5 P0/P1 W-ids;
-  cycle is now 14 W-ids with W-2U-GATE first per CP-2U-GATE-FIRST.
+  D14 chain settled at round 4 PLAN_COHERENT with 14 W-ids
+  (W-2U-GATE first per CP-2U-GATE-FIRST); **at the 2026-05-01
+  pre-implementation gate, W-2U-GATE deferred to v0.1.15 per
+  §1.3.1 path 2 (no candidate on file). Cycle is 13 W-ids with
+  W-PROV-1 first.**
 
 ### 5.2 Acceptance
 
-- W-2U-GATE: one foreign user reaches `synthesized` without
-  maintainer intervention; remediation list filed.
+- ~~W-2U-GATE~~: deferred to v0.1.15.
 - W-PROV-1: schema design doc + 1-domain demo + roundtrip test.
-- W-EXPLAIN-UX: P13 persona added; foreign-user review filed.
+- W-EXPLAIN-UX: P13 persona added; **maintainer-substitute review
+  filed** with carries-forward-to-v0.1.15 section listing items to
+  re-test against the v0.1.15 W-2U-GATE foreign user.
 - W-BACKUP: roundtrip test (backup → wipe → restore → identical
   `hai today` / `hai explain` output) passes in CI.
 - W-FRESH-EXT: `test_doc_freshness_assertions.py` rejects stale
-  W-id references in informal-section sites.
+  W-id references in informal-section sites; persona-runner
+  pre-flight refuses to run with an active demo-session marker
+  (F-PHASE0-01 absorption).
 - Scenario fixtures grow from current ~50 → 120+.
 - Per-persona expected-behaviour table in dogfood harness covers
   all 12 personas across all 6 domains. (v0.1.13 W-AK shipped the
@@ -468,26 +478,29 @@ per CP-2U-GATE-FIRST):**
   byte-for-byte.
 - W-Vb-3 closes the 9-persona residual or honestly partial-closes
   with a v0.1.15 destination.
-- D14 verdict `PLAN_COHERENT` within ≤5 rounds; if it exceeds 5,
-  maintainer re-scopes.
+- D14 verdict `PLAN_COHERENT` **CLOSED at round 4 (1-nit applied)**;
+  pre-implementation defer per §1.3.1 path 2 does not require re-D14.
 
 ### 5.3 Effort estimate
 
-**32-45 days** (14 W-ids: 9 baseline + 5 P0/P1 additions). Cycle
-tier: substantive. Larger than v0.1.10 (~10 W-ids) but smaller than
-v0.1.13 (17 W-ids). D14 expectation: 4-5 rounds. Arithmetic:
-31.5-44.5 days; reported as 32-45 to match honestly (D14 r1
-F-PLAN-02 corrected the pre-audit 23-29 envelope; D14 r2
-F-PLAN-R2-01 caught this surface as a propagation gap).
+**30-43 days** (13 W-ids post-defer; was 32-45 with 14 W-ids at
+D14 close; W-2U-GATE 2-3 d removed; W-FRESH-EXT +0.5 d for
+F-PHASE0-01 absorption). Cycle tier: substantive (still ≥3
+governance-or-audit-chain edits + ≥10 days). D14 status: **CLOSED
+at round 4**, settling shape 12 → 7 → 3 → 1-nit → CLOSE
+(twice-validated for substantive PLANs at the 14-17 W-id range).
+Arithmetic: 29.5-42.5 days; reported as 30-43 to match honestly.
 
-If the cycle trends past 45 days, the v0.1.14 PLAN §4 risks
-"Cycle exceeds 45-day budget" mitigation fires: defer one of
+If the cycle trends past 43 days, the v0.1.14 PLAN §4 risks
+"Cycle exceeds 43-day budget" mitigation fires: defer one of
 W-AM / W-AN / W-FRESH-EXT to v0.1.15.
 
-**Contingency clause:** if W-2U-GATE surfaces a structural blocker
-(e.g., the foreign user cannot complete `hai init --guided`),
-v0.1.14 reshapes around the fix; downstream work moves to v0.1.15
-without prejudice.
+**Contingency clause:** if a foreign-user candidate surfaces
+mid-cycle, W-2U-GATE may be pulled forward into v0.1.14 via a
+mid-cycle CP at
+`reporting/plans/v0_1_14/cycle_proposals/CP-2U-GATE-PULL-FORWARD.md`
+without re-D14 (the workstream is already PLAN-audited under §2.A);
+the budget rises by 2-3 days when pulled.
 
 ---
 
@@ -516,7 +529,10 @@ without prejudice.
 - **Doc-only adjuncts:** W-MCP-THREAT (per CP-MCP-THREAT-FORWARD),
   W-COMP-LANDSCAPE (`reporting/docs/competitive_landscape.md`),
   W-NOF1-METHOD (`reporting/docs/n_of_1_methodology.md`),
-  W-2U-GATE-2 (second foreign-machine onboarding session).
+  W-2U-GATE-2 (second foreign-machine onboarding session;
+  sequenced after v0.1.15 W-2U-GATE first-foreign-user lands —
+  v0.2.0 destination preserved despite v0.1.14 → v0.1.15 first-user
+  defer).
 - **W-EXPLAIN-UX carry-forward consumption.** v0.2.0 W52 PLAN
   authoring must reference v0.1.14's
   `reporting/docs/explain_ux_review_2026-XX.md` "v0.2.0 W52 prose

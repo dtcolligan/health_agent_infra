@@ -1,14 +1,17 @@
 # Health Agent Infra
 
-Health Agent Infra is a local governance runtime for agentic personal-health
-software. It turns a natural-language health agent into a bounded operator:
-you talk to the agent, the agent invokes the local `hai` CLI, and
-deterministic Python owns rules, validation, state, and commits.
+Health Agent Infra is a **domain-pinned AgentSpec implementation for
+personal health** — a local governance runtime that turns a
+natural-language health agent into a bounded operator. You talk to the
+agent, the agent invokes the local `hai` CLI, and deterministic Python
+owns rules, validation, state, and commits. The runtime defines a
+contract (the `hai capabilities` manifest); the agent operates against
+that contract; the contract refuses anything outside it.
 
-It is both a working single-user package and a reference architecture for
-the code/skill split. It is not a chatbot or a hosted coaching app; it is the
-boundary that lets an LLM work over health data without owning the policy
-engine, the database, or the final write path.
+It is both a working single-user package and a reference architecture
+for the code/skill split. It is not a chatbot or a hosted coaching app;
+it is the boundary that lets an LLM work over health data without
+owning the policy engine, the database, or the final write path.
 
 [![PyPI](https://img.shields.io/pypi/v/health-agent-infra)](https://pypi.org/project/health-agent-infra/)
 [![Tests](https://img.shields.io/badge/tests-2493_passing-green)](verification/tests/)

@@ -1,16 +1,21 @@
-# v0.1.14 PLAN — Eval expansion + LLM-judge prep + second-user gate
+# v0.1.14 PLAN — Eval expansion + LLM-judge prep + provenance substrate
 
-**Status:** draft (pre-D14 plan-audit).
+**Status:** D14 PLAN_COHERENT (round 4 close); **Phase 0 (D11)
+gate fired 2026-05-01**; **W-2U-GATE deferred to v0.1.15** at
+pre-implementation gate per `pre_implementation_gate_decision.md`
+(§1.3.1 path 2; cycle scope reshaped to 13 W-ids).
 **Authored:** 2026-05-01.
-**Cycle tier (D15):** substantive (14 W-ids; ≥1 release-blocker
-workstream W-2U-GATE; ≥3 governance-or-audit-chain edits;
-≥10 days estimated).
-**Estimated effort:** 32-45 days (1 maintainer; matches §5
-arithmetic 31.5-44.5; F-PLAN-R2-01 corrected the metadata-surface
-miss from round 1).
-**D14 expectation:** 4-5 rounds; if it exceeds 5 rounds, maintainer
-re-scopes before implementation. (Empirical norm at 17 W-ids
-v0.1.13 was 5 rounds; 14 W-ids should fall in the 4-5 range.)
+**Cycle tier (D15):** substantive (13 W-ids; ≥3 governance-or-audit-chain
+edits; ≥10 days estimated; the v0.1.14-original "≥1 release-blocker
+workstream W-2U-GATE" trigger fired before W-2U-GATE moved to
+v0.1.15, so the substantive tier still holds on the remaining
+two triggers).
+**Estimated effort:** 30-43 days (1 maintainer; was 32-45 pre-defer;
+W-2U-GATE 2-3 d removed). Matches §5 arithmetic 29.5-42.5;
+F-PLAN-R2-01 corrected the metadata-surface miss from D14 round 1.
+**D14 expectation:** **CLOSED at round 4** (PLAN_COHERENT_WITH_REVISIONS
+with 1 nit, applied; settling shape 12 → 7 → 3 → 1-nit → CLOSE
+mirrors v0.1.13 exactly).
 **Source inputs:**
 - `reporting/plans/post_v0_1_13/strategic_research_2026-05-01.md`
   (post-v0.1.13 strategic research, Codex-audited 2 rounds, closed
@@ -34,33 +39,38 @@ v0.1.13 was 5 rounds; 14 W-ids should fall in the 4-5 range.)
 ### 1.1 Theme
 
 Build the eval substrate for v0.2.0's W58 factuality gate; land the
-source-row provenance type that v0.2.0 W52 will require; empirically
-prove the v0.1.13 onboarding test surface against a foreign user;
-and close the v0.1.13-deferred mechanical workstreams (W-29 cli.py
-split, W-Vb-3 9-persona residual, W-DOMAIN-SYNC contract test).
+source-row provenance type that v0.2.0 W52 will require; ship the
+second-user recovery path (`hai backup` / `hai restore` /
+`hai export`); and close the v0.1.13-deferred mechanical workstreams
+(W-29 cli.py split, W-Vb-3 9-persona residual, W-DOMAIN-SYNC
+contract test). Foreign-machine onboarding empirical proof
+(W-2U-GATE) **is deferred to v0.1.15** per the pre-implementation
+gate decision (no candidate on file; §1.3.1 path 2; see
+`pre_implementation_gate_decision.md`).
 
 End-state: **v0.2.0 starts with the source-row primitive + judge
 harness in tree, reducing design risk** (v0.2.0 W52/W58D still ships
 weekly-review aggregation + deterministic claim-block + claim corpus
-in 18-24 days — *not* a wire-up release; F-PLAN-01 corrected). The
-runtime has been validated by a non-maintainer; `hai backup` /
-`hai restore` / `hai export` give second users a recovery path;
-cli.py is split per the v0.1.13 W-29-prep boundary table without
-breaking byte-stability of the capabilities snapshot.
+in 18-24 days — *not* a wire-up release; F-PLAN-01 corrected).
+`hai backup` / `hai restore` / `hai export` give second users a
+recovery path; cli.py is split per the v0.1.13 W-29-prep boundary
+table without breaking byte-stability of the capabilities snapshot.
+Foreign-user empirical validation lands in v0.1.15 once a
+candidate is on file.
 
-### 1.2 Workstream catalogue (14 W-ids)
+### 1.2 Workstream catalogue (13 W-ids)
 
-**Sequencing.** §1.3 below names the strict sequencing constraint:
-W-2U-GATE runs first; if it surfaces a P0 remediation, the cycle
-reshapes around the fix.
+**Sequencing.** §1.3 below names the post-defer order: **W-PROV-1
+runs first** (was second under CP-2U-GATE-FIRST; W-2U-GATE moved to
+v0.1.15 at the pre-implementation gate).
 
 | Section | W-id | Title | Effort | Tier | Source |
 |---|---|---|---|---|---|
-| §2.A | W-2U-GATE | Foreign-machine onboarding empirical proof | 2-3 d | P0 | post-v0.1.13 §5 P0-1 + CP-2U-GATE-FIRST |
+| §2.A | ~~W-2U-GATE~~ | **Deferred to v0.1.15** (no candidate on file at gate; §1.3.1 path 2) | 2-3 d → v0.1.15 | P0 → next-cycle | post-v0.1.13 §5 P0-1 + CP-2U-GATE-FIRST + `pre_implementation_gate_decision.md` |
 | §2.B | W-PROV-1 | Source-row locator type + 1-domain demo | 3-4 d | P0 | post-v0.1.13 §5 P0-2 |
-| §2.C | W-EXPLAIN-UX | `hai explain` confusion-vs-clarity review + P13 persona | 2 d | P0 | post-v0.1.13 §5 P0-3 |
+| §2.C | W-EXPLAIN-UX | `hai explain` confusion-vs-clarity review + P13 persona (foreign-user review uses maintainer-substitute reader per §1.3.1 path 2) | 2 d | P0 | post-v0.1.13 §5 P0-3 |
 | §2.D | W-BACKUP | `hai backup` / `hai restore` / `hai export` | 3-4 d | P0 | post-v0.1.13 §5 P0-5 |
-| §2.E | W-FRESH-EXT | Doc-freshness test extension (catches stale W-id refs) | 1 d | P1 | post-v0.1.13 §6 P1-5 |
+| §2.E | W-FRESH-EXT | Doc-freshness test extension + persona-runner demo-session pre-flight (F-PHASE0-01 absorption) | 1.5 d | P1 | post-v0.1.13 §6 P1-5 + audit_findings F-PHASE0-01 |
 | §2.F | W-AH | Scenario fixture expansion (30+ new) | 3-4 d | tactical-plan | tactical_plan §5.1 |
 | §2.G | W-AI | Ground-truth labelling methodology + maintainer review tool | 2-3 d | tactical-plan | tactical_plan §5.1 |
 | §2.H | W-AJ | LLM-judge harness scaffold (no model invocation yet) | 2-3 d | tactical-plan | tactical_plan §5.1 |
@@ -71,42 +81,41 @@ reshapes around the fix.
 | §2.M | W-Vb-3 | Persona-replay extension (9 non-ship-set personas) | 4-6 d | inherited | v0.1.13 RELEASE_PROOF §5 + F-PLAN-06/R2-02/R3-02 |
 | §2.N | W-DOMAIN-SYNC | Scoped contract test (single truth table) | 0.5 d | inherited | reconciliation L2 + Codex F-PLAN-09 |
 
-**Total:** 14 W-ids; **32-45 days** (matches §5 arithmetic
-31.5-44.5; F-PLAN-02 corrected the original 30-40 round-down);
+**Total:** 13 W-ids (down from 14 at D14 close); **30-43 days**
+(matches §5 arithmetic 29.5-42.5; was 32-45 pre-defer);
 substantive tier.
 
-### 1.3 Sequencing constraint (per CP-2U-GATE-FIRST)
+### 1.3 Sequencing (post-defer)
 
-W-2U-GATE precedes all other workstreams. If it surfaces a P0
-remediation:
+CP-2U-GATE-FIRST sequenced W-2U-GATE first; W-2U-GATE has been
+deferred to v0.1.15 at the pre-implementation gate (§1.3.1 path 2;
+see `pre_implementation_gate_decision.md`). The
+post-W-2U-GATE order from the original §1.3 now applies directly,
+with **W-PROV-1 as the first implementation workstream**:
 
-- **P0 remediation (e.g., foreign user cannot reach `synthesized`):**
-  v0.1.14 reshapes around the fix; non-blocking workstreams move to
-  v0.1.15 without prejudice.
-- **P1 remediation (e.g., onboarding works but UX is rough):** fold
-  the P1 work into v0.1.14 W-EXPLAIN-UX scope; downstream W-ids
-  proceed.
-- **P2 / cosmetic remediation:** file as v0.2.0+ doc-fix-sweep
-  candidates; downstream W-ids proceed.
-
-**Order-of-operations after W-2U-GATE closes:**
-
-1. W-PROV-1 (foundation for v0.2.0 W52; needs to land before W-AH/W-AI scenario work that may reference source-row provenance).
+1. **W-PROV-1** (foundation for v0.2.0 W52; needs to land before W-AH/W-AI scenario work that may reference source-row provenance).
 2. W-29 mechanical cli.py split (mechanical refactor; lands early to avoid merge friction with later substantive edits).
 3. W-DOMAIN-SYNC (small contract test; trivial after W-29).
-4. W-EXPLAIN-UX (P13 persona + foreign-user review; folds W-AK declarative-actions contract).
+4. W-EXPLAIN-UX (P13 persona + foreign-user review uses maintainer-substitute reader per §1.3.1 path 2; folds W-AK declarative-actions contract).
 5. W-BACKUP (independent of eval substrate).
 6. Eval substrate W-AH/W-AI/W-AJ/W-AL/W-AM/W-AN (parallelizable).
 7. W-Vb-3 (parallelizable with eval substrate).
-8. W-FRESH-EXT (last; doc-fix sweep aware of all changes).
+8. W-FRESH-EXT (last; doc-fix sweep + persona-runner demo-session pre-flight aware of all changes).
 
-### 1.3.1 Candidate-absence procedure (per F-PLAN-03 + R2-04 timing fix)
+**If a foreign-user candidate surfaces during the cycle**, a
+mid-cycle CP under
+`reporting/plans/v0_1_14/cycle_proposals/CP-2U-GATE-PULL-FORWARD.md`
+may pull W-2U-GATE back into v0.1.14. The workstream is already
+PLAN-audited; the original §2.A contract (preserved below) still
+applies. No re-D14 is required.
+
+### 1.3.1 Candidate-absence procedure (per F-PLAN-03 + R2-04 timing fix) — **path 2 invoked 2026-05-01**
 
 W-2U-GATE has a hard external dependency on a non-maintainer
-candidate. The OQ-I placeholder ("TBD") must resolve before
-W-2U-GATE can open. Phase 0 (D11 bug-hunt: internal sweep, audit-
-chain probe, 12-persona matrix) does *not* depend on the foreign
-user and may proceed regardless. Procedure:
+candidate. The OQ-I placeholder ("TBD") had to resolve before
+W-2U-GATE could open. Phase 0 (D11 bug-hunt: internal sweep, audit-
+chain probe, 12-persona matrix) did *not* depend on the foreign
+user and proceeded regardless (see `audit_findings.md`). Procedure:
 
 - **Hard rule:** named candidate must be on file by the
   **pre-implementation gate** (after Phase 0 closes, before
@@ -115,12 +124,11 @@ user and may proceed regardless. Procedure:
   pre-cycle code/audit-chain state, not the candidate. "On file"
   means: maintainer has identified the candidate, contacted them,
   and confirmed availability for the recorded session.
-- **If no candidate by pre-implementation gate**, three options —
-  maintainer chooses:
-  1. **Hold W-2U-GATE / implementation.** Phase 0 bug-hunt may
-     proceed (already complete by this point); pre-implementation
-     gate withholds implementation start until candidate surfaces
-     OR option 2/3 fires.
+- **At the 2026-05-01 pre-implementation gate, no candidate was on
+  file.** The maintainer's three options were:
+  1. **Hold W-2U-GATE / implementation.** Phase 0 bug-hunt complete;
+     pre-implementation gate withholds implementation start until
+     candidate surfaces OR option 2/3 fires.
   2. **Defer W-2U-GATE to v0.1.15** with named destination; v0.1.14
      opens implementation without it. W-EXPLAIN-UX foreign-user
      review uses a maintainer-substitute reader (or also defers to
@@ -130,6 +138,11 @@ user and may proceed regardless. Procedure:
      should not be sequenced first under the absence (e.g., if
      candidate availability is a long horizon and v0.1.14 should
      proceed on substrate work first).
+- **Path 2 chosen** (see `pre_implementation_gate_decision.md`).
+  W-2U-GATE deferred to v0.1.15. W-EXPLAIN-UX foreign-user review
+  uses a maintainer-substitute reader (the maintainer reading
+  `hai explain` output with a foreign-user lens) per §2.C below.
+  v0.1.14 opens implementation with W-PROV-1 first.
 
 ### 1.4 Deferrals (named, with destination)
 
@@ -138,14 +151,15 @@ ship in v0.1.14:
 
 | Item | Deferred to | Reason |
 |---|---|---|
+| **W-2U-GATE (foreign-machine onboarding empirical proof)** | **v0.1.15** (per `pre_implementation_gate_decision.md`; §1.3.1 path 2) | No candidate on file at 2026-05-01 pre-implementation gate; W-EXPLAIN-UX foreign-user review uses maintainer-substitute reader in v0.1.14 |
+| W-2U-GATE-2 (second foreign user) | v0.2.0 doc-only adjunct (was scheduled after v0.1.14 W-2U-GATE; v0.2.0 destination preserved — sequenced after v0.1.15 W-2U-GATE first-foreign-user lands) | Sequenced after v0.1.15 remediation |
 | W-MCP-THREAT (MCP threat-model artifact) | v0.2.0 doc-only adjunct | Per CP-MCP-THREAT-FORWARD; precedes v0.3 PLAN-audit |
 | W-COMP-LANDSCAPE (`competitive_landscape.md`) | v0.2.0 doc-only adjunct | Per OQ-E |
 | W-NOF1-METHOD (`n_of_1_methodology.md`) | v0.2.0 doc-only adjunct | Per OQ-E |
-| W-2U-GATE-2 (second foreign user) | v0.2.0 doc-only adjunct | Sequenced after v0.1.14 remediation lands |
 | W-FACT-ATOM (FActScore atomic decomposition) | v0.2.0 (folds into W58D) | Lands when W58D ships |
 | W-JUDGE-BIAS (CALM bias panel) | v0.2.2 (folds into W58J) | Lands when W58J ships per Path A |
-| `hai support` redacted bundle | v0.2.0 (per OQ-M default) | v0.1.14 already at 14 W-ids |
-| AgentSpec README framing (per OQ-J option 2) | maintainer review pending | Draft surfaced; not yet applied |
+| `hai support` redacted bundle | v0.2.0 (per OQ-M default) | v0.1.14 still at 13 W-ids |
+| AgentSpec README framing (per OQ-J option 2) | **applied 2026-05-01** at pre-implementation gate (per `pre_implementation_gate_decision.md`) | README opener now positions HAI as a domain-pinned AgentSpec implementation for personal health |
 | §21 mechanical citation pass on strategic-research report | bundled with W-FRESH-EXT | Codex round-2 deferred per F-RES-R2-06 |
 | privacy.md hosted-agent-exposure tightening (P2-5) | v0.1.14 W-EXPLAIN-UX-adjacent doc | Symmetry with README:34-38 |
 
@@ -153,40 +167,49 @@ ship in v0.1.14:
 
 ## 2. Per-workstream contracts
 
-### §2.A — W-2U-GATE: foreign-machine onboarding empirical proof (P0; sequenced first)
+### §2.A — W-2U-GATE: foreign-machine onboarding empirical proof (**deferred to v0.1.15**)
 
-**Why first.** v0.1.13 shipped the test surface for "trusted first
-value" (W-AA, W-AF, W-A1C7). This workstream produces the empirical
-proof that the test surface holds against a non-maintainer user.
-Every later v0.1.14 workstream inherits the foreign-machine-onboarding
-risk; if W-2U-GATE surfaces a structural blocker, the cycle reshapes.
+**Status (2026-05-01).** **Deferred to v0.1.15** at the
+pre-implementation gate per §1.3.1 path 2 (no foreign-user
+candidate on file at gate; OQ-I unresolved). See
+`pre_implementation_gate_decision.md`. Original contract preserved
+below for v0.1.15 carry-forward and as the contract that applies
+if a mid-cycle candidate surfaces and the workstream is pulled
+back into v0.1.14 via `cycle_proposals/CP-2U-GATE-PULL-FORWARD.md`.
+
+**Original contract (preserved for v0.1.15 / mid-cycle pull-forward):**
+
+**Why first** *(in the original PLAN — now decoupled)*. v0.1.13
+shipped the test surface for "trusted first value" (W-AA, W-AF,
+W-A1C7). This workstream produces the empirical proof that the
+test surface holds against a non-maintainer user. Every later
+workstream inherits the foreign-machine-onboarding risk; if
+W-2U-GATE surfaces a structural blocker, the cycle reshapes.
 
 **Workstream:**
 - One recorded foreign-machine onboarding session by a non-
-  maintainer (candidate: TBD — placeholder per OQ-I; maintainer
-  surfaces the candidate by **pre-implementation gate** per §1.3.1
-  (Phase 0 bug-hunt may proceed regardless); if no candidate by
-  pre-implementation gate, §1.3.1 procedure fires).
+  maintainer (candidate: TBD — surfaced by maintainer at v0.1.15
+  D14 / pre-implementation gate per §1.3.1).
 - Capture: terminal recording, time-to-`synthesized`, every place
   the user paused, every place they had to ask the maintainer.
-- Output artifact: `reporting/docs/second_user_onboarding_2026-XX.md`
-  with verbatim feedback + remediation plan (each item triaged
-  P0/P1/P2 per §1.3).
+- Output artifact:
+  `reporting/docs/second_user_onboarding_2026-XX.md` with verbatim
+  feedback + remediation plan (each item triaged P0/P1/P2 per
+  §1.3 of the v0.1.15 PLAN).
 
 **Acceptance:**
 - One full session reaches `synthesized` **with at most one brief
-  in-session question to the maintainer** (the load-bearing
-  acceptance criterion; "brief" = a single clarifying question that
-  doesn't require the maintainer to operate the keyboard or read
-  the user's screen). Multiple interventions or any maintainer
-  keyboard time = failure.
+  in-session question to the maintainer** (load-bearing acceptance
+  criterion). Multiple interventions or any maintainer keyboard
+  time = failure.
 - Remediation list filed and triaged.
-- If P0 items surface, they are addressed before any §2.F-§2.K
-  eval-substrate W-id ships.
+- If P0 items surface in v0.1.15, they are addressed before any
+  v0.1.15 substrate W-id ships.
 
-**Risk:** structural blocker (P0 remediation surfaces) reshapes the
-cycle. Treat as a *good outcome* — better to surface now than after
-v0.1.14 ships unproven. Candidate-absence path: §1.3.1.
+**Risk:** structural blocker (P0 remediation surfaces) reshapes
+the v0.1.15 cycle. Treat as a *good outcome* — better to surface
+in v0.1.15 than after v0.1.15 ships unproven. Candidate-absence
+path: §1.3.1 (which carries forward to v0.1.15 PLAN authoring).
 
 ### §2.B — W-PROV-1: source-row locator type + 1-domain demo (P0)
 
@@ -239,9 +262,15 @@ only works if the refusal is legible.
   smartphone-native but not CLI-native). Includes
   `expected_actions=` declarative contract per W-AK pattern.
 - Manual review pass: run `hai explain` on three sample state
-  trajectories; have the W-2U-GATE foreign user (or a separate
-  candidate) read the output and report what they understood, what
-  confused them, what they wanted to know.
+  trajectories. **Per §1.3.1 path 2 (W-2U-GATE deferred to
+  v0.1.15), the v0.1.14 review uses a maintainer-substitute
+  reader** — the maintainer reading `hai explain` output with a
+  foreign-user lens (a deliberate "what would a low-domain-knowledge
+  user not understand here?" pass), captured against the P13
+  persona's expected confusion modes. Foreign-user review of the
+  same trajectories carries forward to v0.1.15 W-2U-GATE; this
+  v0.1.14 pass is the maintainer-confidence baseline before the
+  empirical foreign-user pass lands.
 - Output artifact: `reporting/docs/explain_ux_review_2026-XX.md`
   with structured findings list + remediation recommendations.
 
@@ -259,8 +288,12 @@ only works if the refusal is legible.
   matrix-clean = each persona reaches a synthesized plan or
   expected-defer state without crashes; no demo-replay assertion
   for P13).
-- Foreign-user review session captured; structured findings filed
-  in `explain_ux_review_2026-XX.md`.
+- **Maintainer-substitute review** session captured (per §1.3.1
+  path 2; foreign-user review carries forward to v0.1.15 W-2U-GATE);
+  structured findings filed in `explain_ux_review_2026-XX.md` with
+  an explicit "carries-forward-to-v0.1.15-W-2U-GATE-foreign-user-pass"
+  section listing items that must re-test against an actual
+  foreign user once W-2U-GATE opens.
 - The findings doc **must contain a section titled "v0.2.0 W52
   prose obligations"** — each remediation listed as a structured
   item with: issue / proposed prose change / acceptance hook
@@ -303,14 +336,18 @@ gap is real even without quantification.)
 - `hai capabilities --human` updated to surface the new commands;
   byte-stability snapshot accepts the new entries.
 
-### §2.E — W-FRESH-EXT: doc-freshness test extension (P1)
+### §2.E — W-FRESH-EXT: doc-freshness test extension + persona-runner demo-session pre-flight (P1)
 
 **Why P1.** `test_doc_freshness_assertions.py` (added v0.1.12 W-AC)
 catches version-tag drift mechanically. The C-DRIFT-02/03/04 class
 of contradictions caught in the post-v0.1.13 strategic research
 were stale *content* references (v0.1.9 weekly review, v0.2 BCTO,
 v0.3 first-run UX) — the mechanical test cannot catch these without
-expansion.
+expansion. Plus: F-PHASE0-01 (Phase 0 audit_findings.md) surfaced a
+hermeticity bug in the persona harness where a stale demo-session
+marker silently sandboxes the first persona's first proposes; the
+pre-flight cleanup is a sibling hardening adjunct that fits this
+workstream's mechanical-test-coverage scope.
 
 Also catches: stale W-id references in informal doc sections (e.g.,
 any W52 reference outside v0.2.0+ contexts is suspect after this
@@ -322,12 +359,24 @@ extension).
   against current cycle's PLAN.md scope.
 - Cover the §21 mechanical citation pass on
   `strategic_research_2026-05-01.md` (per Codex F-RES-R2-06 deferral).
+- **F-PHASE0-01 absorption (runner-hardening adjunct).** Add a
+  pre-flight step to `verification/dogfood/runner.py` that calls
+  `hai demo cleanup` before the first persona runs; refuse to run
+  if cleanup returns a non-empty `removed_marker_ids` list (a stale
+  marker existed when the harness started — emits a clear error
+  rather than silently sandboxing the first persona's proposes).
+  This prevents the F-PHASE0-01 transient from re-occurring on
+  any future Phase 0 sweep that runs in a maintainer environment
+  with prior `hai demo` activity. Effort: ~3 lines + 1 test.
 
 **Acceptance:**
 - Test rejects W-id references in informal-section sites that
   don't match active workstreams.
 - Test catches the 2 unsampled citation errors from §21 mechanical
   pass (or confirms they are absent).
+- Persona runner pre-flight refuses to run with an active demo
+  marker; test asserts the refusal path emits a `hai demo cleanup`
+  remediation hint.
 
 ### §2.F — W-AH: scenario fixture expansion (tactical-plan)
 
@@ -425,13 +474,13 @@ and exempted explicitly.
 | Ruff | All checks pass | `uvx ruff check src/health_agent_infra` |
 | Capabilities byte-stability | split into expected-diff classes (per F-PLAN-04): **byte-identical** (zero diff) for W-29 mechanical split; **named parser/capabilities surface change accepted** for W-AN (`hai eval run --scenario-set`), W-BACKUP (`backup` / `restore` / `export` subparsers), and W-PROV-1 (locator type in proposal/recommendation rendering only — not a parser change). Regression test must fail any other diff. | `test_cli_parser_capabilities_regression.py` |
 | Persona matrix | 13 personas (P1..P12 + P13), 0 findings, **matrix-clean** (no demo-replay assertion for P13 per F-PLAN-06; W-Vb-3 owns P2-P12 demo-replay) | `verification/dogfood/runner.py` |
-| W-2U-GATE artifact | `reporting/docs/second_user_onboarding_2026-XX.md` exists | manual review |
-| W-EXPLAIN-UX artifact | `reporting/docs/explain_ux_review_2026-XX.md` exists | manual review |
+| ~~W-2U-GATE artifact~~ | **deferred to v0.1.15** (per pre-implementation gate decision; gate carries forward to v0.1.15 ship-gate row) | — |
+| W-EXPLAIN-UX artifact | `reporting/docs/explain_ux_review_2026-XX.md` exists with maintainer-substitute review (per §1.3.1 path 2) + carries-forward-to-v0.1.15 section | manual review |
 | W-BACKUP roundtrip | backup → wipe → restore → identical state | CI |
-| W-FRESH-EXT | doc-freshness test rejects stale W-id refs in informal sections | CI |
+| W-FRESH-EXT | doc-freshness test rejects stale W-id refs in informal sections; persona-runner pre-flight refuses with active demo marker | CI |
 | Codex IR verdict | SHIP or SHIP_WITH_NOTES | review chain |
-| D14 plan-audit | PLAN_COHERENT within ≤5 rounds; if exceeds 5, maintainer re-scopes | review chain |
-| Phase 0 (D11) gate | Internal sweep + audit-chain probe + persona matrix clean | maintainer review |
+| D14 plan-audit | **CLOSED at round 4 (PLAN_COHERENT)**; pre-implementation defer per §1.3.1 path 2 does not require re-D14 | review chain |
+| Phase 0 (D11) gate | **fired green 2026-05-01** (audit_findings.md committed `20dd3c4`) | maintainer review |
 | Cycle tier | substantive declared at top of RELEASE_PROOF | per CP3 D15 |
 
 ---
@@ -440,41 +489,47 @@ and exempted explicitly.
 
 | Risk | Trigger | Mitigation |
 |---|---|---|
-| W-2U-GATE surfaces structural P0 blocker | Foreign user cannot reach `synthesized` | Cycle reshapes around fix per §1.3 sequencing constraint; downstream work moves to v0.1.15 without prejudice; treat as good outcome |
-| W-2U-GATE candidate doesn't materialize | OQ-I unresolved by **pre-implementation gate** (R3-02 corrected timing per §1.3.1 r2 update) | §1.3.1 candidate-absence procedure: **hold W-2U-GATE / implementation** (Phase 0 bug-hunt may proceed) / defer W-2U-GATE to v0.1.15 / re-author PLAN + re-D14. Maintainer chooses |
+| ~~W-2U-GATE surfaces structural P0 blocker~~ | (W-2U-GATE deferred to v0.1.15; risk migrates to v0.1.15 PLAN) | Carries to v0.1.15 risks register |
+| ~~W-2U-GATE candidate doesn't materialize~~ | **Triggered 2026-05-01.** OQ-I unresolved at pre-implementation gate; §1.3.1 path 2 invoked (defer to v0.1.15) per `pre_implementation_gate_decision.md` | Closed for v0.1.14; v0.1.15 D14 re-surfaces OQ-I with same §1.3.1 paths available |
+| Mid-cycle candidate surfaces but pull-forward CP introduces second-order issues | Maintainer drafts `CP-2U-GATE-PULL-FORWARD.md` mid-cycle | CP must include a summary-surface sweep (per AGENTS.md pattern); if the maintainer is uncertain about second-order impact, re-D14 instead |
 | W-PROV-1 schema design needs major change | Recovery R-rule demo reveals locator type insufficient (e.g., needs to span multiple tables) | v0.1.14 splits into substrate (W-PROV-1 only) + features (rest); v0.2.0 W52 absorbs the redesign |
 | W-29 split breaks capabilities snapshot | Byte-stability regression test fails post-split | W-29-prep boundary table + green verdict already cleared this; rollback the split if regression appears at IR. Note §3 ship-gate diff classes: W-29 must be **byte-identical** (zero diff allowed) |
 | W-Vb-3 partial-closes again | Same shape as v0.1.13 (3-at-a-time) | Honest partial-closure naming with v0.1.15 destination per AGENTS.md "Honest partial-closure naming" pattern; W-Vb-3 owns P2-P12 only (per F-PLAN-06) |
-| W-EXPLAIN-UX foreign user unavailable | OQ-I candidate falls through | Use W-2U-GATE candidate for both; or defer W-EXPLAIN-UX to v0.1.15 if neither resolves; covered by §1.3.1 |
-| Cycle exceeds 45-day budget | Cumulative effort overruns 32-45 envelope | Re-scope: defer one of W-AM / W-AN / W-FRESH-EXT to v0.1.15; substrate W-ids (W-2U-GATE / W-PROV-1 / W-BACKUP / W-29) are non-negotiable |
+| W-EXPLAIN-UX maintainer-substitute review surfaces a confusion mode the maintainer cannot judge from inside | Maintainer cannot honestly evaluate "would a low-domain-knowledge user understand this?" from inside | Carries-forward-to-v0.1.15 section in `explain_ux_review_2026-XX.md` lists items that must re-test against the v0.1.15 W-2U-GATE foreign user; v0.1.14 ships the maintainer-confidence baseline, v0.1.15 confirms or remediates against the empirical foreign-user pass |
+| Cycle exceeds 43-day budget | Cumulative effort overruns 30-43 envelope (post-defer) | Re-scope: defer one of W-AM / W-AN / W-FRESH-EXT to v0.1.15; substrate W-ids (W-PROV-1 / W-BACKUP / W-29) are non-negotiable. Pulling W-2U-GATE forward via mid-cycle CP raises the budget by 2-3 d; account for the increase before pulling |
 | D14 exceeds 5 rounds | New finding-density at round N > N-1 | Per §3 ship gate + §5 D14 expectation: maintainer re-scopes before implementation; surface to Codex why the cycle is settling slower than the empirical norm. (R2-05 corrected the original §1.3 / §1.3.1 cross-refs — §1.3.1 governs candidate absence, not round-count rescope.) |
 
 ---
 
 ## 5. Effort estimate
 
-**32-45 days, 1 maintainer, substantive cycle tier.**
+**30-43 days, 1 maintainer, substantive cycle tier** (post-defer
+of W-2U-GATE; was 32-45 days at D14 close).
 
 Breakdown:
-- P0 additions: 11-14 days (W-2U-GATE 2-3 + W-PROV-1 3-4 +
-  W-EXPLAIN-UX 2 + W-BACKUP 3-4 + W-FRESH-EXT 1).
+- P0 additions: 9.5-11.5 days (W-PROV-1 3-4 + W-EXPLAIN-UX 2 +
+  W-BACKUP 3-4 + W-FRESH-EXT 1.5; **W-2U-GATE 2-3 d removed**;
+  W-FRESH-EXT +0.5 d for F-PHASE0-01 absorption).
 - Tactical-plan baseline: 11-16 days (W-AH 3-4 + W-AI 2-3 + W-AJ 2-3
   + W-AL 2 + W-AM 1-2 + W-AN 1-2).
 - Inherited from v0.1.13: 7.5-10.5 days (W-29 3-4 + W-Vb-3 4-6 +
   W-DOMAIN-SYNC 0.5).
-- Cycle overhead (D14 plan-audit, Phase 0 bug-hunt, IR rounds,
-  RELEASE_PROOF authoring, ship-time freshness sweep): 2-4 days.
+- Cycle overhead (D14 plan-audit closed at round 4, Phase 0
+  bug-hunt closed 2026-05-01, IR rounds, RELEASE_PROOF authoring,
+  ship-time freshness sweep): 2-4 days.
 
-Total: **31.5-44.5 days**; reported as **32-45 days** to match the
-arithmetic honestly (F-PLAN-02 corrected the original 30-40
-round-down). If the cycle trends past 45 days, the §4 risks register
-"Cycle exceeds 45-day budget" mitigation fires: defer one of
-W-AM / W-AN / W-FRESH-EXT to v0.1.15.
+Total: **29.5-42.5 days**; reported as **30-43 days** to match
+the arithmetic honestly. If the cycle trends past 43 days, the
+§4 risks register "Cycle exceeds 43-day budget" mitigation fires:
+defer one of W-AM / W-AN / W-FRESH-EXT to v0.1.15.
 
-D14 expectation: **4-5 rounds**. Per the cycle's §3 ship-gate
-acceptance: if it exceeds 5 rounds, maintainer re-scopes. v0.1.13's
-5-round settling on 17 W-ids is the prior; v0.1.14's 14 W-ids should
-fall in the 4-5 range.
+D14 status: **CLOSED at round 4** (PLAN_COHERENT_WITH_REVISIONS
+with 1 nit; nit applied; mirrors v0.1.13's 4-round
+12 → 7 → 3 → 1-nit → CLOSE settling shape on 14-W-id substantive
+PLANs). The pre-implementation defer of W-2U-GATE per §1.3.1
+path 2 does not require re-D14 (the path is the canonical
+candidate-absence handler explicitly anticipated by the audited
+PLAN).
 
 ---
 
@@ -519,7 +574,7 @@ start until this gate fires.
 
 | CP | Status | Application target |
 |---|---|---|
-| **CP-2U-GATE-FIRST** | implemented-in-PLAN | PLAN §1.3 + §1.3.1 + §2.A |
+| **CP-2U-GATE-FIRST** | implemented-in-PLAN at D14 close; **W-2U-GATE deferred to v0.1.15 at pre-implementation gate** per §1.3.1 path 2 (CP-2U-GATE-FIRST status: applied-but-deferred; original sequencing intent carries forward to v0.1.15) | PLAN §1.3 + §1.3.1 + §2.A + `pre_implementation_gate_decision.md` |
 | **CP-MCP-THREAT-FORWARD** | applied-pre-cycle 2026-05-01 | strategic_plan_v1.md Wave 3 staging |
 | **CP-DO-NOT-DO-ADDITIONS** | applied-pre-cycle 2026-05-01 | AGENTS.md "Do Not Do" (3 new bullets) |
 | **CP-PATH-A** | applied-pre-cycle 2026-05-01 | tactical_plan_v0_1_x.md §6/§7/§8/§9 + ROADMAP.md + strategic_plan_v1.md Wave 2 |
@@ -561,9 +616,13 @@ This PLAN is the direct output of:
 3. **Maintainer OQ resolution 2026-05-01:**
    - All yes-default OQs (A, C, D, E, F, G, H, K, L, N, O) accepted.
    - OQ-B: Path A (4-release strict-C6).
-   - OQ-I: TBD placeholder for W-2U-GATE candidate.
-   - OQ-J: option 2 (draft AgentSpec README framing; surface for
-     review before applying — pending).
+   - OQ-I: TBD placeholder for W-2U-GATE candidate **at D14 close;
+     resolved at pre-implementation gate 2026-05-01 via §1.3.1
+     path 2 (defer W-2U-GATE to v0.1.15)** per
+     `pre_implementation_gate_decision.md`.
+   - OQ-J: option 2 (draft AgentSpec README framing) **applied
+     2026-05-01 at pre-implementation gate** per
+     `pre_implementation_gate_decision.md`.
    - OQ-M: default (`hai support` in v0.2.0).
 4. **CPs authored under
    `reporting/plans/post_v0_1_13/cycle_proposals/`:**

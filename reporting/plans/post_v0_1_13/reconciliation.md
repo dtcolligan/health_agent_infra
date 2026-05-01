@@ -146,17 +146,26 @@ strategic-posture disagreements that would warrant push-back.
 
 ## 5. What remains open
 
-**Maintainer decisions surfaced as OQs (§19 of the artifact):**
+**Maintainer decisions surfaced as OQs (§19 of the artifact);
+resolution status updated 2026-05-01 at v0.1.14
+pre-implementation gate per
+`reporting/plans/v0_1_14/pre_implementation_gate_decision.md`:**
 
 - **OQ-B (load-bearing):** Path A (4-release strict-C6) vs Path B
   (single-release per CP5 with new CP overriding C6)? This shapes
-  v0.2.0+ scope significantly.
+  v0.2.0+ scope significantly. **Resolved 2026-05-01: Path A.**
 - **OQ-I:** Designate the 2026-04-28 demo recipient as the
   W-2U-GATE first foreign user, or different candidate?
+  **Resolved 2026-05-01:** TBD-placeholder at D14 close →
+  unresolved at v0.1.14 pre-implementation gate → **§1.3.1 path 2
+  invoked: W-2U-GATE deferred to v0.1.15 with named destination.**
+  v0.1.15 D14 re-surfaces OQ-I.
 - **OQ-J:** Adopt "domain-pinned AgentSpec for personal health"
   framing in README.md opener? Branding choice, not architecture.
+  **Resolved 2026-05-01:** option 2 (draft + apply); applied at
+  v0.1.14 pre-implementation gate.
 - **OQ-M:** `hai support` (redacted state bundle) in v0.1.14 or
-  v0.2.0?
+  v0.2.0? **Resolved 2026-05-01: v0.2.0 default.**
 
 **Maintainer decisions with proposed defaults (likely yes; will
 draft CPs as proposals):**

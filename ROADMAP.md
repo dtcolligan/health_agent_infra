@@ -28,21 +28,28 @@ This file is a high-level pointer; for actual scope, read those plans.
   closed at round 3 with 6 → 2 → 0 (cleaner than the empirical
   norm). See
   [`reporting/plans/v0_1_13/RELEASE_PROOF.md`](reporting/plans/v0_1_13/RELEASE_PROOF.md).
-- **v0.1.14 in flight (next cycle, post-v0.1.13 strategic research
-  reconciled — 14 W-ids).** Eval substrate (W-AH/W-AI/W-AJ/W-AL/W-AM/
-  W-AN) + inherited W-29 / W-Vb-3 / W-DOMAIN-SYNC + 5 P0/P1 additions
-  from post-v0.1.13 strategic research (W-2U-GATE foreign-machine
-  onboarding empirical proof, W-PROV-1 source-row locator,
-  W-EXPLAIN-UX `hai explain` UX review, W-BACKUP backup/restore/
-  export, W-FRESH-EXT doc-freshness extension). W-2U-GATE sequenced
-  first per CP-2U-GATE-FIRST.
+- **v0.1.14 open (D14 PLAN_COHERENT closed at round 4 2026-05-01;
+  Phase 0 (D11) gate fired green 2026-05-01;
+  W-2U-GATE deferred to v0.1.15 at pre-implementation gate per
+  PLAN.md §1.3.1 path 2 — 13 W-ids post-defer).** Eval substrate
+  (W-AH/W-AI/W-AJ/W-AL/W-AM/W-AN) + inherited W-29 / W-Vb-3 /
+  W-DOMAIN-SYNC + 4 P0/P1 additions from post-v0.1.13 strategic
+  research (W-PROV-1 source-row locator, W-EXPLAIN-UX `hai explain`
+  UX review with maintainer-substitute reader, W-BACKUP
+  backup/restore/export, W-FRESH-EXT doc-freshness extension +
+  persona-runner demo-session pre-flight). W-PROV-1 sequenced first
+  post-defer.
 
 ## Next
 
-- **v0.1.14 — eval substrate + cli.py split + W-Vb-3 + 5 P0/P1
-  additions (14 W-ids, 32-45 days).** Detailed scope in
-  `reporting/plans/tactical_plan_v0_1_x.md` §5; full PLAN under
-  D14 plan-audit before opening.
+- **v0.1.14 open — eval substrate + cli.py split + W-Vb-3 + 4 P0/P1
+  additions (13 W-ids post-defer, 30-43 days).** Detailed scope in
+  `reporting/plans/tactical_plan_v0_1_x.md` §5; PLAN +
+  `pre_implementation_gate_decision.md` under
+  `reporting/plans/v0_1_14/`.
+- **v0.1.15 — W-2U-GATE foreign-machine onboarding empirical proof
+  (carry-forward from v0.1.14 pre-implementation gate defer) +
+  scope TBD.** Cycle authoring after v0.1.14 ship.
 - **v0.2.0 — weekly review + deterministic factuality (Path A
   release 1 of 4).** W52 weekly review with source-row locators
   (uses v0.1.14 W-PROV-1), W58D deterministic claim-block (blocking

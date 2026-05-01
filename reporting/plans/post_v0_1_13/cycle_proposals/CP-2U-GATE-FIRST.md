@@ -7,6 +7,14 @@
 + §1.3.1 + §2.A. Revisions per F-PLAN-03 added the §1.3.1
 candidate-absence procedure; F-PLAN-06 clarified W-Vb-3 vs
 W-EXPLAIN-UX P13 boundary.
+**Pre-implementation gate disposition (2026-05-01):**
+**applied-but-deferred.** No foreign-user candidate on file at the
+gate; §1.3.1 path 2 invoked (defer W-2U-GATE to v0.1.15). The
+sequencing intent of this CP carries forward to v0.1.15 — when
+W-2U-GATE opens in v0.1.15, the "sequenced first" convention still
+applies under v0.1.15's own §1.3 / §1.3.1. v0.1.14 opens
+implementation with W-PROV-1 first per the post-defer §1.3 ordering.
+See `reporting/plans/v0_1_14/pre_implementation_gate_decision.md`.
 **Application timing:** at v0.1.14 PLAN.md authoring — inserts a new
 workstream as §2.A of the new PLAN; tactical_plan_v0_1_x.md §5.1
 gains a new row; strategic_plan_v1.md gains a §11 footnote on
