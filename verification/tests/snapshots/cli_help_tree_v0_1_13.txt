@@ -2,6 +2,7 @@ hai auth garmin: --email,--help,--password-env,--password-stdin
 hai auth intervals-icu: --api-key-env,--api-key-stdin,--athlete-id,--help
 hai auth remove: --help,--source
 hai auth status: --help
+hai backup: --base-dir,--db-path,--dest,--help
 hai capabilities: --help,--human,--json,--markdown
 hai clean: --db-path,--evidence-json,--help
 hai config diff: --help,--path
@@ -13,9 +14,10 @@ hai demo cleanup: --help
 hai demo end: --help
 hai demo start: --blank,--help,--persona
 hai doctor: --as-of,--db-path,--deep,--help,--json,--skills-dest,--thresholds-path,--user-id
-hai eval run: --domain,--help,--json,--synthesis
+hai eval run: --domain,--help,--json,--scenario-set,--synthesis
 hai exercise search: --db-path,--help,--limit,--query
 hai explain: --as-of,--daily-plan-id,--db-path,--for-date,--help,--operator,--plan-version,--text,--user-id
+hai export: --base-dir,--dest,--help
 hai init: --db-path,--force,--guided,--help,--history-days,--skills-dest,--skip-skills,--thresholds-path,--user-id,--with-auth,--with-first-pull
 hai intake exercise: --aliases,--category,--db-path,--equipment,--exercise-id,--help,--name,--primary-muscle-group,--secondary-muscle-groups
 hai intake gaps: --allow-stale-snapshot,--as-of,--db-path,--evidence-json,--from-state-snapshot,--help,--user-id
@@ -38,6 +40,7 @@ hai propose: --base-dir,--db-path,--domain,--help,--proposal-json,--replace
 hai pull: --as-of,--date,--db-path,--help,--history-days,--live,--manual-readiness-json,--source,--use-default-manual-readiness,--user-id
 hai research search: --help,--topic
 hai research topics: --help
+hai restore: --base-dir,--bundle,--db-path,--help
 hai review record: --base-dir,--completed,--db-path,--disagreed-firings,--duration-minutes,--help,--intensity-delta,--outcome-json,--post-energy,--pre-energy
 hai review schedule: --base-dir,--db-path,--help,--recommendation-json
 hai review summary: --base-dir,--domain,--help,--user-id

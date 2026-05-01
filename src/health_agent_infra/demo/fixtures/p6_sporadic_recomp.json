@@ -1,0 +1,124 @@
+{
+  "description": "P6 Sporadic recomp. 30yo female, 65kg/170cm, light activity. Sporadic logging (~30% of days have nutrition or readiness gaps). Recomp goal. Stresses gap-detection + sporadic-data path. v0.1.14 W-Vb-3 minimal demo fixture.",
+  "domain_proposals": [
+    {
+      "action": "proceed_with_planned_session",
+      "action_detail": null,
+      "bounded": true,
+      "confidence": "moderate",
+      "domain": "recovery",
+      "policy_decisions": [
+        {
+          "decision": "allow",
+          "note": "persona_baseline_p6_sporadic_recomp",
+          "rule_id": "r_recovery_baseline"
+        }
+      ],
+      "rationale": [
+        "Demo fixture seeds proceed_with_planned_session for p6_sporadic_recomp replay."
+      ],
+      "schema_version": "recovery_proposal.v1",
+      "uncertainty": []
+    },
+    {
+      "action": "defer_decision_insufficient_signal",
+      "action_detail": null,
+      "bounded": true,
+      "confidence": "moderate",
+      "domain": "running",
+      "policy_decisions": [
+        {
+          "decision": "allow",
+          "note": "persona_baseline_p6_sporadic_recomp",
+          "rule_id": "r_running_baseline"
+        }
+      ],
+      "rationale": [
+        "Persona p6_sporadic_recomp: demo fixture seeds defer_decision_insufficient_signal."
+      ],
+      "schema_version": "running_proposal.v1",
+      "uncertainty": [
+        "sporadic_data_below_signal_threshold"
+      ]
+    },
+    {
+      "action": "maintain_schedule",
+      "action_detail": null,
+      "bounded": true,
+      "confidence": "moderate",
+      "domain": "sleep",
+      "policy_decisions": [
+        {
+          "decision": "allow",
+          "note": "persona_baseline_p6_sporadic_recomp",
+          "rule_id": "r_sleep_baseline"
+        }
+      ],
+      "rationale": [
+        "Persona p6_sporadic_recomp: demo fixture seeds maintain_schedule."
+      ],
+      "schema_version": "sleep_proposal.v1",
+      "uncertainty": []
+    },
+    {
+      "action": "maintain_routine",
+      "action_detail": null,
+      "bounded": true,
+      "confidence": "moderate",
+      "domain": "stress",
+      "policy_decisions": [
+        {
+          "decision": "allow",
+          "note": "persona_baseline_p6_sporadic_recomp",
+          "rule_id": "r_stress_baseline"
+        }
+      ],
+      "rationale": [
+        "Persona p6_sporadic_recomp: demo fixture seeds maintain_routine."
+      ],
+      "schema_version": "stress_proposal.v1",
+      "uncertainty": []
+    },
+    {
+      "action": "defer_decision_insufficient_signal",
+      "action_detail": null,
+      "bounded": true,
+      "confidence": "moderate",
+      "domain": "strength",
+      "policy_decisions": [
+        {
+          "decision": "allow",
+          "note": "persona_baseline_p6_sporadic_recomp",
+          "rule_id": "r_strength_baseline"
+        }
+      ],
+      "rationale": [
+        "Persona p6_sporadic_recomp: demo fixture seeds defer_decision_insufficient_signal."
+      ],
+      "schema_version": "strength_proposal.v1",
+      "uncertainty": []
+    },
+    {
+      "action": "maintain_targets",
+      "action_detail": null,
+      "bounded": true,
+      "confidence": "moderate",
+      "domain": "nutrition",
+      "policy_decisions": [
+        {
+          "decision": "allow",
+          "note": "persona_baseline_p6_sporadic_recomp",
+          "rule_id": "r_nutrition_baseline"
+        }
+      ],
+      "rationale": [
+        "Persona p6_sporadic_recomp: demo fixture seeds maintain_targets."
+      ],
+      "schema_version": "nutrition_proposal.v1",
+      "uncertainty": []
+    }
+  ],
+  "persona_slug": "p6_sporadic_recomp",
+  "schema_version": "demo_persona_fixture.v1",
+  "scope": "full"
+}

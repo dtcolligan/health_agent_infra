@@ -1,0 +1,26 @@
+{
+  "description": "ACWR ratio at 1.8 (well above spike threshold) \u2014 must escalate.",
+  "domain": "running",
+  "expected": {
+    "policy": {
+      "fired_rule_ids": [
+        "acwr_spike_escalation"
+      ],
+      "forced_action": "escalate_for_user_review"
+    }
+  },
+  "input": {
+    "signals": {
+      "acwr_ratio": 1.8,
+      "recent_hard_session_count_7d": 4,
+      "resting_hr_band": "above",
+      "sleep_debt_band": "moderate",
+      "training_readiness_pct": 50,
+      "weekly_mileage_baseline_m": 50000.0,
+      "weekly_mileage_m": 90000.0
+    }
+  },
+  "kind": "domain",
+  "scenario_id": "run_004_should_escalate_acwr_max",
+  "tag": "w-am-adversarial-escalate"
+}

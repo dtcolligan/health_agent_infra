@@ -213,6 +213,17 @@ def _format_proposal(p: ExplainProposal) -> str:
         parts.append(
             f"    policy_decisions: {_compact_json(p.policy_decisions)}"
         )
+    # v0.1.14 W-PROV-1 — render source-row locators when present.
+    if p.evidence_locators:
+        parts.append("    evidence_locators:")
+        for loc in p.evidence_locators:
+            pk_pairs = ", ".join(
+                f"{k}={v}" for k, v in sorted(loc.get("pk", {}).items())
+            )
+            column = loc.get("column") or "<row>"
+            parts.append(
+                f"      - {loc.get('table')} / {pk_pairs} / {column}"
+            )
     return "\n".join(parts)
 
 
@@ -270,6 +281,17 @@ def _format_recommendation(r: ExplainRecommendation) -> str:
         parts.append(f"    supersedes : {r.supersedes}")
     if r.superseded_by:
         parts.append(f"    superseded_by: {r.superseded_by}")
+    # v0.1.14 W-PROV-1
+    if r.evidence_locators:
+        parts.append("    evidence_locators:")
+        for loc in r.evidence_locators:
+            pk_pairs = ", ".join(
+                f"{k}={v}" for k, v in sorted(loc.get("pk", {}).items())
+            )
+            column = loc.get("column") or "<row>"
+            parts.append(
+                f"      - {loc.get('table')} / {pk_pairs} / {column}"
+            )
     return "\n".join(parts)
 
 

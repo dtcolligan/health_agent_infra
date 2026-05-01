@@ -21,14 +21,30 @@ from .runner import (
 
 
 def cmd_eval_run(args: argparse.Namespace) -> int:
-    if args.synthesis:
+    from health_agent_infra.core import exit_codes
+
+    # v0.1.14 W-AN: --scenario-set <set> shorthand. Translates to the
+    # underlying (kind, domain) pair, except for 'judge_adversarial'
+    # which is fixture-only (W-AI corpus; no scoring path until v0.2.2
+    # W58J wires the judge harness) and 'all' which fan-outs.
+    scenario_set = getattr(args, "scenario_set", None)
+    if scenario_set:
+        if scenario_set == "judge_adversarial":
+            return _emit_judge_adversarial_summary(args)
+        if scenario_set == "all":
+            return _run_all_scenario_sets(args)
+        if scenario_set == "synthesis":
+            kind = "synthesis"
+            domain: Optional[str] = None
+        else:
+            kind = "domain"
+            domain = scenario_set
+    elif args.synthesis:
         kind = "synthesis"
-        domain: Optional[str] = None
+        domain = None
     else:
         kind = "domain"
         domain = args.domain
-
-    from health_agent_infra.core import exit_codes
 
     try:
         scenarios = load_scenarios(kind, domain=domain)
@@ -81,6 +97,67 @@ def cmd_eval_run(args: argparse.Namespace) -> int:
     return exit_codes.OK if failed == 0 else exit_codes.USER_INPUT
 
 
+def _emit_judge_adversarial_summary(args: argparse.Namespace) -> int:
+    """v0.1.14 W-AN + W-AI: emit shape summary of the judge-adversarial
+    fixture corpus. No scoring; v0.2.2 W58J wires real judge calls."""
+
+    from importlib.resources import files
+    from health_agent_infra.core import exit_codes
+
+    ja_root = files("health_agent_infra").joinpath(
+        "evals", "scenarios", "judge_adversarial"
+    )
+    index_path = ja_root.joinpath("index.json")
+    if not index_path.is_file():
+        print(
+            "judge_adversarial index missing; v0.1.14 W-AI fixture "
+            "corpus is incomplete",
+            file=sys.stderr,
+        )
+        return exit_codes.INTERNAL
+    index = json.loads(index_path.read_text(encoding="utf-8"))
+    summary = {
+        "scenario_set": "judge_adversarial",
+        "shape_only": True,
+        "schema_version": index["schema_version"],
+        "categories": {
+            cat: len(ids) for cat, ids in index["categories"].items()
+        },
+        "total_fixtures": index["total_fixtures"],
+        "scoring_state": (
+            "no_scoring_until_v0_2_2_w58j_wires_judge_harness"
+        ),
+    }
+    if getattr(args, "json", False):
+        print(json.dumps(summary, indent=2, sort_keys=True))
+    else:
+        print(f"judge-adversarial corpus ({index['total_fixtures']} fixtures):")
+        for cat, count in summary["categories"].items():
+            print(f"  {cat}: {count}")
+        print("(no scoring; v0.2.2 W58J wires the judge harness)")
+    return exit_codes.OK
+
+
+def _run_all_scenario_sets(args: argparse.Namespace) -> int:
+    """v0.1.14 W-AN: 'all' fan-out — runs every domain + synthesis
+    sequentially. Returns first non-zero rc; OK on full pass."""
+
+    from health_agent_infra.core import exit_codes
+
+    rc_overall = exit_codes.OK
+    for set_name in sorted(SUPPORTED_DOMAINS) + ["synthesis"]:
+        sub_args = argparse.Namespace(
+            domain=set_name if set_name != "synthesis" else None,
+            synthesis=(set_name == "synthesis"),
+            scenario_set=None,
+            json=getattr(args, "json", False),
+        )
+        rc = cmd_eval_run(sub_args)
+        if rc != exit_codes.OK and rc_overall == exit_codes.OK:
+            rc_overall = rc
+    return rc_overall
+
+
 def register_eval_subparser(sub: argparse._SubParsersAction) -> None:
     """Register the ``hai eval`` subparser tree on an existing dispatcher."""
 
@@ -104,6 +181,17 @@ def register_eval_subparser(sub: argparse._SubParsersAction) -> None:
         "--synthesis",
         action="store_true",
         help="Run synthesis-level (X-rule + run_synthesis) scenarios",
+    )
+    group.add_argument(
+        "--scenario-set",
+        choices=sorted(SUPPORTED_DOMAINS) + ["synthesis", "judge_adversarial", "all"],
+        help=(
+            "Run a named scenario set (v0.1.14 W-AN). 'all' runs every "
+            "domain + synthesis (judge_adversarial is fixture-only and "
+            "skipped from 'all' until v0.2.2 W58J wires the judge "
+            "harness). 'judge_adversarial' enumerates the v0.1.14 W-AI "
+            "fixture corpus shape-only — no scoring."
+        ),
     )
     p_run.add_argument(
         "--json",

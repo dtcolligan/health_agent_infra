@@ -1,0 +1,36 @@
+{
+  "description": "RHR spike + low HRV + sparse coverage compound \u2014 must escalate even though R6 alone could allow caps.",
+  "domain": "recovery",
+  "expected": {
+    "policy": {
+      "fired_rule_ids": [
+        "resting_hr_spike_escalation"
+      ],
+      "forced_action": "escalate_for_user_review"
+    }
+  },
+  "input": {
+    "evidence": {
+      "as_of_date": "2026-04-30",
+      "hrv_ms": 35.0,
+      "resting_hr": 75.0,
+      "sleep_hours": 5.5,
+      "soreness_self_report": "moderate",
+      "user_id": "u_eval"
+    },
+    "raw_summary": {
+      "as_of_date": "2026-04-30",
+      "hrv_ratio_vs_baseline": 0.6,
+      "resting_hr_baseline": 55.0,
+      "resting_hr_ratio_vs_baseline": 1.36,
+      "resting_hr_spike_days": 4,
+      "trailing_7d_training_load": 600.0,
+      "training_load_baseline": 400.0,
+      "training_load_ratio_vs_baseline": 1.5,
+      "user_id": "u_eval"
+    }
+  },
+  "kind": "domain",
+  "scenario_id": "rec_004_should_escalate_compound_signals",
+  "tag": "w-am-adversarial-escalate"
+}

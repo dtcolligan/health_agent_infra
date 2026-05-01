@@ -85,3 +85,108 @@ def test_doc_does_not_name_older_version_as_current(
         f"Package version is v{'.'.join(str(p) for p in pkg_version)}. "
         f"Update {rel_path} to reflect the shipped state."
     )
+
+
+# ---------------------------------------------------------------------------
+# v0.1.14 W-FRESH-EXT — W-id reference freshness across summary surfaces
+# ---------------------------------------------------------------------------
+
+# v0.1.14 W-FRESH-EXT extension: scan summary surfaces for v0.1.14 W-id
+# references and confirm they match the active cycle's PLAN.md catalogue.
+# This catches the v0.1.13 → v0.1.14 reconciliation pattern where a CP
+# referenced a W-id that didn't (yet) exist in PLAN.md.
+#
+# The check is deliberately scoped to the **current cycle's PLAN** and a
+# small set of summary surfaces (ROADMAP, tactical_plan, strategic_plan).
+# Historical references in audit-chain artifacts (codex_*_response*.md,
+# RELEASE_PROOF.md, REPORT.md) are immutable history and exempt.
+
+_CURRENT_CYCLE_PLAN = REPO_ROOT / "reporting/plans/v0_1_14/PLAN.md"
+
+_FRESHNESS_W_ID_SURFACES: tuple[str, ...] = (
+    "ROADMAP.md",
+    "reporting/plans/tactical_plan_v0_1_x.md",
+    "reporting/plans/strategic_plan_v1.md",
+)
+
+# Pattern matches the W-id catalogue rows in PLAN.md §1.2. Capture-group 1
+# is the W-id token (e.g., 'W-PROV-1', 'W-EXPLAIN-UX', 'W-2U-GATE').
+_PLAN_W_ID_ROW_RE = re.compile(
+    r"^\|\s*§2\.[A-Z]+\s*\|\s*~?~?\*?\*?(W-[A-Z0-9-]+)",
+    re.MULTILINE,
+)
+
+
+def _current_cycle_w_ids() -> set[str]:
+    """Parse v0.1.14 PLAN.md §1.2 catalogue rows and return the W-id set."""
+
+    if not _CURRENT_CYCLE_PLAN.exists():
+        return set()
+    body = _CURRENT_CYCLE_PLAN.read_text(encoding="utf-8")
+    return set(_PLAN_W_ID_ROW_RE.findall(body))
+
+
+def test_current_cycle_plan_has_at_least_one_w_id():
+    """Sanity: parser actually finds W-ids in the current cycle's PLAN.md."""
+
+    ids = _current_cycle_w_ids()
+    # 13 W-ids post-W-2U-GATE-defer (was 14 at D14 close); allow ≥10 to
+    # tolerate honest partial closures during the cycle.
+    assert len(ids) >= 10, (
+        f"v0.1.14 PLAN.md §1.2 catalogue parsed {len(ids)} W-ids: "
+        f"{sorted(ids)}. The W-FRESH-EXT contract requires at least 10."
+    )
+
+
+def test_v0_1_14_w_id_in_summary_surface_implies_in_plan_catalogue():
+    """A W-id named in a summary surface (ROADMAP / tactical / strategic)
+    should match the current cycle's PLAN.md catalogue if it's named as
+    a v0.1.14 surface item.
+
+    This is a soft check — we don't fail on every named W-id (historical
+    references are legitimate). We DO fail when a summary surface
+    explicitly tags a W-id as v0.1.14 scope but the W-id doesn't appear
+    in v0.1.14 PLAN.md §1.2.
+    """
+
+    plan_w_ids = _current_cycle_w_ids()
+    if not plan_w_ids:
+        pytest.skip("PLAN.md §1.2 not parseable; skipping cross-check")
+
+    for rel_path in _FRESHNESS_W_ID_SURFACES:
+        path = REPO_ROOT / rel_path
+        if not path.exists():
+            continue
+        body = path.read_text(encoding="utf-8")
+        # Find lines that explicitly tag a W-id as v0.1.14 scope.
+        # Pattern: a line containing both "v0.1.14" and a W-id token.
+        for line in body.splitlines():
+            if "v0.1.14" not in line:
+                continue
+            # Extract every W-id-shaped token on this line.
+            tokens = re.findall(r"\bW-[A-Z0-9-]+\b", line)
+            for tok in tokens:
+                # Honest-deferral / inherited tokens are immune — they
+                # legitimately reference a W-id outside the current
+                # PLAN catalogue (e.g., "W-2U-GATE deferred to v0.1.15").
+                if any(
+                    kw in line.lower() for kw in (
+                        "deferred", "defer to", "inherited",
+                        "carry-forward", "carry forward", "v0.1.15",
+                        "v0.1.13", "v0.2.0", "post-",
+                        "pull-forward", "pull forward",
+                        "pulled forward", "pulled-forward",
+                        "shipped",
+                    )
+                ):
+                    continue
+                # Otherwise, the token must be in the current PLAN.
+                if tok not in plan_w_ids:
+                    pytest.fail(
+                        f"{rel_path}: line names {tok!r} in v0.1.14 "
+                        f"context but PLAN.md §1.2 catalogue does not "
+                        f"contain it. Either update PLAN.md to include "
+                        f"{tok}, mark this reference as deferred / "
+                        f"inherited, or remove the v0.1.14 tag.\n"
+                        f"  line: {line.strip()[:200]!r}"
+                    )

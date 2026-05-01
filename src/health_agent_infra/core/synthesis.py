@@ -205,7 +205,7 @@ def _mechanical_draft(
     review_at = issued_at + timedelta(hours=23)
     review_event_id = f"rev_{proposal['for_date']}_{proposal['user_id']}_{recommendation_id}"
 
-    return {
+    rec: dict[str, Any] = {
         "schema_version": RECOMMENDATION_SCHEMA_BY_DOMAIN.get(
             proposal["domain"], RECOMMENDATION_SCHEMA_VERSION,
         ),
@@ -230,6 +230,13 @@ def _mechanical_draft(
         "bounded": True,
         "daily_plan_id": daily_plan_id,
     }
+    # v0.1.14 W-PROV-1: copy evidence_locators from proposal to
+    # recommendation. The proposal validator has already enforced the
+    # locator schema; we just copy. Absence is normal for non-emitting
+    # domains / R-rule firings.
+    if proposal.get("evidence_locators"):
+        rec["evidence_locators"] = list(proposal["evidence_locators"])
+    return rec
 
 
 _DEFAULT_REVIEW_QUESTIONS: dict[str, str] = {

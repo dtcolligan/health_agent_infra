@@ -1,0 +1,28 @@
+{
+  "category": "bias_probe",
+  "description": "claim ordering \u2014 same content, leading vs trailing locator reference",
+  "expected": {
+    "rationale_keywords_absent": [
+      "order-bias"
+    ],
+    "rationale_keywords_present": [],
+    "verdict_class": "ambiguous"
+  },
+  "fixture_id": "ja_bp_010",
+  "input": {
+    "claim_text": "(see locator [accepted_recovery_state_daily/2026-04-30/resting_hr]) Resting HR was 67 bpm.",
+    "context": {},
+    "evidence_locators": [
+      {
+        "column": "resting_hr",
+        "pk": {
+          "as_of_date": "2026-04-30",
+          "user_id": "u_local_1"
+        },
+        "row_version": "2026-04-30T19:00Z",
+        "table": "accepted_recovery_state_daily"
+      }
+    ]
+  },
+  "schema_version": "judge_adversarial_fixture.v1"
+}

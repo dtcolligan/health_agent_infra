@@ -1,0 +1,23 @@
+{
+  "description": "Mid-taper week with ACWR=0.85, fresh signals \u2014 proceed_with_planned_run.",
+  "domain": "running",
+  "expected": {
+    "policy": {
+      "action_class": "proceed_or_easy"
+    }
+  },
+  "input": {
+    "signals": {
+      "acwr_ratio": 0.85,
+      "recent_hard_session_count_7d": 1,
+      "resting_hr_band": "at",
+      "sleep_debt_band": "none",
+      "training_readiness_pct": 88,
+      "weekly_mileage_baseline_m": 50000.0,
+      "weekly_mileage_m": 30000.0
+    }
+  },
+  "kind": "domain",
+  "scenario_id": "run_006_taper_week",
+  "tag": "w-ah-coverage-expansion"
+}

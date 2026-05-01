@@ -1,0 +1,122 @@
+{
+  "description": "P2 Female marathoner. 32yo female, 58kg/168cm, very active. 5 runs per week, marathon training; today is a Z2 long run. Stresses high running volume + female-specific physiology. v0.1.14 W-Vb-3 minimal demo fixture.",
+  "domain_proposals": [
+    {
+      "action": "proceed_with_planned_session",
+      "action_detail": null,
+      "bounded": true,
+      "confidence": "moderate",
+      "domain": "recovery",
+      "policy_decisions": [
+        {
+          "decision": "allow",
+          "note": "persona_baseline_p2_female_marathoner",
+          "rule_id": "r_recovery_baseline"
+        }
+      ],
+      "rationale": [
+        "Demo fixture seeds proceed_with_planned_session for p2_female_marathoner replay."
+      ],
+      "schema_version": "recovery_proposal.v1",
+      "uncertainty": []
+    },
+    {
+      "action": "proceed_with_planned_run",
+      "action_detail": null,
+      "bounded": true,
+      "confidence": "moderate",
+      "domain": "running",
+      "policy_decisions": [
+        {
+          "decision": "allow",
+          "note": "persona_baseline_p2_female_marathoner",
+          "rule_id": "r_running_baseline"
+        }
+      ],
+      "rationale": [
+        "Persona p2_female_marathoner: demo fixture seeds proceed_with_planned_run."
+      ],
+      "schema_version": "running_proposal.v1",
+      "uncertainty": []
+    },
+    {
+      "action": "maintain_schedule",
+      "action_detail": null,
+      "bounded": true,
+      "confidence": "moderate",
+      "domain": "sleep",
+      "policy_decisions": [
+        {
+          "decision": "allow",
+          "note": "persona_baseline_p2_female_marathoner",
+          "rule_id": "r_sleep_baseline"
+        }
+      ],
+      "rationale": [
+        "Persona p2_female_marathoner: demo fixture seeds maintain_schedule."
+      ],
+      "schema_version": "sleep_proposal.v1",
+      "uncertainty": []
+    },
+    {
+      "action": "maintain_routine",
+      "action_detail": null,
+      "bounded": true,
+      "confidence": "moderate",
+      "domain": "stress",
+      "policy_decisions": [
+        {
+          "decision": "allow",
+          "note": "persona_baseline_p2_female_marathoner",
+          "rule_id": "r_stress_baseline"
+        }
+      ],
+      "rationale": [
+        "Persona p2_female_marathoner: demo fixture seeds maintain_routine."
+      ],
+      "schema_version": "stress_proposal.v1",
+      "uncertainty": []
+    },
+    {
+      "action": "defer_decision_insufficient_signal",
+      "action_detail": null,
+      "bounded": true,
+      "confidence": "moderate",
+      "domain": "strength",
+      "policy_decisions": [
+        {
+          "decision": "allow",
+          "note": "persona_baseline_p2_female_marathoner",
+          "rule_id": "r_strength_baseline"
+        }
+      ],
+      "rationale": [
+        "Persona p2_female_marathoner: demo fixture seeds defer_decision_insufficient_signal."
+      ],
+      "schema_version": "strength_proposal.v1",
+      "uncertainty": []
+    },
+    {
+      "action": "maintain_targets",
+      "action_detail": null,
+      "bounded": true,
+      "confidence": "moderate",
+      "domain": "nutrition",
+      "policy_decisions": [
+        {
+          "decision": "allow",
+          "note": "persona_baseline_p2_female_marathoner",
+          "rule_id": "r_nutrition_baseline"
+        }
+      ],
+      "rationale": [
+        "Persona p2_female_marathoner: demo fixture seeds maintain_targets."
+      ],
+      "schema_version": "nutrition_proposal.v1",
+      "uncertainty": []
+    }
+  ],
+  "persona_slug": "p2_female_marathoner",
+  "schema_version": "demo_persona_fixture.v1",
+  "scope": "full"
+}

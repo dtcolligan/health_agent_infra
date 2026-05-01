@@ -61,6 +61,8 @@ class ExplainProposal:
     policy_decisions: list[dict[str, Any]]
     produced_at: Optional[str]
     validated_at: Optional[str]
+    # v0.1.14 W-PROV-1 — empty list when not emitted (most domains).
+    evidence_locators: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -95,6 +97,8 @@ class ExplainRecommendation:
     review_question: Optional[str]
     supersedes: Optional[str]
     superseded_by: Optional[str]
+    # v0.1.14 W-PROV-1 — empty list when not emitted.
+    evidence_locators: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -478,6 +482,8 @@ def _load_proposals_for_plan(
                 policy_decisions=list(payload.get("policy_decisions") or []),
                 produced_at=row["produced_at"],
                 validated_at=row["validated_at"],
+                # v0.1.14 W-PROV-1
+                evidence_locators=list(payload.get("evidence_locators") or []),
             )
         )
     out.sort(key=lambda p: (p.domain, p.proposal_id))
@@ -527,7 +533,7 @@ def _load_recommendations_for_plan(
     # backfilled for pre-M3 rows by migration 009.
     rows = conn.execute(
         "SELECT recommendation_id, domain, action, confidence, "
-        "  bounded, payload_json, issued_at "
+        "  bounded, payload_json, issued_at, evidence_locators_json "
         "FROM recommendation_log "
         "WHERE daily_plan_id = ? "
         "ORDER BY domain, recommendation_id",
@@ -537,6 +543,14 @@ def _load_recommendations_for_plan(
     for row in rows:
         payload = _loads(row["payload_json"]) or {}
         follow_up = payload.get("follow_up") or {}
+        # v0.1.14 W-PROV-1 — prefer the dedicated column when present,
+        # fall back to payload_json for JSONL replay paths predating
+        # the migration.
+        locators_blob = row["evidence_locators_json"] if "evidence_locators_json" in row.keys() else None
+        if locators_blob:
+            evidence_locators = _loads(locators_blob) or []
+        else:
+            evidence_locators = list(payload.get("evidence_locators") or [])
         out.append(
             ExplainRecommendation(
                 recommendation_id=row["recommendation_id"],
@@ -554,6 +568,7 @@ def _load_recommendations_for_plan(
                 review_question=follow_up.get("review_question") if isinstance(follow_up, dict) else None,
                 supersedes=payload.get("supersedes"),
                 superseded_by=payload.get("superseded_by"),
+                evidence_locators=evidence_locators,
             )
         )
     return out

@@ -1460,6 +1460,18 @@ def reproject_from_jsonl(
                 if not line.strip():
                     continue
                 data = json.loads(line)
+                # v0.1.14 W-PROV-1: evidence_locators_json column.
+                # JSONL rows pre-W-PROV-1 won't carry locators; .get
+                # returns None and the column stays NULL.
+                from health_agent_infra.core.provenance.locator import (
+                    serialize_locators as _serialize_locators_jsonl,
+                )
+                _locators_payload = data.get("evidence_locators")
+                _locators_json = (
+                    _serialize_locators_jsonl(_locators_payload)
+                    if _locators_payload
+                    else None
+                )
                 conn.execute(
                     """
                     INSERT INTO recommendation_log (
@@ -1467,8 +1479,8 @@ def reproject_from_jsonl(
                         action, confidence, bounded, payload_json,
                         jsonl_offset, source, ingest_actor, agent_version,
                         produced_at, validated_at, projected_at,
-                        daily_plan_id
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        daily_plan_id, evidence_locators_json
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         data["recommendation_id"],
@@ -1491,6 +1503,7 @@ def reproject_from_jsonl(
                         # column stays NULL, matching the backfill's
                         # pre-M3 semantics.
                         data.get("daily_plan_id"),
+                        _locators_json,
                     ),
                 )
                 counts["recommendations"] += 1
@@ -2291,6 +2304,15 @@ def project_bounded_recommendation(
     # still lives in payload_json for audit completeness (and for the
     # JSONL reproject path that doesn't have the column at parse time
     # in older logs), but the column is the queryable join key.
+    #
+    # v0.1.14 W-PROV-1: ``evidence_locators_json`` is the typed
+    # source-row provenance column. The same data lives in
+    # payload_json["evidence_locators"] for audit completeness; the
+    # column is the queryable / joinable surface that v0.2.0 W52
+    # weekly review will consume.
+    from health_agent_infra.core.provenance.locator import serialize_locators
+    locators_payload = recommendation.get("evidence_locators")
+    locators_json = serialize_locators(locators_payload) if locators_payload else None
     conn.execute(
         """
         INSERT INTO recommendation_log (
@@ -2298,8 +2320,8 @@ def project_bounded_recommendation(
             action, confidence, bounded, payload_json,
             jsonl_offset, source, ingest_actor, agent_version,
             produced_at, validated_at, projected_at, domain,
-            daily_plan_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            daily_plan_id, evidence_locators_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             recommendation["recommendation_id"],
@@ -2319,6 +2341,7 @@ def project_bounded_recommendation(
             _now_iso(),
             recommendation.get("domain", "recovery"),
             recommendation.get("daily_plan_id"),
+            locators_json,
         ),
     )
     if commit_after:

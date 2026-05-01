@@ -1,0 +1,28 @@
+{
+  "category": "source_conflict",
+  "description": "claim is qualitative but locator points to numeric column",
+  "expected": {
+    "rationale_keywords_absent": [],
+    "rationale_keywords_present": [
+      "qualitative"
+    ],
+    "verdict_class": "ambiguous"
+  },
+  "fixture_id": "ja_sc_010",
+  "input": {
+    "claim_text": "Recovery looked good yesterday.",
+    "context": {},
+    "evidence_locators": [
+      {
+        "column": "resting_hr",
+        "pk": {
+          "as_of_date": "2026-04-29",
+          "user_id": "u_local_1"
+        },
+        "row_version": "2026-04-29T19:00Z",
+        "table": "accepted_recovery_state_daily"
+      }
+    ]
+  },
+  "schema_version": "judge_adversarial_fixture.v1"
+}

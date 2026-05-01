@@ -55,7 +55,7 @@ JSON; this markdown is an at-a-glance overview for humans.
 
 ## Commands
 
-*56 commands; hai 0.1.13; schema agent_cli_contract.v1*
+*59 commands; hai 0.1.13; schema agent_cli_contract.v1*
 
 | Command | Mutation | Idempotent | JSON | Agent-safe | Exit codes | Description |
 |---|---|---|---|---|---|---|
@@ -63,6 +63,7 @@ JSON; this markdown is an at-a-glance overview for humans.
 | ``hai auth intervals-icu`` | ``writes-credentials`` | ``yes`` | ``default`` | no | ``OK``, ``USER_INPUT`` | Store Intervals.icu credentials in the OS keyring. Interactive by default; operator-only (requires a live API key). |
 | ``hai auth remove`` | ``writes-credentials`` | ``yes`` | ``default`` | no | ``OK`` | Remove stored credentials from the OS keyring. Idempotent — removing absent credentials is a no-op. Env-var-supplied credentials are never touched. |
 | ``hai auth status`` | ``read-only`` | ``n/a`` | ``default`` | yes | ``OK`` | Report whether Garmin and Intervals.icu credentials are configured. Presence only — never emits the secret itself. |
+| ``hai backup`` | ``read-only`` | ``yes`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Versioned tarball of state.db + JSONL audit logs + manifest. Read-only on local state. See reporting/docs/recovery.md for the recovery contract. |
 | ``hai capabilities`` | ``read-only`` | ``n/a`` | ``opt-out`` | yes | ``OK`` | Emit the agent-CLI-contract manifest describing every subcommand's mutation class, idempotency, JSON output, and exit codes. The authoritative surface the routing skill consumes. |
 | ``hai clean`` | ``writes-state`` | ``yes`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Normalize pulled evidence into CleanedEvidence + RawSummary JSON and project accepted state rows. Best-effort projection when --db-path is absent. |
 | ``hai config diff`` | ``read-only`` | ``n/a`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Diff user thresholds.toml against DEFAULT_THRESHOLDS, leaf by leaf. |
@@ -77,6 +78,7 @@ JSON; this markdown is an at-a-glance overview for humans.
 | ``hai eval run`` | ``read-only`` | ``n/a`` | ``opt-in`` | yes | ``OK``, ``USER_INPUT``, ``INTERNAL`` | Execute frozen deterministic eval scenarios for a domain (--domain) or the synthesis layer (--synthesis). Read-only — scores scenarios, never writes state. USER_INPUT when a scenario fails its rubric; INTERNAL if the runner itself crashes. |
 | ``hai exercise search`` | ``read-only`` | ``n/a`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Rank top exercise-taxonomy matches for a free-text query. |
 | ``hai explain`` | ``read-only`` | ``n/a`` | ``opt-out`` | yes | ``OK``, ``USER_INPUT``, ``NOT_FOUND`` | Reconstruct the full audit chain (planned / adapted / firings / performed) for a committed plan. Strictly read-only — never recomputes runtime state. |
+| ``hai export`` | ``read-only`` | ``yes`` | ``default`` | yes | ``OK`` | Single JSONL stream of every audit log under base_dir, with each line carrying a `_log` envelope tag. Read-only consolidation; not net-new functionality. |
 | ``hai init`` | ``interactive`` | ``no`` | ``none`` | no | ``OK``, ``USER_INPUT`` | First-run wizard: state init, config scaffolding, auth setup. |
 | ``hai intake exercise`` | ``writes-state`` | ``yes`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Upsert an exercise taxonomy entry. |
 | ``hai intake gaps`` | ``read-only`` | ``yes`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Return the list of user-closeable intake gaps in the snapshot. Read-only; no side effects. |
@@ -99,6 +101,7 @@ JSON; this markdown is an at-a-glance overview for humans.
 | ``hai pull`` | ``writes-sync-log`` | ``yes`` | ``default`` | yes | ``OK``, ``USER_INPUT``, ``TRANSIENT`` | Acquire evidence for a date and emit cleaned evidence JSON. Source resolution (v0.1.6): explicit `--source` > legacy `--live` (= garmin_live) > intervals.icu when credentials are configured > csv fixture fallback. Garmin live is best-effort (rate-limited); intervals.icu is the supported live source. Writes a sync_run_log row; does not touch the main state tables. |
 | ``hai research search`` | ``read-only`` | ``yes`` | ``default`` | yes | ``OK`` | Retrieve sources for one allowlisted research topic. Mirrors core.research.retrieve but exposes only the topic-token interface — the privacy-violation booleans are not configurable. Read-only; no network. |
 | ``hai research topics`` | ``read-only`` | ``yes`` | ``default`` | yes | ``OK`` | List the allowlisted topics the bounded retrieval surface recognises. Read-only. |
+| ``hai restore`` | ``writes-state`` | ``no`` | ``default`` | no | ``OK``, ``USER_INPUT`` | Restore state.db + JSONL audit logs from a `hai backup` tarball. Refuses if the bundle's schema_version does not match the installed wheel's head. Overwrites the destination — back up first if it has data. |
 | ``hai review record`` | ``writes-state`` | ``no`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Record a review_outcome against a review_event. Carries the migration-010 enrichment columns (completed, intensity_delta, pre/post_energy, disagreed_firing_ids). |
 | ``hai review schedule`` | ``writes-state`` | ``no`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Persist a pending review_event for a recommendation (used to schedule the next-day review question). |
 | ``hai review summary`` | ``read-only`` | ``n/a`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Summarize review_outcome counts (followed / not-followed, per-domain tallies). |

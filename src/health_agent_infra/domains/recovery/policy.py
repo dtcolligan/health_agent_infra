@@ -47,6 +47,13 @@ class RecoveryPolicyResult:
     forced_action: Optional[str] = None
     forced_action_detail: Optional[dict[str, Any]] = None
     capped_confidence: Optional[str] = None
+    # v0.1.14 W-PROV-1 — populated when R6 fires with the
+    # `resting_hr_spike_3_days_running` reason token. The skill
+    # is expected to copy these onto the proposal as
+    # `evidence_locators`. None means "no locators required by
+    # the gate" (R1 / R5 / non-spike R6 firings); empty list is
+    # never produced. See reporting/docs/source_row_provenance.md.
+    evidence_locators: Optional[tuple[dict[str, Any], ...]] = None
 
 
 # ---------------------------------------------------------------------------
@@ -156,6 +163,10 @@ def evaluate_recovery_policy(
     classified: ClassifiedRecoveryState,
     raw_summary: dict[str, Any],
     thresholds: Optional[dict[str, Any]] = None,
+    *,
+    for_date_iso: Optional[str] = None,
+    user_id: Optional[str] = None,
+    accepted_state_versions: Optional[dict[str, str]] = None,
 ) -> RecoveryPolicyResult:
     """Apply R1, R5, R6 to a classified recovery state.
 
@@ -164,6 +175,16 @@ def evaluate_recovery_policy(
     ordering matches the skill: R1 short-circuits action selection; R6
     overrides even if R1 allows; R5 caps confidence independently of
     action.
+
+    v0.1.14 W-PROV-1: when R6 fires with the
+    ``resting_hr_spike_3_days_running`` reason token AND the optional
+    ``for_date_iso`` / ``user_id`` / ``accepted_state_versions`` args
+    are provided, populate ``evidence_locators`` on the result with one
+    locator per spike day (the trailing ``consecutive_days`` from
+    ``for_date_iso``). The skill is expected to copy these onto the
+    proposal as ``evidence_locators``. The args are optional to preserve
+    the legacy 3-arg signature for callers that don't have access to
+    snapshot row-version data.
     """
 
     t = thresholds if thresholds is not None else load_thresholds()
@@ -190,9 +211,64 @@ def evaluate_recovery_policy(
         forced_action = r6_forced
         forced_action_detail = r6_detail
 
+    evidence_locators: Optional[tuple[dict[str, Any], ...]] = None
+    if (
+        forced_action == "escalate_for_user_review"
+        and forced_action_detail is not None
+        and forced_action_detail.get("reason_token")
+        == "resting_hr_spike_3_days_running"
+        and for_date_iso is not None
+        and user_id is not None
+        and accepted_state_versions is not None
+    ):
+        evidence_locators = _r6_spike_locators(
+            for_date_iso=for_date_iso,
+            user_id=user_id,
+            consecutive_days=forced_action_detail.get("consecutive_days", 3),
+            accepted_state_versions=accepted_state_versions,
+        )
+
     return RecoveryPolicyResult(
         policy_decisions=tuple(decisions),
         forced_action=forced_action,
         forced_action_detail=forced_action_detail,
         capped_confidence=capped_confidence,
+        evidence_locators=evidence_locators,
     )
+
+
+def _r6_spike_locators(
+    *,
+    for_date_iso: str,
+    user_id: str,
+    consecutive_days: int,
+    accepted_state_versions: dict[str, str],
+) -> tuple[dict[str, Any], ...]:
+    """Build the locator tuple cited by an R6 spike firing.
+
+    Emits one locator per `accepted_recovery_state_daily` row for the
+    trailing `consecutive_days` from `for_date_iso`. The
+    `accepted_state_versions` map is `{as_of_date_iso: row_version}` —
+    typically the row's `projected_at` timestamp — and must contain
+    every spike day. Days missing from the map are silently skipped
+    (the skill or caller's responsibility to populate completely;
+    skipping is the safe-default rather than fabricating a row_version).
+    """
+
+    from datetime import date, timedelta
+
+    end_date = date.fromisoformat(for_date_iso)
+    out: list[dict[str, Any]] = []
+    for offset in range(consecutive_days):
+        day = end_date - timedelta(days=offset)
+        day_iso = day.isoformat()
+        version = accepted_state_versions.get(day_iso)
+        if version is None:
+            continue
+        out.append({
+            "table": "accepted_recovery_state_daily",
+            "pk": {"as_of_date": day_iso, "user_id": user_id},
+            "column": "resting_hr",
+            "row_version": version,
+        })
+    return tuple(out)

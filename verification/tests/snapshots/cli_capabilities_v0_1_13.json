@@ -143,6 +143,56 @@
     },
     {
       "agent_safe": true,
+      "command": "hai backup",
+      "description": "Versioned tarball of state.db + JSONL audit logs + manifest. Read-only on local state. See reporting/docs/recovery.md for the recovery contract.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Output tarball path. Default: ./hai-backup-<UTC>.tar.gz",
+          "name": "--dest",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "State DB path (default: $HAI_STATE_DB or platform default).",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Writeback/intake root (JSONL logs). Default: $HAI_BASE_DIR or ~/.health_agent.",
+          "name": "--base-dir",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "yes",
+      "json_output": "default",
+      "mutation": "read-only"
+    },
+    {
+      "agent_safe": true,
       "command": "hai capabilities",
       "description": "Emit the agent-CLI-contract manifest describing every subcommand's mutation class, idempotency, JSON output, and exit codes. The authoritative surface the routing skill consumes.",
       "exit_codes": [
@@ -781,6 +831,28 @@
           "type": "bool"
         },
         {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "nutrition",
+            "recovery",
+            "running",
+            "sleep",
+            "strength",
+            "stress",
+            "synthesis",
+            "judge_adversarial",
+            "all"
+          ],
+          "default": null,
+          "help": "Run a named scenario set (v0.1.14 W-AN). 'all' runs every domain + synthesis (judge_adversarial is fixture-only and skipped from 'all' until v0.2.2 W58J wires the judge harness). 'judge_adversarial' enumerates the v0.1.14 W-AI fixture corpus shape-only \u2014 no scoring.",
+          "name": "--scenario-set",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
           "action": "store_true",
           "aliases": [],
           "choices": null,
@@ -950,6 +1022,43 @@
       ],
       "idempotent": "n/a",
       "json_output": "opt-out",
+      "mutation": "read-only"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai export",
+      "description": "Single JSONL stream of every audit log under base_dir, with each line carrying a `_log` envelope tag. Read-only consolidation; not net-new functionality.",
+      "exit_codes": [
+        "OK"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Output path. If omitted, writes to stdout.",
+          "name": "--dest",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Writeback/intake root (JSONL logs). Default: $HAI_BASE_DIR.",
+          "name": "--base-dir",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "yes",
+      "json_output": "default",
       "mutation": "read-only"
     },
     {
@@ -3173,6 +3282,56 @@
       "mutation": "read-only"
     },
     {
+      "agent_safe": false,
+      "command": "hai restore",
+      "description": "Restore state.db + JSONL audit logs from a `hai backup` tarball. Refuses if the bundle's schema_version does not match the installed wheel's head. Overwrites the destination \u2014 back up first if it has data.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Path to a backup tarball produced by `hai backup`.",
+          "name": "--bundle",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "State DB path (overwritten on restore).",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Writeback/intake root (JSONL logs overwritten on restore).",
+          "name": "--base-dir",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "no",
+      "json_output": "default",
+      "mutation": "writes-state"
+    },
+    {
       "agent_safe": true,
       "command": "hai review record",
       "description": "Record a review_outcome against a review_event. Carries the migration-010 enrichment columns (completed, intensity_delta, pre/post_energy, disagreed_firing_ids).",
@@ -4703,6 +4862,6 @@
     }
   },
   "generated_by": "core.capabilities.walker.build_manifest",
-  "hai_version": "0.1.12",
+  "hai_version": "0.1.13",
   "schema_version": "agent_cli_contract.v1"
 }

@@ -1,0 +1,22 @@
+{
+  "description": "First run after 6-week gap; sparse history.",
+  "domain": "running",
+  "expected": {
+    "policy": {
+      "action_class": "defer_decision_insufficient_signal"
+    }
+  },
+  "input": {
+    "signals": {
+      "recent_hard_session_count_7d": 0,
+      "resting_hr_band": "at",
+      "sleep_debt_band": "none",
+      "training_readiness_pct": 70,
+      "weekly_mileage_baseline_m": 0.0,
+      "weekly_mileage_m": 5000.0
+    }
+  },
+  "kind": "domain",
+  "scenario_id": "run_007_first_run_back_from_injury",
+  "tag": "w-ah-coverage-expansion"
+}

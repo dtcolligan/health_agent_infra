@@ -1,0 +1,23 @@
+-- v0.1.14 W-PROV-1: source-row locator surface on recommendation_log.
+--
+-- Adds an optional JSON column carrying a list of typed
+-- `source_row_locator` objects, one per evidence row cited by the
+-- recommendation's R-rule firing. Schema documented at
+-- reporting/docs/source_row_provenance.md.
+--
+-- Backwards-compatible additive. Existing rows get NULL; consumers
+-- treat NULL as "no provenance" identically to an empty list.
+-- Recovery R6 firing is the only emitter in v0.1.14; other domains
+-- ship the surface in later cycles.
+--
+-- The proposal layer carries the same data inside
+-- `payload_json`'s `evidence_locators` field (no separate column;
+-- proposal_log.payload_json is already a JSON blob and the
+-- additive payload field is backwards-compatible).
+--
+-- v0.2.0 W52 (weekly review) + W58D (deterministic factuality
+-- gate) consume this column; v0.2.0 W52 may bump
+-- recommendation_log to a `.v2` shape that makes the column
+-- non-null on cited claims.
+
+ALTER TABLE recommendation_log ADD COLUMN evidence_locators_json TEXT;

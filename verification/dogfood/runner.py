@@ -810,11 +810,44 @@ def _synthesise_findings(
     return findings
 
 
+def _preflight_demo_session_check() -> None:
+    """v0.1.14 W-FRESH-EXT (F-PHASE0-01 absorption): refuse to run if a
+    demo-session marker is active.
+
+    A stale demo-session marker (from a maintainer dogfooding `hai
+    demo start ...` and not running `hai demo end` before invoking
+    the persona harness) silently sandboxes the first persona's
+    `hai propose` calls into the demo's scratch root rather than
+    the persona's DB. v0.1.14 Phase 0 caught this on a fresh sweep;
+    the runner pre-flight prevents recurrence.
+
+    Raises ``SystemExit(2)`` if the cleanup hook reports any orphan
+    markers were removed (i.e., a marker was active and we just
+    cleared it; refuse rather than continue silently because we
+    don't know if a downstream test still depends on the stale
+    state). Returns silently otherwise.
+    """
+
+    from health_agent_infra.core.demo.session import cleanup_orphans
+
+    cleaned = cleanup_orphans()
+    if cleaned:
+        print(
+            f"verification/dogfood/runner: refusing to start with active "
+            f"demo-session marker(s) cleared: {cleaned}. Re-run after "
+            f"confirming no live demo session needed those scratch dirs.",
+            file=sys.stderr,
+        )
+        raise SystemExit(2)
+
+
 def run_all_personas(
     as_of: Optional[date] = None,
     output_dir: Optional[Path] = None,
 ) -> list[PersonaRunResult]:
     """Drive every persona in ``ALL_PERSONAS`` and return the result list."""
+
+    _preflight_demo_session_check()
 
     if as_of is None:
         as_of = date.today()

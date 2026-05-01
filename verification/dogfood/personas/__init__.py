@@ -29,11 +29,12 @@ from .p9_older_female_endurance import SPEC as P9
 from .p10_adolescent_recreational import SPEC as P10
 from .p11_elevated_stress_hybrid import SPEC as P11
 from .p12_vacation_returner import SPEC as P12
+from .p13_low_domain_knowledge import SPEC as P13
 
 
 ALL_PERSONAS: list[PersonaSpec] = [
     P1, P2, P3, P4, P5, P6, P7, P8,
-    P9, P10, P11, P12,
+    P9, P10, P11, P12, P13,
 ]
 
 
@@ -41,5 +42,5 @@ __all__ = [
     "ALL_PERSONAS",
     "PersonaSpec",
     "P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8",
-    "P9", "P10", "P11", "P12",
+    "P9", "P10", "P11", "P12", "P13",
 ]

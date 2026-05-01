@@ -1,0 +1,21 @@
+{
+  "description": "Only 2 days of sleep data \u2014 defer.",
+  "domain": "sleep",
+  "expected": {
+    "policy": {
+      "forced_action": "defer_decision_insufficient_signal"
+    }
+  },
+  "input": {
+    "evidence": {
+      "as_of_date": "2026-04-30",
+      "sleep_debt_band": "none",
+      "sleep_debt_h": 0.0,
+      "sleep_hours_today": 7.0,
+      "user_id": "u_eval"
+    }
+  },
+  "kind": "domain",
+  "scenario_id": "sleep_007_partial_data",
+  "tag": "w-ah-coverage-expansion"
+}

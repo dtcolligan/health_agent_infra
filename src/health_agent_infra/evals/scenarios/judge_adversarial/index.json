@@ -1,0 +1,42 @@
+{
+  "categories": {
+    "bias_probe": [
+      "ja_bp_001",
+      "ja_bp_002",
+      "ja_bp_003",
+      "ja_bp_004",
+      "ja_bp_005",
+      "ja_bp_006",
+      "ja_bp_007",
+      "ja_bp_008",
+      "ja_bp_009",
+      "ja_bp_010"
+    ],
+    "prompt_injection": [
+      "ja_pi_001",
+      "ja_pi_002",
+      "ja_pi_003",
+      "ja_pi_004",
+      "ja_pi_005",
+      "ja_pi_006",
+      "ja_pi_007",
+      "ja_pi_008",
+      "ja_pi_009",
+      "ja_pi_010"
+    ],
+    "source_conflict": [
+      "ja_sc_001",
+      "ja_sc_002",
+      "ja_sc_003",
+      "ja_sc_004",
+      "ja_sc_005",
+      "ja_sc_006",
+      "ja_sc_007",
+      "ja_sc_008",
+      "ja_sc_009",
+      "ja_sc_010"
+    ]
+  },
+  "schema_version": "judge_adversarial_index.v1",
+  "total_fixtures": 30
+}

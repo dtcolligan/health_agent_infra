@@ -1,0 +1,25 @@
+{
+  "description": "Only sleep_hours present, no HR/HRV \u2014 sparse capping at moderate confidence.",
+  "domain": "recovery",
+  "expected": {
+    "policy": {
+      "capped_confidence": "moderate"
+    }
+  },
+  "input": {
+    "evidence": {
+      "as_of_date": "2026-04-30",
+      "sleep_hours": 8.0,
+      "soreness_self_report": "low",
+      "user_id": "u_eval"
+    },
+    "raw_summary": {
+      "as_of_date": "2026-04-30",
+      "resting_hr_spike_days": 0,
+      "user_id": "u_eval"
+    }
+  },
+  "kind": "domain",
+  "scenario_id": "rec_007_minimal_signal",
+  "tag": "w-ah-coverage-expansion"
+}

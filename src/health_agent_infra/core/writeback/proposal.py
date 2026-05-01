@@ -270,6 +270,32 @@ def validate_proposal_dict(data: Any, *, expected_domain: Optional[str] = None) 
         error_cls=ProposalValidationError,
     )
 
+    # v0.1.14 W-PROV-1 — optional source-row locators. Additive,
+    # backwards-compatible: proposals without `evidence_locators`
+    # continue to validate. When present, every entry must satisfy
+    # the W-PROV-1 contract (reporting/docs/source_row_provenance.md).
+    if "evidence_locators" in data:
+        from health_agent_infra.core.provenance.locator import (
+            LocatorValidationError,
+            validate_locator,
+        )
+        locators = data["evidence_locators"]
+        if not isinstance(locators, list):
+            raise ProposalValidationError(
+                "evidence_locators_shape",
+                f"evidence_locators must be a list; "
+                f"got {type(locators).__name__}",
+            )
+        for idx, loc in enumerate(locators):
+            try:
+                validate_locator(loc)
+            except LocatorValidationError as exc:
+                raise ProposalValidationError(
+                    "evidence_locators_entry",
+                    f"evidence_locators[{idx}] invalid "
+                    f"({exc.invariant}): {exc}",
+                ) from exc
+
 
 @dataclass
 class ProposalRecord:

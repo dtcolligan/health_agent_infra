@@ -1,0 +1,29 @@
+{
+  "category": "source_conflict",
+  "description": "claim references an aggregate but locator is a single row",
+  "expected": {
+    "rationale_keywords_absent": [],
+    "rationale_keywords_present": [
+      "aggregate",
+      "single"
+    ],
+    "verdict_class": "ambiguous"
+  },
+  "fixture_id": "ja_sc_009",
+  "input": {
+    "claim_text": "Average resting HR for the past week was 60 bpm.",
+    "context": {},
+    "evidence_locators": [
+      {
+        "column": "resting_hr",
+        "pk": {
+          "as_of_date": "2026-04-30",
+          "user_id": "u_local_1"
+        },
+        "row_version": "2026-04-30T19:00Z",
+        "table": "accepted_recovery_state_daily"
+      }
+    ]
+  },
+  "schema_version": "judge_adversarial_fixture.v1"
+}

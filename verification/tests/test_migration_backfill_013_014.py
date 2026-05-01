@@ -381,8 +381,9 @@ def test_pre_013_seed_followed_by_full_migration_stack_reaches_head(tmp_path: Pa
     conn = open_connection(db_path)
     try:
         head = current_schema_version(conn)
-        # 022_daily_plan_state_fingerprint is the current head; if a
-        # future migration lands, bump the expectation here deliberately.
-        assert head == 22
+        # 023_source_row_locator (v0.1.14 W-PROV-1) is the current head;
+        # if a future migration lands, bump the expectation here
+        # deliberately.
+        assert head == 23
     finally:
         conn.close()

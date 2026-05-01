@@ -4201,6 +4201,137 @@ def cmd_state_migrate(args: argparse.Namespace) -> int:
 
 
 # ---------------------------------------------------------------------------
+# hai backup / restore / export — v0.1.14 W-BACKUP
+# ---------------------------------------------------------------------------
+
+def cmd_backup(args: argparse.Namespace) -> int:
+    """Write a versioned backup tarball of state DB + JSONL audit logs.
+
+    See ``reporting/docs/recovery.md`` for the recovery contract.
+    """
+
+    from datetime import datetime, timezone
+
+    from health_agent_infra.core.backup import BackupError, make_backup
+    from health_agent_infra.core.paths import resolve_base_dir
+    from health_agent_infra.core.state import resolve_db_path
+    from health_agent_infra import __version__ as _hai_version
+
+    state_db_path = resolve_db_path(args.db_path)
+    base_dir = resolve_base_dir(args.base_dir)
+
+    if args.dest:
+        dest = Path(args.dest).expanduser()
+    else:
+        ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        dest = Path.cwd() / f"hai-backup-{ts}.tar.gz"
+
+    try:
+        manifest = make_backup(
+            state_db_path=state_db_path,
+            base_dir=base_dir,
+            dest=dest,
+            hai_version=_hai_version,
+        )
+    except BackupError as exc:
+        print(
+            f"hai backup: {exc}. Run `hai state init` first if the state "
+            f"DB does not exist, or check the --db-path / --base-dir flags.",
+            file=sys.stderr,
+        )
+        return exit_codes.USER_INPUT
+
+    _emit_json({
+        "dest": str(dest),
+        "manifest": manifest.to_dict(),
+    })
+    return exit_codes.OK
+
+
+def cmd_restore(args: argparse.Namespace) -> int:
+    """Restore from a backup tarball; refuse on schema mismatch.
+
+    Caller is responsible for backing up the destination state first
+    if it has data — restore overwrites.
+    """
+
+    from health_agent_infra.core.backup import (
+        BackupError,
+        SchemaMismatchError,
+        restore_backup,
+    )
+    from health_agent_infra.core.paths import resolve_base_dir
+    from health_agent_infra.core.state import resolve_db_path
+    from health_agent_infra.core.state.store import discover_migrations
+
+    bundle_path = Path(args.bundle).expanduser()
+    state_db_path = resolve_db_path(args.db_path)
+    base_dir = resolve_base_dir(args.base_dir)
+
+    # Compute the wheel's head schema version. If state DB exists, we
+    # can read its current head; otherwise we use the highest migration
+    # version we know about. Either way, we want the *expected* head
+    # the installed wheel can serve.
+    expected = max(version for version, _, _ in discover_migrations())
+
+    try:
+        manifest = restore_backup(
+            bundle_path=bundle_path,
+            state_db_path=state_db_path,
+            base_dir=base_dir,
+            expected_schema_version=expected,
+        )
+    except SchemaMismatchError as exc:
+        print(
+            f"hai restore: schema mismatch — {exc} Install the matching "
+            f"wheel or run `hai state migrate` to bring the bundle's data "
+            f"forward against an empty target.",
+            file=sys.stderr,
+        )
+        return exit_codes.USER_INPUT
+    except BackupError as exc:
+        print(
+            f"hai restore: {exc}. Verify the bundle path and re-run.",
+            file=sys.stderr,
+        )
+        return exit_codes.USER_INPUT
+
+    _emit_json({
+        "bundle": str(bundle_path),
+        "state_db_path": str(state_db_path),
+        "base_dir": str(base_dir),
+        "manifest": manifest.to_dict(),
+        "restored_schema_version": manifest.schema_version,
+    })
+    return exit_codes.OK
+
+
+def cmd_export(args: argparse.Namespace) -> int:
+    """Emit a unified JSONL stream of every audit log under base_dir."""
+
+    from health_agent_infra.core.backup import export_jsonl
+    from health_agent_infra.core.paths import resolve_base_dir
+
+    base_dir = resolve_base_dir(args.base_dir)
+
+    if args.dest:
+        dest = Path(args.dest).expanduser()
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        with dest.open("w", encoding="utf-8") as fh:
+            count = export_jsonl(base_dir=base_dir, output_stream=fh)
+        _emit_json({
+            "base_dir": str(base_dir),
+            "dest": str(dest),
+            "lines_written": count,
+        })
+    else:
+        count = export_jsonl(base_dir=base_dir, output_stream=sys.stdout)
+        # Stdout already streamed; don't emit a JSON summary.
+        _ = count
+    return exit_codes.OK
+
+
+# ---------------------------------------------------------------------------
 # hai setup-skills
 # ---------------------------------------------------------------------------
 
@@ -8375,6 +8506,98 @@ def build_parser() -> argparse.ArgumentParser:
             "— content/keys/links replay identically across runs, but "
             "projected_at / corrected_at columns reflect the wall-clock "
             "of the rebuild. Safe to re-run."
+        ),
+    )
+
+    # v0.1.14 W-BACKUP — backup / restore / export top-level subcommands.
+    p_backup = sub.add_parser(
+        "backup",
+        help="Write a versioned backup tarball of state DB + JSONL audit logs.",
+    )
+    p_backup.add_argument(
+        "--dest", default=None,
+        help="Output tarball path. Default: ./hai-backup-<UTC>.tar.gz",
+    )
+    p_backup.add_argument(
+        "--db-path", default=None,
+        help="State DB path (default: $HAI_STATE_DB or platform default).",
+    )
+    p_backup.add_argument(
+        "--base-dir", default=None,
+        help="Writeback/intake root (JSONL logs). Default: $HAI_BASE_DIR or "
+             "~/.health_agent.",
+    )
+    p_backup.set_defaults(func=cmd_backup)
+    annotate_contract(
+        p_backup,
+        mutation="read-only",
+        idempotent="yes",
+        json_output="default",
+        exit_codes=("OK", "USER_INPUT"),
+        agent_safe=True,
+        description=(
+            "Versioned tarball of state.db + JSONL audit logs + "
+            "manifest. Read-only on local state. See "
+            "reporting/docs/recovery.md for the recovery contract."
+        ),
+    )
+
+    p_restore = sub.add_parser(
+        "restore",
+        help="Restore from a backup tarball; refuses on schema mismatch.",
+    )
+    p_restore.add_argument(
+        "--bundle", required=True,
+        help="Path to a backup tarball produced by `hai backup`.",
+    )
+    p_restore.add_argument(
+        "--db-path", default=None,
+        help="State DB path (overwritten on restore).",
+    )
+    p_restore.add_argument(
+        "--base-dir", default=None,
+        help="Writeback/intake root (JSONL logs overwritten on restore).",
+    )
+    p_restore.set_defaults(func=cmd_restore)
+    annotate_contract(
+        p_restore,
+        mutation="writes-state",
+        idempotent="no",
+        json_output="default",
+        exit_codes=("OK", "USER_INPUT"),
+        agent_safe=False,
+        description=(
+            "Restore state.db + JSONL audit logs from a `hai backup` "
+            "tarball. Refuses if the bundle's schema_version does not "
+            "match the installed wheel's head. Overwrites the "
+            "destination — back up first if it has data."
+        ),
+    )
+
+    p_export = sub.add_parser(
+        "export",
+        help="Emit a unified JSONL stream of every audit log under base_dir.",
+    )
+    p_export.add_argument(
+        "--dest", default=None,
+        help="Output path. If omitted, writes to stdout.",
+    )
+    p_export.add_argument(
+        "--base-dir", default=None,
+        help="Writeback/intake root (JSONL logs). Default: $HAI_BASE_DIR.",
+    )
+    p_export.set_defaults(func=cmd_export)
+    annotate_contract(
+        p_export,
+        mutation="read-only",
+        idempotent="yes",
+        json_output="default",
+        exit_codes=("OK",),
+        agent_safe=True,
+        description=(
+            "Single JSONL stream of every audit log under base_dir, "
+            "with each line carrying a `_log` envelope tag. "
+            "Read-only consolidation; not net-new functionality."
         ),
     )
 

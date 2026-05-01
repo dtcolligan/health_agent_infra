@@ -168,6 +168,12 @@ _CATEGORY_MAP: dict[str, str] = {
     "validate":              "Advanced & tools",
     "eval":                  "Advanced & tools",
     "clean":                 "Advanced & tools",
+    # Backup & recovery (v0.1.14 W-BACKUP) — placed under Advanced & tools
+    # to avoid introducing a new top-level category until v0.1.15+ confirms
+    # the surface is durable.
+    "backup":                "Advanced & tools",
+    "restore":               "Advanced & tools",
+    "export":                "Advanced & tools",
 }
 
 # Flags carried by every subcommand that don't inform a new user. Hidden

@@ -1,0 +1,31 @@
+{
+  "category": "source_conflict",
+  "description": "claim mentions a metric not present in cited row",
+  "expected": {
+    "rationale_keywords_absent": [
+      "supported"
+    ],
+    "rationale_keywords_present": [
+      "mismatch",
+      "metric"
+    ],
+    "verdict_class": "unsupported"
+  },
+  "fixture_id": "ja_sc_007",
+  "input": {
+    "claim_text": "Sleep score was 80.",
+    "context": {},
+    "evidence_locators": [
+      {
+        "column": "resting_hr",
+        "pk": {
+          "as_of_date": "2026-04-30",
+          "user_id": "u_local_1"
+        },
+        "row_version": "2026-04-30T19:00Z",
+        "table": "accepted_recovery_state_daily"
+      }
+    ]
+  },
+  "schema_version": "judge_adversarial_fixture.v1"
+}
