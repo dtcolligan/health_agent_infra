@@ -11,6 +11,54 @@ Per-release detail lives under `reporting/plans/<version>/`.
 
 ---
 
+## [0.1.14.1] - 2026-05-02
+
+> **Theme.** Hardening — close the agent-contract trap that exposed
+> `garmin_live` as a peer of `intervals_icu` in `hai capabilities --json`
+> despite being known unreliable.
+>
+> **Tier (per CP3 D15):** hardening (1 W-id, single workstream).
+
+### Fixed
+- **W-GARMIN-MANIFEST-SIGNAL.** `hai capabilities --json` now carries
+  a structured `choice_metadata` block per flag. The `--source` flag on
+  `hai pull` and `hai daily` flags `garmin_live` as
+  `reliability: "unreliable"` with a `prefer_instead: "intervals_icu"`
+  hint. `_resolve_pull_source` emits a stderr warning at resolution
+  time when the resolved source is `garmin_live`. The change is purely
+  additive — no behavior break for callers who deliberately use
+  `--source garmin_live`. Origin: 2026-05-02 maintainer session in
+  which a Claude Code agent invoked `garmin_live` as part of a routine
+  data-freshness sweep, hitting the documented HTTP 429 / Cloudflare
+  403 failure mode. See `reporting/plans/v0_1_14_1/`.
+
+### Added
+- `core.capabilities.annotate_choice_metadata(action, metadata)` —
+  attaches per-choice annotations to an argparse action; validated
+  eagerly (unknown reliability values, undeclared choices, missing
+  required fields all fail at CLI-construction time).
+- `core.capabilities.RELIABILITY_VALUES` — `{"reliable", "unreliable"}`.
+  Absence of an entry on a choice is itself the signal (consumers
+  default to "reliable").
+- `verification/tests/test_capabilities_choice_metadata.py` — 9 tests
+  covering validation + walker round-trip + production-parser wiring.
+- `verification/tests/test_pull_garmin_live_warning.py` — 6 tests
+  covering stderr warning fires for `garmin_live` (both via
+  `--source` and legacy `--live`), does not fire for
+  `intervals_icu` / `csv`, and the warning text references the
+  capabilities-manifest signal.
+
+### Changed
+- `verification/tests/test_capabilities_flags_contract.py`:
+  `test_flag_entry_shape_is_stable` updated to recognise
+  `choice_metadata` as an optional schema key.
+- `reporting/docs/agent_cli_contract.md` — regenerated.
+- `verification/tests/snapshots/cli_capabilities_v0_1_13.json` —
+  regenerated with the new `choice_metadata` field on the `--source`
+  flag of `hai pull` and `hai daily`.
+
+---
+
 ## [0.1.14] - 2026-05-01
 
 > **Theme.** Eval substrate + provenance + recovery path. Ship

@@ -478,6 +478,13 @@
         {
           "action": "store",
           "aliases": [],
+          "choice_metadata": {
+            "garmin_live": {
+              "prefer_instead": "intervals_icu",
+              "reason": "rate-limited / Cloudflare-blocked (HTTP 429 / 403)",
+              "reliability": "unreliable"
+            }
+          },
           "choices": [
             "csv",
             "garmin_live",
@@ -3202,6 +3209,13 @@
         {
           "action": "store",
           "aliases": [],
+          "choice_metadata": {
+            "garmin_live": {
+              "prefer_instead": "intervals_icu",
+              "reason": "rate-limited / Cloudflare-blocked (HTTP 429 / 403)",
+              "reliability": "unreliable"
+            }
+          },
           "choices": [
             "csv",
             "garmin_live",
@@ -4862,6 +4876,6 @@
     }
   },
   "generated_by": "core.capabilities.walker.build_manifest",
-  "hai_version": "0.1.13",
+  "hai_version": "0.1.14",
   "schema_version": "agent_cli_contract.v1"
 }

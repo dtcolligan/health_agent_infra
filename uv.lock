@@ -307,7 +307,7 @@ wheels = [
 
 [[package]]
 name = "health-agent-infra"
-version = "0.1.14"
+version = "0.1.14.1"
 source = { editable = "." }
 dependencies = [
     { name = "garminconnect" },

@@ -99,21 +99,38 @@ def test_every_flag_argparse_knows_about_appears_in_manifest():
 
 
 def test_flag_entry_shape_is_stable():
-    """Each flag entry carries the same set of keys. If a new key
-    lands, it needs to land on every flag — otherwise consumers pattern-
-    matching against the shape break silently.
+    """Each flag entry carries the same set of required keys. If a new
+    required key lands, it needs to land on every flag — otherwise
+    consumers pattern-matching against the shape break silently.
+
+    v0.1.14.1: ``choice_metadata`` joined the schema as an OPTIONAL
+    key — it appears only on flags whose author explicitly attached
+    per-choice annotations via :func:`annotate_choice_metadata`.
+    Absence of the key is itself the signal (consumers default to
+    "reliable" for plain choices). Optional keys are validated
+    separately so a flag without them still passes.
     """
 
-    expected_keys = {
+    required_keys = {
         "name", "positional", "required", "type", "choices",
         "default", "help", "action", "nargs", "aliases",
     }
+    optional_keys = {"choice_metadata"}
+    allowed_keys = required_keys | optional_keys
+
     manifest = build_manifest(build_parser())
     for row in manifest["commands"]:
         for flag in row["flags"]:
-            assert set(flag) == expected_keys, (
-                f"{row['command']}: flag {flag.get('name')!r} has keys "
-                f"{set(flag)}; expected {expected_keys}"
+            actual = set(flag)
+            missing = required_keys - actual
+            unknown = actual - allowed_keys
+            assert not missing, (
+                f"{row['command']}: flag {flag.get('name')!r} missing "
+                f"required keys {sorted(missing)}"
+            )
+            assert not unknown, (
+                f"{row['command']}: flag {flag.get('name')!r} has unknown "
+                f"keys {sorted(unknown)}; allowed: {sorted(allowed_keys)}"
             )
 
 

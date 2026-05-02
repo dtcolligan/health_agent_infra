@@ -31,6 +31,7 @@ from health_agent_infra import __version__ as _PACKAGE_VERSION
 from health_agent_infra.core import exit_codes
 from health_agent_infra.core.paths import resolve_base_dir
 from health_agent_infra.core.capabilities import (
+    annotate_choice_metadata,
     annotate_contract,
     build_manifest,
 )
@@ -530,6 +531,30 @@ def _build_intervals_icu_adapter(args: argparse.Namespace) -> IntervalsIcuAdapte
     )
 
 
+# v0.1.14.1 W-GARMIN-MANIFEST-SIGNAL: per-choice metadata for the
+# ``--source`` flag on ``hai pull`` and ``hai daily``. Single source of
+# truth so both annotation sites can't drift. Read by the capabilities
+# walker; surfaced under ``flags[].choice_metadata`` in the manifest.
+PULL_SOURCE_CHOICE_METADATA: dict[str, dict[str, Any]] = {
+    "garmin_live": {
+        "reliability": "unreliable",
+        "reason": "rate-limited / Cloudflare-blocked (HTTP 429 / 403)",
+        "prefer_instead": "intervals_icu",
+    },
+}
+
+# v0.1.14.1: stderr warning string emitted when the resolved pull
+# source is ``garmin_live``. Kept as a module constant so tests can
+# assert against it without duplicating prose.
+_GARMIN_LIVE_WARNING = (
+    "WARN [hai pull]: Garmin live is rate-limited and frequently "
+    "fails (HTTP 429 / Cloudflare 403). intervals.icu is the "
+    "maintainer-supported live source. See AGENTS.md \"Settled "
+    "Decisions\" and `hai capabilities --json` "
+    "(commands[hai pull].flags[--source].choice_metadata)."
+)
+
+
 def _resolve_pull_source(args: argparse.Namespace) -> str:
     """Pick the pull source.
 
@@ -550,19 +575,32 @@ def _resolve_pull_source(args: argparse.Namespace) -> str:
     mobile + portal + Cloudflare in succession). Users who want
     Garmin live must opt in explicitly via ``--source garmin_live``
     or ``--live``.
+
+    v0.1.14.1 W-GARMIN-MANIFEST-SIGNAL: when the resolved source is
+    ``garmin_live``, emit a stderr warning at resolution time so
+    callers (especially programmatic agents that bypassed the help
+    text and the capabilities manifest) get the unreliability signal
+    even if the upstream login subsequently succeeds. The warning does
+    not gate the call; it is purely diagnostic.
     """
 
     explicit = getattr(args, "source", None)
     if explicit is not None:
-        return explicit
-    if getattr(args, "live", False):
-        return "garmin_live"
-    # Auto-default: intervals.icu when configured, else csv. Keep the
-    # check cheap (credential presence, no network) so this resolution
-    # adds no perceptible latency to commands that don't pull.
-    if _intervals_icu_configured():
-        return "intervals_icu"
-    return "csv"
+        resolved = explicit
+    elif getattr(args, "live", False):
+        resolved = "garmin_live"
+    elif _intervals_icu_configured():
+        # Auto-default: intervals.icu when configured, else csv. Keep
+        # the check cheap (credential presence, no network) so this
+        # resolution adds no perceptible latency.
+        resolved = "intervals_icu"
+    else:
+        resolved = "csv"
+
+    if resolved == "garmin_live":
+        print(_GARMIN_LIVE_WARNING, file=sys.stderr)
+
+    return resolved
 
 
 def _intervals_icu_configured() -> bool:
@@ -6994,7 +7032,7 @@ def build_parser() -> argparse.ArgumentParser:
                              "for live scraping; prefer `--source "
                              "intervals_icu` (the maintainer's declared "
                              "supported live source as of v0.1.6).")
-    p_pull.add_argument(
+    p_pull_source = p_pull.add_argument(
         "--source",
         choices=("csv", "garmin_live", "intervals_icu"),
         default=None,
@@ -7007,6 +7045,7 @@ def build_parser() -> argparse.ArgumentParser:
              "granularity yet). Default (v0.1.6): intervals_icu when "
              "credentials are configured, else csv.",
     )
+    annotate_choice_metadata(p_pull_source, PULL_SOURCE_CHOICE_METADATA)
     p_pull.add_argument("--history-days", type=int, default=14,
                         help="Trailing window size for resting_hr / hrv / "
                              "training_load series (live pull only). Matches "
@@ -8628,7 +8667,7 @@ def build_parser() -> argparse.ArgumentParser:
                               "and unreliable for live scraping; prefer "
                               "`--source intervals_icu` (the v0.1.6+ "
                               "supported live source).")
-    p_daily.add_argument(
+    p_daily_source = p_daily.add_argument(
         "--source",
         choices=("csv", "garmin_live", "intervals_icu"),
         default=None,
@@ -8636,6 +8675,7 @@ def build_parser() -> argparse.ArgumentParser:
              "`hai pull --source`. Default (v0.1.6+): intervals_icu "
              "when credentials are configured, else csv.",
     )
+    annotate_choice_metadata(p_daily_source, PULL_SOURCE_CHOICE_METADATA)
     p_daily.add_argument("--history-days", type=int, default=14,
                          help="Trailing window for live pull series "
                               "(matches `hai pull --history-days`).")

@@ -70,6 +70,18 @@ JSON_OUTPUT_MODES: frozenset[str] = frozenset({
     "dual",      # explicit --json and --text flags both supported
 })
 
+# v0.1.14.1 W-GARMIN-MANIFEST-SIGNAL: per-choice reliability annotation.
+# Carried in flag entries' optional ``choice_metadata`` block. Authors
+# attach via :func:`annotate_choice_metadata` after ``add_argument``;
+# the walker reads it back when serialising the manifest. Choices that
+# carry no entry are treated by consumers as ``reliable`` by default —
+# the absence of an entry is the signal that no caveat exists.
+RELIABILITY_VALUES: frozenset[str] = frozenset({
+    "reliable",     # supported live source (e.g. intervals_icu).
+    "unreliable",   # known best-effort / rate-limited / upstream-flaky
+                    # (e.g. garmin_live). Agents should prefer alternatives.
+})
+
 # Legacy exit-code placeholder for subcommands that still return 0/2 via
 # the old pattern. An honest manifest reports what the handler actually
 # does today, so these sit alongside migrated entries until the
@@ -107,6 +119,68 @@ class ContractAnnotationError(ValueError):
     Caught at build-time (import time, typically) so a bad annotation
     fails the test suite rather than silently corrupting the manifest.
     """
+
+
+# Internal attribute name used to stash per-choice metadata on an
+# argparse Action. Underscore-prefixed so it doesn't collide with
+# anything argparse owns. Not part of the public manifest schema —
+# the walker reads it and serialises into the ``choice_metadata`` key.
+_CHOICE_METADATA_ATTR = "_contract_choice_metadata"
+
+
+def annotate_choice_metadata(
+    action: argparse.Action,
+    metadata: dict[str, dict[str, Any]],
+) -> None:
+    """Attach per-choice metadata to a flag's argparse Action.
+
+    Called immediately after ``parser.add_argument(...)``; the returned
+    Action is the object to annotate. The walker reads the attached
+    attribute when building each flag entry and surfaces it under
+    ``choice_metadata`` in the manifest.
+
+    The shape is ``{choice_value: {field: value, ...}}``. Every keyed
+    choice must exist in ``action.choices``; every entry must include
+    a ``reliability`` field whose value is in :data:`RELIABILITY_VALUES`.
+    Validation is eager so a typo fails CLI-construction (test-suite
+    time) rather than silently corrupting the manifest.
+
+    v0.1.14.1 W-GARMIN-MANIFEST-SIGNAL — closes the agent-contract trap
+    where ``--source garmin_live`` looked like a peer of
+    ``intervals_icu`` despite being known unreliable.
+    """
+
+    if not isinstance(metadata, dict):
+        raise ContractAnnotationError(
+            f"choice_metadata must be a dict; got {type(metadata).__name__}"
+        )
+
+    declared_choices = set(action.choices or ())
+    for choice_value, entry in metadata.items():
+        if action.choices is not None and choice_value not in declared_choices:
+            raise ContractAnnotationError(
+                f"choice_metadata key {choice_value!r} is not a declared "
+                f"choice on {action.option_strings or action.dest!r}; "
+                f"choices: {sorted(declared_choices)}"
+            )
+        if not isinstance(entry, dict):
+            raise ContractAnnotationError(
+                f"choice_metadata[{choice_value!r}] must be a dict; "
+                f"got {type(entry).__name__}"
+            )
+        reliability = entry.get("reliability")
+        if reliability is None:
+            raise ContractAnnotationError(
+                f"choice_metadata[{choice_value!r}] missing required "
+                f"'reliability' field"
+            )
+        if reliability not in RELIABILITY_VALUES:
+            raise ContractAnnotationError(
+                f"choice_metadata[{choice_value!r}] reliability "
+                f"{reliability!r} not in {sorted(RELIABILITY_VALUES)}"
+            )
+
+    setattr(action, _CHOICE_METADATA_ATTR, dict(metadata))
 
 
 # ---------------------------------------------------------------------------
@@ -371,7 +445,7 @@ def _flag_entry(action: argparse.Action) -> dict[str, Any]:
         name = action.dest
         aliases = []
 
-    return {
+    entry: dict[str, Any] = {
         "name": name,
         "positional": positional,
         "required": _flag_is_required(action),
@@ -383,6 +457,19 @@ def _flag_entry(action: argparse.Action) -> dict[str, Any]:
         "nargs": action.nargs if action.nargs is not None else None,
         "aliases": aliases,
     }
+    # v0.1.14.1: per-choice metadata (e.g. reliability hints). Only
+    # rendered when an author has explicitly attached one via
+    # :func:`annotate_choice_metadata` — the absence of the key is
+    # itself a signal (consumers default to "reliable" for plain
+    # choices).
+    choice_metadata = getattr(action, _CHOICE_METADATA_ATTR, None)
+    if choice_metadata:
+        # Defensive copy so manifest serialisation can't mutate the
+        # parser's stashed dict.
+        entry["choice_metadata"] = {
+            k: dict(v) for k, v in choice_metadata.items()
+        }
+    return entry
 
 
 def _primary_option_string(option_strings: list[str]) -> str:

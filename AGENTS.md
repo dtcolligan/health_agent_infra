@@ -132,7 +132,14 @@ write a cycle proposal in `reporting/plans/`; do not act unilaterally.
   2026-05-01; W58D claim-block added to v0.2.0 schema-group list
   per v0.1.14 D14 round 1 F-PLAN-10.)
 - **Garmin Connect is not the default live source.** Login is rate-limited
-  and unreliable. Default to intervals.icu when configured.
+  and unreliable. Default to intervals.icu when configured. As of
+  v0.1.14.1 (W-GARMIN-MANIFEST-SIGNAL), this is also a *structured*
+  signal: `hai capabilities --json` exposes
+  `commands[hai pull].flags[--source].choice_metadata.garmin_live.reliability == "unreliable"`,
+  and `_resolve_pull_source` emits a stderr warning at resolution
+  time when the resolved source is `garmin_live`. Agents reading the
+  capabilities manifest programmatically should pattern-match on
+  `choice_metadata` rather than parsing the help-text prose.
 - **Nutrition v1 is macros-only.**
 - **No `STATUS.md`.** Status lives in CHANGELOG, AUDIT, ROADMAP, and
   ARCHITECTURE; do not resurrect a parallel status file without a new
