@@ -1,25 +1,28 @@
 # GPT Images Prompt Notes
 
-No generated bitmap images were added in this docs pass; **three prompts
-are reserved below for the maintainer to render and commit when public-
-facing assets are needed**. Internal architecture docs continue to use
-Mermaid because it is diffable, reviewable, and source-controlled.
+Three GPT Image renders ship with this docs pass under top-level
+[`assets/`](../../../assets/). The prompts below are the source-of-truth
+for re-rendering or iterating. Internal architecture docs continue to
+use Mermaid because it is diffable, reviewable, and source-controlled —
+the bitmaps are reserved for outward-facing public surfaces (README
+hero, social card, talk slides), not for the canonical architecture
+pages.
 
-The three reserved prompts cover distinct targets — they are not
-interchangeable. Render whichever you actually need; do not render all
-three by default.
+| Slot | Target | Aspect / output | Filename | Status |
+|---|---|---|---|---|
+| 1 | Public landing-page / README hero | 16:9 · 1600 × 900 | [`assets/landing_hero.png`](../../../assets/landing_hero.png) | **rendered 2026-05-04**, embedded in `README.md` |
+| 2 | Show HN / Open Graph card | 1.91:1 · 1200 × 630 | [`assets/show_hn_card.png`](../../../assets/show_hn_card.png) | **rendered 2026-05-04**, referenced from `reporting/docs/launch/show_hn_draft.md` |
+| 3 | Maintainer's-talk slide-deck hero | 16:9 · 1920 × 1080 | [`assets/talk_slide_hero.png`](../../../assets/talk_slide_hero.png) | **rendered 2026-05-04**, parked under `assets/` for talk decks (not currently embedded in any doc) |
 
-| Slot | Target | Aspect / output | Filename |
-|---|---|---|---|
-| 1 | Public landing-page / README hero | 16:9 · 1600 × 900 | `assets/landing_hero.png` |
-| 2 | Show HN / Open Graph card | 1.91:1 · 1200 × 630 | `assets/show_hn_card.png` |
-| 3 | Maintainer's-talk slide-deck hero | 16:9 · 1920 × 1080 | `assets/talk_slide_hero.png` |
+The renders are kept verbatim from the GPT Image output — no editing,
+crop, or recolouring. Re-running a prompt to iterate is fine; record
+the new render date in this table and overwrite the file at its
+canonical filename so links don't drift.
 
-When images land, place them under `assets/` (top-level), commit with
-attribution + the prompt that produced them, and link from the relevant
-doc. Do **not** embed them in the canonical internal architecture pages
-(`ARCHITECTURE.md`, `reporting/docs/architecture.md`,
-`reporting/docs/explainability.md`) — those stay Mermaid.
+Do **not** embed these bitmaps in the canonical internal architecture
+pages (`ARCHITECTURE.md`, `reporting/docs/architecture.md`,
+`reporting/docs/explainability.md`) — those stay Mermaid so changes are
+diffable.
 
 ## Diagrams Added Instead
 

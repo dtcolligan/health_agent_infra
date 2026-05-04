@@ -25,6 +25,8 @@ manifest, not a Claude-only backend.
 > v0.1.16. Treat headline claims as maintainer-verified, not yet
 > independently reproduced.
 
+![A user's health data goes through a shell-capable personal-health agent into the hai governed tool surface, which validates and gates writes to local SQLite state, JSONL audit logs, keyring/config, and validators. A direct write attempt from the agent is crossed out at the boundary.](assets/landing_hero.png)
+
 ## Product boundary
 
 ```mermaid

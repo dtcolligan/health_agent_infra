@@ -3,6 +3,15 @@
 **Status:** launch draft, not current product truth. Refresh against
 `reporting/docs/current_system_state.md` before reuse.
 
+**Open Graph image.** Use [`assets/show_hn_card.png`](../../../assets/show_hn_card.png)
+(1200 × 630, 1.21 MB) as the social card for whichever framing ships.
+The card carries the "Health Agent Infra · Local plugin / runtime
+wrapper around a personal-health agent" headline, a `hai daily`
+terminal, the user-question speech bubble, and the local SQLite +
+audit-chain motif. Source prompt:
+[`reporting/plans/post_v0_1_15/gpt_image_prompts.md`](../../plans/post_v0_1_15/gpt_image_prompts.md)
+slot 2.
+
 The three framings from the v2 plan, each drafted as a complete Show HN
 post. My recommendation is at the bottom.
 
