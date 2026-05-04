@@ -45,9 +45,11 @@
 | **v0.1.14.1** | Hardening cycle: Garmin-live unreliability surfaced as structured capabilities signal (W-GARMIN-MANIFEST-SIGNAL). `hai capabilities --json` exposes per-choice `choice_metadata.reliability == "unreliable"` block; `_resolve_pull_source` emits stderr warning. Single workstream, purely-additive surface change, no D14 plan-audit, no external Codex IR (D15 hardening latitude). | shipped 2026-05-02 | shipped | v0.1.14 |
 | **v0.1.15** | **Foreign-user-ready package, published 2026-05-03.** 6 W-ids shipped: W-GYM-SETID (gym set-id PK collision) + W-A (`hai intake gaps` presence + `is_partial_day`) + F-PV14-01 (CSV-fixture isolation) + W-C (`hai target nutrition` over existing `target` table; migration 025 adds `carbs_g` + `fat_g`) + W-D arm-1 (partial-day nutrition suppression) + W-E (`merge-human-inputs` presence-block update). W-2U-GATE reframed from pre-publish ship gate to post-publish empirical validation feeding v0.1.16. Maintainability + eval substrate deferred to v0.1.17. | shipped 2026-05-03 | shipped | v0.1.14.1 |
 | **v0.1.15.1** | Hotfix: Linux keyring fall-through hardening after CI exposed `NoKeyringError` on runners without a registered backend. Adds `keyrings.alt`, defensive `_default_backend()` fallback, README install hardening, and public candidate-name scrub. Schema head unchanged at 25. | shipped 2026-05-03 | shipped | v0.1.15 |
-| **v0.1.16** | Empirical post-publish fixes from v0.1.15.1's W-2U-GATE recorded session. v0.1.16 picks up P1/P2 findings from the named foreign-user candidate's session, W-EXPLAIN-UX-2, and conditional W-FPV14-SYM if the asymmetric-override pattern causes friction. **Ship claim:** foreign-user session findings consolidated. Cycle scope is purely empirical; PLAN.md authored after the transcript exists. | post-v0.1.15.1 | 2026-Q3 mid | v0.1.15.1 published + foreign-user candidate transcript |
-| **v0.1.17** | Maintainability + eval substrate consolidation (deferred from v0.1.15 round-0 over-scoping). W-29 cli.py 9217-line mechanical split + W-30 regression test + W-AH-2 scenario expansion 35 → 120+ + W-AI-2 `hai eval review` CLI + W-AM-2 4 fork-deferred escalate-tagged scenarios + W-Vb-4 persona-replay residual P7..P12 + F-PV14-02 (`hai sync purge`) + W-B (`hai intake weight` body-comp surface + table) + W-D arm-2 + W-C-EQP query-plan assertions. **Ship claim:** internal correctness + maintainer-side cleanup. Parallelizable with v0.2.0 since v0.2.0 hard deps do not include v0.1.17 work. See `reporting/plans/v0_1_17/README.md`. | post-v0.1.16 | 2026-Q3 late / Q4 early | v0.1.15 (W-A + W-C in tree) + v0.1.16 (session fixes consolidated) |
-| **v0.2.0** | Weekly review (W52) + deterministic factuality (W58D) + 4 doc-only adjuncts (Path A) | post-v0.1.16 + 2-4 weeks | 2026-Q4 | v0.1.16 (foreign-user session fixes consolidated) + v0.1.14 (W-PROV-1 + W-AJ judge harness). **NOT** dependent on v0.1.17 — runs in parallel. |
+| ~~**v0.1.16**~~ | **CANCELLED 2026-05-04.** Originally scoped as empirical post-publish fixes from a foreign-user session. Cancelled when the named foreign-user candidate became unavailable; empirical scope renumbered to **v0.1.19** with a new **v0.1.18** onboarding cycle inserted before it. See `reporting/plans/v0_1_16/README.md`. | n/a | n/a | n/a |
+| **v0.1.17** | Maintainability + eval substrate consolidation (deferred from v0.1.15 round-0 over-scoping). W-29 cli.py 9217-line mechanical split + W-30 regression test + W-AH-2 scenario expansion 35 → 120+ + W-AI-2 `hai eval review` CLI + W-AM-2 4 fork-deferred escalate-tagged scenarios + W-Vb-4 persona-replay residual P7..P12 + F-PV14-02 (`hai sync purge`) + W-B (`hai intake weight` body-comp surface + table) + W-D arm-2 + W-C-EQP query-plan assertions. **Ship claim:** internal correctness + maintainer-side cleanup. Parallelizable with v0.2.0 since v0.2.0 hard deps do not include v0.1.17 work. See `reporting/plans/v0_1_17/README.md`. | next-active (post-v0.1.15.1) | 2026-Q3 late / Q4 early | v0.1.15 (W-A + W-C in tree). **Former v0.1.16 precondition retired 2026-05-04** — W-AH-2 consolidates against synthetic + dogfood evidence, not foreign-user transcript. |
+| **v0.1.18** | **Onboarding-quality cycle (new 2026-05-04).** README quickstart pivot + `hai init` default-flip to `--guided` when stdin is TTY + `--guided` prompt content review + self-onboard dogfood pass + `hai doctor onboarding_readiness` actionability. **Ship claim:** the install→first-plan path is the easy path, not the buried `--guided` flag. Closes the gap surfaced by the maintainer's own DB still showing `intent_count: 0` after v0.1.13 W-AA shipped. See `reporting/plans/v0_1_18/README.md`. | post-v0.1.17 | 2026-Q4 mid | v0.1.17 close (W-29 cli.py split in tree) + PyPI-installable current package |
+| **v0.1.19** | **Foreign-user empirical (renumbered from cancelled v0.1.16, 2026-05-04).** P1/P2 fixes from a real second-user transcript + W-EXPLAIN-UX-2 + conditional W-FPV14-SYM + conditional W-OB-FU-RESIDUAL (any onboarding gap v0.1.18 missed). **Ship claim:** post-publish foreign-user session findings consolidated. PLAN.md authored after the session transcript exists. See `reporting/plans/v0_1_19/README.md`. | post-v0.1.18 + foreign-user available | 2026-Q4 late | v0.1.18 published to PyPI + foreign-user candidate transcript exists |
+| **v0.2.0** | Weekly review (W52) + deterministic factuality (W58D) + 4 doc-only adjuncts (Path A) | post-v0.1.19 + 2-4 weeks | 2026-Q4 / 2027-Q1 | v0.1.19 (foreign-user session fixes consolidated, formerly v0.1.16) + v0.1.14 (W-PROV-1 + W-AJ judge harness). **NOT** dependent on v0.1.17 — runs in parallel. |
 | **v0.2.1** | Insight ledger (W53) (Path A) | post-v0.2.0 + 2-3 weeks | 2026-Q4 / 2027-Q1 | v0.2.0 |
 | **v0.2.2** | LLM judge shadow-by-default (W58J + W-JUDGE-BIAS) (Path A) | post-v0.2.1 + 2-3 weeks | 2026-Q4 / 2027-Q1 | v0.2.1 |
 | **v0.2.3** | Judge promotion to blocking + W-30 capabilities-manifest schema freeze (Path A) | post-v0.2.2 + ≥50 shadow runs | 2027-Q1 | v0.2.2 (≥50 shadow runs accumulated) |
@@ -57,9 +59,17 @@
 path and reassigned maintainability + eval substrate to a new
 **v0.1.17** cycle. The 2026-05-03 publish-first pivot then shipped
 v0.1.15 to PyPI before the W-2U-GATE session so the named foreign-user candidate's install path
-uses the real package; v0.1.16 remains empirical post-session fixes.
-The v0.1.15.1 hotfix then repaired the Linux keyring fall-through
-surfaced by CI before the recorded session.
+uses the real package. The v0.1.15.1 hotfix then repaired the Linux
+keyring fall-through surfaced by CI before the recorded session. On
+**2026-05-04 the foreign-user candidate became unavailable**, which
+cancelled v0.1.16 (its scope was empirical-by-design and meaningless
+without a session transcript). The maintainer restructured the
+forward sequence: **v0.1.17 (maintainability) → v0.1.18 (new
+onboarding-quality cycle, closing the install→first-plan gap before
+exposing it to a foreign user) → v0.1.19 (renumbered foreign-user
+empirical, ships when any second-user candidate arrives) → v0.2.0**.
+v0.1.16 is preserved as a cancelled-cycle README pointing to v0.1.19;
+the W-29 cli.py-split destination is unchanged at v0.1.17.
 The 4-release Path A split for v0.2.x honors reconciliation C6 (one
 schema group per release) per CP-PATH-A (post-v0.1.13 OQ-B answered
 Path A 2026-05-01).
@@ -639,54 +649,46 @@ PyPI publish happened before the named foreign-user candidate's recorded session
 became the empirical-fix cycle for whatever the real install session
 finds. Detail in `reporting/plans/v0_1_15/RELEASE_PROOF.md` §5.
 
+> **Update 2026-05-04.** The named foreign-user candidate became
+> unavailable; v0.1.16 was cancelled and its empirical contract
+> renumbered to **v0.1.19** (with a new **v0.1.18** onboarding cycle
+> inserted before it). The §5B.1 row 7 ("findings feed v0.1.16") and
+> §5B.2 acceptance bullets that route findings to v0.1.16 should be
+> read as "findings feed v0.1.19" in the current world; the original
+> v0.1.16 wording is preserved as historical provenance for what the
+> v0.1.15 ship contract said. See §5C and `reporting/plans/v0_1_16/README.md`.
+
 ---
 
-## 5C. v0.1.16 — Empirical post-publish bug fixes
+## 5C. v0.1.16 — CANCELLED 2026-05-04
 
-> **Status.** **Will follow the named foreign-user candidate's post-publish session.** Cycle
-> scope is purely empirical and authors after v0.1.15's W-2U-GATE
-> recorded session surfaces its findings.
+> **Status.** **Cancelled.** The named foreign-user candidate became
+> unavailable on 2026-05-04 with no near-term replacement. v0.1.16's
+> scope was empirical-by-design — no transcript means no scope.
 >
-> **Theme.** Pick up the post-publish findings v0.1.15 named-deferred
-> (P1) plus any P2 surfaced during the recorded session. **Ship
-> claim:** foreign-user session findings consolidated.
+> **What happened to the empirical work.** Renumbered to **v0.1.19**
+> (`reporting/plans/v0_1_19/README.md`), sequenced after the new
+> v0.1.18 onboarding cycle. v0.1.18 closes known onboarding gaps
+> proactively so the v0.1.19 foreign-user session — when any second
+> user arrives — surfaces the unknown ones, not the ones already
+> visible from the maintainer's own state DB.
+>
+> **What didn't change.** W-29 cli.py-split destination remains v0.1.17.
+> v0.2.0 hard-deps shift from v0.1.16 to v0.1.19 (the renumbered
+> empirical slot).
 
-### 5C.1 In scope (provisional — final scope follows the session)
-
-| W-id | Title | Effort | Source |
-|---|---|---|---|
-| **W-2U-FIX-P1** | All P1 fixes named-deferred from v0.1.15's recorded session | 2-5d | v0.1.15 W-2U-GATE output |
-| **W-2U-FIX-P2** | All P2 fixes from the recorded session (or named further deferrals) | 1-2d | v0.1.15 W-2U-GATE output |
-| **W-EXPLAIN-UX-2** | Empirical foreign-user pass over `hai explain` consuming the v0.1.14 review doc's `carries-forward-to-v0.1.15` section (each prose-obligation item either confirmed-still-confusing or confirmed-resolved against the live foreign-user transcript captured after v0.1.15 publish) | 1-2d | v0.1.14 W-EXPLAIN-UX |
-| **W-FPV14-SYM** *(conditional)* | Broader symmetric `--db-path` / `--base-dir` refusal rule, only if the post-publish session surfaces asymmetric-override friction | 0.5-1d | v0.1.15 IR F-IR-02 named-defer |
-
-### 5C.2 Acceptance
-
-- All v0.1.15 named-deferred P1 findings either fixed or
-  re-deferred with a specific v0.1.17 / v0.2.0 destination.
-- All session P2 findings fixed or deferred.
-- W-EXPLAIN-UX-2 dispositions filed against the v0.1.14 review doc's carry-forward section.
-
-### 5C.3 Effort estimate
-
-4-9 days (substantive, but bounded — empirical session output
-typically caps at ~10 P-class findings if the v0.1.15 package is
-reasonably prepared).
-
-### 5C.4 Strategic context
-
-v0.1.16's scope is determined by what the post-publish foreign-user
-session surfaces — it cannot be pre-scoped beyond "empirical fixes."
-Use a patch hotfix only for an isolated P0; otherwise consolidate
-findings here.
+See `reporting/plans/v0_1_16/README.md` for the cancellation note;
+§5E and §5F below cover the replacement v0.1.18 / v0.1.19 cycles.
 
 ---
 
 ## 5D. v0.1.17 — Maintainability + eval substrate consolidation
 
-> **Status.** **Will follow v0.1.16.** Workspace at
-> `reporting/plans/v0_1_17/README.md` is open; PLAN.md authors when
-> the cycle opens.
+> **Status.** **Next-active cycle (post-v0.1.16-cancellation,
+> 2026-05-04).** Workspace at `reporting/plans/v0_1_17/README.md` is
+> open; PLAN.md authors when the cycle opens. The original
+> v0.1.16 → v0.1.17 dependency was transcript-driven and retired
+> 2026-05-04.
 >
 > **Theme.** Land the deferred maintainability + eval-substrate work
 > that the v0.1.15 round-0 PLAN tried to bundle into the foreign-user
@@ -723,9 +725,118 @@ cycle, which would have created exactly the W-29 ↔ W-A/W-C/W-D
 merge friction the `agent_state_visibility_findings.md` recommendation
 warned of. The 2026-05-02 evening self-audit cut the maintainability
 + eval work to v0.1.17 so the gate cycle stays focused. v0.2.0 does
-NOT depend on v0.1.17 (per row 49 — v0.2.0 hard deps are v0.1.16
-+ v0.1.14 substrate only), so v0.1.17 can run parallel to or
-defer past v0.2.0 if the maintainer prefers.
+NOT depend on v0.1.17 — v0.2.0 hard deps are v0.1.19 (formerly
+v0.1.16, post-2026-05-04 renumber) + v0.1.14 substrate only — so
+v0.1.17 can run parallel to or defer past v0.2.0 if the maintainer
+prefers. v0.1.16 cancellation (2026-05-04) promoted v0.1.17 to
+next-active and dropped its former v0.1.16-must-close precondition;
+W-AH-2 now consolidates against synthetic + dogfood evidence rather
+than a foreign-user transcript, and ships honestly as
+"synthetic-coverage expansion."
+
+---
+
+## 5E. v0.1.18 — Onboarding-quality cycle (new 2026-05-04)
+
+> **Status.** **Scoped, not yet open.** Workspace at
+> `reporting/plans/v0_1_18/README.md`; PLAN.md authors when v0.1.17
+> closes.
+>
+> **Theme.** The infrastructure for easy onboarding shipped in v0.1.13
+> (`hai init --guided`, `hai doctor onboarding_readiness`), but the
+> maintainer's own DB still reports `intent_count: 0` after months of
+> dogfood — meaning the gap is in surfacing/discoverability/UX, not
+> in mechanism. **Ship claim:** the install→first-plan path is the
+> easy path, not the buried `--guided` flag. Close the known gaps
+> proactively before exposing them to a v0.1.19 foreign user.
+
+### 5E.1 In scope (provisional — finalised in PLAN.md)
+
+| W-id | Title | Effort | Source |
+|---|---|---|---|
+| **W-OB-1** | README quickstart pivot to `hai init --guided`; drop the now-redundant manual `hai auth intervals-icu` step | 0.5d | maintainer 2026-05-04 directive |
+| **W-OB-2** | `hai init` default-flip: when stdin is a TTY and `onboarding_readiness` reports missing fields, auto-promote to `--guided`. Non-interactive opt-out via `--non-interactive` flag or `HAI_INIT_NON_INTERACTIVE=1` env var. Lands cleanly post-v0.1.17 W-29 split. | 1-2d | own-DB `intent_count=0` evidence |
+| **W-OB-3** | `--guided` prompt content review — intent prompt stickiness, target prompts, refusal paths, defaults | 1-2d | UX judgment call informed by W-OB-4 |
+| **W-OB-4** | Self-onboard dogfood pass — maintainer installs from PyPI on a clean `pipx` env, walks the README cold, files findings | 1d | substitutes for v0.1.16's missing transcript |
+| **W-OB-5** | `hai doctor onboarding_readiness` actionability — hint text + machine-parsable `next_action` field; capabilities manifest update | 0.5d | downstream from W-OB-1/2/3 |
+| **W-OB-6** *(conditional)* | Structural finding from W-OB-4 not absorbed by W-OB-1/2/3/5 | bounded by W-OB-4 | conditional |
+
+### 5E.2 Acceptance
+
+- README quickstart has `hai init --guided` as the lead command.
+- `hai init` invoked interactively on a fresh DB auto-runs the
+  guided flow without needing the flag.
+- `hai doctor onboarding_readiness` warns include a copy-pasteable
+  remediation command.
+- Self-onboard dogfood pass run + findings filed.
+
+### 5E.3 Effort estimate
+
+3-7 days (substantive). Bounded by the small surface area — no new
+domains, no schema changes, no new live sources.
+
+### 5E.4 Strategic context
+
+v0.1.18 exists because v0.1.16 cancelled before producing transcript
+evidence. Doing a self-onboard dogfood pass on the post-v0.1.17
+package gives v0.1.19 a cleaner starting point: the foreign user
+won't burn their session on issues already visible from the
+maintainer's own DB. Downside: dogfood evidence is not foreign-user
+evidence — v0.1.18 ships honestly as "known-gap closure," and
+v0.1.19 still owns the foreign-user empirical surface.
+
+---
+
+## 5F. v0.1.19 — Foreign-user empirical (renumbered from v0.1.16)
+
+> **Status.** **Scoped as empirical-by-design**, not yet open.
+> Workspace at `reporting/plans/v0_1_19/README.md`; PLAN.md authors
+> after the cycle opens (post-v0.1.18 + foreign-user transcript
+> exists).
+>
+> **Theme.** Pick up P1/P2 findings from a real second-user
+> transcript captured against the post-v0.1.18 PyPI package, plus
+> W-EXPLAIN-UX-2 carry-forward and any conditional onboarding
+> residual not closed by v0.1.18. **Ship claim:** post-publish
+> foreign-user session findings consolidated.
+>
+> **Renumber provenance.** Originally scoped as v0.1.16 (created
+> 2026-05-03). Cancelled 2026-05-04 when the named candidate became
+> unavailable; scope renumbered to v0.1.19 to ship after v0.1.18's
+> proactive onboarding work.
+
+### 5F.1 In scope (provisional — final scope follows the session)
+
+| W-id | Title | Effort | Source |
+|---|---|---|---|
+| **W-2U-FIX-P1** | All P1 fixes from the recorded foreign-user session | 2-5d | foreign-user session output |
+| **W-2U-FIX-P2** | All P2 fixes (or named further deferrals) | 1-2d | foreign-user session output |
+| **W-EXPLAIN-UX-2** | Empirical foreign-user pass over `hai explain`; consumes v0.1.14 review doc's `carry-forward` section (deferred from v0.1.14 W-EXPLAIN-UX) | 1-2d | v0.1.14 W-EXPLAIN-UX deferred |
+| **W-FPV14-SYM** *(conditional)* | Broader symmetric `--db-path` / `--base-dir` refusal rule, only if the session surfaces asymmetric-override friction | 0.5-1d | v0.1.15 IR F-IR-02 named-defer |
+| **W-OB-FU-RESIDUAL** *(conditional)* | Onboarding gap v0.1.18 missed | bounded | foreign-user session output |
+
+### 5F.2 Acceptance
+
+- All session P1 findings either fixed or re-deferred with a
+  specific destination.
+- All session P2 findings fixed or deferred.
+- W-EXPLAIN-UX-2 (deferred from v0.1.14 W-EXPLAIN-UX): dispositions
+  filed against the v0.1.14 review doc's carry-forward section.
+
+### 5F.3 Effort estimate
+
+4-9 days (substantive, but bounded — empirical session output
+typically caps at ~10 P-class findings if v0.1.18's package is
+reasonably prepared).
+
+### 5F.4 Strategic context
+
+v0.1.19 inherits v0.1.16's empirical contract verbatim, with one
+update: the package the foreign user installs is post-v0.1.18, so
+the obvious onboarding gaps should already be closed. Findings from
+v0.1.19 should therefore skew toward genuine second-user blind spots
+rather than "the README didn't tell me to run `--guided`." If they
+don't, v0.1.18 underperformed and that's its own retro signal.
 
 ---
 

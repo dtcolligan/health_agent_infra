@@ -43,18 +43,30 @@
   - W-A presence surface is in tree (persona-runner consumes it).
   - W-C `target` table macro extension (migration 025 — `'carbs_g'` + `'fat_g'` added to `target_type` CHECK + `_VALID_TARGET_TYPE`) is in tree; W-D arm-2 reads the existing `target` table filtered by `domain='nutrition' AND target_type IN ('calories_kcal','protein_g','carbs_g','fat_g')`. (Updated post-v0.1.15 round-4 F-PHASE0-01 Option A revision; the original v0.1.15 round-3 PLAN proposed a separate `nutrition_target` table that was cut. Migration number bumped from "024" to "025" at W-C-implementation time because v0.1.15 W-GYM-SETID claimed 024 first.)
   - The repo is post-restructure-stable.
-- **v0.1.16 must close** so that:
-  - The foreign-user gate has fired and any P0/P1 bugs from the gate session have landed before this cycle's eval-substrate work starts. Otherwise W-AH-2's new scenarios may encode the wrong runtime contract.
+- **(Former v0.1.16 precondition retired 2026-05-04.)** The original
+  v0.1.16 → v0.1.17 dependency was that the foreign-user gate would
+  have fired and any P0/P1 bugs landed before W-AH-2's eval-substrate
+  work, so scenarios wouldn't encode the wrong runtime contract.
+  v0.1.16 was cancelled 2026-05-04 (named foreign-user candidate
+  unavailable; see `reporting/plans/v0_1_16/README.md`). The
+  empirical work renumbered to **v0.1.19**, sequenced after **v0.1.18
+  (onboarding)**. v0.1.17 now runs without that precondition: W-AH-2
+  consolidates against the existing synthetic persona matrix +
+  dogfood evidence, and ships honestly as "synthetic-coverage
+  expansion" rather than "foreign-user-validated coverage."
 
 ## Out of scope (deferred further)
 
-- v0.2.0 schema work (W52 + W58D) — depends on v0.1.16 close, runs parallel to or after v0.1.17.
+- v0.2.0 schema work (W52 + W58D) — depends on v0.1.19 close (post-
+  cancellation renumber from v0.1.16), runs parallel to or after
+  v0.1.17.
 - Capabilities-manifest schema freeze (W-30 final destination is v0.2.3, not v0.1.17).
 - Apple Health / Whoop adapters (post-v0.2.x).
 
 ## First actions for the cycle session (when it opens)
 
-1. Confirm v0.1.15 published and v0.1.16 closed (RELEASE_PROOF.md present in both).
+1. Confirm v0.1.15 published (RELEASE_PROOF.md present). v0.1.16
+   close is no longer a precondition (cancelled 2026-05-04).
 2. Re-read this README + the source carry-over docs.
 3. Author `PLAN.md`. First line: tier annotation.
 4. Copy `_templates/codex_plan_audit_prompt.template.md` and customise.

@@ -1,73 +1,58 @@
-# v0.1.16 cycle — workspace
+# v0.1.16 cycle — CANCELLED
 
-**Status:** scoped as **empirical-by-design**, not yet open. PLAN.md is intentionally NOT authored ahead of cycle open — its scope IS the post-publish findings from v0.1.15.1's W-2U-GATE recorded session, which cannot be pre-scoped honestly.
+**Status:** Cancelled 2026-05-04. Empirical scope preserved and
+renumbered to **v0.1.19** (`reporting/plans/v0_1_19/README.md`).
 
-**Tier (anticipated):** substantive. Empirical post-session cycles typically close 4-9 days but the cycle pattern still fires full Phase 0 + multi-round D14 because what's being audited is the session-output triage, not a fixed workstream catalogue.
+## Why cancelled
 
-**Provenance.** Created 2026-05-03 alongside the v0.1.15 D14 close. The 2026-05-02 evening scope-restructure folded the original-v0.1.16 "first foreign-machine onboarding empirical proof" claim into v0.1.15. After D15 IR closed, the maintainer made the publish-first pivot: v0.1.15 published to PyPI first, then v0.1.15.1 hotfixed the Linux keyring fall-through before the named foreign-user candidate's recorded W-2U-GATE session. That session is post-publish empirical validation feeding this cycle. Maintainability + eval substrate that the v0.1.15 round-0 PLAN tried to graft into v0.1.15 was reassigned to v0.1.17 instead.
+v0.1.16 was scoped as **empirical-by-design** — its PLAN.md was
+intentionally not authored ahead of cycle open because the scope
+was "the bugs the post-publish foreign-user session surfaces." That
+scope is meaningless without an actual foreign-user session.
 
-## Why no PLAN.md yet
+The named foreign-user candidate became unavailable on 2026-05-04
+with no near-term replacement. Holding v0.1.16 open with no source
+material would either:
 
-The v0.1.15 round-0 over-scoping (16 catalogued slots; D14 round-1 cut to 7 against the second-user objective) showed the cost of forward-speculation. v0.1.16's scope is literally "the bugs the post-publish foreign-user session surfaces" — authoring a PLAN.md before the session fires would either be (a) speculative scope (guessing what bugs will appear), or (b) trivial restate of "TBD per session output." Neither helps. The PLAN authors when the cycle opens, with the session transcript and the W-2U-GATE deferral list as inputs.
+- (a) waste a cycle slot reservation, or
+- (b) tempt forward-speculation that v0.1.15's round-0 over-scoping
+  already proved costly.
 
-## Scope (provisional, finalised in PLAN.md after gate)
+The maintainer's call: cancel v0.1.16, restructure the next-active
+sequence to make onboarding *easier* before exposing it to a foreign
+user, and reopen the empirical slot (now v0.1.19) once a real
+second-user transcript exists.
 
-| W-id (anticipated) | Title | Source |
+## What replaces it
+
+| Old slot | New slot | Rationale |
 |---|---|---|
-| **W-2U-FIX-P1** | All P1 fixes named-deferred from v0.1.15's recorded session | v0.1.15 W-2U-GATE output |
-| **W-2U-FIX-P2** | All P2 fixes from the recorded session (or named further deferrals) | v0.1.15 W-2U-GATE output |
-| **W-EXPLAIN-UX-2** | Empirical foreign-user pass over `hai explain` consuming v0.1.14 review doc's `carries-forward-to-v0.1.15` section | v0.1.14 W-EXPLAIN-UX |
-| **W-FPV14-SYM** *(conditional)* | Broader F-PV14-01 symmetry rule: every CLI command consuming both `--db-path` and `--base-dir` refuses asymmetric overrides (the source-finding `post_v0_1_14/carry_over_findings.md` F-PV14-01 item 4 wider scope). Land **only if the post-publish foreign-user session surfaces a friction point with the asymmetric-override pattern.** Otherwise defer to v0.1.17 or later. Source: v0.1.15 D15 IR round 1 F-IR-02 named-defer. | v0.1.15 IR round 1 F-IR-02 disposition |
+| v0.1.16 (empirical, pending Mohil) | v0.1.19 (empirical, pending any second user) | Preserves the empirical-cycle pattern; pushes it after onboarding quality is improved. |
+| (gap) | v0.1.18 (onboarding cycle) | Close known onboarding gaps before a foreign user hits them. |
+| v0.1.17 (was post-v0.1.16) | v0.1.17 (next-active, no precondition) | The v0.1.16 → v0.1.17 dependency was transcript-driven, not technical — without a transcript, the precondition evaporates. |
+| v0.2.0 (was post-v0.1.16) | v0.2.0 (post-v0.1.19) | Hard prereq follows the renumbered empirical slot. |
 
-**Effort estimate (anticipated):** 4-9 days. Bounded by the session-output cap (~10 P-class findings if the v0.1.15.1 package is reasonably prepared). If the session surfaces a small isolated P0, a follow-up patch hotfix remains available; otherwise findings consolidate here.
+See `reporting/plans/tactical_plan_v0_1_x.md` for the updated cycle
+table.
 
-## Hard dependencies
+## Provenance
 
-- **v0.1.15.1 must be published** with RELEASE_PROOF.md + REPORT.md present and `pyproject.toml` at `0.1.15.1`.
-- the named foreign-user candidate's post-publish transcript at `reporting/plans/v0_1_15/foreign_machine_session_<YYYY-MM-DD>.md` must exist.
-- The named foreign-user candidate's install record + state DB snapshot must be archived per the v0.1.15 release-proof "Next: the named foreign-user candidate's session" contract.
-- All P1 findings the v0.1.15 cycle named-deferred to v0.1.16 must have specific destinations (per v0.1.15 PLAN §2.G acceptance — "named-deferred to v0.1.16 with a specific destination").
+This README originally scoped v0.1.16 as the post-publish foreign-
+user empirical cycle (created 2026-05-03 alongside the v0.1.15 D14
+close, after the 2026-05-02 evening v0.1.15 scope-restructure). The
+full original scope is preserved in
+`reporting/plans/v0_1_19/README.md` (substantively unchanged, only
+renumbered and pointed at the post-v0.1.18 sequencing).
 
-## What's explicitly OUT of scope for v0.1.16
+Do not use this directory as an open implementation checklist.
 
-- **No new feature work.** Empirical fixes only.
-- **No mechanical refactor** (W-29 cli.py split, W-30) — those live in v0.1.17.
-- **No eval-substrate work** (W-AH-2 / W-AI-2 / W-AM-2) — those live in v0.1.17.
-- **No persona-replay residual** (W-Vb-4) — v0.1.17.
-- **No state-model schema additions** (W-B body-comp, W-D arm-2 projection) — v0.1.17.
-- **No v0.2.x scope.**
+## Pattern note
 
-If a finding from the session reveals a need for one of the above, **the maintainer's call is whether to (a) defer that finding to v0.1.17 / v0.2.x with named scope, or (b) cut a focused patch hotfix if the issue is small and release-blocking** — not silently absorb it.
-
-## First actions for the cycle session (when it opens)
-
-1. Confirm v0.1.15.1 published (RELEASE_PROOF.md + REPORT.md present in `v0_1_15_1/`; PyPI version is `0.1.15.1`).
-2. Read v0.1.15's post-publish session transcript at `reporting/plans/v0_1_15/foreign_machine_session_<YYYY-MM-DD>.md`.
-3. Read v0.1.15's RELEASE_PROOF.md §carry-overs (named-deferred P1 list).
-4. Confirm `pwd == /Users/domcolligan/health_agent_infra` per the AGENTS.md active-repo declaration.
-5. Author `PLAN.md` per the empirical findings. First line: tier annotation. Sections: theme + per-finding W-id + ship gates + risks. Each named-deferred P1 from v0.1.15 becomes a W-2U-FIX-P1 sub-item.
-6. Copy `_templates/codex_plan_audit_prompt.template.md` and customise for the empirical-cycle audit shape (D14 questions focus on whether the empirical findings are correctly triaged, not whether the workstream catalogue is right).
-7. Hand to maintainer for D14 round-1 launch.
-
-## D14 plan-audit settled expectation (empirical cycles)
-
-Substantive tier still applies. Empirical cycles tend to settle in 2-3 rounds (the catalogue is bounded by session output; less surface area for cross-doc consistency findings than v0.1.15's restructure).
-
-## Phase 0 (D11) scope (empirical cycles)
-
-Substantive tier requires Phase 0, but for an empirical cycle the bug-hunt is narrower: re-run the persona matrix against the post-v0.1.15 state model, audit-chain probe to verify v0.1.15's W-2U-GATE artifacts are still queryable once captured, internal sweep on the named-deferred P1 fix surfaces. Codex external bug-hunt audit is optional per maintainer.
-
-## Ship gate
-
-- All v0.1.15 named-deferred P1 findings either fixed or re-deferred with a specific v0.1.17 / v0.2.0 destination.
-- All session P2 findings fixed or deferred.
-- W-EXPLAIN-UX-2 dispositions filed against the v0.1.14 review doc's carries-forward section.
-- Standard substantive-cycle gates (pytest, mypy, bandit, capabilities round-trip).
-- AUDIT.md + CHANGELOG entries authored.
-- Ship-time freshness checklist from AGENTS.md.
-
-## Cross-references
-
-- `reporting/plans/v0_1_15/PLAN.md` §2.G (W-2U-GATE acceptance + P-tier definitions; this cycle inherits the named-deferred P1 list).
-- `reporting/plans/tactical_plan_v0_1_x.md` row 47 + §5C.
-- `reporting/plans/v0_1_17/README.md` (the next cycle; non-empirical, knowable scope).
+This cancellation surfaced a quiet gap in the audit-chain
+empirical-cycle pattern: cycles whose ship claim is "absorb empirical
+findings from a session" cannot be built on synthetic evidence
+without renaming the claim. If the source-material precondition
+fails, the cycle either cancels (this case) or its claim must change
+(e.g., "self-onboard dogfood pass" instead of "foreign-user gate").
+Worth a one-line addition to AGENTS.md "Patterns the cycles have
+validated" if the pattern recurs.

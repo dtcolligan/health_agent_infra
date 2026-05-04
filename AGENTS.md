@@ -152,7 +152,14 @@ write a cycle proposal in `reporting/plans/`; do not act unilaterally.
   mid-day post-v0.1.14.1 ship; v0.1.15 → v0.1.17 W-29 destination
   updated 2026-05-02 evening per scope-restructure self-audit, so
   v0.1.15 can ship the foreign-user-ready package without W-29 merge
-  friction with W-A/W-C/W-D CLI extensions.)
+  friction with W-A/W-C/W-D CLI extensions; v0.1.17 promoted to
+  next-active cycle 2026-05-04 after v0.1.16 cancelled — named
+  foreign-user candidate unavailable, foreign-user empirical work
+  renumbered to v0.1.19, with new v0.1.18 onboarding cycle inserted
+  before it; W-29 destination unchanged at v0.1.17. See
+  `reporting/plans/v0_1_16/README.md`,
+  `reporting/plans/v0_1_18/README.md`, and
+  `reporting/plans/v0_1_19/README.md`.)
 - **Garmin Connect is not the default live source.** Login is rate-limited
   and unreliable. Default to intervals.icu when configured. As of
   v0.1.14.1 (W-GARMIN-MANIFEST-SIGNAL), this is also a *structured*
@@ -436,7 +443,10 @@ CI runs `verification/tests/`. The suite includes docs and skill/CLI drift check
   2026-05-02 evening per the v0.1.15 scope-restructure self-audit
   to keep the foreign-user-ready package cycle free of cli.py merge
   friction with W-A/W-C/W-D CLI extensions — see `reporting/plans/v0_1_15/PLAN.md`
-  §1.4 and `reporting/plans/v0_1_17/README.md`.)
+  §1.4 and `reporting/plans/v0_1_17/README.md`; v0.1.17 promoted to
+  next-active cycle 2026-05-04 after v0.1.16 cancelled, foreign-user
+  empirical work renumbered to v0.1.19 with new v0.1.18 onboarding
+  cycle before it — destination unchanged at v0.1.17.)
 - Do not add micronutrient or food-taxonomy features.
 - Do not treat raw SQLite reads as the normal inspection surface; use
   `hai today`, `hai explain`, and `hai doctor`.

@@ -209,13 +209,19 @@ up the live data path:
 
 ```bash
 pipx install health-agent-infra
-hai init
-hai auth intervals-icu
+hai init --guided   # interactive: prompts for intervals.icu creds, authors initial intent + target, runs first wellness pull, surfaces today's plan
 hai capabilities --human
 hai doctor
 hai daily
 hai today
 ```
+
+`hai init --guided` is idempotent — safe to rerun, skips steps that
+already have state. The bare `hai init` (no flag) does the
+non-interactive scaffold only and leaves credentials, intent, and
+target authoring for you to do manually; agent harnesses calling
+`hai init` from CI use the bare form. New users on an interactive
+terminal should always pass `--guided`.
 
 `intervals_icu` is currently the only working live source. Without
 credentials, `hai pull` falls back to a committed CSV fixture for
