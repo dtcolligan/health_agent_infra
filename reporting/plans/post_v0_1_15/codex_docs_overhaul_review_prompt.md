@@ -252,11 +252,87 @@ uv run pytest verification/tests/test_capabilities.py \
 uv run pytest verification/tests -q
 # Expected: 2631 passed, 3 skipped
 
-# Markdown link/anchor check
-# Repeat the local current-docs link check from docs_overhaul_report.md:
-# include root operating docs, reporting/README.md, reporting/docs/**/*.md
-# excluding reporting/docs/archive/**, plus reporting/plans/post_v0_1_15/*.md.
-# Expected from this pass: no broken links/anchors; 378 checked across 51 docs.
+# Markdown link/anchor check (reproducible).
+# Self-contained Python heredoc: walks the listed roots, strips fenced
+# and inline code blocks (so example link syntax inside code does not
+# false-positive), extracts inline link patterns from .md files, and
+# verifies each relative target exists (and that anchors match a heading
+# slug in the target file). Excludes archive paths.
+python3 - <<'PY'
+import re, sys
+from pathlib import Path
+
+REPO = Path(".").resolve()
+ROOTS = [
+    "README.md", "ARCHITECTURE.md", "AGENTS.md", "CLAUDE.md",
+    "ROADMAP.md", "AUDIT.md", "CHANGELOG.md", "SECURITY.md",
+    "CITATION.cff", "CONTRIBUTING.md", "REPO_MAP.md", "HYPOTHESES.md",
+    "reporting/README.md", "reporting/docs", "reporting/plans/README.md",
+    "reporting/plans/post_v0_1_15",
+]
+EXCLUDE = ("reporting/docs/archive/",)
+FENCE_RE = re.compile(r"```.*?```", re.S)
+INLINE_RE = re.compile(r"`[^`\n]*`")
+LINK_RE = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
+HEADING_RE = re.compile(r"^#{1,6}\s+(.+?)\s*$", re.M)
+
+def slugify(h):
+    s = h.strip().lower()
+    s = re.sub(r"[^a-z0-9\s\-]+", "", s)
+    return re.sub(r"\s+", "-", s)
+
+def strip_code(text):
+    text = FENCE_RE.sub("", text)
+    text = INLINE_RE.sub("", text)
+    return text
+
+files = []
+for r in ROOTS:
+    p = REPO / r
+    if p.is_file() and p.suffix == ".md":
+        files.append(p)
+    elif p.is_dir():
+        for q in p.rglob("*.md"):
+            if any(str(q).find(e) >= 0 for e in EXCLUDE):
+                continue
+            files.append(q)
+
+checked = 0
+broken = []
+for src in files:
+    raw = src.read_text(encoding="utf-8", errors="replace")
+    text = strip_code(raw)
+    headings = {slugify(h) for h in HEADING_RE.findall(raw)}
+    for m in LINK_RE.finditer(text):
+        target = m.group(1)
+        if target.startswith(("http://", "https://", "mailto:")):
+            continue
+        if target.startswith("#"):
+            checked += 1
+            anchor = target[1:]
+            if anchor and slugify(anchor) not in headings:
+                broken.append((src, target, "same-file anchor missing"))
+            continue
+        checked += 1
+        path, _, anchor = target.partition("#")
+        tgt = (src.parent / path).resolve()
+        if not tgt.exists():
+            broken.append((src, target, "missing file"))
+            continue
+        if anchor and tgt.suffix == ".md":
+            slugs = {slugify(h) for h in HEADING_RE.findall(tgt.read_text(encoding="utf-8", errors="replace"))}
+            if slugify(anchor) not in slugs:
+                broken.append((src, target, "anchor missing in target"))
+
+print(f"checked {checked} markdown links across {len(files)} docs")
+print(f"broken: {len(broken)}")
+for src, target, why in broken:
+    print(f"  {src.relative_to(REPO)}: {target} ({why})")
+sys.exit(1 if broken else 0)
+PY
+# Expected: "broken: 0". Checked count similar to the in-pass run
+# (~350 across ~54 docs at the time of this commit); exact totals
+# will vary as docs evolve.
 ```
 
 ## 4. Codex deliverables

@@ -34,13 +34,17 @@ contract:
 hai capabilities --json
 ```
 
-The manifest emits, per subcommand:
+The manifest emits, per subcommand (verbatim JSON field names):
 
-- `name` (e.g. `hai propose`)
-- `mutation_class` - one of nine declared classes (`read-only`,
-  `writes-sync-log`, `writes-audit-log`, `writes-state`,
-  `writes-memory`, `writes-skills-dir`, `writes-credentials`,
-  `writes-config`, `interactive`). See section 2.
+- `command` (e.g. `hai propose`) - the canonical invocation string.
+- `mutation` - one of the declared mutation values (`read-only`,
+  `writes-sync-log`, `writes-state`, `writes-memory`,
+  `writes-skills-dir`, `writes-credentials`, `writes-config`,
+  `interactive`; the schema also reserves `writes-audit-log`, which no
+  command currently emits — proposal/review writes pair audit logging
+  with state writes and land as `writes-state`). See section 2. **In
+  this doc's prose, "mutation class" is the concept name; the JSON
+  field is literally `mutation`.**
 - `agent_safe` - boolean. See section 4.
 - `idempotent` - `yes`, `no`, `yes-with-replace`. Determines whether
   retry on TRANSIENT exit is safe.
@@ -62,9 +66,12 @@ skill exists specifically to read the manifest as its source of truth.
 
 ## 2. Mutation classes - operational meaning
 
-Every `hai` subcommand declares a `mutation_class`. The class is an
-operational contract, not documentation decoration. The runtime
-declares nine classes in the manifest:
+Every `hai` subcommand declares a mutation value (the JSON field is
+literally `mutation`; this doc calls the concept "mutation class").
+The class is an operational contract, not documentation decoration.
+The runtime defines nine classes in the manifest schema; eight
+currently appear on at least one command, and `writes-audit-log` is
+schema-reserved:
 
 | Class | What it may touch | Operational meaning for the agent |
 |---|---|---|
@@ -249,8 +256,8 @@ is mutual.
 ## 11. Quick reference
 
 ```bash
-# Discover the contract
-hai capabilities --json | jq '.commands[] | {name, mutation_class, agent_safe}'
+# Discover the contract (JSON field names are `command` and `mutation`)
+hai capabilities --json | jq '.commands[] | {command, mutation, agent_safe}'
 
 # Verify local setup
 hai doctor

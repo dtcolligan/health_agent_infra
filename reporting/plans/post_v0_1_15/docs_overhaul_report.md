@@ -55,6 +55,12 @@ Kubernetes docs <https://kubernetes.io/docs/>, OpenTelemetry docs
   status API returned no combined statuses for `c86f80b`; `gh run list` showed
   the latest push CI run succeeded, with `test (3.11)`, `test (3.12)`, and
   `build` jobs successful.
+- **GitHub releases / tags:** read locally via `git tag --sort=-creatordate`
+  (latest tags: `v0.1.15.1`, `v0.1.12.1`, `v0.1.12`, `v0.1.11`, `v0.1.10`,
+  ...). Remote `gh release list` / `gh release view` were **not** invoked
+  in this pass; no release notes were authored, no tag was moved, and no
+  GitHub release was created. The local tag history matches the published-
+  versions narrative in `reporting/docs/current_system_state.md`.
 - **Web search:** available and used for documentation-structure research.
   Only patterns were used; no prose was copied.
 - **Live `hai` CLI:** available and used for `hai capabilities --json` /
@@ -191,3 +197,113 @@ docs: overhaul internal documentation around agent-wrapper architecture
 ```
 
 No push, tag move, PyPI publish, or GitHub release was performed.
+
+## Appendix A — Per-agent research evidence
+
+The six parallel research agents in §2 produced their findings in-session;
+their full transcripts were not persisted as standalone artifacts (the
+audit trail decision was that the *changes they justified* belong in the
+docs themselves, not as a parallel report dump). For each agent below,
+the durable trail is the file:line citation in the change made and the
+pre-pass facts those changes were responding to. A future review can
+reconstruct each finding from the diff against `c86f80b`.
+
+### Agent A — Cold-reader journey
+
+- Pre-pass evidence: `README.md` opened with a 14-row failure-mode table
+  (then-`README.md:29-44`) and a 16-row "Current state" table
+  (then-`README.md:94-110`) before the conceptual model was set; the
+  audience-routing surface only existed at `reporting/docs/README.md:40-48`.
+- Changes that closed the finding: README "Product boundary" Mermaid
+  diagram inserted before the failure-mode table (`README.md:22-43` in
+  the post-commit tree); failure-mode table trimmed to 7 rows
+  (`README.md:74-84`); audience-routing "Read next" table at
+  `README.md:422-429` extended to include `host_agent_contract.md`.
+
+### Agent B — Open-source documentation patterns
+
+- Pattern sources fetched: Rust Book, Cargo, Django, FastAPI, Kubernetes,
+  uv/Astral, LangChain, OpenTelemetry, SQLite, GitHub CLI, Anthropic
+  Claude API / MCP. URLs preserved in the citations block of agent B's
+  in-session report.
+- Patterns adopted: audience-card landing block (HIGH-applicability;
+  closed via README "Read next" + `reporting/docs/README.md` "Read by
+  role"); machine-readable contract (HIGH; already present via
+  `hai capabilities --json` and the regenerated `agent_cli_contract.md`);
+  mental-model "concepts" page pattern (HIGH; closed via the new
+  `host_agent_contract.md`).
+- Patterns *not* adopted in this pass: `llms.txt`, Diátaxis directory
+  restructure, sidebar navigation. Named in §8 residuals.
+
+### Agent C — Visual-aid opportunities
+
+- Pre-pass evidence: zero Mermaid in `README.md` / `ARCHITECTURE.md` /
+  `AGENTS.md`; existing Mermaid limited to
+  `reporting/docs/architecture.md`, `agent_integration.md`,
+  `memory_model.md`, `explainability.md`.
+- Changes that closed the finding: D1 mutation-substrate map at
+  `reporting/docs/architecture.md` "Command contract and mutation
+  substrates" (Mermaid `flowchart LR`); D2 runtime-pipeline diagram at
+  `reporting/docs/architecture.md` "Runtime pipeline under the wrapper"
+  (Mermaid `flowchart TB`); D3 three-state audit chain lifted into
+  `ARCHITECTURE.md` "Three-State Audit Chain" (Mermaid `stateDiagram-v2`).
+  Cap of three new diagrams was respected.
+
+### Agent D — Agent-operability
+
+- Pre-pass evidence: 11 gaps clustered around the absence of one
+  canonical host-agent contract page; mutation classes documented as a
+  bare table in `agent_cli_contract.md:23-35` with no operational prose;
+  proposal-gate three-state machine documented only at
+  `agent_integration.md:198-205`; USER_INPUT handling scattered across
+  `cli_exit_codes.md:13-20` and `agent_integration.md:155-156`.
+- Changes that closed the finding: the new
+  `reporting/docs/host_agent_contract.md` consolidates manifest
+  discovery (§1), nine-class mutation taxonomy with operational prose
+  (§2), proposal-gate three-state machine (§3), `agent_safe` and W57
+  (§4 + §6), USER_INPUT exit handling (§5), source-freshness rules
+  (§7), and a "what the agent must never do" table (§8). Glossary
+  expanded with `proposal gate`, `mutation class`, `classified_state`,
+  `policy_result`, `proposal_log`, `planned_recommendation`,
+  `recommendation_log`.
+
+### Agent E — Domain reference quality
+
+- Pre-pass evidence: `recovery.md` used vague "X1/X6-style" language
+  for X-rule participation; `stress.md` mentioned X7 only as
+  "contributes"; `running.md` and `nutrition.md` both stated X2 softens
+  running (verified wrong against `core/synthesis_policy.py:621`,
+  which restricts X2 targets to `("strength", "recovery")`); `sleep.md`
+  vaguely said chronic-deprivation forces "an escalation-style sleep
+  action" (the live policy at
+  `domains/sleep/policy.py:140-161` forces `sleep_debt_repayment_day`).
+- Changes that closed the finding: all six domain docs moved to a
+  uniform 8-section structure (Runtime Surface · Evidence And Accepted
+  State · Classifier Reference · Policy / R-rules · Proposal Actions ·
+  X-rule Participation · Missingness And V1 Limits · Tests). X2
+  participation now explicitly says "Running is intentionally not an X2
+  target in v1" in `nutrition.md` and `running.md`. Sleep
+  chronic-deprivation now names the forced action explicitly. Recovery
+  and Stress sections now enumerate every X-rule that targets them.
+
+### Agent F — Stale facts and link integrity
+
+- Pre-pass evidence: 1 high-severity finding (`ROADMAP.md:34` "2630
+  passed" vs canonical 2631 at `current_system_state.md:18`); link
+  integrity otherwise clean across 51 current docs.
+- Changes that closed the finding: `ROADMAP.md:34` corrected to
+  `2631 passed, 3 skipped (+50 vs v0.1.14.1)`. The two low housekeeping
+  items (personal-path mention in `AGENTS.md:20-22`, archive-perimeter
+  wording in `reporting/docs/README.md`) were intentionally not changed
+  — see §8 residuals.
+
+### Note on transcript persistence
+
+The agent transcripts themselves were in-session only and were not
+written to disk as `agent_a_report.md` / `agent_b_report.md` / etc. The
+trade-off was that persisting six raw transcripts would have created
+parallel-truth surfaces that drift away from the actual changes. The
+audit-trail anchor is therefore: this appendix + the diff against
+`c86f80b`. Future cycles that want fuller transcripts can wire the
+parallel-agent prompts to a per-cycle artifacts directory before the
+session starts.
