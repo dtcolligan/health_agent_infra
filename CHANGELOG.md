@@ -11,6 +11,28 @@ Per-release detail lives under `reporting/plans/<version>/`.
 
 ---
 
+## [Unreleased]
+
+### Removed
+
+- `verification/tests/test_readme_structure.py` (D3 v0.1.4 — six structural
+  contracts pinning `## Reading your plan` / `## Recording your day`
+  sections + the architecture "prefer `hai today` over raw SQL" bullet).
+- `verification/tests/test_readme_quickstart_smoke.py` (W-AF v0.1.13 — the
+  CI-runnable ` ```bash quickstart ``` ` fenced-block smoke test that
+  executed each command end-to-end against a stubbed intervals.icu fixture).
+
+> **Why.** The 2026-05-03 / 2026-05-04 README rewrites (agent-operability
+> rebuild + adversarial audit pass) deliberately retired the v0.1.4 user-
+> instruction structure in favour of an agent-first product framing. The
+> two test files encoded the old structure; once the README intentionally
+> moved on, the tests blocked CI on a contract that no longer reflected
+> the product. Maintainer call 2026-05-04: keep the rebuilt README, retire
+> the now-stale contracts. Future README-CLI drift protection leans on
+> `hai capabilities --json` + the manifest tests.
+
+---
+
 ## [0.1.15.1] - 2026-05-03
 
 > **Theme.** Linux keyring fall-through hardening. The package now
