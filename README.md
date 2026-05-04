@@ -3,11 +3,14 @@
 Health Agent Infra is the local plugin/runtime wrapper around a
 shell-capable personal-health agent.
 
-You talk to an agent. The agent invokes the local `hai` CLI. The
-agent remains the conversational operator. `hai` is the governed tool
-surface that tells the agent what it may do, which local substrates
-each command may mutate, which outputs must validate, and which
-actions are refused.
+You talk to an agent. The agent invokes the local `hai` CLI. In
+parallel, the runtime absorbs passive evidence — wearable data today
+via intervals.icu, bloodwork and richer passive sources next —
+without the user having to narrate the data. The agent remains the
+conversational operator. `hai` is the governed tool surface that
+tells the agent what it may do, which local substrates each command
+may mutate, which outputs must validate, and which actions are
+refused.
 
 The package is working single-user software. It is currently packaged
 and tested around Claude Code as the first compatible agent surface,
@@ -29,38 +32,14 @@ manifest, not a Claude-only backend.
 
 ## Product boundary
 
-```mermaid
-flowchart TB
-    U[User conversation]
-    A[Shell-capable agent]
-    H["hai · governed tool surface"]
-    R[Python runtime]
-    E[hai today / explain / review / backup]
+![A user conversation flows into a shell-capable agent. The agent invokes the hai governed tool surface, which validates, gates, and audits every write before persisting to local SQLite state, JSONL audit logs, and the OS keyring/config. A direct write attempt from the agent to local state is shown crossed out at the boundary. A read-only return path through hai today, explain, review, and backup feeds back to the agent.](assets/product_boundary.png)
 
-    subgraph state["Local substrates"]
-        D[(SQLite state)]
-        J[(JSONL audit logs)]
-        K[(keyring / config)]
-    end
-
-    U <--> A
-    A -->|invokes| H
-    H -->|validates and gates| R
-    R --> D
-    R --> J
-    R --> K
-    D --> E
-    J --> E
-    E --> A
-    A -. cannot write directly .-> D
-    A -. cannot write directly .-> J
-```
-
-The agent proposes, explains, and asks for missing context. The wrapper
-validates, gates, mutates, and records.
+The agent proposes, explains, and asks for missing context. The
+wrapper validates, gates, mutates, and records. Every persisted byte
+goes through `hai`; nothing else has write authority.
 
 Goals are user-owned, not agent-owned: the agent may *propose* intent
-or training/nutrition target rows, but only you can *commit* them
+or training/nutrition target rows, but only the user can *commit* them
 (governance invariant W57). The runtime enforces this mechanically —
 the commit/archive paths are marked `agent_safe == false` in the
 capabilities manifest. See
@@ -73,16 +52,26 @@ These commands are for **inspection and setup** — verifying that the
 package installed, that credentials are configured, and that the
 runtime is healthy. The day-to-day surface is conversational: you
 talk to a host agent (Claude Code or equivalent), the agent invokes
-`hai` for you. Run these yourself once to confirm the install:
+`hai` for you. Run these yourself once to confirm the install and to
+wire up the live data path:
 
 ```bash
 pipx install health-agent-infra
 hai init
+hai auth intervals-icu          # the only working live data path
 hai capabilities --human
 hai doctor
 hai daily
 hai today
 ```
+
+> **intervals.icu is currently the only working live source.** The
+> runtime treats it as the preferred wearable path; without
+> credentials, `hai pull` falls back to the committed CSV fixture.
+> Garmin live exists for completeness but is rate-limited and
+> Cloudflare-blocked in practice — the capabilities manifest marks
+> it `reliability == "unreliable"` and the runtime warns at
+> resolution time.
 
 Use the pinned CDN-bypass install only in the first few minutes after
 a fresh PyPI publish:
@@ -98,34 +87,45 @@ first commands a human should inspect.
 
 ## Why this exists
 
-Agentic AI in health fails when the agent is asked to be everything at
-once. The same model is asked to be chat interface, memory layer, data
-interpreter, planner, database writer, validator, and auditor.
+Agentic AI in personal health fails when the agent is asked to be
+everything at once — the chat interface, the memory layer, the data
+interpreter, the planner, the database, the validator, and the
+auditor. The same prompt that produces good rationale on Monday
+produces bad classification on Wednesday, and there is no inspectable
+record of why.
 
-That breaks down in predictable ways:
+Personal health is the wrong domain to lose that record. Decisions
+compound: today's training load shapes tomorrow's recovery, this
+week's sleep debt shapes next week's stress capacity. If the agent is
+the only thing that "remembers" what it told you yesterday, you don't
+have an agent — you have a rolling guess.
 
-| Failure mode | What goes wrong |
-|---|---|
-| No durable local state | The agent reasons from chat memory or ad hoc files instead of an inspectable health-state database. |
-| Non-deterministic interpretation | The same wearable data or self-report can be interpreted differently from run to run. |
-| Unsafe write path | The agent can blur the line between proposing a change and mutating user state. |
-| Weak validation | Plans become prose before required evidence, targets, and constraints are present. |
-| Source ambiguity | Stale data, fixture data, live-source failures, and missing credentials collapse into vague "no data" prose. |
-| Cross-domain drift | Running, recovery, sleep, stress, strength, and nutrition get planned independently even though useful guidance depends on their interaction. |
-| Prompt-only governance | Safety depends on telling the model to behave instead of constraining the tools it can call. |
+Health Agent Infra moves the durable parts — typed state, projection,
+classification, policy, validation, atomic commit — into local Python
+behind a CLI the agent calls. The model keeps its strengths:
+conversation, clarification, uncertainty surfacing, and prose
+rationale over a bounded action set. The runtime keeps its strengths:
+deterministic interpretation and a reconstructable audit chain.
 
-Health Agent Infra fixes those failure modes by moving the durable,
-deterministic, and auditable parts into local software. The LLM stays
-where it is strongest: conversation, clarification, summarisation, and
-domain-specific rationale over a bounded state surface.
+![Two side-by-side panels. Left panel titled Agent does everything shows a single operator figure surrounded by an overlapping cluster of seven labeled circles — chat, memory, interpret, plan, validate, audit, DB — with tangled crossing arrows; subtitle: non-deterministic, no audit trail. Right panel titled Agent + governed runtime shows the same operator figure connected through a labeled hai governed tool surface gateway to a tidy column of five separate boxes — typed state, deterministic classifiers, policy rules, atomic commits, audit log — with simple parallel arrows; subtitle: deterministic, reconstructable.](assets/why_this_exists.png)
+
+The contract is one line:
+
+> **The agent proposes and explains; the runtime validates and commits.**
+
+That single boundary is what turns "an LLM with health context" into
+software you can audit, reproduce, and trust across sessions.
 
 ## What the product does
 
 Health Agent Infra wraps an agentic personal-health workflow in local,
 deterministic infrastructure. It gives the agent a governed CLI and a
-SQLite-backed state layer for wearable pulls, manual intake, typed daily
-projections, deterministic classifiers, policy rules, bounded proposals,
-and auditable commits.
+SQLite-backed state layer for **passive data intake** (wearables today
+via intervals.icu; bloodwork and other passive sources are the natural
+next extension of the same typed-evidence pattern), **active intake**
+(gym sets, food, readiness, stress, free-text notes), typed daily
+projections, deterministic classifiers, policy rules, bounded
+proposals, and auditable commits.
 
 It also gives the agent operational surfaces that a plain chat agent
 does not have: source freshness checks, credential diagnostics,
@@ -137,8 +137,11 @@ agent-facing surface from drifting silently as the runtime changes.
 
 In practice:
 
-1. You converse with the agent about training, recovery, sleep,
-   nutrition, stress, and missing context.
+1. The user converses with the agent about training, recovery, sleep,
+   nutrition, stress, and missing context. In parallel, the runtime
+   absorbs **passive evidence** — wearable pulls today, bloodwork and
+   richer passive sources on the roadmap — without the user having
+   to narrate the data.
 2. The agent reads `hai capabilities --json` to understand exactly
    which commands are safe and what each command can mutate.
 3. `hai` performs the local state operations: pulling or recording
@@ -168,7 +171,7 @@ keyring hotfix.
 | Daily loop | Working and dogfooded: pull/clean/snapshot, intake gaps, proposal gate, synthesis, `hai today`. |
 | State and audit | Local SQLite, 25 migrations, six accepted-state domains, proposal/planned/adapted/review rows. |
 | Agent contract | 60 annotated commands with mutation class, idempotency, JSON behavior, exit codes, and agent-safety metadata. |
-| Source handling | intervals.icu preferred; Garmin live marked unreliable; CSV fixture guarded from canonical state by default. |
+| Source handling | **intervals.icu is the live data path.** Garmin live is best-effort and structurally marked `reliability == "unreliable"` in the capabilities manifest. CSV fixture guarded from canonical state by default. |
 | User-governed commits | Agent-proposed targets and intent rows require explicit non-agent `commit` / `archive` authority. |
 | Review and explanation | `hai explain`, `hai review record`, and `hai review summary` reconstruct why a plan changed and how it landed. |
 | Recovery and portability | `hai backup`, `hai restore`, and `hai export` preserve local state and refuse incompatible schema restores by default. |
@@ -178,38 +181,38 @@ keyring hotfix.
 For the terse release-truth map, read
 [`reporting/docs/current_system_state.md`](reporting/docs/current_system_state.md).
 
-## The loops this enables
+## What hai enables for AI in personal health
 
-Health Agent Infra is infrastructure around a health-state database.
-The loops are the product surface it enables for an agent.
+`hai` is the substrate. The agent is the operator. Together they give
+an LLM the authority and scaffolding to do real work inside a
+personal-health loop without being asked to *also* be the database,
+the validator, or the auditor.
 
-| Loop | Status | What it enables |
-|---|---|---|
-| Daily planning | Current | Pull data, ask for missing context, check readiness, create bounded domain proposals, and commit one audited daily plan. |
-| Intake and correction | Current | Turn user narration into structured readiness, stress, nutrition, note, target, intent, and gym rows. |
-| Source quality | Current | Track sync freshness, distinguish fixture/live sources, surface credential status, and mark Garmin live as unreliable. |
-| Review | Current | Record whether yesterday's recommendation was followed/helpful and link outcomes through superseded plans. |
-| Explanation | Current | Reconstruct "why did this change?" from persisted proposal, planned, X-rule, plan, and recommendation rows. |
-| Targets and planning | Partial | Store governed targets and intent rows; agent-proposed rows still require explicit user commit. |
-| Backup and recovery | Current | Back up, restore, export, and refuse incompatible schema restores by default. |
-| Weekly review | Planned | Use preserved evidence, proposals, X-rule firings, recommendations, and outcomes as the substrate for v0.2.0. |
-| Longer-horizon planning | Future | Build broader planning authority only after daily state, review memory, and provenance are strong enough. |
-| Evaluation and regression | Internal | Keep agent-facing behavior stable with tests, persona harnesses, eval scenarios, and generated CLI checks. |
+### Already achieved
+
+| Capability | What's working today |
+|---|---|
+| Multi-domain data intake | Six domains — recovery, running, sleep, stress, strength, nutrition — accept passive wearable data via intervals.icu and active intake via `hai intake` (gym sets, readiness, stress, food, free-text notes). |
+| Local health-state database | A user-owned SQLite database accumulates typed state across days, schema-versioned and migration-tracked (25 migrations, 60 annotated CLI commands). |
+| Daily health report | A typed snapshot the agent narrates from `hai today`: per-domain bands, source freshness, missing inputs, and the committed plan. |
+| Daily recommendation | Bounded `DomainProposal` rows reconciled by 11 cross-domain X-rules into one auditable daily plan, anchored in user-committed intent. |
+| Reconstructable audit chain | Every recommendation traces back through proposal, X-rule firing, planned, and final-plan rows via `hai explain`. |
+| Source honesty | Stale data, fixture data, live-source failures, and missing credentials surface to the agent instead of collapsing into "no data" prose. |
+| User-governed targets and intent | Agent-proposed goals require explicit user commit (governance invariant W57). |
+
+### What hai will enable next
+
+| Capability | Status |
+|---|---|
+| Weekly review loop | v0.2.0 — uses preserved evidence, proposals, X-rule firings, and outcomes to surface what's drifting. |
+| Bloodwork and richer passive intake | Future — extends the same typed-evidence pattern beyond wearables. |
+| Longer-horizon planning | Future — built on top of validated daily state and review memory; not before the loops below it are strong. |
+| MCP-portable agent surface | Future — the capability manifest is already structured for hosts other than Claude Code. |
+| Personal-calibration evaluation | Future — measure whether recommendations actually fit the individual user, not just whether the system is internally consistent. |
 
 ## How it feels to use
 
-```text
-User:  "Plan today. I slept badly and my quads are sore."
-Agent: Reads `hai capabilities`, invokes the local runtime, asks for missing context.
-hai:   Pulls wearable data, updates local state, and classifies six domains.
-Agent: Uses the skills to explain uncertainty and post bounded proposals.
-hai:   Applies deterministic cross-domain rules and commits the daily plan.
-User:  "Why did you soften the run?"
-Agent: Runs `hai explain --operator` and answers from persisted rows.
-```
-
-The user experience is conversational. The system architecture is not.
-The agent talks; the runtime governs.
+![A five-panel storyboard. Panel 1 — User asks: speech bubble reading Plan today. I slept badly and my quads are sore. Panel 2 — Agent reads the contract: agent figure pointing to a labeled tag hai capabilities --json. Panel 3 — Runtime gates and classifies: a labeled gateway hai governed tool surface containing icons for pull (wearable watch silhouette), classify (bands), and commit (database with checkmark). Panel 4 — Agent narrates: agent speech bubble reading easy run, sleep priority, lower stress load. Panel 5 — User asks why: question mark icon, agent figure with arrow to a labeled tag hai explain, unrolling-paper audit-chain motif. Banner above reads: User experience is conversational. System architecture is not.](assets/how_it_feels.png)
 
 ## Why it is different
 
@@ -264,75 +267,78 @@ published version immediately:
 pipx install --force --pip-args="--no-cache-dir --index-url https://pypi.org/simple/" 'health-agent-infra==0.1.15.1'
 ```
 
-`intervals_icu` is the preferred live source. Garmin Connect support is
-best-effort because Garmin login is rate-limited and can fail behind
-Cloudflare; use `--source garmin_live` only when you explicitly want
-that path. If no live credentials are configured, the runtime can use
-the committed CSV fixture for demos and smoke tests.
+**`intervals_icu` is the only working live source.** It's what the
+runtime resolves to when credentials are present, what `hai daily`
+pulls from, and what every persona run and demo uses. Run
+`hai auth intervals-icu` once after `hai init` to wire it up.
+
+Garmin Connect support exists for completeness but is best-effort —
+Garmin login is rate-limited and frequently fails behind Cloudflare,
+the capabilities manifest exposes
+`commands[hai pull].flags[--source].choice_metadata.garmin_live.reliability == "unreliable"`,
+and `hai pull --source garmin_live` emits a stderr warning at
+resolution time. Use it only when you explicitly want that path.
+
+If no live credentials are configured, the runtime falls back to the
+committed CSV fixture for demos and smoke tests; fixture data is
+guarded from canonical state by default and clearly labeled in
+`hai doctor`.
 
 On macOS, credentials use the OS keychain. On Linux, v0.1.15.1 includes
 `keyrings.alt` and a defensive fallback so setup/status commands do not
 crash when no desktop keyring backend is registered.
 
-## Daily workflow
+## Daily workflow (agent-operated)
 
-`hai daily` is the current product loop. It runs the runtime-owned
-part of the day and tells the agent what still needs to happen.
+`hai daily` is the current product loop. The **agent** runs it on the
+user's behalf during a morning conversation; the runtime executes the
+deterministic stages and tells the agent what still needs to happen.
 
-1. `pull` fetches evidence and records sync freshness.
+1. `pull` fetches passive evidence (intervals.icu wearable data) and
+   records sync freshness.
 2. `clean` normalizes evidence into typed accepted-state rows.
 3. `snapshot` builds the six-domain state bundle.
-4. `gaps` reports missing user-closeable inputs.
-5. `proposal_gate` reports whether proposals are still needed.
+4. `gaps` reports missing user-closeable inputs (the agent asks the
+   user only for what the runtime says it actually needs).
+5. `proposal_gate` reports whether bounded `DomainProposal` rows are
+   still needed.
 
-When proposals are needed, the agent uses the domain skills and writes
-one bounded `DomainProposal` per expected domain with `hai propose`.
-Then `hai daily` or `hai synthesize` completes the atomic commit.
+When proposals are needed, the agent uses the domain skills and
+writes one bounded `DomainProposal` per expected domain with `hai
+propose`. Then `hai daily` or `hai synthesize` completes the atomic
+commit. The user never types these commands in normal use — they are
+what the agent invokes through the governed surface.
 
 The daily loop is not the whole product; it is the first complete
-agent-operable loop. The same state and provenance model is what
+agent-operable loop. The same state and provenance model is what the
 weekly review, longer-horizon planning, and future evaluation surfaces
-build on.
+will build on.
 
 The full integration contract is in
 [`reporting/docs/agent_integration.md`](reporting/docs/agent_integration.md).
 
-## Reading your plan
+## Read and review surfaces (agent-called)
 
-`hai today` is the user-facing read surface for the committed daily
-plan:
+The read and review surfaces are part of the same agent-operable
+contract — the agent calls them on the user's behalf during a
+session, and a human can run them directly for inspection or
+debugging.
 
-```bash
-hai today
-hai today --as-of 2026-04-23
-hai today --domain recovery
-hai today --format json
-```
+- **Read surface** — `hai today` returns the committed daily plan
+  (per-domain bands, sources, missing inputs); `hai explain` and
+  `hai explain --operator` reconstruct *why* the plan looks the way
+  it does from persisted proposal, X-rule, planned, and
+  recommendation rows. Neither command recomputes the day from
+  scratch; both are strictly read-only.
+- **Review surface** — `hai review record` logs whether yesterday's
+  recommendation was followed and whether it helped; `hai review
+  summary` aggregates outcomes by domain. Rows are append-only; if
+  the same day is re-authored, outcomes route to the canonical leaf
+  recommendation. `followed_recommendation` and
+  `self_reported_improvement` must be strict booleans.
 
-For dense audit output:
-
-```bash
-hai explain --operator
-```
-
-`hai explain` reconstructs the plan from persisted rows. It does not
-recompute the day from scratch.
-
-## Recording your day
-
-The review loop records whether the recommendation was followed and
-whether it helped:
-
-```bash
-hai review record --outcome-json <path>
-hai review summary
-hai review summary --domain recovery
-```
-
-Review rows are append-only. If you record an outcome against a
-morning plan and later re-author the day, the outcome is routed to the
-canonical leaf recommendation for the same domain. `followed_recommendation`
-and `self_reported_improvement` must be strict booleans.
+The agent narrates from these surfaces. The user does not have to
+memorise them.
 
 ## Domains
 
@@ -416,7 +422,11 @@ coach, dietitian, wearable platform, or cloud service.
   review, longer-horizon planning, richer personal guidance evals,
   and broader source-quality policy are still staged work.
 
-## Main command groups
+## Main command groups (what the agent calls)
+
+These are the surfaces the agent invokes through the governed CLI on
+the user's behalf. A human can run them directly for inspection or
+debugging; in normal use they are agent-operated.
 
 ```bash
 # Evidence and daily orchestration
@@ -443,8 +453,10 @@ hai target set | nutrition | list | commit | archive
 ```
 
 `intent commit`, `intent archive`, `target commit`, and `target archive`
-are explicit user/operator authority paths, not agent-safe autonomous
-actions.
+are **explicit user/operator authority paths** — the capabilities
+manifest marks them `agent_safe == false`, and the runtime refuses to
+execute them under an agent token. This is the W57 governance
+invariant.
 
 The authoritative command surface is generated at
 [`reporting/docs/agent_cli_contract.md`](reporting/docs/agent_cli_contract.md)
