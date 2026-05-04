@@ -33,6 +33,35 @@ touches intake, projection, snapshot, classify, policy, synthesis,
 writeback, skill, tests, evals, and docs. Expect the diff to cross
 roughly a dozen files even for a small domain.
 
+```mermaid
+flowchart TB
+    D[New domain <d>] --> SC[domains/<d>/schemas.py<br/>Proposal + Recommendation]
+    D --> CL[domains/<d>/classify.py<br/>bands + coverage + status]
+    D --> RP[domains/<d>/policy.py<br/>R-rules + forced_action + caps]
+    D --> SK[skills/<d>-readiness/SKILL.md<br/>rationale + bounded proposal]
+
+    SC --> WB[core/writeback/proposal.py<br/>SUPPORTED_DOMAINS + schema + actions]
+    SC --> SYN[core/synthesis.py<br/>recommendation schema registry]
+    CL --> SNAP[core/state/snapshot.py<br/>snapshot block]
+    RP --> SNAP
+    SNAP --> SK
+
+    D --> MIG[core/state/migrations/<next>.sql]
+    MIG --> PROJ[core/state/projectors/<d>.py]
+    PROJ --> ACC[(accepted_<d>_state_daily)]
+    ACC --> SNAP
+
+    WB --> CLI[hai propose --domain <d>]
+    SK --> CLI
+    CLI --> PLOG[(proposal_log)]
+    PLOG --> SYN
+    SYN --> XR[core/synthesis_policy.py<br/>X-rule action registry if hard actions exist]
+    SYN --> REC[(recommendation_log)]
+
+    D --> TEST[verification tests + eval scenarios]
+    D --> DOCS[state_model_v1.md + domain docs]
+```
+
 ## Minimum domain contract (required)
 
 Every v1 domain ships the same shape. The minimum is:
@@ -111,7 +140,7 @@ returning a frozen `Classified<Domain>State` with:
   R-sparse.
 - a composite `<d>_status` ∈ {`ready`, `conditional`, `hold`,
   `unknown`} (naming may vary by domain — see sleep's
-  `sleep_readiness_status`).
+  `sleep_status`).
 - a numeric `readiness_score` ∈ [0.0, 1.0] or `None` when
   `coverage=insufficient`.
 - a sorted, deduped `uncertainty` tuple of stable reason tokens.

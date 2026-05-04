@@ -4,7 +4,7 @@ Stress converts Garmin stress, manual stress, and body-battery trend into a
 bounded readiness signal. It prevents the agent from treating sustained high
 stress as vague context.
 
-## Runtime surface
+## Runtime Surface
 
 | Surface | Path |
 |---|---|
@@ -12,36 +12,53 @@ stress as vague context.
 | Classifier | `src/health_agent_infra/domains/stress/classify.py` |
 | Policy | `src/health_agent_infra/domains/stress/policy.py` |
 | Signals | `src/health_agent_infra/domains/stress/signals.py` |
-| Manual intake | `src/health_agent_infra/domains/stress/intake.py` |
+| Intake | `src/health_agent_infra/domains/stress/intake.py` |
+| Projector | `src/health_agent_infra/core/state/projectors/stress.py` |
 | Skill | `src/health_agent_infra/skills/stress-regulation/SKILL.md` |
 
-## Inputs and accepted state
+## Evidence And Accepted State
 
-Stress reads wearable stress and body-battery values where available, plus
-manual stress observations recorded through `hai intake stress`. Manual input
-is a first-class fallback when Garmin stress is absent.
+Stress reads wearable all-day stress and body-battery values where available,
+plus manual stress observations recorded through `hai intake stress`.
+Classifier inputs include `garmin_all_day_stress`, `manual_stress_score`,
+`body_battery_end_of_day`, `body_battery_prev_day`, and
+`stress_history_garmin_last_7` for policy evaluation.
 
-## Classifier output
+Manual stress is a first-class fallback when Garmin stress is absent. Body
+battery alone is not enough to anchor the domain.
 
-`ClassifiedStressState` emits:
+## Classifier Reference
 
-- `garmin_stress_band`
-- `manual_stress_band`
-- `body_battery_trend_band`
-- `coverage_band`
-- `stress_state`
-- `stress_score`
-- `uncertainty`
+`ClassifiedStressState` exposes:
 
-## Policy rules
+| Field | Values |
+|---|---|
+| `garmin_stress_band` | `low`, `moderate`, `high`, `very_high`, `unknown` |
+| `manual_stress_band` | `low`, `moderate`, `high`, `very_high`, `unknown` |
+| `body_battery_trend_band` | `improving`, `steady`, `declining`, `depleted`, `unknown` |
+| `coverage_band` | `full`, `partial`, `sparse`, `insufficient` |
+| `stress_state` | `calm`, `manageable`, `elevated`, `overloaded`, `unknown` |
+| `stress_score` | `0.0..1.0`, or `None` when coverage is insufficient |
+| `body_battery_delta` | Today minus previous day, or `None` |
+
+Coverage is insufficient when both Garmin and manual stress are absent. A
+single direct stress signal without body battery is sparse; one direct signal
+plus body battery or both direct signals without body battery is partial.
+
+## Policy / R-rules
+
+`StressPolicyResult` contains `policy_decisions`, optional `forced_action`,
+optional `forced_action_detail`, optional `capped_confidence`, and cold-start
+`extra_uncertainty`.
 
 | Rule id | Effect |
 |---|---|
-| `require_min_coverage` | Forces `defer_decision_insufficient_signal` when no usable stress signal is present. |
+| `require_min_coverage` | Forces `defer_decision_insufficient_signal` when no direct stress signal is present. |
 | `no_high_confidence_on_sparse_signal` | Caps confidence at `moderate` on sparse stress coverage. |
-| `sustained_very_high_stress_escalation` | Forces `escalate_for_user_review` when very-high stress persists across the configured window. |
+| `sustained_very_high_stress_escalation` | Forces `escalate_for_user_review` when Garmin stress is very high across the configured trailing run. |
+| `cold_start_relaxation` | In the first 14 days, an energy self-report can lift the coverage defer at low confidence. |
 
-## Action enum
+## Proposal Actions
 
 - `maintain_routine`
 - `add_low_intensity_recovery`
@@ -49,14 +66,26 @@ is a first-class fallback when Garmin stress is absent.
 - `escalate_for_user_review`
 - `defer_decision_insufficient_signal`
 
-## Cross-domain participation
+## X-rule Participation
 
-Stress contributes X7 confidence capping and body-battery X6a/X6b rules.
-Low body battery can soften hard proposals; depleted body battery can block
-hard proposals into user review.
+Stress contributes X6a/X6b body-battery rules and X7 confidence capping. Low
+body battery can soften hard training-domain proposals; depleted body battery
+can block hard proposals. Elevated Garmin stress can cap confidence across
+domains.
 
-## Skill contract
+## Missingness And V1 Limits
 
-The stress skill explains the runtime state and can suggest bounded
-decompression/recovery actions. It must not infer hidden stress scores,
-recalculate body-battery trend, or override sustained-stress escalations.
+- Body battery alone is insufficient because it is an indirect proxy.
+- Missing previous-day body battery makes trend unknown but does not block if
+  direct stress evidence exists.
+- Cold-start relaxation depends on explicit energy self-report; without that,
+  the honest answer is still defer.
+- Stress guidance is readiness support, not mental-health triage.
+
+## Tests
+
+- `verification/tests/test_stress_classify.py`
+- `verification/tests/test_stress_policy.py`
+- `verification/tests/test_stress_cold_start_policy.py`
+- `verification/tests/test_stress_skill_gates.py`
+- `verification/tests/test_synthesis_policy.py`

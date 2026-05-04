@@ -1,27 +1,107 @@
 # Architecture
 
-Health Agent Infra is an agent-native, locally governed runtime for personal
-health agents. The user speaks to a shell-capable agent in natural language;
-the agent operates the local `hai` CLI. It reads a cross-domain state snapshot,
-invokes domain-specific skills to emit per-domain proposals, and lets
-deterministic synthesis reconcile them into bounded per-domain
-recommendations. Every deterministic guarantee lives in code; every judgment
-call lives in a skill; the contract between them is typed.
+Health Agent Infra is the local plugin/runtime wrapper around a
+shell-capable personal-health agent. The user speaks to the agent; the
+agent operates `hai`; `hai` defines the allowed tasks, validates the
+agent's outputs, owns the local write path, and records the audit trail.
 
-The architecture exists to close the common failure modes of agentic health
-software: no durable state, nondeterministic interpretation, unsafe writes,
-weak validation, source/freshness ambiguity, cross-domain drift, opaque
-recommendations, and prompt-only governance. The LLM is deliberately not the
-database, policy engine, migration layer, or final write path.
+That framing matters. The architecture is not "a Python app that happens
+to have an agent front end." It is infrastructure around an agentic AI
+system so the agent can work on personal health data without becoming the
+database, policy engine, migration layer, validator, clinical authority, or
+final write path.
 
-This doc covers *how* the runtime is wired. For the framing layer
-(what this project is, how roles split across runtime / coach / memory
-/ grounded expert, and why it is local-first) see
-[``personal_health_agent_positioning.md``](personal_health_agent_positioning.md).
-For the layered view of what lives on disk see
-[``memory_model.md``](memory_model.md). For the classes of user
-question the runtime is built to answer see
-[``query_taxonomy.md``](query_taxonomy.md).
+The wrapper enables the agent to:
+
+- pull and distinguish wearable / fixture / manual evidence;
+- preserve durable local health state outside chat memory;
+- project raw evidence into typed daily rows;
+- read deterministic classifications and policy firings before proposing;
+- write bounded DomainProposal rows instead of free-form plans;
+- synthesize, explain, review, back up, and export through governed commands.
+
+The wrapper prevents the agent from:
+
+- editing SQLite or JSONL state directly;
+- inventing actions outside a domain's enum;
+- silently activating user intent or nutrition/training targets;
+- treating missing, stale, fixture, or unavailable evidence as equivalent;
+- bypassing X-rule reconciliation or the three-state audit chain;
+- presenting unsupported clinical or autonomous diet/training-plan authority.
+
+This doc covers the architecture of that wrapper: what the agent is told to
+call, what those calls may mutate, which validation layers stand between
+the agent and state, and how current/future evals judge the behavior. For
+positioning language see
+[`personal_health_agent_positioning.md`](personal_health_agent_positioning.md).
+For what lives on disk see [`memory_model.md`](memory_model.md). For the
+classes of user question the wrapper is built to support see
+[`query_taxonomy.md`](query_taxonomy.md).
+
+## Agent-wrapper model
+
+```mermaid
+flowchart TB
+    U[User] <--> A[Personal-health agent]
+    A --> B[Skills + capabilities manifest]
+    B --> C[Declared hai workflows]
+    C --> H[Health Agent Infra wrapper]
+    H --> T[Bounded health tasks]
+    H --> M[(Declared local substrates)]
+    H --> R[Refused authority]
+    M --> E[Explain, review, backup, eval]
+    E --> A
+```
+
+Read the diagram left-to-right from the agent's perspective:
+
+1. The agent receives user intent in natural language.
+2. The agent reads skills and `hai capabilities --json` to discover which
+   tasks are allowed.
+3. The agent invokes `hai`; it does not improvise database writes, schema
+   changes, hidden memory, or final plans.
+4. `hai` validates inputs, mutates only declared local substrates, and
+   records rows that can later be explained, reviewed, backed up, or scored.
+
+`Bounded health tasks` means pull, intake, snapshot, classify, propose,
+synthesize, explain, review, and backup/export. `Declared local substrates`
+means SQLite state, governed JSONL audit logs, keyring/config, and explicit
+caller-requested output files. `Refused authority` means direct database
+edits, invented actions, silent targets, unsafe source use, unsupported
+clinical claims, and confidence on missing evidence.
+
+The wrapper's authority is deliberately narrower than "own health." It owns
+local state governance, not the user's goals. It owns deterministic
+classification and policy application, not the user's lived judgment. It owns
+the final write path, not the agent's conversational relationship with the
+user.
+
+## Agent journey
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant A as Host agent
+    participant H as hai wrapper
+    participant DB as Local SQLite + JSONL
+
+    U->>A: Plan today / explain a change / record context
+    A->>H: hai capabilities --json
+    H-->>A: commands, flags, agent_safe, mutation classes
+    A->>H: hai daily --as-of <date>
+    H->>DB: pull, clean, project, snapshot, check gaps
+    H-->>A: complete, awaiting_proposals, incomplete, or USER_INPUT
+    A->>H: hai propose --domain <d> --proposal-json <p>
+    H->>DB: validate proposal and append proposal_log
+    A->>H: hai daily --as-of <date>
+    H->>DB: synthesize, apply X-rules, commit audit rows
+    A->>H: hai today / hai explain
+    H-->>A: persisted plan and audit chain
+    A-->>U: conversational answer grounded in persisted rows
+```
+
+This is the product path. The agent may decide which workflow matches the
+conversation, but every health-state mutation goes through `hai`.
 
 ## Six domains in v1
 
@@ -38,7 +118,39 @@ The ordering reflects historical build order (recovery was first; nutrition
 was last) and increasing effort per phase, not a reasoning
 precedence. Synthesis does not privilege one domain over another.
 
-## Data flow
+## Runtime pipeline under the wrapper
+
+This is the implementation pipeline the wrapper exposes to the agent. It is
+not the product perspective; it is what happens after the agent has chosen a
+governed `hai` workflow.
+
+```mermaid
+flowchart TB
+    I[hai pull + hai intake] --> RAW[Raw evidence<br/>SQLite raw tables + JSONL audit]
+    RAW --> PRJ[Projectors<br/>deterministic per-domain projection]
+    PRJ --> ACC[(accepted_*_state_daily)]
+    ACC --> SNAP[hai state snapshot<br/>evidence + raw_summary + classified_state + policy_result + missingness]
+
+    SNAP --> SK[Domain skills<br/>rationale + bounded DomainProposal]
+    SK --> PROP[hai propose<br/>proposal validation]
+    PROP --> PLOG[(proposal_log)]
+
+    PLOG --> A[Phase A X-rules<br/>runtime mechanical mutations]
+    SNAP --> A
+    A --> DRAFT[Draft recommendations<br/>actions fixed after Phase A]
+
+    DRAFT --> OVERLAY{Optional<br/>daily-plan-synthesis overlay?}
+    OVERLAY -->|runtime-only path| B[Phase B X9<br/>action_detail-only guard]
+    OVERLAY -->|two-pass skill path| RAT[Rationale overlay<br/>no action mutation]
+    RAT --> B
+
+    B --> TX[Atomic synthesis transaction]
+    TX --> PLAN[(daily_plan)]
+    TX --> XF[(x_rule_firing)]
+    TX --> PLANNED[(planned_recommendation)]
+    TX --> REC[(recommendation_log)]
+    REC --> READ[hai today / hai explain / hai review]
+```
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -117,25 +229,21 @@ precedence. Synthesis does not privilege one domain over another.
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-## Code-vs-skill boundary
+## Authority boundaries
 
-The line is tight and intentionally simple. Short form:
+The important architectural boundary is not "code versus prose." It is
+authority: what the agent may decide, what it may ask `hai` to do, and what
+the wrapper is allowed to mutate.
 
-```mermaid
-flowchart LR
-    A[User conversation] --> B[Host agent]
-    B --> C[hai CLI]
-    C --> D[Python runtime]
-    D --> E[SQLite state]
-    D --> F[classified_state + policy_result]
-    F --> G[Markdown skills]
-    G --> H[DomainProposal]
-    H --> C
-    C --> I[Validated commit]
-    I --> E
-```
+| Layer | Allowed authority | Explicitly not allowed |
+|---|---|---|
+| User | Set goals, approve commitments, provide missing context, reject recommendations. | None; the user is the principal. |
+| Agent | Converse, choose workflows, ask clarifying questions, invoke declared `hai` commands, draft bounded proposals through skills. | Direct database/JSONL edits, hidden memory, invented action enums, silent target activation, clinical authority. |
+| Skills | Rationale, uncertainty framing, clarification, bounded proposal composition from supplied snapshot/policy fields. | Arithmetic bands, policy firings, action mutation, persistence. |
+| `hai` CLI/runtime | Validation, state mutation, projection, classification, R-rules, X-rules, synthesis, explainability, review, backup/restore/export. | Free-form coaching prose or user-goal ownership. |
+| Evals | Current deterministic tests and scenario fixtures; future personal-guidance / skill harness scoring. | Replacing the runtime write path or letting an LLM self-certify. |
 
-**Code owns:**
+**Runtime/code owns:**
 - Deterministic arithmetic (band classification, scoring, signal
   counting).
 - Mechanical policy rules (R-rules per domain; X-rules cross-
@@ -238,6 +346,81 @@ into a bounded CLI workflow without changing the governance model:
   source of truth. Teaches the agent `hai` the way Claude already
   knows `gh`. See [``agent_operable_runtime_plan.md``](../plans/historical/agent_operable_runtime_plan.md)
   for the full cycle context.
+
+## Command contract and mutation substrates
+
+The agent is instructed to treat `hai capabilities --json` as the source of
+truth. If a workflow is not in the manifest or a skill does not route to it,
+the agent should ask for clarification or stop; it should not create an
+ad hoc file, issue raw SQL, or mutate JSONL directly.
+
+The manifest's mutation classes map to concrete local substrates:
+
+```mermaid
+flowchart LR
+    subgraph cmds["hai command groups"]
+        ro["read-only<br/>today / explain / stats /<br/>capabilities / doctor /<br/>backup / export"]
+        sync["writes-sync-log<br/>pull"]
+        state["writes-state<br/>intake / propose / synthesize /<br/>review record / target / state"]
+        mem["writes-memory<br/>memory set / memory archive"]
+        skills["writes-skills-dir<br/>setup-skills"]
+        creds["writes-credentials<br/>auth intervals-icu / auth garmin /<br/>auth remove"]
+        cfg["writes-config<br/>config init"]
+        intr["interactive<br/>init"]
+    end
+    subgraph subs["Local substrates"]
+        out[(stdout / caller-requested output)]
+        sl[(sync_run_log)]
+        db[(SQLite state DB)]
+        jsonl[(governed JSONL audit logs)]
+        um[(user_memory ledger)]
+        sd[(~/.claude/skills/)]
+        kr[(OS keyring)]
+        cf[(~/.config/hai/)]
+        tty[(human terminal)]
+    end
+    ro --> out
+    sync --> sl
+    state --> db
+    state --> jsonl
+    mem --> um
+    skills --> sd
+    creds --> kr
+    cfg --> cf
+    intr --> tty
+```
+
+Each command declares exactly one class. `agent_safe == false`
+commands (W57-gated commit/archive paths under `intent` and `target`,
+plus `interactive` setup) require a user prompt rather than agent
+invocation. See [`agent_integration.md`](agent_integration.md) for the
+operational protocol.
+
+| Mutation class | May touch | Examples |
+|---|---|---|
+| `read-only` | No mutation of local state/config/credentials; may print output or write an explicit caller-requested backup/export destination | `hai today`, `hai explain`, `hai stats`, `hai capabilities`, `hai backup`, `hai export` |
+| `writes-sync-log` | `sync_run_log` freshness rows only | `hai pull` |
+| `writes-audit-log` | JSONL audit logs without primary state mutation | Reserved class in the manifest schema; proposal/review writes currently pair audit logging with state writes. |
+| `writes-state` | SQLite state DB and governed JSONL logs when the command has an audit sidecar | `hai intake *`, `hai propose`, `hai synthesize`, `hai review record`, `hai target *`, `hai state *` write paths |
+| `writes-memory` | `user_memory` ledger | `hai memory set`, `hai memory archive` |
+| `writes-skills-dir` | Local skills installation directory | `hai setup-skills` |
+| `writes-credentials` | OS keyring or null-backend credential state | `hai auth intervals-icu`, `hai auth garmin`, `hai auth remove` |
+| `writes-config` | User threshold/config files | `hai config init` |
+| `interactive` | Live human setup flow; not agent-invocable | `hai init` |
+
+Those classes are not documentation decoration. They are the contract the
+agent works under: a task may only mutate the substrate declared by the
+command, and payload validators decide whether the mutation is admitted. The
+critical write paths (`propose`, `synthesize`, `review`, `intent`, `target`,
+and intake) preserve named invariant failures so an agent can recover by
+asking the user or running the next safe command.
+
+The same boundary is the future evaluation boundary. Current tests already
+score deterministic commands, schema invariants, doc freshness, and scenario
+fixtures. The next evaluation layer should judge whether the agent uses the
+manifest correctly: choosing the right command, refusing unsupported
+shortcuts, asking for missing evidence, and keeping rationale inside the
+runtime's bounded action space.
 
 ## Package layout
 

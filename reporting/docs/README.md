@@ -1,14 +1,15 @@
 # Docs — index
 
 Current v1 documentation for Health Agent Infra. Start with
-``current_system_state.md`` if you need the latest shipped truth;
-start with ``architecture.md`` if this is your first architecture read.
+`current_system_state.md` if you need the latest shipped truth; start
+with `architecture.md` if this is your first architecture read.
 
-Health Agent Infra is an agent-native, locally governed runtime for
-personal health agents. It is not a health chatbot. It gives a
-shell-capable agent durable state, deterministic interpretation,
-bounded write paths, review memory, backup/recovery tooling, and
-auditable explanations for personal-health decisions.
+Health Agent Infra is the local plugin/runtime wrapper around a
+shell-capable personal-health agent. It is not a health chatbot, and the
+runtime is not the agent. It gives the agent durable local state,
+deterministic interpretation, bounded write paths, review memory,
+backup/recovery tooling, and auditable explanations for personal-health
+decisions.
 
 For a one-page orientation of the top-level repo layout (what each
 top-level directory is, what is active vs historical), see
@@ -23,6 +24,8 @@ itself (docs / artifacts / plans / experiments), see
   roles. This is the shortest "what is true now?" document.
 - [`architecture.md`](architecture.md) — pipeline diagram,
   code-vs-skill boundary, R-rule / X-rule intro, package layout.
+- [`host_agent_contract.md`](host_agent_contract.md) — compact
+  operating contract for a shell-capable host agent.
 - [`non_goals.md`](non_goals.md) — what v1 refuses to build and
   why (macros-only nutrition, no ML loop, no hosted, etc).
 - [`x_rules.md`](x_rules.md) — full X-rule catalogue with
@@ -33,19 +36,17 @@ itself (docs / artifacts / plans / experiments), see
   schema. The migrations themselves at
   `src/health_agent_infra/core/state/migrations/` are the source of
   truth; this doc may lag the latest migration when a release adds
-  schema (currently 025 live as of v0.1.15).
+  schema (currently 025 live as of v0.1.15.1).
 
-## Read by job
+## Read by role
 
-| You need to | Read |
+| Reader | Read |
 |---|---|
-| Know what shipped and what is still unproven | [`current_system_state.md`](current_system_state.md) |
-| Understand the runtime shape | [`architecture.md`](architecture.md), then [`state_model_v1.md`](state_model_v1.md) |
-| Understand why the product exists | [`personal_health_agent_positioning.md`](personal_health_agent_positioning.md), [`memory_model.md`](memory_model.md), [`query_taxonomy.md`](query_taxonomy.md) |
-| Operate the package from an agent | [`agent_integration.md`](agent_integration.md), [`agent_cli_contract.md`](agent_cli_contract.md) |
-| Inspect why a recommendation changed | [`explainability.md`](explainability.md), [`x_rules.md`](x_rules.md) |
-| Check safety and scope boundaries | [`non_goals.md`](non_goals.md), [`privacy.md`](privacy.md), [`backup_and_recovery.md`](backup_and_recovery.md) |
-| Extend the runtime | [`how_to_add_a_domain.md`](how_to_add_a_domain.md), [`domains/README.md`](domains/README.md), [`how_to_add_a_pull_adapter.md`](how_to_add_a_pull_adapter.md) |
+| User | [`current_system_state.md`](current_system_state.md), [`privacy.md`](privacy.md), [`non_goals.md`](non_goals.md), [`backup_and_recovery.md`](backup_and_recovery.md) |
+| Host-agent integrator | [`host_agent_contract.md`](host_agent_contract.md), [`agent_integration.md`](agent_integration.md), [`agent_cli_contract.md`](agent_cli_contract.md), [`cli_exit_codes.md`](cli_exit_codes.md), [`glossary.md`](glossary.md) |
+| Runtime contributor | [`architecture.md`](architecture.md), [`state_model_v1.md`](state_model_v1.md), [`domains/README.md`](domains/README.md), [`how_to_add_a_domain.md`](how_to_add_a_domain.md), [`how_to_add_a_pull_adapter.md`](how_to_add_a_pull_adapter.md) |
+| Release auditor / maintainer | [`current_system_state.md`](current_system_state.md), [`../../AUDIT.md`](../../AUDIT.md), [`../../ROADMAP.md`](../../ROADMAP.md), [`../plans/README.md`](../plans/README.md) |
+| Explanation reviewer | [`explainability.md`](explainability.md), [`x_rules.md`](x_rules.md), [`memory_model.md`](memory_model.md) |
 
 ## Current-vs-provenance rule
 

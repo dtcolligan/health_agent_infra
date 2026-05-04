@@ -19,8 +19,8 @@ Specifically note:
 
 - The "five skills" framing (recovery-readiness, reporting,
   merge-human-inputs, writeback-protocol, safety) is obsolete. v1
-  ships twelve skills spanning six domains, a synthesis skill, plus
-  the pre-rebuild cross-cutting skills.
+  ships fourteen skills spanning six domains, synthesis, intent routing,
+  explanation, review, reporting, safety, and cross-cutting intake.
 - The "runtime holds no classification" framing is obsolete. v1
   moves classification + mechanical policy into code (per-domain
   ``classify.py`` + ``policy.py``), keeping only judgment in skills.

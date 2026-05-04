@@ -40,6 +40,30 @@ stateDiagram-v2
     Superseded --> Adapted: new canonical plan
 ```
 
+```mermaid
+flowchart LR
+    Q[User asks<br/>Why did this change?] --> EX[hai explain<br/>read-only]
+
+    EX --> DP[(daily_plan)]
+    EX --> PG[(proposal_log)]
+    EX --> PL[(planned_recommendation)]
+    EX --> XR[(x_rule_firing)]
+    EX --> RL[(recommendation_log)]
+    EX --> RV[(review_event + review_outcome)]
+    EX --> UM[(user_memory active at plan date)]
+
+    PG --> Planned[Planned intent<br/>per-domain proposal]
+    PL --> Pre[Pre-X-rule aggregate]
+    XR --> Mut[Rule firings<br/>trigger + mutation + explanation]
+    RL --> Adapted[Adapted committed recommendation]
+    RV --> Performed[Performed / reviewed outcome]
+
+    Planned --> Pre --> Mut --> Adapted --> Performed
+
+    EX -. does not .-> Recompute[recompute classifiers, policy, or X-rules]
+    EX -. does not .-> Write[open write transaction]
+```
+
 ## 2. CLI surface
 
 ```

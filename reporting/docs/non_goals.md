@@ -96,7 +96,7 @@ judgment
   recommendations adjust against the user's own goal.
 - No mental-health surface, no crisis triage.
 
-### What IS allowed (v0.1.8 and forward)
+### What IS allowed (current v1 surface)
 
 The above forbids *autonomous* prescriptions. The following user-
 driven shapes are explicitly in scope and should not be confused
@@ -117,10 +117,10 @@ with plan generation:
   gated behind an explicit user commit path before becoming
   active. They never auto-promote.
 
-### What may be allowed later (post-v0.1.8, with new governance)
+### What may be allowed later, with new governance
 
-Out of scope for v0.1.8, listed here only so contributors do not
-mistake it for "currently shipping":
+Out of scope for the current v1 surface, listed here only so contributors do
+not mistake it for "currently shipping":
 
 - Bounded wellness plan suggestions inside fixed enums (e.g.
   "rest", "easy aerobic", "tempo"), surfaced as proposals that
@@ -135,7 +135,7 @@ from outcomes — remains explicitly out of scope.
 
 ## Not a broad integration platform
 
-- `v0.1.8` is released and installable from PyPI.
+- `v0.1.15.1` is released and installable from PyPI.
 - `hai init` and `hai doctor` ship in v1.
 - An MCP server wrapper remains optional and deferred; the shipped
   surface is the `hai` CLI plus packaged skills.

@@ -21,12 +21,12 @@ the provenance trail; this file is the current-state map.
 
 ## Product claim
 
-Health Agent Infra is a local governed runtime for a personal-health
-agent. The maintainer dogfoods it daily. v0.1.15 made the package
-installable from PyPI for a non-maintainer and closed the candidate
-package bugs found before publish. v0.1.15.1 repaired Linux keyring
-fall-through after CI exposed `NoKeyringError` on runners without a
-registered backend.
+Health Agent Infra is the local plugin/runtime wrapper around a
+shell-capable personal-health agent. The maintainer dogfoods it daily.
+v0.1.15 made the package installable from PyPI for a non-maintainer
+and closed the candidate package bugs found before publish. v0.1.15.1
+repaired Linux keyring fall-through after CI exposed `NoKeyringError`
+on runners without a registered backend.
 
 The stronger claim, "a non-maintainer completed the full flow under
 recorded observation," is **not yet proven**. The named foreign-user

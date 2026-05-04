@@ -675,8 +675,8 @@ reasonably prepared).
 
 v0.1.16's scope is determined by what the post-publish foreign-user
 session surfaces — it cannot be pre-scoped beyond "empirical fixes."
-If the session surfaces a small isolated P0, v0.1.15.1 remains the
-hotfix path; otherwise findings consolidate here.
+Use a patch hotfix only for an isolated P0; otherwise consolidate
+findings here.
 
 ---
 

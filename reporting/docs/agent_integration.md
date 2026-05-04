@@ -1,7 +1,7 @@
 # Agent Integration
 
-Health Agent Infra is an agent-native, locally governed runtime for
-personal health agents. This doc explains how a shell-capable agent
+Health Agent Infra is the local plugin/runtime wrapper around a
+shell-capable personal-health agent. This doc explains how a host agent
 installs and uses the v1 runtime. Claude Code is the first compatible
 host surface, but the durable contract is the local `hai` CLI plus
 `hai capabilities --json`. The human product loop is natural language;
@@ -23,6 +23,10 @@ agent's output at the proposal, synthesis, review, intake, intent, and target
 boundaries.
 
 ## Install
+
+For a user install, the root README leads with `pipx install`, `hai init`,
+`hai doctor`, and the first inspection commands. A host-agent setup needs the
+same runtime plus installed skills:
 
 ```bash
 pipx install health-agent-infra
@@ -109,6 +113,9 @@ sequenceDiagram
    (``followed_recommendation_must_be_bool``, etc.) — an agent that
    passes ``"yes"`` instead of ``true`` will see a governed
    ``USER_INPUT`` exit, not a silent JSONL/SQLite truth fork.
+   The agent obtains ``review_event_id`` and ``recommendation_id`` from
+   generated review events, ``hai today --format json``, or
+   ``hai explain``. It must not guess ids from date/domain patterns.
 
 ## Claude Agent SDK
 
@@ -153,6 +160,74 @@ to ask the user for the missing state or run the next safe setup
 command, not to retry with guessed flags. When a command refuses a
 source, schema, clinical claim, or write boundary, the refusal is part
 of the product contract.
+
+### Minimum host-agent loop
+
+For normal planning, prefer this loop over manual `pull` / `clean` /
+`snapshot` / `synthesize` orchestration:
+
+1. Read `hai capabilities --json`.
+2. Run `hai daily --as-of <date>` or the default `hai daily`.
+3. If status is `awaiting_proposals` or `incomplete`, read the snapshot
+   and run the relevant domain skills.
+4. Submit each missing bounded proposal with
+   `hai propose --domain <d> --proposal-json <p>`.
+5. Re-run `hai daily`; the runtime advances the proposal gate and commits
+   synthesis when the expected proposal set is complete.
+6. Narrate from `hai today`, `hai explain`, and review summaries rather
+   than from unsaved proposal drafts.
+
+Manual lower-level commands remain useful for debugging, evals, and
+operator inspection. They are not the default agent loop.
+
+### W57 intent and target gate
+
+Intent and target rows are governed user state. Agent-authored suggestions
+may be recorded as proposed rows, but activation and deactivation require
+explicit user/operator authority:
+
+- Agent suggestion: use the command shape that records
+  `source=agent_proposed`, `status=proposed`, and an agent ingest actor
+  where the command exposes those fields.
+- User-authored instruction: only record `active` / `user_authored` when the
+  user explicitly gave that instruction, not because the agent inferred it.
+- `hai intent commit`, `hai intent archive`, `hai target commit`, and
+  `hai target archive` are marked `agent_safe=false` in the capabilities
+  manifest. A host agent must not run them autonomously.
+
+This gate is the operational form of W57: the agent may propose user state;
+it cannot activate or deactivate it.
+
+### Source safety and freshness
+
+Host agents should inspect source and data-quality fields before narrating
+confidence:
+
+- Prefer `intervals_icu` when configured.
+- Treat `garmin_live` as unreliable; the capabilities manifest marks this in
+  `flags[].choice_metadata`.
+- Use the committed CSV source for demos, offline tests, or explicit
+  non-canonical/demonstration state. Do not write fixture data into the
+  canonical state DB unless the user explicitly requests the
+  `--allow-fixture-into-real-state` path.
+- If data is stale, fixture-derived, unavailable at source, or pending user
+  input, say that plainly and ask for the user-closeable input or setup step.
+  Do not collapse these states into generic missing data.
+
+### Refusal and retry handling
+
+Runtime handler failures use the stable taxonomy from
+[`cli_exit_codes.md`](cli_exit_codes.md). For host agents:
+
+- `USER_INPUT` means the caller or user can fix something; ask for the
+  missing state, run the next safe setup command, or refresh capabilities.
+- `TRANSIENT` means a retry may be reasonable after backoff, especially for a
+  live source. Do not loop indefinitely.
+- Argparse usage errors, unknown flags, and invalid choices can also exit
+  with the literal process code `2`; treat those as caller input errors and
+  re-read `hai capabilities --json` rather than retrying the same command.
+- `NOT_FOUND` on read surfaces should lead to a different selector or a
+  setup/planning step, not fabricated ids.
 
 ## Determinism boundaries
 

@@ -4,7 +4,7 @@ Strength evaluates recent resistance-training volume, muscle-group freshness,
 exercise taxonomy confidence, and unmatched exercise tokens. It exists because
 strength intake is structurally richer than a free-text workout note.
 
-## Runtime surface
+## Runtime Surface
 
 | Surface | Path |
 |---|---|
@@ -14,37 +14,54 @@ strength intake is structurally richer than a free-text workout note.
 | Signals | `src/health_agent_infra/domains/strength/signals.py` |
 | Intake | `src/health_agent_infra/domains/strength/intake.py` |
 | Taxonomy match | `src/health_agent_infra/domains/strength/taxonomy_match.py` |
+| Projector | `src/health_agent_infra/core/state/projectors/strength.py` |
 | Skill | `src/health_agent_infra/skills/strength-readiness/SKILL.md` |
 
-## Inputs and accepted state
+## Evidence And Accepted State
 
-Strength reads structured gym-session and gym-set rows, canonical exercise
-taxonomy entries, muscle-group mapping, and recent volume history. `hai intake
-gym` and the strength-intake skill turn user narration into structured sets.
+Strength reads structured `gym_session` and `gym_set` rows, canonical
+exercise-taxonomy entries, muscle-group mapping, recent volume history, and
+today-only rationale fields. Classifier inputs include
+`volume_ratio_7d_vs_28d_week_mean`, `sessions_last_7d`,
+`sessions_last_28d`, `days_since_heavy_by_group`,
+`unmatched_exercise_tokens`, `today_volume_by_muscle_group`,
+`estimated_1rm_today`, and optional `goal_domain`.
 
-## Classifier output
+`hai intake gym` and the `strength-intake` skill turn user narration into
+structured sets. Taxonomy matching is code-owned.
 
-`ClassifiedStrengthState` emits:
+## Classifier Reference
 
-- `recent_volume_band`
-- `freshness_band_by_group`
-- `coverage_band`
-- `strength_status`
-- `strength_score`
-- `volume_ratio`
-- `unmatched_exercise_tokens`
-- `uncertainty`
+`ClassifiedStrengthState` exposes:
 
-## Policy rules
+| Field | Values |
+|---|---|
+| `recent_volume_band` | `very_low`, `low`, `moderate`, `high`, `very_high`, `unknown` |
+| `freshness_band_by_group` | per muscle group: `fresh`, `recent`, `fatigued`, `unknown` |
+| `coverage_band` | `insufficient`, `sparse`, `partial`, `full` |
+| `strength_status` | `progressing`, `maintaining`, `undertrained`, `overreaching`, `unknown` |
+| `strength_score` | `0.0..1.0`, or `None` when coverage is insufficient |
+| `volume_ratio` | last 7d volume divided by 28d weekly mean, or `None` |
+| `unmatched_exercise_tokens` | sorted tuple of unresolved free-text exercise names |
+
+Coverage is based on `sessions_last_28d`: absent or too few sessions are
+insufficient, then sparse, partial, and full as history accumulates.
+
+## Policy / R-rules
+
+`StrengthPolicyResult` contains `policy_decisions`, optional
+`forced_action`, optional `forced_action_detail`, optional
+`capped_confidence`, and cold-start `extra_uncertainty`.
 
 | Rule id | Effect |
 |---|---|
-| `require_min_coverage` | Forces `defer_decision_insufficient_signal` when the strength surface lacks enough structured evidence. |
-| `no_high_confidence_on_sparse_signal` | Caps confidence at `moderate` on sparse coverage. |
-| `volume_spike_escalation` | Forces `escalate_for_user_review` when recent volume ratio reaches the spike threshold and history is sufficient. |
-| `unmatched_exercise_confidence_cap` | Caps confidence when unmatched exercise tokens are present. |
+| `require_min_coverage` | Forces `defer_decision_insufficient_signal` when strength history is insufficient. |
+| `no_high_confidence_on_sparse_signal` | Caps confidence at `moderate` on sparse session history. |
+| `volume_spike_escalation` | Forces `escalate_for_user_review` when volume ratio crosses the spike threshold after enough 28d history exists. |
+| `unmatched_exercise_confidence_cap` | Caps confidence when unresolved exercise tokens are present. |
+| `cold_start_relaxation` | In the first 14 days, may lift the coverage defer only when recovery is not impaired and planned session type explicitly indicates strength. |
 
-## Action enum
+## Proposal Actions
 
 - `proceed_with_planned_session`
 - `downgrade_to_technique_or_accessory`
@@ -53,15 +70,33 @@ gym` and the strength-intake skill turn user narration into structured sets.
 - `defer_decision_insufficient_signal`
 - `escalate_for_user_review`
 
-## Cross-domain participation
+## X-rule Participation
 
-Strength is a training domain. Hard strength drafts can be softened or blocked
-by sleep debt, nutrition underfuelling, body battery, and recovery signals.
-Yesterday's hard run can soften lower-body strength, and yesterday's heavy
-lower-body strength can soften today's running.
+Strength hard proposals can be targeted by X1a/X1b sleep-debt rules, X2
+nutrition-underfuelling, X3a/X3b load-spike rules, X5 endurance-fatigue
+sequencing, X6a/X6b body-battery rules, and X7 confidence capping. Heavy
+lower-body strength history can trigger X4 against running. A hard strength
+draft can trigger X9's nutrition protein-target adjustment when it remains
+hard after Phase A.
 
-## Skill contract
+## Missingness And V1 Limits
 
-The strength skill reads structured state and policy output. It can choose a
-bounded action and explain uncertainty, but taxonomy matching, volume ratios,
-muscle-group freshness, and unmatched-token confidence caps belong in code.
+- No session history means insufficient coverage unless cold-start relaxation
+  applies.
+- Too little 28d history suppresses the volume-spike escalation rather than
+  treating every early session as a spike.
+- Unmatched exercise names are intake-quality uncertainty; they cap
+  confidence but do not mutate actions by themselves.
+- Strength does not generate a lifting program; it adjusts the user's planned
+  session or asks for review.
+
+## Tests
+
+- `verification/tests/test_strength_classify.py`
+- `verification/tests/test_strength_policy.py`
+- `verification/tests/test_strength_cold_start_policy.py`
+- `verification/tests/test_strength_projector.py`
+- `verification/tests/test_strength_signals.py`
+- `verification/tests/test_strength_taxonomy_match.py`
+- `verification/tests/test_intake_gym.py`
+- `verification/tests/test_synthesis_x3_x4_x5_strength.py`

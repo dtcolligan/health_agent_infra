@@ -7,11 +7,11 @@ head, command count, and release posture, read
 
 ## 1. What you're looking at
 
-Health Agent Infra is an **agent-native, locally governed runtime for
-personal health agents**, not a health app. The user speaks to a
-shell-capable agent in natural language; the agent operates the local
-`hai` CLI. Claude Code is the first compatibility surface, not the
-architecture boundary. The package ships two things to the agent:
+Health Agent Infra is the local plugin/runtime wrapper around a
+shell-capable personal-health agent, not a health app. The user speaks to
+the agent in natural language; the agent operates the local `hai` CLI.
+Claude Code is the first compatibility surface, not the architecture
+boundary. The package ships two things to the agent:
 
 - **A CLI called ``hai``** with deterministic subcommands for
   pulling evidence, running intake, projecting state, classifying
@@ -133,15 +133,17 @@ runs.
 ## 6. Where the proof lives
 
 ``reporting/artifacts/flagship_loop_proof/2026-04-18-multi-domain-evals/``
-captures a complete pass of the Phase 6 eval runner across all six
-domains + synthesis: 28 scenarios, all green.
+captures the original Phase 6 proof pass across all six domains +
+synthesis: 28 scenarios, all green. The packaged eval scenario tree has
+since grown to 66 JSON scenarios total (35 non-judge scenarios plus the
+adversarial judge set).
 
 Pre-rebuild artifacts live under
 ``reporting/artifacts/archive/`` and no longer reflect the runtime.
 
 The eval framework is **packaged inside the wheel** at
 ``src/health_agent_infra/evals/``: ``scenarios/<d>/*.json`` are the
-28 authored scenarios, ``runner.py`` executes + scores them, and
+authored scenarios, ``runner.py`` executes + scores them, and
 ``hai eval run`` is the CLI entry point. The dev-reference docs
 (``README.md``, ``skill_harness_blocker.md``) still live under
 ``verification/evals/``.

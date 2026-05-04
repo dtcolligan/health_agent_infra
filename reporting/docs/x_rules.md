@@ -163,16 +163,16 @@ Run ``hai config show`` to print the effective merged config
 
 ## Eval coverage
 
-Every Phase A rule above (X1a, X1b, X2, X3a, X3b, X6a, X7) plus the
-Phase B rule (X9) has at least one scenario under
+The packaged synthesis scenario floor currently covers X1a, X1b, X2, X3a,
+X3b, X6a, X7, and X9 under
 ``src/health_agent_infra/evals/scenarios/synthesis/``.
 ``verification/tests/test_eval_scenarios.py ::
-test_synthesis_scenarios_cover_key_x_rules`` is the floor-check that asserts
-this set is always exercised.
+test_synthesis_scenarios_cover_key_x_rules`` is the floor-check for that
+scenario set.
 
-X4 and X5 currently have Phase A evaluators but no dedicated
-scenario — they require proposals for strength and running on
-sequential days with the right prior-day volume / session shape.
-Adding them requires extending the scenario authoring layer to
-support prior-day state, which is tracked as a Phase 7 follow-up,
-not a v1 gap.
+X4 and X5 have dedicated unit/integration tests in
+``verification/tests/test_synthesis_x3_x4_x5_strength.py`` because they need
+prior-day running/strength state that the scenario authoring layer does not
+yet model cleanly. X6b has direct synthesis-policy coverage in
+``verification/tests/test_synthesis_policy.py``. Moving X4/X5/X6b into
+packaged JSON scenarios is future eval-authoring work, not a runtime v1 gap.

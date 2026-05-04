@@ -49,8 +49,9 @@ recommendations auditable instead of hand-wavy — every rule firing
 lands in a typed table you can SELECT against.
 
 What ships today: six domains, 14 packaged skills, 60 annotated CLI
-commands, 25 SQLite migrations, 11 cross-domain X-rules, 28
-packaged deterministic eval scenarios, and a v0.1.15.1 release gate of
+commands, 25 SQLite migrations, 11 cross-domain X-rules, 66 packaged
+eval scenario files (35 non-judge scenarios plus the adversarial judge
+set), and a v0.1.15.1 release gate of
 2631 passed tests. Each domain
 has its own state projection, rule set, and readiness skill; synthesis
 reconciles them via codified cross-domain rules. `hai daily` runs the morning
@@ -117,7 +118,7 @@ The invariants that matter:
 It's MIT-licensed, runs on macOS and Linux, requires Python 3.11+,
 and is currently packaged around Claude Code as the first compatible
 agent surface. Current shape: 60 annotated CLI commands, 14 packaged
-skills, 2631 passing release-gate tests, 28 packaged eval scenarios,
+skills, 2631 passing release-gate tests, 66 packaged eval scenario files,
 atomic audit chain end-to-end.
 
 Install: `pipx install health-agent-infra && hai init && hai auth
@@ -160,7 +161,7 @@ enough mechanical structure to formalize (HRV bands, training load,
 sleep stages, X-rules across domains) and enough judgment to make the
 skill layer pull its weight (which proposal to surface, what
 uncertainty to flag, how much rationale to write). Six v1 domains,
-11 cross-domain X-rules, 28 packaged eval scenarios, full audit chain.
+11 cross-domain X-rules, 66 packaged eval scenario files, full audit chain.
 
 The artifact I'd most value feedback on: `reporting/docs/architecture.md`
 and `reporting/docs/agent_cli_contract.md`. The first documents the

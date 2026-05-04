@@ -12,9 +12,11 @@ in [`x_rules.md`](x_rules.md); the scope discipline in
 
 ## 1. The one-sentence frame
 
-Health Agent Infra is an **agent-native, locally governed runtime for
-personal health agents**. A shell-capable agent operates over six health
-domains through the local `hai` CLI. Claude Code is the first packaged
+Health Agent Infra is the **local plugin/runtime wrapper around a
+shell-capable personal-health agent**. The agent remains the conversational
+operator; `hai` is the governed tool surface that tells the agent what it
+may do, which substrates each command may mutate, which outputs must
+validate, and which actions are refused. Claude Code is the first packaged
 compatibility surface, but the contract is not Claude-specific. The user
 speaks in natural language; deterministic tools, typed contracts, and
 auditable persisted state bound what the agent can do, so recommendations

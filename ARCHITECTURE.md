@@ -1,22 +1,59 @@
 # Architecture
 
-One-page architecture. Health Agent Infra is an agent-native, locally
-governed runtime for personal health agents. The user speaks natural language
-to an agent, the agent operates `hai`, and the runtime owns the deterministic
-boundaries. For the full pipeline and every code-vs-skill seam, see
+One-page architecture. Health Agent Infra is the local plugin/runtime wrapper
+around a shell-capable personal-health agent. The agent remains the
+conversational operator. `hai` is the governed tool surface that tells the
+agent what it may do, which substrates each command may mutate, which outputs
+must validate, and which actions are refused. For the full architecture, see
 [`reporting/docs/architecture.md`](reporting/docs/architecture.md).
 
 ## Single Rule
 
-The project has two surfaces:
+The agent can converse, decide what workflow to run, ask clarification
+questions, and propose bounded recommendations. It must do health-state work
+through `hai`.
 
-- **Python runtime** (`src/health_agent_infra/`) - deterministic. Owns data
-  acquisition, projection, classification, R-rules, X-rules, synthesis,
-  validation, persistence, and the CLI.
-- **Markdown skills** (`src/health_agent_infra/skills/`) - judgment. Own
-  rationale prose, uncertainty surfacing, and clarification.
+`hai` owns the deterministic authority boundary:
 
-> Skills never mutate actions; code never improvises coaching prose.
+- which commands exist (`hai capabilities --json`);
+- whether the agent may call them (`agent_safe`);
+- what each command may mutate (`read-only`, `writes-state`,
+  `writes-sync-log`, `writes-audit-log`, `writes-memory`,
+  `writes-skills-dir`, `writes-credentials`, `writes-config`,
+  `interactive`);
+- which proposal, intake, target, review, and synthesis payloads validate;
+- which rows are committed to local SQLite and JSONL audit logs.
+
+> The agent proposes and explains; the wrapper validates, gates, mutates, and
+> records.
+
+## Agent Wrapper Model
+
+```text
+user conversation
+      |
+      v
+shell-capable agent
+      |
+      | reads skills + hai capabilities
+      | invokes only declared hai commands
+      v
+Health Agent Infra wrapper
+      |
+      +--> ENABLES: pull evidence, record intake, build snapshots,
+      |             classify domains, create bounded proposals,
+      |             synthesize a daily plan, explain, review, back up
+      |
+      +--> PREVENTS: direct DB edits, invented actions, silent target/intent
+      |              activation, fixture data in real state, unsupported
+      |              clinical claims, missing-evidence confidence
+      |
+      +--> MUTATES: local SQLite state, JSONL audit logs, keyring/config;
+      |             read-only commands may emit caller-requested files
+      |
+      +--> EVALUATED BY: pytest contracts today; scenario/persona/skill
+                         harnesses now and richer personal-guidance evals next
+```
 
 ## Daily Loop
 
@@ -79,18 +116,31 @@ flag, exit codes, flags, and selected output schemas. The human mirror is
 [`reporting/docs/agent_cli_contract.md`](reporting/docs/agent_cli_contract.md).
 
 The `intent-router` skill consumes this manifest as the natural-language to
-CLI mapping surface.
+CLI mapping surface. If a workflow is absent from the manifest, the agent
+asks for clarification or stops; it does not issue raw SQL, write JSONL by
+hand, or invent a replacement command.
 
 ## Three-State Audit Chain
 
 Every recommendation is reconcilable across persisted rows:
+
+```mermaid
+stateDiagram-v2
+    [*] --> Proposed: DomainProposal rows<br/>(per-domain, validated)
+    Proposed --> Planned: planned_recommendation<br/>(aggregate pre-X-rule)
+    Planned --> Adapted: x_rule_firing<br/>(Phase A + Phase B mutations)
+    Adapted --> Performed: review_outcome<br/>(next-day capture)
+    Adapted --> Superseded: same-day re-author
+    Superseded --> Adapted: new canonical plan
+```
 
 1. **`proposal_log`** - what a per-domain skill proposed.
 2. **`planned_recommendation`** - the aggregate pre-X-rule plan.
 3. **`daily_plan` + `recommendation_log`** - the adapted committed plan.
 
 `hai explain` renders the chain from persisted rows alone. Every X-rule
-firing carries a stable public slug plus a sentence-form explanation.
+firing carries a stable public slug plus a sentence-form `human_explanation`
+that the agent narrates verbatim.
 
 ## Governance Invariants
 

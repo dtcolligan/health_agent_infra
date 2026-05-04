@@ -2,7 +2,9 @@
 
 ## Mental model
 
-The project has two surfaces. Everything you contribute lands in one of them:
+Health Agent Infra wraps a shell-capable personal-health agent with a
+governed local tool surface. The project has two implementation surfaces.
+Everything you contribute lands in one of them:
 
 - **Python runtime** under `src/health_agent_infra/` — deterministic
   data acquisition, projection, classification, policy, synthesis,

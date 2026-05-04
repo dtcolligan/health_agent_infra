@@ -7,7 +7,9 @@ extension points, synthesis touchpoints, state-shape expectations,
 what not to change) see
 [`../how_to_add_a_domain.md`](../how_to_add_a_domain.md). Reference
 implementations are the six v1 domains (recovery, running, sleep,
-stress, strength, nutrition).
+stress, strength, nutrition). Each domain reference names evidence inputs,
+accepted-state shape, classifier bands, R-rules, proposal actions, X-rule
+participation, missingness behavior, v1 limits, and tests.
 
 ## Current domain references
 

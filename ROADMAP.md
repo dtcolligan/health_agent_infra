@@ -31,7 +31,7 @@ This file is a high-level pointer; for actual scope, read those plans.
   keyring hotfix. Audit chain:
   D14 12→7→3→2 (4 rounds + Phase 0 revises-scope round) + D15 IR
   6→2→1 (3 rounds, SHIP_WITH_NOTES close-in-place). Substantive tier.
-  Test surface: 2630 passed (+50 vs v0.1.14.1).
+  Test surface: 2631 passed, 3 skipped (+50 vs v0.1.14.1).
   See [`reporting/plans/v0_1_15/RELEASE_PROOF.md`](reporting/plans/v0_1_15/RELEASE_PROOF.md).
 - **v0.1.14.1 shipped (2026-05-02).** Hardening cycle: Garmin-live
   unreliability surfaced as a structured capabilities signal. Single
