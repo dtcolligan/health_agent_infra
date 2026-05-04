@@ -19,6 +19,12 @@ manifest, not a Claude-only backend.
 [![Python](https://img.shields.io/badge/python-3.11+-blue)](pyproject.toml)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
+> **Status.** Working maintainer-dogfooded software. Non-maintainer
+> full-flow validation is pending: the recorded session against
+> `health-agent-infra==0.1.15.1` is the empirical input that feeds
+> v0.1.16. Treat headline claims as maintainer-verified, not yet
+> independently reproduced.
+
 ## Product boundary
 
 ```mermaid
@@ -42,7 +48,21 @@ flowchart LR
 The agent proposes, explains, and asks for missing context. The wrapper
 validates, gates, mutates, and records.
 
+Goals are user-owned, not agent-owned: the agent may *propose* intent
+or training/nutrition target rows, but only you can *commit* them
+(governance invariant W57). The runtime enforces this mechanically —
+the commit/archive paths are marked `agent_safe == false` in the
+capabilities manifest. See
+[`reporting/docs/host_agent_contract.md`](reporting/docs/host_agent_contract.md)
+for the host-agent operating rules.
+
 ## Two-minute on-ramp
+
+These commands are for **inspection and setup** — verifying that the
+package installed, that credentials are configured, and that the
+runtime is healthy. The day-to-day surface is conversational: you
+talk to a host agent (Claude Code or equivalent), the agent invokes
+`hai` for you. Run these yourself once to confirm the install:
 
 ```bash
 pipx install health-agent-infra
