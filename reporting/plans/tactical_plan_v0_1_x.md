@@ -613,8 +613,10 @@ contract in `reporting/plans/v0_1_15/PLAN.md` §2 and final state in
   empirical evidence, but its findings route to v0.1.16 per the
   publish-first pivot.
 - All P0/P1/P2 findings from the named foreign-user candidate's post-publish session are triaged
-  into v0.1.16 unless small isolated P0 severity justifies a v0.1.15.1
-  hotfix.
+  into v0.1.16 unless small isolated P0 severity justifies a follow-up
+  patch hotfix (v0.1.15.1 already shipped 2026-05-03 for the Linux
+  keyring fall-through; a future patch on top of it would land as
+  v0.1.15.2 or fold into v0.1.16).
 - Transcript + state DB snapshot + install record archived at
   `reporting/plans/v0_1_15/foreign_machine_session_<YYYY-MM-DD>.md`,
   `verification/dogfood/foreign_user/state_snapshot/<YYYY-MM-DD>/`,

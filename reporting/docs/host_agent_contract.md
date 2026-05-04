@@ -150,6 +150,31 @@ The fourth gate `hai daily` exposes (proposal completeness) is
 *operationally* a USER_INPUT-shaped halt: the agent must do work (post
 proposals) before re-invoking. See section 3.
 
+`USER_INPUT` covers three operationally distinct sub-cases that all
+share the exit class. Distinguish them by reading the `invariant=<id>`
+stderr tag (and, for argparse-style failures, the leading `usage:`
+line):
+
+- **Argparse / caller-shape errors** — missing required flag, bad
+  enum value, malformed JSON. Stderr opens with `usage: hai ...`
+  followed by the flag the parser rejected. Fix by adjusting the
+  invocation; do not ask the user.
+- **Validator-rejection errors** — payload reached the determinism
+  boundary (`hai propose` / `hai synthesize` / `hai review record` /
+  intake) and an invariant fired. Stderr carries `invariant=<id>`
+  (e.g. `invariant=followed_recommendation_must_be_bool`,
+  `invariant=action_enum`). Fix by asking the user for the right
+  value or correcting the agent-side payload — never coerce.
+- **Governed refusals** — the runtime refused to take an action that
+  would violate a governance invariant (W57 commit/archive without
+  user gate, fixture-data into canonical state without explicit
+  opt-in, clinical-claim language). Surface the refusal to the user
+  verbatim; do not retry through a "looser" path.
+
+`TRANSIENT` is a separate class: I/O hiccup, not caller error. It is
+the only retry-allowed exit (governed by the manifest's `idempotent`
+field).
+
 ## 6. W57 in plain language
 
 The runtime refuses to let the agent silently activate or deactivate
@@ -228,6 +253,17 @@ nothing, and fabricates nothing. See
 When the user asks "why did you tone down my run?" the agent reads
 `hai explain` and narrates the firing's `human_explanation` verbatim
 - never improvises.
+
+**Get IDs from persisted surfaces; never invent them.** When the
+agent needs a `recommendation_id`, `daily_plan_id`,
+`review_event_id`, `intent_id`, or `target_id` to feed into the next
+command (e.g. `hai review record --outcome-json` carrying a
+`review_event_id`), it must read that id from `hai today`,
+`hai explain`, the relevant `hai stats` view, or the manifest-
+declared JSON output of the previous mutation. It must not generate
+ids client-side, fuzzy-match on substrings, or reuse an id from a
+different `(for_date, user_id)`. The runtime assigns canonical ids;
+the agent's job is to thread them, not author them.
 
 ## 10. Skills are part of the contract
 

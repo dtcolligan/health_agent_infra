@@ -37,17 +37,21 @@ The committed diff from `c86f80b` is 32 files changed, 1942 insertions, and
 | E - Domain Reference Quality | Domain docs needed consistent evidence, accepted-state, classifier, policy, action, X-rule, missingness, v1-limit, and test sections. | Upgraded recovery, running, sleep, stress, strength, and nutrition references with code/test links. |
 | F - Stale Facts and Link Integrity | Stale counts, stale hotfix wording, and launch/archive drift remained; active-doc links were otherwise structurally healthy. | Fixed ROADMAP test count, x-rule/eval scenario prose, archive skill count, tactical-plan hotfix wording, and backup/recovery routing. |
 
-External documentation patterns were extracted from these sources, among
-others: Django docs
-<https://docs.djangoproject.com/en/dev/internals/contributing/writing-documentation/>,
-Kubernetes docs <https://kubernetes.io/docs/>, OpenTelemetry docs
-<https://opentelemetry.io/docs/>, FastAPI tutorial
-<https://fastapi.tiangolo.com/tutorial/>, Cargo docs
-<https://doc.crates.io/contrib/documentation/index.html>, uv docs
-<https://docs.astral.sh/uv/>, SQLite docs
-<https://www.sqlite.org/docs.html>, GitHub CLI manual
-<https://cli.github.com/manual/>, and LangChain documentation guidance
-<https://docs.langchain.com/oss/javascript/contributing/documentation>.
+External documentation patterns were extracted from these sources;
+patterns only — no prose copied:
+
+- Rust Book — <https://doc.rust-lang.org/book/>
+- Cargo (Rust) — <https://doc.rust-lang.org/cargo/> and <https://doc.crates.io/contrib/documentation/index.html>
+- Django documentation guide — <https://docs.djangoproject.com/en/stable/> and <https://docs.djangoproject.com/en/dev/internals/contributing/writing-documentation/>
+- FastAPI — <https://fastapi.tiangolo.com/> and <https://fastapi.tiangolo.com/tutorial/>
+- Kubernetes — <https://kubernetes.io/docs/> and <https://kubernetes.io/docs/reference/glossary/>
+- uv / Astral — <https://docs.astral.sh/uv/>
+- LangChain — <https://docs.langchain.com/oss/python/langchain/overview> and <https://docs.langchain.com/oss/javascript/contributing/documentation>
+- OpenTelemetry — <https://opentelemetry.io/docs/>
+- SQLite — <https://www.sqlite.org/docs.html>
+- GitHub CLI manual — <https://cli.github.com/manual/>
+- Anthropic Claude API / SDK docs — <https://platform.claude.com/docs/en/docs/welcome>
+- Model Context Protocol — <https://modelcontextprotocol.io/docs> and <https://modelcontextprotocol.io/llms.txt>
 
 ## 3. External connectors checked
 
@@ -146,15 +150,28 @@ $ uv run pytest verification/tests -q
 2631 passed, 3 skipped in 123.05s (0:02:03)
 ```
 
-Markdown link check:
+Markdown link check (re-run after the addendum-driven follow-up):
 
 ```text
-checked 378 markdown links/anchors across 51 current docs; excluded
-reporting/docs/archive/** and historical reporting/plans/v0_*
+$ # the self-contained Python checker pinned in
+$ # reporting/plans/post_v0_1_15/codex_docs_overhaul_review_prompt.md §3
+checked 352 markdown links across 54 docs
+broken: 0
+exit=0
 ```
 
-The exclusion is intentional: archived doctrine/cycle artifacts are
-provenance, not current operating docs.
+Roots scanned: root operating docs (`README.md`, `ARCHITECTURE.md`,
+`AGENTS.md`, `CLAUDE.md`, `ROADMAP.md`, `AUDIT.md`, `CHANGELOG.md`,
+`SECURITY.md`, `CITATION.cff`, `CONTRIBUTING.md`, `REPO_MAP.md`,
+`HYPOTHESES.md`), plus `reporting/README.md`,
+`reporting/docs/**` (excluding `reporting/docs/archive/**`),
+`reporting/plans/README.md`, and `reporting/plans/post_v0_1_15/`.
+
+Exclusion is intentional: `reporting/docs/archive/**` and historical
+`reporting/plans/v0_1_*/` artifacts are provenance, not current
+operating docs. The earlier "378 links across 51 docs" figure cited
+in the original overhaul report came from a pre-fix-up pass; the
+authoritative current numbers are above.
 
 ## 8. Known residual issues
 
