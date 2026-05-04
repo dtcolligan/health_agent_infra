@@ -30,21 +30,30 @@ manifest, not a Claude-only backend.
 ## Product boundary
 
 ```mermaid
-flowchart LR
-    U[User conversation] <--> A[Shell-capable personal-health agent]
-    A -->|reads| C[hai capabilities --json]
-    A -->|loads| S[Packaged markdown skills]
-    A -->|invokes declared commands| H[hai governed tool surface]
-    H -->|validates and gates| R[Python runtime]
-    R -->|projects, classifies, applies R/X rules| P[Bounded daily recommendations]
-    R -->|commits| D[(Local SQLite state)]
-    R -->|records| J[JSONL audit logs]
-    R -->|uses when configured| K[OS keyring/config]
-    D --> E[hai today / hai explain / review / backup]
+flowchart TB
+    U[User conversation]
+    A[Shell-capable agent]
+    H["hai · governed tool surface"]
+    R[Python runtime]
+    E[hai today / explain / review / backup]
+
+    subgraph state["Local substrates"]
+        D[(SQLite state)]
+        J[(JSONL audit logs)]
+        K[(keyring / config)]
+    end
+
+    U <--> A
+    A -->|invokes| H
+    H -->|validates and gates| R
+    R --> D
+    R --> J
+    R --> K
+    D --> E
     J --> E
     E --> A
-    A -. cannot .-> D
-    A -. cannot .-> J
+    A -. cannot write directly .-> D
+    A -. cannot write directly .-> J
 ```
 
 The agent proposes, explains, and asks for missing context. The wrapper
