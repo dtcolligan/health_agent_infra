@@ -318,6 +318,128 @@ def test_linear_extrapolation_reachable_via_full_tree_threshold_override():
 
 
 # ---------------------------------------------------------------------------
+# Acceptance test 6 — `hai explain` rendering of observed + projected
+#
+# v0.1.17 IR-R1 F-IR-03 fix: arm-2 surfaces both observed calories and
+# projected_eod_kcal in the explain bundle. The integration path is:
+#
+#   build_snapshot → run_synthesis → daily_plan.synthesis_meta JSON →
+#   load_bundle_for_date → bundle_to_dict / render_bundle_text.
+#
+# synthesis writes the classified state + observed today_row into
+# ``synthesis_meta.domain_classified_states.nutrition``; explain reads
+# that JSON directly, no recomputation required.
+# ---------------------------------------------------------------------------
+
+
+def test_hai_explain_renders_observed_and_projected_eod_for_arm2(tmp_path):
+    """End-to-end W-D arm-2 explain rendering acceptance.
+
+    Sequence:
+      1. Seed 4 active macro targets + partial-day nutrition intake.
+      2. Run build_snapshot → confirms classified_state has projected_eod_*.
+      3. Project a minimal nutrition proposal so synthesis can run.
+      4. Run synthesis with the snapshot — the daily_plan row's
+         ``synthesis_meta.domain_classified_states.nutrition`` block
+         persists observed + classified (incl. projected_eod_*).
+      5. Load the explain bundle; assert bundle_to_dict surfaces
+         observed.calories AND projected_eod_kcal in the JSON view.
+      6. Render the operator text; assert both values are in the report.
+    """
+
+    from health_agent_infra.core.explain import (
+        bundle_to_dict,
+        load_bundle_for_date,
+        render_bundle_text,
+    )
+    from health_agent_infra.core.state.projector import project_proposal
+    from health_agent_infra.core.synthesis import run_synthesis
+
+    db = tmp_path / "state.db"
+    initialize_database(db)
+    _seed_target_rows(db, kcal=3100, protein=160, carbs=350, fat=90)
+
+    submission_time = datetime(2026, 5, 5, 10, 0, 0, tzinfo=timezone.utc)
+    _seed_partial_day_nutrition_intake(
+        db, calories=1344.0, protein_g=38.0, carbs_g=160.0, fat_g=42.0,
+        hydration_l=1.0, submission_time=submission_time,
+    )
+
+    with closing(open_connection(db)) as conn:
+        snapshot = build_snapshot(
+            conn,
+            as_of_date=AS_OF,
+            user_id=USER,
+            now_local=submission_time,
+        )
+
+        # Confirm arm-2 fired before going through synthesis.
+        nutrition_classified = snapshot["nutrition"]["classified_state"]
+        assert nutrition_classified["projected_eod_kcal"] == 3100.0
+
+        # Project a minimal nutrition proposal so synthesis has something
+        # to commit. Carbon-copy the shape used by other test fixtures.
+        proposal = {
+            "schema_version": "domain_proposal.v1",
+            "proposal_id": "nut_arm2_explain_proposal",
+            "domain": "nutrition",
+            "user_id": USER,
+            "for_date": AS_OF.isoformat(),
+            "action": "maintain_targets",
+            "action_detail": {
+                "calorie_target_kcal": 3100,
+                "protein_target_g": 160,
+            },
+            "confidence": "moderate",
+            "rationale": ["arm-2 projection closes the gap"],
+            "uncertainty": [],
+            "policy_decisions": [
+                {"rule_id": "wd_arm2_test_seed", "decision": "allow",
+                 "note": "fixture proposal for explain rendering"},
+            ],
+        }
+        project_proposal(conn, proposal)
+
+        result = run_synthesis(
+            conn,
+            for_date=AS_OF,
+            user_id=USER,
+            snapshot=snapshot,
+            expected_domains=None,
+        )
+        assert result is not None
+
+        # Now load the explain bundle for the same date.
+        bundle = load_bundle_for_date(
+            conn, for_date=AS_OF, user_id=USER, plan_version="latest",
+        )
+
+    # JSON shape — synthesis_meta.domain_classified_states.nutrition
+    # carries both observed (calories=1344) and projected (kcal=3100).
+    bundle_dict = bundle_to_dict(bundle)
+    domain_states = (
+        bundle_dict["plan"]["synthesis_meta"]
+        .get("domain_classified_states", {})
+    )
+    assert "nutrition" in domain_states, (
+        f"synthesis_meta.domain_classified_states missing nutrition: "
+        f"{bundle_dict['plan']['synthesis_meta']}"
+    )
+    nut = domain_states["nutrition"]
+    assert nut["observed"]["calories"] == 1344.0
+    assert nut["classified"]["projected_eod_kcal"] == 3100.0
+
+    # Operator text surface — both numeric tokens appear in the report.
+    text = render_bundle_text(bundle)
+    assert "calories     : 1344" in text, (
+        f"observed calories not rendered. Output:\n{text[:1500]}"
+    )
+    assert "projected_eod_kcal      : 3100" in text, (
+        f"projected_eod_kcal not rendered. Output:\n{text[:1500]}"
+    )
+
+
+# ---------------------------------------------------------------------------
 # Acceptance test 7 — synthesis-policy integration (operates against projection)
 # ---------------------------------------------------------------------------
 

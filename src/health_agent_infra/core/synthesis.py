@@ -1021,6 +1021,31 @@ def run_synthesis(
     recommendation_ids = [r["recommendation_id"] for r in final_recommendations]
     all_firings = [*phase_a_firings, *phase_b_firings]
 
+    # v0.1.17 W-D arm-2 IR-R1 F-IR-03 — persist domain classified-state
+    # snapshots into ``synthesis_meta`` so ``hai explain`` can surface
+    # the W-D arm-2 projection (observed kcal vs projected_eod_kcal)
+    # without recomputing the snapshot at explain time. Only the v1
+    # nutrition block is captured today; the structure is keyed by
+    # domain so adding more later is a one-line extension.
+    domain_classified_states: dict[str, Any] = {}
+    nutrition_block = snapshot.get("nutrition") or {}
+    nutrition_classified = nutrition_block.get("classified_state") or {}
+    if nutrition_classified:
+        nutrition_signals = nutrition_block.get("signals") or {}
+        observed_today = nutrition_signals.get("today_row") or {}
+        domain_classified_states["nutrition"] = {
+            "classified": nutrition_classified,
+            "observed": {
+                "calories": observed_today.get("calories"),
+                "protein_g": observed_today.get("protein_g"),
+                "carbs_g": observed_today.get("carbs_g"),
+                "fat_g": observed_today.get("fat_g"),
+                "hydration_l": observed_today.get("hydration_l"),
+                "is_partial_day": nutrition_signals.get("is_partial_day"),
+                "target_status": nutrition_signals.get("target_status"),
+            },
+        }
+
     plan_dict = {
         "daily_plan_id": daily_plan_id,
         "user_id": user_id,
@@ -1033,6 +1058,7 @@ def run_synthesis(
             "phase_a_count": len(phase_a_firings),
             "phase_b_count": len(phase_b_firings),
             "supersede": supersede,
+            "domain_classified_states": domain_classified_states,
         },
         "agent_version": agent_version,
         # v0.1.11 W-E: persisted with the row so a subsequent

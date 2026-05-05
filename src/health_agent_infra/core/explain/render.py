@@ -148,6 +148,15 @@ def render_bundle_text(bundle: ExplainBundle) -> str:
         lines.append("x_rules_fired : (none)")
     lines.append("")
 
+    # v0.1.17 W-D arm-2 — surface the partial-day macro projection that
+    # synthesis persisted into synthesis_meta.domain_classified_states.
+    classified_section = _format_domain_classified_states_section(
+        plan.synthesis_meta or {}
+    )
+    if classified_section:
+        lines.append(classified_section)
+        lines.append("")
+
     lines.append(_section("Proposals", bundle.proposals, _format_proposal))
     lines.append("")
     lines.append(
@@ -319,6 +328,92 @@ def _format_review(rv: ExplainReview) -> str:
                 line += f" note={outcome.free_text!r}"
             parts.append(line)
     return "\n".join(parts)
+
+
+def _format_domain_classified_states_section(
+    synthesis_meta: dict[str, Any],
+) -> str:
+    """Render the W-D arm-2 nutrition projection (and any sibling
+    domain classified-state snapshots) persisted in
+    ``synthesis_meta.domain_classified_states`` at synthesis time.
+
+    Returns an empty string when no classified state was persisted —
+    pre-W-D-arm-2 plans, or plans where every domain classifier emitted
+    an empty block.
+    """
+
+    classified_states = synthesis_meta.get("domain_classified_states") or {}
+    if not classified_states:
+        return ""
+
+    nutrition = classified_states.get("nutrition") or {}
+    if not nutrition:
+        return ""
+
+    classified = nutrition.get("classified") or {}
+    observed = nutrition.get("observed") or {}
+
+    lines: list[str] = ["## Nutrition classified state (snapshot at synthesis time)"]
+
+    # Observed values (today_row from snapshot signals).
+    obs_kcal = observed.get("calories")
+    obs_protein = observed.get("protein_g")
+    obs_carbs = observed.get("carbs_g")
+    obs_fat = observed.get("fat_g")
+    obs_hydration = observed.get("hydration_l")
+    is_partial = observed.get("is_partial_day")
+    target_status = observed.get("target_status")
+
+    if any(v is not None for v in (obs_kcal, obs_protein, obs_carbs, obs_fat, obs_hydration)):
+        lines.append("  observed:")
+        if obs_kcal is not None:
+            lines.append(f"    calories     : {obs_kcal}")
+        if obs_protein is not None:
+            lines.append(f"    protein_g    : {obs_protein}")
+        if obs_carbs is not None:
+            lines.append(f"    carbs_g      : {obs_carbs}")
+        if obs_fat is not None:
+            lines.append(f"    fat_g        : {obs_fat}")
+        if obs_hydration is not None:
+            lines.append(f"    hydration_l  : {obs_hydration}")
+    if is_partial is not None or target_status is not None:
+        lines.append(
+            f"    is_partial_day={is_partial}, target_status={target_status}"
+        )
+
+    # W-D arm-2 projection — only printed when arm-2 actually fired.
+    proj_kcal = classified.get("projected_eod_kcal")
+    proj_protein = classified.get("projected_eod_protein_g")
+    proj_carbs = classified.get("projected_eod_carbs_g")
+    proj_fat = classified.get("projected_eod_fat_g")
+    if any(v is not None for v in (proj_kcal, proj_protein, proj_carbs, proj_fat)):
+        lines.append("  projected_eod (W-D arm-2):")
+        if proj_kcal is not None:
+            lines.append(f"    projected_eod_kcal      : {proj_kcal}")
+        if proj_protein is not None:
+            lines.append(f"    projected_eod_protein_g : {proj_protein}")
+        if proj_carbs is not None:
+            lines.append(f"    projected_eod_carbs_g   : {proj_carbs}")
+        if proj_fat is not None:
+            lines.append(f"    projected_eod_fat_g     : {proj_fat}")
+
+    # Headline bands + status.
+    bands = []
+    for key in (
+        "calorie_balance_band",
+        "protein_sufficiency_band",
+        "hydration_band",
+        "coverage_band",
+        "nutrition_status",
+    ):
+        v = classified.get(key)
+        if v is not None:
+            bands.append(f"{key}={v}")
+    if bands:
+        lines.append("  bands:")
+        lines.append(f"    {', '.join(bands)}")
+
+    return "\n".join(lines)
 
 
 def _format_user_memory_section(memory: ExplainUserMemory) -> str:
