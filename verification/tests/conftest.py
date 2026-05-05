@@ -33,6 +33,17 @@ def _disable_intervals_icu_auto_default(monkeypatch):
     monkeypatch this back to ``True`` themselves.
     """
 
+    # W-29.2.9: `_intervals_icu_configured` lives in cli.handlers.pull_clean
+    # (re-exported via cli/__init__.py). Patching the source module is the
+    # binding cmd_pull / _resolve_pull_source actually look up.
+    monkeypatch.setattr(
+        "health_agent_infra.cli.handlers.pull_clean._intervals_icu_configured",
+        lambda: False,
+        raising=True,
+    )
+    # Also patch the cli re-export so any test that imports the symbol
+    # directly (`from health_agent_infra.cli import _intervals_icu_configured`)
+    # observes the same False.
     monkeypatch.setattr(
         "health_agent_infra.cli._intervals_icu_configured",
         lambda: False,

@@ -234,8 +234,12 @@ def test_pull_live_adapter_error_returns_transient(monkeypatch):
         def load(self, as_of):
             raise GarminLiveError("vendor 503 — try again later")
 
+    # W-29.2.9: `_build_live_adapter` lives in cli.handlers.pull_clean. Patching
+    # cli_mod's re-export does not affect cmd_pull's local lookup. Patch the
+    # source module directly.
+    from health_agent_infra.cli.handlers import pull_clean as _pull_clean_mod
     monkeypatch.setattr(
-        cli_mod, "_build_live_adapter", lambda args: _ExplodingAdapter(),
+        _pull_clean_mod, "_build_live_adapter", lambda args: _ExplodingAdapter(),
     )
 
     rc = cli_main(["pull", "--live", "--date", "2026-04-17"])

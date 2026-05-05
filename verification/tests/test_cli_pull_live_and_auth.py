@@ -277,7 +277,9 @@ def test_pull_live_happy_path(monkeypatch, capsys):
     def fake_build(args):
         return _FakeAdapter()
 
-    monkeypatch.setattr(cli_mod, "_build_live_adapter", fake_build)
+    # W-29.2.9: `_build_live_adapter` lives in cli.handlers.pull_clean.
+    from health_agent_infra.cli.handlers import pull_clean as _pull_clean_mod
+    monkeypatch.setattr(_pull_clean_mod, "_build_live_adapter", fake_build)
 
     rc = cli_main(["pull", "--live", "--date", "2026-04-17"])
     assert rc == 0
@@ -336,7 +338,14 @@ def test_pull_default_falls_back_to_csv_when_no_intervals_auth(
         def load_intervals_icu(self):
             return None
 
+    # W-29.2.9: `CredentialStore` *as a name* is bound in both cli_mod and
+    # cli.handlers.pull_clean. Replacing the name on the source module
+    # affects pull_clean's local lookup; the cli_mod re-export is also
+    # patched so any test or code that reads cli_mod.CredentialStore sees
+    # the same binding.
+    from health_agent_infra.cli.handlers import pull_clean as _pull_clean_mod
     monkeypatch.setattr(cli_mod, "CredentialStore", _NoCreds)
+    monkeypatch.setattr(_pull_clean_mod, "CredentialStore", _NoCreds)
 
     # F-PV14-01 (v0.1.15): the implicit-csv fallback path also hits the
     # default-deny guard now; --allow-fixture-into-real-state confirms
@@ -362,7 +371,9 @@ def test_pull_live_wraps_adapter_error(monkeypatch, capsys):
         def load(self, as_of):
             raise GarminLiveError("upstream 500")
 
-    monkeypatch.setattr(cli_mod, "_build_live_adapter", lambda args: ExplodingAdapter())
+    # W-29.2.9: `_build_live_adapter` lives in cli.handlers.pull_clean.
+    from health_agent_infra.cli.handlers import pull_clean as _pull_clean_mod
+    monkeypatch.setattr(_pull_clean_mod, "_build_live_adapter", lambda args: ExplodingAdapter())
 
     rc = cli_main(["pull", "--live", "--date", "2026-04-17"])
     assert rc == exit_codes.TRANSIENT
@@ -394,8 +405,11 @@ def test_build_live_adapter_returns_adapter_when_creds_and_client_ok(monkeypatch
             return {}
     # M6 wired retry_config through; accept kwargs so the stub keeps
     # matching the real signature.
+    # W-29.2.9: `_build_live_adapter` calls `build_default_client` via its
+    # own pull_clean binding, not cli_mod's re-export. Patch the source.
+    from health_agent_infra.cli.handlers import pull_clean as _pull_clean_mod
     monkeypatch.setattr(
-        cli_mod, "build_default_client",
+        _pull_clean_mod, "build_default_client",
         lambda creds, **kwargs: StubClient(),
     )
 

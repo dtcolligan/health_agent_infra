@@ -201,7 +201,14 @@ def test_daily_sync_row_records_partial_when_adapter_partial(tmp_path: Path):
         history_days=14,
     )
 
+    # W-29.2.9: `_build_intervals_icu_adapter` lives in cli.handlers.pull_clean.
+    # `_daily_pull_and_project` (still in cli/__init__.py) references the
+    # cli-side re-export binding, so both must be patched until W-29.2.11
+    # moves _daily_pull_and_project to cli/handlers/recommend.py.
     with patch(
+        "health_agent_infra.cli.handlers.pull_clean._build_intervals_icu_adapter",
+        return_value=_PartialDailyAdapter(),
+    ), patch(
         "health_agent_infra.cli._build_intervals_icu_adapter",
         return_value=_PartialDailyAdapter(),
     ):
