@@ -21,10 +21,26 @@ from pathlib import Path
 import pytest
 
 
-_CLI_PATH = (
+_CLI_PKG_ROOT = (
     Path(__file__).resolve().parents[2]
-    / "src" / "health_agent_infra" / "cli" / "__init__.py"
+    / "src" / "health_agent_infra" / "cli"
 )
+
+
+def _cli_source_files() -> list[Path]:
+    """Walk the ``cli/`` package and return every ``.py`` file whose
+    USER_INPUT exits we want to audit. Pre-W-29 this was a single
+    ``cli.py``; post-W-29 the handlers split across ``cli/handlers/*.py``
+    and the audit must scan all of them.
+    """
+
+    return sorted(
+        p for p in _CLI_PKG_ROOT.rglob("*.py")
+        # Skip __main__.py (3-line shim) and __init__.py inside handlers/
+        # (handler-package marker, no handler bodies).
+        if p.name not in ("__main__.py",)
+        and p != _CLI_PKG_ROOT / "handlers" / "__init__.py"
+    )
 
 
 # Verbs that count as "actionable next-step." If a stderr print mentions
@@ -175,12 +191,29 @@ def _function_stderr_messages(func: ast.FunctionDef) -> list[str]:
 # ---------------------------------------------------------------------------
 
 
+def _all_user_input_sites() -> list[tuple[ast.FunctionDef, ast.Return, Path]]:
+    """Aggregate USER_INPUT exit sites across every ``.py`` under ``cli/``.
+
+    Returns triples of (function-def-node, return-node, source-file-path)
+    so failure messages can name the file the breach was found in.
+    """
+
+    out: list[tuple[ast.FunctionDef, ast.Return, Path]] = []
+    for path in _cli_source_files():
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for func, ret in _collect_user_input_exit_sites(tree):
+            out.append((func, ret, path))
+    return out
+
+
 def test_cli_py_has_user_input_exit_sites():
     """Sanity: the audit surface is non-empty. If this fails, the
-    grep / AST visitor changed and the rest of the test is meaningless."""
+    grep / AST visitor changed and the rest of the test is meaningless.
 
-    tree = ast.parse(_CLI_PATH.read_text(encoding="utf-8"))
-    sites = _collect_user_input_exit_sites(tree)
+    Post-W-29 the audit walks the full ``cli/`` package, not just
+    ``cli/__init__.py`` — handlers split across ``cli/handlers/*.py``."""
+
+    sites = _all_user_input_sites()
     assert len(sites) >= 100, f"only found {len(sites)} USER_INPUT sites"
 
 
@@ -195,35 +228,36 @@ def test_every_user_input_exit_site_has_actionable_prose_in_function():
     function granularity (not statement-level proximity) because cli
     handlers commonly compose: validate-then-explain-then-exit."""
 
-    tree = ast.parse(_CLI_PATH.read_text(encoding="utf-8"))
-    sites = _collect_user_input_exit_sites(tree)
+    sites = _all_user_input_sites()
 
     failures: list[str] = []
-    seen_funcs: set[str] = set()
-    for func, ret_node in sites:
-        if func.name in seen_funcs:
+    seen_funcs: set[tuple[str, Path]] = set()
+    for func, ret_node, src_path in sites:
+        key = (func.name, src_path)
+        if key in seen_funcs:
             # We only need to fail once per function; the prose
             # surface is per-function.
             continue
-        seen_funcs.add(func.name)
+        seen_funcs.add(key)
 
         msgs = _function_stderr_messages(func)
         if not msgs:
             failures.append(
-                f"{func.name} (line {func.lineno}): no stderr print at all "
-                f"despite {sum(1 for f, _ in sites if f.name == func.name)} "
+                f"{src_path.name}:{func.lineno} {func.name}: no stderr print "
+                f"at all despite "
+                f"{sum(1 for f, _, p in sites if f.name == func.name and p == src_path)} "
                 f"USER_INPUT exit(s)"
             )
             continue
         if not any(_has_actionable_verb(m) for m in msgs):
             failures.append(
-                f"{func.name} (line {func.lineno}): no actionable verb in "
-                f"stderr prose; messages: {[m[:80] for m in msgs[:3]]}"
+                f"{src_path.name}:{func.lineno} {func.name}: no actionable "
+                f"verb in stderr prose; messages: {[m[:80] for m in msgs[:3]]}"
             )
 
     if failures:
         pytest.fail(
-            f"W-AD: {len(failures)} cli.py handler(s) emit USER_INPUT "
+            f"W-AD: {len(failures)} cli handler(s) emit USER_INPUT "
             f"without actionable next-step prose:\n"
             + "\n".join(f"  - {f}" for f in failures[:15])
             + (f"\n  ... ({len(failures) - 15} more)" if len(failures) > 15 else "")
