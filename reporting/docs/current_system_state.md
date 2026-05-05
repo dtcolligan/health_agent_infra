@@ -1,6 +1,6 @@
 # Current system state
 
-**Status:** current truth as of the v0.1.15.1 hotfix on 2026-05-03.
+**Status:** current truth as of v0.1.17 ship on 2026-05-05.
 
 This file is the short operational answer to "what is true now?"
 Use it before reading cycle-level audit history. Release artifacts
@@ -11,11 +11,13 @@ the provenance trail; this file is the current-state map.
 
 | Surface | Current value | Source of truth |
 |---|---|---|
-| Package version | `0.1.15.1` | `pyproject.toml`, `CHANGELOG.md` |
-| Published posture | PyPI package hotfixed after v0.1.15; second-user empirical validation pending | `reporting/plans/v0_1_15_1/RELEASE_PROOF.md` |
-| Schema head | `25` | `src/health_agent_infra/core/state/migrations/` |
-| CLI commands | 60 annotated `hai` commands | `hai capabilities --json` |
-| Test gate at release | 2631 passed, 3 skipped | `reporting/plans/v0_1_15_1/RELEASE_PROOF.md` |
+| Package version | `0.1.17` | `pyproject.toml`, `CHANGELOG.md` |
+| Published posture | v0.1.17 ship-ready; D15 IR + PyPI publish pending maintainer authorization | `reporting/plans/v0_1_17/RELEASE_PROOF.md` |
+| Schema head | `26` (W-B `body_comp` added v0.1.17) | `src/health_agent_infra/core/state/migrations/` |
+| CLI commands | 67 annotated `hai` commands (v0.1.15 baseline 60 + `hai sync purge` + `hai intake weight` + `hai eval review {list,show,tag,dismiss,export}`) | `hai capabilities --json` |
+| CLI source layout | `cli/__init__.py` (~2986 LOC parser-tree builder + dispatch) + `cli/handlers/{auth,pull_clean,state,config_init,intake,intent,target,recommend,review,inspect,tools}.py` (each <2500 LOC). W-29 mechanical split landed v0.1.17. | `src/health_agent_infra/cli/` |
+| Test gate at release | 2683 passed, 4 skipped (full suite); `hai eval run --scenario-set all` 135/135 PASS; persona matrix 13/13 with 0 findings + 0 crashes (opt-in via `HAI_RUN_PERSONA_MATRIX=1`) | `reporting/plans/v0_1_17/RELEASE_PROOF.md` |
+| Eval scenario corpus | 135 deterministic fixtures (20 per domain × 6 + 15 synthesis) + 30 judge_adversarial fixtures | `src/health_agent_infra/evals/scenarios/` |
 | Domains | recovery, running, sleep, stress, strength, nutrition | `src/health_agent_infra/domains/` |
 | Runtime state | local SQLite by default; no package telemetry | `reporting/docs/privacy.md`, `SECURITY.md` |
 

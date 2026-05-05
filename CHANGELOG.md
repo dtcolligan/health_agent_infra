@@ -11,6 +11,69 @@ Per-release detail lives under `reporting/plans/<version>/`.
 
 ---
 
+## [0.1.17] — 2026-05-05
+
+**Tier:** substantive — 10 W-ids, maintainability + eval substrate
+consolidation. Full Phase 0 D11 bug-hunt + 3-round D14 plan-audit
+(11 → 5 → 3 halving signature; thrice-validated against AGENTS.md
+empirical norm).
+
+### Added
+
+- **W-29 cli.py mechanical split.** The 9927-LOC `cli.py` decomposes
+  into 1 main + 1 shared module + 11 handler-group modules under
+  `src/health_agent_infra/cli/handlers/`. Every group <2500 LOC;
+  manifest byte-stable post-split. New `test_cli_handler_dispatch_smoke.py`
+  + `test_cli_handler_group_loc_ceiling.py` regression contracts.
+- **W-30 capabilities-manifest schema regression test** at
+  `test_capabilities_manifest_schema.py` — pins field names + types
+  (not values). Schema freeze itself remains scheduled for v0.2.3.
+- **W-AH-2 scenario corpus expansion** 35 → 135 fixtures across six
+  domains (20 each) + synthesis (15). 100% pass-rate via
+  `hai eval run --scenario-set all`.
+- **W-AI-2 `hai eval review` CLI surface** — list / show / tag /
+  dismiss / export. Per-user triage state at
+  `~/.local/share/health_agent_infra/eval_review.json`.
+- **W-AM-2 4 escalate-tagged adversarial scenarios** (sleep / strength
+  / stress / nutrition); cumulative `w-am-adversarial-escalate` count
+  6 of 6.
+- **W-Vb-4 cumulative persona closure** verified — 12-of-12 P1..P12
+  close cleanly + P13 matrix-only, 0 findings, 0 crashes. Opt-in
+  regression test pins the contract.
+- **W-B `hai intake weight` body-composition surface** + new
+  `body_comp` table + migration 026. User-authored only;
+  multi-measurement-per-day append semantics; weight (20–250 kg) +
+  optional body-fat percent (0–75) validation.
+- **W-D arm-2 partial-day end-of-day macro projection.** When today's
+  intake is partial AND a nutrition target covers today,
+  `build_snapshot()` projects EOD macros against the target
+  (default `target_anchored`; `linear_extrapolation` reachable via
+  threshold override). Closes the v0.1.15 W-D arm-1 known-incomplete
+  fix without false-positive deficit cascades.
+- **W-C-EQP migration 025 query-plan stability assertion.**
+- **F-PV14-02 `hai sync purge` surgical cleanup** — refuses
+  selectors matching >5 rows; writes `runtime_event_log` audit row
+  on commit. `--dry-run` is read-only inspection.
+
+### Changed
+
+- `cli.py` → `cli/__init__.py` package layout. Tests that monkeypatch
+  private symbols (`_build_live_adapter`, `_build_intervals_icu_adapter`,
+  `CredentialStore` *as a name*) now target the source-module path
+  (`cli.handlers.pull_clean.X`) for module-attribute patches.
+  Class-attribute patches (e.g. `cli_mod.CredentialStore.default`)
+  continue to propagate as before.
+- AGENTS.md "Settled Decisions" W29/W30 entry: appended W-29 closure;
+  W-30 schema-freeze destination unchanged.
+- AGENTS.md "Do Not Do" cli.py-split clause retired (provenance tail
+  preserved).
+
+### Migrations
+
+- **026** — `body_comp` table for W-B body-composition intake.
+
+---
+
 ## [Unreleased]
 
 ### Removed

@@ -1,8 +1,9 @@
 # Planning Tree — Reading Order Index
 
-> **Last updated:** 2026-05-03 (v0.1.15.1 hotfix follows the v0.1.15
-> publish-first package release; recorded foreign-user validation
-> remains pending and feeds v0.1.16).
+> **Last updated:** 2026-05-05 (v0.1.17 shipped — maintainability +
+> eval substrate consolidation; 10 W-ids closed at 100% acceptance.
+> v0.1.16 was cancelled 2026-05-04; foreign-user empirical work is
+> now v0.1.19, sequenced after v0.1.18 onboarding).
 
 This is the orientation guide to the `reporting/plans/` tree.
 Read this when you're returning cold and need to find the right

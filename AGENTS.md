@@ -159,7 +159,14 @@ write a cycle proposal in `reporting/plans/`; do not act unilaterally.
   before it; W-29 destination unchanged at v0.1.17. See
   `reporting/plans/v0_1_16/README.md`,
   `reporting/plans/v0_1_18/README.md`, and
-  `reporting/plans/v0_1_19/README.md`.)
+  `reporting/plans/v0_1_19/README.md`. **W-29 closed at v0.1.17**
+  (mechanical split landed; cli.py 9927 LOC → 1 main + 1 shared +
+  11 handler-group modules, all <2500 LOC; manifest byte-stable;
+  refreshed boundary note at
+  `reporting/plans/v0_1_17/w29_boundary_refresh.md`). W-30 regression-
+  test scaffold landed at v0.1.17; capabilities-manifest schema freeze
+  itself remains scheduled for v0.2.3 per the unchanged provenance
+  chain above.)
 - **Garmin Connect is not the default live source.** Login is rate-limited
   and unreliable. Default to intervals.icu when configured. As of
   v0.1.14.1 (W-GARMIN-MANIFEST-SIGNAL), this is also a *structured*
@@ -435,18 +442,21 @@ CI runs `verification/tests/`. The suite includes docs and skill/CLI drift check
 - Do not open a PR or push autonomously.
 - Do not add a wearable source until the per-domain evidence contract is
   broadened.
-- Do not split `cli.py` or freeze the capabilities manifest schema before
-  their scheduled cycles (v0.1.17 / v0.2.3). (Origin: v0.1.12 CP1 + CP2;
-  v0.2.x destination updated by post-v0.1.13 CP-W30-SPLIT; v0.1.14 →
-  v0.1.15 cli.py-split destination updated 2026-05-02 mid-day
-  post-v0.1.14.1 ship; v0.1.15 → v0.1.17 destination redestinated
-  2026-05-02 evening per the v0.1.15 scope-restructure self-audit
-  to keep the foreign-user-ready package cycle free of cli.py merge
-  friction with W-A/W-C/W-D CLI extensions — see `reporting/plans/v0_1_15/PLAN.md`
-  §1.4 and `reporting/plans/v0_1_17/README.md`; v0.1.17 promoted to
-  next-active cycle 2026-05-04 after v0.1.16 cancelled, foreign-user
-  empirical work renumbered to v0.1.19 with new v0.1.18 onboarding
-  cycle before it — destination unchanged at v0.1.17.)
+- Do not freeze the capabilities manifest schema before its scheduled
+  cycle (v0.2.3). (Origin: v0.1.12 CP1 + CP2; v0.2.x destination updated
+  by post-v0.1.13 CP-W30-SPLIT; v0.1.14 → v0.1.15 cli.py-split
+  destination updated 2026-05-02 mid-day post-v0.1.14.1 ship;
+  v0.1.15 → v0.1.17 destination redestinated 2026-05-02 evening per
+  the v0.1.15 scope-restructure self-audit to keep the foreign-user-
+  ready package cycle free of cli.py merge friction with W-A/W-C/W-D
+  CLI extensions — see `reporting/plans/v0_1_15/PLAN.md` §1.4 and
+  `reporting/plans/v0_1_17/README.md`; v0.1.17 promoted to next-active
+  cycle 2026-05-04 after v0.1.16 cancelled, foreign-user empirical
+  work renumbered to v0.1.19 with new v0.1.18 onboarding cycle before
+  it — destination unchanged at v0.1.17. **W-29 cli.py-split clause
+  retired at v0.1.17 ship — the split landed cleanly with byte-stable
+  manifest; this entry is provenance only. Capabilities-manifest
+  schema-freeze clause retained until v0.2.3.**)
 - Do not add micronutrient or food-taxonomy features.
 - Do not treat raw SQLite reads as the normal inspection surface; use
   `hai today`, `hai explain`, and `hai doctor`.

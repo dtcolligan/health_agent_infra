@@ -4,6 +4,40 @@ Health Agent Infra uses structured Codex review before substantive releases.
 The review is not a badge; the artifact is the value. This file indexes the
 existing release-cycle audit records so they are visible from the repo root.
 
+## v0.1.17 - 2026-05-05
+
+Maintainability + eval substrate consolidation. 10 W-ids closed: W-29
+(cli.py 9927-LOC mechanical split), W-30 (capabilities-manifest schema
+regression test), W-AH-2 (scenario corpus 35 → 135), W-AI-2
+(`hai eval review` CLI), W-AM-2 (4 escalate scenarios), W-Vb-4 (12-of-12
+persona closure), F-PV14-02 (`hai sync purge` surgical cleanup), W-B
+(`hai intake weight` + body_comp + migration 026), W-D arm-2 (partial-
+day macro projection), W-C-EQP (migration 025 query-plan stability).
+**Tier:** substantive.
+
+| Round | Artifact | Result |
+|---|---|---|
+| Phase 0 (D11) | [`reporting/plans/v0_1_17/audit_findings.md`](reporting/plans/v0_1_17/audit_findings.md) | 9 findings (5 nit, 4 none); pre-implementation gate fired `OPEN PHASE 1` |
+| D14 round 1 | [`reporting/plans/v0_1_17/codex_plan_audit_response.md`](reporting/plans/v0_1_17/codex_plan_audit_response.md) | 11 findings PLAN_COHERENT_WITH_REVISIONS |
+| D14 round 2 | [`reporting/plans/v0_1_17/codex_plan_audit_round_2_response.md`](reporting/plans/v0_1_17/codex_plan_audit_round_2_response.md) | 5 findings PLAN_COHERENT_WITH_REVISIONS (halving on track) |
+| D14 round 3 | [`reporting/plans/v0_1_17/codex_plan_audit_round_3_response.md`](reporting/plans/v0_1_17/codex_plan_audit_round_3_response.md) | 3 findings PLAN_COHERENT_WITH_REVISIONS close-in-place; D14 closed |
+| D15 IR | *(pending — to be launched at ship time)* | — |
+| Verification | [`reporting/plans/v0_1_17/RELEASE_PROOF.md`](reporting/plans/v0_1_17/RELEASE_PROOF.md) | 2683 pass / 4 skipped; `hai eval run --scenario-set all` 135/135; mypy + bandit clean; manifest byte-stable across W-29 split |
+
+**Outcome:** v0.1.17 ships substantive maintainability + eval-substrate
+consolidation. cli.py 9927 LOC → ~2986-LOC main + 11 handler-group
+modules (each <2500 LOC). Eval scenario corpus tripled (35 → 135) at
+100% pass-rate. New `hai sync purge` + `hai intake weight` + `hai eval
+review` surfaces. W-D arm-2 partial-day macro projection closes the
+v0.1.15 W-D arm-1 known-incomplete fix. AGENTS.md "Do Not Do"
+cli.py-split clause retired; W-30 schema-freeze clause retained until
+v0.2.3.
+
+**D14 halving signature:** 11 → 5 → 3 (thrice-validated against AGENTS.md
+empirical norm `10 → 5 → 3 → 0`; one round shorter than v0.1.11/v0.1.12
+because v0.1.17's catalogue was largely inherited from prior release-
+proofs with established source contracts).
+
 ## v0.1.15.1 - 2026-05-03
 
 Linux keyring fall-through hotfix. CI on Linux exposed a runtime crash
