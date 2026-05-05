@@ -25,14 +25,32 @@ implementation under maintainer ratification.
 
 ## §2 Standard substantive-cycle ship gates
 
+Initially stamped against pre-IR-R1 HEAD. Re-stamped after the IR-R1
+fix-and-reland round closed F-IR-01 (Bandit), F-IR-02
+(`_find_in_corpus`), F-IR-03 (W-D arm-2 explain), F-IR-04 (W-AH-2
+classifier-axis vacuous-pass), and F-IR-05 (wheel-content
+hygiene). See §8 below.
+
 ```
-✓ Full pytest suite (narrow gate): 2683 passed, 4 skipped (~2 min)
+✓ Full pytest suite (narrow gate): 2688 passed, 5 skipped (~2 min)
+  (was 2683 + 4 pre-IR-R1; +5 tests from F-IR-02 + F-IR-03 + F-IR-05; +1 skip from pre-W-29 wheel)
 ✓ uvx mypy src/health_agent_infra: Success — 147 source files, 0 errors
 ✓ uvx bandit -ll -r src/health_agent_infra: 0 medium / 0 high severity
+  (initially red on 3 Medium B608; closed at IR-R1 F-IR-01 via three
+  same-line nosec annotations following the established
+  intent/store.py + intake/presence.py pattern)
 ✓ hai capabilities --json: byte-stable against snapshot
 ✓ hai capabilities --markdown: byte-stable against agent_cli_contract.md
 ✓ Persona matrix: 13/13 personas, 0 findings, 0 crashes (~5 min, opt-in)
 ✓ hai eval run --scenario-set all: 135/135 PASS (100% per W-AH-2 §2.C item 5)
+  (post-IR-R1 F-IR-04: classifier-axis assertions are now non-vacuous —
+  every domain fixture pins the actual classifier output for its named
+  bands; mutation spot-check confirmed the runner now fails on band
+  divergence)
+✓ Wheel-content smoke (`test_wheel_artifact_no_pre_split_cli.py`):
+  v0.1.17 wheel does not ship the pre-W-29 `cli.py` shadow
+  (closed F-IR-05 after `rm -rf build/ dist/ src/health_agent_infra.egg-info`
+  + clean rebuild)
 ```
 
 ## §3 W-29-specific ship gates (release-blocker)
@@ -78,12 +96,16 @@ fork-deferral.
 
 ## §7 Notes for the maintainer
 
-- **D15 IR pending.** The Codex implementation review is the next
-  audit step. Per AGENTS.md substantive-cycle pattern, the IR prompt
-  is authored at ship-time + handed to the maintainer to launch.
-  This release proof reflects ship-readiness up to but not through
-  IR; the IR may surface further nits to close-in-place before PyPI
-  publish.
+- **D15 IR round 1 closed `SHIP_WITH_FIXES` 2026-05-05.** Six findings
+  surfaced — F-IR-01 (Bandit gate red on 3 Medium B608), F-IR-02
+  (`_find_in_corpus` id-contract mismatch), F-IR-03 (W-D arm-2 explain
+  rendering missing), F-IR-04 (W-AH-2 classifier-axis vacuous-pass),
+  F-IR-05 (wheel ships pre-W-29 cli.py shadow), F-IR-06 (runtime-
+  contract paper docs landed unnamed). Round-1 fix-and-reland landed
+  in this cycle; full disposition trail at
+  `codex_implementation_review_round_1_response.md`. Round 2 expected
+  to close `SHIP` or `SHIP_WITH_NOTES` per the empirical
+  5 → 2 → 1-nit shape.
 - **Test-infra change at W-29.2.9 / W-29.2.11.** Tests that monkeypatch
   cli-private *module attributes* (e.g. `_build_live_adapter`) now target
   `cli.handlers.pull_clean.X` / `cli.handlers.recommend.X` directly —

@@ -125,6 +125,23 @@ without live validation can fail silently. The v0.1.14 W-AM lesson
 generalises: per-fixture interactive validation, not batch-author +
 batch-validate.
 
+## §5.4 Out-of-band: HAI runtime-contract paper planning subtree
+
+`reporting/plans/hai_runtime_contract_paper/` (606 lines:
+`DRAFT_PAPER.md` + `IMPLEMENTATION_PLAN.md`) landed in the F-PV14-02
+commit (`d06d694`) but is forward-looking research planning material
+for a HACO-Bench / runtime-contract empirical paper, not part of any
+v0.1.17 W-id. Codex round-1 IR (F-IR-06) flagged the unnamed
+addition.
+
+**Disposition (2026-05-05 IR-R1):** kept in the v0.1.17 diff and
+named here as out-of-band planning. The subtree's eventual owner is
+likely a v0.2.x research cycle (post-W52 weekly-review +
+post-W58D claim-block infrastructure); destination is intentionally
+not yet named because the paper's scope is pre-decisional. Future
+cycles that scope the paper work should reference this subtree
+explicitly.
+
 ## §6 Open items for D15 IR
 
 - **Test-infra refactor scope.** The pull_clean / recommend monkeypatch
