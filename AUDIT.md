@@ -21,8 +21,9 @@ day macro projection), W-C-EQP (migration 025 query-plan stability).
 | D14 round 1 | [`reporting/plans/v0_1_17/codex_plan_audit_response.md`](reporting/plans/v0_1_17/codex_plan_audit_response.md) | 11 findings PLAN_COHERENT_WITH_REVISIONS |
 | D14 round 2 | [`reporting/plans/v0_1_17/codex_plan_audit_round_2_response.md`](reporting/plans/v0_1_17/codex_plan_audit_round_2_response.md) | 5 findings PLAN_COHERENT_WITH_REVISIONS (halving on track) |
 | D14 round 3 | [`reporting/plans/v0_1_17/codex_plan_audit_round_3_response.md`](reporting/plans/v0_1_17/codex_plan_audit_round_3_response.md) | 3 findings PLAN_COHERENT_WITH_REVISIONS close-in-place; D14 closed |
-| D15 IR | *(pending — to be launched at ship time)* | — |
-| Verification | [`reporting/plans/v0_1_17/RELEASE_PROOF.md`](reporting/plans/v0_1_17/RELEASE_PROOF.md) | 2683 pass / 4 skipped; `hai eval run --scenario-set all` 135/135; mypy + bandit clean; manifest byte-stable across W-29 split |
+| D15 IR round 1 | [`reporting/plans/v0_1_17/codex_implementation_review_response.md`](reporting/plans/v0_1_17/codex_implementation_review_response.md) | 6 findings SHIP_WITH_FIXES (Bandit + `_find_in_corpus` + W-D arm-2 explain + W-AH-2 vacuous-axis + wheel hygiene + paper docs unnamed) |
+| D15 IR round 2 | [`reporting/plans/v0_1_17/codex_implementation_review_round_2_response.md`](reporting/plans/v0_1_17/codex_implementation_review_round_2_response.md) | 1 nit SHIP_WITH_NOTES close-in-place; IR closed |
+| Verification | [`reporting/plans/v0_1_17/RELEASE_PROOF.md`](reporting/plans/v0_1_17/RELEASE_PROOF.md) | 2688 pass / 5 skipped; `hai eval run --scenario-set all` 135/135 with non-vacuous classifier-axis (post-IR-R1 F-IR-04); mypy + bandit clean; manifest byte-stable across W-29 split; wheel-content smoke green |
 
 **Outcome:** v0.1.17 ships substantive maintainability + eval-substrate
 consolidation. cli.py 9927 LOC → ~2986-LOC main + 11 handler-group
@@ -37,6 +38,11 @@ v0.2.3.
 empirical norm `10 → 5 → 3 → 0`; one round shorter than v0.1.11/v0.1.12
 because v0.1.17's catalogue was largely inherited from prior release-
 proofs with established source contracts).
+
+**D15 IR settling signature:** 6 → 1 (within AGENTS.md empirical
+`5 → 2 → 1-nit`; one round shorter than canonical 3-round shape because
+R1 fixes were mechanical/contractual rather than architectural and no
+second-order issue surfaced from the R1 reland).
 
 ## v0.1.15.1 - 2026-05-03
 
