@@ -28,6 +28,10 @@
     "policy": {
       "forced_action": null,
       "fired_rule_ids": []
+    },
+    "classified": {
+      "sleep_debt_band": "elevated",
+      "coverage_band": "full"
     }
   },
   "tag": "w-ah-coverage-expansion"

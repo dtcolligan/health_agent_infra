@@ -20,6 +20,14 @@
     "policy": {
       "forced_action": null,
       "fired_rule_ids": []
+    },
+    "classified": {
+      "calorie_balance_band": "met",
+      "protein_sufficiency_band": "met",
+      "hydration_band": "low",
+      "coverage_band": "full",
+      "nutrition_status": "under_hydrated",
+      "micronutrient_coverage": "unavailable_at_source"
     }
   },
   "tag": "w-ah-coverage-expansion"

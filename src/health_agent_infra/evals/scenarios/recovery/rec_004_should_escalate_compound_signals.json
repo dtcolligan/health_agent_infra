@@ -7,6 +7,10 @@
         "resting_hr_spike_escalation"
       ],
       "forced_action": "escalate_for_user_review"
+    },
+    "classified": {
+      "sleep_debt_band": "elevated",
+      "coverage_band": "full"
     }
   },
   "input": {

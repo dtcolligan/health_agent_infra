@@ -4,6 +4,9 @@
   "expected": {
     "policy": {
       "action_class": "defer_decision_insufficient_signal"
+    },
+    "classified": {
+      "coverage_band": "sparse"
     }
   },
   "input": {

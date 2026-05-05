@@ -24,6 +24,10 @@
     "policy": {
       "forced_action": null,
       "fired_rule_ids": []
+    },
+    "classified": {
+      "garmin_stress_band": "very_high",
+      "coverage_band": "full"
     }
   },
   "tag": "w-ah-coverage-expansion"

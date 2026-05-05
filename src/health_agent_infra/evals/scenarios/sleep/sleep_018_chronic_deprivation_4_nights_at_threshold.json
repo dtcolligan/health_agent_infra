@@ -26,6 +26,11 @@
       "fired_rule_ids": [
         "chronic_deprivation_escalation"
       ]
+    },
+    "classified": {
+      "sleep_debt_band": "elevated",
+      "coverage_band": "full",
+      "sleep_status": "impaired"
     }
   },
   "tag": "w-ah-coverage-expansion"

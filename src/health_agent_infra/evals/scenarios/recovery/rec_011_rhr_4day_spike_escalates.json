@@ -30,6 +30,10 @@
       "fired_rule_ids": [
         "resting_hr_spike_escalation"
       ]
+    },
+    "classified": {
+      "sleep_debt_band": "mild",
+      "coverage_band": "full"
     }
   },
   "tag": "w-ah-coverage-expansion"

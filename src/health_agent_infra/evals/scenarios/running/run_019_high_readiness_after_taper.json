@@ -18,6 +18,9 @@
     "policy": {
       "forced_action": null,
       "fired_rule_ids": []
+    },
+    "classified": {
+      "coverage_band": "full"
     }
   },
   "tag": "w-ah-coverage-expansion"

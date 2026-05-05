@@ -26,6 +26,10 @@
       "fired_rule_ids": [
         "sustained_very_high_stress_escalation"
       ]
+    },
+    "classified": {
+      "garmin_stress_band": "high",
+      "coverage_band": "full"
     }
   },
   "tag": "w-ah-coverage-expansion"

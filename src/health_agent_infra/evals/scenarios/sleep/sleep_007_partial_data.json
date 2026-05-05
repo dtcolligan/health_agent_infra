@@ -4,6 +4,11 @@
   "expected": {
     "policy": {
       "forced_action": "defer_decision_insufficient_signal"
+    },
+    "classified": {
+      "sleep_debt_band": "unknown",
+      "coverage_band": "insufficient",
+      "sleep_status": "unknown"
     }
   },
   "input": {

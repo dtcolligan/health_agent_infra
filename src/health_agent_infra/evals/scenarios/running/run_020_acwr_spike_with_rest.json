@@ -20,6 +20,9 @@
       "fired_rule_ids": [
         "acwr_spike_escalation"
       ]
+    },
+    "classified": {
+      "coverage_band": "full"
     }
   },
   "tag": "w-ah-coverage-expansion"

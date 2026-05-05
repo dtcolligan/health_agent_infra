@@ -25,6 +25,10 @@
     "policy": {
       "forced_action": null,
       "fired_rule_ids": []
+    },
+    "classified": {
+      "coverage_band": "full",
+      "strength_status": "maintaining"
     }
   },
   "tag": "w-ah-coverage-expansion"

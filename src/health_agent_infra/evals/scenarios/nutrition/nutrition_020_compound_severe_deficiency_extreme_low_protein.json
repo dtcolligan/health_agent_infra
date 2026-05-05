@@ -22,6 +22,14 @@
       "fired_rule_ids": [
         "extreme_deficiency_escalation"
       ]
+    },
+    "classified": {
+      "calorie_balance_band": "high_deficit",
+      "protein_sufficiency_band": "very_low",
+      "hydration_band": "low",
+      "coverage_band": "full",
+      "nutrition_status": "deficit_caloric",
+      "micronutrient_coverage": "unavailable_at_source"
     }
   },
   "tag": "w-ah-edge-case"

@@ -7,6 +7,9 @@
         "acwr_spike_escalation"
       ],
       "forced_action": "escalate_for_user_review"
+    },
+    "classified": {
+      "coverage_band": "full"
     }
   },
   "input": {

@@ -4,6 +4,9 @@
   "expected": {
     "policy": {
       "action_class": "proceed_or_easy"
+    },
+    "classified": {
+      "coverage_band": "full"
     }
   },
   "input": {

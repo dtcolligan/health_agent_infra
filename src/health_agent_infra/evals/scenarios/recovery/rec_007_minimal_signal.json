@@ -4,6 +4,10 @@
   "expected": {
     "policy": {
       "capped_confidence": "moderate"
+    },
+    "classified": {
+      "sleep_debt_band": "none",
+      "coverage_band": "sparse"
     }
   },
   "input": {

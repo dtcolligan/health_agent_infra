@@ -31,6 +31,10 @@
         "unmatched_exercise_confidence_cap"
       ],
       "capped_confidence": "moderate"
+    },
+    "classified": {
+      "coverage_band": "full",
+      "strength_status": "overreaching"
     }
   },
   "tag": "w-ah-coverage-expansion"

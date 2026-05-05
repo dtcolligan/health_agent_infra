@@ -24,7 +24,13 @@
   "expected": {
     "policy": {
       "forced_action": "defer_decision_insufficient_signal",
-      "fired_rule_ids": ["require_min_coverage"]
+      "fired_rule_ids": [
+        "require_min_coverage"
+      ]
+    },
+    "classified": {
+      "coverage_band": "insufficient",
+      "strength_status": "unknown"
     }
   },
   "tag": "w-ah-coverage-expansion"
