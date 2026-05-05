@@ -1,0 +1,24 @@
+{
+  "scenario_id": "run_013_high_volume_within_threshold",
+  "kind": "domain",
+  "domain": "running",
+  "description": "High weekly mileage (90km) but ACWR controlled (1.2) \u2014 allow.",
+  "input": {
+    "signals": {
+      "acwr_ratio": 1.2,
+      "recent_hard_session_count_7d": 2,
+      "resting_hr_band": "at",
+      "sleep_debt_band": "none",
+      "training_readiness_pct": 70,
+      "weekly_mileage_baseline_m": 75000.0,
+      "weekly_mileage_m": 90000.0
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

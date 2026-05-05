@@ -1,0 +1,43 @@
+{
+  "scenario_id": "syn_012_recovery_only_no_other_domains",
+  "kind": "synthesis",
+  "description": "Snapshot baseline with recovery-only proposal \u2014 no X-rule firings on a single-domain proposal.",
+  "as_of_date": "2026-04-18",
+  "user_id": "u_eval",
+  "snapshot": {
+    "sleep": {
+      "classified_state": {
+        "sleep_debt_band": "none"
+      }
+    },
+    "recovery": {
+      "today": {
+        "acwr_ratio": 1.0
+      }
+    },
+    "stress": {
+      "today_garmin": 25,
+      "today_body_battery": 65
+    }
+  },
+  "proposals": [
+    {
+      "proposal_id": "prop_rec_syn012",
+      "user_id": "u_eval",
+      "for_date": "2026-04-18",
+      "domain": "recovery",
+      "action": "proceed_with_planned_session",
+      "confidence": "high"
+    }
+  ],
+  "expected": {
+    "x_rules_fired": [],
+    "final_actions": {
+      "recovery": "proceed_with_planned_session"
+    },
+    "final_confidences": {
+      "recovery": "high"
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

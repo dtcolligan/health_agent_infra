@@ -1,0 +1,30 @@
+{
+  "scenario_id": "sleep_009_two_short_nights_below_threshold",
+  "kind": "domain",
+  "domain": "sleep",
+  "description": "2 short nights in trailing 7 \u2014 below R-chronic-deprivation threshold.",
+  "input": {
+    "signals": {
+      "sleep_hours": 5.5,
+      "sleep_score_overall": 68,
+      "sleep_awake_min": 30,
+      "sleep_start_variance_minutes": 25,
+      "sleep_history_hours_last_7": [
+        5.5,
+        5.8,
+        7.5,
+        8,
+        7.8,
+        8.2,
+        7.5
+      ]
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

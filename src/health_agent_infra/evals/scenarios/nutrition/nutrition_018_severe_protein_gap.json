@@ -1,0 +1,26 @@
+{
+  "scenario_id": "nutrition_018_severe_protein_gap",
+  "kind": "domain",
+  "domain": "nutrition",
+  "description": "Protein ratio 0.2 (very_low) but calories at target \u2014 no escalate (no calorie deficit).",
+  "input": {
+    "signals": {
+      "today_row": {
+        "calories": 2400,
+        "protein_g": 28,
+        "carbs_g": 320,
+        "fat_g": 85,
+        "hydration_l": 2.5,
+        "meals_count": 3,
+        "derivation_path": "daily_macros"
+      }
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

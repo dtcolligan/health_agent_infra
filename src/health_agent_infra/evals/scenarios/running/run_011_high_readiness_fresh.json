@@ -1,0 +1,24 @@
+{
+  "scenario_id": "run_011_high_readiness_fresh",
+  "kind": "domain",
+  "domain": "running",
+  "description": "Training readiness 95, low ACWR \u2014 proceed.",
+  "input": {
+    "signals": {
+      "acwr_ratio": 0.7,
+      "recent_hard_session_count_7d": 0,
+      "resting_hr_band": "below",
+      "sleep_debt_band": "none",
+      "training_readiness_pct": 95,
+      "weekly_mileage_baseline_m": 50000.0,
+      "weekly_mileage_m": 35000.0
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

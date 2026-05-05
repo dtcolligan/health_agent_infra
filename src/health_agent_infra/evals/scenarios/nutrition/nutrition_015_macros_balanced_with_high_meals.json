@@ -1,0 +1,26 @@
+{
+  "scenario_id": "nutrition_015_macros_balanced_with_high_meals",
+  "kind": "domain",
+  "domain": "nutrition",
+  "description": "Macros at target, 5 meals \u2014 proceed.",
+  "input": {
+    "signals": {
+      "today_row": {
+        "calories": 2400,
+        "protein_g": 140,
+        "carbs_g": 280,
+        "fat_g": 75,
+        "hydration_l": 2.5,
+        "meals_count": 5,
+        "derivation_path": "daily_macros"
+      }
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

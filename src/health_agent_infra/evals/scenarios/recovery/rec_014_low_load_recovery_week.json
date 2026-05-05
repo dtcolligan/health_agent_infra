@@ -1,0 +1,34 @@
+{
+  "scenario_id": "rec_014_low_load_recovery_week",
+  "kind": "domain",
+  "domain": "recovery",
+  "description": "Recovery week: load 0.5x baseline, signals at baseline \u2014 proceed.",
+  "input": {
+    "evidence": {
+      "as_of_date": "2026-04-17",
+      "user_id": "u_eval",
+      "sleep_hours": 8.0,
+      "resting_hr": 51,
+      "hrv_ms": 82,
+      "soreness_self_report": "low"
+    },
+    "raw_summary": {
+      "as_of_date": "2026-04-17",
+      "user_id": "u_eval",
+      "resting_hr_baseline": 52,
+      "resting_hr_ratio_vs_baseline": 0.98,
+      "hrv_ratio_vs_baseline": 1.0,
+      "trailing_7d_training_load": 200,
+      "training_load_baseline": 400,
+      "training_load_ratio_vs_baseline": 0.5,
+      "resting_hr_spike_days": 0
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

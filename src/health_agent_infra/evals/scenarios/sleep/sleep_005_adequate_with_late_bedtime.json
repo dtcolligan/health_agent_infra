@@ -1,0 +1,30 @@
+{
+  "scenario_id": "sleep_005_adequate_with_late_bedtime",
+  "kind": "domain",
+  "domain": "sleep",
+  "description": "8h sleep but variable bedtime (90min variance) \u2014 full coverage, no firings.",
+  "input": {
+    "signals": {
+      "sleep_hours": 8.0,
+      "sleep_score_overall": 78,
+      "sleep_awake_min": 25,
+      "sleep_start_variance_minutes": 90,
+      "sleep_history_hours_last_7": [
+        8,
+        7.5,
+        8.5,
+        8,
+        7.5,
+        8,
+        8.2
+      ]
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

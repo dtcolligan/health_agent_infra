@@ -1,0 +1,30 @@
+{
+  "scenario_id": "stress_006_moderate_stress_no_chronic",
+  "kind": "domain",
+  "domain": "stress",
+  "description": "Moderate stress today (45) but only 1 day above 60 in trailing 7 \u2014 no chronic firing.",
+  "input": {
+    "signals": {
+      "garmin_all_day_stress": 45,
+      "manual_stress_score": 3,
+      "body_battery_end_of_day": 55,
+      "body_battery_prev_day": 60,
+      "stress_history_garmin_last_7": [
+        45,
+        40,
+        42,
+        38,
+        65,
+        40,
+        38
+      ]
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

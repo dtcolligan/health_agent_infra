@@ -1,0 +1,24 @@
+{
+  "scenario_id": "run_015_zero_recent_hard_sessions",
+  "kind": "domain",
+  "domain": "running",
+  "description": "0 recent hard sessions, ACWR 1.0 \u2014 proceed.",
+  "input": {
+    "signals": {
+      "acwr_ratio": 1.0,
+      "recent_hard_session_count_7d": 0,
+      "resting_hr_band": "at",
+      "sleep_debt_band": "none",
+      "training_readiness_pct": 75,
+      "weekly_mileage_baseline_m": 50000.0,
+      "weekly_mileage_m": 50000.0
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

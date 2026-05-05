@@ -1,0 +1,24 @@
+{
+  "scenario_id": "run_009_just_below_spike_threshold",
+  "kind": "domain",
+  "domain": "running",
+  "description": "ACWR 1.39 (just under 1.4 spike threshold) \u2014 allow.",
+  "input": {
+    "signals": {
+      "acwr_ratio": 1.39,
+      "recent_hard_session_count_7d": 2,
+      "resting_hr_band": "at",
+      "sleep_debt_band": "moderate",
+      "training_readiness_pct": 65,
+      "weekly_mileage_baseline_m": 50000.0,
+      "weekly_mileage_m": 69500.0
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

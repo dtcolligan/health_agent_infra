@@ -1,0 +1,26 @@
+{
+  "scenario_id": "nutrition_014_just_below_extreme_threshold",
+  "kind": "domain",
+  "domain": "nutrition",
+  "description": "Calorie deficit 499 kcal (1 below threshold) AND low protein \u2014 does not fire (deficit just below).",
+  "input": {
+    "signals": {
+      "today_row": {
+        "calories": 1901,
+        "protein_g": 60,
+        "carbs_g": 210,
+        "fat_g": 58,
+        "hydration_l": 2.0,
+        "meals_count": 3,
+        "derivation_path": "daily_macros"
+      }
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

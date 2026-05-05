@@ -1,0 +1,30 @@
+{
+  "scenario_id": "sleep_014_long_low_score",
+  "kind": "domain",
+  "domain": "sleep",
+  "description": "9h but very low score (40) \u2014 no chronic-deprivation rule firing on score alone.",
+  "input": {
+    "signals": {
+      "sleep_hours": 9.0,
+      "sleep_score_overall": 40,
+      "sleep_awake_min": 120,
+      "sleep_start_variance_minutes": 40,
+      "sleep_history_hours_last_7": [
+        9,
+        8,
+        8.5,
+        8,
+        7.5,
+        8.5,
+        8
+      ]
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

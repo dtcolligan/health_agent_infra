@@ -1,0 +1,24 @@
+{
+  "scenario_id": "run_008_baseline_low_acwr",
+  "kind": "domain",
+  "domain": "running",
+  "description": "ACWR 0.85 (within allow band) with full signals \u2014 proceed.",
+  "input": {
+    "signals": {
+      "acwr_ratio": 0.85,
+      "recent_hard_session_count_7d": 1,
+      "resting_hr_band": "at",
+      "sleep_debt_band": "none",
+      "training_readiness_pct": 80,
+      "weekly_mileage_baseline_m": 50000.0,
+      "weekly_mileage_m": 42500.0
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

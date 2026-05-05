@@ -1,0 +1,30 @@
+{
+  "scenario_id": "sleep_008_one_short_night_balanced_history",
+  "kind": "domain",
+  "domain": "sleep",
+  "description": "5.5h tonight but 6 prior nights all 8h+ \u2014 1 short night well below 4-night chronic threshold.",
+  "input": {
+    "signals": {
+      "sleep_hours": 5.5,
+      "sleep_score_overall": 65,
+      "sleep_awake_min": 30,
+      "sleep_start_variance_minutes": 25,
+      "sleep_history_hours_last_7": [
+        5.5,
+        8,
+        8.2,
+        7.9,
+        8.5,
+        8,
+        8.1
+      ]
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

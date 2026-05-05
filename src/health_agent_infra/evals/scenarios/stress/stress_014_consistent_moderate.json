@@ -1,0 +1,30 @@
+{
+  "scenario_id": "stress_014_consistent_moderate",
+  "kind": "domain",
+  "domain": "stress",
+  "description": "Steady moderate stress (40-50) all week \u2014 no firings.",
+  "input": {
+    "signals": {
+      "garmin_all_day_stress": 45,
+      "manual_stress_score": 3,
+      "body_battery_end_of_day": 50,
+      "body_battery_prev_day": 55,
+      "stress_history_garmin_last_7": [
+        42,
+        48,
+        45,
+        50,
+        46,
+        44,
+        45
+      ]
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

@@ -1,0 +1,30 @@
+{
+  "scenario_id": "stress_012_run_of_4_high_days_below_threshold",
+  "kind": "domain",
+  "domain": "stress",
+  "description": "4 consecutive days >= 60 \u2014 still below 5-day threshold; no escalation.",
+  "input": {
+    "signals": {
+      "garmin_all_day_stress": 72,
+      "manual_stress_score": 4,
+      "body_battery_end_of_day": 30,
+      "body_battery_prev_day": 35,
+      "stress_history_garmin_last_7": [
+        30,
+        40,
+        30,
+        68,
+        70,
+        72,
+        72
+      ]
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

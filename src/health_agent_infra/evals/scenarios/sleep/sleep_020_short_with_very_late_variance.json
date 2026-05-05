@@ -1,0 +1,30 @@
+{
+  "scenario_id": "sleep_020_short_with_very_late_variance",
+  "kind": "domain",
+  "domain": "sleep",
+  "description": "5h with 120min variance \u2014 coverage check is full, but R-chronic-deprivation needs the trailing window to fire (only 1 short night here).",
+  "input": {
+    "signals": {
+      "sleep_hours": 5.0,
+      "sleep_score_overall": 58,
+      "sleep_awake_min": 45,
+      "sleep_start_variance_minutes": 120,
+      "sleep_history_hours_last_7": [
+        5,
+        7.8,
+        8,
+        7.9,
+        8,
+        8.1,
+        7.7
+      ]
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

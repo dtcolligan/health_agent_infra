@@ -1,0 +1,24 @@
+{
+  "scenario_id": "run_019_high_readiness_after_taper",
+  "kind": "domain",
+  "domain": "running",
+  "description": "Post-taper: high readiness (90), low ACWR \u2014 proceed.",
+  "input": {
+    "signals": {
+      "acwr_ratio": 0.65,
+      "recent_hard_session_count_7d": 0,
+      "resting_hr_band": "below",
+      "sleep_debt_band": "none",
+      "training_readiness_pct": 90,
+      "weekly_mileage_baseline_m": 60000.0,
+      "weekly_mileage_m": 35000.0
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

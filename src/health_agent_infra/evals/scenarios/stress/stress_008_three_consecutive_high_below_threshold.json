@@ -1,0 +1,30 @@
+{
+  "scenario_id": "stress_008_three_consecutive_high_below_threshold",
+  "kind": "domain",
+  "domain": "stress",
+  "description": "3 consecutive days >= 60 \u2014 below 5-day chronic threshold; no escalation.",
+  "input": {
+    "signals": {
+      "garmin_all_day_stress": 70,
+      "manual_stress_score": 4,
+      "body_battery_end_of_day": 35,
+      "body_battery_prev_day": 42,
+      "stress_history_garmin_last_7": [
+        38,
+        40,
+        45,
+        40,
+        68,
+        70,
+        70
+      ]
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

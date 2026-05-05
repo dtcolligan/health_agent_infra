@@ -1,0 +1,30 @@
+{
+  "scenario_id": "stress_013_alternating_high_low_pattern",
+  "kind": "domain",
+  "domain": "stress",
+  "description": "Alternating pattern, no run of 3 consecutive >= 60.",
+  "input": {
+    "signals": {
+      "garmin_all_day_stress": 68,
+      "manual_stress_score": 4,
+      "body_battery_end_of_day": 40,
+      "body_battery_prev_day": 55,
+      "stress_history_garmin_last_7": [
+        68,
+        40,
+        68,
+        42,
+        68,
+        40,
+        68
+      ]
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

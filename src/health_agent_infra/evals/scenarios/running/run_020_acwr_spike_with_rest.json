@@ -1,0 +1,26 @@
+{
+  "scenario_id": "run_020_acwr_spike_with_rest",
+  "kind": "domain",
+  "domain": "running",
+  "description": "ACWR 1.6 spike but 0 hard sessions in last 7d \u2192 escalate (compound check: hard count alone doesn't gate).",
+  "input": {
+    "signals": {
+      "acwr_ratio": 1.6,
+      "recent_hard_session_count_7d": 0,
+      "resting_hr_band": "at",
+      "sleep_debt_band": "none",
+      "training_readiness_pct": 75,
+      "weekly_mileage_baseline_m": 50000.0,
+      "weekly_mileage_m": 80000.0
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": "escalate_for_user_review",
+      "fired_rule_ids": [
+        "acwr_spike_escalation"
+      ]
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

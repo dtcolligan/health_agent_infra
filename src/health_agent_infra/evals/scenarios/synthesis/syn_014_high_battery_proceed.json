@@ -1,0 +1,53 @@
+{
+  "scenario_id": "syn_014_high_battery_proceed",
+  "kind": "synthesis",
+  "description": "High body-battery + low stress \u2014 no soften; proceed.",
+  "as_of_date": "2026-04-18",
+  "user_id": "u_eval",
+  "snapshot": {
+    "sleep": {
+      "classified_state": {
+        "sleep_debt_band": "none"
+      }
+    },
+    "recovery": {
+      "today": {
+        "acwr_ratio": 0.95
+      }
+    },
+    "stress": {
+      "today_garmin": 18,
+      "today_body_battery": 88
+    }
+  },
+  "proposals": [
+    {
+      "proposal_id": "prop_rec_syn014",
+      "user_id": "u_eval",
+      "for_date": "2026-04-18",
+      "domain": "recovery",
+      "action": "proceed_with_planned_session",
+      "confidence": "high"
+    },
+    {
+      "proposal_id": "prop_run_syn014",
+      "user_id": "u_eval",
+      "for_date": "2026-04-18",
+      "domain": "running",
+      "action": "proceed_with_planned_run",
+      "confidence": "high"
+    }
+  ],
+  "expected": {
+    "x_rules_fired": [],
+    "final_actions": {
+      "recovery": "proceed_with_planned_session",
+      "running": "proceed_with_planned_run"
+    },
+    "final_confidences": {
+      "recovery": "high",
+      "running": "high"
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

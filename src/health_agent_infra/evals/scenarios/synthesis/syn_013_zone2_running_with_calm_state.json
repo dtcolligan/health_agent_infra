@@ -1,0 +1,53 @@
+{
+  "scenario_id": "syn_013_zone2_running_with_calm_state",
+  "kind": "synthesis",
+  "description": "Calm state, easy-aerobic running proposal \u2014 X-rules don't fire on already-easy actions.",
+  "as_of_date": "2026-04-18",
+  "user_id": "u_eval",
+  "snapshot": {
+    "sleep": {
+      "classified_state": {
+        "sleep_debt_band": "none"
+      }
+    },
+    "recovery": {
+      "today": {
+        "acwr_ratio": 1.0
+      }
+    },
+    "stress": {
+      "today_garmin": 25,
+      "today_body_battery": 65
+    }
+  },
+  "proposals": [
+    {
+      "proposal_id": "prop_rec_syn013",
+      "user_id": "u_eval",
+      "for_date": "2026-04-18",
+      "domain": "recovery",
+      "action": "proceed_with_planned_session",
+      "confidence": "high"
+    },
+    {
+      "proposal_id": "prop_run_syn013",
+      "user_id": "u_eval",
+      "for_date": "2026-04-18",
+      "domain": "running",
+      "action": "downgrade_to_easy_aerobic",
+      "confidence": "high"
+    }
+  ],
+  "expected": {
+    "x_rules_fired": [],
+    "final_actions": {
+      "recovery": "proceed_with_planned_session",
+      "running": "downgrade_to_easy_aerobic"
+    },
+    "final_confidences": {
+      "recovery": "high",
+      "running": "high"
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

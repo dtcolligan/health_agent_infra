@@ -1,0 +1,30 @@
+{
+  "scenario_id": "sleep_019_recovery_after_deprivation",
+  "kind": "domain",
+  "domain": "sleep",
+  "description": "Just 1 short night in trailing 7 (recovery); proceed.",
+  "input": {
+    "signals": {
+      "sleep_hours": 8.0,
+      "sleep_score_overall": 82,
+      "sleep_awake_min": 20,
+      "sleep_start_variance_minutes": 18,
+      "sleep_history_hours_last_7": [
+        8,
+        7.8,
+        5.8,
+        7.9,
+        8.1,
+        7.9,
+        8.2
+      ]
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

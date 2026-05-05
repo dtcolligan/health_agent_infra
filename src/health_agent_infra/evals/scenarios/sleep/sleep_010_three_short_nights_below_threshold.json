@@ -1,0 +1,30 @@
+{
+  "scenario_id": "sleep_010_three_short_nights_below_threshold",
+  "kind": "domain",
+  "domain": "sleep",
+  "description": "3 short nights \u2014 still below 4-night threshold; no escalate.",
+  "input": {
+    "signals": {
+      "sleep_hours": 5.8,
+      "sleep_score_overall": 64,
+      "sleep_awake_min": 35,
+      "sleep_start_variance_minutes": 30,
+      "sleep_history_hours_last_7": [
+        5.8,
+        5.5,
+        5.7,
+        7.5,
+        7.2,
+        8,
+        7
+      ]
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

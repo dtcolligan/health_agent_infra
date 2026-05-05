@@ -1,0 +1,34 @@
+{
+  "scenario_id": "rec_018_extreme_low_hrv",
+  "kind": "domain",
+  "domain": "recovery",
+  "description": "HRV ratio 0.5 (severely suppressed) without RHR spike days \u2014 no R-RHR escalation; HRV alone is informational.",
+  "input": {
+    "evidence": {
+      "as_of_date": "2026-04-17",
+      "user_id": "u_eval",
+      "sleep_hours": 7.5,
+      "resting_hr": 53,
+      "hrv_ms": 40,
+      "soreness_self_report": "moderate"
+    },
+    "raw_summary": {
+      "as_of_date": "2026-04-17",
+      "user_id": "u_eval",
+      "resting_hr_baseline": 52,
+      "resting_hr_ratio_vs_baseline": 1.02,
+      "hrv_ratio_vs_baseline": 0.5,
+      "trailing_7d_training_load": 400,
+      "training_load_baseline": 400,
+      "training_load_ratio_vs_baseline": 1.0,
+      "resting_hr_spike_days": 0
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

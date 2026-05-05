@@ -1,0 +1,30 @@
+{
+  "scenario_id": "sleep_016_full_coverage_consistent_schedule",
+  "kind": "domain",
+  "domain": "sleep",
+  "description": "Solid week of 7.5h+ sleep with tight schedule consistency.",
+  "input": {
+    "signals": {
+      "sleep_hours": 7.8,
+      "sleep_score_overall": 82,
+      "sleep_awake_min": 20,
+      "sleep_start_variance_minutes": 12,
+      "sleep_history_hours_last_7": [
+        7.8,
+        7.9,
+        8,
+        7.7,
+        7.8,
+        8.1,
+        7.9
+      ]
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

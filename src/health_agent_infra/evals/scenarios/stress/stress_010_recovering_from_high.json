@@ -1,0 +1,30 @@
+{
+  "scenario_id": "stress_010_recovering_from_high",
+  "kind": "domain",
+  "domain": "stress",
+  "description": "High history but today calm (recovery) \u2014 chronic-stress run broken.",
+  "input": {
+    "signals": {
+      "garmin_all_day_stress": 22,
+      "manual_stress_score": 2,
+      "body_battery_end_of_day": 70,
+      "body_battery_prev_day": 40,
+      "stress_history_garmin_last_7": [
+        68,
+        70,
+        72,
+        75,
+        40,
+        28,
+        22
+      ]
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

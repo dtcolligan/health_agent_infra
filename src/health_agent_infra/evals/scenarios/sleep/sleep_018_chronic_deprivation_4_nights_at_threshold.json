@@ -1,0 +1,32 @@
+{
+  "scenario_id": "sleep_018_chronic_deprivation_4_nights_at_threshold",
+  "kind": "domain",
+  "domain": "sleep",
+  "description": "Exactly 4 nights < 6h \u2014 at the chronic-deprivation threshold; escalate.",
+  "input": {
+    "signals": {
+      "sleep_hours": 5.5,
+      "sleep_score_overall": 55,
+      "sleep_awake_min": 40,
+      "sleep_start_variance_minutes": 35,
+      "sleep_history_hours_last_7": [
+        5.5,
+        5.8,
+        5.6,
+        5.9,
+        7,
+        7.5,
+        7.2
+      ]
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": "sleep_debt_repayment_day",
+      "fired_rule_ids": [
+        "chronic_deprivation_escalation"
+      ]
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

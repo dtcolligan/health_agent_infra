@@ -1,0 +1,30 @@
+{
+  "scenario_id": "sleep_013_high_quality_short_window",
+  "kind": "domain",
+  "domain": "sleep",
+  "description": "6h sleep but excellent quality (score 88, low awake) \u2014 no chronic deprivation; proceed.",
+  "input": {
+    "signals": {
+      "sleep_hours": 6.0,
+      "sleep_score_overall": 88,
+      "sleep_awake_min": 8,
+      "sleep_start_variance_minutes": 15,
+      "sleep_history_hours_last_7": [
+        6,
+        7,
+        8,
+        7.5,
+        7.8,
+        8,
+        7.2
+      ]
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

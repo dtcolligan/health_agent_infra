@@ -1,0 +1,30 @@
+{
+  "scenario_id": "stress_018_baseline_with_one_high_yesterday",
+  "kind": "domain",
+  "domain": "stress",
+  "description": "Single high day yesterday but today calm \u2014 no chronic firing.",
+  "input": {
+    "signals": {
+      "garmin_all_day_stress": 30,
+      "manual_stress_score": 2,
+      "body_battery_end_of_day": 68,
+      "body_battery_prev_day": 45,
+      "stress_history_garmin_last_7": [
+        28,
+        30,
+        32,
+        30,
+        68,
+        32,
+        30
+      ]
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

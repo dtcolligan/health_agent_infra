@@ -1,0 +1,34 @@
+{
+  "scenario_id": "rec_015_high_load_high_hrv",
+  "kind": "domain",
+  "domain": "recovery",
+  "description": "Load 1.5x but HRV elevated above baseline (good adaptation) \u2014 proceed.",
+  "input": {
+    "evidence": {
+      "as_of_date": "2026-04-17",
+      "user_id": "u_eval",
+      "sleep_hours": 7.5,
+      "resting_hr": 52,
+      "hrv_ms": 92,
+      "soreness_self_report": "moderate"
+    },
+    "raw_summary": {
+      "as_of_date": "2026-04-17",
+      "user_id": "u_eval",
+      "resting_hr_baseline": 52,
+      "resting_hr_ratio_vs_baseline": 1.0,
+      "hrv_ratio_vs_baseline": 1.15,
+      "trailing_7d_training_load": 600,
+      "training_load_baseline": 400,
+      "training_load_ratio_vs_baseline": 1.5,
+      "resting_hr_spike_days": 0
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

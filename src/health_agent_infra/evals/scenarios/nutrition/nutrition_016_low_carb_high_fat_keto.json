@@ -1,0 +1,26 @@
+{
+  "scenario_id": "nutrition_016_low_carb_high_fat_keto",
+  "kind": "domain",
+  "domain": "nutrition",
+  "description": "Calories at target, very low carbs (50g) compensated by high fat \u2014 protein at target; proceed.",
+  "input": {
+    "signals": {
+      "today_row": {
+        "calories": 2400,
+        "protein_g": 140,
+        "carbs_g": 50,
+        "fat_g": 180,
+        "hydration_l": 2.5,
+        "meals_count": 3,
+        "derivation_path": "daily_macros"
+      }
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

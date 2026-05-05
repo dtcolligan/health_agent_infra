@@ -1,0 +1,24 @@
+{
+  "scenario_id": "run_018_below_baseline_no_firings",
+  "kind": "domain",
+  "domain": "running",
+  "description": "Below baseline mileage, ACWR 0.6 \u2014 proceed.",
+  "input": {
+    "signals": {
+      "acwr_ratio": 0.6,
+      "recent_hard_session_count_7d": 0,
+      "resting_hr_band": "at",
+      "sleep_debt_band": "none",
+      "training_readiness_pct": 82,
+      "weekly_mileage_baseline_m": 50000.0,
+      "weekly_mileage_m": 30000.0
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

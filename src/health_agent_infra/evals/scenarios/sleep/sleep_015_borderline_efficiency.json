@@ -1,0 +1,30 @@
+{
+  "scenario_id": "sleep_015_borderline_efficiency",
+  "kind": "domain",
+  "domain": "sleep",
+  "description": "7.5h sleep with elevated awake time (45min); coverage full, no firings.",
+  "input": {
+    "signals": {
+      "sleep_hours": 7.5,
+      "sleep_score_overall": 72,
+      "sleep_awake_min": 45,
+      "sleep_start_variance_minutes": 30,
+      "sleep_history_hours_last_7": [
+        7.5,
+        7.8,
+        8,
+        7.2,
+        7.5,
+        8,
+        7.6
+      ]
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

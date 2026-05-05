@@ -1,0 +1,30 @@
+{
+  "scenario_id": "sleep_017_alternating_pattern",
+  "kind": "domain",
+  "domain": "sleep",
+  "description": "Alternating short/long nights but 6 nights >= 6h \u2014 below threshold.",
+  "input": {
+    "signals": {
+      "sleep_hours": 8.5,
+      "sleep_score_overall": 80,
+      "sleep_awake_min": 18,
+      "sleep_start_variance_minutes": 20,
+      "sleep_history_hours_last_7": [
+        8.5,
+        5.8,
+        8,
+        5.7,
+        8.5,
+        7.9,
+        8
+      ]
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

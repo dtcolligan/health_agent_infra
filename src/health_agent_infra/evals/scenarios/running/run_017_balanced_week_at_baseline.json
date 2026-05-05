@@ -1,0 +1,24 @@
+{
+  "scenario_id": "run_017_balanced_week_at_baseline",
+  "kind": "domain",
+  "domain": "running",
+  "description": "Weekly at baseline mileage (1.0 ratio), 2 hard sessions \u2014 proceed.",
+  "input": {
+    "signals": {
+      "acwr_ratio": 1.0,
+      "recent_hard_session_count_7d": 2,
+      "resting_hr_band": "at",
+      "sleep_debt_band": "none",
+      "training_readiness_pct": 78,
+      "weekly_mileage_baseline_m": 60000.0,
+      "weekly_mileage_m": 60000.0
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

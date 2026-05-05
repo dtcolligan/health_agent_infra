@@ -1,0 +1,32 @@
+{
+  "scenario_id": "stress_016_at_threshold_partial_run",
+  "kind": "domain",
+  "domain": "stress",
+  "description": "All 7 days at exactly 60 \u2014 at threshold, full run; chronic escalation.",
+  "input": {
+    "signals": {
+      "garmin_all_day_stress": 60,
+      "manual_stress_score": 4,
+      "body_battery_end_of_day": 40,
+      "body_battery_prev_day": 42,
+      "stress_history_garmin_last_7": [
+        60,
+        60,
+        60,
+        60,
+        60,
+        60,
+        60
+      ]
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": "escalate_for_user_review",
+      "fired_rule_ids": [
+        "sustained_very_high_stress_escalation"
+      ]
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

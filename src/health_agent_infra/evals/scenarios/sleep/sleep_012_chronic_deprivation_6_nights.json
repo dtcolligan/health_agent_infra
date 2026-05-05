@@ -1,0 +1,32 @@
+{
+  "scenario_id": "sleep_012_chronic_deprivation_6_nights",
+  "kind": "domain",
+  "domain": "sleep",
+  "description": "6 nights < 6h \u2014 escalate hard.",
+  "input": {
+    "signals": {
+      "sleep_hours": 4.5,
+      "sleep_score_overall": 42,
+      "sleep_awake_min": 70,
+      "sleep_start_variance_minutes": 85,
+      "sleep_history_hours_last_7": [
+        4.5,
+        5,
+        5.5,
+        4.8,
+        5.2,
+        5.5,
+        7
+      ]
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": "sleep_debt_repayment_day",
+      "fired_rule_ids": [
+        "chronic_deprivation_escalation"
+      ]
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

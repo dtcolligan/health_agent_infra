@@ -1,0 +1,63 @@
+{
+  "scenario_id": "syn_011_easy_proposals_pass_through",
+  "kind": "synthesis",
+  "description": "Easy/maintain proposals on rested baseline \u2014 no X-rule fires; actions pass through.",
+  "as_of_date": "2026-04-18",
+  "user_id": "u_eval",
+  "snapshot": {
+    "sleep": {
+      "classified_state": {
+        "sleep_debt_band": "none"
+      }
+    },
+    "recovery": {
+      "today": {
+        "acwr_ratio": 1.0
+      }
+    },
+    "stress": {
+      "today_garmin": 25,
+      "today_body_battery": 65
+    }
+  },
+  "proposals": [
+    {
+      "proposal_id": "prop_rec_syn011",
+      "user_id": "u_eval",
+      "for_date": "2026-04-18",
+      "domain": "recovery",
+      "action": "proceed_with_planned_session",
+      "confidence": "high"
+    },
+    {
+      "proposal_id": "prop_run_syn011",
+      "user_id": "u_eval",
+      "for_date": "2026-04-18",
+      "domain": "running",
+      "action": "downgrade_to_easy_aerobic",
+      "confidence": "high"
+    },
+    {
+      "proposal_id": "prop_str_syn011",
+      "user_id": "u_eval",
+      "for_date": "2026-04-18",
+      "domain": "strength",
+      "action": "proceed_with_planned_session",
+      "confidence": "high"
+    }
+  ],
+  "expected": {
+    "x_rules_fired": [],
+    "final_actions": {
+      "recovery": "proceed_with_planned_session",
+      "running": "downgrade_to_easy_aerobic",
+      "strength": "proceed_with_planned_session"
+    },
+    "final_confidences": {
+      "recovery": "high",
+      "running": "high",
+      "strength": "high"
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

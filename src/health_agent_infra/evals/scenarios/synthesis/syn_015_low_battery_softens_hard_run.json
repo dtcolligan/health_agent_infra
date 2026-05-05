@@ -1,0 +1,55 @@
+{
+  "scenario_id": "syn_015_low_battery_softens_hard_run",
+  "kind": "synthesis",
+  "description": "Low body-battery (<25) fires X6a soften on hard running proposals.",
+  "as_of_date": "2026-04-18",
+  "user_id": "u_eval",
+  "snapshot": {
+    "sleep": {
+      "classified_state": {
+        "sleep_debt_band": "none"
+      }
+    },
+    "recovery": {
+      "today": {
+        "acwr_ratio": 1.0
+      }
+    },
+    "stress": {
+      "today_garmin": 35,
+      "today_body_battery": 15
+    }
+  },
+  "proposals": [
+    {
+      "proposal_id": "prop_rec_syn015",
+      "user_id": "u_eval",
+      "for_date": "2026-04-18",
+      "domain": "recovery",
+      "action": "proceed_with_planned_session",
+      "confidence": "high"
+    },
+    {
+      "proposal_id": "prop_run_syn015",
+      "user_id": "u_eval",
+      "for_date": "2026-04-18",
+      "domain": "running",
+      "action": "proceed_with_planned_run",
+      "confidence": "high"
+    }
+  ],
+  "expected": {
+    "x_rules_fired": [
+      "X6a"
+    ],
+    "final_actions": {
+      "recovery": "downgrade_hard_session_to_zone_2",
+      "running": "downgrade_to_easy_aerobic"
+    },
+    "final_confidences": {
+      "recovery": "high",
+      "running": "high"
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

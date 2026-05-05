@@ -1,0 +1,30 @@
+{
+  "scenario_id": "stress_005_low_stress_with_high_battery",
+  "kind": "domain",
+  "domain": "stress",
+  "description": "Calm day, body-battery climbing.",
+  "input": {
+    "signals": {
+      "garmin_all_day_stress": 20,
+      "manual_stress_score": 1,
+      "body_battery_end_of_day": 85,
+      "body_battery_prev_day": 80,
+      "stress_history_garmin_last_7": [
+        20,
+        22,
+        18,
+        25,
+        22,
+        21,
+        20
+      ]
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

@@ -1,0 +1,26 @@
+{
+  "scenario_id": "nutrition_007_moderate_deficit_no_escalate",
+  "kind": "domain",
+  "domain": "nutrition",
+  "description": "Moderate calorie deficit (300 kcal), protein at target \u2014 no escalate (deficit alone insufficient for R-extreme).",
+  "input": {
+    "signals": {
+      "today_row": {
+        "calories": 2100,
+        "protein_g": 140,
+        "carbs_g": 240,
+        "fat_g": 65,
+        "hydration_l": 2.4,
+        "meals_count": 3,
+        "derivation_path": "daily_macros"
+      }
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}

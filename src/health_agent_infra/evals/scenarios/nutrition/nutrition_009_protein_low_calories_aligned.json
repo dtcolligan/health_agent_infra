@@ -1,0 +1,26 @@
+{
+  "scenario_id": "nutrition_009_protein_low_calories_aligned",
+  "kind": "domain",
+  "domain": "nutrition",
+  "description": "Calories at target but protein very low (60g vs 140g, ratio 0.43) \u2014 alone insufficient (deficit not high).",
+  "input": {
+    "signals": {
+      "today_row": {
+        "calories": 2400,
+        "protein_g": 60,
+        "carbs_g": 320,
+        "fat_g": 80,
+        "hydration_l": 2.5,
+        "meals_count": 3,
+        "derivation_path": "daily_macros"
+      }
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": null,
+      "fired_rule_ids": []
+    }
+  },
+  "tag": "w-ah-coverage-expansion"
+}
