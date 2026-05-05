@@ -23,7 +23,7 @@ import pytest
 
 _CLI_PATH = (
     Path(__file__).resolve().parents[2]
-    / "src" / "health_agent_infra" / "cli.py"
+    / "src" / "health_agent_infra" / "cli" / "__init__.py"
 )
 
 
