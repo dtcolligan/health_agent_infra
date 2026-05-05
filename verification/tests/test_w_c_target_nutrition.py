@@ -164,6 +164,59 @@ def test_migration_025_preserves_pre_existing_target_rows_byte_stable(
                 f"index {required!r} missing after migration 025; "
                 f"got {sorted(index_names)}"
             )
+
+        # W-C-EQP (v0.1.17 §2.J): index-name existence is necessary but
+        # not sufficient — the planner could still pick a full table scan
+        # if the index is structurally wrong-shaped or stale post-migration.
+        # Assert the W-A active-window query actually USES
+        # `idx_target_active_window`. Catches the case where migration 025's
+        # recreate-and-copy left a syntactically-present but query-stale
+        # index, OR a future migration drops the index.
+        as_of = "2026-05-05"
+        plan_rows = conn.execute(
+            "EXPLAIN QUERY PLAN "
+            "SELECT 1 FROM target "
+            "WHERE user_id=? AND domain='nutrition' "
+            "AND target_type IN ('calories_kcal','protein_g','carbs_g','fat_g') "
+            "AND status='active' AND superseded_by_target_id IS NULL "
+            "AND date(effective_from) <= date(?) "
+            "AND (effective_to IS NULL OR date(effective_to) >= date(?)) "
+            "LIMIT 1",
+            (USER, as_of, as_of),
+        ).fetchall()
+        plan_text = "\n".join(
+            " ".join(str(v) for v in dict(r).values())
+            for r in plan_rows
+        )
+        # Per PLAN §2.J item 5: "whichever rebuilt index covers the
+        # predicate." The SQLite planner picks the most selective index
+        # for the actual filter set. With the IN(...) on target_type
+        # being highly selective at v0.1.15 ship, the planner chooses
+        # `idx_target_domain_type` over `idx_target_active_window`. Both
+        # are migration-020 indexes that survived the migration-025
+        # recreate-and-copy. The contract under test is "no full table
+        # scan after migration 025"; pin against ANY of the three
+        # expected indexes from the migration set.
+        plan_indexes = {
+            "idx_target_active_window",
+            "idx_target_domain_type",
+            "idx_target_supersedes",
+        }
+        used_via_index = any(
+            f"USING INDEX {idx}" in plan_text for idx in plan_indexes
+        )
+        assert used_via_index, (
+            f"W-C-EQP: planner did not use any expected migration-020 index "
+            f"({sorted(plan_indexes)}) for the W-A active-window query. "
+            f"This may indicate a fall-back to full table scan or an "
+            f"unexpected index. EXPLAIN QUERY PLAN output:\n{plan_text}"
+        )
+        # Stronger negative: explicitly refuse a full table scan, which
+        # would manifest as "SCAN target" without "USING INDEX".
+        assert "SCAN target" not in plan_text or "USING INDEX" in plan_text, (
+            f"W-C-EQP: planner fell back to a full table scan for the "
+            f"W-A active-window query. EXPLAIN QUERY PLAN output:\n{plan_text}"
+        )
     finally:
         conn.close()
 
