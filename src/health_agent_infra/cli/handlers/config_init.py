@@ -948,6 +948,7 @@ def _onboarding_default_today_renderer(
                 ),
             }
         try:
+            from health_agent_infra.cli.handlers.inspect import _daily_streak_from_events
             streak_days = _daily_streak_from_events(conn)
         except Exception:  # noqa: BLE001
             streak_days = None

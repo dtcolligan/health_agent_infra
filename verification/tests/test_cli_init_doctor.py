@@ -554,8 +554,19 @@ def test_init_with_first_pull_makes_single_adapter_call(
                 "training_load": [], "raw_daily_row": None,
             }
 
+    # W-29.2.9 / .11: `_build_live_adapter` is referenced from
+    # cli.handlers.recommend._daily_pull_and_project, which has its own
+    # import-time binding. Patch all three module bindings.
+    from health_agent_infra.cli.handlers import pull_clean as _pull_clean_mod
+    from health_agent_infra.cli.handlers import recommend as _recommend_mod
     monkeypatch.setattr(
         cli_mod, "_build_live_adapter", lambda args: _CountingAdapter(),
+    )
+    monkeypatch.setattr(
+        _pull_clean_mod, "_build_live_adapter", lambda args: _CountingAdapter(),
+    )
+    monkeypatch.setattr(
+        _recommend_mod, "_build_live_adapter", lambda args: _CountingAdapter(),
     )
 
     rc = cli_main(_init_argv(tmp_path, "--with-first-pull"))
@@ -577,6 +588,16 @@ def test_init_with_first_pull_respects_history_days_override(
 ):
     monkeypatch.setattr(
         cli_mod, "_build_live_adapter", lambda args: _NoRawRowAdapter(),
+    )
+    # W-29.2.9 / .11: also patch source modules so import-time bindings
+    # in cli.handlers.{pull_clean,recommend} pick up the substitution.
+    from health_agent_infra.cli.handlers import pull_clean as _pull_clean_mod
+    from health_agent_infra.cli.handlers import recommend as _recommend_mod
+    monkeypatch.setattr(
+        _pull_clean_mod, "_build_live_adapter", lambda args: _NoRawRowAdapter(),
+    )
+    monkeypatch.setattr(
+        _recommend_mod, "_build_live_adapter", lambda args: _NoRawRowAdapter(),
     )
 
     rc = cli_main(_init_argv(
@@ -600,6 +621,16 @@ def test_init_with_first_pull_writes_one_sync_row(
 
     monkeypatch.setattr(
         cli_mod, "_build_live_adapter", lambda args: _NoRawRowAdapter(),
+    )
+    # W-29.2.9 / .11: also patch source modules so import-time bindings
+    # in cli.handlers.{pull_clean,recommend} pick up the substitution.
+    from health_agent_infra.cli.handlers import pull_clean as _pull_clean_mod
+    from health_agent_infra.cli.handlers import recommend as _recommend_mod
+    monkeypatch.setattr(
+        _pull_clean_mod, "_build_live_adapter", lambda args: _NoRawRowAdapter(),
+    )
+    monkeypatch.setattr(
+        _recommend_mod, "_build_live_adapter", lambda args: _NoRawRowAdapter(),
     )
 
     rc = cli_main(_init_argv(tmp_path, "--with-first-pull"))
@@ -636,6 +667,16 @@ def test_init_with_first_pull_records_failure_with_hint(
 
     monkeypatch.setattr(
         cli_mod, "_build_live_adapter", lambda args: _ExplodingAdapter(),
+    )
+    # W-29.2.9 / .11: also patch source modules so import-time bindings
+    # in cli.handlers.{pull_clean,recommend} pick up the substitution.
+    from health_agent_infra.cli.handlers import pull_clean as _pull_clean_mod
+    from health_agent_infra.cli.handlers import recommend as _recommend_mod
+    monkeypatch.setattr(
+        _pull_clean_mod, "_build_live_adapter", lambda args: _ExplodingAdapter(),
+    )
+    monkeypatch.setattr(
+        _recommend_mod, "_build_live_adapter", lambda args: _ExplodingAdapter(),
     )
 
     rc = cli_main(_init_argv(tmp_path, "--with-first-pull"))
@@ -674,6 +715,16 @@ def test_init_with_auth_and_first_pull_end_to_end(
     monkeypatch.setattr(getpass_mod, "getpass", lambda _="": "s3cret")
     monkeypatch.setattr(
         cli_mod, "_build_live_adapter", lambda args: _NoRawRowAdapter(),
+    )
+    # W-29.2.9 / .11: also patch source modules so import-time bindings
+    # in cli.handlers.{pull_clean,recommend} pick up the substitution.
+    from health_agent_infra.cli.handlers import pull_clean as _pull_clean_mod
+    from health_agent_infra.cli.handlers import recommend as _recommend_mod
+    monkeypatch.setattr(
+        _pull_clean_mod, "_build_live_adapter", lambda args: _NoRawRowAdapter(),
+    )
+    monkeypatch.setattr(
+        _recommend_mod, "_build_live_adapter", lambda args: _NoRawRowAdapter(),
     )
 
     rc = cli_main(_init_argv(

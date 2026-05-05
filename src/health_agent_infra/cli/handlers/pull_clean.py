@@ -31,7 +31,7 @@ import uuid
 from dataclasses import asdict, is_dataclass
 from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 from health_agent_infra.core import exit_codes
 from health_agent_infra.core.clean import build_raw_summary, clean_inputs
