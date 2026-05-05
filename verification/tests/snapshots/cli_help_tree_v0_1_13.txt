@@ -51,6 +51,7 @@ hai state read: --db-path,--domain,--help,--since,--until,--user-id
 hai state reproject: --allow-empty-reproject,--base-dir,--cascade-synthesis,--db-path,--help
 hai state snapshot: --as-of,--db-path,--evidence-json,--help,--lookback-days,--user-id
 hai stats: --baselines,--data-quality,--db-path,--domain,--funnel,--help,--json,--limit,--outcomes,--since,--user-id
+hai sync purge: --db-path,--dry-run,--for-date,--help,--source,--started-after,--user-id
 hai synthesize: --agent-version,--as-of,--bundle-only,--db-path,--domains,--drafts-json,--help,--supersede,--user-id
 hai target archive: --confirm,--db-path,--help,--target-id,--user-id
 hai target commit: --confirm,--db-path,--help,--target-id,--user-id

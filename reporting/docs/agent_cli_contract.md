@@ -63,7 +63,7 @@ JSON; this markdown is an at-a-glance overview for humans.
 
 ## Commands
 
-*60 commands; hai 0.1.15.1; schema agent_cli_contract.v1*
+*61 commands; hai 0.1.15.1; schema agent_cli_contract.v1*
 
 | Command | Mutation | Idempotent | JSON | Agent-safe | Exit codes | Description |
 |---|---|---|---|---|---|---|
@@ -120,6 +120,7 @@ JSON; this markdown is an at-a-glance overview for humans.
 | ``hai state reproject`` | ``writes-state`` | ``yes`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Rebuild the accepted_*_state_daily tables from the raw evidence JSONL. Deterministic modulo projection timestamps — content/keys/links replay identically across runs, but projected_at / corrected_at columns reflect the wall-clock of the rebuild. Safe to re-run. |
 | ``hai state snapshot`` | ``read-only`` | ``n/a`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Emit the cross-domain state snapshot the synthesis / skills layer consumes for a (for_date, user_id) pair. |
 | ``hai stats`` | ``read-only`` | ``n/a`` | ``opt-in`` | yes | ``OK``, ``USER_INPUT`` | Summarise sync_run_log (last pull per source) + runtime_event_log (recent commands, daily streak) from the user's local DB. With --outcomes, emits the code-owned review-outcome summary (W48) instead. No telemetry leaves the device. |
+| ``hai sync purge`` | ``writes-state`` | ``no`` | ``default`` | no | ``OK``, ``USER_INPUT`` | F-PV14-02 (v0.1.17): surgically delete contaminated rows from sync_run_log. Refuses if selectors resolve to >5 rows. Writes a runtime_event_log audit row tagged `sync purge` on commit. agent_safe=False — operator-side surgical tool. |
 | ``hai synthesize`` | ``writes-state`` | ``yes-with-supersede`` | ``default`` | yes | ``OK``, ``USER_INPUT``, ``INTERNAL`` | Run synthesis end-to-end inside one atomic SQLite transaction: daily_plan + x_rule_firings + planned_recommendation + recommendation_log. --supersede versions the plan instead of replacing it. |
 | ``hai target archive`` | ``writes-state`` | ``yes-with-supersede`` | ``default`` | no | ``OK``, ``USER_INPUT`` | Archive a W50 target row (status='archived'). Marked NOT agent-safe: archiving an active or proposed row IS user-state deactivation per AGENTS.md W57. Agents that proposed the row must NOT auto-archive it; only an explicit user invocation may run this command. |
 | ``hai target commit`` | ``writes-state`` | ``yes-with-supersede`` | ``default`` | no | ``OK``, ``USER_INPUT`` | Promote a proposed target row to active. Marked NOT agent-safe: agents that proposed the row must NOT auto-promote it; only an explicit user invocation may run this command. |

@@ -412,3 +412,78 @@ def cmd_export(args: argparse.Namespace) -> int:
         # Stdout already streamed; don't emit a JSON summary.
         _ = count
     return exit_codes.OK
+
+
+# ---------------------------------------------------------------------------
+# hai sync purge — F-PV14-02 surgical sync_run_log cleanup
+# ---------------------------------------------------------------------------
+# Per W-29 boundary refresh §(d) OQ-1 disposition: the `hai sync ...`
+# namespace co-locates with the state-handlers group rather than getting
+# its own `cli/handlers/sync.py` module. F-PV14-02 ships the only
+# subcommand in this namespace today.
+
+def cmd_sync_purge(args: argparse.Namespace) -> int:
+    """Surgically delete sync_run_log rows that match the selectors.
+
+    Default-deny: refuses if more than 5 rows match the selector tuple.
+    Writes a runtime_event_log audit row with the deleted-row payloads
+    on commit. ``--dry-run`` is the inspection mode (read-only).
+
+    Out-of-scope (per ``carry_over_findings.md`` §F-PV14-02):
+      - Tables other than sync_run_log.
+      - Selector-less invocations ("nuke all sync rows for source X").
+      - The broader --db-path/--base-dir symmetry rule (deferred to
+        v0.1.19 W-FPV14-SYM per v0.1.15 IR F-IR-02).
+    """
+
+    from health_agent_infra.core.state import resolve_db_path, open_connection
+    from health_agent_infra.core.sync import (
+        MAX_PURGE_ROWS,
+        PurgeRefusedError,
+        purge_sync_rows,
+    )
+
+    db_path = resolve_db_path(args.db_path)
+    if not db_path.exists():
+        sys.stderr.write(
+            f"hai sync purge: state DB not found at {db_path}. "
+            f"Run `hai state init` first.\n"
+        )
+        return exit_codes.USER_INPUT
+
+    conn = open_connection(db_path)
+    try:
+        try:
+            result = purge_sync_rows(
+                conn,
+                source=args.source,
+                for_date=args.for_date,
+                started_after=args.started_after,
+                user_id=args.user_id,
+                dry_run=args.dry_run,
+            )
+        except PurgeRefusedError as exc:
+            sys.stderr.write(
+                f"hai sync purge: {exc} "
+                f"Run with --dry-run to inspect the matches first; "
+                f"recommend `hai backup` before any non-dry-run purge.\n"
+            )
+            return exit_codes.USER_INPUT
+
+        _emit_json({
+            "source": args.source,
+            "selectors": {
+                "for_date": args.for_date,
+                "started_after": args.started_after,
+                "user_id": args.user_id,
+            },
+            "matched_rows": [r.to_dict() for r in result.matched],
+            "matched_count": len(result.matched),
+            "deleted_count": result.deleted_count,
+            "dry_run": result.dry_run,
+            "runtime_event_id": result.runtime_event_id,
+            "safety_cap": MAX_PURGE_ROWS,
+        })
+        return exit_codes.OK
+    finally:
+        conn.close()

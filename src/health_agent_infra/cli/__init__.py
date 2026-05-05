@@ -402,6 +402,7 @@ from health_agent_infra.cli.handlers.state import (  # noqa: E402
     cmd_state_read,
     cmd_state_reproject,
     cmd_state_snapshot,
+    cmd_sync_purge,  # F-PV14-02 (v0.1.17 Phase 3); OQ-1 cohabits with state group
 )
 
 
@@ -2107,6 +2108,67 @@ def build_parser() -> argparse.ArgumentParser:
             "— content/keys/links replay identically across runs, but "
             "projected_at / corrected_at columns reflect the wall-clock "
             "of the rebuild. Safe to re-run."
+        ),
+    )
+
+    # v0.1.17 F-PV14-02 — `hai sync purge` surgical sync_run_log cleanup.
+    # Top-level `hai sync ...` namespace (per W-29 boundary refresh OQ-1,
+    # the handler co-locates with state.py rather than a separate
+    # cli/handlers/sync.py module). agent_safe=False — maintainer-side
+    # surgical surface; an agent honoring the manifest will not invoke.
+    p_sync = sub.add_parser(
+        "sync",
+        help="Sync-row maintenance (sync_run_log surgical operations)",
+    )
+    sync_sub = p_sync.add_subparsers(dest="sync_command", required=True)
+    p_sync_purge = sync_sub.add_parser(
+        "purge",
+        help=(
+            "Surgically delete sync_run_log rows that match the selectors. "
+            "Refuses if more than 5 rows match. Recommend `hai backup` first."
+        ),
+    )
+    p_sync_purge.add_argument(
+        "--source", required=True,
+        help="Source name to purge (e.g. garmin, garmin_live, intervals_icu).",
+    )
+    p_sync_purge.add_argument(
+        "--for-date", default=None,
+        help="Civil date the sync was for (ISO-8601), if filtering on for_date.",
+    )
+    p_sync_purge.add_argument(
+        "--started-after", default=None,
+        help=(
+            "Only consider rows whose started_at is strictly after this "
+            "ISO-8601 timestamp."
+        ),
+    )
+    p_sync_purge.add_argument(
+        "--user-id", default=None,
+        help="Filter to one user_id (default: all users for the source).",
+    )
+    p_sync_purge.add_argument(
+        "--db-path", default=None,
+        help="Path to state.db (default: $HAI_STATE_DB or "
+             "~/.local/share/health_agent_infra/state.db).",
+    )
+    p_sync_purge.add_argument(
+        "--dry-run", action="store_true",
+        help="List the rows that would be purged without committing the delete.",
+    )
+    p_sync_purge.set_defaults(func=cmd_sync_purge)
+    annotate_contract(
+        p_sync_purge,
+        mutation="writes-state",
+        idempotent="no",
+        json_output="default",
+        exit_codes=("OK", "USER_INPUT"),
+        agent_safe=False,
+        description=(
+            "F-PV14-02 (v0.1.17): surgically delete contaminated rows from "
+            "sync_run_log. Refuses if selectors resolve to >5 rows. Writes "
+            "a runtime_event_log audit row tagged `sync purge` on commit. "
+            "agent_safe=False — operator-side surgical tool."
         ),
     )
 

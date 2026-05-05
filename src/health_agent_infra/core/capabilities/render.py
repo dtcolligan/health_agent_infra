@@ -182,6 +182,10 @@ _CATEGORY_MAP: dict[str, str] = {
     "backup":                "Advanced & tools",
     "restore":               "Advanced & tools",
     "export":                "Advanced & tools",
+    # F-PV14-02 (v0.1.17) — `hai sync purge` surgical sync_run_log cleanup.
+    # Maintainer-side surface; agent_safe=False; cohabits with state in
+    # the Advanced & tools bucket per OQ-1.
+    "sync":                  "Advanced & tools",
 }
 
 # Flags carried by every subcommand that don't inform a new user. Hidden

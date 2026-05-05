@@ -4096,6 +4096,92 @@
       "mutation": "read-only"
     },
     {
+      "agent_safe": false,
+      "command": "hai sync purge",
+      "description": "F-PV14-02 (v0.1.17): surgically delete contaminated rows from sync_run_log. Refuses if selectors resolve to >5 rows. Writes a runtime_event_log audit row tagged `sync purge` on commit. agent_safe=False \u2014 operator-side surgical tool.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Source name to purge (e.g. garmin, garmin_live, intervals_icu).",
+          "name": "--source",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Civil date the sync was for (ISO-8601), if filtering on for_date.",
+          "name": "--for-date",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Only consider rows whose started_at is strictly after this ISO-8601 timestamp.",
+          "name": "--started-after",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Filter to one user_id (default: all users for the source).",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Path to state.db (default: $HAI_STATE_DB or ~/.local/share/health_agent_infra/state.db).",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "List the rows that would be purged without committing the delete.",
+          "name": "--dry-run",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        }
+      ],
+      "idempotent": "no",
+      "json_output": "default",
+      "mutation": "writes-state"
+    },
+    {
       "agent_safe": true,
       "command": "hai synthesize",
       "description": "Run synthesis end-to-end inside one atomic SQLite transaction: daily_plan + x_rule_firings + planned_recommendation + recommendation_log. --supersede versions the plan instead of replacing it.",
