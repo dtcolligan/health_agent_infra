@@ -822,6 +822,214 @@
     },
     {
       "agent_safe": true,
+      "command": "hai eval review dismiss",
+      "description": "Mark a scenario as dismissed in the per-user triage state.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "",
+          "name": "--scenario-id",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Free-text dismissal reason (e.g. 'fixture supersedes earlier rev').",
+          "name": "--reason",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        }
+      ],
+      "idempotent": "no",
+      "json_output": "default",
+      "mutation": "writes-state"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai eval review export",
+      "description": "Export the per-scenario triage state to a JSON or CSV file.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Destination path for the export.",
+          "name": "--output",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "json",
+            "csv"
+          ],
+          "default": "json",
+          "help": "Export format (default: json).",
+          "name": "--format",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "yes",
+      "json_output": "default",
+      "mutation": "read-only"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai eval review list",
+      "description": "List eval corpus with per-scenario triage overlay. Read-only.",
+      "exit_codes": [
+        "OK"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": [
+            "all",
+            "scenarios",
+            "judge_adversarial"
+          ],
+          "default": "all",
+          "help": "Which corpus to list. 'scenarios' = per-domain + synthesis fixture tree; 'judge_adversarial' = the W-AI judge corpus; 'all' = both. Default: all.",
+          "name": "--corpus",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Filter to entries already carrying this triage tag.",
+          "name": "--tag",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Include rows that were dismissed (default: hide them).",
+          "name": "--include-dismissed",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        }
+      ],
+      "idempotent": "yes",
+      "json_output": "default",
+      "mutation": "read-only"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai eval review show",
+      "description": "Show one scenario's full fixture + triage state.",
+      "exit_codes": [
+        "OK",
+        "NOT_FOUND"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "The scenario_id from the fixture tree.",
+          "name": "--scenario-id",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        }
+      ],
+      "idempotent": "yes",
+      "json_output": "default",
+      "mutation": "read-only"
+    },
+    {
+      "agent_safe": true,
+      "command": "hai eval review tag",
+      "description": "Tag a scenario with a triage label. Per-user state; not the fixture tree itself (which is packaged read-only substrate).",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "",
+          "name": "--scenario-id",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Free-text triage tag (e.g. 'review-after-runtime-fix').",
+          "name": "--tag",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Optional free-text note.",
+          "name": "--note",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "no",
+      "json_output": "default",
+      "mutation": "writes-state"
+    },
+    {
+      "agent_safe": true,
       "command": "hai eval run",
       "description": "Execute frozen deterministic eval scenarios for a domain (--domain) or the synthesis layer (--synthesis). Read-only \u2014 scores scenarios, never writes state. USER_INPUT when a scenario fails its rubric; INTERNAL if the runner itself crashes.",
       "exit_codes": [

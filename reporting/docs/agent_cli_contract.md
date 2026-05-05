@@ -63,7 +63,7 @@ JSON; this markdown is an at-a-glance overview for humans.
 
 ## Commands
 
-*62 commands; hai 0.1.15.1; schema agent_cli_contract.v1*
+*67 commands; hai 0.1.15.1; schema agent_cli_contract.v1*
 
 | Command | Mutation | Idempotent | JSON | Agent-safe | Exit codes | Description |
 |---|---|---|---|---|---|---|
@@ -83,6 +83,11 @@ JSON; this markdown is an at-a-glance overview for humans.
 | ``hai demo end`` | ``writes-state`` | ``yes`` | ``default`` | yes | ``OK`` | Close the active demo session. Removes the marker so subsequent CLI invocations route to real persistence. v0.1.11 W-Va leaves the scratch root in place; W-Vb adds archive-on-end behaviour. |
 | ``hai demo start`` | ``writes-state`` | ``no`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Open a new demo session. Creates a scratch root at /tmp/hai_demo_<id>/ with state.db, health_agent_root/, and config/thresholds.toml. Writes a marker file at the demo-session location ($XDG_CACHE_HOME/hai/ or ~/.cache/hai/). Refuses with USER_INPUT if a session is already active. |
 | ``hai doctor`` | ``read-only`` | ``n/a`` | ``opt-in`` | yes | ``OK``, ``USER_INPUT`` | Report runtime health: DB present, migrations up to date, per-source freshness, today's accepted counts. |
+| ``hai eval review dismiss`` | ``writes-state`` | ``no`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Mark a scenario as dismissed in the per-user triage state. |
+| ``hai eval review export`` | ``read-only`` | ``yes`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Export the per-scenario triage state to a JSON or CSV file. |
+| ``hai eval review list`` | ``read-only`` | ``yes`` | ``default`` | yes | ``OK`` | List eval corpus with per-scenario triage overlay. Read-only. |
+| ``hai eval review show`` | ``read-only`` | ``yes`` | ``default`` | yes | ``OK``, ``NOT_FOUND`` | Show one scenario's full fixture + triage state. |
+| ``hai eval review tag`` | ``writes-state`` | ``no`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Tag a scenario with a triage label. Per-user state; not the fixture tree itself (which is packaged read-only substrate). |
 | ``hai eval run`` | ``read-only`` | ``n/a`` | ``opt-in`` | yes | ``OK``, ``USER_INPUT``, ``INTERNAL`` | Execute frozen deterministic eval scenarios for a domain (--domain) or the synthesis layer (--synthesis). Read-only — scores scenarios, never writes state. USER_INPUT when a scenario fails its rubric; INTERNAL if the runner itself crashes. |
 | ``hai exercise search`` | ``read-only`` | ``n/a`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Rank top exercise-taxonomy matches for a free-text query. |
 | ``hai explain`` | ``read-only`` | ``n/a`` | ``opt-out`` | yes | ``OK``, ``USER_INPUT``, ``NOT_FOUND`` | Reconstruct the full audit chain (planned / adapted / firings / performed) for a committed plan. Strictly read-only — never recomputes runtime state. |

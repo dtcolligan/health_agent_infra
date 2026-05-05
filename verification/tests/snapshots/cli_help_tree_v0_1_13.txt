@@ -14,6 +14,11 @@ hai demo cleanup: --help
 hai demo end: --help
 hai demo start: --blank,--help,--persona
 hai doctor: --as-of,--db-path,--deep,--help,--json,--skills-dest,--thresholds-path,--user-id
+hai eval review dismiss: --help,--reason,--scenario-id
+hai eval review export: --format,--help,--output
+hai eval review list: --corpus,--help,--include-dismissed,--tag
+hai eval review show: --help,--scenario-id
+hai eval review tag: --help,--note,--scenario-id,--tag
 hai eval run: --domain,--help,--json,--scenario-set,--synthesis
 hai exercise search: --db-path,--help,--limit,--query
 hai explain: --as-of,--daily-plan-id,--db-path,--for-date,--help,--operator,--plan-version,--text,--user-id

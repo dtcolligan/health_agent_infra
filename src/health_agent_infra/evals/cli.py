@@ -158,6 +158,89 @@ def _run_all_scenario_sets(args: argparse.Namespace) -> int:
     return rc_overall
 
 
+def cmd_eval_review(args: argparse.Namespace) -> int:
+    """W-AI-2 (v0.1.17 §2.D) — `hai eval review` triage state operations.
+
+    Subcommands: list / show / tag / dismiss / export. Persistence at
+    ``~/.local/share/health_agent_infra/eval_review.json`` per OQ-2.
+    """
+
+    from health_agent_infra.core import exit_codes
+    from health_agent_infra.evals import review
+
+    op = args.review_command
+    if op == "list":
+        rows = review.list_corpus(
+            corpus=args.corpus,
+            tag_filter=args.tag,
+            include_dismissed=args.include_dismissed,
+        )
+        print(json.dumps({
+            "corpus": args.corpus,
+            "count": len(rows),
+            "rows": rows,
+        }, indent=2, sort_keys=True))
+        return exit_codes.OK
+
+    if op == "show":
+        bundle = review.show_scenario(args.scenario_id)
+        if bundle is None:
+            print(
+                f"hai eval review show: scenario_id={args.scenario_id!r} "
+                f"not found in fixture tree",
+                file=sys.stderr,
+            )
+            return exit_codes.NOT_FOUND
+        print(json.dumps(bundle, indent=2, sort_keys=True))
+        return exit_codes.OK
+
+    if op == "tag":
+        if review.show_scenario(args.scenario_id) is None:
+            print(
+                f"hai eval review tag: unknown scenario_id "
+                f"{args.scenario_id!r}",
+                file=sys.stderr,
+            )
+            return exit_codes.USER_INPUT
+        entry = review.tag_scenario(
+            args.scenario_id, tag=args.tag, note=args.note,
+        )
+        print(json.dumps(entry.to_dict(), indent=2, sort_keys=True))
+        return exit_codes.OK
+
+    if op == "dismiss":
+        if review.show_scenario(args.scenario_id) is None:
+            print(
+                f"hai eval review dismiss: unknown scenario_id "
+                f"{args.scenario_id!r}",
+                file=sys.stderr,
+            )
+            return exit_codes.USER_INPUT
+        entry = review.dismiss_scenario(
+            args.scenario_id, reason=args.reason,
+        )
+        print(json.dumps(entry.to_dict(), indent=2, sort_keys=True))
+        return exit_codes.OK
+
+    if op == "export":
+        from pathlib import Path
+        out = Path(args.output).expanduser()
+        try:
+            review.export_state(output=out, fmt=args.format)
+        except ValueError as exc:
+            print(f"hai eval review export: {exc}", file=sys.stderr)
+            return exit_codes.USER_INPUT
+        print(json.dumps({"exported_to": str(out), "format": args.format}))
+        return exit_codes.OK
+
+    # Should be unreachable — argparse `required=True`.
+    print(
+        f"hai eval review: unknown subcommand {op!r}",
+        file=sys.stderr,
+    )
+    return exit_codes.USER_INPUT
+
+
 def register_eval_subparser(sub: argparse._SubParsersAction) -> None:
     """Register the ``hai eval`` subparser tree on an existing dispatcher."""
 
@@ -216,5 +299,138 @@ def register_eval_subparser(sub: argparse._SubParsersAction) -> None:
             "— scores scenarios, never writes state. USER_INPUT when a "
             "scenario fails its rubric; INTERNAL if the runner itself "
             "crashes."
+        ),
+    )
+
+    # W-AI-2 (v0.1.17 §2.D) — `hai eval review` triage state CLI.
+    p_review = eval_sub.add_parser(
+        "review",
+        help=(
+            "Triage state for the eval corpus (tag / dismiss / export). "
+            "Persists to ~/.local/share/health_agent_infra/eval_review.json."
+        ),
+    )
+    review_sub = p_review.add_subparsers(dest="review_command", required=True)
+
+    p_rev_list = review_sub.add_parser(
+        "list",
+        help="List the live corpus with any per-scenario triage overlay.",
+    )
+    p_rev_list.add_argument(
+        "--corpus", default="all",
+        choices=("all", "scenarios", "judge_adversarial"),
+        help=(
+            "Which corpus to list. 'scenarios' = per-domain + synthesis "
+            "fixture tree; 'judge_adversarial' = the W-AI judge corpus; "
+            "'all' = both. Default: all."
+        ),
+    )
+    p_rev_list.add_argument(
+        "--tag", default=None,
+        help="Filter to entries already carrying this triage tag.",
+    )
+    p_rev_list.add_argument(
+        "--include-dismissed",
+        action="store_true", dest="include_dismissed",
+        help="Include rows that were dismissed (default: hide them).",
+    )
+    p_rev_list.set_defaults(func=cmd_eval_review)
+    annotate_contract(
+        p_rev_list,
+        mutation="read-only", idempotent="yes",
+        json_output="default",
+        exit_codes=("OK",),
+        agent_safe=True,
+        description=(
+            "List eval corpus with per-scenario triage overlay. Read-only."
+        ),
+    )
+
+    p_rev_show = review_sub.add_parser(
+        "show", help="Show one scenario's fixture body + triage state.",
+    )
+    p_rev_show.add_argument(
+        "--scenario-id", required=True,
+        help="The scenario_id from the fixture tree.",
+    )
+    p_rev_show.set_defaults(func=cmd_eval_review)
+    annotate_contract(
+        p_rev_show,
+        mutation="read-only", idempotent="yes",
+        json_output="default",
+        exit_codes=("OK", "NOT_FOUND"),
+        agent_safe=True,
+        description="Show one scenario's full fixture + triage state.",
+    )
+
+    p_rev_tag = review_sub.add_parser(
+        "tag",
+        help=(
+            "Set a triage tag on a scenario (persists to eval_review.json). "
+            "Replaces any prior triage entry for that scenario."
+        ),
+    )
+    p_rev_tag.add_argument("--scenario-id", required=True)
+    p_rev_tag.add_argument(
+        "--tag", required=True,
+        help="Free-text triage tag (e.g. 'review-after-runtime-fix').",
+    )
+    p_rev_tag.add_argument("--note", default=None, help="Optional free-text note.")
+    p_rev_tag.set_defaults(func=cmd_eval_review)
+    annotate_contract(
+        p_rev_tag,
+        mutation="writes-state", idempotent="no",
+        json_output="default",
+        exit_codes=("OK", "USER_INPUT"),
+        agent_safe=True,
+        description=(
+            "Tag a scenario with a triage label. Per-user state; not the "
+            "fixture tree itself (which is packaged read-only substrate)."
+        ),
+    )
+
+    p_rev_dismiss = review_sub.add_parser(
+        "dismiss",
+        help=(
+            "Mark a scenario dismissed with a reason. The scenario stays "
+            "in the corpus but is hidden from default `list` output."
+        ),
+    )
+    p_rev_dismiss.add_argument("--scenario-id", required=True)
+    p_rev_dismiss.add_argument(
+        "--reason", required=True,
+        help="Free-text dismissal reason (e.g. 'fixture supersedes earlier rev').",
+    )
+    p_rev_dismiss.set_defaults(func=cmd_eval_review)
+    annotate_contract(
+        p_rev_dismiss,
+        mutation="writes-state", idempotent="no",
+        json_output="default",
+        exit_codes=("OK", "USER_INPUT"),
+        agent_safe=True,
+        description="Mark a scenario as dismissed in the per-user triage state.",
+    )
+
+    p_rev_export = review_sub.add_parser(
+        "export",
+        help="Export the full triage state to JSON or CSV.",
+    )
+    p_rev_export.add_argument(
+        "--output", required=True,
+        help="Destination path for the export.",
+    )
+    p_rev_export.add_argument(
+        "--format", default="json", choices=("json", "csv"),
+        help="Export format (default: json).",
+    )
+    p_rev_export.set_defaults(func=cmd_eval_review)
+    annotate_contract(
+        p_rev_export,
+        mutation="read-only", idempotent="yes",
+        json_output="default",
+        exit_codes=("OK", "USER_INPUT"),
+        agent_safe=True,
+        description=(
+            "Export the per-scenario triage state to a JSON or CSV file."
         ),
     )
