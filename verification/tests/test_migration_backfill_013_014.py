@@ -384,6 +384,6 @@ def test_pre_013_seed_followed_by_full_migration_stack_reaches_head(tmp_path: Pa
         # 025_target_macros_extension (v0.1.15 W-C) is the current head;
         # if a future migration lands, bump the expectation here
         # deliberately.
-        assert head == 25
+        assert head == 26
     finally:
         conn.close()

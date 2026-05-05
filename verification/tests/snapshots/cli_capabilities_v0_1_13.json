@@ -2133,6 +2133,128 @@
     },
     {
       "agent_safe": false,
+      "command": "hai intake weight",
+      "description": "W-B (v0.1.17 \u00a72.H): record a body-composition measurement. Append-only (multiple measurements per day are valid). Source enum is fixed to 'user_authored'; agent-proposal path is post-v0.2.x scope.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Weight in kg. Must be in (20, 250).",
+          "name": "--kg",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "float"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Optional body-fat percentage (range 0-75 when given).",
+          "name": "--body-fat-pct",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "float"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "When the measurement happened (ISO-8601). Default: current UTC.",
+          "name": "--measured-at",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Civil date the measurement is associated with (YYYY-MM-DD). Default: civil date of --measured-at.",
+          "name": "--as-of",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Optional free-text note (e.g. 'fasted morning post-bathroom').",
+          "name": "--notes",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "u_local_1",
+          "help": "User this measurement attaches to (default: u_local_1).",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "cli",
+          "help": "Per-record provenance label (default: cli). Not a security boundary \u2014 agents respect agent_safe=False at the manifest.",
+          "name": "--ingest-actor",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Intake root (body_comp_intake.jsonl lands here). Default: $HAI_BASE_DIR or ~/.health_agent.",
+          "name": "--base-dir",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "State DB path (default: $HAI_STATE_DB or ~/.local/share/health_agent_infra/state.db).",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "no",
+      "json_output": "default",
+      "mutation": "writes-state"
+    },
+    {
+      "agent_safe": false,
       "command": "hai intent archive",
       "description": "Archive a W49 intent row (status='archived'). Marked NOT agent-safe: archiving an active or proposed row IS user-state deactivation per AGENTS.md W57. Agents that proposed the row must NOT auto-archive it; only an explicit user invocation may run this command.",
       "exit_codes": [

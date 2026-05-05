@@ -392,6 +392,7 @@ from health_agent_infra.cli.handlers.intake import (  # noqa: E402
     cmd_intake_nutrition,
     cmd_intake_readiness,
     cmd_intake_stress,
+    cmd_intake_weight,  # W-B (v0.1.17 §2.H) — body-comp intake
 )
 from health_agent_infra.cli.handlers.state import (  # noqa: E402
     cmd_backup,
@@ -1971,6 +1972,78 @@ def build_parser() -> argparse.ArgumentParser:
         description=(
             "Return the list of user-closeable intake gaps in the snapshot. "
             "Read-only; no side effects."
+        ),
+    )
+
+    # W-B (v0.1.17 §2.H) — body-composition intake.
+    p_iw = intake_sub.add_parser(
+        "weight",
+        help=(
+            "Record a body-composition measurement (weight + optional "
+            "body-fat percent). User-authored only — agent_safe=False."
+        ),
+    )
+    p_iw.add_argument(
+        "--kg", required=True, type=float,
+        help="Weight in kg. Must be in (20, 250).",
+    )
+    p_iw.add_argument(
+        "--body-fat-pct", default=None, type=float,
+        help=(
+            "Optional body-fat percentage (range 0-75 when given)."
+        ),
+    )
+    p_iw.add_argument(
+        "--measured-at", default=None,
+        help="When the measurement happened (ISO-8601). Default: current UTC.",
+    )
+    p_iw.add_argument(
+        "--as-of", default=None,
+        help=(
+            "Civil date the measurement is associated with (YYYY-MM-DD). "
+            "Default: civil date of --measured-at."
+        ),
+    )
+    p_iw.add_argument(
+        "--notes", default=None,
+        help="Optional free-text note (e.g. 'fasted morning post-bathroom').",
+    )
+    p_iw.add_argument(
+        "--user-id", default="u_local_1",
+        help="User this measurement attaches to (default: u_local_1).",
+    )
+    p_iw.add_argument(
+        "--ingest-actor", default="cli",
+        help=(
+            "Per-record provenance label (default: cli). Not a security "
+            "boundary — agents respect agent_safe=False at the manifest."
+        ),
+    )
+    p_iw.add_argument(
+        "--base-dir", default=None,
+        help=(
+            "Intake root (body_comp_intake.jsonl lands here). "
+            "Default: $HAI_BASE_DIR or ~/.health_agent."
+        ),
+    )
+    p_iw.add_argument(
+        "--db-path", default=None,
+        help="State DB path (default: $HAI_STATE_DB or "
+             "~/.local/share/health_agent_infra/state.db).",
+    )
+    p_iw.set_defaults(func=cmd_intake_weight)
+    annotate_contract(
+        p_iw,
+        mutation="writes-state",
+        idempotent="no",
+        json_output="default",
+        exit_codes=("OK", "USER_INPUT"),
+        agent_safe=False,
+        description=(
+            "W-B (v0.1.17 §2.H): record a body-composition measurement. "
+            "Append-only (multiple measurements per day are valid). "
+            "Source enum is fixed to 'user_authored'; agent-proposal "
+            "path is post-v0.2.x scope."
         ),
     )
 

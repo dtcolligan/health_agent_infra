@@ -1175,3 +1175,91 @@ def _project_readiness_submission_into_state(db_path_arg, submission) -> None:
 # hai state init / hai state migrate — SQLite substrate (7A.1)
 # ---------------------------------------------------------------------------
 # W-29.2.4: handler bodies live in cli/handlers/state.py.
+
+
+# ---------------------------------------------------------------------------
+# hai intake weight — W-B (v0.1.17 §2.H) body-composition intake
+# ---------------------------------------------------------------------------
+
+def cmd_intake_weight(args: argparse.Namespace) -> int:
+    """Record a body-composition measurement (weight + optional body-fat %).
+
+    User-authored only (per F-PLAN-09 round-1 ratification): the manifest
+    declares ``agent_safe=False`` and the runtime trusts that. Multiple
+    measurements per day are valid (fasted morning + post-meal evening
+    are different observations); idempotency is "append, not replace".
+
+    Audit: writes one JSONL row to
+    ``<base_dir>/body_comp_intake.jsonl`` and one row to the
+    ``body_comp`` table (dual-write for byte-stable replay parity).
+    """
+
+    from health_agent_infra.core.body_comp import (
+        BodyCompValidationError,
+        add_body_comp,
+    )
+    from health_agent_infra.core.state import open_connection, resolve_db_path
+
+    # Resolve measured_at + as_of_date.
+    if args.measured_at:
+        try:
+            measured_at = _coerce_dt(args.measured_at)
+        except ValueError as exc:
+            sys.stderr.write(
+                f"hai intake weight: --measured-at must be ISO-8601: {exc}\n"
+            )
+            return exit_codes.USER_INPUT
+    else:
+        measured_at = datetime.now(timezone.utc)
+
+    if args.as_of:
+        try:
+            as_of_date = _coerce_date(args.as_of)
+        except ValueError as exc:
+            sys.stderr.write(
+                f"hai intake weight: --as-of must be YYYY-MM-DD: {exc}\n"
+            )
+            return exit_codes.USER_INPUT
+    else:
+        # Default: local civil date of measured_at. Use UTC date here
+        # for determinism — the user can pass --as-of explicitly to
+        # disambiguate timezone-edge cases.
+        as_of_date = measured_at.date()
+
+    # Validate + persist.
+    db_path = resolve_db_path(args.db_path)
+    if not db_path.exists():
+        sys.stderr.write(
+            f"hai intake weight: state DB not found at {db_path}. "
+            f"Run `hai state init` first.\n"
+        )
+        return exit_codes.USER_INPUT
+
+    conn = open_connection(db_path)
+    try:
+        try:
+            record = add_body_comp(
+                conn,
+                user_id=args.user_id,
+                measured_at=measured_at,
+                as_of_date=as_of_date,
+                weight_kg=args.kg,
+                body_fat_pct=args.body_fat_pct,
+                ingest_actor=args.ingest_actor,
+                notes=args.notes,
+            )
+        except BodyCompValidationError as exc:
+            sys.stderr.write(f"hai intake weight: {exc}\n")
+            return exit_codes.USER_INPUT
+    finally:
+        conn.close()
+
+    # JSONL audit log (mirrors the existing intake-jsonl pattern).
+    base_dir = resolve_base_dir(args.base_dir)
+    jsonl_path = base_dir / "body_comp_intake.jsonl"
+    base_dir.mkdir(parents=True, exist_ok=True)
+    with jsonl_path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(record.to_row(), sort_keys=True) + "\n")
+
+    _emit_json(record.to_row())
+    return exit_codes.OK

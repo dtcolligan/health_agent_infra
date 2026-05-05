@@ -26,6 +26,7 @@ hai intake note: --as-of,--base-dir,--db-path,--help,--ingest-actor,--recorded-a
 hai intake nutrition: --as-of,--base-dir,--calories,--carbs-g,--db-path,--fat-g,--help,--hydration-l,--ingest-actor,--meals-count,--protein-g,--replace,--user-id
 hai intake readiness: --active-goal,--as-of,--base-dir,--db-path,--energy,--help,--ingest-actor,--planned-session-type,--soreness,--user-id
 hai intake stress: --as-of,--base-dir,--db-path,--help,--ingest-actor,--score,--tags,--user-id
+hai intake weight: --as-of,--base-dir,--body-fat-pct,--db-path,--help,--ingest-actor,--kg,--measured-at,--notes,--user-id
 hai intent archive: --confirm,--db-path,--help,--intent-id,--user-id
 hai intent commit: --confirm,--db-path,--help,--intent-id,--user-id
 hai intent list: --all,--as-of,--db-path,--domain,--help,--status,--user-id
