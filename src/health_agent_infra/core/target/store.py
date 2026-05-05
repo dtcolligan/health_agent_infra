@@ -12,6 +12,10 @@ from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from typing import Any, Optional
 
+# W-D arm-2: get_active_macro_targets reuses the W-A target-type tuple
+# so the active-window query stays in lockstep across surfaces.
+from health_agent_infra.core.intake.presence import NUTRITION_MACRO_TARGET_TYPES
+
 
 _TARGET_COLUMNS = (
     "target_id",
@@ -428,3 +432,65 @@ def supersede_target(
         )
     conn.commit()
     return new_record
+
+
+def get_active_macro_targets(
+    conn: sqlite3.Connection,
+    *,
+    user_id: str,
+    as_of_date: date,
+) -> dict[str, float]:
+    """W-D arm-2 (v0.1.17 §2.I) — fetch active macro target values for a day.
+
+    Returns a dict keyed to match
+    ``DEFAULT_THRESHOLDS["classify"]["nutrition"]["targets"]`` shape
+    (extended for v0.1.17 with ``carbs_target_g`` + ``fat_target_g`` —
+    those leaves don't exist in the v0.1.15.1 ``DEFAULT_THRESHOLDS``,
+    so the merge in ``build_snapshot()`` adds them when arm-2 fires).
+
+    Returned keys: ``calorie_target_kcal``, ``protein_target_g``,
+    ``carbs_target_g``, ``fat_target_g``. A missing target_type produces
+    a missing key — callers (the build_snapshot internal merge) decide
+    whether partial-target arm-2 should still fire or fall through to
+    arm-1 suppression.
+
+    Mirrors the W-A active-window query at
+    ``core/intake/presence.py:163-213`` (``compute_target_status``):
+    same predicate + same index path. The two methods differ only in
+    return shape — presence returns the enum string, this returns
+    the value dict.
+    """
+
+    placeholders = ",".join("?" for _ in NUTRITION_MACRO_TARGET_TYPES)
+    rows = conn.execute(
+        # nosec B608 — placeholders are constant "?" derived from a
+        # module constant; every value is bound. Same rationale as
+        # NUTRITION_MACRO_TARGET_TYPES sites in core/intake/presence.py.
+        f"SELECT target_type, value_json FROM target "
+        f"WHERE user_id=? AND domain='nutrition' "
+        f"AND target_type IN ({placeholders}) "
+        f"AND status='active' AND superseded_by_target_id IS NULL "
+        f"AND date(effective_from) <= date(?) "
+        f"AND (effective_to IS NULL OR date(effective_to) >= date(?))",
+        (user_id, *NUTRITION_MACRO_TARGET_TYPES,
+         as_of_date.isoformat(), as_of_date.isoformat()),
+    ).fetchall()
+
+    # Map target_type → threshold-tree key.
+    type_to_key = {
+        "calories_kcal": "calorie_target_kcal",
+        "protein_g":     "protein_target_g",
+        "carbs_g":       "carbs_target_g",
+        "fat_g":         "fat_target_g",
+    }
+    out: dict[str, float] = {}
+    for raw in rows:
+        target_type = raw["target_type"] if hasattr(raw, "keys") else raw[0]
+        value_json = raw["value_json"] if hasattr(raw, "keys") else raw[1]
+        key = type_to_key.get(target_type)
+        if key is None:
+            continue
+        decoded = json.loads(value_json)
+        value = decoded.get("value", decoded) if isinstance(decoded, dict) else decoded
+        out[key] = float(value)
+    return out

@@ -906,7 +906,49 @@ def build_snapshot(
             is_partial_day=_w_a_block["is_partial_day"],
             target_status=_w_a_block["target_status"],
         )
-        nutrition_classified = classify_nutrition_state(nutrition_signals)
+        # W-D arm-2 (v0.1.17 §2.I): when partial-day intake AND a
+        # nutrition target covers today, fetch the active macro target
+        # values + deep-merge them into the threshold tree so the
+        # nutrition classifier projects EOD macros instead of falling
+        # through to arm-1's blanket suppression. The merge is internal
+        # to build_snapshot — CLI handlers continue to call
+        # build_snapshot() with no public-API change. Surface the local
+        # clock so the linear-extrapolation alternative branch (reachable
+        # via threshold override; not the v1 default) has the fraction
+        # of day elapsed at hand.
+        nutrition_signals["now_local"] = now_local
+        if (
+            _w_a_block["is_partial_day"] is True
+            and _w_a_block["target_status"] == "present"
+        ):
+            from copy import deepcopy
+            from health_agent_infra.core.config import (
+                load_thresholds as _load_thresholds_arm2,
+            )
+            from health_agent_infra.core.target.store import (
+                get_active_macro_targets,
+            )
+
+            macro_values = get_active_macro_targets(
+                conn, user_id=user_id, as_of_date=as_of_date,
+            )
+            if macro_values:
+                merged_thresholds = deepcopy(_load_thresholds_arm2())
+                targets_block = (
+                    merged_thresholds.setdefault("classify", {})
+                    .setdefault("nutrition", {})
+                    .setdefault("targets", {})
+                )
+                # Deep-merge: keep the default hydration_target_l;
+                # overlay the four macro values from the active targets.
+                targets_block.update(macro_values)
+                nutrition_classified = classify_nutrition_state(
+                    nutrition_signals, thresholds=merged_thresholds,
+                )
+            else:
+                nutrition_classified = classify_nutrition_state(nutrition_signals)
+        else:
+            nutrition_classified = classify_nutrition_state(nutrition_signals)
         # v0.1.10 W-C wire (F-CDX-IR-01): plumb the partial-day gate
         # through the runtime call. The policy function has accepted
         # ``meals_count`` and ``is_end_of_day`` since v0.1.10, but the
@@ -1193,7 +1235,7 @@ def _nutrition_classified_to_dict(classified: Any) -> dict[str, Any]:
     skill's source of truth, not synthesis_policy's.
     """
 
-    return {
+    out: dict[str, Any] = {
         "calorie_balance_band": classified.calorie_balance_band,
         "protein_sufficiency_band": classified.protein_sufficiency_band,
         "hydration_band": classified.hydration_band,
@@ -1207,6 +1249,20 @@ def _nutrition_classified_to_dict(classified: Any) -> dict[str, Any]:
         "derivation_path": classified.derivation_path,
         "uncertainty": list(classified.uncertainty),
     }
+    # W-D arm-2 (v0.1.17 §2.I): emit projected EOD macros when the
+    # classifier populated them. Omit (rather than emit None) on
+    # non-arm-2 paths so the existing v0.1.15.1 explain-shape stays
+    # byte-stable for callers that don't get arm-2 firing.
+    for key in (
+        "projected_eod_kcal",
+        "projected_eod_protein_g",
+        "projected_eod_carbs_g",
+        "projected_eod_fat_g",
+    ):
+        value = getattr(classified, key, None)
+        if value is not None:
+            out[key] = value
+    return out
 
 
 def _sources_block(

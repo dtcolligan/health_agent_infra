@@ -104,6 +104,18 @@ class ClassifiedNutritionState:
     hydration_ratio: Optional[float]       # actual / target, or None
     derivation_path: Optional[str]
     uncertainty: tuple[str, ...] = field(default_factory=tuple)
+    # W-D arm-2 (v0.1.17 §2.I) — end-of-day macro projections.
+    # Populated only when arm-2 fires (is_partial_day=True AND
+    # target_status="present"). When the projection branch is the
+    # default ``target_anchored``, projected_eod_X equals the active
+    # macro target for X. None on every other path (arm-1 suppression,
+    # day-closed, no-target). Carbs + fat are emitted as informational
+    # values when present; only kcal + protein drive band classification
+    # in v1 (no carbs/fat band thresholds in DEFAULT_THRESHOLDS).
+    projected_eod_kcal: Optional[float] = None
+    projected_eod_protein_g: Optional[float] = None
+    projected_eod_carbs_g: Optional[float] = None
+    projected_eod_fat_g: Optional[float] = None
 
 
 # ---------------------------------------------------------------------------
@@ -392,6 +404,80 @@ def classify_nutrition_state(
         if hydration_l is not None and hydration_target > 0:
             hydration_ratio = float(hydration_l) / hydration_target
 
+    # W-D arm-2 (v0.1.17 §2.I): when partial-day intake AND a target
+    # exists, project end-of-day macros + drive band classification
+    # against the projection rather than the raw partial intake.
+    # Default mode is "target_anchored" (the projection IS the target):
+    # the user is assumed to close the gap by EOD, so calorie_deficit
+    # collapses to 0 and protein_ratio to 1.0. This avoids the
+    # false-deficit cascade the v0.1.15 W-D arm-1 fallback handles
+    # only by suppressing classification entirely.
+    projection_mode = (
+        t.get("classify", {}).get("nutrition", {}).get("projection_mode")
+    )
+    is_partial_day = nutrition_signals.get("is_partial_day")
+    target_status = nutrition_signals.get("target_status")
+    arm2_active = (
+        is_partial_day is True
+        and target_status == "present"
+        and projection_mode in ("target_anchored", "linear_extrapolation")
+    )
+
+    projected_eod_kcal: Optional[float] = None
+    projected_eod_protein_g: Optional[float] = None
+    projected_eod_carbs_g: Optional[float] = None
+    projected_eod_fat_g: Optional[float] = None
+
+    if arm2_active:
+        targets_block = t["classify"]["nutrition"]["targets"]
+        target_carbs = targets_block.get("carbs_target_g")
+        target_fat = targets_block.get("fat_target_g")
+        if projection_mode == "target_anchored":
+            # Target IS the projection: user closes the gap by EOD.
+            projected_eod_kcal = float(calorie_target)
+            projected_eod_protein_g = float(protein_target)
+            if target_carbs is not None:
+                projected_eod_carbs_g = float(target_carbs)
+            if target_fat is not None:
+                projected_eod_fat_g = float(target_fat)
+            # Re-derive deficit + ratio against the projection so
+            # downstream band classifiers see the closed-gap state.
+            calorie_deficit = 0.0
+            protein_ratio = 1.0 if protein_target > 0 else None
+        elif projection_mode == "linear_extrapolation":
+            # Reachable via threshold override; not the v1 default.
+            # Linear-extrapolate: scale current intake to a 24h window.
+            from datetime import datetime as _dt
+            now_local = nutrition_signals.get("now_local")
+            if now_local is None:
+                fraction = 0.5  # defensive midday fallback
+            elif isinstance(now_local, _dt):
+                fraction = max(
+                    1.0 / 24.0,
+                    (now_local.hour + now_local.minute / 60.0) / 24.0,
+                )
+            else:
+                fraction = 0.5
+            if calories is not None:
+                projected_eod_kcal = round(float(calories) / fraction, 1)
+                calorie_deficit = calorie_target - projected_eod_kcal
+            if protein_g is not None:
+                projected_eod_protein_g = round(
+                    float(protein_g) / fraction, 1
+                )
+                if protein_target > 0:
+                    protein_ratio = projected_eod_protein_g / protein_target
+            # Carbs/fat: emit projection if target present + intake
+            # tracked. v1 doesn't band-classify these.
+            today_carbs = (today_row or {}).get("carbs_g")
+            today_fat = (today_row or {}).get("fat_g")
+            if today_carbs is not None and target_carbs is not None:
+                projected_eod_carbs_g = round(
+                    float(today_carbs) / fraction, 1
+                )
+            if today_fat is not None and target_fat is not None:
+                projected_eod_fat_g = round(float(today_fat) / fraction, 1)
+
     coverage_band, u = _classify_coverage(today_row)
     uncertainty.extend(u)
 
@@ -433,4 +519,8 @@ def classify_nutrition_state(
         ),
         derivation_path=derivation_path,
         uncertainty=tuple(sorted(set(uncertainty))),
+        projected_eod_kcal=projected_eod_kcal,
+        projected_eod_protein_g=projected_eod_protein_g,
+        projected_eod_carbs_g=projected_eod_carbs_g,
+        projected_eod_fat_g=projected_eod_fat_g,
     )

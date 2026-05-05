@@ -330,6 +330,19 @@ DEFAULT_THRESHOLDS: dict[str, Any] = {
                 "protein_target_g": 140.0,
                 "hydration_target_l": 2.5,
             },
+            # W-D arm-2 (v0.1.17 §2.I) — partial-day projection mode.
+            # "target_anchored" (v1 default): when partial-day intake
+            # AND a nutrition target exists for today, the projected
+            # end-of-day macros equal the target. The user is assumed
+            # to close the gap by EOD; calorie_deficit collapses to 0
+            # and protein_ratio to 1.0 in the band classification.
+            # "linear_extrapolation" (alternative; reachable via threshold
+            # override): scales partial-day intake against fraction-of-
+            # day-elapsed. Surfaces underconsumption pre-EOD but false-
+            # flags morning-only intake against any positive midday gap.
+            # Future cycles may flip the default if dogfood evidence
+            # shows the alternative is better-shaped.
+            "projection_mode": "target_anchored",
             # calorie_balance_band fires on absolute_deficit_kcal =
             # target - actual. A negative value (surplus) lands in
             # "surplus". A value AT a boundary lands in the higher
