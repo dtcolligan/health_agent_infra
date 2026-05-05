@@ -306,7 +306,13 @@ def _walk_corpus(corpus: str) -> list[dict[str, Any]]:
 
 
 def _find_in_corpus(scenario_id: str) -> Optional[dict[str, Any]]:
-    """Find a single scenario's full fixture body anywhere in the tree."""
+    """Find a single scenario's full fixture body anywhere in the tree.
+
+    Id contract matches :func:`_walk_corpus`: a fixture is selectable by
+    its ``scenario_id`` (domain corpus convention), its ``fixture_id``
+    (judge_adversarial convention), or its file stem (last-resort
+    fallback for fixtures that carry neither).
+    """
 
     base = Path(__file__).parent / "scenarios"
     for fixture_path in base.rglob("*.json"):
@@ -316,6 +322,11 @@ def _find_in_corpus(scenario_id: str) -> Optional[dict[str, Any]]:
             fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError):
             continue
-        if fixture.get("scenario_id") == scenario_id:
+        candidate_ids = (
+            fixture.get("scenario_id"),
+            fixture.get("fixture_id"),
+            fixture_path.stem,
+        )
+        if scenario_id in candidate_ids:
             return fixture
     return None

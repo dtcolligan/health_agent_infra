@@ -284,3 +284,48 @@ def test_show_unknown_scenario_returns_not_found(isolated_review_state):
     rc, out, err = _run("eval", "review", "show",
                         "--scenario-id", "no_such_scenario")
     assert rc == exit_codes.NOT_FOUND
+
+
+# ---------------------------------------------------------------------------
+# F-IR-02 — judge_adversarial round-trip via show/tag/dismiss
+#
+# Round-1 IR caught: `_walk_corpus` listed judge_adversarial fixtures by
+# their `fixture_id` (or stem fallback), but `_find_in_corpus` only
+# matched `scenario_id`. show/tag/dismiss were broken for that corpus.
+# Contract is now: scenario_id ∨ fixture_id ∨ stem.
+# ---------------------------------------------------------------------------
+
+
+def test_show_resolves_judge_adversarial_fixture_id(isolated_review_state):
+    rc, out, err = _run("eval", "review", "show",
+                        "--scenario-id", "ja_bp_001")
+    assert rc == exit_codes.OK, f"show ja_bp_001: rc={rc}, stderr={err[:200]}"
+    bundle = json.loads(out)
+    assert bundle["fixture"]["fixture_id"] == "ja_bp_001"
+    assert bundle["fixture"].get("category") == "bias_probe"
+
+
+def test_tag_then_dismiss_roundtrip_judge_adversarial(isolated_review_state):
+    rc, _, err = _run(
+        "eval", "review", "tag",
+        "--scenario-id", "ja_bp_001",
+        "--tag", "ja-review",
+    )
+    assert rc == exit_codes.OK, f"tag: rc={rc}, stderr={err[:200]}"
+
+    rc, _, err = _run(
+        "eval", "review", "dismiss",
+        "--scenario-id", "ja_bp_001",
+        "--reason", "judge-corpus stable",
+    )
+    assert rc == exit_codes.OK, f"dismiss: rc={rc}, stderr={err[:200]}"
+
+    rc, out, _ = _run("eval", "review", "list",
+                      "--corpus", "judge_adversarial",
+                      "--include-dismissed")
+    rows = json.loads(out)["rows"]
+    target = next(
+        r for r in rows if r["scenario_id"] == "ja_bp_001"
+    )
+    assert target["triage_state"] == "dismissed"
+    assert target["triage_reason"] == "judge-corpus stable"
