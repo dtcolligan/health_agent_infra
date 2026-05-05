@@ -463,10 +463,7 @@ def get_active_macro_targets(
 
     placeholders = ",".join("?" for _ in NUTRITION_MACRO_TARGET_TYPES)
     rows = conn.execute(
-        # nosec B608 — placeholders are constant "?" derived from a
-        # module constant; every value is bound. Same rationale as
-        # NUTRITION_MACRO_TARGET_TYPES sites in core/intake/presence.py.
-        f"SELECT target_type, value_json FROM target "
+        f"SELECT target_type, value_json FROM target "  # nosec B608 - placeholders are constant "?" derived from NUTRITION_MACRO_TARGET_TYPES; every value binds via params. Same rationale as core/intake/presence.py:190/205.
         f"WHERE user_id=? AND domain='nutrition' "
         f"AND target_type IN ({placeholders}) "
         f"AND status='active' AND superseded_by_target_id IS NULL "

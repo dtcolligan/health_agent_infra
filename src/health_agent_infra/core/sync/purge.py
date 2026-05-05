@@ -107,7 +107,7 @@ def resolve_purge_selectors(
         params.append(user_id)
 
     sql = (
-        "SELECT sync_id, source, user_id, mode, started_at, completed_at, "
+        "SELECT sync_id, source, user_id, mode, started_at, completed_at, "  # nosec B608 - WHERE clauses are literal predicates from this function's source; values bind via params.
         "       status, rows_pulled, rows_accepted, duplicates_skipped, "
         "       for_date, error_class, error_message "
         "FROM sync_run_log WHERE " + " AND ".join(where) + " "

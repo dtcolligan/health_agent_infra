@@ -171,7 +171,7 @@ def list_body_comp(
             params.append(until.isoformat())
 
     sql = (
-        "SELECT body_comp_id, user_id, measured_at, as_of_date, "
+        "SELECT body_comp_id, user_id, measured_at, as_of_date, "  # nosec B608 - WHERE clauses are literal predicates from this function's source; values bind via params.
         "  weight_kg, body_fat_pct, source, ingest_actor, notes, created_at "
         "FROM body_comp WHERE " + " AND ".join(where) + " "
         "ORDER BY measured_at ASC"
