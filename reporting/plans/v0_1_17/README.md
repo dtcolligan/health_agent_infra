@@ -1,6 +1,6 @@
 # v0.1.17 cycle — workspace
 
-**Status:** scoped, not yet open. PLAN.md authored when the cycle opens after v0.1.16 closes. v0.1.15 is already published; v0.1.16 must first absorb or defer the post-publish foreign-user findings.
+**Status:** **next-active cycle**, PLAN.md authored 2026-05-04. **D14 closed 2026-05-05 at round 3** (close-in-place per Codex round-3 closure recommendation). Round 1: 11 findings PLAN_COHERENT_WITH_REVISIONS; round 2: 5 findings PLAN_COHERENT_WITH_REVISIONS; round 3: 3 findings PLAN_COHERENT_WITH_REVISIONS close-in-place. Halving signature **11 → 5 → 3** matches AGENTS.md empirical norm `10 → 5 → 3 → 0` (thrice-validated v0.1.11 + v0.1.12 + now v0.1.17). **Phase 0 (D11) bug-hunt opens next.** v0.1.15 is published (v0.1.15.1 hotfix is the published shape). **v0.1.16 cancelled 2026-05-04** (named foreign-user candidate unavailable; empirical scope renumbered to v0.1.19 sequenced after v0.1.18 onboarding cycle); the original "v0.1.16 must first absorb post-publish foreign-user findings" precondition retired the same day. v0.1.17 ships the deferred maintainability + eval-substrate work without the foreign-user precondition. See `reporting/plans/v0_1_16/README.md` for the cancellation note.
 
 **Tier (anticipated):** substantive (multiple inherited workstreams + new schema/migration + persona-replay residual). Full Phase 0 D11 bug-hunt + multi-round D14 plan-audit.
 
@@ -10,7 +10,7 @@
 
 | W-id | Title | Effort | Source |
 |---|---|---|---|
-| **W-29** | cli.py 9217-line mechanical split (byte-stable manifest) | 4-6 d | v0.1.14 RELEASE_PROOF §carry-overs; AGENTS.md D124-135 |
+| **W-29** | cli.py mechanical split (9927 LOC at HEAD `df6a13c`; byte-stable manifest) | 4-6 d | v0.1.14 RELEASE_PROOF §carry-overs; AGENTS.md D124-135 |
 | **W-30** | Capabilities-manifest schema freeze prep (regression test only; freeze itself is v0.2.3) | 0.5 d | AGENTS.md D124-135 |
 | **F-PV14-02** | `hai sync purge` surgical-cleanup CLI | 1.5 d | `post_v0_1_14/carry_over_findings.md` F-PV14-02 |
 | **W-AH-2** | Scenario fixture expansion 35 → 120+ | 4-6 d | v0.1.14 RELEASE_PROOF §carry-overs |
