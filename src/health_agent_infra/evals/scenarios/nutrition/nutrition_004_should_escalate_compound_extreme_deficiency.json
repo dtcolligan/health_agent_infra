@@ -1,0 +1,32 @@
+{
+  "scenario_id": "nutrition_004_should_escalate_compound_extreme_deficiency",
+  "kind": "domain",
+  "domain": "nutrition",
+  "description": "W-AM-2 adversarial: severe calorie deficit (target 2400 vs actual 1100 → 1300 kcal deficit) AND very low protein ratio (40g / 140g = 0.29) compound to fire extreme_deficiency_escalation. Larger deficit AND more severe protein gap than nutrition_002, exercising the worst-case escalate path.",
+  "input": {
+    "signals": {
+      "is_partial_day": false,
+      "today_row": {
+        "calories": 1100.0,
+        "protein_g": 40.0,
+        "carbs_g": 130.0,
+        "fat_g": 38.0,
+        "hydration_l": 1.5,
+        "meals_count": 2,
+        "derivation_path": "daily_macros"
+      }
+    }
+  },
+  "expected": {
+    "classified": {
+      "calorie_balance_band": "high_deficit",
+      "protein_sufficiency_band": "very_low",
+      "micronutrient_coverage": "unavailable_at_source"
+    },
+    "policy": {
+      "forced_action": "escalate_for_user_review",
+      "fired_rule_ids": ["extreme_deficiency_escalation"]
+    }
+  },
+  "tag": "w-am-adversarial-escalate"
+}

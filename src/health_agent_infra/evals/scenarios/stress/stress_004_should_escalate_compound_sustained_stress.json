@@ -1,0 +1,22 @@
+{
+  "scenario_id": "stress_004_should_escalate_compound_sustained_stress",
+  "kind": "domain",
+  "domain": "stress",
+  "description": "W-AM-2 adversarial: 7 consecutive days of Garmin all-day stress >= 65 (scores 65-85, well above the 60 threshold) with low body-battery and elevated subjective score — sustained_very_high_stress_escalation fires. Compounds against acute high stress today so an agent that focuses only on today's number could miss the chronic pattern.",
+  "input": {
+    "signals": {
+      "garmin_all_day_stress": 82,
+      "manual_stress_score": 5,
+      "body_battery_end_of_day": 18,
+      "body_battery_prev_day": 22,
+      "stress_history_garmin_last_7": [68, 72, 75, 80, 78, 85, 82]
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": "escalate_for_user_review",
+      "fired_rule_ids": ["sustained_very_high_stress_escalation"]
+    }
+  },
+  "tag": "w-am-adversarial-escalate"
+}

@@ -1,0 +1,22 @@
+{
+  "scenario_id": "sleep_004_should_escalate_compound_chronic_deprivation",
+  "kind": "domain",
+  "domain": "sleep",
+  "description": "W-AM-2 adversarial: 6 consecutive nights < 6h (well above the 4-night threshold) with low overall sleep score — chronic_deprivation_escalation fires hard. Compounds with sparse coverage signal but R-chronic-deprivation wins precedence.",
+  "input": {
+    "signals": {
+      "sleep_hours": 4.5,
+      "sleep_score_overall": 42,
+      "sleep_awake_min": 65.0,
+      "sleep_start_variance_minutes": 75.0,
+      "sleep_history_hours_last_7": [4.5, 4.8, 5.1, 4.2, 5.5, 5.9, 4.7]
+    }
+  },
+  "expected": {
+    "policy": {
+      "forced_action": "sleep_debt_repayment_day",
+      "fired_rule_ids": ["chronic_deprivation_escalation"]
+    }
+  },
+  "tag": "w-am-adversarial-escalate"
+}
