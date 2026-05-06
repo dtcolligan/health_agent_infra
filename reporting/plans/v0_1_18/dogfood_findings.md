@@ -254,4 +254,191 @@ W-OB-3 + W-OB-5 implementation may now proceed informed by these findings.
 
 # § W-OB-4b — Phase 2 post-W-OB-2 local-wheel smoke
 
-(Pending. Authored after W-OB-2 lands.)
+**Run date:** 2026-05-06
+**Run mode:** autonomous (Claude under maintainer ratification per
+the cycle's end-to-end execution mandate)
+**Tree state:** post-W-OB-1 + W-OB-7 + W-OB-3 + W-OB-2 commits in
+tree (commits up through `4ac917e`). All Phase 1 + Phase 2 code
+landed before the wheel was built.
+
+## Setup — local wheel build + isolated venv install
+
+**Safety scope.** The PLAN §2.D scenario named `pipx install
+<wheel-path>` against the user's environment. Per autonomous-mode
+discipline, I substituted an **isolated venv** for the install
+target so the maintainer's primary `hai` symlink is not
+overwritten. Semantically equivalent for the smoke (testing the
+packaged wheel + CLI surface in isolation); reversible (the venv
+is throwaway).
+
+```bash
+# Build local wheel (W-OB-4b acceptance step 1)
+uvx --from build python -m build --wheel --outdir /tmp/w_ob_4b_smoke
+# → health_agent_infra-0.1.17-py3-none-any.whl
+#   (version label still 0.1.17 — pyproject.toml version bump is
+#   ship-prep, not implementation phase. Wheel CONTENTS include
+#   W-OB-1..W-OB-7 changes.)
+
+# Isolated venv install
+uv venv /tmp/w_ob_4b_venv
+uv pip install --python /tmp/w_ob_4b_venv/bin/python \
+    /tmp/w_ob_4b_smoke/health_agent_infra-0.1.17-py3-none-any.whl
+# → installed cleanly; resolved + installed all deps from pyproject.
+```
+
+## Acceptance step 4 — bare `hai init` on TTY → default-flip witness
+
+**Limitation.** This subshell context is not a real TTY (subshells
+in pytest / shell automation do not have a terminal attached). The
+release-blocker witness "bare `hai init` on interactive TTY enters
+the `--guided` flow" therefore CANNOT be exercised here in
+autonomous mode — running `hai init` interactively in a non-TTY
+subshell would either (a) skip the default-flip via the `not
+stdin.isatty()` opt-out path (matching production behaviour), OR
+(b) deadlock waiting for prompts that have no input source.
+
+**The maintainer-only interactive witness is required at ship
+time.** The release-blocker gate is logically witnessed by the
+**unit test** (`test_cli_init_default_flip.py::test_case_i_tty_plus_missing_fields_fires_guided`)
+which monkeypatches `sys.stdin.isatty` to True. The test passed
+post-W-OB-2 (verified inline in the W-OB-2 commit `4ac917e`).
+**Maintainer must run `hai init` interactively from a real terminal
+once at ship time** to confirm the default-flip user experience
+(prompts surface as expected; user can answer or skip; `--guided`
+flow runs end-to-end). This is documented as a manual ship-time
+gate — see RELEASE_PROOF.md (to be authored).
+
+## Acceptance step 6 — opt-out paths verified end-to-end
+
+Both opt-out paths exercised against the installed wheel via the
+isolated venv. Wheel manifest confirmed:
+
+```json
+{
+  "hai_version": "0.1.17",
+  "hai init flag count": 11,
+  "hai init flags": [
+    "--thresholds-path", "--db-path", "--skills-dest",
+    "--skip-skills", "--force", "--with-auth", "--with-first-pull",
+    "--history-days", "--user-id", "--guided",
+    "--non-interactive"
+  ],
+  "total command count": 67
+}
+```
+
+`--non-interactive` flag present at index 11 ✓ (was 10 flags
+pre-W-OB-2; +1 expected per W-OB-2 acceptance item 4).
+
+### Smoke 1 — `HAI_INIT_NON_INTERACTIVE=1` env var
+
+```bash
+HAI_INIT_NON_INTERACTIVE=1 hai init --db-path .../state.db ...
+```
+
+JSON report contained:
+- `default_flip.decision`: `"opt_out_env"` ✓
+- `steps.config.status`: `"created"` ✓
+- `steps.state_db.status`: `"created"` ✓
+- `"guided"` key absent from `steps` ✓
+
+### Smoke 2 — `--non-interactive` CLI flag
+
+```bash
+hai init --non-interactive --db-path .../state.db ...
+```
+
+JSON report contained:
+- `default_flip.decision`: `"opt_out_flag"` ✓
+- `"guided"` key absent from `steps` ✓
+
+## Findings
+
+### F-OB-4B-01 — Release-blocker opt-out paths verified at wheel level (positive)
+
+**Severity:** none — confirmation, not defect.
+**`cycle_impact` tag:** `informational`.
+
+The W-OB-2 release-blocker contract (PLAN §2.B item 3 + §6 ship
+gate) requires that CI / agent harnesses calling `hai init` without
+TTY OR with explicit opt-out continue to get bare init. Both
+opt-out paths verified end-to-end against the packaged wheel:
+
+- `HAI_INIT_NON_INTERACTIVE=1` env var → `opt_out_env` decision.
+- `--non-interactive` CLI flag → `opt_out_flag` decision.
+
+Both result in `guided` absent from the report's `steps` dict, i.e.
+the bare init path ran. No regression on the existing automation
+contract.
+
+### F-OB-4B-02 — TTY default-flip witness deferred to maintainer
+
+**Severity:** none — scope-of-autonomous-mode boundary, not defect.
+**`cycle_impact` tag:** `informational`.
+
+The release-blocker contract also requires "bare `hai init` on
+interactive TTY enters the `--guided` flow" (PLAN §2.D W-OB-4b
+acceptance item 3). This requires a real interactive terminal,
+which is not available in the autonomous-mode subshell. The
+unit-test analogue
+(`test_cli_init_default_flip.py::test_case_i_tty_plus_missing_fields_fires_guided`)
+passes post-W-OB-2 with monkeypatched isatty=True and confirms
+the default-flip predicate fires correctly + the guided flow is
+invoked.
+
+**Maintainer ship-time action:** run `hai init` interactively from
+a real terminal once before PyPI publish to confirm the user
+experience. RELEASE_PROOF.md will document this as a manual
+ship-time gate.
+
+### F-OB-4B-03 — Wheel build + isolated install cleanly handles the W-OB-2 + W-OB-7 changes
+
+**Severity:** none — packaging confirmation.
+**`cycle_impact` tag:** `informational`.
+
+The wheel built without packaging warnings; installed into an
+isolated venv without dep-resolution drift; the new
+`open_connection_with_migrations` symbol is exported correctly
+(implicit since `hai capabilities --json` succeeded — that command
+imports the full state module). No surface added or removed beyond
+the intentional `--non-interactive` flag.
+
+### F-OB-4B-04 — No W-OB-6-class structural findings
+
+**Severity:** none.
+**`cycle_impact` tag:** `informational` per PLAN §2.F item 1.
+
+No missing CLI commands. No broken paths. No documented behavior
+diverging from implementation. The wheel-level smoke surfaced
+zero W-OB-6-class findings; the only deferred item (F-OB-4B-02)
+is a maintainer-driven ship-time UX confirmation, not a structural
+defect requiring W-OB-6 absorption.
+
+---
+
+## W-OB-4b closure
+
+**Verdict:** Phase 2 dogfood pass complete to autonomous-mode
+boundary. Release-blocker opt-out paths verified end-to-end at
+wheel level. TTY default-flip witness deferred to maintainer
+ship-time interactive run (release-blocker gate logically witnessed
+by unit test; UX confirmation requires real terminal).
+
+**Cumulative dogfood findings across W-OB-4a + W-OB-4b:**
+
+- F-OB-4A-01 (W-OB-5 cross-cycle field-naming convention) — open;
+  W-OB-5 implementation upcoming.
+- F-OB-4A-02 (W-OB-5 umbrella-command preference) — open; W-OB-5
+  implementation upcoming.
+- F-OB-4A-03 (W-OB-7 verified end-to-end) — closed positive.
+- F-OB-4A-04 (no W-OB-6-class) — closed.
+- F-OB-4B-01 (opt-out paths verified at wheel level) — closed
+  positive.
+- F-OB-4B-02 (TTY default-flip witness deferred to maintainer) —
+  open; ship-time manual gate.
+- F-OB-4B-03 (wheel build clean) — closed positive.
+- F-OB-4B-04 (no W-OB-6-class) — closed.
+
+**Phase 3 W-OB-6 disposition:** does NOT fire. No W-OB-6-class
+findings across either dogfood pass. RELEASE_PROOF will record
+"no W-OB-6-class findings" per PLAN §2.F item 1 + OQ-7 disposition.
