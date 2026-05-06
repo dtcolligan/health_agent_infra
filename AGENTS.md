@@ -347,7 +347,7 @@ Before citing a file path, line number, function name, or fact in a
 PLAN, RELEASE_PROOF, audit response, or reply to the maintainer,
 **verify on disk**. Empirical examples:
 
-- v0.1.12 D14 round 1 caught `core/credentials.py:171` claims when
+- v0.1.12 D14 round 2 caught `core/credentials.py:171` claims when
   the helper actually lived at `core/pull/auth.py:171`.
 - v0.1.12 D14 round 2 caught "strategic plan §10 contains no MCP
   exposure row" when it had a Wave 3 row at line 444.

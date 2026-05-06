@@ -127,10 +127,12 @@ Use disagreement to sharpen the plan."*
 That posture caught at least three classes of bug across v0.1.x
 that single-AI review wouldn't have:
 
-- **v0.1.12 D14 round 1** — Codex caught Claude citing
+- **v0.1.12 D14 round 2** — Codex caught Claude citing
   `core/credentials.py:171` for a helper that actually lived at
   `core/pull/auth.py:171`. Wrong file path in a load-bearing audit
-  prompt.
+  prompt — and the second-order shape of the catch (round 2, not
+  round 1) is itself the pattern: round-1 fixes cite paths that
+  round 2 verifies on disk.
 - **v0.1.12 D14 round 2** — Codex caught "strategic plan §10
   contains no MCP exposure row" when it had a Wave 3 row at line
   444. Wrong cited absence.

@@ -6,13 +6,13 @@
 >
 > **Why fresh, not patched.** v1 was authored after v0.1.10 shipped.
 > Since then, 10 release cycles have shipped (v0.1.11–v0.1.18 + two
-> hotfixes), 2 cycles have been cancelled (v0.1.16, v0.1.19), 7 new
-> settled decisions have been added (D10–D16), the cli.py split has
-> landed, the docs overhaul has ratified an "agent-wrapper" framing
-> sharper than v1 articulated, and the foreign-user empirical
-> contract has bifurcated into three claims. v1 is preserved as
-> evidence; this doc derives current strategic posture from current
-> state.
+> hotfixes), 2 cycles have been cancelled (v0.1.16, v0.1.19), 4 new
+> settled decisions have been added (D13–D16; D10–D12 were already
+> in v1), the cli.py split has landed, the docs overhaul has
+> ratified an "agent-wrapper" framing sharper than v1 articulated,
+> and the foreign-user empirical contract has bifurcated into three
+> claims. v1 is preserved as evidence; this doc derives current
+> strategic posture from current state.
 >
 > **Audience.** Portfolio-grade — readable to a senior engineer
 > opening the project cold; dense enough for the maintainer to use
@@ -325,8 +325,10 @@ engineering team in consumer health. Google PHA paper concedes 6.5
 LLM calls per query and >3-minute latency.
 
 **v0.1.x evidence accumulation:**
-- **18 cycles shipped** by a single maintainer. v0.1.13 alone
-  closed 17 W-ids — largest cycle in the track.
+- **16 shipped releases plus 2 cancelled empirical cycles** disposed
+  by a single maintainer (18 cycle outcomes total). v0.1.13 was the
+  largest cycle in the track at 17 workstreams, with 16 closed and
+  one honest partial-closure (W-Vb → v0.1.14 residual).
 - **D11 + D14 + D15** audit cycle pattern twice/thrice-validated:
   - **D14 plan-audit:** 10 → 5 → 3 → 0 settling shape twice-validated
     (v0.1.11, v0.1.12); 11 → 5 → 3 thrice-validated (v0.1.17).
@@ -458,11 +460,12 @@ IR rounds. Doc-only cycles single round.
 
 ### 5.6 Eval scenario corpus tripled
 
-v0.1.10 had ~35 scenario fixtures. v0.1.17 W-AH-2 expanded to **135
+v0.1.14 moved the deterministic scenario corpus from 28 → 35
+(W-AH) and shipped 30 judge-adversarial fixtures (W-AI). v0.1.17
+W-AH-2 then expanded the deterministic corpus from 35 → **135
 deterministic fixtures** (20 per domain × 6 + 15 synthesis), 100%
-pass-rate. v0.1.18 added 30 judge-adversarial fixtures. The
-eval-substrate v0.2.0 W58D factuality gate consumes is now
-order-of-magnitude larger than v1 anticipated.
+pass-rate. The eval-substrate v0.2.0 W58D factuality gate consumes
+is now order-of-magnitude larger than v1 anticipated.
 
 ### 5.7 Onboarding ergonomics ratified
 
@@ -627,9 +630,11 @@ The substrate-maturation gates (v0.5 → 90d → v0.6, v0.7 → 90d →
 v1.0) cannot be compressed; they are evidence-driven.
 
 **v1 said "14-18 months optimistic from v0.1.10 (April 2026) to
-v1.0 ship — late 2027."** v2 holds the same horizon — Wave 1 shipped
-~3 weeks ahead of v1's estimate, but the calendar gates dominate the
-back half regardless.
+v1.0 ship — late 2027."** v2 holds the same horizon — Wave 1
+shipped roughly 2-3 months ahead of v1's "~3 months" Wave 1
+estimate (actual: ~10 days from v0.1.10 to v0.1.18), but the total
+v1.0 horizon is unchanged because the back-half calendar gates
+(v0.5 → 90d → v0.6, v0.7 → 90d → v1.0) dominate.
 
 ---
 
@@ -800,6 +805,11 @@ This doc is built on:
 - **`AGENTS.md`** "Settled Decisions" (2026-05-06). Source of D1–D16.
 - **`reporting/plans/post_v0_1_18/CP-2U-GATE-SPLIT.md`** (today).
   Source of D16.
+- **`reporting/plans/tactical_plan_v0_1_x.md`** (2026-05-06).
+  Source of current v0.2.x row state + v0.2.0 hard-deps post-D16.
+- **`reporting/plans/risks_and_open_questions.md`** (2026-05-06
+  freshness header). Source of R-T-03 RESOLVED status (cli.py rot
+  closed at v0.1.17 W-29) + active risk/open-question posture.
 - **`reporting/plans/v0_1_10/audit_findings.md`** through
   **v0_1_18/RELEASE_PROOF.md**. Source of per-cycle evidence.
 

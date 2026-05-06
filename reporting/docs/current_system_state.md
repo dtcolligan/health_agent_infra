@@ -1,6 +1,6 @@
 # Current system state
 
-**Status:** current truth as of v0.1.17 ship on 2026-05-05.
+**Status:** current truth as of v0.1.18 ship on 2026-05-06.
 
 This file is the short operational answer to "what is true now?"
 Use it before reading cycle-level audit history. Release artifacts
@@ -12,7 +12,7 @@ the provenance trail; this file is the current-state map.
 | Surface | Current value | Source of truth |
 |---|---|---|
 | Package version | `0.1.18` | `pyproject.toml`, `CHANGELOG.md` |
-| Published posture | v0.1.18 ship-prep complete 2026-05-06; D15 IR pending; PyPI publish gated on IR settle. **v0.1.19 cancelled 2026-05-06 per CP-2U-GATE-SPLIT (AGENTS.md D16); v0.2.0 (Wave 2 — weekly review + factuality) is next-active.** | `reporting/plans/v0_1_18/RELEASE_PROOF.md`, [PyPI](https://pypi.org/project/health-agent-infra/) |
+| Published posture | v0.1.18 shipped 2026-05-06; D15 IR closed at R3 SHIP_WITH_NOTES (settling 4 → 2 → 1-nit); PyPI publish remaining gated only on maintainer manual TTY ship gate per RELEASE_PROOF §3. **v0.1.19 cancelled 2026-05-06 per CP-2U-GATE-SPLIT (AGENTS.md D16); v0.2.0 (Wave 2 — weekly review + factuality) is next-active.** | `reporting/plans/v0_1_18/RELEASE_PROOF.md`, [PyPI](https://pypi.org/project/health-agent-infra/) |
 | Schema head | `26` (unchanged from v0.1.17 — `body_comp` added v0.1.17 W-B; v0.1.18 has no schema additions) | `src/health_agent_infra/core/state/migrations/` |
 | CLI commands | 67 annotated `hai` commands (unchanged from v0.1.17 — v0.1.18 W-OB-2 added `--non-interactive` flag at `hai init`, not a new command). New flag count on `hai init`: 11. | `hai capabilities --json` |
 | CLI source layout | `cli/__init__.py` (~3140 LOC parser-tree builder + dispatch) + `cli/handlers/{auth,pull_clean,state,config_init,intake,intent,target,recommend,review,inspect,tools}.py` (each <2500 LOC). W-29 mechanical split landed v0.1.17. | `src/health_agent_infra/cli/` |
@@ -35,15 +35,19 @@ correctness work (W-OB-2 `hai init` interactive default, W-OB-7
 intake-handler migration parity closing F-OB-PRE-01, W-OB-5
 `hai doctor next_action` schema).
 
-The stronger claim, "a non-maintainer completed the full flow under
-recorded observation," is **not yet proven**. v0.1.16 was scoped as
-the empirical post-publish cycle but cancelled 2026-05-04 when its
-named candidate became unavailable; the empirical work was renumbered
-to v0.1.19 and a new v0.1.18 onboarding-quality cycle inserted before
-it to close known onboarding gaps proactively. v0.1.19 will run the
-foreign-user session against the post-v0.1.18 PyPI build.
+The stronger claim, "a non-maintainer completed the full flow with
+wearable signal under recorded observation," is **not yet proven**.
+v0.1.16 was scoped as the empirical post-publish cycle but cancelled
+2026-05-04 when its named candidate became unavailable. v0.1.19
+(renumbered empirical scope) was then cancelled 2026-05-06 per
+CP-2U-GATE-SPLIT when the candidate-supply criteria proved too narrow
+on the v0.2.0 timeline. AGENTS.md D16 splits the original W-2U-GATE
+into three claims: **W-2U-INSTALL closed verbal-only** by the
+post-v0.1.18 maintainer's-father session; **W-2U-WEARABLE** (full
+pipeline with wearable signal) and **W-2U-DOGFOOD** (≥7d daily
+non-maintainer use) deferred to v0.4 review.
 
-## v0.1.18 shipped (ship-prep complete; PyPI publish gated on D15 IR)
+## v0.1.18 shipped (D15 IR closed at R3; PyPI publish gated only on maintainer manual TTY ship gate)
 
 - W-OB-1: README quickstart pivot to bare `hai init` as the primary
   first-run command (post-W-OB-2 default-flip shape; W-OB-2 auto-

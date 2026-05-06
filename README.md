@@ -17,20 +17,20 @@ give that provider — that's the only path data leaves the machine,
 and it's not something `hai` controls.
 
 [![PyPI](https://img.shields.io/pypi/v/health-agent-infra)](https://pypi.org/project/health-agent-infra/)
-[![Tests](https://img.shields.io/badge/tests-2683_passing-green)](verification/tests/)
+[![Tests](https://img.shields.io/badge/tests-2733_passing-green)](verification/tests/)
 [![Python](https://img.shields.io/badge/python-3.11+-blue)](pyproject.toml)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-> **Status — `0.1.17` (2026-05-05).** Working maintainer-dogfooded
+> **Status — `0.1.18` (2026-05-06).** Working maintainer-dogfooded
 > single-user software, packaged around Claude Code as the first
-> compatible host. The 2,683-test gate, 67-command CLI surface, and
+> compatible host. The 2,733-test gate, 67-command CLI surface, and
 > end-to-end audit chain are maintainer-verified. Non-maintainer
-> full-flow validation remains the open empirical input — the
-> originally-named foreign-user session was deferred when the
-> candidate became unavailable, and v0.1.18 (onboarding-quality
-> cycle) is now closing known onboarding gaps proactively before
-> v0.1.19 runs the second-user transcript against the post-v0.1.18
-> PyPI build.
+> full-flow validation: W-2U-INSTALL closed verbal-only by a
+> post-v0.1.18 foreign-machine session (maintainer's father);
+> W-2U-WEARABLE (full pipeline with wearable signal) and
+> W-2U-DOGFOOD (≥7d daily non-maintainer use) deferred to v0.4
+> review per CP-2U-GATE-SPLIT (AGENTS.md D16). v0.2.0 (Wave 2 —
+> weekly review + factuality) is now next-active.
 
 ![A user conversation flows into a shell-capable agent. The agent invokes the hai governed tool surface, which validates, gates, and audits every write before persisting to local SQLite state, JSONL audit logs, and the OS keyring/config. A direct write attempt from the agent to local state is shown crossed out at the boundary. A read-only return path through hai today, explain, review, and backup feeds back to the agent.](assets/product_boundary.png)
 
@@ -286,12 +286,12 @@ build on. The full integration contract is in
 
 | Surface | Current value |
 |---|---|
-| Package version | `0.1.17` (2026-05-05) |
-| Schema head | migration `026` (`body_comp` table added v0.1.17) |
+| Package version | `0.1.18` (2026-05-06) |
+| Schema head | migration `026` (`body_comp` table added v0.1.17; unchanged at v0.1.18) |
 | CLI surface | 67 annotated commands |
-| Test gate at release | 2,683 passed, 4 skipped |
+| Test gate at release | 2,733 passed, 5 skipped |
 | Live source | intervals.icu only; Garmin marked `unreliable` |
-| Posture | maintainer-dogfooded; foreign-user full-flow validation pending (renumbered to v0.1.19; v0.1.18 onboarding-quality cycle inserted before it) |
+| Posture | maintainer-dogfooded; W-2U-INSTALL closed verbal-only by post-v0.1.18 foreign-machine session; W-2U-WEARABLE + W-2U-DOGFOOD deferred to v0.4 review per CP-2U-GATE-SPLIT (AGENTS.md D16); v0.2.0 next-active |
 
 For the terse release-truth map, read
 [`reporting/docs/current_system_state.md`](reporting/docs/current_system_state.md).
