@@ -11,11 +11,50 @@ Per-release detail lives under `reporting/plans/<version>/`.
 
 ---
 
-## [0.1.18] — Unreleased
+## [0.1.18] — 2026-05-06
 
 **Tier:** substantive — 7 W-ids, onboarding-quality + intake-handler
 migration parity. Full Phase 0 D11 bug-hunt + 2-round D14 plan-audit
-(R1 7 findings + R2 3 findings, close-in-place).
+(R1 7 findings + R2 3 findings, close-in-place; 7 → 3 halving
+signature matching AGENTS.md empirical norm).
+
+### Behaviour change
+
+- **`hai init` interactive default (with opt-out)** (W-OB-2) — when
+  stdin is a TTY AND `onboarding_readiness` reports incomplete
+  state, bare `hai init` now auto-promotes to the `--guided` flow
+  (intervals.icu credential prompt + intent + target authoring +
+  first wellness pull + post-prompt `next_action_hint`). Opt-outs:
+  `--non-interactive` flag, `HAI_INIT_NON_INTERACTIVE=1` env var, or
+  no TTY (CI / agent harnesses). Existing automation calling `hai init`
+  without TTY is unaffected. Decision logged to
+  `report["default_flip"]["decision"]` for post-hoc visibility.
+
+### Added
+
+- **`open_connection_with_migrations` helper** (W-OB-7) at
+  `core/state/store.py` next to `open_connection`. Additive — wraps
+  existing seam + `apply_pending_migrations` before returning. All 8
+  `cmd_intake_*` handlers route through it; closes F-OB-PRE-01
+  (`hai intake weight` crash on schema-behind DB after wheel upgrade
+  without `hai init` re-run).
+- **`hai doctor next_action` field** (W-OB-5) on hint-emitting checks
+  (`onboarding_readiness`, `state_db`, `auth_intervals_icu`,
+  `auth_garmin`, `skills`). Structured shape:
+  `{command, purpose, agent_safe, interactive}`. Agents read
+  `hai doctor --json` and pattern-match on `next_action.command`
+  rather than parsing hint prose. Manifest-consistency invariant
+  pinned by `_NEXT_ACTION_REGISTRY` table + a regression test.
+  Multi-missing onboarding case prefers umbrella `hai init`; single-
+  missing case keeps the per-component command.
+- **`OnboardingResult.next_action_hint`** (W-OB-3) — content-only
+  post-prompt summary surfacing the next agent-driven step
+  (`hai daily` direct, or remediation if creds/intent skipped).
+- **`hai init --non-interactive`** flag (W-OB-2) — explicit opt-out
+  for the W-OB-2 default-flip on TTY-attached environments where
+  the user wants bare init.
+- **`HAI_INIT_NON_INTERACTIVE=1`** env-var contract (W-OB-2) —
+  equivalent opt-out for non-flag invocation paths.
 
 ### Doctrine
 
@@ -25,6 +64,32 @@ migration parity. Full Phase 0 D11 bug-hunt + 2-round D14 plan-audit
   `agent_integration.md:27` install-lead summary updated to match.
   Historical launch material under `reporting/docs/launch/` (v0.1.0-era
   drafts) intentionally left as-is per provenance discipline.
+
+### Internal
+
+- **W-OB-4a** Phase 1 dogfood pass against synthetic schema-25 DB —
+  W-OB-7 fix verified end-to-end; 4 findings (F-OB-4A-01..04 routed
+  appropriately).
+- **W-OB-4b** Phase 2 local-wheel smoke — both opt-out paths
+  verified end-to-end against the packaged wheel; TTY default-flip
+  UX confirmation deferred to maintainer ship-time manual gate
+  (per RELEASE_PROOF §3).
+- **W-OB-6** conditional absorption slot did NOT fire — no W-OB-6-
+  class structural findings across W-OB-4a + W-OB-4b. RELEASE_PROOF
+  records "no W-OB-6-class findings" per OQ-7 disposition.
+- **F-PHASE0-01 conftest fixture** — autouse fixture sets
+  `HAI_INIT_NON_INTERACTIVE=1` for the test suite by default so
+  existing init tests are unaffected by the W-OB-2 default-flip.
+  Tests specifically exercising the predicate `monkeypatch.delenv`
+  themselves.
+
+### Tests
+
+- 34 new tests (W-OB-2: 6, W-OB-3: 6, W-OB-5: 12, W-OB-7: 10).
+- Full suite at v0.1.18 ship: 2722 passed, 5 skipped (~80s).
+- 13-persona matrix: 13/13 reach `synthesized` cleanly, 0 findings,
+  0 crashes (identical to v0.1.17 baseline; v0.1.18 doesn't change
+  classifiers/policy).
 
 ---
 

@@ -30,15 +30,27 @@ This file is a high-level pointer; for actual scope, read those plans.
   close-in-place). Substantive tier. Test surface: 2,683 passed,
   4 skipped (+52 vs v0.1.15.1).
   See [`reporting/plans/v0_1_17/RELEASE_PROOF.md`](reporting/plans/v0_1_17/RELEASE_PROOF.md).
-- **v0.1.18 in-flight (cycle workspace scoped 2026-05-04; PLAN.md
-  authors when cycle opens).** Onboarding-quality cycle: pivot README
-  quickstart to `hai init --guided`; default-flip `hai init` to
-  guided when stdin is a TTY and `onboarding_readiness` reports
-  missing fields; review `--guided` prompt content; self-onboard
-  dogfood pass; `hai doctor onboarding_readiness` actionability +
-  machine-parsable `next_action`. Substantive tier, 5–6 W-ids,
-  3–7 days. Workspace at
-  [`reporting/plans/v0_1_18/README.md`](reporting/plans/v0_1_18/README.md).
+- **v0.1.18 ship-prep complete (2026-05-06; PyPI publish pending D15
+  IR + maintainer manual TTY gate).** Onboarding-quality + intake-
+  handler migration parity. 7 W-ids closed: W-OB-1 (README pivot
+  ratified), W-OB-2 (`hai init` interactive default with
+  `--non-interactive` + `HAI_INIT_NON_INTERACTIVE=1` opt-outs;
+  release-blocker leg of substantive tier), W-OB-3 (`--guided` post-
+  prompt `next_action_hint` + skip-input affordance tests), W-OB-4a
+  (Phase 1 upgrade dogfood — F-OB-PRE-01 verified end-to-end),
+  W-OB-4b (Phase 2 local-wheel smoke — both opt-out paths verified;
+  TTY UX deferred to maintainer manual gate), W-OB-5 (`hai doctor
+  next_action` across hint-emitting checks with manifest-consistency
+  invariant), W-OB-7 (intake-handler migration parity — additive
+  `open_connection_with_migrations` helper closing F-OB-PRE-01).
+  W-OB-6 conditional did NOT fire. Schema head unchanged at 26.
+  Test surface: 2,722 passed, 5 skipped (broader warning gate).
+  D14 7 → 3 close-in-place (one round earlier than substantive norm).
+  See [`reporting/plans/v0_1_18/RELEASE_PROOF.md`](reporting/plans/v0_1_18/RELEASE_PROOF.md).
+- **v0.1.19 next-active (foreign-user empirical, renumbered from
+  cancelled v0.1.16). PLAN.md authors after a recorded foreign-user
+  session against the post-v0.1.18 PyPI build.** Workspace at
+  [`reporting/plans/v0_1_19/README.md`](reporting/plans/v0_1_19/README.md).
 - **v0.1.16 cancelled (2026-05-04).** The named foreign-user candidate
   became unavailable; empirical scope renumbered to v0.1.19.
   See [`reporting/plans/v0_1_16/README.md`](reporting/plans/v0_1_16/README.md).

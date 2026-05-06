@@ -4,6 +4,37 @@ Health Agent Infra uses structured Codex review before substantive releases.
 The review is not a badge; the artifact is the value. This file indexes the
 existing release-cycle audit records so they are visible from the repo root.
 
+## v0.1.18 - 2026-05-06
+
+Onboarding-quality + intake-handler migration parity. 7 W-ids closed:
+W-OB-1 (README pivot ratified), W-OB-2 (`hai init` interactive default
+with opt-outs), W-OB-3 (`--guided` post-prompt next_action_hint +
+skip-input affordance tests), W-OB-4a (Phase 1 upgrade dogfood),
+W-OB-4b (Phase 2 local-wheel smoke), W-OB-5 (`hai doctor next_action`
+across hint-emitting checks with manifest-consistency invariant),
+W-OB-7 (intake-handler migration parity — closes F-OB-PRE-01).
+W-OB-6 conditional did NOT fire. **Tier:** substantive (W-OB-2
+release-blocker leg).
+
+| Round | Artifact | Result |
+|---|---|---|
+| Phase 0 (D11) | [`reporting/plans/v0_1_18/audit_findings.md`](reporting/plans/v0_1_18/audit_findings.md) | 4 records: F-OB-PRE-01 (revises-scope, absorbed as W-OB-7) + F-PHASE0-01..03 (informational); pre-implementation gate fired `OPEN PHASE 1` |
+| D14 round 1 | [`reporting/plans/v0_1_18/codex_plan_audit_response.md`](reporting/plans/v0_1_18/codex_plan_audit_response.md) | 7 findings PLAN_COHERENT_WITH_REVISIONS |
+| D14 round 2 | [`reporting/plans/v0_1_18/codex_plan_audit_round_2_response.md`](reporting/plans/v0_1_18/codex_plan_audit_round_2_response.md) | 3 findings PLAN_COHERENT_WITH_REVISIONS close-in-place; D14 closed (7 → 3 halving signature) |
+| D15 IR round 1 | TBD (prompt at [`reporting/plans/v0_1_18/codex_implementation_review_prompt.md`](reporting/plans/v0_1_18/codex_implementation_review_prompt.md)) | pending Codex launch |
+| Verification | [`reporting/plans/v0_1_18/RELEASE_PROOF.md`](reporting/plans/v0_1_18/RELEASE_PROOF.md) | 2722 pass / 5 skipped; mypy + bandit clean; persona matrix 13/13 (identical to baseline); manifest snapshot regenerated for W-OB-2 `--non-interactive` flag intentional add |
+
+**Outcome:** v0.1.18 ships onboarding ergonomics + upgrade-path
+correctness. F-OB-PRE-01 (the maintainer-DB crash surfaced 2026-05-05)
+closed end-to-end via the additive `open_connection_with_migrations`
+seam. `hai init` default-flip makes interactive first-run friction-free
+without breaking CI / agent automation. `hai doctor next_action` gives
+agents a structured companion to the existing `hint` field. v0.1.18
+W-OB-4a + W-OB-4b are maintainer dogfood; foreign-user empirical claim
+stays v0.1.19's.
+
+---
+
 ## v0.1.17 - 2026-05-05
 
 Maintainability + eval substrate consolidation. 10 W-ids closed: W-29

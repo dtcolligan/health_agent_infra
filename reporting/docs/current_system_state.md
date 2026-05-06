@@ -11,12 +11,12 @@ the provenance trail; this file is the current-state map.
 
 | Surface | Current value | Source of truth |
 |---|---|---|
-| Package version | `0.1.17` | `pyproject.toml`, `CHANGELOG.md` |
-| Published posture | Shipped to PyPI 2026-05-05; v0.1.18 (onboarding-quality cycle) is next-active | `reporting/plans/v0_1_17/RELEASE_PROOF.md`, [PyPI](https://pypi.org/project/health-agent-infra/) |
-| Schema head | `26` (W-B `body_comp` added v0.1.17) | `src/health_agent_infra/core/state/migrations/` |
-| CLI commands | 67 annotated `hai` commands (v0.1.15 baseline 60 + `hai sync purge` + `hai intake weight` + `hai eval review {list,show,tag,dismiss,export}`) | `hai capabilities --json` |
-| CLI source layout | `cli/__init__.py` (~2986 LOC parser-tree builder + dispatch) + `cli/handlers/{auth,pull_clean,state,config_init,intake,intent,target,recommend,review,inspect,tools}.py` (each <2500 LOC). W-29 mechanical split landed v0.1.17. | `src/health_agent_infra/cli/` |
-| Test gate at release | 2683 passed, 4 skipped (full suite); `hai eval run --scenario-set all` 135/135 PASS; persona matrix 13/13 with 0 findings + 0 crashes (opt-in via `HAI_RUN_PERSONA_MATRIX=1`) | `reporting/plans/v0_1_17/RELEASE_PROOF.md` |
+| Package version | `0.1.18` | `pyproject.toml`, `CHANGELOG.md` |
+| Published posture | v0.1.18 ship-prep complete 2026-05-06; D15 IR pending; PyPI publish gated on IR settle. v0.1.19 (foreign-user empirical) is next-active. | `reporting/plans/v0_1_18/RELEASE_PROOF.md`, [PyPI](https://pypi.org/project/health-agent-infra/) |
+| Schema head | `26` (unchanged from v0.1.17 — `body_comp` added v0.1.17 W-B; v0.1.18 has no schema additions) | `src/health_agent_infra/core/state/migrations/` |
+| CLI commands | 67 annotated `hai` commands (unchanged from v0.1.17 — v0.1.18 W-OB-2 added `--non-interactive` flag at `hai init`, not a new command). New flag count on `hai init`: 11. | `hai capabilities --json` |
+| CLI source layout | `cli/__init__.py` (~3140 LOC parser-tree builder + dispatch) + `cli/handlers/{auth,pull_clean,state,config_init,intake,intent,target,recommend,review,inspect,tools}.py` (each <2500 LOC). W-29 mechanical split landed v0.1.17. | `src/health_agent_infra/cli/` |
+| Test gate at release | 2722 passed, 5 skipped (full suite, broader `-W error::Warning` gate, ~80s); `hai eval run --scenario-set all` 135/135 PASS; persona matrix 13/13 with 0 findings + 0 crashes (opt-in via `HAI_RUN_PERSONA_MATRIX=1`) | `reporting/plans/v0_1_18/RELEASE_PROOF.md` |
 | Eval scenario corpus | 135 deterministic fixtures (20 per domain × 6 + 15 synthesis) + 30 judge_adversarial fixtures | `src/health_agent_infra/evals/scenarios/` |
 | Domains | recovery, running, sleep, stress, strength, nutrition | `src/health_agent_infra/domains/` |
 | Runtime state | local SQLite by default; no package telemetry | `reporting/docs/privacy.md`, `SECURITY.md` |
@@ -30,7 +30,10 @@ and closed the candidate package bugs found before publish. v0.1.15.1
 repaired Linux keyring fall-through. v0.1.17 consolidated the
 maintainability + eval-substrate carry-over (W-29 cli.py split,
 W-AH-2 scenario corpus, W-B body-comp intake, W-D arm-2 partial-day
-projection).
+projection). v0.1.18 closed the onboarding ergonomics + upgrade-path
+correctness work (W-OB-2 `hai init` interactive default, W-OB-7
+intake-handler migration parity closing F-OB-PRE-01, W-OB-5
+`hai doctor next_action` schema).
 
 The stronger claim, "a non-maintainer completed the full flow under
 recorded observation," is **not yet proven**. v0.1.16 was scoped as
@@ -39,6 +42,37 @@ named candidate became unavailable; the empirical work was renumbered
 to v0.1.19 and a new v0.1.18 onboarding-quality cycle inserted before
 it to close known onboarding gaps proactively. v0.1.19 will run the
 foreign-user session against the post-v0.1.18 PyPI build.
+
+## v0.1.18 shipped (ship-prep complete; PyPI publish gated on D15 IR)
+
+- W-OB-1: README quickstart pivot ratified; `agent_integration.md`
+  install lead updated to mention `--guided`. Pure docs.
+- W-OB-2: `hai init` interactive default. When stdin is a TTY AND
+  `check_onboarding_readiness` reports incomplete state, bare
+  `hai init` auto-promotes to the `--guided` flow. Opt-outs:
+  `--non-interactive` flag + `HAI_INIT_NON_INTERACTIVE=1` env var.
+  5-case test surface; manifest snapshot regenerated for the new flag.
+- W-OB-3: `--guided` prompt content review. Content-only
+  `next_action_hint` field on `OnboardingResult` (points user at
+  `hai daily` post-onboarding, with remediation if creds/intent skipped).
+  Empty-input affordance tests (no literal `skip` keyword).
+- W-OB-4a: Phase 1 upgrade-from-old-DB dogfood. W-OB-7 fix verified
+  end-to-end against synthetic schema-25 DB.
+- W-OB-4b: Phase 2 post-W-OB-2 local-wheel smoke. Both opt-out paths
+  verified end-to-end. TTY default-flip UX confirmation deferred to
+  maintainer ship-time manual gate.
+- W-OB-5: `hai doctor next_action` field across 5 hint-emitting
+  checks (`onboarding_readiness`, `state_db`, `auth_intervals_icu`,
+  `auth_garmin`, `skills`). Structured shape:
+  `{command, purpose, agent_safe, interactive}`. Manifest-consistency
+  invariant pinned by `_NEXT_ACTION_REGISTRY` table + regression test.
+  Multi-missing onboarding case prefers umbrella `hai init`.
+- W-OB-6: conditional absorption slot did NOT fire. No W-OB-6-class
+  structural findings.
+- W-OB-7: intake-handler migration parity. New
+  `open_connection_with_migrations` helper in `core/state/store.py`;
+  all 8 `cmd_intake_*` handlers route through it. F-OB-PRE-01
+  (intake crash on schema-behind DB) closed end-to-end.
 
 ## v0.1.17 shipped
 
@@ -90,9 +124,8 @@ foreign-user session against the post-v0.1.18 PyPI build.
 
 | Cycle | Role |
 |---|---|
-| v0.1.18 | Onboarding-quality cycle (next-active). README pivot to `hai init --guided`, default-flip `hai init` to guided when stdin is a TTY and `onboarding_readiness` reports missing fields, prompt content review, self-onboard dogfood pass, `hai doctor onboarding_readiness` actionability. PLAN.md authors when cycle opens. |
-| v0.1.19 | Foreign-user empirical (renumbered from v0.1.16; the originally-scoped post-publish empirical cycle). PLAN.md authors after a recorded foreign-user session against the post-v0.1.18 PyPI build. |
-| v0.2.0 | Weekly review (W52) + deterministic factuality (W58D) + Path A doc adjuncts. Hard deps are v0.1.19 + v0.1.14 substrate, not v0.1.17/v0.1.18 — parallelizable. |
+| v0.1.19 | Foreign-user empirical (next-active; renumbered from v0.1.16; the originally-scoped post-publish empirical cycle). PLAN.md authors after a recorded foreign-user session against the post-v0.1.18 PyPI build. |
+| v0.2.0 | Weekly review (W52) + deterministic factuality (W58D) + Path A doc adjuncts. Tactically sequenced post-v0.1.19, which is itself post-v0.1.18 (chain v0.1.18 → v0.1.19 → v0.2.0). |
 
 ## How to update this file
 

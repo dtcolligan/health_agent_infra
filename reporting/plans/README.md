@@ -1,9 +1,9 @@
 # Planning Tree — Reading Order Index
 
-> **Last updated:** 2026-05-05 (v0.1.17 shipped — maintainability +
-> eval substrate consolidation; 10 W-ids closed at 100% acceptance.
-> v0.1.16 was cancelled 2026-05-04; foreign-user empirical work is
-> now v0.1.19, sequenced after v0.1.18 onboarding).
+> **Last updated:** 2026-05-06 (v0.1.18 ship-prep complete —
+> onboarding-quality + intake-handler migration parity; 7 W-ids closed
+> + W-OB-6 conditional unfired. D15 IR pending. v0.1.19 (foreign-user
+> empirical) is now next-active).
 
 This is the orientation guide to the `reporting/plans/` tree.
 Read this when you're returning cold and need to find the right
@@ -26,8 +26,8 @@ reporting/plans/
 ├── v0_1_15_1/                         ← hotfix 2026-05-03 (Linux keyring fall-through)
 ├── v0_1_16/                           ← CANCELLED 2026-05-04 (foreign-user candidate unavailable; scope renumbered to v0.1.19)
 ├── v0_1_17/                           ← shipped 2026-05-05 (maintainability + eval consolidation; W-29 cli.py split + W-B body-comp + W-D arm-2)
-├── v0_1_18/                           ← next-active onboarding-quality cycle (workspace scoped 2026-05-04; PLAN.md authors when cycle opens)
-├── v0_1_19/                           ← foreign-user empirical workspace (renumbered from v0.1.16; PLAN.md authors after recorded session)
+├── v0_1_18/                           ← shipped 2026-05-06 (onboarding-quality + intake-handler migration parity; 7 W-ids closed + W-OB-6 unfired; PyPI publish pending IR + manual TTY gate)
+├── v0_1_19/                           ← next-active foreign-user empirical workspace (renumbered from v0.1.16; PLAN.md authors after recorded session)
 ├── post_v0_1_10/                      ← historical between-cycle handoff (demo, Phase 4 audit)
 ├── post_v0_1_13/                      ← post-v0.1.13 strategic research + audit chain + CPs
 ├── post_v0_1_14/                      ← post-v0.1.14 carry-over findings + research notes
@@ -167,6 +167,19 @@ Cycle directories preserve their own history:
   partial-day projection; W-C-EQP query-plan stability; F-PV14-02
   `hai sync purge`. Schema head 26. Test surface: 2683 passed,
   4 skipped. D14 11 → 5 → 3 → CLOSE; D15 IR 6 → 1-nit.
+- `v0_1_18/` — onboarding-quality + intake-handler migration parity
+  (ship-prep 2026-05-06; PyPI publish pending D15 IR + maintainer
+  manual TTY gate). 7 W-ids closed: W-OB-1 README pivot ratified;
+  W-OB-2 `hai init` interactive default with `--non-interactive` +
+  `HAI_INIT_NON_INTERACTIVE=1` opt-outs (release-blocker); W-OB-3
+  `--guided` post-prompt `next_action_hint` + skip-input affordance
+  tests; W-OB-4a Phase 1 upgrade dogfood; W-OB-4b Phase 2 local-wheel
+  smoke; W-OB-5 `hai doctor next_action` across hint-emitting checks
+  with manifest-consistency invariant; W-OB-7 intake-handler migration
+  parity via additive `open_connection_with_migrations` helper —
+  closes F-OB-PRE-01. W-OB-6 conditional did NOT fire. Schema head
+  unchanged at 26. Test surface: 2722 passed, 5 skipped (broader
+  warning gate). D14 7 → 3 close-in-place; D15 IR pending.
 
 Each cycle directory typically contains:
 - `PLAN.md` — cycle scope.
