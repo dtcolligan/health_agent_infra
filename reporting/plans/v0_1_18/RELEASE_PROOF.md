@@ -173,6 +173,19 @@ Closure-side updates landing at v0.1.18 ship:
 | 1 | 7 | PLAN_COHERENT_WITH_REVISIONS |
 | 2 | 3 | PLAN_COHERENT_WITH_REVISIONS close-in-place |
 
+## §8b D15 IR audit-chain summary
+
+| Round | Findings | Verdict | Closed via |
+|---|---:|---|---|
+| 1 | 4 | SHIP_WITH_FIXES | fix-and-reland 1 (commit `4de4306`) |
+| 2 | 2 | SHIP_WITH_FIXES | fix-and-reland 2 (commit `19ed4b0`) |
+| 3 | 1 (nit) | SHIP_WITH_NOTES | close-in-place |
+
+**D15 IR settled at R3.** Settling shape **4 → 2 → 1-nit** matches
+AGENTS.md empirical norm `5 → 2 → 1-nit` (twice-validated against
+v0.1.11 + v0.1.12 + v0.1.17). v0.1.18 settles slightly tighter at
+R1 (4 not 5) consistent with its smaller catalogue.
+
 Settling shape **7 → 3** matches AGENTS.md empirical norm `10 → 5 → 3 → 0`
 (thrice-validated against v0.1.11, v0.1.12, v0.1.17). v0.1.18 settled one
 round earlier than the norm because the catalogue is small (7 W-ids) and

@@ -188,17 +188,51 @@ This pattern is broader than W-OB-3: any future hint/render/decision
 logic that consumes onboarding readiness should consult the same
 intent/target/wellness_pull primitives, not the derived status string.
 
-## §6 Open items for D15 IR
+### 5.7 fix-and-reland response_response file-counts should be read from `git status`, not reconstructed
 
-- **Manual ship-time TTY gate.** RELEASE_PROOF §3 documents this
-  explicitly. IR may want to ratify the substitution shape (autonomous-
-  mode unit-test + maintainer manual gate together = acceptance) or
-  surface a stronger automated gate.
-- **`open_connection_with_migrations` scope discipline.** The helper is
-  intentionally intake-handler-scoped (additive, doesn't replace
-  `open_connection` globally). IR may want to verify the read-path
-  doctor checks intentionally don't migrate, or surface the boundary
-  more loudly.
+F-IR-R3-01 (D15 IR R3, nit-class) caught a bookkeeping miss: the
+R2 fix-and-reland response_response §"Files modified" table said
+"10 file-level changes (8 modified + 2 new)." The actual diff was
+11 — the missing entry was the R2 audit response artifact
+(`codex_implementation_review_round_2_response.md`) that Codex
+had pasted into the worktree before the fix-and-reland-2 commit.
+
+The author's mental model of "files I'm authoring" did not include
+the audit artifact that was already in the working tree. Codex's
+R3 walk caught the discrepancy.
+
+**Pattern that should apply.** Future fix-and-reland response_responses
+should author the "Files modified" table by reading
+`git status --short` immediately before commit, not by
+reconstructing it from the implementation narrative. This catches
+audit artifacts (response.md / response_response.md) and
+ship-prep artifacts (RELEASE_PROOF / REPORT) landing in the same
+commit that the writing-side narrative might miss.
+
+Added to autonomous-mode discipline alongside §5.5 (doc-regen-with-
+version-bump) and §5.6 (primitive-readiness vs derived-status
+state-model coupling).
+
+## §6 D15 IR closure
+
+**D15 IR settled at R3 SHIP_WITH_NOTES.** Settling shape
+**4 → 2 → 1-nit** matches AGENTS.md empirical norm
+`5 → 2 → 1-nit` (twice-validated against v0.1.11 + v0.1.12 +
+v0.1.17). v0.1.18 settles slightly tighter at R1 (4 not 5)
+consistent with its smaller catalogue.
+
+### IR open items at R1 — disposition
+
+- **Manual ship-time TTY gate.** **RATIFIED at IR R1** (W-OB-4b
+  PASS_WITH_NOTE per Codex R1 verdict). The autonomous-mode unit-
+  test (`test_case_i_tty_plus_missing_fields_fires_guided` with
+  monkeypatched isatty=True) + the maintainer manual gate
+  together = acceptance. The manual gate remains mandatory before
+  PyPI publish per RELEASE_PROOF §3.
+- **`open_connection_with_migrations` scope discipline.** Verified
+  at IR R1 (W-OB-7 PASS); helper additivity confirmed via mutation
+  probe — `open_connection` unchanged globally. Read-path doctor
+  checks intentionally still use bare `open_connection`.
 - **W-OB-5 registry exhaustiveness.** **CLOSED at IR R1 F-IR-03 +
   R2 F-IR-R2-01.** Registry now 11 commands; coverage extends to
   `check_config` (×2 paths), `check_sources`, `check_today` (×2),
@@ -217,9 +251,21 @@ intent/target/wellness_pull primitives, not the derived status string.
 v0.1.18 closes the onboarding-quality + intake-handler migration parity
 PLAN.md authored 2026-05-06 in full. All 7 W-ids land at acceptance
 under the standard substantive-cycle gates (W-OB-6 unfired per
-conditional contract). The cycle ships as "onboarding-gap closure with
-maintainer-side dogfood validation" — the foreign-user empirical claim
-stays v0.1.19's.
+conditional contract). **D15 IR closed at R3 SHIP_WITH_NOTES** with
+the canonical empirical settling shape. The cycle ships as
+"onboarding-gap closure with maintainer-side dogfood validation" —
+the foreign-user empirical claim stays v0.1.19's.
+
+**Maintainer-only actions remaining for ship:**
+
+1. Manual TTY ship gate per RELEASE_PROOF §3 (real terminal `hai
+   init` interactive run to confirm W-OB-2 default-flip UX).
+2. `git push origin main` (cycle is currently ~14 commits ahead of
+   origin/main).
+3. Build + publish: `uvx --from build python -m build --wheel
+   --sdist` then `uvx twine upload dist/health_agent_infra-0.1.18-*`.
+4. Verify install via the CDN-bypass form per
+   `reference_release_toolchain` user-memory.
 
 The maintainer-driven actions remaining for ship:
 1. Run the manual TTY gate per RELEASE_PROOF §3.

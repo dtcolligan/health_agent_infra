@@ -23,17 +23,23 @@ release-blocker leg).
 | D14 round 2 | [`reporting/plans/v0_1_18/codex_plan_audit_round_2_response.md`](reporting/plans/v0_1_18/codex_plan_audit_round_2_response.md) | 3 findings PLAN_COHERENT_WITH_REVISIONS close-in-place; D14 closed (7 → 3 halving signature) |
 | D15 IR round 1 | [`reporting/plans/v0_1_18/codex_implementation_review_response.md`](reporting/plans/v0_1_18/codex_implementation_review_response.md) | 4 findings SHIP_WITH_FIXES (F-IR-01 stale agent_cli_contract.md + F-IR-02 README pre-W-OB-2 wording + F-IR-03 missed concrete doctor checks + F-IR-04 next_action_hint correctness bug); all 4 accepted + fixed in fix-and-reland commit |
 | D15 IR round 2 | [`reporting/plans/v0_1_18/codex_implementation_review_round_2_response.md`](reporting/plans/v0_1_18/codex_implementation_review_round_2_response.md) | 2 findings SHIP_WITH_FIXES (F-IR-R2-01 deep-probe `check_auth_intervals_icu` outcomes still without `next_action` + F-IR-R2-02 release-summary surface propagation gap); both accepted + fixed in fix-and-reland-2 commit |
-| D15 IR round 3 | TBD (prompt at [`reporting/plans/v0_1_18/codex_implementation_review_round_3_prompt.md`](reporting/plans/v0_1_18/codex_implementation_review_round_3_prompt.md)) | pending Codex launch |
-| Verification | [`reporting/plans/v0_1_18/RELEASE_PROOF.md`](reporting/plans/v0_1_18/RELEASE_PROOF.md) | 2733 pass / 5 skipped (post-IR-R2 fix-and-reland-2); mypy + bandit clean; persona matrix 13/13 (identical to baseline); manifest snapshot regenerated for W-OB-2 `--non-interactive` flag intentional add; agent_cli_contract.md regenerated post-version-bump |
+| D15 IR round 3 | [`reporting/plans/v0_1_18/codex_implementation_review_round_3_response.md`](reporting/plans/v0_1_18/codex_implementation_review_round_3_response.md) | 1 nit-class finding SHIP_WITH_NOTES (F-IR-R3-01 R2 response_response file-count off by one); close-in-place amendment, no fix-and-reland-3. **D15 IR closed.** |
+| Verification | [`reporting/plans/v0_1_18/RELEASE_PROOF.md`](reporting/plans/v0_1_18/RELEASE_PROOF.md) | 2733 pass / 5 skipped (post-IR-R2 fix-and-reland-2; R3 introduced no source/test changes); mypy + bandit clean; persona matrix 13/13 (identical to baseline); manifest snapshot regenerated for W-OB-2 `--non-interactive` flag intentional add; agent_cli_contract.md regenerated post-version-bump |
 
 **Outcome:** v0.1.18 ships onboarding ergonomics + upgrade-path
-correctness. F-OB-PRE-01 (the maintainer-DB crash surfaced 2026-05-05)
-closed end-to-end via the additive `open_connection_with_migrations`
-seam. `hai init` default-flip makes interactive first-run friction-free
-without breaking CI / agent automation. `hai doctor next_action` gives
-agents a structured companion to the existing `hint` field. v0.1.18
-W-OB-4a + W-OB-4b are maintainer dogfood; foreign-user empirical claim
-stays v0.1.19's.
+correctness. **D15 IR closed at R3 SHIP_WITH_NOTES** (settling shape
+4 → 2 → 1-nit, matching AGENTS.md empirical norm `5 → 2 → 1-nit`
+twice-validated against v0.1.11 + v0.1.12 + v0.1.17). F-OB-PRE-01
+(the maintainer-DB crash surfaced 2026-05-05) closed end-to-end via
+the additive `open_connection_with_migrations` seam. `hai init`
+default-flip makes interactive first-run friction-free without
+breaking CI / agent automation. `hai doctor next_action` gives agents
+a structured companion to the existing `hint` field across 9 doctor
+check paths (including deep-probe outcomes). v0.1.18 W-OB-4a +
+W-OB-4b are maintainer dogfood; foreign-user empirical claim stays
+v0.1.19's. **PyPI publish remaining maintainer-only:** manual TTY
+ship gate (RELEASE_PROOF §3) → `git push origin main` → `uvx twine
+upload`.
 
 ---
 

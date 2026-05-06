@@ -139,10 +139,14 @@ post-R1; +4 from F-IR-R2-01).
 | `reporting/plans/v0_1_18/REPORT.md` | F-IR-R2-02 | §6 "W-OB-5 registry exhaustiveness" marked CLOSED; concrete-vs-prose rule codified |
 | `reporting/docs/current_system_state.md` | F-IR-R2-02 | W-OB-1 + W-OB-5 paragraphs in §"v0.1.18 shipped" rewritten; test gate count 2733 |
 | `AUDIT.md` | F-IR-R2-02 | IR R2 row stamped with 2 findings + R3 placeholder |
+| `reporting/plans/v0_1_18/codex_implementation_review_round_2_response.md` | (R2 audit artifact) | new — Codex's R2 findings file landed in this same commit |
 | `reporting/plans/v0_1_18/codex_implementation_review_round_2_response_response.md` | (this file) | new |
 | `reporting/plans/v0_1_18/codex_implementation_review_round_3_prompt.md` | (handoff) | new — narrow R3 pass per Codex closure recommendation |
 
-10 file-level changes (8 modified + 2 new).
+**11 file-level changes (8 modified + 3 new).** (Original draft of
+this table said "10 (8 modified + 2 new)" — F-IR-R3-01 nit caught
+that the R2 response artifact also lands in the same commit;
+amended close-in-place at fix-and-reland-3.)
 
 ---
 
