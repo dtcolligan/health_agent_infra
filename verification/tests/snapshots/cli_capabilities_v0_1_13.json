@@ -1428,6 +1428,18 @@
           "positional": false,
           "required": false,
           "type": "bool"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Opt out of the v0.1.18 W-OB-2 default-flip (interactive `hai init` default). Without this flag, when stdin is a TTY AND onboarding state is incomplete, `hai init` auto-promotes to the `--guided` flow. Equivalent to setting HAI_INIT_NON_INTERACTIVE=1. CI / agent harnesses calling `hai init` without TTY are already opted out implicitly via the TTY check.",
+          "name": "--non-interactive",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
         }
       ],
       "idempotent": "no",
@@ -5476,6 +5488,6 @@
     }
   },
   "generated_by": "core.capabilities.walker.build_manifest",
-  "hai_version": "0.1.15.1",
+  "hai_version": "0.1.17",
   "schema_version": "agent_cli_contract.v1"
 }

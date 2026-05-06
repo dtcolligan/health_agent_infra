@@ -49,3 +49,23 @@ def _disable_intervals_icu_auto_default(monkeypatch):
         lambda: False,
         raising=True,
     )
+
+
+@pytest.fixture(autouse=True)
+def _opt_out_of_w_ob_2_default_flip(monkeypatch):
+    """W-OB-2 (v0.1.18) default-flip auto-opt-out for the suite.
+
+    F-PHASE0-01: existing init tests do not mock ``sys.stdin.isatty()``.
+    They pass today because pytest stdin is typically not a TTY in CI /
+    dev runs. After W-OB-2 lands, a developer running ``pytest`` in an
+    interactive terminal could see ``cmd_init`` auto-promote to the
+    ``--guided`` flow and block on user input.
+
+    The mitigation is to set the production opt-out env var
+    ``HAI_INIT_NON_INTERACTIVE=1`` for every test by default. Tests that
+    specifically exercise the default-flip predicate
+    (``test_cli_init_default_flip.py``) ``monkeypatch.delenv`` it
+    themselves and control isatty per-case.
+    """
+
+    monkeypatch.setenv("HAI_INIT_NON_INTERACTIVE", "1")

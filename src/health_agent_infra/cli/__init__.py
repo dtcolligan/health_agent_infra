@@ -2576,6 +2576,15 @@ def build_parser() -> argparse.ArgumentParser:
                              "intent + target rows, run a first wellness "
                              "pull, and surface today's plan. Idempotent; "
                              "skips steps that already have state.")
+    p_init.add_argument("--non-interactive", action="store_true",
+                        help="Opt out of the v0.1.18 W-OB-2 default-flip "
+                             "(interactive `hai init` default). Without this "
+                             "flag, when stdin is a TTY AND onboarding state "
+                             "is incomplete, `hai init` auto-promotes to the "
+                             "`--guided` flow. Equivalent to setting "
+                             "HAI_INIT_NON_INTERACTIVE=1. CI / agent harnesses "
+                             "calling `hai init` without TTY are already "
+                             "opted out implicitly via the TTY check.")
     p_init.set_defaults(func=cmd_init)
     annotate_contract(
         p_init,

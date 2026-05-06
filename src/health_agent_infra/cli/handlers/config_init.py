@@ -580,8 +580,56 @@ def cmd_init(args: argparse.Namespace) -> int:
     # via the intervals.icu adapter, and surfaces today's plan. Each
     # step is naturally idempotent so a Ctrl-C mid-flow leaves state
     # consistent and a re-run reaches the first incomplete step.
+    #
+    # W-OB-2 (v0.1.18) default-flip: when stdin is a TTY AND
+    # onboarding_readiness reports incomplete fields, auto-promote
+    # to the guided flow even without the explicit ``--guided`` flag.
+    # Opt-outs: ``--non-interactive`` flag, ``HAI_INIT_NON_INTERACTIVE=1``
+    # env var, or simply running without a TTY (CI / agent harnesses).
+    # Per W57 / OQ-5: routes to the existing prompt-based flow; never
+    # auto-authors. F-PHASE0-01: existing init tests rely on the
+    # non-TTY default; conftest.py autouse fixture mocks isatty=False
+    # to keep them stable.
+    effective_guided = bool(getattr(args, "guided", False))
+    default_flip_decision = "explicit_guided" if effective_guided else "not_evaluated"
+    if not effective_guided:
+        non_interactive_flag = bool(getattr(args, "non_interactive", False))
+        non_interactive_env = os.environ.get("HAI_INIT_NON_INTERACTIVE") == "1"
+        stdin_is_tty = sys.stdin.isatty() if hasattr(sys.stdin, "isatty") else False
+        if non_interactive_flag:
+            default_flip_decision = "opt_out_flag"
+        elif non_interactive_env:
+            default_flip_decision = "opt_out_env"
+        elif not stdin_is_tty:
+            default_flip_decision = "opt_out_no_tty"
+        else:
+            # On TTY without explicit opt-out — check onboarding readiness.
+            # Reuse the same predicate hai doctor uses so the contract is
+            # singular (no drift between cmd_init's view of "incomplete"
+            # and check_onboarding_readiness's).
+            try:
+                from health_agent_infra.core.doctor.checks import (
+                    check_onboarding_readiness,
+                )
+                readiness = check_onboarding_readiness(
+                    resolved,
+                    user_id=getattr(args, "user_id", "u_local_1"),
+                    as_of_date=date.today(),
+                )
+                onboarding_status = readiness.get("status", "ok")
+                if onboarding_status in {"warn", "fail"}:
+                    effective_guided = True
+                    default_flip_decision = "fired_incomplete"
+                else:
+                    default_flip_decision = "not_fired_already_complete"
+            except Exception:
+                # Defensive: a doctor-check failure should not break init.
+                # Fall through to bare init; surface the failure in the report.
+                default_flip_decision = "not_fired_check_error"
+    report["default_flip"] = {"decision": default_flip_decision}
+
     guided_status: Optional[str] = None
-    if getattr(args, "guided", False):
+    if effective_guided:
         guided_report = _run_guided_onboarding(
             args,
             db_path=resolved,
