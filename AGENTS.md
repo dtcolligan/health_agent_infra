@@ -255,6 +255,25 @@ write a cycle proposal in `reporting/plans/`; do not act unilaterally.
   RELEASE_PROOF.md declares the chosen tier as the first line
   of the document. Future audit-cycle retros cite the tier
   annotation. Origin: v0.1.12 CP3.
+- **(D16, post-v0.1.18) W-2U-GATE split.** Foreign-user empirical
+  evidence is three gates, not one. **W-2U-INSTALL** (install +
+  onboarding + abstain-without-wearable produces coherent output for
+  a non-maintainer) is closed by the post-v0.1.18 foreign-user
+  session (maintainer's father, 2026-05-06; verbal-only closure, no
+  transcript). **W-2U-WEARABLE** (full pipeline produces useful
+  output for a wearable-bearing foreign user) and **W-2U-DOGFOOD**
+  (non-maintainer uses the system daily for ≥7 consecutive days) are
+  deferred to opportunistic-not-blocking from v0.2.0 forward, both
+  re-evaluated as hard gates at the v0.4 review when MCP read-surface
+  decisions require foreign-user evidence. v0.2.0 hard-deps drop the
+  foreign-user empirical row; v0.2.0's only remaining hard dep is
+  v0.1.14 substrate (W-PROV-1 + W-AJ). The named residual: v0.2.0
+  ships its W52 weekly-review surface without a wearable-bearing or
+  multi-day foreign-user session having run against it; the W58D
+  factuality gate is the structural mitigation. The W-2U-INSTALL
+  closure is verbal-only and a future cycle's D14 may flag this as
+  weak provenance. Origin: post-v0.1.18 CP-2U-GATE-SPLIT
+  (`reporting/plans/post_v0_1_18/CP-2U-GATE-SPLIT.md`).
 
 ## Release Cycle Expectation
 

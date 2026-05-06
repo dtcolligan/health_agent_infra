@@ -48,8 +48,8 @@
 | ~~**v0.1.16**~~ | **CANCELLED 2026-05-04.** Originally scoped as empirical post-publish fixes from a foreign-user session. Cancelled when the named foreign-user candidate became unavailable; empirical scope renumbered to **v0.1.19** with a new **v0.1.18** onboarding cycle inserted before it. See `reporting/plans/v0_1_16/README.md`. | n/a | n/a | n/a |
 | **v0.1.17** | **Shipped 2026-05-05** — Maintainability + eval substrate consolidation. 10 W-ids closed: W-29 cli.py 9927-LOC mechanical split (1 main + 1 shared + 11 handler-group modules, all <2500 LOC; manifest byte-stable) + W-30 capabilities-manifest schema regression test + W-AH-2 scenario corpus 35 → 135 (100% pass-rate) + W-AI-2 `hai eval review` CLI + W-AM-2 4 escalate scenarios (cumulative 6/6) + W-Vb-4 persona-replay residual closure (12/12) + F-PV14-02 `hai sync purge` + W-B `hai intake weight` + body_comp + migration 026 + W-D arm-2 partial-day macro projection + W-C-EQP migration-025 query-plan stability. D14 halving signature 11 → 5 → 3 (thrice-validated against AGENTS.md empirical norm). AGENTS.md "Do Not Do" cli.py-split clause retired (provenance preserved). See `reporting/plans/v0_1_17/RELEASE_PROOF.md`. | shipped 2026-05-05 | shipped | v0.1.15 (W-A + W-C in tree) |
 | **v0.1.18** | **Shipped 2026-05-06** — Onboarding-quality + intake-handler migration parity. 7 W-ids closed: W-OB-1 (README pivot ratified) + W-OB-2 (`hai init` interactive default with `--non-interactive` + `HAI_INIT_NON_INTERACTIVE=1` opt-outs) + W-OB-3 (`--guided` post-prompt `next_action_hint` + skip-input affordance tests) + W-OB-4a (Phase 1 upgrade dogfood) + W-OB-4b (Phase 2 local-wheel smoke) + W-OB-5 (`hai doctor next_action` across hint-emitting checks with manifest-consistency invariant) + W-OB-7 (intake-handler migration parity — closes F-OB-PRE-01 via additive `open_connection_with_migrations` helper). W-OB-6 conditional did NOT fire. D14 halving signature 7 → 3 close-in-place. PyPI publish gated on D15 IR settle + maintainer manual TTY gate. See `reporting/plans/v0_1_18/RELEASE_PROOF.md`. | shipped 2026-05-06 | shipped | v0.1.17 close (W-29 cli.py split in tree) |
-| **v0.1.19** | **Foreign-user empirical (renumbered from cancelled v0.1.16, 2026-05-04).** P1/P2 fixes from a real second-user transcript + W-EXPLAIN-UX-2 + conditional W-FPV14-SYM + conditional W-OB-FU-RESIDUAL (any onboarding gap v0.1.18 missed). **Ship claim:** post-publish foreign-user session findings consolidated. PLAN.md authored after the session transcript exists. See `reporting/plans/v0_1_19/README.md`. | post-v0.1.18 + foreign-user available | 2026-Q4 late | v0.1.18 published to PyPI + foreign-user candidate transcript exists |
-| **v0.2.0** | Weekly review (W52) + deterministic factuality (W58D) + 4 doc-only adjuncts (Path A) | post-v0.1.19 + 2-4 weeks | 2026-Q4 / 2027-Q1 | v0.1.19 (foreign-user session fixes consolidated, formerly v0.1.16) + v0.1.14 (W-PROV-1 + W-AJ judge harness). **NOT** dependent on v0.1.17 — runs in parallel. |
+| ~~**v0.1.19**~~ | **CANCELLED 2026-05-06** per CP-2U-GATE-SPLIT (`reporting/plans/post_v0_1_18/CP-2U-GATE-SPLIT.md`) + AGENTS.md D16. Foreign-user empirical scope re-tiered to opportunistic-not-blocking; W-2U-INSTALL closed (verbal-only) by the post-v0.1.18 father session; W-2U-WEARABLE + W-2U-DOGFOOD deferred to v0.4 review. See `reporting/plans/v0_1_19/README.md`. | n/a | n/a | n/a |
+| **v0.2.0** | Weekly review (W52) + deterministic factuality (W58D) + 4 doc-only adjuncts (Path A) | post-v0.1.18 + 2-4 weeks | 2026-Q4 / 2027-Q1 | v0.1.14 (W-PROV-1 + W-AJ judge harness). **NOT** dependent on v0.1.17 — runs in parallel. **Foreign-user empirical evidence re-tiered to opportunistic-not-blocking per CP-2U-GATE-SPLIT (post-v0.1.18, AGENTS.md D16):** v0.1.19 cancelled; W-2U-INSTALL closed (verbal-only) by the post-v0.1.18 father session; W-2U-WEARABLE + W-2U-DOGFOOD deferred to v0.4 review. |
 | **v0.2.1** | Insight ledger (W53) (Path A) | post-v0.2.0 + 2-3 weeks | 2026-Q4 / 2027-Q1 | v0.2.0 |
 | **v0.2.2** | LLM judge shadow-by-default (W58J + W-JUDGE-BIAS) (Path A) | post-v0.2.1 + 2-3 weeks | 2026-Q4 / 2027-Q1 | v0.2.1 |
 | **v0.2.3** | Judge promotion to blocking + W-30 capabilities-manifest schema freeze (Path A) | post-v0.2.2 + ≥50 shadow runs | 2027-Q1 | v0.2.2 (≥50 shadow runs accumulated) |
@@ -70,6 +70,18 @@ exposing it to a foreign user) → v0.1.19 (renumbered foreign-user
 empirical, ships when any second-user candidate arrives) → v0.2.0**.
 v0.1.16 is preserved as a cancelled-cycle README pointing to v0.1.19;
 the W-29 cli.py-split destination is unchanged at v0.1.17.
+
+**v0.1.19 cancelled 2026-05-06** per CP-2U-GATE-SPLIT
+(`reporting/plans/post_v0_1_18/CP-2U-GATE-SPLIT.md`) + AGENTS.md D16.
+The maintainer's candidate-supply criteria proved too narrow to
+satisfy on the v0.2.0 timeline. W-2U-GATE was found to conflate three
+empirical claims (install / wearable / ≥7d dogfood); W-2U-INSTALL
+closed verbal-only by the post-v0.1.18 father session, and the
+remaining two deferred to opportunistic-not-blocking with a v0.4
+review re-evaluation gate. **v0.2.0 hard-dep on v0.1.19 dropped.**
+Forward sequence is now: **v0.1.18 (shipped 2026-05-06) → v0.2.0**
+with v0.1.19 preserved as a cancelled-cycle README pointing to this
+CP.
 The 4-release Path A split for v0.2.x honors reconciliation C6 (one
 schema group per release) per CP-PATH-A (post-v0.1.13 OQ-B answered
 Path A 2026-05-01).

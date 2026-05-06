@@ -1,115 +1,102 @@
-# v0.1.19 cycle — workspace
+# v0.1.19 cycle — CANCELLED
 
-**Status:** scoped as **empirical-by-design**, not yet open. PLAN.md
-authored when the cycle opens, after v0.1.18 closes and a real
-foreign-user candidate runs the install.
+**Status:** Cancelled 2026-05-06 per CP-2U-GATE-SPLIT
+(`reporting/plans/post_v0_1_18/CP-2U-GATE-SPLIT.md`) + AGENTS.md D16.
 
-**Tier (anticipated):** substantive. Empirical post-session cycles
-typically close 4-9 days but the cycle pattern still fires full
-Phase 0 + multi-round D14 because what's being audited is the
-session-output triage, not a fixed workstream catalogue.
+## Why cancelled
 
-**Provenance.** Originally scoped as **v0.1.16** (created 2026-05-03
-alongside the v0.1.15 D14 close). v0.1.16 was cancelled on 2026-05-04
-when its named foreign-user candidate became unavailable; the
-empirical scope was preserved and renumbered to v0.1.19 to ship after
-v0.1.18's onboarding-quality improvements. The maintainer's
-restructure logic: do v0.1.17 (maintainability) → v0.1.18
-(onboarding) → v0.1.19 (foreign-user empirical) → v0.2.0. See
-`reporting/plans/v0_1_16/README.md` for the cancellation note.
+The cycle was scoped as **empirical-by-design** against a wearable-
+bearing foreign-user session. v0.1.16 cancelled when its named
+candidate (Mohil Garg, per memory) became unavailable on 2026-05-04;
+v0.1.19 inherited the empirical scope after a v0.1.18 onboarding-
+quality cycle was inserted to close the install→first-plan gap before
+re-exposing it to a foreign user.
 
-## Why no PLAN.md yet
+On 2026-05-06 the maintainer surfaced two facts in chat:
 
-v0.1.19's scope is literally "the bugs the post-publish foreign-user
-session surfaces" — authoring a PLAN.md before the session fires
-would either be (a) speculative scope (guessing what bugs will
-appear), or (b) trivial restate of "TBD per session output." Neither
-helps. The PLAN authors when the cycle opens, with the session
-transcript as input.
+1. The candidate-supply criteria for a wearable-bearing foreign user
+   are too narrow to satisfy on the v0.2.0 timeline ("the criteria
+   for what is needed is too difficult for me to find").
+2. A wearable-less foreign-user install had already happened
+   (maintainer's father, post-v0.1.18, verbatim "it worked for him").
 
-## Scope (provisional, finalised in PLAN.md after gate)
+That combination forced re-evaluation of the gate definition.
+W-2U-GATE was found to conflate three empirical claims with different
+candidate-supply costs. CP-2U-GATE-SPLIT formalizes the split and
+re-tiers two of the three to opportunistic-not-blocking.
 
-| W-id (anticipated) | Title | Source |
-|---|---|---|
-| **W-2U-FIX-P1** | All P1 fixes from the recorded foreign-user session | foreign-user session output |
-| **W-2U-FIX-P2** | All P2 fixes from the recorded session (or named further deferrals) | foreign-user session output |
-| **W-EXPLAIN-UX-2** | Empirical foreign-user pass over `hai explain` (deferred from v0.1.14 W-EXPLAIN-UX) consuming the v0.1.14 review doc's `carries-forward` section | v0.1.14 W-EXPLAIN-UX |
-| **W-FPV14-SYM** *(conditional)* | Broader F-PV14-01 symmetry rule: every CLI command consuming both `--db-path` and `--base-dir` refuses asymmetric overrides. Land **only if the foreign-user session surfaces a friction point with the asymmetric-override pattern.** Otherwise defer. Source: v0.1.15 D15 IR round 1 F-IR-02 named-defer. | v0.1.15 IR round 1 F-IR-02 disposition |
-| **W-OB-FU-RESIDUAL** *(conditional)* | If v0.1.18's onboarding work lands but the foreign user still gets stuck on an onboarding step, absorb the fix here. (v0.1.18 closes the *known* onboarding gaps; v0.1.19 catches the unknown ones.) | foreign-user session output |
+## What replaces it (per CP-2U-GATE-SPLIT)
 
-**Effort estimate (anticipated):** 4-9 days. Bounded by session
-output (~10 P-class findings if v0.1.18 + the package version current
-at cycle open is reasonably prepared).
+W-2U-GATE splits into three gates:
 
-## Hard dependencies
+- **W-2U-INSTALL** — install + onboarding + abstain-without-wearable
+  produces coherent output for a non-maintainer. **Closed**
+  (verbal-only) by the post-v0.1.18 father session.
+- **W-2U-WEARABLE** — full pipeline (pull adapter → classification
+  → cross-domain synthesis → daily plan with non-trivial coverage)
+  produces useful output for a wearable-bearing foreign user.
+  **Deferred** to v0.4 review (MCP read-surface prereq).
+- **W-2U-DOGFOOD** — non-maintainer uses the system daily for ≥7
+  consecutive days. **Deferred** to v0.4 review.
 
-- **v0.1.18 must be shipped to PyPI** — the foreign user installs the
-  post-onboarding-cycle package, not pre.
-- The foreign user's transcript at
-  `reporting/plans/v0_1_19/foreign_machine_session_<YYYY-MM-DD>.md`
-  must exist (or in a session log file the cycle session points to).
-- The foreign user's install record + state DB snapshot archived per
-  the convention v0.1.15 established.
+The empirical workstreams originally scoped here are re-destinated:
 
-## What's explicitly OUT of scope for v0.1.19
+- **W-2U-FIX-P1 / P2** — fold into whatever cycle opens against the
+  next available foreign-user session (likely v0.2.x post-publish
+  carry-forward).
+- **W-EXPLAIN-UX-2** — re-destinated to v0.2.0 PLAN as a non-blocking
+  carry-forward workstream.
+- **W-FPV14-SYM** (conditional) — re-destinated to v0.2.0 PLAN as a
+  non-blocking carry-forward (still conditional on a friction signal
+  surfacing).
+- **W-OB-FU-RESIDUAL** (conditional) — closed-by-default; absorbed
+  into W-2U-INSTALL closure (no residual surfaced in the father
+  session).
 
-- **No new feature work.** Empirical fixes only.
-- **No mechanical refactor** — that's v0.1.17.
-- **No eval-substrate work** — v0.1.17.
-- **No state-model schema additions** (v0.2.x territory).
-- **No v0.2.x scope.**
+## Closure provenance — verbal-only
 
-If a finding from the session reveals a need for one of the above,
-**the maintainer's call is whether to (a) defer that finding to
-v0.2.x with named scope, or (b) cut a focused patch hotfix if the
-issue is small and release-blocking** — not silently absorb it.
+The W-2U-INSTALL closure is **verbal-only**. No transcript at
+`reporting/plans/v0_1_19/foreign_machine_session_<YYYY-MM-DD>.md` and
+none planned (maintainer chat 2026-05-06: "I cannot get father
+transcript").
 
-## First actions for the cycle session (when it opens)
+This residual is named in:
 
-1. Confirm v0.1.18 published (RELEASE_PROOF.md + REPORT.md present).
-2. Confirm the foreign-user session transcript exists.
-3. Read the transcript end-to-end before scoping.
-4. Author `PLAN.md` per the empirical findings. First line: tier
-   annotation. Sections: theme + per-finding W-id + ship gates +
-   risks.
-5. Copy `_templates/codex_plan_audit_prompt.template.md` and
-   customise for the empirical-cycle audit shape (D14 questions
-   focus on whether the empirical findings are correctly triaged,
-   not whether the workstream catalogue is right).
-6. Hand to maintainer for D14 round-1 launch.
+- AGENTS.md D16.
+- v0.2.0 PLAN.md §-residual-risks (when authored).
+- CP-2U-GATE-SPLIT "Residual claim — W-2U-INSTALL closure quality
+  (verbal-only)".
 
-## D14 plan-audit settled expectation (empirical cycles)
+Future cycles' D14 may flag the closure as weak provenance. That is
+correct behaviour — the residual is real and is named explicitly to
+short-circuit the round-2 finding.
 
-Substantive tier still applies. Empirical cycles tend to settle in
-2-3 rounds (catalogue is bounded by session output; less surface
-area for cross-doc consistency findings than restructure cycles).
+## v0.2.0 hard-dep impact
 
-## Phase 0 (D11) scope (empirical cycles)
-
-Substantive tier requires Phase 0, but for an empirical cycle the
-bug-hunt is narrower: re-run the persona matrix against the
-post-v0.1.18 state model, audit-chain probe, internal sweep on the
-named-deferred fix surfaces. Codex external bug-hunt audit is
-optional per maintainer.
-
-## Ship gate
-
-- All session P1 findings either fixed or re-deferred with a
-  specific destination.
-- All session P2 findings fixed or deferred.
-- W-EXPLAIN-UX-2 dispositions filed against the v0.1.14 review doc's
-  carries-forward section.
-- Standard substantive-cycle gates (pytest, mypy, bandit,
-  capabilities round-trip).
-- AUDIT.md + CHANGELOG entries authored.
-- Ship-time freshness checklist from AGENTS.md.
+v0.2.0 hard-dep on v0.1.19 is **dropped** per CP-2U-GATE-SPLIT.
+v0.2.0's only remaining hard dep is v0.1.14 substrate (W-PROV-1 +
+W-AJ judge harness), already shipped.
 
 ## Cross-references
 
-- `reporting/plans/v0_1_16/README.md` — cancellation note for the
-  original empirical slot.
-- `reporting/plans/v0_1_18/README.md` — the precursor onboarding
-  cycle this cycle empirically validates.
-- `reporting/plans/v0_1_15/PLAN.md` §2.G — original W-2U-GATE
-  acceptance.
-- `reporting/plans/tactical_plan_v0_1_x.md` — track table.
+- `reporting/plans/post_v0_1_18/CP-2U-GATE-SPLIT.md` — the CP that
+  authorizes this cancellation.
+- `AGENTS.md` D16 — the settled decision.
+- `reporting/plans/v0_1_16/README.md` — prior cancellation precedent.
+- `reporting/plans/tactical_plan_v0_1_x.md` §1 — v0.2.0 hard-deps row
+  reflects the drop.
+- `reporting/plans/strategic_plan_v1.md` §7 Wave 1 — footnote naming
+  the gate split.
+
+## Pattern note
+
+This is the second cancelled-cycle README in the v0.1.x track. The
+pattern (v0.1.16 → v0.1.19) confirms the "empirical-by-design cycles
+cannot be built on synthetic evidence" lesson from
+`reporting/plans/v0_1_16/README.md` and adds a refinement:
+**empirical cycles also cannot be built on over-specified candidate
+criteria**. CP-2U-GATE-SPLIT operationalizes the refinement by
+splitting one over-specified gate into three claims with explicit
+candidate-supply differentials.
+
+Do not use this directory as an open implementation checklist.
