@@ -47,12 +47,21 @@ This file is a high-level pointer; for actual scope, read those plans.
   Test surface: 2,722 passed, 5 skipped (broader warning gate).
   D14 7 → 3 close-in-place (one round earlier than substantive norm).
   See [`reporting/plans/v0_1_18/RELEASE_PROOF.md`](reporting/plans/v0_1_18/RELEASE_PROOF.md).
-- **v0.1.19 next-active (foreign-user empirical, renumbered from
-  cancelled v0.1.16). PLAN.md authors after a recorded foreign-user
-  session against the post-v0.1.18 PyPI build.** Workspace at
-  [`reporting/plans/v0_1_19/README.md`](reporting/plans/v0_1_19/README.md).
+- **v0.1.19 cancelled (2026-05-06)** per CP-2U-GATE-SPLIT
+  (`reporting/plans/post_v0_1_18/CP-2U-GATE-SPLIT.md`) + AGENTS.md
+  D16. Foreign-user empirical scope re-tiered to
+  opportunistic-not-blocking; W-2U-INSTALL closed verbal-only by
+  the post-v0.1.18 maintainer's-father session; W-2U-WEARABLE +
+  W-2U-DOGFOOD (≥7d daily non-maintainer use) deferred to v0.4
+  review. See [`reporting/plans/v0_1_19/README.md`](reporting/plans/v0_1_19/README.md).
+- **v0.2.0 next-active (Wave 2 — weekly review + factuality).**
+  Hard deps: v0.1.14 substrate (W-PROV-1 + W-AJ judge harness),
+  already shipped. **NOT** dependent on v0.1.17/v0.1.18 — runs in
+  parallel. Foreign-user empirical evidence re-tiered per D16
+  (opportunistic-not-blocking).
 - **v0.1.16 cancelled (2026-05-04).** The named foreign-user candidate
-  became unavailable; empirical scope renumbered to v0.1.19.
+  became unavailable; empirical scope renumbered to v0.1.19 (which
+  itself was cancelled 2026-05-06).
   See [`reporting/plans/v0_1_16/README.md`](reporting/plans/v0_1_16/README.md).
 - **v0.1.15.1 shipped (2026-05-03).** Hotfix: Linux keyring
   fall-through hardening; adds `keyrings.alt` and defensive
@@ -79,34 +88,19 @@ This file is a high-level pointer; for actual scope, read those plans.
 
 ## Next
 
-- **v0.1.18 — onboarding-quality cycle.** Workspace scoped
-  2026-05-04; PLAN.md authors when the cycle opens.
-  W-OB-1 README quickstart pivot to `hai init --guided`; W-OB-2
-  default-flip `hai init` to guided when stdin is a TTY and
-  `onboarding_readiness` reports missing fields (`--non-interactive`
-  / `HAI_INIT_NON_INTERACTIVE=1` opt-out); W-OB-3 `--guided` prompt
-  content review; W-OB-4 self-onboard dogfood pass on a clean `pipx`
-  env; W-OB-5 `hai doctor onboarding_readiness` actionability +
-  machine-parsable `next_action`. **Ship claim:** the install→first-
-  plan path is the easy path, not the buried `--guided` flag.
-- **v0.1.19 — foreign-user empirical (renumbered from v0.1.16).**
-  Empirical-by-design; PLAN.md authors after a recorded foreign-user
-  session against the post-v0.1.18 PyPI build. Expected scope:
-  W-2U-FIX-P1 + W-2U-FIX-P2 fixes from the session, W-EXPLAIN-UX-2
-  (`hai explain` foreign-user pass; carry-forward from v0.1.14
-  W-EXPLAIN-UX), conditional W-FPV14-SYM, conditional W-OB-FU-RESIDUAL
-  for any onboarding gap v0.1.18 missed. **Ship claim:** post-publish
-  foreign-user session findings consolidated.
 - **v0.2.0 — weekly review + deterministic factuality (Path A
-  release 1 of 4).** W52 weekly review with source-row locators
-  (uses v0.1.14 W-PROV-1), W58D deterministic claim-block (blocking
-  from day 1), W-FACT-ATOM atomic decomposition, plus 4 doc-only
-  adjuncts (W-MCP-THREAT, W-COMP-LANDSCAPE, W-NOF1-METHOD,
-  W-2U-GATE-2 second foreign-machine session, sequenced after the
-  v0.1.19 foreign-user empirical cycle).
-  One schema group per release (honors C6). v0.2.0 is parallelizable
-  with v0.1.18 — its hard dependencies are v0.1.19 + v0.1.14
-  substrate, not v0.1.17/v0.1.18 maintainability work.
+  release 1 of 4).** **Next-active cycle.** W52 weekly review with
+  source-row locators (uses v0.1.14 W-PROV-1), W58D deterministic
+  claim-block (blocking from day 1), W-FACT-ATOM atomic
+  decomposition, plus 4 doc-only adjuncts (W-MCP-THREAT,
+  W-COMP-LANDSCAPE, W-NOF1-METHOD, W-2U-GATE-2 second
+  foreign-machine session, opportunistic-not-blocking per D16).
+  One schema group per release (honors C6). **v0.2.0 hard deps
+  post-D16:** v0.1.14 substrate (W-PROV-1 + W-AJ judge harness),
+  already shipped. **NOT** dependent on v0.1.17/v0.1.18
+  maintainability work. Foreign-user empirical evidence
+  re-tiered to opportunistic-not-blocking per
+  CP-2U-GATE-SPLIT (D16).
 - **v0.2.1 — insight ledger (Path A release 2 of 4).** W53 only;
   one schema group.
 - **v0.2.2 — LLM judge shadow-by-default (Path A release 3 of 4).**
@@ -150,29 +144,29 @@ v0.1.13 onboarding + governance prereqs (shipped 2026-04-30)
         -> v0.1.14.1 hardening: garmin_live structured-signal trap (shipped 2026-05-02)
             -> v0.1.15 publish-first package (shipped 2026-05-03)
                 -> v0.1.15.1 Linux keyring hotfix (shipped 2026-05-03)
-                    -> [v0.1.16 CANCELLED 2026-05-04 — foreign-user candidate unavailable; scope renumbered to v0.1.19]
+                    -> [v0.1.16 CANCELLED 2026-05-04 — foreign-user candidate unavailable]
                     -> v0.1.17 maintainability + eval consolidation (shipped 2026-05-05)
-                        -> v0.1.18 onboarding-quality cycle (in-flight; pivot README + default-flip --guided)
-                            -> v0.1.19 foreign-user empirical (renumbered from v0.1.16; awaits real second-user transcript)
-                                -> v0.2.0 W52 weekly review + W58D deterministic factuality (Path A 1/4)
-                                    -> v0.2.1 W53 insight ledger (Path A 2/4)
-                                        -> v0.2.2 W58J LLM judge shadow + W-JUDGE-BIAS panel (Path A 3/4)
-                                            -> v0.2.3 W58J promote to blocking + W-30 capabilities freeze (Path A 4/4)
-                                                -> v0.3 MCP plan (consumes v0.2.0 W-MCP-THREAT artifact)
-                                                    -> v0.4 MCP prereqs (least-privilege scope + threat-model done)
-                                                        -> v0.4-or-v0.5 MCP read surface ships
-                                                        -> v0.5 N-of-1 substrate (read-only UI decision-checkpoint)
-                                                             -> 90+ days of accumulated triples
-                                                             -> v0.6 personal-evidence estimator
-                                                                 -> v0.7 governed adaptation
-                                                                     -> 3+ months zero-incident
-                                                                     -> v1.0 stable contract
+                        -> v0.1.18 onboarding-quality cycle (shipped 2026-05-06)
+                            -> [v0.1.19 CANCELLED 2026-05-06 — CP-2U-GATE-SPLIT (D16); foreign-user empirical re-tiered to opportunistic-not-blocking]
+                            -> v0.2.0 W52 weekly review + W58D deterministic factuality (Path A 1/4)
+                                -> v0.2.1 W53 insight ledger (Path A 2/4)
+                                    -> v0.2.2 W58J LLM judge shadow + W-JUDGE-BIAS panel (Path A 3/4)
+                                        -> v0.2.3 W58J promote to blocking + W-30 capabilities freeze (Path A 4/4)
+                                            -> v0.3 MCP plan (consumes v0.2.0 W-MCP-THREAT artifact)
+                                                -> v0.4 MCP prereqs (least-privilege scope + threat-model done; W-2U-WEARABLE + W-2U-DOGFOOD re-evaluation gate per D16)
+                                                    -> v0.4-or-v0.5 MCP read surface ships
+                                                    -> v0.5 N-of-1 substrate (read-only UI decision-checkpoint)
+                                                         -> 90+ days of accumulated triples
+                                                         -> v0.6 personal-evidence estimator
+                                                             -> v0.7 governed adaptation
+                                                                 -> 3+ months zero-incident
+                                                                 -> v1.0 stable contract
 ```
 
-v0.2.0+ has hard deps on **v0.1.19** (foreign-user empirical) and the
-v0.1.14 substrate, **not** on v0.1.17/v0.1.18 — so v0.1.18 and v0.2.0
-are parallelizable if the maintainer prefers; the linear sequence
-above is the recommended ordering.
+v0.2.0 hard deps post-D16: **v0.1.14 substrate (W-PROV-1 + W-AJ
+judge harness), already shipped.** Foreign-user empirical evidence
+re-tiered to opportunistic-not-blocking per CP-2U-GATE-SPLIT.
+v0.2.0 is parallelizable with v0.1.17/v0.1.18 maintainability work.
 
 The Path A 4-release v0.2.x split (CP-PATH-A) honors reconciliation
 C6 (one conceptual schema group per release). See

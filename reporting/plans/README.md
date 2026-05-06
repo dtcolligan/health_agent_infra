@@ -1,9 +1,12 @@
 # Planning Tree — Reading Order Index
 
-> **Last updated:** 2026-05-06 (v0.1.18 ship-prep complete —
-> onboarding-quality + intake-handler migration parity; 7 W-ids closed
-> + W-OB-6 conditional unfired. D15 IR pending. v0.1.19 (foreign-user
-> empirical) is now next-active).
+> **Last updated:** 2026-05-06 (v0.1.18 shipped + post-v0.1.18
+> strategic refresh: v0.1.19 cancelled per CP-2U-GATE-SPLIT + D16
+> [foreign-user gate split into install/wearable/dogfood];
+> `post_v0_1_18/strategic_plan_v2.md` supersedes v1 as canonical
+> strategic reference; companion `post_v0_1_18/v0_1_x_retro.md`
+> documents v0.1.x track close. **v0.2.0 (Wave 2 — weekly review +
+> factuality) is now next-active.**)
 
 This is the orientation guide to the `reporting/plans/` tree.
 Read this when you're returning cold and need to find the right
@@ -14,11 +17,13 @@ doc by intent.
 ```
 reporting/plans/
 ├── README.md                          (this file)
-├── strategic_plan_v1.md               ← active strategic vision
+├── post_v0_1_18/strategic_plan_v2.md  ← active strategic vision (supersedes v1 2026-05-06)
+├── post_v0_1_18/v0_1_x_retro.md       ← v0.1.x track close retro (companion to v2)
+├── strategic_plan_v1.md               ← SUPERSEDED 2026-05-06 (preserved as v2 source)
 ├── tactical_plan_v0_1_x.md            ← active release plan
 ├── eval_strategy/v1.md                ← active eval methodology
-├── success_framework_v1.md            ← active value-measurement
-├── risks_and_open_questions.md        ← active risk + decision register
+├── success_framework_v1.md            ← active value-measurement (post-v0.2.0 wave-boundary refresh due)
+├── risks_and_open_questions.md        ← active risk + decision register (R-T-03 cli.py rot RESOLVED v0.1.17)
 ├── v0_1_4/ … v0_1_13/                 ← per-cycle artifacts (frozen post-ship)
 ├── v0_1_14/                           ← shipped 2026-05-01 (eval substrate + provenance + recovery path)
 ├── v0_1_14_1/                         ← shipped 2026-05-02 (hardening: garmin_live structured signal)
@@ -26,12 +31,13 @@ reporting/plans/
 ├── v0_1_15_1/                         ← hotfix 2026-05-03 (Linux keyring fall-through)
 ├── v0_1_16/                           ← CANCELLED 2026-05-04 (foreign-user candidate unavailable; scope renumbered to v0.1.19)
 ├── v0_1_17/                           ← shipped 2026-05-05 (maintainability + eval consolidation; W-29 cli.py split + W-B body-comp + W-D arm-2)
-├── v0_1_18/                           ← shipped 2026-05-06 (onboarding-quality + intake-handler migration parity; 7 W-ids closed + W-OB-6 unfired; PyPI publish pending IR + manual TTY gate)
-├── v0_1_19/                           ← next-active foreign-user empirical workspace (renumbered from v0.1.16; PLAN.md authors after recorded session)
+├── v0_1_18/                           ← shipped 2026-05-06 (onboarding-quality + intake-handler migration parity; 7 W-ids closed + W-OB-6 unfired)
+├── v0_1_19/                           ← CANCELLED 2026-05-06 per CP-2U-GATE-SPLIT (foreign-user empirical re-tiered to opportunistic; W-2U-INSTALL closed verbal-only, W-2U-WEARABLE + W-2U-DOGFOOD deferred to v0.4 review)
 ├── post_v0_1_10/                      ← historical between-cycle handoff (demo, Phase 4 audit)
 ├── post_v0_1_13/                      ← post-v0.1.13 strategic research + audit chain + CPs
 ├── post_v0_1_14/                      ← post-v0.1.14 carry-over findings + research notes
 ├── post_v0_1_15/                      ← post-v0.1.15 internal-docs audit + between-cycle notes
+├── post_v0_1_18/                      ← post-v0.1.18 strategic refresh: CP-2U-GATE-SPLIT + strategic_plan_v2 + v0_1_x_retro
 ├── future_strategy_2026-04-29/        ← Claude/Codex deep strategy review
 ├── historical/                        ← 9 superseded planning docs
 └── docs_overhaul/                     ← docs-overhaul review record
@@ -43,13 +49,21 @@ reporting/plans/
 
 **Read in order:**
 
-1. `strategic_plan_v1.md` — 12-24 month vision, settled decisions,
-   five hypotheses, scope-expansion exploration.
-2. `tactical_plan_v0_1_x.md` — concrete next 6-8 releases.
-3. `risks_and_open_questions.md` — what could derail this + what
+1. `post_v0_1_18/strategic_plan_v2.md` — 12-24 month vision, settled
+   decisions D1–D16, five hypotheses with v0.1.x evidence
+   accumulation, scope-expansion exploration. **Supersedes v1 as of
+   2026-05-06.**
+2. `post_v0_1_18/v0_1_x_retro.md` — companion retro: what 18 cycles
+   taught us. Five generalisable lessons + the patterns now load-
+   bearing.
+3. `tactical_plan_v0_1_x.md` — concrete next 6-8 releases.
+4. `risks_and_open_questions.md` — what could derail this + what
    decisions remain.
 
-If you only have time for one: `strategic_plan_v1.md`.
+If you only have time for one: `post_v0_1_18/strategic_plan_v2.md`.
+
+`strategic_plan_v1.md` is preserved as v2's primary source; read v1
+only when you need the snapshot of project posture at v0.1.10.
 
 ## I want to scope the next release.
 
@@ -116,7 +130,8 @@ If you only have time for one: `success_framework_v1.md`.
 2. `README.md` (project root) — product story + quickstart.
 3. `ARCHITECTURE.md` (project root) — runtime shape.
 4. `REPO_MAP.md` (project root) — every directory classified.
-5. `reporting/plans/strategic_plan_v1.md` — strategic frame.
+5. `reporting/plans/post_v0_1_18/strategic_plan_v2.md` — strategic
+   frame (supersedes v1).
 6. `reporting/plans/tactical_plan_v0_1_x.md` — execution frame.
 
 ## I'm reviewing a specific past release.
@@ -258,6 +273,21 @@ Post-v0.1.15 between-cycle notes. Current contents:
 
 - `internal_docs_audit.md` — internal-docs audit + fix report from
   the 2026-05-03 post-publish cleanup.
+
+## post_v0_1_18/
+
+Post-v0.1.18 strategic refresh + v0.1.x track close. Current contents:
+
+- `CP-2U-GATE-SPLIT.md` — cycle proposal authorising the
+  three-way split of W-2U-GATE (install closed verbal-only,
+  wearable + dogfood deferred to v0.4 review). AGENTS.md D16
+  applied.
+- `strategic_plan_v2.md` — fresh-authored strategic plan
+  (2026-05-06). Supersedes `strategic_plan_v1.md` as canonical
+  forward reference. Cites v1 as primary source.
+- `v0_1_x_retro.md` — companion retro on what 18 cycles taught
+  us. External-readable; intended for portfolio / careers
+  context as well as project continuity.
 
 ---
 

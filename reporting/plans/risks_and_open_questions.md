@@ -5,6 +5,16 @@
 > plans, plus questions that need maintainer judgement (not agent
 > judgement).
 >
+> **2026-05-06 freshness note.** R-T-03 (`cli.py` rot) is **RESOLVED**
+> at v0.1.17 W-29 mechanical split (9,927 LOC → 1 main + 1 shared +
+> 11 handler-group modules, all <2,500 LOC; manifest byte-stable).
+> The trip-wire (wc -l > 10000) was approached but never tripped;
+> the split shipped pre-emptively. Other risks remain active. v0.1.x
+> evidence consolidation lives in
+> [`post_v0_1_18/strategic_plan_v2.md`](post_v0_1_18/strategic_plan_v2.md) §5.
+> Full risk-register refresh deferred to post-v0.2.0 wave-boundary
+> review.
+>
 > **Reading intent.** Two sections. § 2-7 = risks. § 8 = open
 > questions. Read § 2-7 to understand what could go wrong; read § 8
 > when about to make a decision.
@@ -216,23 +226,22 @@ patch convention if needed).
 
 ---
 
-### R-T-03. `cli.py` rot
+### R-T-03. `cli.py` rot — RESOLVED 2026-05-05 (v0.1.17 W-29)
 
-**Trigger:** `cli.py` is 8239 lines today. Per AGENTS.md D4, splitting
-is deferred. As features land, the file grows. At some
-size, it becomes hard to navigate.
+**Status:** **RESOLVED.** v0.1.17 shipped W-29 mechanical split:
+9,927 LOC → 1 main module + 1 shared module + 11 handler-group
+modules under `src/health_agent_infra/cli/handlers/`, each <2,500
+LOC. Manifest byte-stable across the split. Per AGENTS.md, the
+"Do Not Do" cli.py-split clause was retired at v0.1.17 ship; only
+the capabilities-manifest schema-freeze clause remains (scheduled
+v0.2.3).
 
-**Impact:** Audit-cycle review time grows; new features land
-slower; bugs hide longer.
-
-**Likelihood:** Medium. The deferral is sensible today; eventually
-not.
-
-**Mitigation:**
-- D4 names the trip-wire: cli.py exceeds 10kloc OR external
-  integration arrives. Either lifts the deferral.
-
-**Trip-wire:** `wc -l src/health_agent_infra/cli.py` > 10000.
+**Original risk text** (preserved for provenance):
+- **Trigger:** `cli.py` is 8239 lines today. Per AGENTS.md D4,
+  splitting is deferred. As features land, the file grows. At some
+  size, it becomes hard to navigate.
+- **Trip-wire:** `wc -l src/health_agent_infra/cli.py` > 10000
+  (approached but never tripped — split shipped pre-emptively).
 
 ---
 

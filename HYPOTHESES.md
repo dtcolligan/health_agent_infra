@@ -8,8 +8,12 @@ case.
 This file is a stable lift from the (now superseded)
 [`reporting/plans/historical/multi_release_roadmap.md § 3`](reporting/plans/historical/multi_release_roadmap.md).
 The current working strategy lives in
-[`reporting/plans/strategic_plan_v1.md`](reporting/plans/strategic_plan_v1.md);
-this file is the citable artifact for the H1-H5 hypotheses themselves.
+[`reporting/plans/post_v0_1_18/strategic_plan_v2.md`](reporting/plans/post_v0_1_18/strategic_plan_v2.md)
+(supersedes
+[`strategic_plan_v1.md`](reporting/plans/strategic_plan_v1.md) as of
+2026-05-06; v1 preserved as historical evidence). This file is the
+citable artifact for the H1-H5 hypotheses themselves; v2 §3 carries
+the v0.1.x evidence accumulation per bet.
 
 ---
 

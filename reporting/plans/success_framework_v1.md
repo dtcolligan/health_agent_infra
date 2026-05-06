@@ -3,6 +3,15 @@
 > **Status.** Authored 2026-04-27 by Claude in extended planning
 > session. First standalone success-framework doc.
 >
+> **2026-05-06 freshness note.** Tier 1 metric structure + targets
+> remain load-bearing. v0.1.x evidence accumulation (persona count
+> 8 → 13, scenario corpus 35 → 135, audit-cycle settling shapes
+> twice/thrice-validated, etc.) is consolidated in
+> [`post_v0_1_18/strategic_plan_v2.md`](post_v0_1_18/strategic_plan_v2.md) §5
+> and the [`v0_1_x_retro.md`](post_v0_1_18/v0_1_x_retro.md) §2 numbers
+> table. This file is not patched inline; full refresh deferred to
+> the post-v0.2.0 wave-boundary review.
+>
 > **Reading intent.** When the maintainer is asking "is the project
 > succeeding?" — distinct from "is the code correct?"
 > (`eval_strategy/v1.md`) and "what comes next?" (`tactical_plan_v0_1_x.md`).

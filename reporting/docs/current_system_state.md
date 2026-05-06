@@ -12,7 +12,7 @@ the provenance trail; this file is the current-state map.
 | Surface | Current value | Source of truth |
 |---|---|---|
 | Package version | `0.1.18` | `pyproject.toml`, `CHANGELOG.md` |
-| Published posture | v0.1.18 ship-prep complete 2026-05-06; D15 IR pending; PyPI publish gated on IR settle. v0.1.19 (foreign-user empirical) is next-active. | `reporting/plans/v0_1_18/RELEASE_PROOF.md`, [PyPI](https://pypi.org/project/health-agent-infra/) |
+| Published posture | v0.1.18 ship-prep complete 2026-05-06; D15 IR pending; PyPI publish gated on IR settle. **v0.1.19 cancelled 2026-05-06 per CP-2U-GATE-SPLIT (AGENTS.md D16); v0.2.0 (Wave 2 — weekly review + factuality) is next-active.** | `reporting/plans/v0_1_18/RELEASE_PROOF.md`, [PyPI](https://pypi.org/project/health-agent-infra/) |
 | Schema head | `26` (unchanged from v0.1.17 — `body_comp` added v0.1.17 W-B; v0.1.18 has no schema additions) | `src/health_agent_infra/core/state/migrations/` |
 | CLI commands | 67 annotated `hai` commands (unchanged from v0.1.17 — v0.1.18 W-OB-2 added `--non-interactive` flag at `hai init`, not a new command). New flag count on `hai init`: 11. | `hai capabilities --json` |
 | CLI source layout | `cli/__init__.py` (~3140 LOC parser-tree builder + dispatch) + `cli/handlers/{auth,pull_clean,state,config_init,intake,intent,target,recommend,review,inspect,tools}.py` (each <2500 LOC). W-29 mechanical split landed v0.1.17. | `src/health_agent_infra/cli/` |
@@ -131,8 +131,8 @@ foreign-user session against the post-v0.1.18 PyPI build.
 
 | Cycle | Role |
 |---|---|
-| v0.1.19 | Foreign-user empirical (next-active; renumbered from v0.1.16; the originally-scoped post-publish empirical cycle). PLAN.md authors after a recorded foreign-user session against the post-v0.1.18 PyPI build. |
-| v0.2.0 | Weekly review (W52) + deterministic factuality (W58D) + Path A doc adjuncts. Tactically sequenced post-v0.1.19, which is itself post-v0.1.18 (chain v0.1.18 → v0.1.19 → v0.2.0). |
+| ~~v0.1.19~~ | **CANCELLED 2026-05-06** per CP-2U-GATE-SPLIT (`reporting/plans/post_v0_1_18/CP-2U-GATE-SPLIT.md`) + AGENTS.md D16. Foreign-user empirical scope re-tiered to opportunistic-not-blocking; W-2U-INSTALL closed (verbal-only) by post-v0.1.18 father session; W-2U-WEARABLE + W-2U-DOGFOOD deferred to v0.4 review. |
+| v0.2.0 | **Next-active.** Weekly review (W52) + deterministic factuality (W58D) + Path A doc adjuncts (W-MCP-THREAT, W-COMP-LANDSCAPE, W-NOF1-METHOD, W-2U-GATE-2). Hard deps: v0.1.14 substrate (W-PROV-1 + W-AJ judge harness), already shipped. **Foreign-user empirical evidence re-tiered to opportunistic-not-blocking per D16.** |
 
 ## How to update this file
 
