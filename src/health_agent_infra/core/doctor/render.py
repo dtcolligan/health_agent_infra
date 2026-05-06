@@ -104,6 +104,8 @@ def _render_sources(result: dict[str, Any]) -> list[str]:
         lines.append(f"  reason: {result['reason']}")
     if "hint" in result:
         lines.append(f"  hint: {result['hint']}")
+    if "next_action" in result and isinstance(result["next_action"], dict):
+        lines.extend(_render_next_action_lines(result["next_action"]))
     sources = result.get("sources") or {}
     if not sources:
         if "reason" not in result:
@@ -151,6 +153,8 @@ def _render_intake_gaps(result: dict[str, Any]) -> list[str]:
         lines = [f"  reason: {result['reason']}"]
         if "hint" in result:
             lines.append(f"  hint: {result['hint']}")
+        if "next_action" in result and isinstance(result["next_action"], dict):
+            lines.extend(_render_next_action_lines(result["next_action"]))
         return lines
     gap_count = result.get("gap_count", 0)
     blocking = result.get("blocking_gap_count", 0)
@@ -186,6 +190,8 @@ def _render_today(result: dict[str, Any]) -> list[str]:
         lines = [f"  reason: {result['reason']}"]
         if "hint" in result:
             lines.append(f"  hint: {result['hint']}")
+        if "next_action" in result and isinstance(result["next_action"], dict):
+            lines.extend(_render_next_action_lines(result["next_action"]))
         return lines
     return [
         f"  for_date: {result.get('for_date')}",

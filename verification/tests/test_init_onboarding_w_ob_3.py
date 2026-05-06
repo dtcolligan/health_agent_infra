@@ -274,6 +274,88 @@ def test_guided_skip_everything_emits_re_run_guided_hint(tmp_path):
     assert "hai init --guided" in result.next_action_hint
 
 
+def test_guided_creds_plus_intent_but_all_targets_skipped_routes_to_target_remediation(tmp_path):
+    """F-IR-04 (D15 IR R1) regression: pre-fix the post-prompt hint
+    branched on `intent_target.status` alone, which returns "authored"
+    when ANY row was authored — even if only intent landed and all
+    target prompts were skipped. The hint then incorrectly said
+    "Run `hai daily`" while `check_onboarding_readiness` would still
+    WARN on missing targets.
+
+    Post-fix: with creds + focus answered + all 3 target prompts
+    skipped, the hint must NOT point at `hai daily`. It should call
+    out the target gap and route to `hai target set`."""
+
+    db_path = tmp_path / "state.db"
+    initialize_database(db_path)
+
+    prompts = ScriptedPrompts(
+        responses=[
+            "i123456",       # athlete id
+            "test_api_key",  # api key
+            "running",       # focus answered
+            None,            # kcal target SKIPPED
+            None,            # protein target SKIPPED
+            None,            # sleep target SKIPPED
+        ]
+    )
+
+    result = run_guided_onboarding(
+        db_path=db_path,
+        user_id=USER,
+        prompts=prompts,
+        credential_store=_fake_store(),
+        pull_runner=_stub_pull_runner,
+        today_renderer=_stub_today_renderer,
+    )
+
+    # Verify the precondition the bug surfaced on: status is "authored"
+    # (intent landed) but target_ids is empty.
+    assert result.intent_target["status"] == "authored"
+    assert len(result.intent_target["intent_ids"]) == 1
+    assert result.intent_target["target_ids"] == []
+
+    # Hint must NOT point at hai daily — onboarding readiness is
+    # incomplete (missing target).
+    assert "hai daily" not in result.next_action_hint or "then run `hai daily`" in result.next_action_hint
+    assert "hai target set" in result.next_action_hint
+
+
+def test_guided_creds_plus_intent_skipped_but_targets_authored_routes_to_intent_remediation(tmp_path):
+    """Symmetric F-IR-04 regression: creds + targets answered + intent
+    skipped → hint must route to `hai intent training add-session`,
+    not `hai daily`."""
+
+    db_path = tmp_path / "state.db"
+    initialize_database(db_path)
+
+    prompts = ScriptedPrompts(
+        responses=[
+            "i123456",       # athlete id
+            "test_api_key",  # api key
+            None,            # focus SKIPPED
+            "2400",          # kcal target answered
+            "140",           # protein target answered
+            "8",             # sleep target answered
+        ]
+    )
+
+    result = run_guided_onboarding(
+        db_path=db_path,
+        user_id=USER,
+        prompts=prompts,
+        credential_store=_fake_store(),
+        pull_runner=_stub_pull_runner,
+        today_renderer=_stub_today_renderer,
+    )
+
+    assert result.intent_target["status"] == "authored"
+    assert result.intent_target["intent_ids"] == []
+    assert len(result.intent_target["target_ids"]) == 3
+
+    assert "hai intent training add-session" in result.next_action_hint
+
+
 def test_guided_next_action_hint_in_to_dict(tmp_path):
     """`to_dict` includes the hint so the upstream cmd_init JSON
     report surfaces it without reshaping."""

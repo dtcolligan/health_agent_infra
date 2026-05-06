@@ -153,6 +153,41 @@ without the auto-newline. This pattern should be documented in
 `reporting/docs/snapshot_regen.md` (or similar) so future cycles don't
 re-discover it. Not in v0.1.18 scope.
 
+### 5.5 Doc-regen-with-version-bump should be in the ship-prep checklist
+
+F-IR-01 caught the v0.1.18 ship-prep commit's omission: the
+`pyproject.toml` version bumped 0.1.17 → 0.1.18 but
+`reporting/docs/agent_cli_contract.md` (a generated doc that
+embeds the version) didn't regenerate in lockstep. The gate test
+`test_committed_contract_doc_matches_generated` failed under both
+narrow and broader pytest runs.
+
+The pattern: any cycle that bumps `pyproject.toml` version must
+also regenerate every generated doc that embeds the version. The
+implicit ship-prep checklist should add this step. Future cycles
+should treat the doc regen as part of the version bump itself, not
+a separate manual step.
+
+### 5.6 Coarse status-string branching diverges from primitive state models
+
+F-IR-04 caught a real correctness bug: W-OB-3's `next_action_hint`
+keyed on `intent_target.status` (a derived string field) when
+`check_onboarding_readiness` keyed on `intent_count` + `target_count`
++ `has_wellness_pull` (the underlying primitives). The string and
+the primitives drifted: status="authored" can mean "intent + targets
+authored" OR "only intent authored, all targets skipped." The hint
+then said "Run `hai daily`" when the readiness check would WARN.
+
+The lesson: when two surfaces consume the same state model, they
+should read the same primitives. Derived strings introduce a layer
+where divergence can hide. Prefer keying the second consumer on the
+first's primitive fields (or on the same source-of-truth function),
+not on a string the first emits.
+
+This pattern is broader than W-OB-3: any future hint/render/decision
+logic that consumes onboarding readiness should consult the same
+intent/target/wellness_pull primitives, not the derived status string.
+
 ## §6 Open items for D15 IR
 
 - **Manual ship-time TTY gate.** RELEASE_PROOF §3 documents this

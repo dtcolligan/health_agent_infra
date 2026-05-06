@@ -211,19 +211,32 @@ up the live data path:
 
 ```bash
 pipx install health-agent-infra
-hai init --guided   # interactive: prompts for intervals.icu creds, authors initial intent + target, runs first wellness pull, surfaces today's plan
+hai init             # interactive: on a TTY with no prior setup, auto-promotes to the guided flow (prompts for intervals.icu creds, authors initial intent + target, runs first wellness pull)
 hai capabilities --human
 hai doctor
 hai daily
 hai today
 ```
 
-`hai init --guided` is idempotent — safe to rerun, skips steps that
-already have state. The bare `hai init` (no flag) does the
-non-interactive scaffold only and leaves credentials, intent, and
-target authoring for you to do manually; agent harnesses calling
-`hai init` from CI use the bare form. New users on an interactive
-terminal should always pass `--guided`.
+**`hai init` default behaviour (v0.1.18+).** When stdin is a TTY AND
+your onboarding is incomplete (no active intent or target), bare
+`hai init` auto-promotes to the guided flow. The flow is idempotent
+— safe to rerun; it skips steps that already have state. Once
+onboarding is complete, bare `hai init` stays a non-interactive
+scaffold-and-go.
+
+**Opt-outs for non-interactive callers.** CI runners, agent harnesses,
+and automation that need bare init regardless of TTY have three
+opt-out paths:
+
+- No TTY (the default for piped / redirected stdin) — auto-skips the
+  guided promotion.
+- `--non-interactive` flag on `hai init`.
+- `HAI_INIT_NON_INTERACTIVE=1` env var.
+
+**Explicit-force.** `hai init --guided` still works as the explicit
+spelling; useful when you want guided onboarding even if your state
+already has some rows (the flow itself remains idempotent).
 
 `intervals_icu` is currently the only working live source. Without
 credentials, `hai pull` falls back to a committed CSV fixture for

@@ -130,6 +130,84 @@ def test_skills_warn_missing_dest_emits_next_action(tmp_path):
 
 
 # ---------------------------------------------------------------------------
+# F-IR-03 (D15 IR R1) regression: W-OB-5 missed several concrete
+# hint-emitting checks. Coverage extends to check_config (2 paths),
+# check_sources (no-DB), check_today (2 paths), check_intake_gaps (2 paths).
+# ---------------------------------------------------------------------------
+
+
+def test_check_config_missing_thresholds_emits_next_action(tmp_path):
+    """F-IR-03: hint says 'run `hai init` or `hai config init`' →
+    next_action.command == 'hai init'."""
+
+    from health_agent_infra.core.doctor.checks import check_config
+
+    thresholds_path = tmp_path / "no_such_thresholds.toml"
+    result = check_config(thresholds_path)
+
+    assert result["status"] == "warn"
+    assert "next_action" in result
+    assert result["next_action"]["command"] == "hai init"
+
+
+def test_check_config_malformed_toml_emits_next_action(tmp_path):
+    """F-IR-03: hint says 'run `hai config init --force`' →
+    next_action.command == 'hai config init --force'."""
+
+    from health_agent_infra.core.doctor.checks import check_config
+
+    thresholds_path = tmp_path / "broken.toml"
+    thresholds_path.write_text("this is = not [valid] toml ::: [", encoding="utf-8")
+    result = check_config(thresholds_path)
+
+    assert result["status"] == "fail"
+    assert "next_action" in result
+    assert result["next_action"]["command"] == "hai config init --force"
+
+
+def test_check_sources_no_db_emits_next_action(tmp_path):
+    """F-IR-03: hint says 'run `hai state init`' →
+    next_action.command == 'hai state init'."""
+
+    from health_agent_infra.core.doctor.checks import check_sources
+
+    db_path = tmp_path / "no_such.db"
+    result = check_sources(db_path, user_id="u_test", as_of_date=date.today())
+
+    assert result["status"] == "warn"
+    assert "next_action" in result
+    assert result["next_action"]["command"] == "hai state init"
+
+
+def test_check_today_no_db_emits_next_action(tmp_path):
+    """F-IR-03: hint says 'run `hai state init`' →
+    next_action.command == 'hai state init'."""
+
+    from health_agent_infra.core.doctor.checks import check_today
+
+    db_path = tmp_path / "no_such.db"
+    result = check_today(db_path, user_id="u_test", as_of_date=date.today())
+
+    assert result["status"] == "warn"
+    assert "next_action" in result
+    assert result["next_action"]["command"] == "hai state init"
+
+
+def test_check_intake_gaps_no_db_emits_next_action(tmp_path):
+    """F-IR-03: hint says 'run `hai init`' →
+    next_action.command == 'hai init'."""
+
+    from health_agent_infra.core.doctor.checks import check_intake_gaps
+
+    db_path = tmp_path / "no_such.db"
+    result = check_intake_gaps(db_path, user_id="u_test", as_of_date=date.today())
+
+    assert result["status"] == "warn"
+    assert "next_action" in result
+    assert result["next_action"]["command"] == "hai init"
+
+
+# ---------------------------------------------------------------------------
 # Acceptance 1 — PASS results omit next_action
 # ---------------------------------------------------------------------------
 

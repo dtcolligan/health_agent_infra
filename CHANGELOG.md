@@ -85,8 +85,12 @@ signature matching AGENTS.md empirical norm).
 
 ### Tests
 
-- 34 new tests (W-OB-2: 6, W-OB-3: 6, W-OB-5: 12, W-OB-7: 10).
-- Full suite at v0.1.18 ship: 2722 passed, 5 skipped (~80s).
+- 41 new tests (W-OB-2: 6, W-OB-3: 8, W-OB-5: 17, W-OB-7: 10).
+  Includes 7 IR-R1 regression tests: 5 for F-IR-03 (`check_config`
+  ×2, `check_sources`, `check_today`, `check_intake_gaps`
+  `next_action` coverage) and 2 for F-IR-04 (`next_action_hint`
+  routes to target/intent remediation when prereqs incomplete).
+- Full suite at v0.1.18 ship: 2729 passed, 5 skipped (~130s).
 - 13-persona matrix: 13/13 reach `synthesized` cleanly, 0 findings,
   0 crashes (identical to v0.1.17 baseline; v0.1.18 doesn't change
   classifiers/policy).

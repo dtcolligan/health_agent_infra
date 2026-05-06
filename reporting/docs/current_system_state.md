@@ -16,7 +16,7 @@ the provenance trail; this file is the current-state map.
 | Schema head | `26` (unchanged from v0.1.17 — `body_comp` added v0.1.17 W-B; v0.1.18 has no schema additions) | `src/health_agent_infra/core/state/migrations/` |
 | CLI commands | 67 annotated `hai` commands (unchanged from v0.1.17 — v0.1.18 W-OB-2 added `--non-interactive` flag at `hai init`, not a new command). New flag count on `hai init`: 11. | `hai capabilities --json` |
 | CLI source layout | `cli/__init__.py` (~3140 LOC parser-tree builder + dispatch) + `cli/handlers/{auth,pull_clean,state,config_init,intake,intent,target,recommend,review,inspect,tools}.py` (each <2500 LOC). W-29 mechanical split landed v0.1.17. | `src/health_agent_infra/cli/` |
-| Test gate at release | 2722 passed, 5 skipped (full suite, broader `-W error::Warning` gate, ~80s); `hai eval run --scenario-set all` 135/135 PASS; persona matrix 13/13 with 0 findings + 0 crashes (opt-in via `HAI_RUN_PERSONA_MATRIX=1`) | `reporting/plans/v0_1_18/RELEASE_PROOF.md` |
+| Test gate at release | 2729 passed, 5 skipped (full suite, broader `-W error::Warning` gate, ~130s; post-IR-R1 fix-and-reland +7 regression tests for F-IR-03 + F-IR-04); `hai eval run --scenario-set all` 135/135 PASS; persona matrix 13/13 with 0 findings + 0 crashes (opt-in via `HAI_RUN_PERSONA_MATRIX=1`) | `reporting/plans/v0_1_18/RELEASE_PROOF.md` |
 | Eval scenario corpus | 135 deterministic fixtures (20 per domain × 6 + 15 synthesis) + 30 judge_adversarial fixtures | `src/health_agent_infra/evals/scenarios/` |
 | Domains | recovery, running, sleep, stress, strength, nutrition | `src/health_agent_infra/domains/` |
 | Runtime state | local SQLite by default; no package telemetry | `reporting/docs/privacy.md`, `SECURITY.md` |

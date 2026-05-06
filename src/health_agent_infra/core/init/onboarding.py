@@ -532,26 +532,64 @@ def run_guided_onboarding(
         result.overall_status = "ok"
 
     # W-OB-3 (v0.1.18) — content-only post-prompt next-action hint.
-    # If the user has credentials + authored intent/target, point them
-    # at `hai daily` directly. Otherwise prepend a remediation hint
-    # for the missing prerequisite. Per OQ-5: content addition, no new
-    # flow step.
+    # If the user has credentials + active intent + active target, point
+    # them at `hai daily` directly. Otherwise enumerate the missing
+    # prerequisite(s) and surface a targeted remediation hint. Per OQ-5:
+    # content addition, no new flow step.
+    #
+    # F-IR-04 (D15 IR R1): the hint was previously branched on the coarse
+    # `intent_target.status` field, which returns "authored" when ANY
+    # row was authored — even if only intent landed and all target
+    # prompts were skipped. That caused the hint to point at `hai daily`
+    # when `check_onboarding_readiness` would still WARN on missing
+    # targets, contradicting the cycle's onboarding-readiness model.
+    # Fixed: check intent_ids + target_ids lists (or pre-existing
+    # `already_present` status) directly, build a missing-prereq list,
+    # and route the hint accordingly.
     auth_status = result.auth_intervals_icu.get("status", "")
-    intent_status = result.intent_target.get("status", "")
-    creds_ready = auth_status in ("configured", "already_configured")
-    intent_ready = intent_status in ("authored", "already_present")
+    intent_target_status = result.intent_target.get("status", "")
+    intent_ids = result.intent_target.get("intent_ids") or []
+    target_ids = result.intent_target.get("target_ids") or []
 
-    if creds_ready and intent_ready:
+    creds_ready = auth_status in ("configured", "already_configured")
+    # already_present means the orchestrator skipped the prompts because
+    # intent + target rows were already active in the DB.
+    if intent_target_status == "already_present":
+        intent_ready = True
+        target_ready = True
+    else:
+        intent_ready = bool(intent_ids)
+        target_ready = bool(target_ids)
+
+    missing: list[str] = []
+    if not creds_ready:
+        missing.append("credentials")
+    if not intent_ready:
+        missing.append("intent")
+    if not target_ready:
+        missing.append("target")
+
+    if not missing:
         result.next_action_hint = (
             "Run `hai daily` to compute today's recommendation, "
             "or ask your agent."
         )
-    elif not creds_ready and intent_ready:
+    elif missing == ["credentials"]:
         result.next_action_hint = (
             "Add intervals.icu credentials via `hai auth intervals-icu`, "
             "then run `hai daily`."
         )
-    elif creds_ready and not intent_ready:
+    elif missing == ["intent"]:
+        result.next_action_hint = (
+            "Author your training intent via "
+            "`hai intent training add-session`, then run `hai daily`."
+        )
+    elif missing == ["target"]:
+        result.next_action_hint = (
+            "Author your wellness targets via `hai target set`, "
+            "then run `hai daily`."
+        )
+    elif set(missing) == {"intent", "target"} and creds_ready:
         result.next_action_hint = (
             "Author your training intent + targets via "
             "`hai intent training add-session` and `hai target set`, "
@@ -559,8 +597,8 @@ def run_guided_onboarding(
         )
     else:
         result.next_action_hint = (
-            "Re-run `hai init --guided` to author credentials, intent, "
-            "and targets, then run `hai daily`."
+            "Re-run `hai init --guided` to address the skipped step(s) "
+            f"({', '.join(missing)}), then run `hai daily`."
         )
 
     return result

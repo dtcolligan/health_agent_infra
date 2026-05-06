@@ -26,17 +26,24 @@ execution mandate.
 
 ## §2 Standard substantive-cycle ship gates
 
-Initially stamped pre-IR. Re-stamp after IR settles SHIP / SHIP_WITH_NOTES.
+Initially stamped pre-IR. **Re-stamped post-IR R1 fix-and-reland**
+(F-IR-01 closed: `agent_cli_contract.md` regenerated; F-IR-02 closed:
+README post-W-OB-2 wording; F-IR-03 closed: 7 additional `next_action`
+paths + 5 regression tests; F-IR-04 closed: `next_action_hint` keys
+on primitive readiness fields, not derived status string + 2
+regression tests).
 
 ```
-✓ Full pytest suite (narrow gate): 2722 passed, 5 skipped (~80s)
-  (was 2688 + 5 at v0.1.17 close; +34 new tests from W-OB-2 (6) +
-  W-OB-3 (6) + W-OB-5 (12) + W-OB-7 (10))
-✓ Full pytest suite (broader -W error::Warning gate): 2722 passed, 5 skipped
+✓ Full pytest suite (narrow gate): 2729 passed, 5 skipped (~130s)
+  (was 2688 + 5 at v0.1.17 close; +41 new tests: W-OB-2 (6) +
+  W-OB-3 (8) + W-OB-5 (17) + W-OB-7 (10))
+✓ Full pytest suite (broader -W error::Warning gate): 2729 passed, 5 skipped
 ✓ uvx mypy src/health_agent_infra: Success — 147 source files, 0 errors
 ✓ uvx bandit -ll -r src/health_agent_infra: 0 medium / 0 high severity
 ✓ hai capabilities --json: snapshot regenerated with W-OB-2 --non-interactive
   flag intentional add; no other drift
+✓ reporting/docs/agent_cli_contract.md: regenerated post-version-bump
+  (F-IR-01 fix); test_committed_contract_doc_matches_generated green
 ✓ Persona matrix (post-impl): 13/13 personas, 0 findings, 0 crashes (~5 min,
   opt-in via HAI_RUN_PERSONA_MATRIX=1) — IDENTICAL to pre-impl baseline
   (v0.1.18 doesn't change classifiers/policy; expected)
@@ -46,7 +53,13 @@ Initially stamped pre-IR. Re-stamp after IR settles SHIP / SHIP_WITH_NOTES.
 ✓ W-OB-7 reproducer test (`test_intake_weight_on_pre_v0_1_17_db`) green
 ✓ W-OB-7 8-handler parity test (`test_intake_migration_parity.py`) green
 ✓ W-OB-5 manifest-consistency test green (caught + corrected 3 drift
-  entries pre-impl)
+  entries pre-impl; +2 new entries verified post-IR-R1)
+✓ W-OB-5 doctor coverage extended post-IR-R1: check_config (×2 paths),
+  check_sources, check_today (×2), check_intake_gaps (×2) all emit
+  next_action when their hint maps to a concrete command
+✓ W-OB-3 next_action_hint regression test green: creds + intent +
+  all-targets-skipped → routes to `hai target set`, NOT `hai daily`
+  (F-IR-04 fix witness)
 ```
 
 ## §3 Manual ship-time gate (maintainer-driven)

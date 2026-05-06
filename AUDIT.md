@@ -21,8 +21,9 @@ release-blocker leg).
 | Phase 0 (D11) | [`reporting/plans/v0_1_18/audit_findings.md`](reporting/plans/v0_1_18/audit_findings.md) | 4 records: F-OB-PRE-01 (revises-scope, absorbed as W-OB-7) + F-PHASE0-01..03 (informational); pre-implementation gate fired `OPEN PHASE 1` |
 | D14 round 1 | [`reporting/plans/v0_1_18/codex_plan_audit_response.md`](reporting/plans/v0_1_18/codex_plan_audit_response.md) | 7 findings PLAN_COHERENT_WITH_REVISIONS |
 | D14 round 2 | [`reporting/plans/v0_1_18/codex_plan_audit_round_2_response.md`](reporting/plans/v0_1_18/codex_plan_audit_round_2_response.md) | 3 findings PLAN_COHERENT_WITH_REVISIONS close-in-place; D14 closed (7 → 3 halving signature) |
-| D15 IR round 1 | TBD (prompt at [`reporting/plans/v0_1_18/codex_implementation_review_prompt.md`](reporting/plans/v0_1_18/codex_implementation_review_prompt.md)) | pending Codex launch |
-| Verification | [`reporting/plans/v0_1_18/RELEASE_PROOF.md`](reporting/plans/v0_1_18/RELEASE_PROOF.md) | 2722 pass / 5 skipped; mypy + bandit clean; persona matrix 13/13 (identical to baseline); manifest snapshot regenerated for W-OB-2 `--non-interactive` flag intentional add |
+| D15 IR round 1 | [`reporting/plans/v0_1_18/codex_implementation_review_response.md`](reporting/plans/v0_1_18/codex_implementation_review_response.md) | 4 findings SHIP_WITH_FIXES (F-IR-01 stale agent_cli_contract.md + F-IR-02 README pre-W-OB-2 wording + F-IR-03 missed concrete doctor checks + F-IR-04 next_action_hint correctness bug); all 4 accepted + fixed in fix-and-reland commit |
+| D15 IR round 2 | TBD (prompt at [`reporting/plans/v0_1_18/codex_implementation_review_round_2_prompt.md`](reporting/plans/v0_1_18/codex_implementation_review_round_2_prompt.md)) | pending Codex launch |
+| Verification | [`reporting/plans/v0_1_18/RELEASE_PROOF.md`](reporting/plans/v0_1_18/RELEASE_PROOF.md) | 2729 pass / 5 skipped (post-IR-R1 fix-and-reland); mypy + bandit clean; persona matrix 13/13 (identical to baseline); manifest snapshot regenerated for W-OB-2 `--non-interactive` flag intentional add; agent_cli_contract.md regenerated post-version-bump |
 
 **Outcome:** v0.1.18 ships onboarding ergonomics + upgrade-path
 correctness. F-OB-PRE-01 (the maintainer-DB crash surfaced 2026-05-05)

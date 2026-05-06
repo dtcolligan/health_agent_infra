@@ -68,6 +68,7 @@ def check_config(thresholds_path: Path) -> dict[str, Any]:
             "path": str(thresholds_path),
             "reason": "thresholds file not present; defaults in effect",
             "hint": "run `hai init` or `hai config init`",
+            "next_action": _next_action("hai init"),
         }
     try:
         load_thresholds(path=thresholds_path)
@@ -77,6 +78,7 @@ def check_config(thresholds_path: Path) -> dict[str, Any]:
             "path": str(thresholds_path),
             "reason": str(exc),
             "hint": "repair the TOML or regenerate with `hai config init --force`",
+            "next_action": _next_action("hai config init --force"),
         }
     return {"status": "ok", "path": str(thresholds_path)}
 
@@ -124,6 +126,16 @@ _NEXT_ACTION_REGISTRY: dict[str, dict[str, Any]] = {
     },
     "hai pull --source intervals_icu": {
         "purpose": "fetch and project the latest intervals.icu wellness window",
+        "agent_safe": True,
+        "interactive": False,
+    },
+    "hai config init --force": {
+        "purpose": "regenerate the thresholds TOML, overwriting any malformed file",
+        "agent_safe": True,
+        "interactive": False,
+    },
+    "hai doctor": {
+        "purpose": "re-run runtime diagnostics after addressing the underlying issue",
         "agent_safe": True,
         "interactive": False,
     },
@@ -381,6 +393,7 @@ def check_sources(
             "status": "warn",
             "reason": "state DB not initialised — no sync history to read",
             "hint": "run `hai state init`",
+            "next_action": _next_action("hai state init"),
             "sources": {},
         }
 
@@ -505,6 +518,7 @@ def check_today(
             "status": "warn",
             "reason": "state DB not initialised",
             "hint": "run `hai state init`",
+            "next_action": _next_action("hai state init"),
         }
 
     from health_agent_infra.core.state import open_connection
@@ -542,6 +556,7 @@ def check_today(
                 "status": "warn",
                 "reason": f"schema read failed: {exc}",
                 "hint": "run `hai state migrate`",
+                "next_action": _next_action("hai state migrate"),
             }
     finally:
         conn.close()
@@ -690,6 +705,7 @@ def check_intake_gaps(
             "status": "warn",
             "reason": "state DB not initialised",
             "hint": "run `hai init`",
+            "next_action": _next_action("hai init"),
         }
 
     try:
@@ -711,6 +727,7 @@ def check_intake_gaps(
             "status": "warn",
             "reason": f"gap detection failed: {type(exc).__name__}: {exc}",
             "hint": "re-run `hai doctor` after `hai state migrate`",
+            "next_action": _next_action("hai state migrate"),
         }
 
     gap_rows = gap_payload.get("gaps", []) or []
