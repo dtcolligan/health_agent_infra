@@ -24,8 +24,10 @@ reporting/plans/
 ├── v0_1_14_1/                         ← shipped 2026-05-02 (hardening: garmin_live structured signal)
 ├── v0_1_15/                           ← shipped 2026-05-03 (publish-first package cycle)
 ├── v0_1_15_1/                         ← hotfix 2026-05-03 (Linux keyring fall-through)
-├── v0_1_16/                           ← next empirical-fix workspace (authors after foreign-user candidate transcript)
-├── v0_1_17/                           ← maintainability + eval consolidation workspace
+├── v0_1_16/                           ← CANCELLED 2026-05-04 (foreign-user candidate unavailable; scope renumbered to v0.1.19)
+├── v0_1_17/                           ← shipped 2026-05-05 (maintainability + eval consolidation; W-29 cli.py split + W-B body-comp + W-D arm-2)
+├── v0_1_18/                           ← next-active onboarding-quality cycle (workspace scoped 2026-05-04; PLAN.md authors when cycle opens)
+├── v0_1_19/                           ← foreign-user empirical workspace (renumbered from v0.1.16; PLAN.md authors after recorded session)
 ├── post_v0_1_10/                      ← historical between-cycle handoff (demo, Phase 4 audit)
 ├── post_v0_1_13/                      ← post-v0.1.13 strategic research + audit chain + CPs
 ├── post_v0_1_14/                      ← post-v0.1.14 carry-over findings + research notes
@@ -55,10 +57,14 @@ If you only have time for one: `strategic_plan_v1.md`.
 
 1. `reporting/docs/current_system_state.md` — latest shipped truth.
 2. `tactical_plan_v0_1_x.md` — current release-in-flight rows
-   (v0.1.16 empirical fixes, v0.1.17 maintainability/eval).
-3. `v0_1_16/README.md` — next-cycle workspace. PLAN.md is intentionally
-   absent until the named foreign-user candidate's transcript exists.
-4. The opening cycle's `PLAN.md` once authored.
+   (§5E v0.1.18 onboarding-quality, §5F v0.1.19 foreign-user empirical).
+3. `v0_1_18/README.md` — next-active cycle workspace. PLAN.md authors
+   when the cycle opens (after v0.1.17 close-out hygiene is complete);
+   `v0_1_18/audit_findings.md` already accumulates pre-PLAN findings.
+4. `v0_1_19/README.md` — empirical-by-design cycle. PLAN.md authors
+   after a recorded foreign-user session against the post-v0.1.18
+   PyPI build exists.
+5. The opening cycle's `PLAN.md` once authored.
 
 If you only have time for one: the open cycle's `PLAN.md` (or, when
 no cycle is open, `tactical_plan_v0_1_x.md` for the next two
@@ -142,9 +148,25 @@ Cycle directories preserve their own history:
 - `v0_1_15/` — package release published 2026-05-03.
   Six W-ids shipped (W-GYM-SETID, F-PV14-01, W-A, W-C, W-D arm-1,
   W-E); W-2U-GATE reframed from pre-publish ship gate to post-publish
-  empirical validation feeding v0.1.16. Migration head 25. Test
-  surface: 2630 passed, 3 skipped. D14 settled 12 → 7 → 3 → 2;
-  D15 IR settled 6 → 2 → 1 nit.
+  empirical validation. Migration head 25. Test surface: 2630 passed,
+  3 skipped. D14 settled 12 → 7 → 3 → 2; D15 IR settled 6 → 2 → 1 nit.
+- `v0_1_15_1/` — Linux keyring fall-through hotfix (shipped 2026-05-03).
+  Adds `keyrings.alt` and defensive `_default_backend()` probe so
+  Linux installs without a registered desktop secret store degrade
+  gracefully. Hotfix tier; no D14 or external IR.
+- `v0_1_16/` — **CANCELLED 2026-05-04.** Empirical scope renumbered
+  to v0.1.19 after the named candidate became unavailable. Cancellation
+  note in `v0_1_16/README.md`.
+- `v0_1_17/` — maintainability + eval consolidation (shipped
+  2026-05-05). 10 W-ids closed at 100% acceptance: W-29 cli.py
+  9,927 LOC mechanical split into 1 main + 1 shared + 11 handler-group
+  modules (manifest byte-stable); W-30 schema regression test;
+  W-AH-2 corpus 35 → 135; W-AI-2 `hai eval review`; W-AM-2
+  4 escalate-tagged scenarios; W-Vb-4 12-of-12 persona closure;
+  W-B `hai intake weight` + `body_comp` + migration 026; W-D arm-2
+  partial-day projection; W-C-EQP query-plan stability; F-PV14-02
+  `hai sync purge`. Schema head 26. Test surface: 2683 passed,
+  4 skipped. D14 11 → 5 → 3 → CLOSE; D15 IR 6 → 1-nit.
 
 Each cycle directory typically contains:
 - `PLAN.md` — cycle scope.
