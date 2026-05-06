@@ -208,6 +208,100 @@ def test_check_intake_gaps_no_db_emits_next_action(tmp_path):
 
 
 # ---------------------------------------------------------------------------
+# F-IR-R2-01 (D15 IR R2) regression: deep-probe failure paths with
+# concrete-command outcomes (CAUSE_2_CREDS, NETWORK) emit next_action.
+# CAUSE_1_CLOUDFLARE_UA + OTHER stay prose-only by design.
+# ---------------------------------------------------------------------------
+
+
+class _ProbeResultStub:
+    """Minimal stub matching the ProbeResult duck-type the check uses
+    (ok, outcome_class, error_message, to_dict)."""
+
+    def __init__(self, ok: bool, outcome_class: str, error_message: str = "stub"):
+        self.ok = ok
+        self.outcome_class = outcome_class
+        self.error_message = error_message
+
+    def to_dict(self) -> dict:
+        return {
+            "ok": self.ok,
+            "outcome_class": self.outcome_class,
+            "error_message": self.error_message,
+        }
+
+
+def _store_with_intervals_creds() -> CredentialStore:
+    """CredentialStore reporting `credentials_available=True` so the
+    check reaches the deep-probe branch.
+
+    Mirrors the storage shape `intervals_icu_status` reads:
+      service=hai_intervals_icu_athlete  user=default        → athlete_id
+      service=hai_intervals_icu           user=<athlete_id>  → api_key
+    """
+
+    backend = _FakeKeyring()
+    athlete_id = "i123456"
+    backend.set_password("hai_intervals_icu_athlete", "default", athlete_id)
+    backend.set_password("hai_intervals_icu", athlete_id, "test_api_key")
+    return CredentialStore(backend=backend, env={})
+
+
+def test_auth_intervals_icu_deep_probe_cause_2_creds_emits_next_action():
+    """F-IR-R2-01: CAUSE_2_CREDS hint maps to `hai auth intervals-icu`."""
+
+    store = _store_with_intervals_creds()
+    probe = _ProbeResultStub(ok=False, outcome_class="CAUSE_2_CREDS")
+    result = check_auth_intervals_icu(store, probe_result=probe)
+
+    assert result["status"] == "fail"
+    assert "next_action" in result
+    assert result["next_action"]["command"] == "hai auth intervals-icu"
+    # The hint surface still points at the prose triage doc.
+    assert "hai auth intervals-icu" in result["hint"]
+
+
+def test_auth_intervals_icu_deep_probe_network_emits_next_action():
+    """F-IR-R2-01: NETWORK hint maps to `hai doctor` (rerun after
+    fixing connectivity)."""
+
+    store = _store_with_intervals_creds()
+    probe = _ProbeResultStub(ok=False, outcome_class="NETWORK")
+    result = check_auth_intervals_icu(store, probe_result=probe)
+
+    assert result["status"] == "fail"
+    assert "next_action" in result
+    assert result["next_action"]["command"] == "hai doctor"
+
+
+def test_auth_intervals_icu_deep_probe_cause_1_stays_prose_only():
+    """F-IR-R2-01: CAUSE_1_CLOUDFLARE_UA next-step text is diagnostic /
+    triage-doc-pointer, not a single concrete command. Stays prose-only
+    by design — no next_action."""
+
+    store = _store_with_intervals_creds()
+    probe = _ProbeResultStub(ok=False, outcome_class="CAUSE_1_CLOUDFLARE_UA")
+    result = check_auth_intervals_icu(store, probe_result=probe)
+
+    assert result["status"] == "fail"
+    assert "next_action" not in result
+    # Hint still surfaces the prose triage-doc pointer.
+    assert "Cloudflare" in result["hint"]
+
+
+def test_auth_intervals_icu_deep_probe_other_stays_prose_only():
+    """F-IR-R2-01: OTHER outcome is unclassified diagnostic; no
+    concrete command to recommend."""
+
+    store = _store_with_intervals_creds()
+    probe = _ProbeResultStub(ok=False, outcome_class="OTHER")
+    result = check_auth_intervals_icu(store, probe_result=probe)
+
+    assert result["status"] == "fail"
+    assert "next_action" not in result
+
+
+# ---------------------------------------------------------------------------
 # Acceptance 1 — PASS results omit next_action
 # ---------------------------------------------------------------------------
 

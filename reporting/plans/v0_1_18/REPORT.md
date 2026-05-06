@@ -199,12 +199,18 @@ intent/target/wellness_pull primitives, not the derived status string.
   `open_connection` globally). IR may want to verify the read-path
   doctor checks intentionally don't migrate, or surface the boundary
   more loudly.
-- **W-OB-5 registry exhaustiveness.** Currently 9 commands registered.
-  Some hint-emitting checks (e.g. `check_today`, `check_intake_gaps`,
-  `check_config`) don't yet emit `next_action` because their hints are
-  prose-style or context-dependent (e.g. "investigate manually").
-  IR may want to expand coverage or codify the "concrete command vs prose"
-  rule.
+- **W-OB-5 registry exhaustiveness.** **CLOSED at IR R1 F-IR-03 +
+  R2 F-IR-R2-01.** Registry now 11 commands; coverage extends to
+  `check_config` (×2 paths), `check_sources`, `check_today` (×2),
+  `check_intake_gaps` (×2), and the deep-probe `check_auth_intervals_icu`
+  outcomes that map to concrete commands (CAUSE_2_CREDS → `hai auth
+  intervals-icu`; NETWORK → `hai doctor`). CAUSE_1_CLOUDFLARE_UA +
+  OTHER stay prose-only by design — their next-step text is
+  diagnostic / triage-doc-pointer rather than a single concrete
+  command. The "concrete command vs prose" rule is now codified by
+  the test surface: every WARN/FAIL doctor result whose hint maps
+  to a concrete CLI command MUST emit `next_action`; prose-style
+  diagnostic hints MUST NOT.
 
 ## §7 Closure
 

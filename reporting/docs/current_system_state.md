@@ -16,7 +16,7 @@ the provenance trail; this file is the current-state map.
 | Schema head | `26` (unchanged from v0.1.17 — `body_comp` added v0.1.17 W-B; v0.1.18 has no schema additions) | `src/health_agent_infra/core/state/migrations/` |
 | CLI commands | 67 annotated `hai` commands (unchanged from v0.1.17 — v0.1.18 W-OB-2 added `--non-interactive` flag at `hai init`, not a new command). New flag count on `hai init`: 11. | `hai capabilities --json` |
 | CLI source layout | `cli/__init__.py` (~3140 LOC parser-tree builder + dispatch) + `cli/handlers/{auth,pull_clean,state,config_init,intake,intent,target,recommend,review,inspect,tools}.py` (each <2500 LOC). W-29 mechanical split landed v0.1.17. | `src/health_agent_infra/cli/` |
-| Test gate at release | 2729 passed, 5 skipped (full suite, broader `-W error::Warning` gate, ~130s; post-IR-R1 fix-and-reland +7 regression tests for F-IR-03 + F-IR-04); `hai eval run --scenario-set all` 135/135 PASS; persona matrix 13/13 with 0 findings + 0 crashes (opt-in via `HAI_RUN_PERSONA_MATRIX=1`) | `reporting/plans/v0_1_18/RELEASE_PROOF.md` |
+| Test gate at release | 2733 passed, 5 skipped (full suite, broader `-W error::Warning` gate, ~130s; post-IR-R2 fix-and-reland-2 +11 regression tests across F-IR-03 + F-IR-04 + F-IR-R2-01); `hai eval run --scenario-set all` 135/135 PASS; persona matrix 13/13 with 0 findings + 0 crashes (opt-in via `HAI_RUN_PERSONA_MATRIX=1`) | `reporting/plans/v0_1_18/RELEASE_PROOF.md` |
 | Eval scenario corpus | 135 deterministic fixtures (20 per domain × 6 + 15 synthesis) + 30 judge_adversarial fixtures | `src/health_agent_infra/evals/scenarios/` |
 | Domains | recovery, running, sleep, stress, strength, nutrition | `src/health_agent_infra/domains/` |
 | Runtime state | local SQLite by default; no package telemetry | `reporting/docs/privacy.md`, `SECURITY.md` |
@@ -45,8 +45,11 @@ foreign-user session against the post-v0.1.18 PyPI build.
 
 ## v0.1.18 shipped (ship-prep complete; PyPI publish gated on D15 IR)
 
-- W-OB-1: README quickstart pivot ratified; `agent_integration.md`
-  install lead updated to mention `--guided`. Pure docs.
+- W-OB-1: README quickstart pivot to bare `hai init` as the primary
+  first-run command (post-W-OB-2 default-flip shape; W-OB-2 auto-
+  promotion documented inline + opt-outs enumerated; `--guided`
+  retained as explicit-force spelling). `agent_integration.md:27`
+  install lead matches. Pure docs.
 - W-OB-2: `hai init` interactive default. When stdin is a TTY AND
   `check_onboarding_readiness` reports incomplete state, bare
   `hai init` auto-promotes to the `--guided` flow. Opt-outs:
@@ -61,12 +64,16 @@ foreign-user session against the post-v0.1.18 PyPI build.
 - W-OB-4b: Phase 2 post-W-OB-2 local-wheel smoke. Both opt-out paths
   verified end-to-end. TTY default-flip UX confirmation deferred to
   maintainer ship-time manual gate.
-- W-OB-5: `hai doctor next_action` field across 5 hint-emitting
-  checks (`onboarding_readiness`, `state_db`, `auth_intervals_icu`,
-  `auth_garmin`, `skills`). Structured shape:
-  `{command, purpose, agent_safe, interactive}`. Manifest-consistency
-  invariant pinned by `_NEXT_ACTION_REGISTRY` table + regression test.
-  Multi-missing onboarding case prefers umbrella `hai init`.
+- W-OB-5: `hai doctor next_action` field across 9 hint-emitting paths
+  (`onboarding_readiness`, `state_db` ×2, `auth_intervals_icu` no-creds
+  + deep-probe CAUSE_2_CREDS + NETWORK, `auth_garmin`, `skills` ×2,
+  `check_config` ×2, `check_sources`, `check_today` ×2,
+  `check_intake_gaps` ×2). Structured shape:
+  `{command, purpose, agent_safe, interactive}`. `_NEXT_ACTION_REGISTRY`
+  has 11 commands; manifest-consistency invariant pinned by regression
+  test. Multi-missing onboarding case prefers umbrella `hai init`.
+  CAUSE_1_CLOUDFLARE_UA + OTHER deep-probe outcomes intentionally
+  prose-only (diagnostic, no concrete command).
 - W-OB-6: conditional absorption slot did NOT fire. No W-OB-6-class
   structural findings.
 - W-OB-7: intake-handler migration parity. New

@@ -58,12 +58,16 @@ signature matching AGENTS.md empirical norm).
 
 ### Doctrine
 
-- **W-OB-1** README quickstart pivots `hai init --guided` as the
-  recommended interactive command (pre-staged 2026-05-04 alongside
-  v0.1.18 README scaffold; ratified at cycle implementation).
-  `agent_integration.md:27` install-lead summary updated to match.
-  Historical launch material under `reporting/docs/launch/` (v0.1.0-era
-  drafts) intentionally left as-is per provenance discipline.
+- **W-OB-1** README quickstart pivots to bare `hai init` as the
+  primary first-run command (pre-staged 2026-05-04 alongside the
+  v0.1.18 README scaffold; ratified at cycle implementation; further
+  rewritten post-D15 IR R1 F-IR-02 to reflect the W-OB-2 default-flip
+  shape: bare `hai init` auto-promotes on TTY when onboarding is
+  incomplete; opt-outs documented; `--guided` retained as
+  explicit-force spelling). `agent_integration.md:27` install-lead
+  summary updated to match. Historical launch material under
+  `reporting/docs/launch/` (v0.1.0-era drafts) intentionally left
+  as-is per provenance discipline.
 
 ### Internal
 
@@ -85,12 +89,13 @@ signature matching AGENTS.md empirical norm).
 
 ### Tests
 
-- 41 new tests (W-OB-2: 6, W-OB-3: 8, W-OB-5: 17, W-OB-7: 10).
-  Includes 7 IR-R1 regression tests: 5 for F-IR-03 (`check_config`
-  ×2, `check_sources`, `check_today`, `check_intake_gaps`
-  `next_action` coverage) and 2 for F-IR-04 (`next_action_hint`
-  routes to target/intent remediation when prereqs incomplete).
-- Full suite at v0.1.18 ship: 2729 passed, 5 skipped (~130s).
+- 45 new tests (W-OB-2: 6, W-OB-3: 8, W-OB-5: 21, W-OB-7: 10).
+  Includes 7 IR-R1 regression tests (5 for F-IR-03 broader doctor
+  coverage; 2 for F-IR-04 primitive-readiness logic) plus 4 IR-R2
+  regression tests for F-IR-R2-01 (deep-probe outcomes:
+  CAUSE_2_CREDS + NETWORK emit `next_action`; CAUSE_1 + OTHER stay
+  prose-only by design).
+- Full suite at v0.1.18 ship: 2733 passed, 5 skipped (~130s).
 - 13-persona matrix: 13/13 reach `synthesized` cleanly, 0 findings,
   0 crashes (identical to v0.1.17 baseline; v0.1.18 doesn't change
   classifiers/policy).

@@ -332,6 +332,19 @@ def check_auth_intervals_icu(
             # generic "probe failed" hint when classification ran.
             if outcome_class is not None:
                 out["hint"] = out["next_step"]
+                # F-IR-R2-01 (D15 IR R2): the outcome-class hint maps
+                # to a concrete CLI command for two outcomes; attach
+                # the structured next_action companion. CAUSE_1 and
+                # OTHER stay prose-only because their next-step text
+                # is diagnostic / triage-doc-pointer rather than a
+                # single concrete command.
+                _DEEP_PROBE_NEXT_ACTION = {
+                    "CAUSE_2_CREDS": "hai auth intervals-icu",
+                    "NETWORK": "hai doctor",
+                }
+                command = _DEEP_PROBE_NEXT_ACTION.get(outcome_class)
+                if command is not None:
+                    out["next_action"] = _next_action(command)
     return out
 
 
