@@ -11,6 +11,23 @@ Per-release detail lives under `reporting/plans/<version>/`.
 
 ---
 
+## [0.1.18] — Unreleased
+
+**Tier:** substantive — 7 W-ids, onboarding-quality + intake-handler
+migration parity. Full Phase 0 D11 bug-hunt + 2-round D14 plan-audit
+(R1 7 findings + R2 3 findings, close-in-place).
+
+### Doctrine
+
+- **W-OB-1** README quickstart pivots `hai init --guided` as the
+  recommended interactive command (pre-staged 2026-05-04 alongside
+  v0.1.18 README scaffold; ratified at cycle implementation).
+  `agent_integration.md:27` install-lead summary updated to match.
+  Historical launch material under `reporting/docs/launch/` (v0.1.0-era
+  drafts) intentionally left as-is per provenance discipline.
+
+---
+
 ## [0.1.17] — 2026-05-05
 
 **Tier:** substantive — 10 W-ids, maintainability + eval substrate

@@ -24,9 +24,10 @@ boundaries.
 
 ## Install
 
-For a user install, the root README leads with `pipx install`, `hai init`,
-`hai doctor`, and the first inspection commands. A host-agent setup needs the
-same runtime plus installed skills:
+For a user install, the root README leads with `pipx install`, `hai init --guided`
+(the interactive onboarding flow that prompts for intervals.icu credentials and
+authors initial intent + target), `hai doctor`, and the first inspection commands.
+A host-agent setup needs the same runtime plus installed skills:
 
 ```bash
 pipx install health-agent-infra
