@@ -40,6 +40,20 @@ def render_text(report: DoctorReport) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
+def _render_next_action_lines(next_action: dict[str, Any]) -> list[str]:
+    """W-OB-5 (v0.1.18 §2.E item 5) — render the structured ``next_action``
+    block as one ``next:`` line per emitted purpose. Surfaced after the
+    ``hint`` line in human-readable doctor output so agents and operators
+    see the same content twice (prose hint + structured purpose) without
+    parsing JSON."""
+
+    lines: list[str] = []
+    purpose = next_action.get("purpose")
+    if purpose:
+        lines.append(f"  next: {purpose}")
+    return lines
+
+
 def _render_check(name: str, result: dict[str, Any]) -> list[str]:
     status = result.get("status", "?")
     glyph = _STATUS_GLYPH.get(status, "[?]")
@@ -77,6 +91,9 @@ def _render_check(name: str, result: dict[str, Any]) -> list[str]:
         if key == "probe" and isinstance(value, dict):
             body.extend(_render_probe(value))
             continue
+        if key == "next_action" and isinstance(value, dict):
+            body.extend(_render_next_action_lines(value))
+            continue
         body.append(f"  {key}: {value}")
     return body
 
@@ -109,6 +126,8 @@ def _render_onboarding_readiness(result: dict[str, Any]) -> list[str]:
         lines = [f"  reason: {result['reason']}"]
         if "hint" in result:
             lines.append(f"  hint: {result['hint']}")
+        if "next_action" in result and isinstance(result["next_action"], dict):
+            lines.extend(_render_next_action_lines(result["next_action"]))
         return lines
     lines = [
         f"  intent_count: {result.get('intent_count')}",
@@ -120,6 +139,8 @@ def _render_onboarding_readiness(result: dict[str, Any]) -> list[str]:
         lines.append(f"  missing: {', '.join(missing)}")
     if "hint" in result:
         lines.append(f"  hint: {result['hint']}")
+    if "next_action" in result and isinstance(result["next_action"], dict):
+        lines.extend(_render_next_action_lines(result["next_action"]))
     return lines
 
 

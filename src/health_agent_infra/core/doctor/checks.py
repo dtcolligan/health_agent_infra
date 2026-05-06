@@ -81,6 +81,88 @@ def check_config(thresholds_path: Path) -> dict[str, Any]:
     return {"status": "ok", "path": str(thresholds_path)}
 
 
+_NEXT_ACTION_REGISTRY: dict[str, dict[str, Any]] = {
+    "hai init": {
+        "purpose": "scaffold config + state DB + skills, and (when stdin is a TTY) author intent + target via the guided onboarding flow",
+        "agent_safe": False,
+        "interactive": True,
+    },
+    "hai state init": {
+        "purpose": "create the SQLite state DB and apply pending migrations",
+        "agent_safe": True,
+        "interactive": False,
+    },
+    "hai state migrate": {
+        "purpose": "apply pending schema migrations to the existing state DB",
+        "agent_safe": True,
+        "interactive": False,
+    },
+    "hai auth intervals-icu": {
+        "purpose": "store intervals.icu credentials in the OS keyring",
+        "agent_safe": False,
+        "interactive": True,
+    },
+    "hai auth garmin": {
+        "purpose": "store Garmin credentials in the OS keyring",
+        "agent_safe": False,
+        "interactive": True,
+    },
+    "hai setup-skills": {
+        "purpose": "copy packaged skills to the Claude skills directory",
+        "agent_safe": True,
+        "interactive": False,
+    },
+    "hai intent training add-session": {
+        "purpose": "author an active training-session intent for today",
+        "agent_safe": True,
+        "interactive": False,
+    },
+    "hai target set": {
+        "purpose": "commit a measurable wellness target (e.g. calories, protein, sleep)",
+        "agent_safe": True,
+        "interactive": False,
+    },
+    "hai pull --source intervals_icu": {
+        "purpose": "fetch and project the latest intervals.icu wellness window",
+        "agent_safe": True,
+        "interactive": False,
+    },
+}
+"""W-OB-5 (v0.1.18 §2.E) — registry of structured ``next_action`` descriptors.
+
+Each doctor check's ``hint`` field maps to a concrete CLI command; this
+table provides the matching ``next_action`` block (``command``, ``purpose``,
+``agent_safe``, ``interactive``) without re-parsing the hint prose.
+
+**Consistency invariant:** ``next_action.agent_safe`` MUST match the live
+``hai capabilities --json`` ``commands[name].agent_safe`` for the cited
+command. The registry hardcodes the values; the W-OB-5 test asserts the
+match against the runtime manifest. If the manifest entry for a command
+flips, the registry must be updated in the same commit.
+
+Per OQ-4 Codex disposition: this registry is **runtime-only**. It is NOT
+exported to ``hai capabilities --json`` (no manifest schema delta). The
+v0.2.3 capabilities-manifest schema freeze (W-30) remains untouched.
+
+Per W-OB-2 default-flip: ``hai init`` is the umbrella command — it
+auto-promotes to ``--guided`` on TTY when onboarding state is incomplete.
+``next_action.command`` references the post-W-OB-2 shape (``hai init``,
+not ``hai init --guided``)."""
+
+
+def _next_action(command: str) -> dict[str, Any]:
+    """Return the structured ``next_action`` block for ``command``.
+
+    Raises ``KeyError`` if the command is not registered — that's a bug
+    surface (the doctor check emitted a hint for a command we don't
+    have a descriptor for); failing loud is better than silently
+    omitting the structured surface.
+    """
+
+    descriptor = _NEXT_ACTION_REGISTRY[command]
+    return {"command": command, **descriptor}
+
+
 def check_state_db(db_path: Path) -> dict[str, Any]:
     """DB present + at schema HEAD? Also carries file size for ops visibility."""
 
@@ -97,6 +179,7 @@ def check_state_db(db_path: Path) -> dict[str, Any]:
             "path": str(db_path),
             "reason": "state DB file not present",
             "hint": "run `hai init` or `hai state init`",
+            "next_action": _next_action("hai init"),
         }
 
     conn = open_connection(db_path)
@@ -139,6 +222,7 @@ def check_state_db(db_path: Path) -> dict[str, Any]:
                 "known-good backup or run `hai state init` against a "
                 "fresh DB"
             ),
+            "next_action": _next_action("hai state init"),
         })
     elif current < head:
         base.update({
@@ -146,6 +230,7 @@ def check_state_db(db_path: Path) -> dict[str, Any]:
             "pending_migrations": head - current,
             "reason": f"{head - current} pending migration(s)",
             "hint": "run `hai state migrate`",
+            "next_action": _next_action("hai state migrate"),
         })
     else:
         base["status"] = "ok"
@@ -173,6 +258,7 @@ def check_auth_garmin(
                 "run `hai auth garmin` (interactive) or set "
                 "HAI_GARMIN_EMAIL + HAI_GARMIN_PASSWORD in the environment"
             ),
+            "next_action": _next_action("hai auth garmin"),
         }
     source = "keyring" if status["keyring"]["password_present"] else "env"
     out: dict[str, Any] = {"status": "ok", "credentials_source": source}
@@ -210,6 +296,7 @@ def check_auth_intervals_icu(
                 "run `hai auth intervals-icu` (interactive) or set "
                 "HAI_INTERVALS_ATHLETE_ID + HAI_INTERVALS_API_KEY in the environment"
             ),
+            "next_action": _next_action("hai auth intervals-icu"),
         }
     source = "keyring" if status["keyring"]["api_key_present"] else "env"
     out: dict[str, Any] = {"status": "ok", "credentials_source": source}
@@ -247,6 +334,7 @@ def check_skills(skills_dest: Path, packaged_names: list[str]) -> dict[str, Any]
             "installed_count": 0,
             "reason": "skills destination does not exist",
             "hint": "run `hai init` or `hai setup-skills`",
+            "next_action": _next_action("hai setup-skills"),
         }
     installed = sorted(p.name for p in skills_dest.iterdir() if p.is_dir())
     missing = sorted(set(packaged_names) - set(installed))
@@ -260,6 +348,7 @@ def check_skills(skills_dest: Path, packaged_names: list[str]) -> dict[str, Any]
             "status": "warn",
             "missing": missing,
             "hint": "run `hai setup-skills` to install missing skills",
+            "next_action": _next_action("hai setup-skills"),
         })
     else:
         base["status"] = "ok"
@@ -491,6 +580,7 @@ def check_onboarding_readiness(
             "status": "warn",
             "reason": "state DB not initialised",
             "hint": "run `hai init`",
+            "next_action": _next_action("hai init"),
         }
 
     from health_agent_infra.core.intent import list_active_intent
@@ -518,6 +608,7 @@ def check_onboarding_readiness(
                 "status": "warn",
                 "reason": f"schema read failed: {exc}",
                 "hint": "run `hai state migrate`",
+                "next_action": _next_action("hai state migrate"),
             }
     finally:
         conn.close()
@@ -558,6 +649,22 @@ def check_onboarding_readiness(
         # surfaced under `missing` so a renderer can show them all.
         base["hint"] = hints[0]
         base["all_hints"] = hints
+        # W-OB-5 (v0.1.18) — structured next_action companion field.
+        # Per F-OB-4A-02 dogfood finding: when MULTIPLE preconditions
+        # are missing (i.e. the user hasn't initialised at all), prefer
+        # the umbrella `hai init` command. Per W-OB-2 default-flip,
+        # bare `hai init` on TTY auto-promotes to the guided flow that
+        # closes intent + target + first pull in one pass. When only
+        # ONE precondition is missing (typically post-init drift), the
+        # per-component command is the targeted fix.
+        if len(missing) > 1:
+            base["next_action"] = _next_action("hai init")
+        elif missing == ["intent"]:
+            base["next_action"] = _next_action("hai intent training add-session")
+        elif missing == ["target"]:
+            base["next_action"] = _next_action("hai target set")
+        elif missing == ["wellness_pull"]:
+            base["next_action"] = _next_action("hai pull --source intervals_icu")
     else:
         base["status"] = "ok"
     return base
