@@ -313,6 +313,27 @@ def apply_pending_migrations(
     return applied_now
 
 
+def open_connection_with_migrations(db_path: Path) -> sqlite3.Connection:
+    """Open a SQLite connection AND apply any pending migrations before
+    returning. Wraps :func:`open_connection` + :func:`apply_pending_migrations`.
+
+    Used by handlers that write or read schema-current state when invoked
+    against a DB whose schema head may be behind the package head — the
+    common case being a user who upgraded the wheel without re-running
+    ``hai init``. The classic failure mode (F-OB-PRE-01, surfaced 2026-05-05)
+    is ``hai intake weight`` raising ``OperationalError: no such table:
+    body_comp`` against a pre-v0.1.17 DB.
+
+    Returned connection is caller-owned (open WAL + foreign-keys + Row
+    factory per :func:`open_connection`); caller is responsible for
+    ``.close()`` / ``with`` context.
+    """
+
+    conn = open_connection(db_path)
+    apply_pending_migrations(conn)
+    return conn
+
+
 def initialize_database(db_path: Path) -> tuple[Path, list[tuple[int, str]]]:
     """Open the DB at ``db_path`` (creating file + parent dir if needed),
     enable WAL + FKs, ensure the bookkeeping table, and apply pending

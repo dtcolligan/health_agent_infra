@@ -61,6 +61,7 @@ from health_agent_infra.core.state.store import (
     initialize_database,
     migration_004_dry_run_diff,
     open_connection,
+    open_connection_with_migrations,
     resolve_db_path,
 )
 from health_agent_infra.core.state.sync_log import (
@@ -108,6 +109,7 @@ __all__ = [
     "merge_manual_stress_into_accepted_stress",
     "migration_004_dry_run_diff",
     "open_connection",
+    "open_connection_with_migrations",
     "project_accepted_nutrition_state_daily",
     "project_accepted_recovery_state_daily",
     "project_accepted_resistance_training_state_daily",

@@ -207,7 +207,7 @@ def _project_gym_submission_into_state(db_path_arg, submission) -> None:
         match_exercise_name,
     )
     from health_agent_infra.core.state import (
-        open_connection,
+        open_connection_with_migrations,
         project_accepted_resistance_training_state_daily,
         project_gym_session,
         project_gym_set,
@@ -224,7 +224,7 @@ def _project_gym_submission_into_state(db_path_arg, submission) -> None:
         )
         return
 
-    conn = open_connection(db_path)
+    conn = open_connection_with_migrations(db_path)
     try:
         # Build the taxonomy resolver once per invocation so every set
         # in the submission shares a single consistent view. Only
@@ -307,7 +307,7 @@ def cmd_intake_exercise(args: argparse.Namespace) -> int:
     """
 
     from health_agent_infra.core.state import (
-        open_connection,
+        open_connection_with_migrations,
         project_exercise_taxonomy_entry,
         resolve_db_path,
     )
@@ -349,7 +349,7 @@ def cmd_intake_exercise(args: argparse.Namespace) -> int:
         for_date=None,
     )
 
-    conn = open_connection(db_path)
+    conn = open_connection_with_migrations(db_path)
     try:
         # F-A-07 fix per W-H1: build_manual_taxonomy_row validates the
         # required fields upstream, but mypy sees the row dict's values
@@ -583,7 +583,7 @@ def _project_nutrition_submission_into_state(db_path_arg, submission) -> None:
     """
 
     from health_agent_infra.core.state import (
-        open_connection,
+        open_connection_with_migrations,
         project_accepted_nutrition_state_daily,
         project_nutrition_intake_raw,
         resolve_db_path,
@@ -599,7 +599,7 @@ def _project_nutrition_submission_into_state(db_path_arg, submission) -> None:
         )
         return
 
-    conn = open_connection(db_path)
+    conn = open_connection_with_migrations(db_path)
     try:
         conn.execute("BEGIN IMMEDIATE")
         try:
@@ -735,7 +735,7 @@ def _project_stress_submission_into_state(db_path_arg, submission) -> None:
 
     from health_agent_infra.core.state import (
         merge_manual_stress_into_accepted_stress,
-        open_connection,
+        open_connection_with_migrations,
         project_stress_manual_raw,
         resolve_db_path,
     )
@@ -750,7 +750,7 @@ def _project_stress_submission_into_state(db_path_arg, submission) -> None:
         )
         return
 
-    conn = open_connection(db_path)
+    conn = open_connection_with_migrations(db_path)
     try:
         conn.execute("BEGIN IMMEDIATE")
         try:
@@ -863,7 +863,7 @@ def _project_context_note_into_state(db_path_arg, note) -> None:
     (nothing to roll back across)."""
 
     from health_agent_infra.core.state import (
-        open_connection,
+        open_connection_with_migrations,
         project_context_note,
         resolve_db_path,
     )
@@ -877,7 +877,7 @@ def _project_context_note_into_state(db_path_arg, note) -> None:
         )
         return
 
-    conn = open_connection(db_path)
+    conn = open_connection_with_migrations(db_path)
     try:
         project_context_note(
             conn,
@@ -1001,7 +1001,7 @@ def cmd_intake_gaps(args: argparse.Namespace) -> int:
     )
     from health_agent_infra.core.state import (
         build_snapshot,
-        open_connection,
+        open_connection_with_migrations,
         resolve_db_path,
     )
 
@@ -1022,7 +1022,7 @@ def cmd_intake_gaps(args: argparse.Namespace) -> int:
     # same `present` + `is_partial_day` + `target_status` keys so an
     # agent driving the CLI can rely on the W-A contract regardless of
     # which derivation source the caller picked.
-    presence_conn = open_connection(db_path)
+    presence_conn = open_connection_with_migrations(db_path)
     try:
         presence_block = compute_presence_block(
             presence_conn, as_of=as_of, user_id=user_id,
@@ -1090,7 +1090,7 @@ def cmd_intake_gaps(args: argparse.Namespace) -> int:
         "cleaned_evidence": evidence, "raw_summary": raw_summary,
     }
 
-    conn = open_connection(db_path)
+    conn = open_connection_with_migrations(db_path)
     try:
         snapshot = build_snapshot(
             conn, as_of_date=as_of, user_id=user_id,
@@ -1131,7 +1131,7 @@ def _project_readiness_submission_into_state(db_path_arg, submission) -> None:
     """
 
     from health_agent_infra.core.state import (
-        open_connection,
+        open_connection_with_migrations,
         project_manual_readiness_raw,
         resolve_db_path,
     )
@@ -1146,7 +1146,7 @@ def _project_readiness_submission_into_state(db_path_arg, submission) -> None:
         )
         return
 
-    conn = open_connection(db_path)
+    conn = open_connection_with_migrations(db_path)
     try:
         project_manual_readiness_raw(
             conn,
@@ -1198,7 +1198,7 @@ def cmd_intake_weight(args: argparse.Namespace) -> int:
         BodyCompValidationError,
         add_body_comp,
     )
-    from health_agent_infra.core.state import open_connection, resolve_db_path
+    from health_agent_infra.core.state import open_connection_with_migrations, resolve_db_path
 
     # Resolve measured_at + as_of_date.
     if args.measured_at:
@@ -1235,7 +1235,7 @@ def cmd_intake_weight(args: argparse.Namespace) -> int:
         )
         return exit_codes.USER_INPUT
 
-    conn = open_connection(db_path)
+    conn = open_connection_with_migrations(db_path)
     try:
         try:
             record = add_body_comp(
