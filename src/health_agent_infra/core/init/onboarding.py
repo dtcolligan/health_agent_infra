@@ -100,6 +100,13 @@ class OnboardingResult:
     first_pull: dict[str, Any] = field(default_factory=dict)
     surface_today: dict[str, Any] = field(default_factory=dict)
     overall_status: str = "ok"
+    next_action_hint: str = ""
+    """W-OB-3 (v0.1.18) — content-only post-prompt summary hint
+    pointing the user at the next agent-driven step. Populated by
+    ``run_guided_onboarding`` after step 7 completes; the upstream
+    ``cmd_init`` renderer surfaces this in the JSON report so the
+    user sees what to do next without parsing prose. Per OQ-5
+    Codex disposition: content addition, NOT a new flow step."""
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -108,6 +115,7 @@ class OnboardingResult:
             "first_pull": self.first_pull,
             "surface_today": self.surface_today,
             "overall_status": self.overall_status,
+            "next_action_hint": self.next_action_hint,
         }
 
 
@@ -522,5 +530,37 @@ def run_guided_onboarding(
         result.overall_status = "ok_with_skips"
     else:
         result.overall_status = "ok"
+
+    # W-OB-3 (v0.1.18) — content-only post-prompt next-action hint.
+    # If the user has credentials + authored intent/target, point them
+    # at `hai daily` directly. Otherwise prepend a remediation hint
+    # for the missing prerequisite. Per OQ-5: content addition, no new
+    # flow step.
+    auth_status = result.auth_intervals_icu.get("status", "")
+    intent_status = result.intent_target.get("status", "")
+    creds_ready = auth_status in ("configured", "already_configured")
+    intent_ready = intent_status in ("authored", "already_present")
+
+    if creds_ready and intent_ready:
+        result.next_action_hint = (
+            "Run `hai daily` to compute today's recommendation, "
+            "or ask your agent."
+        )
+    elif not creds_ready and intent_ready:
+        result.next_action_hint = (
+            "Add intervals.icu credentials via `hai auth intervals-icu`, "
+            "then run `hai daily`."
+        )
+    elif creds_ready and not intent_ready:
+        result.next_action_hint = (
+            "Author your training intent + targets via "
+            "`hai intent training add-session` and `hai target set`, "
+            "then run `hai daily`."
+        )
+    else:
+        result.next_action_hint = (
+            "Re-run `hai init --guided` to author credentials, intent, "
+            "and targets, then run `hai daily`."
+        )
 
     return result
