@@ -21,7 +21,7 @@ Under `snapshot.stress` you receive these blocks:
 - `history` — recent days of stress rows for context.
 - `signals` — the runtime-derived dict the classifier consumed: `garmin_all_day_stress`, `manual_stress_score`, `body_battery_end_of_day`, `body_battery_prev_day`, `stress_history_garmin_last_7`. Context only; never re-derive.
 - `classified_state` — `garmin_stress_band`, `manual_stress_band`, `body_battery_trend_band`, `coverage_band`, `stress_state`, `stress_score`, `body_battery_delta`, `uncertainty`. **Source of truth.**
-- `policy_result` — `policy_decisions[]`, `forced_action`, `forced_action_detail`, `capped_confidence`. **Source of truth.**
+- `policy_result` — `policy_decisions[]`, `forced_action`, `forced_action_detail`, `capped_confidence`, and (v0.2.0 W-PROV-2) optional `evidence_locators[]`. The runtime always emits a row-level locator citing today's `accepted_stress_state_daily`; an R-sustained-very-high-stress firing additionally cites `garmin_all_day_stress` per consecutive day in the trailing run. **Source of truth.**
 - `missingness` — per state_model_v1.md §5.
 
 ## Protocol
@@ -76,7 +76,7 @@ Emit a `StressProposal` JSON and call `hai propose --domain stress --proposal-js
 
 `proposal_id` = `prop_<for_date>_<user_id>_stress_01` (idempotent on `(for_date, user_id, domain)`; re-running on the same day does not produce a new row).
 
-Copy `policy_result.policy_decisions` into the output's `policy_decisions` verbatim — the runtime decided them; you do not re-edit or add new ones.
+Copy `policy_result.policy_decisions` into the output's `policy_decisions` verbatim — the runtime decided them; you do not re-edit or add new ones. **v0.2.0 W-PROV-2:** if `policy_result.evidence_locators` is present, copy that list verbatim into the proposal's `evidence_locators` field — do NOT derive locators yourself; the runtime computed them. If the field is absent, omit `evidence_locators` from the proposal.
 
 ## Invariants
 

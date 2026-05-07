@@ -872,10 +872,22 @@ def build_snapshot(
             "cold_start": stress_block["cold_start"],
             "energy_self_report": cleaned.get("energy_self_report"),
         }
+        # v0.2.0 W-PROV-2: sustained-stress rule cites trailing run
+        # within stress_history_garmin_last_7, so lookback_days=7.
+        stress_state_versions = _accepted_state_versions(
+            conn,
+            table="accepted_stress_state_daily",
+            user_id=user_id,
+            end_date=as_of_date,
+            lookback_days=7,
+        )
         stress_policy = evaluate_stress_policy(
             stress_classified,
             stress_signals,
             cold_start_context=stress_cold_start_ctx,
+            for_date_iso=as_of_date.isoformat(),
+            user_id=user_id,
+            stress_state_versions=stress_state_versions,
         )
         stress_block["signals"] = stress_signals
         stress_block["classified_state"] = _stress_classified_to_dict(stress_classified)

@@ -55,6 +55,12 @@ class StressPolicyResult:
     # D4 cold-start — tokens the snapshot layer folds into
     # classified_state.uncertainty.
     extra_uncertainty: tuple[str, ...] = ()
+    # v0.2.0 W-PROV-2: source-row locator(s). Always-emit baseline →
+    # 1 row-level locator on today's accepted_stress_state_daily.
+    # Sustained-stress firing adds one column-level locator
+    # (column="garmin_all_day_stress") per consecutive day in the
+    # trailing run, mirroring recovery R6.
+    evidence_locators: Optional[tuple[dict[str, Any], ...]] = None
 
 
 # ---------------------------------------------------------------------------
@@ -188,6 +194,10 @@ def evaluate_stress_policy(
     stress_signals: dict[str, Any],
     thresholds: Optional[dict[str, Any]] = None,
     cold_start_context: Optional[dict[str, Any]] = None,
+    *,
+    for_date_iso: Optional[str] = None,
+    user_id: Optional[str] = None,
+    stress_state_versions: Optional[dict[str, str]] = None,
 ) -> StressPolicyResult:
     """Apply stress R-rules to a classified stress state.
 
@@ -240,13 +250,81 @@ def evaluate_stress_policy(
         forced_action = sust_forced
         forced_action_detail = sust_detail
 
+    evidence_locators = _build_stress_locators(
+        for_date_iso=for_date_iso,
+        user_id=user_id,
+        stress_state_versions=stress_state_versions,
+        sustained_stress_fired=(
+            forced_action_detail is not None
+            and forced_action_detail.get("reason_token")
+            == "sustained_very_high_stress"
+        ),
+        consecutive_days=(
+            forced_action_detail.get("consecutive_days")
+            if forced_action_detail is not None
+            else None
+        ),
+    )
+
     return StressPolicyResult(
         policy_decisions=tuple(decisions),
         forced_action=forced_action,
         forced_action_detail=forced_action_detail,
         capped_confidence=capped_confidence,
         extra_uncertainty=tuple(extra_uncertainty),
+        evidence_locators=evidence_locators,
     )
+
+
+def _build_stress_locators(
+    *,
+    for_date_iso: Optional[str],
+    user_id: Optional[str],
+    stress_state_versions: Optional[dict[str, str]],
+    sustained_stress_fired: bool,
+    consecutive_days: Optional[int],
+) -> Optional[tuple[dict[str, Any], ...]]:
+    """v0.2.0 W-PROV-2 hybrid emission for stress.
+
+    Always-emit: 1 row-level locator on today's
+    ``accepted_stress_state_daily``. Spike-emit (additional): on
+    sustained-stress firing, append one column-level locator
+    (column=``garmin_all_day_stress``) per consecutive day in the
+    trailing run present in the version map. Days missing are
+    silently skipped (mirrors ``_r6_spike_locators``).
+    """
+
+    if for_date_iso is None or user_id is None:
+        return None
+    if not stress_state_versions:
+        return None
+
+    today_version = stress_state_versions.get(for_date_iso)
+    out: list[dict[str, Any]] = []
+    if today_version is not None:
+        out.append({
+            "table": "accepted_stress_state_daily",
+            "pk": {"as_of_date": for_date_iso, "user_id": user_id},
+            "row_version": today_version,
+        })
+
+    if sustained_stress_fired and consecutive_days:
+        from datetime import date, timedelta
+        end_date = date.fromisoformat(for_date_iso)
+        for offset in range(int(consecutive_days)):
+            day = end_date - timedelta(days=offset)
+            day_iso = day.isoformat()
+            version = stress_state_versions.get(day_iso)
+            if version is None:
+                continue
+            out.append({
+                "table": "accepted_stress_state_daily",
+                "pk": {"as_of_date": day_iso, "user_id": user_id},
+                "column": "garmin_all_day_stress",
+                "row_version": version,
+            })
+
+    return tuple(out) if out else None
 
 
 # ---------------------------------------------------------------------------
