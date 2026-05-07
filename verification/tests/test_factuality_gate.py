@@ -981,6 +981,82 @@ def test_review_weekly_capabilities_manifest_lists_bypass_flag():
     assert "agents must not use" in bypass_flag["help"].lower()
 
 
+# ---------------------------------------------------------------------------
+# 18. Step 8 — --scenario-set all fan-out semantics
+# ---------------------------------------------------------------------------
+
+
+def test_scenario_set_all_choices_include_factuality():
+    """Verify the parser accepts ``--scenario-set factuality`` as a
+    declared choice (not an unknown-set rejection)."""
+
+    from health_agent_infra.cli import build_parser
+
+    parser = build_parser()
+    # Should not raise / no SystemExit on valid choice.
+    args = parser.parse_args([
+        "eval", "run", "--scenario-set", "factuality",
+    ])
+    assert args.scenario_set == "factuality"
+
+
+def test_scenario_set_all_fan_out_runs_factuality_via_subprocess():
+    """``hai eval run --scenario-set all`` includes the factuality
+    corpus output. Verifies F-PLAN-R2-05 propagation: all-set
+    semantics extends to factuality.
+    """
+
+    import subprocess
+
+    result = subprocess.run(
+        ["uv", "run", "hai", "eval", "run", "--scenario-set", "all"],
+        capture_output=True, text=True,
+    )
+    assert result.returncode == 0
+    assert "factuality corpus:" in result.stdout
+    assert "known-bad:" in result.stdout
+    assert "known-good:" in result.stdout
+
+
+def test_scenario_set_judge_adversarial_stays_shape_only():
+    """``--scenario-set judge_adversarial`` continues to emit the
+    shape-only summary with no scoring. Pinned per PLAN §2.F
+    acceptance #6 — only the 'all' set's semantics changed; the
+    judge_adversarial set behavior is unchanged from v0.1.14 W-AI.
+    """
+
+    import subprocess
+
+    result = subprocess.run(
+        [
+            "uv", "run", "hai", "eval", "run",
+            "--scenario-set", "judge_adversarial",
+        ],
+        capture_output=True, text=True,
+    )
+    assert result.returncode == 0
+    assert "judge-adversarial corpus" in result.stdout
+    assert "no scoring" in result.stdout
+    # Shape-only — must NOT include scoring vocabulary.
+    assert "blocked" not in result.stdout
+    assert "passed" not in result.stdout
+
+
+def test_scenario_set_all_excludes_judge_adversarial():
+    """``--scenario-set all`` does NOT include judge_adversarial
+    (no scoring path until v0.2.2 W58J). Verified by absence of
+    the judge-adversarial summary line in the all-set output.
+    """
+
+    import subprocess
+
+    result = subprocess.run(
+        ["uv", "run", "hai", "eval", "run", "--scenario-set", "all"],
+        capture_output=True, text=True,
+    )
+    assert "judge-adversarial corpus" not in result.stdout
+
+
 def test_every_factuality_fixture_produces_its_expected_outcome():
     """Run each known-bad fixture through the gate and assert the
     outcome matches its declared ``expected_outcome`` +

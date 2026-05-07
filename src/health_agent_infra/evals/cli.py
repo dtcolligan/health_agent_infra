@@ -330,11 +330,22 @@ def _emit_judge_adversarial_summary(args: argparse.Namespace) -> int:
 
 def _run_all_scenario_sets(args: argparse.Namespace) -> int:
     """v0.1.14 W-AN: 'all' fan-out — runs every domain + synthesis
-    sequentially. Returns first non-zero rc; OK on full pass."""
+    + factuality sequentially. Returns first non-zero rc; OK on
+    full pass.
+
+    v0.2.0 W58D step 8 (per F-PLAN-R2-05 + PLAN §2.F acceptance #6):
+    extends the fan-out to include the factuality corpus scoring.
+    Both deterministic domain/synthesis sets and the factuality
+    corpus are scored at 100% in 'all'. ``judge_adversarial`` stays
+    shape-only summary (fixture corpus only — no scoring) until
+    v0.2.2 W58J wires the judge harness; it is intentionally NOT
+    in the 'all' fan-out.
+    """
 
     from health_agent_infra.core import exit_codes
 
     rc_overall = exit_codes.OK
+    # Deterministic domain + synthesis sets first.
     for set_name in sorted(SUPPORTED_DOMAINS) + ["synthesis"]:
         sub_args = argparse.Namespace(
             domain=set_name if set_name != "synthesis" else None,
@@ -345,6 +356,10 @@ def _run_all_scenario_sets(args: argparse.Namespace) -> int:
         rc = cmd_eval_run(sub_args)
         if rc != exit_codes.OK and rc_overall == exit_codes.OK:
             rc_overall = rc
+    # Factuality corpus (W58D step 8 add).
+    rc_fac = _run_factuality_corpus_scoring(args)
+    if rc_fac != exit_codes.OK and rc_overall == exit_codes.OK:
+        rc_overall = rc_fac
     return rc_overall
 
 
