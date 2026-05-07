@@ -49,6 +49,17 @@ Phase 3 close empirical:
 ✓ Full pytest suite (broader -W error::Warning gate):
   2940 passed, 4 skipped (~140s)
 
+Post-IR R1 close empirical (ship-time):
+
+✓ Full pytest suite (narrow gate -W error::pytest.PytestUnraisableExceptionWarning):
+  2943 passed, 4 skipped (~110s)
+  (Phase-3 close baseline 2940; +3 IR R1 regression tests:
+   F-IR-01 W58D real-schema drift (1) + F-IR-05 W52 multi-canonical
+   disposition (2). Total v0.1.18→v0.2.0 ship-time delta: +187.)
+
+✓ Full pytest suite (broader -W error::Warning gate):
+  2943 passed, 4 skipped (~140s)
+
 ✓ hai capabilities --json: byte-stable manifest with the
   v0.2.0 surface adds: `--scenario-set factuality` choice,
   `hai review weekly --bypass-factuality-gate` flag,
@@ -137,8 +148,11 @@ Re-evaluation gate stays at the v0.4 review per D16. NOT v0.2.1.
   reflect this ratio.
 
 - **Test growth this cycle (Phase 1 → Phase 5).** v0.1.18 close
-  baseline: 2756. v0.2.0 ship: 2940. Delta: +184. PLAN G2 target:
-  ≥+86. Exceeded 2.1×.
+  baseline: 2756. v0.2.0 Phase-3 close: 2940. v0.2.0 ship-time
+  (post-IR R1): 2943. Delta: +187 (Phase-3 close +184 + IR R1
+  regression +3 for F-IR-01 W58D real-schema drift + F-IR-05 W52
+  multi-canonical disposition). PLAN G2 target: ≥+86. Exceeded
+  2.2×.
 
 - **Commits this cycle.** Phase 1 (11) + Phase 2 (2) + Phase 3
   (8 W52 + 5 W-FACT-ATOM + 9 W58D + 1 fix commit + 1 fix-w52

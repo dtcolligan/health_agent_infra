@@ -17,14 +17,14 @@ give that provider — that's the only path data leaves the machine,
 and it's not something `hai` controls.
 
 [![PyPI](https://img.shields.io/pypi/v/health-agent-infra)](https://pypi.org/project/health-agent-infra/)
-[![Tests](https://img.shields.io/badge/tests-2940_passing-green)](verification/tests/)
+[![Tests](https://img.shields.io/badge/tests-2943_passing-green)](verification/tests/)
 [![Python](https://img.shields.io/badge/python-3.11+-blue)](pyproject.toml)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 > **Status — `0.1.18` shipped; v0.2.0 ship-prep complete 2026-05-07,
 > PyPI publish gated on D15 IR settle + maintainer manual TTY gate.**
 > Working maintainer-dogfooded single-user software, packaged around
-> Claude Code as the first compatible host. The 2,940-test gate,
+> Claude Code as the first compatible host. The 2,943-test gate,
 > 68-command CLI surface, and end-to-end audit chain are maintainer-
 > verified. Non-maintainer full-flow validation: W-2U-INSTALL closed
 > verbal-only by a post-v0.1.18 foreign-machine session (maintainer's

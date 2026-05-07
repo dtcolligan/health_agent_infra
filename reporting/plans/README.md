@@ -202,11 +202,14 @@ Cycle directories preserve their own history:
   W-EVCARD-WEEKLY (migration 028) + W-FACT-ATOM atomic-claim corpus +
   Path A doc adjuncts (W-MCP-THREAT, W-COMP-LANDSCAPE, W-NOF1-METHOD)
   + W-EXPLAIN-UX-CARRY disposition tracker. Schema head 28
-  (W-EVCARD migrations 027 + 028). Test surface: 2940 passed, 4
-  skipped (broader warning gate, +184 vs v0.1.18 baseline). Persona
-  matrix 13/13 with 0 findings + 0 crashes. Factuality corpus
-  100/100 vs 97/99 thresholds. CLI surface: 68 commands. D14
-  10 → 5 → 3 → 1nit close. Honesty boundary gates G15-G17 reserve
+  (W-EVCARD migrations 027 + 028). Test surface: 2943 passed, 4
+  skipped (broader warning gate, +187 vs v0.1.18 baseline; the +3
+  over the Phase-3 close 2940 are IR R1 regression tests landed for
+  F-IR-01 + F-IR-05). Persona matrix 13/13 with 0 findings + 0
+  crashes. Factuality corpus 100/100 vs 97/99 thresholds. CLI
+  surface: 68 commands. D14 10 → 5 → 3 → 1nit close. D15 IR R1
+  SHIP_WITH_FIXES (5 findings, all closed in 6 commits). Honesty
+  boundary gates G15-G17 reserve
   foreign-user empirical (W-2U-WEARABLE/DOGFOOD), LLM-judge
   factuality (W58J → v0.2.2), and insight-ledger persistence
   (W53 → v0.2.1) for downstream cycles.

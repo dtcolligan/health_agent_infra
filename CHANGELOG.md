@@ -138,6 +138,60 @@ Per-release detail lives under `reporting/plans/<version>/`.
   heading suffix). The F-PLAN-10 mechanical assertion now exercises
   deferred bundles too via a new regression test.
 
+- **W58D row-version drift lane now fires against the real
+  accepted-state schema** (D15 IR R1 F-IR-01). The drift check
+  read `row.get("row_version")`, but real
+  `accepted_recovery_state_daily` rows expose `projected_at` (the
+  canonical W-PROV-1 row-version column for accepted-state tables
+  per `state_model_v1.md` §0/§8 + `domains/recovery/policy.py:273`
+  emitter). Synthetic test fixtures masked this by creating a
+  literal `row_version` column. Stale locators silently passed in
+  production. Fix promotes column resolution to a registry
+  (`_ROW_VERSION_COLUMN` in `core/provenance/locator.py`); the
+  factuality gate now reads the row's value at the mapped column.
+  Synthetic seed renamed to `projected_at`. New
+  `test_gate_claim_drift_runs_against_real_accepted_state_schema`
+  pins the integration end-to-end against `initialize_database()`.
+
+- **W52 multi-canonical disposition now reachable in markdown +
+  JSON** (D15 IR R1 F-IR-05). PLAN §409 required weeks with 2+
+  non-superseded plans on the same `for_date` to surface an
+  explicit "multiple plans on this day" disposition. The query
+  layer loaded both rows and the renderer carried the disposition
+  prose, but `_multi_canonical_day_count()` always returned 0
+  because `WeeklyCoverage` had no metadata to read. Fix adds
+  `multi_canonical_dates: list[str]` to `WeeklyCoverage`,
+  populates it in `evaluate_weekly_coverage`, and surfaces it in
+  both the markdown footer and the JSON `coverage` block.
+  Positive + negative regression tests pin the disposition surface.
+
+- **Repo-wide mypy gate now clean** (D15 IR R1 F-IR-02). Eleven
+  errors across five files closed: `bad_locators` annotation in
+  the factuality corpus generator, lookup-narrowing locals in
+  synthesis evidence-card emission, `_make_row_getter` helper in
+  the explain queries (replacing a lambda-in-conditional), `Sequence[T]`
+  parameter defaults in the atomic-claims corpus generator, scoped
+  `# type: ignore[arg-type]` on the `_NullConn()` duck-typed
+  `build_weekly_prose` call, and an `assert first is not None`
+  narrowing assertion in the weekly-review handler.
+
+- **Repo-wide bandit gate now clean** (D15 IR R1 F-IR-03). Two
+  `# nosec B608` suppressions sat on a different line than the
+  offending f-string and bandit reported them as unsuppressed
+  findings. Moved both to the f-string lines, matching the 35-site
+  pattern that already worked elsewhere.
+
+- **Summary-surface freshness sweep** (D15 IR R1 F-IR-04). Three
+  surfaces over-claimed v0.2.0 ship-prep status against the prior
+  v0.1.18 baseline: README badge + status block, planning-tree
+  reading-order index, and `current_system_state.md` "Next cycles"
+  table. All updated to reflect ship-prep complete + v0.2.1 next-
+  active. (Round 2 surfaced second-order test-count drift at
+  `2940 → 2943` across README + ROADMAP + RELEASE_PROOF + REPORT
+  + planning-tree index + current-system-state from the round-1
+  fixes themselves; that drift is closed in the same release as
+  this entry.)
+
 ---
 
 ## [0.1.18] — 2026-05-06

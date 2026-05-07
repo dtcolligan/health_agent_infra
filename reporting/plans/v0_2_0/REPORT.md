@@ -93,8 +93,10 @@ not a v0.2.0 ship blocker).
 ## §4 Test surface
 
 - v0.1.18 close baseline: 2756.
-- v0.2.0 ship-prep: 2940 passed, 4 skipped (broader gate).
-- Delta: +184. PLAN G2 floor was +86. Exceeded 2.1×.
+- v0.2.0 Phase-3 close: 2940 passed, 4 skipped (broader gate).
+- v0.2.0 ship-time (post-IR R1 close): 2943 passed, 4 skipped.
+- Delta: +187 (Phase-3 close +184 + IR R1 regression +3).
+  PLAN G2 floor was +86. Exceeded 2.2×.
 
 Per-W-id growth (rough):
 - W-PROV-2: +27 (Phase 1 close memory).
@@ -103,6 +105,9 @@ Per-W-id growth (rough):
 - W-FACT-ATOM: +24 (13 step 1 + 11 step 3) + 1 F-PLAN-10 regression.
 - W58D: +46 (16 step 1 + 5 step 2 + 8 step 3 + 4 step 4 + 2 step 5
   + 4 step 6 + 3 step 7 + 4 step 8).
+- IR R1 closure: +3 (F-IR-01 W58D real-schema drift regression test
+  + F-IR-05 W52 multi-canonical disposition positive + negative
+  regression tests).
 
 ## §5 Lessons from the cycle
 

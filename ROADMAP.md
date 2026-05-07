@@ -24,9 +24,11 @@ This file is a high-level pointer; for actual scope, read those plans.
   26 → 28 (migrations 027 daily evidence card + 028 weekly claim
   card). **Empirical: factuality corpus 100/100 vs 97/99 thresholds;
   parser precision 100% over 30-fixture corpus; persona matrix 13/13
-  with 0 findings + 0 crashes.** Test surface: 2,940 passed, 4
-  skipped (broader warning gate; +184 vs v0.1.18 baseline of 2,756,
-  exceeded the +86 floor 2.1×).
+  with 0 findings + 0 crashes.** Test surface: 2,943 passed, 4
+  skipped (broader warning gate; +187 vs v0.1.18 baseline of 2,756,
+  exceeded the +86 floor 2.2×; +3 over the Phase-3 close 2,940
+  baseline are the IR R1 regression tests for F-IR-01 W58D real-
+  schema drift + F-IR-05 W52 multi-canonical disposition).
   See [`reporting/plans/v0_2_0/RELEASE_PROOF.md`](reporting/plans/v0_2_0/RELEASE_PROOF.md).
 - **v0.1.17 shipped (2026-05-05).** Maintainability + eval-substrate
   consolidation. 10 W-ids closed at 100% acceptance: W-29 cli.py
