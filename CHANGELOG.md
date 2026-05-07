@@ -30,6 +30,21 @@ Per-release detail lives under `reporting/plans/<version>/`.
   `reporting/docs/per_domain_locator_emission.md`. Recovery's
   v0.1.14 W-PROV-1 emission path is unchanged.
 
+- **Per-recommendation evidence cards now persist alongside the
+  daily plan** (W-EVCARD-DAILY, migration 027). Each `hai
+  synthesize` writes one `recommendation_evidence_card` row per
+  committed recommendation inside the same transaction; cards roll
+  back together with the plan if any insert fails. Each card
+  carries the `recommendation_evidence_card.v1` payload (decision
+  + evidence + provenance lanes). Source-row locator entries
+  validate per W-PROV-1; audit-chain references (proposal_log,
+  planned_recommendation, recommendation_log, x_rule_firing,
+  data_quality_daily) live in separate payload-lane fields and are
+  validated as plain primary keys per F-PHASE0-12. `hai explain
+  --json` now includes a top-level `evidence_cards` field. The
+  daily card is the substrate W52 weekly review (this cycle) and
+  v0.2.2 W58J judge harness (next cycle group) consume.
+
 ---
 
 ## [0.1.18] — 2026-05-06

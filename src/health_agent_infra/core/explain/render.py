@@ -59,9 +59,17 @@ def bundle_to_dict(bundle: ExplainBundle) -> dict[str, Any]:
         "recommendations": [
             _recommendation_to_dict(r) for r in bundle.recommendations
         ],
+        # v0.2.0 W-EVCARD-DAILY (PLAN §2.B acceptance #5).
+        "evidence_cards": [
+            _evidence_card_to_dict(c) for c in bundle.evidence_cards
+        ],
         "reviews": [_review_to_dict(r) for r in bundle.reviews],
         "user_memory": _user_memory_to_dict(bundle.user_memory),
     }
+
+
+def _evidence_card_to_dict(card: Any) -> dict[str, Any]:
+    return asdict(card)
 
 
 def _plan_to_dict(plan: ExplainPlan) -> dict[str, Any]:

@@ -381,9 +381,9 @@ def test_pre_013_seed_followed_by_full_migration_stack_reaches_head(tmp_path: Pa
     conn = open_connection(db_path)
     try:
         head = current_schema_version(conn)
-        # 025_target_macros_extension (v0.1.15 W-C) is the current head;
-        # if a future migration lands, bump the expectation here
+        # 027_evidence_card_daily (v0.2.0 W-EVCARD-DAILY) is the current
+        # head; if a future migration lands, bump the expectation here
         # deliberately.
-        assert head == 26
+        assert head == 27
     finally:
         conn.close()

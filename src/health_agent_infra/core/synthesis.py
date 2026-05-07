@@ -67,6 +67,10 @@ from health_agent_infra.core.state.projector import (
     project_x_rule_firing,
     read_proposals_for_plan_key,
 )
+from health_agent_infra.core.state.projectors.evidence_card import (
+    build_evidence_card_payload,
+    project_evidence_card,
+)
 from health_agent_infra.core.state.snapshot import build_snapshot
 from health_agent_infra.core.synthesis_policy import (
     XRuleFiring,
@@ -699,6 +703,67 @@ V1_EXPECTED_DOMAINS: frozenset[str] = frozenset({
 })
 
 
+# v0.2.0 W-EVCARD-DAILY helpers — keep next to ``run_synthesis``
+# for proximity since they're called inside its commit transaction.
+
+def _collect_x_rule_firing_ids_by_domain(
+    conn: sqlite3.Connection,
+    *,
+    daily_plan_id: str,
+) -> dict[str, list[int]]:
+    """Group x_rule_firing.firing_id values by affected_domain for the
+    plan currently being committed.
+
+    Reads from inside the active synthesis transaction — the
+    project_x_rule_firing calls earlier in the run_synthesis loop
+    have already inserted the rows. Returns ``{domain: [firing_id, ...]}``;
+    missing domains map to absent (callers default to []).
+    """
+
+    rows = conn.execute(
+        "SELECT firing_id, affected_domain FROM x_rule_firing "
+        "WHERE daily_plan_id = ?",
+        (daily_plan_id,),
+    ).fetchall()
+    out: dict[str, list[int]] = {}
+    for row in rows:
+        firing_id = row[0] if not hasattr(row, "keys") else row["firing_id"]
+        domain = row[1] if not hasattr(row, "keys") else row["affected_domain"]
+        out.setdefault(domain, []).append(firing_id)
+    return out
+
+
+def _split_locators_by_lane(
+    locators: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Split an ``evidence_locators`` list into the two card-payload lanes.
+
+    The W-EVCARD-DAILY card payload separates locator entries into:
+      - ``accepted_state_rows`` — locators whose ``table`` is one of
+        the six ``accepted_*_state_daily`` tables (W-PROV-2 emission).
+      - ``raw_source_refs`` — locators whose ``table`` is a source-row
+        evidence table (e.g., ``source_daily_garmin`` from recovery
+        R6's spike-window emission).
+
+    Both lanes carry SourceRowLocator-shaped dicts; the split is
+    purely organisational. Validator (in build_evidence_card_payload)
+    verifies each locator against the W-PROV-1 whitelist regardless
+    of which lane it lands in.
+    """
+
+    accepted: list[dict[str, Any]] = []
+    raw: list[dict[str, Any]] = []
+    for loc in locators:
+        if not isinstance(loc, dict):
+            continue
+        table = loc.get("table", "")
+        if isinstance(table, str) and table.startswith("accepted_"):
+            accepted.append(loc)
+        else:
+            raw.append(loc)
+    return accepted, raw
+
+
 def run_synthesis(
     conn: sqlite3.Connection,
     *,
@@ -1160,6 +1225,51 @@ def run_synthesis(
             project_planned_recommendation(
                 conn,
                 planned_row,
+                agent_version=agent_version,
+                commit_after=False,
+            )
+
+        # v0.2.0 W-EVCARD-DAILY: write one recommendation_evidence_card
+        # row per committed recommendation, INSIDE the same transaction
+        # so a card-write failure rolls back the daily_plan +
+        # recommendation_log + planned_recommendation rows together.
+        # Acceptance #2 + #3 (PLAN §2.B).
+        firing_ids_by_domain = _collect_x_rule_firing_ids_by_domain(
+            conn, daily_plan_id=daily_plan_id,
+        )
+        proposal_id_by_domain = {
+            p["domain"]: p["proposal_id"] for p in proposals
+        }
+        planned_id_by_domain = {
+            r["domain"]: r["planned_id"] for r in planned_rows
+        }
+        for recommendation in final_recommendations:
+            domain = recommendation.get("domain", "recovery")
+            accepted, raw = _split_locators_by_lane(
+                recommendation.get("evidence_locators") or []
+            )
+            payload = build_evidence_card_payload(
+                recommendation,
+                accepted_state_rows=accepted,
+                raw_source_refs=raw,
+                proposal_log_ids=[proposal_id_by_domain.get(domain)]
+                    if proposal_id_by_domain.get(domain) else [],
+                planned_ids=[planned_id_by_domain.get(domain)]
+                    if planned_id_by_domain.get(domain) else [],
+                recommendation_log_ids=[recommendation["recommendation_id"]],
+                x_rule_firing_ids=firing_ids_by_domain.get(domain, []),
+            )
+            project_evidence_card(
+                conn,
+                card_id=f"card_{recommendation['recommendation_id']}",
+                daily_plan_id=daily_plan_id,
+                recommendation_id=recommendation["recommendation_id"],
+                planned_id=planned_id_by_domain.get(domain),
+                proposal_id=proposal_id_by_domain.get(domain),
+                user_id=recommendation["user_id"],
+                for_date=recommendation["for_date"],
+                domain=domain,
+                payload=payload,
                 agent_version=agent_version,
                 commit_after=False,
             )

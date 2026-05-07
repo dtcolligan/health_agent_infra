@@ -2444,6 +2444,20 @@ def delete_canonical_plan_cascade(
     # proper column (migration 009). Pre-M3 rows were backfilled from
     # payload_json at migration time, so the column lookup finds every
     # row the previous json_extract path did.
+    #
+    # v0.2.0 W-EVCARD-DAILY (migration 027): recommendation_evidence_card
+    # has FKs to recommendation_log + daily_plan, so cards are deleted
+    # FIRST (before recommendation_log + daily_plan + planned_recommendation
+    # below). The card's planned_id + proposal_id FKs are
+    # ON DELETE SET NULL so the planned_recommendation deletion later in
+    # this function doesn't need a separate card-cleanup pass for those
+    # refs. (If a future migration tightens those FKs, this comment
+    # serves as the provenance trail.)
+    conn.execute(
+        "DELETE FROM recommendation_evidence_card WHERE daily_plan_id = ?",
+        (daily_plan_id,),
+    )
+
     rec_rows = conn.execute(
         "SELECT recommendation_id FROM recommendation_log "
         "WHERE daily_plan_id = ?",

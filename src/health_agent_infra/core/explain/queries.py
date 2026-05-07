@@ -182,6 +182,24 @@ class ExplainUserMemory:
 
 
 @dataclass(frozen=True)
+class ExplainEvidenceCard:
+    """v0.2.0 W-EVCARD-DAILY — daily evidence-card surface row for
+    ``hai explain --json``. One per row in
+    ``recommendation_evidence_card`` for the loaded plan.
+    """
+
+    card_id: str
+    daily_plan_id: str
+    recommendation_id: str
+    planned_id: Optional[str]
+    proposal_id: Optional[str]
+    domain: str
+    schema_version: str
+    payload: dict[str, Any]
+    computed_at: str
+
+
+@dataclass(frozen=True)
 class ExplainBundle:
     plan: ExplainPlan
     proposals: list[ExplainProposal]
@@ -195,6 +213,10 @@ class ExplainBundle:
     planned_recommendations: list[ExplainPlannedRecommendation] = field(
         default_factory=list
     )
+    # v0.2.0 W-EVCARD-DAILY — empty list on legacy plans (pre-mig 027)
+    # OR on plans authored before W-EVCARD-DAILY landed in the synth
+    # transaction. Consumers treat absence as "no daily-card surface".
+    evidence_cards: list[ExplainEvidenceCard] = field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -381,6 +403,9 @@ def load_bundle_by_daily_plan_id(
     planned = _load_planned_recommendations_for_plan(
         conn, daily_plan_id=daily_plan_id,
     )
+    evidence_cards = _load_evidence_cards_for_plan(
+        conn, daily_plan_id=daily_plan_id,
+    )
 
     return ExplainBundle(
         plan=plan,
@@ -391,7 +416,62 @@ def load_bundle_by_daily_plan_id(
         reviews=reviews,
         user_memory=user_memory,
         planned_recommendations=planned,
+        evidence_cards=evidence_cards,
     )
+
+
+def _load_evidence_cards_for_plan(
+    conn: sqlite3.Connection,
+    *,
+    daily_plan_id: str,
+) -> list[ExplainEvidenceCard]:
+    """v0.2.0 W-EVCARD-DAILY — load all
+    ``recommendation_evidence_card`` rows for the requested plan.
+
+    Returns an empty list on legacy plans (pre-migration-027 schema OR
+    plans synthesized before W-EVCARD-DAILY landed). The
+    open_connection_with_migrations seam ensures the table exists at
+    query time on any current DB; if the user opens a connection
+    without that seam (rare, test-only), this query degrades by
+    catching OperationalError + emitting an empty list.
+    """
+
+    try:
+        rows = conn.execute(
+            "SELECT card_id, daily_plan_id, recommendation_id, "
+            "       planned_id, proposal_id, domain, schema_version, "
+            "       payload_json, computed_at "
+            "FROM recommendation_evidence_card "
+            "WHERE daily_plan_id = ? "
+            "ORDER BY domain ASC, computed_at ASC",
+            (daily_plan_id,),
+        ).fetchall()
+    except sqlite3.OperationalError:
+        return []
+
+    out: list[ExplainEvidenceCard] = []
+    for row in rows:
+        get = (
+            (lambda k: row[k]) if hasattr(row, "keys")
+            else (lambda k, _r=row: _r[
+                ["card_id", "daily_plan_id", "recommendation_id",
+                 "planned_id", "proposal_id", "domain",
+                 "schema_version", "payload_json", "computed_at"
+                ].index(k)
+            ])
+        )
+        out.append(ExplainEvidenceCard(
+            card_id=get("card_id"),
+            daily_plan_id=get("daily_plan_id"),
+            recommendation_id=get("recommendation_id"),
+            planned_id=get("planned_id"),
+            proposal_id=get("proposal_id"),
+            domain=get("domain"),
+            schema_version=get("schema_version"),
+            payload=json.loads(get("payload_json")),
+            computed_at=get("computed_at"),
+        ))
+    return out
 
 
 # ---------------------------------------------------------------------------
