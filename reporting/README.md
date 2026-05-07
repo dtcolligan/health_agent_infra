@@ -6,6 +6,7 @@ under `reporting/` is imported by the package.
 
 Project-wide research framing now lives outside this tree:
 [`../PROJECT_FRAME.md`](../PROJECT_FRAME.md),
+[`../PROJECT_OPERATING_MODEL.md`](../PROJECT_OPERATING_MODEL.md),
 [`../research/runtime_contracts_paper/`](../research/runtime_contracts_paper/),
 and [`../benchmarks/governed_agent_bench/`](../benchmarks/governed_agent_bench/).
 Use `reporting/` for HAI runtime docs, release proof, and historical
@@ -29,9 +30,9 @@ This directory has four subdirectories, each with a distinct role.
 | [`plans/post_v0_1_18/strategic_plan_v2.md`](plans/post_v0_1_18/strategic_plan_v2.md) | HAI reference-runtime strategy before the research reframe |
 | [`plans/strategic_plan_v1.md`](plans/strategic_plan_v1.md) | superseded — preserved as v2 source evidence |
 | [`plans/tactical_plan_v0_1_x.md`](plans/tactical_plan_v0_1_x.md) | HAI runtime backlog and release history |
-| [`plans/eval_strategy/v1.md`](plans/eval_strategy/v1.md) | active — how correctness is measured |
-| [`plans/success_framework_v1.md`](plans/success_framework_v1.md) | active — how project value is measured |
-| [`plans/risks_and_open_questions.md`](plans/risks_and_open_questions.md) | active — what could derail + decisions needed |
+| [`plans/eval_strategy/v1.md`](plans/eval_strategy/v1.md) | HAI runtime correctness strategy; not the project-wide research eval strategy |
+| [`plans/success_framework_v1.md`](plans/success_framework_v1.md) | HAI runtime value framework; not project-wide research success criteria |
+| [`plans/risks_and_open_questions.md`](plans/risks_and_open_questions.md) | HAI runtime risk register; project-wide research risks live in research docs |
 | [`plans/v0_1_15/`](plans/v0_1_15/) | frozen — package release, published 2026-05-03. |
 | [`plans/v0_1_15_1/`](plans/v0_1_15_1/) | frozen — latest hotfix cycle (Linux keyring fall-through, 2026-05-03). |
 | [`plans/v0_1_16/`](plans/v0_1_16/) | frozen — cancelled 2026-05-04. |

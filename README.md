@@ -24,7 +24,9 @@ the claim testable.
 | **Paper** | Research-engineering systems/evals paper around local governed agents and model-scale reduction. | Frame locked; empirical design and benchmark buildout in progress. |
 
 The canonical internal project-memory file is
-[`PROJECT_FRAME.md`](PROJECT_FRAME.md). The locked paper frame lives at
+[`PROJECT_FRAME.md`](PROJECT_FRAME.md). The internal operating model is
+[`PROJECT_OPERATING_MODEL.md`](PROJECT_OPERATING_MODEL.md). The locked
+paper frame lives at
 [`research/runtime_contracts_paper/PAPER_FRAME.md`](research/runtime_contracts_paper/PAPER_FRAME.md).
 
 ## Research Thesis
@@ -117,6 +119,8 @@ after the fact.
 | Path | Purpose |
 |---|---|
 | [`PROJECT_FRAME.md`](PROJECT_FRAME.md) | Canonical project framing and priority order for future agents. |
+| [`PROJECT_OPERATING_MODEL.md`](PROJECT_OPERATING_MODEL.md) | Internal operating model, documentation gate, artifact hierarchy, and decision rules. |
+| [`HYPOTHESES.md`](HYPOTHESES.md) | Current research hypotheses. |
 | [`research/runtime_contracts_paper/`](research/runtime_contracts_paper/) | Paper frame, draft, implementation plan, and documentation audit. |
 | [`benchmarks/governed_agent_bench/`](benchmarks/governed_agent_bench/) | GovernedAgentBench schemas, tasks, manifests, scorer, baselines, and reports. |
 | [`src/health_agent_infra/`](src/health_agent_infra/) | HAI reference-runtime source package. |
@@ -142,7 +146,7 @@ See [`ROADMAP.md`](ROADMAP.md) for the research-first roadmap.
 
 | Reader | Best next docs |
 |---|---|
-| Research / benchmark reviewer | [`PROJECT_FRAME.md`](PROJECT_FRAME.md), [`research/runtime_contracts_paper/PAPER_FRAME.md`](research/runtime_contracts_paper/PAPER_FRAME.md), [`benchmarks/governed_agent_bench/README.md`](benchmarks/governed_agent_bench/README.md) |
+| Research / benchmark reviewer | [`PROJECT_FRAME.md`](PROJECT_FRAME.md), [`PROJECT_OPERATING_MODEL.md`](PROJECT_OPERATING_MODEL.md), [`HYPOTHESES.md`](HYPOTHESES.md), [`research/runtime_contracts_paper/PAPER_FRAME.md`](research/runtime_contracts_paper/PAPER_FRAME.md), [`research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`](research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md), [`benchmarks/governed_agent_bench/README.md`](benchmarks/governed_agent_bench/README.md) |
 | HAI user or operator | [`reporting/docs/hai_reference_runtime.md`](reporting/docs/hai_reference_runtime.md), [`reporting/docs/current_system_state.md`](reporting/docs/current_system_state.md), [`reporting/docs/privacy.md`](reporting/docs/privacy.md), [`reporting/docs/non_goals.md`](reporting/docs/non_goals.md) |
 | Host-agent integrator | [`reporting/docs/host_agent_contract.md`](reporting/docs/host_agent_contract.md), [`reporting/docs/agent_integration.md`](reporting/docs/agent_integration.md), [`reporting/docs/agent_cli_contract.md`](reporting/docs/agent_cli_contract.md) |
 | Runtime contributor | [`CONTRIBUTING.md`](CONTRIBUTING.md), [`reporting/docs/architecture.md`](reporting/docs/architecture.md), [`reporting/docs/domains/README.md`](reporting/docs/domains/README.md), [`reporting/docs/x_rules.md`](reporting/docs/x_rules.md) |

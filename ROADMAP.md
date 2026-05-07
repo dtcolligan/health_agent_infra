@@ -16,10 +16,13 @@ is [`research/runtime_contracts_paper/PAPER_FRAME.md`](research/runtime_contract
 
 ## Now
 
-- **Documentation alignment.** Make every cold-start doc teach the same
-  frame: runtime-contract research repo; HAI as reference runtime;
-  GovernedAgentBench as benchmark; personal wellness as non-clinical
-  demonstrator domain.
+- **Documentation alignment gate.** Current focus. Make the internal docs
+  strong enough that a cold session can recover the new objective without
+  conversation memory: runtime-contract research repo; HAI as reference
+  runtime; GovernedAgentBench as benchmark; personal wellness as
+  non-clinical demonstrator domain; historical HAI plans as provenance,
+  not current priority. Gate doc:
+  [`PROJECT_OPERATING_MODEL.md`](PROJECT_OPERATING_MODEL.md).
 - **Freeze the HAI operator contract for research.** Stabilize the
   public manifest, command schemas, mutation classes, exit-code
   semantics, proposal/commit separation, validation gates, privacy caveat,

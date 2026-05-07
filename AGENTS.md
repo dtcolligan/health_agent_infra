@@ -45,7 +45,12 @@ codex_plan_audit_response F-PLAN-12.)
 Authoritative orientation:
 
 - `PROJECT_FRAME.md` - canonical research framing and priority order
+- `PROJECT_OPERATING_MODEL.md` - internal operating model, documentation
+  gate, artifact hierarchy, and decision rules
+- `HYPOTHESES.md` - current research hypotheses
 - `research/runtime_contracts_paper/PAPER_FRAME.md` - locked paper frame
+- `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md` - current
+  project-wide evaluation strategy
 - `benchmarks/governed_agent_bench/README.md` - benchmark scope and MVP
 - `README.md` - research-facing repo overview
 - `reporting/docs/hai_reference_runtime.md` - HAI install, operator
@@ -61,9 +66,12 @@ Authoritative orientation:
   strategy before the research reframe; useful context, not the current
   project-wide priority order
 - `reporting/plans/tactical_plan_v0_1_x.md` - HAI reference-runtime backlog
-- `reporting/plans/eval_strategy/v1.md` - how correctness is measured
-- `reporting/plans/success_framework_v1.md` - how project value is measured
-- `reporting/plans/risks_and_open_questions.md` - what could derail + decisions needed
+- `reporting/plans/eval_strategy/v1.md` - pre-reframe HAI runtime
+  correctness strategy; not project-wide research evaluation
+- `reporting/plans/success_framework_v1.md` - pre-reframe HAI value
+  framework; not project-wide research success criteria
+- `reporting/plans/risks_and_open_questions.md` - pre-reframe HAI risk
+  register; useful provenance/support-lane input
 - `verification/dogfood/README.md` - persona harness operating guide
 - `AUDIT.md` - release-by-release audit index
 
@@ -307,8 +315,16 @@ write a cycle proposal in `reporting/plans/`; do not act unilaterally.
   autonomous medical decisions). Do not reopen HACO-Bench naming or
   health-agent-first framing without an explicit maintainer decision.
   Canonical sources: `PROJECT_FRAME.md`,
+  `PROJECT_OPERATING_MODEL.md`, `HYPOTHESES.md`,
   `research/runtime_contracts_paper/PAPER_FRAME.md`, and
-  `research/runtime_contracts_paper/DOC_ALIGNMENT_AUDIT.md`.
+  `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`.
+- **(D18, 2026-05-07) Documentation alignment is the current gate.**
+  After the research reframe, do not assume implementation work should
+  resume just because the root README changed. The repo must be
+  internally engineered for the new goal first: cold-start docs,
+  project-wide hypotheses, evaluation strategy, roadmap, and HAI
+  planning provenance must all agree on the new objective. Canonical
+  gate: `PROJECT_OPERATING_MODEL.md`.
 
 ## Release Cycle Expectation
 
@@ -352,6 +368,9 @@ Drift in any of these is the trust hazard a second user hits first:
   outcome verdict + RELEASE_PROOF link). v0.1.10/v0.1.11/etc. cannot
   silently fall off the index.
 - [ ] `README.md` reflects the research frame and current artifact status.
+- [ ] `PROJECT_OPERATING_MODEL.md`, `HYPOTHESES.md`, and
+  `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md` still
+  reflect the current objective.
 - [ ] `reporting/docs/hai_reference_runtime.md` reflects HAI install,
   operator workflow, domains, and CLI surface.
   Historical "v0.1.X added Y" prose can stay.
@@ -360,15 +379,15 @@ Drift in any of these is the trust hazard a second user hits first:
   project-priority or paper-framing changes.
 - [ ] `reporting/docs/current_system_state.md` reflects the just-shipped
   package version, schema head, command count, test gate, and next-cycle role.
-- [ ] `HYPOTHESES.md` references current strategic plan, not a
-  superseded roadmap.
 - [ ] `reporting/plans/README.md` reading-order index marks the just-
   shipped cycle as shipped (not "in flight").
 - [ ] `reporting/plans/tactical_plan_v0_1_x.md` next-cycle row reflects
   the just-authored next-cycle PLAN, not the pre-revision shape.
-- [ ] `success_framework_v1.md` and `risks_and_open_questions.md` —
-  spot-check for stale references to deferred items that have since
-  shipped or moved.
+- [ ] `reporting/plans/success_framework_v1.md`,
+  `reporting/plans/eval_strategy/v1.md`, and
+  `reporting/plans/risks_and_open_questions.md` are still clearly marked
+  as HAI pre-reframe/support-lane docs, not current project-wide
+  strategy.
 
 `verification/tests/test_doc_freshness_assertions.py` (added v0.1.12)
 catches version-tag drift in the most common offenders mechanically.
@@ -546,12 +565,15 @@ CI runs `verification/tests/`. The suite includes docs and skill/CLI drift check
 
 ## When In Doubt
 
-Read `PROJECT_FRAME.md`, `research/runtime_contracts_paper/PAPER_FRAME.md`,
-`README.md`, `REPO_MAP.md`, `ROADMAP.md`, `reporting/docs/architecture.md`,
-and `reporting/docs/non_goals.md`. If the question is about HAI operation,
-also read `reporting/docs/hai_reference_runtime.md`. If the question is
-about HAI release history, then read `reporting/plans/README.md` and the
-relevant cycle plan. If still unclear, ask Dom rather than guessing.
+Read `PROJECT_FRAME.md`, `PROJECT_OPERATING_MODEL.md`,
+`research/runtime_contracts_paper/PAPER_FRAME.md`,
+`research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`,
+`HYPOTHESES.md`, `README.md`, `REPO_MAP.md`, `ROADMAP.md`,
+`reporting/docs/architecture.md`, and `reporting/docs/non_goals.md`. If
+the question is about HAI operation, also read
+`reporting/docs/hai_reference_runtime.md`. If the question is about HAI
+release history, then read `reporting/plans/README.md` and the relevant
+cycle plan. If still unclear, ask Dom rather than guessing.
 
 The planning tree under `reporting/plans/` has a structured shape as of
 2026-04-29:
@@ -559,9 +581,9 @@ The planning tree under `reporting/plans/` has a structured shape as of
 - `post_v0_1_18/strategic_plan_v2.md` — HAI reference-runtime strategy
   before the research reframe.
 - `tactical_plan_v0_1_x.md` — HAI reference-runtime backlog.
-- `eval_strategy/v1.md` — how correctness is measured.
-- `success_framework_v1.md` — how project value is measured.
-- `risks_and_open_questions.md` — what could go wrong + decisions needed.
+- `eval_strategy/v1.md` — pre-reframe HAI correctness strategy.
+- `success_framework_v1.md` — pre-reframe HAI value framework.
+- `risks_and_open_questions.md` — pre-reframe HAI risk register.
 - `v0_1_X/` — per-cycle artifacts (PLAN, audit findings, release proof).
 - `historical/` — superseded planning docs (multi_release_roadmap,
   post_v0_1_roadmap, agent_operable_runtime_plan, launch_notes,

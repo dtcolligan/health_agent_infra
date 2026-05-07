@@ -11,6 +11,7 @@ for the HAI operator manual.
 | Path | Class | What it is |
 |---|---|---|
 | [`PROJECT_FRAME.md`](PROJECT_FRAME.md) | active docs | Canonical research framing and priority order for cold agents. |
+| [`PROJECT_OPERATING_MODEL.md`](PROJECT_OPERATING_MODEL.md) | active docs | Internal operating model for the post-reframe repo: documentation gate, artifact hierarchy, decision rules, and success conditions. |
 | [`research/`](research/) | active research | Paper frame, draft, execution plan, and documentation-alignment audit for the runtime-contract / GovernedAgentBench direction. |
 | [`benchmarks/`](benchmarks/) | active benchmark | GovernedAgentBench scaffold: schemas, tasks, manifests, scorer, baselines, and reports. |
 | [`src/`](src/health_agent_infra/) | active runtime | The `health_agent_infra` Python package: CLI, core orchestration, per-domain logic, packaged skills, packaged eval framework, the committed Garmin CSV fixture. This is the shipped wheel. |
@@ -22,7 +23,7 @@ for the HAI operator manual.
 | [`CLAUDE.md`](CLAUDE.md) | active docs | Claude Code shim that imports `AGENTS.md` and adds Claude-specific notes. |
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | active docs | One-page architecture and links to deep docs. |
 | [`AUDIT.md`](AUDIT.md) | active docs | Release-by-release audit-cycle index. |
-| [`HYPOTHESES.md`](HYPOTHESES.md) | active docs | Five falsifiable roadmap hypotheses. |
+| [`HYPOTHESES.md`](HYPOTHESES.md) | active docs | Current research hypotheses for runtime contracts, model scale, fine-tuning, benchmark generality, and non-clinical boundaries. |
 | [`ROADMAP.md`](ROADMAP.md) | active docs | Now / Next / Later roadmap. |
 | [`SECURITY.md`](SECURITY.md) | active docs | Vulnerability reporting and scope of trust. |
 | [`CITATION.cff`](CITATION.cff) | active docs | Citation metadata; DOI placeholders await manual Zenodo registration. |
@@ -52,8 +53,8 @@ checked-in repo shape.
 
 | You want to | Start at |
 |---|---|
-| Understand the current objective | [`PROJECT_FRAME.md`](PROJECT_FRAME.md), then [`research/runtime_contracts_paper/PAPER_FRAME.md`](research/runtime_contracts_paper/PAPER_FRAME.md) |
-| Understand the benchmark | [`benchmarks/governed_agent_bench/README.md`](benchmarks/governed_agent_bench/README.md) |
+| Understand the current objective | [`PROJECT_FRAME.md`](PROJECT_FRAME.md), then [`PROJECT_OPERATING_MODEL.md`](PROJECT_OPERATING_MODEL.md), then [`research/runtime_contracts_paper/PAPER_FRAME.md`](research/runtime_contracts_paper/PAPER_FRAME.md) |
+| Understand the benchmark | [`benchmarks/governed_agent_bench/README.md`](benchmarks/governed_agent_bench/README.md), then [`research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`](research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md) |
 | Understand HAI as software | [`reporting/docs/hai_reference_runtime.md`](reporting/docs/hai_reference_runtime.md), then [`reporting/docs/tour.md`](reporting/docs/tour.md) |
 | Know what is shipped right now | [`reporting/docs/current_system_state.md`](reporting/docs/current_system_state.md), then [`CHANGELOG.md`](CHANGELOG.md) and [`AUDIT.md`](AUDIT.md) |
 | Take the guided 10-minute tour | [`reporting/docs/tour.md`](reporting/docs/tour.md) |
@@ -71,24 +72,28 @@ checked-in repo shape.
 ## Active vs historical at a glance
 
 - **Active research frame**: `PROJECT_FRAME.md`,
+  `PROJECT_OPERATING_MODEL.md`, `HYPOTHESES.md`,
   `research/runtime_contracts_paper/`, and
   `benchmarks/governed_agent_bench/`.
 - **Active runtime**: `src/health_agent_infra/`.
 - **Active docs**: `README.md`, `CHANGELOG.md`, `AGENTS.md`, `CLAUDE.md`,
-  `ARCHITECTURE.md`, `AUDIT.md`, `HYPOTHESES.md`, `ROADMAP.md`,
-  `SECURITY.md`, `CITATION.cff`, `CONTRIBUTING.md`, `REPO_MAP.md`,
+  `ARCHITECTURE.md`, `AUDIT.md`, `PROJECT_OPERATING_MODEL.md`,
+  `HYPOTHESES.md`, `ROADMAP.md`, `SECURITY.md`, `CITATION.cff`,
+  `CONTRIBUTING.md`, `REPO_MAP.md`,
   current docs directly under `reporting/docs/`
   (including `agent_cli_contract.md` — generated from `hai
   capabilities --json`; `current_system_state.md` is the current-truth
   summary),
   `reporting/plans/README.md` (HAI planning-tree reading-order index),
-  `reporting/plans/post_v0_1_18/strategic_plan_v2.md` (HAI
-  reference-runtime strategy before the research reframe),
+  `reporting/plans/post_v0_1_18/strategic_plan_v2.md` (pre-reframe HAI
+  reference-runtime strategy, provenance/support-lane only),
   `reporting/plans/tactical_plan_v0_1_x.md` (HAI runtime backlog,
   with shipped-history sections that should be read as provenance),
-  `reporting/plans/eval_strategy/`, `reporting/plans/success_framework_v1.md`,
-  `reporting/plans/risks_and_open_questions.md`, and the current/future
-  cycle workspaces, and between-cycle notes.
+  `reporting/plans/eval_strategy/`,
+  `reporting/plans/success_framework_v1.md`, and
+  `reporting/plans/risks_and_open_questions.md` (all HAI support-lane
+  docs, not current project-wide research strategy), plus the
+  current/future cycle workspaces and between-cycle notes.
 - **SUPERSEDED 2026-04-27**: `reporting/plans/historical/multi_release_roadmap.md` —
   preserved as historical provenance; do not act on its release
   schedule. Use the strategic + tactical plans above.

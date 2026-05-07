@@ -15,9 +15,18 @@
 > Full risk-register refresh deferred to post-v0.2.0 wave-boundary
 > review.
 >
+> **2026-05-07 research-reframe note.** This is now the HAI
+> reference-runtime risk register and support-lane provenance. It is not
+> the current project-wide risk register for the paper,
+> GovernedAgentBench, model baselines, or scaffold ablations. Current
+> project-wide decision rules live in
+> [`../../PROJECT_OPERATING_MODEL.md`](../../PROJECT_OPERATING_MODEL.md);
+> current research evaluation risks live in
+> [`../../research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`](../../research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md).
+>
 > **Reading intent.** Two sections. § 2-7 = risks. § 8 = open
-> questions. Read § 2-7 to understand what could go wrong; read § 8
-> when about to make a decision.
+> questions. Read this for HAI runtime/support-lane risks; use the
+> research docs above for project-wide research risks.
 >
 > **Refresh cadence.** Reviewed every minor release. Resolved
 > questions move to AGENTS.md "Settled Decisions"; closed risks

@@ -25,7 +25,9 @@ Current priority is paper + GovernedAgentBench + paper-critical HAI
 contract work. HAI v1 polish is subordinate unless it supports those
 artifacts. Canonical sources:
 [`../../PROJECT_FRAME.md`](../../PROJECT_FRAME.md),
+[`../../PROJECT_OPERATING_MODEL.md`](../../PROJECT_OPERATING_MODEL.md),
 [`../../research/runtime_contracts_paper/PAPER_FRAME.md`](../../research/runtime_contracts_paper/PAPER_FRAME.md),
+[`../../research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`](../../research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md),
 and
 [`../../benchmarks/governed_agent_bench/README.md`](../../benchmarks/governed_agent_bench/README.md).
 

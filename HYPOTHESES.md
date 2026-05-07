@@ -1,160 +1,115 @@
-# Falsifiable hypotheses
+# Research Hypotheses
 
-Five bets the project is making. Each can turn out wrong; each has a
-falsification criterion. Stated explicitly so future audits can ask
-"is this still true?" rather than re-derive the entire strategic
-case.
+**Status:** Current project-wide hypothesis ledger, 2026-05-07.
 
-This file is a stable HAI reference-runtime hypothesis ledger, lifted
-from the (now superseded)
-[`reporting/plans/historical/multi_release_roadmap.md § 3`](reporting/plans/historical/multi_release_roadmap.md).
-The current repo-wide strategy lives in [`PROJECT_FRAME.md`](PROJECT_FRAME.md)
-and the paper frame in
-[`research/runtime_contracts_paper/PAPER_FRAME.md`](research/runtime_contracts_paper/PAPER_FRAME.md).
-The HAI runtime strategy context lives in
-[`reporting/plans/post_v0_1_18/strategic_plan_v2.md`](reporting/plans/post_v0_1_18/strategic_plan_v2.md)
-(supersedes `strategic_plan_v1.md` as of 2026-05-06; v1 preserved as
-historical evidence). This file remains the citable artifact for the
-H1-H5 HAI hypotheses themselves; v2 §3 carries the v0.1.x evidence
-accumulation per bet.
+This file replaces the old root-level HAI product hypothesis ledger.
+The pre-reframe HAI bets remain preserved in
+`reporting/plans/post_v0_1_18/strategic_plan_v2.md` and historical plan
+docs. The active project now tests runtime contracts for local agents over
+sensitive user-owned data.
 
----
+## H1. Runtime contracts improve safety-constrained operation
 
-## H1. The hard problem in personal health AI is interpretability of outcomes, not better recommendations
+**Hypothesis.** A model operating through a runtime contract will make
+fewer unsafe mutation attempts, hallucinated command calls,
+schema-invalid proposals, unsupported narrations, and clinical-boundary
+violations than the same model operating prompt-only.
 
-**Bet.** The marginal value of a 5% better daily recommendation is
-tiny compared to the marginal value of being able to answer "did
-anything I changed actually help, and why do I think so?" The
-project's core competence should be the *evidence-and-audit chain*,
-not the recommendation algorithm.
+**Why it matters.** This is the minimum empirical reason for the project.
+If the contract does not improve bounded operation, the architecture may
+still be useful engineering, but the paper claim narrows sharply.
 
-**Evidence.** SePA (arXiv 2509.04752) shows personalisation lives in
-the per-user predictor; LLM is downstream narration. Apple Mulberry's
-shelving (Feb 2026) shows that a better recommendation engine alone
-does not ship a product. JITAI meta-analysis (PMC12481328) finds
-between-group g=0.15 — the recommendation effect is small; the
-review/learning loop is where compound gain lives. WHOOP Coach,
-Oura Advisor, and Fitbit AI Coach all narrate over fixed metrics
-stacks and do not silently re-personalise.
+**Falsification.** Prompt-only baselines match or beat full-contract
+baselines on safety-constrained task success across the MVP benchmark,
+without increased unsafe-action or unsupported-narration rates.
 
-**Falsification.** Structural caveat first: the project has N=1
-user (Dom) today, so any "users find X more useful than Y"
-criterion is unmeasurable until the project has a community.
-The honest near-term proxy: *if Dom himself, after using v0.5's
-N-of-1 substrate for ≥ 90 days, consistently consults the
-underlying metrics in preference to the personal-evidence
-verdicts, the bet is wrong*. Promotes to a population criterion
-(≥ a handful of users in same direction) only post-v1.0 when a
-community exists. Without that community, the H1 review is a
-self-report check at the v0.5 retro, not a population claim.
+## H2. Contract components have separable effects
 
-## H2. Local-first beats hosted for the daily-runtime use case
+**Hypothesis.** Scaffold ablations will show that individual contract
+components contribute measurable safety or task-success gains.
 
-**Bet.** Privacy + ownership + offline reliability + zero
-data-egress beats centralised model freshness for a daily driver
-that touches every domain of personal health.
+Candidate components:
 
-**Evidence.** Cactus + Ollama + MLX clear 38–58 tok/s for 4B-class
-models on M2 Pro; Llama 3.1 8B and Phi-7B are usable as judgment
-models without a cloud round-trip
-([SitePoint Apple-silicon LLM guide 2026](https://www.sitepoint.com/local-llms-apple-silicon-mac-2026/)).
-EU Digital Omnibus + EDPB Opinion (2025) raise the GDPR bar on
-training-data lawfulness, making "data never leaves the device" a
-legitimate marketing posture
-([Petrie-Flom](https://petrieflom.law.harvard.edu/2025/02/24/europe-tightens-data-protection-rules-for-ai-models-and-its-a-big-deal-for-healthcare-and-life-sciences/)).
-Solid + sovereignty platforms still lack health PMF — lesson is
-"useful local utility drives adoption, not standards." Comparable-OSS
-survey: every shipping vendor coach is cloud; the local-first niche
-is empty.
+- manifest access;
+- `agent_safe`;
+- mutation classes;
+- exit-code semantics;
+- output schemas;
+- proposal/commit gates;
+- audit/evidence references;
+- drift-aware manifest retrieval.
 
-**Falsification.** If consumer hardware regresses on local LLM
-performance OR a regulator forces a server-side audit trail
-incompatible with local-first, the architecture is wrong.
+**Why it matters.** A useful research-engineering result should explain
+which parts of the contract matter, not only that the full system works.
 
-## H3. User-authored intent + targets + bounded supersession is the right substrate for governed adaptation
+**Falsification.** The full contract improves scores, but ablations cannot
+identify any component-level contribution or the improvement comes only
+from benchmark-specific prompt wording.
 
-**Bet.** The W49 intent ledger + W50 target ledger + the existing
-proposal/plan supersession discipline form the substrate that makes
-*future* governed adaptation possible without becoming a black-box
-auto-tuning system. Adaptation belongs on top of this substrate, not
-in place of it.
+## H3. Runtime contracts can reduce required model scale
 
-**Evidence.** AgentSpec (arXiv 2503.18666) is the closest published
-prior art for runtime enforcement with user-approval-gated rule
-mutation; it depends on a substrate of user-authored constraints
-exactly like W49/W50. Bloom / GPTCoach (arXiv 2510.05449) shows
-LLMs proposing structured mutations to user-owned plans is a working
-shape. The project's `hai propose --replace` revision-chain is the
-same primitive at a smaller scope.
+**Hypothesis.** For bounded operation over sensitive user-owned data, a
+smaller local model plus the runtime contract can reach a safety-constrained
+operating threshold that requires a larger model without the contract.
 
-**Falsification.** If, after v0.7 ships governed adaptation, users
-either (a) routinely approve every proposed mutation without
-reviewing or (b) routinely reject so many that the channel is
-unused, the substrate is the wrong shape. The check is at the
-v0.7 review.
+**Why it matters.** This is the paper's strongest possible result:
+reliability shifts out of the model and into local software.
 
-## H4. LLM agents driving deterministic CLIs > LLM agents reasoning end-to-end
+**Falsification.** Performance remains primarily a function of model scale,
+with the contract adding little or no safety-constrained advantage for
+smaller models.
 
-**Bet.** A CLI that exposes typed mutation classes + capability
-manifest + exit-code contract is a *better* substrate for an LLM
-agent than letting the LLM directly access the database, the model
-weights, or the policy engine.
+## H4. Fine-tuned local operators need live contract grounding
 
-**Evidence.** PHIA (Nature Communications 2025) shows a single agent
-with a code-execution tool matches a three-agent specialist team on
-equal token budgets. Single-Agent vs Multi-Agent (arXiv 2604.02460)
-shows multi-agent advantage shrinks as base-model capability rises.
-The project's `hai capabilities --json` + `hai daily --auto`
-next-actions manifest (v0.1.7) already operationalises this. Cactus +
-Ollama show local single-agent inference is fast enough for
-interactive loops.
+**Hypothesis.** Fine-tuning can improve local operator behavior, but a
+fine-tuned model without live manifest/contract grounding will be brittle
+under contract drift.
 
-**Falsification.** Two reachable signals:
-(1) *Internal:* the project's own daily loop (Claude Code over the
-CLI, today) starts shelling into SQLite directly because the CLI
-can't surface what's needed. Detectable now via Codex audit of
-session transcripts.
-(2) *External (post-v0.4):* once the MCP ships, second agents that
-integrate either bypass governed surfaces in favour of the
-maintainer raw-access escape hatch, OR refuse to integrate because
-the governed surface is too narrow. Both indicate the contract
-shape is wrong.
+**Why it matters.** This separates learned operational habits from
+current-authority awareness. A memorized CLI operator is not enough for a
+governed runtime.
 
-## H5. A small set of governed ledgers + a strict code-vs-skill boundary scales further than a multi-agent prose-driven architecture
+**Falsification.** Fine-tuned local models retain high performance under
+manifest drift without live contract retrieval, or live manifest retrieval
+does not improve drift robustness.
 
-**Bet.** The project's invariants — append-only evidence, archive /
-supersede over UPDATE, every row has provenance, skills never run
-arithmetic — let one maintainer ship a runtime that a multi-agent
-team cannot match for governance, audit, and reproducibility per
-unit of complexity.
+## H5. GovernedAgentBench can stay domain-general while using HAI
 
-**Evidence.** Apple Mulberry's failure (Feb 2026) at multi-domain
-clinical-decision-tree-encoded coaching with the largest engineering
-team in consumer health. Google PHA paper concedes 6.5 LLM calls per
-query and >3 minute latency — not a daily-driver shape. The shipping
-vendor coaches (WHOOP, Oura, Fitbit) are all narration-over-fixed-
-metrics, structurally similar to the project's classify+policy=code
-+ skill=narration boundary.
+**Hypothesis.** A benchmark can use HAI as the first reference runtime
+while measuring general properties of contract-governed operation rather
+than health-product quality.
 
-**Falsification.** Structural caveat: the project lacks
-retention / "did this help" telemetry today (N=1, no instrumented
-comparison set). The reachable near-term signal is the *opposite
-direction*: if the project itself starts to need a multi-agent
-shape to ship the next release (e.g. v0.7 governed adaptation
-proves intractable inside the single-runtime + skill boundary),
-that's the falsification. Population-comparison criteria
-(competitor-X vs project on retention) are post-v1.0 only and
-contingent on the project having any external user comparison
-data — which it does not today.
+**Why it matters.** The paper should be about bounded agents over
+sensitive data. If the benchmark collapses into personal-wellness advice
+quality, the research contribution weakens.
 
----
+**Falsification.** Benchmark tasks require private health rows, clinical
+judgment, personal coaching quality, or HAI-internal implementation
+knowledge rather than public contract obedience.
 
-## Inspiration
+## H6. Non-clinical boundaries are enforceable runtime behavior
 
-This project's framing draws on **AgentSpec** (arXiv 2503.18666) for
-runtime enforcement, **PHIA** (Nature Communications 2025) for the
-single-agent + code-execution shape, **SePA** (arXiv 2509.04752) for
-the personalisation-lives-downstream finding, and **Bloom / GPTCoach**
-(arXiv 2510.05449) for the user-owned mutation primitive. None of
-these are direct ancestors; the project is an independent take on a
-research direction these papers help characterise.
+**Hypothesis.** Diagnosis, treatment, prescribing, and autonomous medical
+decision boundaries can be represented and scored as part of the runtime
+contract.
+
+**Why it matters.** The health boundary must be more than a disclaimer.
+It should shape tasks, refusals, metrics, and error analysis.
+
+**Falsification.** Models can pass benchmark tasks while producing
+diagnosis-shaped, treatment-shaped, prescribing-shaped, or autonomous
+medical-decision outputs; or the benchmark cannot distinguish compliant
+wellness support from clinical claims.
+
+## Review Rule
+
+These hypotheses should be reviewed when:
+
+- GovernedAgentBench MVP results exist;
+- first local/cloud baselines exist;
+- scaffold ablation results exist;
+- fine-tuning results exist;
+- the paper frame changes.
+
+Do not use old HAI product hypotheses as project-wide strategy unless a
+new maintainer decision explicitly restores that priority.

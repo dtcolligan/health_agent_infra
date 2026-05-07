@@ -4,6 +4,17 @@
 > in extended planning session. Fresh authorship; supersedes
 > `reporting/plans/strategic_plan_v1.md` (2026-04-27).
 >
+> **2026-05-07 research-reframe note.** This document is no longer the
+> project-wide strategic plan. It is preserved as the HAI
+> reference-runtime strategy immediately before the runtime-contract
+> research reframe. Current project-wide strategy lives in
+> [`../../../PROJECT_FRAME.md`](../../../PROJECT_FRAME.md) and
+> [`../../../PROJECT_OPERATING_MODEL.md`](../../../PROJECT_OPERATING_MODEL.md).
+> Current paper/evaluation strategy lives in
+> [`../../../research/runtime_contracts_paper/PAPER_FRAME.md`](../../../research/runtime_contracts_paper/PAPER_FRAME.md)
+> and
+> [`../../../research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`](../../../research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md).
+>
 > **Why fresh, not patched.** v1 was authored after v0.1.10 shipped.
 > Since then, 10 release cycles have shipped (v0.1.11–v0.1.18 + two
 > hotfixes), 2 cycles have been cancelled (v0.1.16, v0.1.19), 4 new
@@ -11,18 +22,18 @@
 > in v1), the cli.py split has landed, the docs overhaul has
 > ratified an "agent-wrapper" framing sharper than v1 articulated,
 > and the foreign-user empirical contract has bifurcated into three
-> claims. v1 is preserved as evidence; this doc derives current
-> strategic posture from current state.
+> claims. v1 is preserved as evidence; this doc derived the HAI
+> strategic posture from then-current state before the research reframe.
 >
-> **Audience.** Portfolio-grade — readable to a senior engineer
-> opening the project cold; dense enough for the maintainer to use
-> as the canonical strategic reference.
+> **Audience.** HAI support-lane provenance — readable to a senior
+> engineer opening the HAI runtime cold, but superseded for repo-wide
+> project strategy.
 >
 > **Companion docs.**
 > - `tactical_plan_v0_1_x.md` — release-by-release execution.
-> - `eval_strategy/v1.md` — how we measure correctness.
-> - `success_framework_v1.md` — how we measure project value.
-> - `risks_and_open_questions.md` — what could derail this.
+> - `eval_strategy/v1.md` — HAI runtime correctness strategy.
+> - `success_framework_v1.md` — HAI runtime value framework.
+> - `risks_and_open_questions.md` — HAI runtime risk register.
 > - `post_v0_1_18/v0_1_x_retro.md` — operational retro on what 18
 >   cycles taught us.
 > - `README.md` — reading order index.
@@ -31,7 +42,8 @@
 > releases (next refresh: post-v0.2.0 ship) or whenever a settled
 > decision needs revisiting. Tactical plan refreshed per release.
 > v1 is preserved as evidence at `strategic_plan_v1.md` and is not
-> revised in place — this doc is the canonical forward reference.
+> revised in place. As of 2026-05-07, this doc is support-lane
+> provenance, not the active forward reference.
 
 ---
 

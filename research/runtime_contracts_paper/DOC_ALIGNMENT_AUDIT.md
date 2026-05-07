@@ -31,6 +31,9 @@ The repo should communicate this hierarchy consistently:
 | Reporting indexes | `reporting/README.md` and `reporting/docs/README.md` called themselves current v1 docs, which reads as project-wide. | Clarify that `reporting/docs/` is HAI reference-runtime documentation and make `hai_reference_runtime.md` the HAI manual. |
 | Current truth | `current_system_state.md` mixed stale v0.1.18 status with v0.2.0 source state and lacked research status. | Add repo-level research status and fix HAI source-truth table. |
 | Paper/benchmark | New frame existed but was isolated. | Keep `PAPER_FRAME.md` as locked research frame; link from root and agent docs. |
+| Operating memory | Several ideas from the reframe existed only in conversation: documentation-first gate, external research-engineering audience, local/cloud/fine-tune scope, scaffold ablations, and HAI polish subordination. | Add `PROJECT_OPERATING_MODEL.md` and `RESEARCH_EVAL_STRATEGY.md`. |
+| Hypotheses | Root `HYPOTHESES.md` still carried HAI product/runtime hypotheses, despite being a top-level active doc. | Rewrite root `HYPOTHESES.md` as current research hypotheses; preserve HAI hypotheses in historical strategy docs. |
+| Pre-reframe planning docs | `strategic_plan_v2.md`, `success_framework_v1.md`, `eval_strategy/v1.md`, and `risks_and_open_questions.md` could be mistaken for current project-wide strategy. | Add explicit research-reframe notes and mark them as HAI support-lane/provenance docs. |
 | Market context | Vendor-coach context shifted on 2026-05-07 with Google Health Coach and Bevel's AI layer. | Update competitive landscape with dated primary-source links, without making HAI a consumer-product bet. |
 
 ## Non-Fixes
@@ -46,6 +49,8 @@ story they did not originally tell.
 After this audit, a fresh agent should know:
 
 - The repo's objective is the runtime-contract paper + GovernedAgentBench.
+- The current work gate is internal documentation alignment before new
+  implementation.
 - HAI remains active, but as the reference runtime.
 - Personal wellness is the demonstrator domain, not the paper's topic.
 - The health boundary is non-clinical and experimental, not a disclaimer.

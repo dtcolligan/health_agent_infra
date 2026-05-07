@@ -8,26 +8,28 @@
 > install/wearable/dogfood]; `post_v0_1_18/strategic_plan_v2.md`
 > supersedes v1 as HAI reference-runtime strategic reference; companion
 > `post_v0_1_18/v0_1_x_retro.md` documents v0.1.x track close.
-> Project-wide priority now lives in `../../PROJECT_FRAME.md` and
+> Project-wide priority now lives in `../../PROJECT_FRAME.md`,
+> `../../PROJECT_OPERATING_MODEL.md`, and
 > `../../research/runtime_contracts_paper/PAPER_FRAME.md`.
 
 This is the orientation guide to the `reporting/plans/` tree. Read this
 when you need HAI runtime release history, audit records, or backlog
 provenance. For current project priority, start at
-[`../../PROJECT_FRAME.md`](../../PROJECT_FRAME.md).
+[`../../PROJECT_FRAME.md`](../../PROJECT_FRAME.md) and
+[`../../PROJECT_OPERATING_MODEL.md`](../../PROJECT_OPERATING_MODEL.md).
 
 ## Tree at a glance
 
 ```
 reporting/plans/
 ├── README.md                          (this file)
-├── post_v0_1_18/strategic_plan_v2.md  ← active strategic vision (supersedes v1 2026-05-06)
+├── post_v0_1_18/strategic_plan_v2.md  ← pre-reframe HAI strategy (supersedes v1 2026-05-06; not project-wide current strategy)
 ├── post_v0_1_18/v0_1_x_retro.md       ← v0.1.x track close retro (companion to v2)
 ├── strategic_plan_v1.md               ← SUPERSEDED 2026-05-06 (preserved as v2 source)
-├── tactical_plan_v0_1_x.md            ← active release plan
-├── eval_strategy/v1.md                ← active eval methodology
-├── success_framework_v1.md            ← active value-measurement (post-v0.2.0 wave-boundary refresh due)
-├── risks_and_open_questions.md        ← active risk + decision register (R-T-03 cli.py rot RESOLVED v0.1.17)
+├── tactical_plan_v0_1_x.md            ← HAI runtime backlog / release plan
+├── eval_strategy/v1.md                ← HAI runtime eval methodology (not research eval strategy)
+├── success_framework_v1.md            ← HAI runtime value framework
+├── risks_and_open_questions.md        ← HAI runtime risk + decision register
 ├── v0_1_4/ … v0_1_13/                 ← per-cycle artifacts (frozen post-ship)
 ├── v0_1_14/                           ← shipped 2026-05-01 (eval substrate + provenance + recovery path)
 ├── v0_1_14_1/                         ← shipped 2026-05-02 (hardening: garmin_live structured signal)
@@ -53,12 +55,14 @@ reporting/plans/
 ## I want to understand HAI runtime strategy.
 
 For project-wide strategy under the research reframe, read
-`../../PROJECT_FRAME.md` and
+`../../PROJECT_FRAME.md`, `../../PROJECT_OPERATING_MODEL.md`,
+`../../HYPOTHESES.md`, and
 `../../research/runtime_contracts_paper/PAPER_FRAME.md` first.
 
 **Read in order:**
 
-1. `post_v0_1_18/strategic_plan_v2.md` — 12-24 month vision, settled
+1. `post_v0_1_18/strategic_plan_v2.md` — pre-reframe 12-24 month HAI
+   runtime vision, settled
    decisions D1–D16, five hypotheses with v0.1.x evidence
    accumulation, scope-expansion exploration. **Supersedes v1 as of
    2026-05-06.**
@@ -69,8 +73,9 @@ For project-wide strategy under the research reframe, read
 4. `risks_and_open_questions.md` — what could derail this + what
    decisions remain.
 
-If you only have time for one HAI strategy doc:
-`post_v0_1_18/strategic_plan_v2.md`.
+If you only have time for one HAI strategy doc, read
+`post_v0_1_18/strategic_plan_v2.md`; if you need current project-wide
+strategy, do not stop there.
 
 `strategic_plan_v1.md` is preserved as v2's primary source; read v1
 only when you need the snapshot of project posture at v0.1.10.
@@ -88,7 +93,10 @@ If you only have time for one: the open cycle's `PLAN.md` (or, when
 no cycle is open, `tactical_plan_v0_1_x.md` for the next two
 release rows).
 
-## I want to know how we evaluate correctness.
+## I want to know how we evaluate HAI runtime correctness.
+
+For project-wide research evaluation, read
+`../../research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`.
 
 **Read in order:**
 
@@ -101,7 +109,11 @@ release rows).
 
 If you only have time for one: `eval_strategy/v1.md`.
 
-## I want to know if the project is succeeding.
+## I want to know if HAI runtime use is succeeding.
+
+For project-wide research success, read `../../PROJECT_OPERATING_MODEL.md`,
+`../../HYPOTHESES.md`, and
+`../../research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`.
 
 **Read in order:**
 

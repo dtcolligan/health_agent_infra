@@ -19,10 +19,10 @@ truth, validation, mutation, policy, and audit.
 
 | Artifact | Role | Canonical docs |
 |---|---|---|
-| Runtime contract | The intervention: capabilities manifest, typed commands, mutation classes, `agent_safe`, schemas, proposal/commit separation, deterministic gates, policy, and audit. | `PROJECT_FRAME.md`, `research/runtime_contracts_paper/PAPER_FRAME.md`, `ARCHITECTURE.md` |
+| Runtime contract | The intervention: capabilities manifest, typed commands, mutation classes, `agent_safe`, schemas, proposal/commit separation, deterministic gates, policy, and audit. | `PROJECT_FRAME.md`, `PROJECT_OPERATING_MODEL.md`, `research/runtime_contracts_paper/PAPER_FRAME.md`, `ARCHITECTURE.md` |
 | HAI | Personal-wellness reference runtime, packaged as `health-agent-infra` and exposed through `hai`. | `reporting/docs/hai_reference_runtime.md`, `reporting/docs/`, `src/health_agent_infra/` |
-| GovernedAgentBench | Benchmark artifact for contract-governed agent operation. | `benchmarks/governed_agent_bench/`, `research/runtime_contracts_paper/IMPLEMENTATION_PLAN.md` |
-| Paper | Research-engineering systems/evals paper. | `research/runtime_contracts_paper/` |
+| GovernedAgentBench | Benchmark artifact for contract-governed agent operation. | `benchmarks/governed_agent_bench/`, `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`, `research/runtime_contracts_paper/IMPLEMENTATION_PLAN.md` |
+| Paper | Research-engineering systems/evals paper. | `research/runtime_contracts_paper/`, `HYPOTHESES.md` |
 
 ## Priority Order
 
@@ -58,13 +58,15 @@ footer disclaimer.
 Cold agents should read in this order:
 
 1. `PROJECT_FRAME.md`
-2. `AGENTS.md`
-3. `research/runtime_contracts_paper/PAPER_FRAME.md`
-4. `benchmarks/governed_agent_bench/README.md`
-5. `README.md`
-6. `ROADMAP.md`
-7. `reporting/docs/hai_reference_runtime.md` if the task touches HAI
-8. `reporting/docs/current_system_state.md`
+2. `PROJECT_OPERATING_MODEL.md`
+3. `AGENTS.md`
+4. `research/runtime_contracts_paper/PAPER_FRAME.md`
+5. `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`
+6. `benchmarks/governed_agent_bench/README.md`
+7. `README.md`
+8. `ROADMAP.md`
+9. `reporting/docs/hai_reference_runtime.md` if the task touches HAI
+10. `reporting/docs/current_system_state.md`
 
 Historical release plans under `reporting/plans/` explain how HAI got
 here. They are not the default source of current project priority when

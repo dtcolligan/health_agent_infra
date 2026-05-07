@@ -12,9 +12,19 @@
 > table. This file is not patched inline; full refresh deferred to
 > the post-v0.2.0 wave-boundary review.
 >
+> **2026-05-07 research-reframe note.** This is now a HAI
+> reference-runtime success framework, not the current project-wide
+> success framework. The current repo objective, artifact hierarchy, and
+> research success criteria live in
+> [`../../PROJECT_OPERATING_MODEL.md`](../../PROJECT_OPERATING_MODEL.md),
+> [`../../HYPOTHESES.md`](../../HYPOTHESES.md), and
+> [`../../research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`](../../research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md).
+> Use this file for HAI support-lane/product-health provenance only.
+>
 > **Reading intent.** When the maintainer is asking "is the project
-> succeeding?" — distinct from "is the code correct?"
-> (`eval_strategy/v1.md`) and "what comes next?" (`tactical_plan_v0_1_x.md`).
+> succeeding as a HAI runtime?" — distinct from "is the code correct?"
+> (`eval_strategy/v1.md`) and "what comes next for HAI?"
+> (`tactical_plan_v0_1_x.md`).
 >
 > **Refresh cadence.** Reviewed annually OR at every wave boundary
 > (v0.2 → v0.3, v0.5 → v0.6, etc.).
@@ -62,7 +72,7 @@ phase-3 metric reported in phase-1 is a vanity number.
 
 ## 2. North-star: what success looks like
 
-The project succeeds if, at v1.0:
+The HAI reference runtime succeeds if, at v1.0:
 
 > **The maintainer (and any other user who installs it) can rely on
 > `hai today` as their daily decision input across the six domains,

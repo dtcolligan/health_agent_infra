@@ -11,6 +11,9 @@ benchmark explicitly treats clinical-boundary obedience as part of the
 contract: reference-runtime tasks must not require diagnosis,
 treatment, prescribing, or autonomous medical decisions.
 
+The project-wide benchmark/evaluation strategy lives at
+[`../../research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`](../../research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md).
+
 ## Current Scope
 
 This directory is the benchmark skeleton. The next milestone is an MVP

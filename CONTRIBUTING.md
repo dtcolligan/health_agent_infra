@@ -5,7 +5,9 @@
 This repo is a runtime-contract research project with HAI as the first
 reference runtime and GovernedAgentBench as the benchmark artifact.
 Read [`PROJECT_FRAME.md`](PROJECT_FRAME.md) before assuming HAI product
-polish is the next priority.
+polish is the next priority. Read
+[`PROJECT_OPERATING_MODEL.md`](PROJECT_OPERATING_MODEL.md) before changing
+project direction, benchmark scope, or paper-facing claims.
 
 Most HAI contributions land in one of two implementation surfaces:
 
@@ -79,9 +81,11 @@ Never:
 1. `uv run pytest verification/tests -q`
 2. If you touched packaging or versioning: `uv run python -m build --wheel --sdist`
 3. If you touched docs: make sure `README.md`, `CHANGELOG.md`,
-   `PROJECT_FRAME.md`, `ROADMAP.md`, `AUDIT.md`,
-   `research/runtime_contracts_paper/PAPER_FRAME.md`, and the active HAI
-   docs under `reporting/docs/` still agree.
+   `PROJECT_FRAME.md`, `PROJECT_OPERATING_MODEL.md`, `HYPOTHESES.md`,
+   `ROADMAP.md`, `AUDIT.md`,
+   `research/runtime_contracts_paper/PAPER_FRAME.md`,
+   `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`, and the
+   active HAI docs under `reporting/docs/` still agree.
 4. If you touched a skill: verify the corresponding skill-boundary
    tests still pass.
 5. If you touched a migration/projector/schema: verify the relevant
@@ -111,11 +115,14 @@ Never:
 
 Start with these:
 
-- `README.md`
 - `PROJECT_FRAME.md`
+- `PROJECT_OPERATING_MODEL.md`
+- `HYPOTHESES.md`
+- `README.md`
 - `REPO_MAP.md` — one-page orientation of every top-level entry
 - `ROADMAP.md`
 - `research/runtime_contracts_paper/PAPER_FRAME.md`
+- `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`
 - `benchmarks/governed_agent_bench/README.md`
 - `AUDIT.md`
 - `reporting/docs/architecture.md`
