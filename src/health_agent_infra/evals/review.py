@@ -255,6 +255,17 @@ def export_state(
 # ---------------------------------------------------------------------------
 
 
+_NON_DOMAIN_SCENARIO_DIRS: frozenset[str] = frozenset({
+    # judge_adversarial is walked separately below — its fixtures are
+    # keyed by ``fixture_id`` and live in per-category subdirectories.
+    "judge_adversarial",
+    # atomic_claims (v0.2.0 W-FACT-ATOM) is a parser-precision corpus
+    # whose fixtures are markdown + ground-truth atom triples, not
+    # review-listable scenarios. They have no ``scenario_id`` field.
+    "atomic_claims",
+})
+
+
 def _walk_corpus(corpus: str) -> list[dict[str, Any]]:
     """Walk the fixture tree and return per-scenario summary dicts.
 
@@ -270,7 +281,10 @@ def _walk_corpus(corpus: str) -> list[dict[str, Any]]:
 
     if corpus in ("scenarios", "all"):
         for domain_dir in sorted(base.iterdir()):
-            if not domain_dir.is_dir() or domain_dir.name == "judge_adversarial":
+            if (
+                not domain_dir.is_dir()
+                or domain_dir.name in _NON_DOMAIN_SCENARIO_DIRS
+            ):
                 continue
             for fixture_path in sorted(domain_dir.glob("*.json")):
                 if fixture_path.name == "index.json":
