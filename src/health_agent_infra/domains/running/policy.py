@@ -54,6 +54,12 @@ class RunningPolicyResult:
     # ``classified_state.uncertainty`` in the snapshot surface. Empty
     # tuple means no policy-originated uncertainty tokens.
     extra_uncertainty: tuple[str, ...] = ()
+    # v0.2.0 W-PROV-2: source-row locator(s) for this policy result.
+    # Always-emit baseline → 1 locator on today's
+    # accepted_running_state_daily row. ACWR-spike firing adds a column
+    # citation to today's accepted_recovery_state_daily row (acwr_ratio
+    # is computed from recovery's acute_load + chronic_load).
+    evidence_locators: Optional[tuple[dict[str, Any], ...]] = None
 
 
 # ---------------------------------------------------------------------------
@@ -157,6 +163,11 @@ def evaluate_running_policy(
     running_signals: dict[str, Any],
     thresholds: Optional[dict[str, Any]] = None,
     cold_start_context: Optional[dict[str, Any]] = None,
+    *,
+    for_date_iso: Optional[str] = None,
+    user_id: Optional[str] = None,
+    running_today_row_version: Optional[str] = None,
+    recovery_today_row_version: Optional[str] = None,
 ) -> RunningPolicyResult:
     """Apply running R-rules to a classified running state.
 
@@ -177,6 +188,17 @@ def evaluate_running_policy(
     at capped ``moderate`` confidence, with
     ``cold_start_running_history_limited`` added to uncertainty.
     Outside those conditions the pre-D4 behaviour stands.
+
+    v0.2.0 W-PROV-2: when the locator-emission args
+    (``for_date_iso`` / ``user_id`` / ``running_today_row_version``) are
+    provided, the result carries an always-emit locator citing today's
+    ``accepted_running_state_daily`` row at row level (column=None).
+    When the ACWR-spike rule fires AND ``recovery_today_row_version``
+    is also provided, an additional locator citing
+    ``accepted_recovery_state_daily.acwr_ratio`` is appended — the
+    ratio is computed from recovery's acute_load + chronic_load
+    columns, so the spike's source row lives in recovery, not
+    running. Args are optional to preserve the legacy 4-arg signature.
     """
 
     t = thresholds if thresholds is not None else load_thresholds()
@@ -214,13 +236,63 @@ def evaluate_running_policy(
         forced_action = spike_forced
         forced_action_detail = spike_detail
 
+    evidence_locators = _build_running_locators(
+        for_date_iso=for_date_iso,
+        user_id=user_id,
+        running_today_row_version=running_today_row_version,
+        recovery_today_row_version=recovery_today_row_version,
+        spike_fired=(
+            forced_action_detail is not None
+            and forced_action_detail.get("reason_token") == "acwr_spike"
+        ),
+    )
+
     return RunningPolicyResult(
         policy_decisions=tuple(decisions),
         forced_action=forced_action,
         forced_action_detail=forced_action_detail,
         capped_confidence=capped_confidence,
         extra_uncertainty=tuple(extra_uncertainty),
+        evidence_locators=evidence_locators,
     )
+
+
+def _build_running_locators(
+    *,
+    for_date_iso: Optional[str],
+    user_id: Optional[str],
+    running_today_row_version: Optional[str],
+    recovery_today_row_version: Optional[str],
+    spike_fired: bool,
+) -> Optional[tuple[dict[str, Any], ...]]:
+    """v0.2.0 W-PROV-2 hybrid emission for running.
+
+    Always-emit: 1 row-level locator on today's
+    ``accepted_running_state_daily`` when the trio of identity args is
+    present. Spike-emit (additional): on ACWR-spike firing, append a
+    column-level locator on today's ``accepted_recovery_state_daily``
+    citing ``acwr_ratio`` (the source row for the ratio is recovery's,
+    not running's). Returns None when no locators can be built.
+    """
+
+    if for_date_iso is None or user_id is None:
+        return None
+
+    out: list[dict[str, Any]] = []
+    if running_today_row_version is not None:
+        out.append({
+            "table": "accepted_running_state_daily",
+            "pk": {"as_of_date": for_date_iso, "user_id": user_id},
+            "row_version": running_today_row_version,
+        })
+    if spike_fired and recovery_today_row_version is not None:
+        out.append({
+            "table": "accepted_recovery_state_daily",
+            "pk": {"as_of_date": for_date_iso, "user_id": user_id},
+            "column": "acwr_ratio",
+            "row_version": recovery_today_row_version,
+        })
+    return tuple(out) if out else None
 
 
 # ---------------------------------------------------------------------------

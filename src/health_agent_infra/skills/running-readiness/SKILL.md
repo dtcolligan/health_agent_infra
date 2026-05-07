@@ -21,7 +21,7 @@ Under `snapshot.running` you receive:
 - `activities_today` / `activities_history` — per-session intervals.icu rows (`type='Run'`), newest-first. Each carries `distance_m`, `moving_time_s`, `hr_zone_times_s` ([Z1..Z7] seconds), `interval_summary`, `trimp`, `warmup_time_s`, `cooldown_time_s`, `feel`, `icu_rpe`. Empty on rest days.
 - `signals` — runtime-derived dict. Classic: `weekly_mileage_m`, `weekly_mileage_baseline_m`, `recent_hard_session_count_7d`, `acwr_ratio`, `training_readiness_pct`, `sleep_debt_band`, `resting_hr_band`. Structural (v0.1.4): `z4_plus_seconds_today`, `z4_plus_seconds_7d`, `last_hard_session_days_ago`, `today_interval_summary`, `activity_count_14d`. Context only; never re-derive.
 - `classified_state` — **source of truth**. Carries `weekly_mileage_trend_band`, `hard_session_load_band`, `freshness_band`, `recovery_adjacent_band`, `coverage_band`, `running_readiness_status`, `readiness_score`, `uncertainty`.
-- `policy_result` — **source of truth** for `policy_decisions[]`, `forced_action`, `forced_action_detail`, `capped_confidence`.
+- `policy_result` — **source of truth** for `policy_decisions[]`, `forced_action`, `forced_action_detail`, `capped_confidence`, and (v0.2.0 W-PROV-2) optional `evidence_locators[]`. The runtime always emits a row-level locator citing today's `accepted_running_state_daily`; an ACWR-spike firing additionally cites `accepted_recovery_state_daily.acwr_ratio`.
 - `missingness` — per state_model_v1.md §5.
 
 Reach into `activities_today` / `activities_history` for qualitative context — "did today's session match what I planned?" (compare `today_interval_summary` to `evidence.planned_session_type`), or session-level colour in rationale ("Z4 for 4:42"). Never recompute a band the classifier already decided.
@@ -78,7 +78,7 @@ Emit a `RunningProposal` JSON and call `hai propose --domain running --proposal-
 
 `proposal_id` = `prop_<for_date>_<user_id>_running_01` (idempotent on `(for_date, user_id, domain)`; re-running on the same day does not produce a new row).
 
-Copy `policy_result.policy_decisions` into the output's `policy_decisions` verbatim — the runtime decided them; you do not re-edit or add new ones.
+Copy `policy_result.policy_decisions` into the output's `policy_decisions` verbatim — the runtime decided them; you do not re-edit or add new ones. **v0.2.0 W-PROV-2:** if `policy_result.evidence_locators` is present, copy that list verbatim into the proposal's `evidence_locators` field — do NOT derive locators yourself; the runtime computed them. If the field is absent, omit `evidence_locators` from the proposal.
 
 ## Invariants
 

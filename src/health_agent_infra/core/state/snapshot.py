@@ -793,10 +793,31 @@ def build_snapshot(
             ),
             "planned_session_type": cleaned.get("planned_session_type"),
         }
+        # v0.2.0 W-PROV-2: source-row provenance for running. Always-emit
+        # cites today's accepted_running_state_daily row; an ACWR-spike
+        # firing additionally cites accepted_recovery_state_daily.acwr_ratio
+        # (the ratio's source row lives in recovery, not running).
+        running_state_versions = _accepted_state_versions(
+            conn,
+            table="accepted_running_state_daily",
+            user_id=user_id,
+            end_date=as_of_date,
+            lookback_days=0,
+        )
+        running_today_row_version = running_state_versions.get(
+            as_of_date.isoformat()
+        )
+        recovery_today_row_version = recovery_state_versions.get(
+            as_of_date.isoformat()
+        )
         running_policy = evaluate_running_policy(
             running_classified,
             running_signals,
             cold_start_context=running_cold_start_ctx,
+            for_date_iso=as_of_date.isoformat(),
+            user_id=user_id,
+            running_today_row_version=running_today_row_version,
+            recovery_today_row_version=recovery_today_row_version,
         )
         running_block["signals"] = running_signals
         running_block["classified_state"] = _running_classified_to_dict(running_classified)
