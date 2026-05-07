@@ -549,6 +549,28 @@ DEFAULT_THRESHOLDS: dict[str, Any] = {
             # `gap_detection.snapshot_staleness_max_hours` precedent.
             "data_quality_stale_pull_hours": 48,
         },
+        # v0.2.0 W58D — deterministic factuality gate (PLAN §2.F).
+        # Tunes the corpus acceptance thresholds for `hai eval run
+        # --scenario-set factuality`. D13 threshold-injection-seam
+        # validation via `_validate_threshold_types` rejects bool
+        # overrides on these float-typed values (a `true` override on
+        # a min-pct threshold would silently coerce to `1.0` and pass
+        # all corpora — exactly the silent-failure mode D13 closes).
+        "factuality_gate": {
+            # Minimum percentage of known-bad fixtures the gate must
+            # BLOCK over the deterministic factuality corpus. Below
+            # this floor the cycle thesis fails (gate is too lenient
+            # — false-negative tolerance has exceeded budget per PLAN
+            # §2.F threshold-acceptance discussion). 97% admits ≤3%
+            # false-negatives on bad atoms; the value is challenged at
+            # D14 round 1 per PLAN §2.F.
+            "block_known_bad_min_pct": 97.0,
+            # Minimum percentage of known-good fixtures the gate must
+            # PASS over the deterministic factuality corpus. Above
+            # 99% the gate is over-strict (false-positive tolerance
+            # exceeded), blocking legitimate prose unnecessarily.
+            "pass_known_good_min_pct": 99.0,
+        },
     },
     "synthesis": {
         "x_rules": {
@@ -1032,6 +1054,21 @@ coverage_threshold_days = 5
 # only). Manual retrospective entries always classify as
 # `retrospective_manual` regardless of the gap.
 data_quality_stale_pull_hours = 48
+
+# ---------------------------------------------------------------------------
+# Factuality gate (v0.2.0 W58D) — corpus acceptance thresholds
+# ---------------------------------------------------------------------------
+
+[policy.factuality_gate]
+# Minimum percentage of known-bad fixtures the deterministic
+# factuality gate must BLOCK over `evals/scenarios/factuality/`.
+# 97% admits ≤3% false-negative tolerance on bad atoms.
+block_known_bad_min_pct = 97.0
+
+# Minimum percentage of known-good fixtures the gate must PASS
+# over the same corpus. 99% admits ≤1% false-positive tolerance
+# on good atoms.
+pass_known_good_min_pct = 99.0
 
 # ---------------------------------------------------------------------------
 # Synthesis layer — X-rule triggers

@@ -12,9 +12,16 @@ dedicated fixture; the bundle-level aggregation is also exercised.
 from __future__ import annotations
 
 import sqlite3
+from pathlib import Path
 
 import pytest
 
+from health_agent_infra.core.config import (
+    DEFAULT_THRESHOLDS,
+    ConfigCoerceError,
+    load_thresholds,
+    scaffold_thresholds_toml,
+)
 from health_agent_infra.core.eval import (
     BlockReason,
     ClaimGateInput,
@@ -373,3 +380,107 @@ def test_two_lane_separation_audit_chain_table_cannot_be_locator_target(conn):
     result = gate_claim(conn, claim)
     assert result.outcome == GateOutcome.BLOCK
     assert result.block_reason == BlockReason.LOCATOR_INVALID
+
+
+# ---------------------------------------------------------------------------
+# 9. Threshold defaults — DEFAULT_THRESHOLDS surface
+# ---------------------------------------------------------------------------
+
+
+def test_default_thresholds_include_factuality_gate_block():
+    """``DEFAULT_THRESHOLDS["policy"]["factuality_gate"]`` ships with
+    the PLAN §2.F threshold-acceptance values and types.
+    """
+
+    block = DEFAULT_THRESHOLDS["policy"]["factuality_gate"]
+    assert block == {
+        "block_known_bad_min_pct": 97.0,
+        "pass_known_good_min_pct": 99.0,
+    }
+    # Types match the D13 contract: float defaults so any non-float /
+    # non-int / bool override is rejected at load time.
+    assert isinstance(block["block_known_bad_min_pct"], float)
+    assert isinstance(block["pass_known_good_min_pct"], float)
+    assert not isinstance(block["block_known_bad_min_pct"], bool)
+
+
+def test_scaffold_thresholds_toml_includes_factuality_gate_section():
+    """``scaffold_thresholds_toml`` writes a ``[policy.factuality_gate]``
+    block matching the defaults so a fresh ``hai config init`` produces
+    a file effective-equivalent to no config at all.
+    """
+
+    scaffold = scaffold_thresholds_toml()
+    assert "[policy.factuality_gate]" in scaffold
+    assert "block_known_bad_min_pct = 97.0" in scaffold
+    assert "pass_known_good_min_pct = 99.0" in scaffold
+
+
+# ---------------------------------------------------------------------------
+# 10. D13 threshold-injection-seam — bool override rejection
+# ---------------------------------------------------------------------------
+
+
+def test_load_thresholds_rejects_bool_override_for_block_known_bad_min_pct(
+    tmp_path: Path,
+):
+    """Per D13: ``_validate_threshold_types`` at the load_thresholds
+    boundary rejects bool overrides on float defaults. A user writing
+    ``block_known_bad_min_pct = true`` would silently coerce to
+    ``1.0`` (passing every fixture) — exactly the silent-failure mode
+    D13 closes.
+    """
+
+    bad_toml = tmp_path / "thresholds.toml"
+    bad_toml.write_text(
+        "[policy.factuality_gate]\n"
+        "block_known_bad_min_pct = true\n"
+    )
+    with pytest.raises(ConfigCoerceError) as exc_info:
+        load_thresholds(path=bad_toml)
+    msg = str(exc_info.value)
+    assert "factuality_gate" in msg
+    assert "block_known_bad_min_pct" in msg
+
+
+def test_load_thresholds_rejects_bool_override_for_pass_known_good_min_pct(
+    tmp_path: Path,
+):
+    bad_toml = tmp_path / "thresholds.toml"
+    bad_toml.write_text(
+        "[policy.factuality_gate]\n"
+        "pass_known_good_min_pct = false\n"
+    )
+    with pytest.raises(ConfigCoerceError) as exc_info:
+        load_thresholds(path=bad_toml)
+    msg = str(exc_info.value)
+    assert "factuality_gate" in msg
+    assert "pass_known_good_min_pct" in msg
+
+
+# ---------------------------------------------------------------------------
+# 11. D13 — legitimate float / int overrides round-trip
+# ---------------------------------------------------------------------------
+
+
+def test_load_thresholds_applies_float_override_for_factuality_gate(
+    tmp_path: Path,
+):
+    """Positive companion: legitimate float overrides load cleanly
+    and flow through to ``policy.factuality_gate``. TOML allows ``99``
+    and ``99.0`` interchangeably for float defaults; both pass.
+    """
+
+    user_toml = tmp_path / "thresholds.toml"
+    user_toml.write_text(
+        "[policy.factuality_gate]\n"
+        "block_known_bad_min_pct = 95.5\n"
+        "pass_known_good_min_pct = 98\n"  # int form — float-coercible
+    )
+    merged = load_thresholds(path=user_toml)
+    block = merged["policy"]["factuality_gate"]
+    assert block["block_known_bad_min_pct"] == 95.5
+    assert block["pass_known_good_min_pct"] == 98
+    # Neither value is a bool after the round-trip.
+    assert not isinstance(block["block_known_bad_min_pct"], bool)
+    assert not isinstance(block["pass_known_good_min_pct"], bool)
