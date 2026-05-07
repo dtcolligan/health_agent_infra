@@ -1,0 +1,25 @@
+{
+  "category": "source_row_drift",
+  "description": "Cited row_version 'v1' differs from current row_version '2026-04-28T19:00Z'.",
+  "expected_block_reason": "locator_row_version_drift",
+  "expected_outcome": "block",
+  "fixture_id": "fac_drift_008_stale_version",
+  "input": {
+    "atom_text": "On April 28 the resting heart rate was 52 bpm.",
+    "atom_type": "quantitative",
+    "audit_refs": {},
+    "locator_set": [
+      {
+        "pk": {
+          "as_of_date": "2026-04-28",
+          "user_id": "u_factuality_corpus"
+        },
+        "row_version": "v1",
+        "table": "accepted_recovery_state_daily"
+      }
+    ],
+    "user_id": null
+  },
+  "schema_version": "factuality_fixture.v1",
+  "subcategory": "row_version_mismatch"
+}

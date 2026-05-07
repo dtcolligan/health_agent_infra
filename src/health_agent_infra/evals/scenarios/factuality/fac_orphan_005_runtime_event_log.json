@@ -1,0 +1,20 @@
+{
+  "category": "audit_ref_orphan",
+  "description": "audit_ref to runtime_event_log pk 88888 which does not exist.",
+  "expected_block_reason": "audit_ref_orphan",
+  "expected_outcome": "block",
+  "fixture_id": "fac_orphan_005_runtime_event_log",
+  "input": {
+    "atom_text": "...",
+    "atom_type": "quantitative",
+    "audit_refs": {
+      "runtime_event_log": [
+        88888
+      ]
+    },
+    "locator_set": [],
+    "user_id": null
+  },
+  "schema_version": "factuality_fixture.v1",
+  "subcategory": "pk_not_found"
+}

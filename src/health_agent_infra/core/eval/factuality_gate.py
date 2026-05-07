@@ -117,6 +117,16 @@ class BlockReason(str, Enum):
     ``row_version`` column does not match the cited row_version
     (PLAN §2.F sub-category 4: source-row drift / supersession)."""
 
+    SOURCE_SIGNAL_CONFLICT = "source_signal_conflict"
+    """Locator cites a ``column`` whose value is missing or NULL on
+    the resolved row (PLAN §2.F sub-category 3). Two sub-cases:
+      * Column does not exist on the row schema (cited column was
+        renamed or never existed).
+      * Column exists but the value is NULL (the source signal the
+        atom claims to draw from is absent).
+    Both are deterministic detectors — the column either is or isn't
+    on the row, and its value either is or isn't NULL."""
+
     AUDIT_REF_ORPHAN = "audit_ref_orphan"
     """Audit-chain primary key is not present in its cited table
     (PLAN §2.F sub-category 5)."""
@@ -269,6 +279,24 @@ def _resolve_locator_with_drift(
             f"match current {actual_row_version!r} on row "
             f"{dict(locator['pk'])} of {locator['table']}",
         )
+
+    cited_column = locator.get("column")
+    if cited_column is not None:
+        if cited_column not in row:
+            return (
+                False,
+                BlockReason.SOURCE_SIGNAL_CONFLICT,
+                f"cited column {cited_column!r} not on row schema for "
+                f"{locator['table']} (renamed or never existed)",
+            )
+        if row[cited_column] is None:
+            return (
+                False,
+                BlockReason.SOURCE_SIGNAL_CONFLICT,
+                f"cited column {cited_column!r} is NULL on row "
+                f"{dict(locator['pk'])} of {locator['table']} — the "
+                f"source signal the atom draws from is absent",
+            )
 
     return (True, None, None)
 

@@ -1,0 +1,20 @@
+{
+  "category": "audit_ref_orphan",
+  "description": "audit_ref table 'synthesis_event' not in W58D whitelist.",
+  "expected_block_reason": "audit_ref_orphan",
+  "expected_outcome": "block",
+  "fixture_id": "fac_orphan_007_unknown_table",
+  "input": {
+    "atom_text": "...",
+    "atom_type": "quantitative",
+    "audit_refs": {
+      "synthesis_event": [
+        "any-pk-value"
+      ]
+    },
+    "locator_set": [],
+    "user_id": null
+  },
+  "schema_version": "factuality_fixture.v1",
+  "subcategory": "table_not_in_whitelist"
+}

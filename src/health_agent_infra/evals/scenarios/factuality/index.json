@@ -1,5 +1,17 @@
 {
   "categories": {
+    "audit_ref_orphan": [
+      "fac_orphan_001_daily_plan",
+      "fac_orphan_002_recommendation_log",
+      "fac_orphan_003_proposal_log",
+      "fac_orphan_004_x_rule_firing",
+      "fac_orphan_005_runtime_event_log",
+      "fac_orphan_006_sync_run_log",
+      "fac_orphan_007_unknown_table",
+      "fac_orphan_008_unknown_table",
+      "fac_orphan_009_unknown_table",
+      "fac_orphan_010_unknown_table"
+    ],
     "source_quality": [
       "fac_sq_001_table_unknown",
       "fac_sq_002_table_unknown",
@@ -32,6 +44,40 @@
       "fac_sq_029_pk_value_type",
       "fac_sq_030_pk_value_type"
     ],
+    "source_row_drift": [
+      "fac_drift_001_stale_version",
+      "fac_drift_002_stale_version",
+      "fac_drift_003_stale_version",
+      "fac_drift_004_stale_version",
+      "fac_drift_005_stale_version",
+      "fac_drift_006_stale_version",
+      "fac_drift_007_stale_version",
+      "fac_drift_008_stale_version",
+      "fac_drift_009_stale_version",
+      "fac_drift_010_stale_version",
+      "fac_drift_011_stale_version",
+      "fac_drift_012_stale_version",
+      "fac_drift_013_stale_version",
+      "fac_drift_014_stale_version",
+      "fac_drift_015_stale_version"
+    ],
+    "source_signal_conflict": [
+      "fac_ssc_001_column_unknown",
+      "fac_ssc_002_column_unknown",
+      "fac_ssc_003_column_unknown",
+      "fac_ssc_004_column_unknown",
+      "fac_ssc_005_column_unknown",
+      "fac_ssc_006_column_unknown",
+      "fac_ssc_007_column_unknown",
+      "fac_ssc_008_column_unknown",
+      "fac_ssc_009_value_null",
+      "fac_ssc_010_value_null",
+      "fac_ssc_011_value_null",
+      "fac_ssc_012_value_null",
+      "fac_ssc_013_value_null",
+      "fac_ssc_014_value_null",
+      "fac_ssc_015_value_null"
+    ],
     "x_rule_conflict": [
       "fac_xc_001_disagreed_firing",
       "fac_xc_002_disagreed_firing",
@@ -52,10 +98,185 @@
   },
   "description": "Factuality-gate corpus (PLAN \u00a72.F). Each fixture pairs a ClaimGateInput payload with the expected gate outcome. Step 6's scoring runner computes pass/block percentages from manifest cardinality (no hard-coded counts per F-PLAN-06).",
   "expected_outcome_counts": {
-    "block": 45,
+    "block": 85,
     "pass": 0
   },
   "fixtures": [
+    {
+      "category": "source_row_drift",
+      "expected_block_reason": "locator_row_version_drift",
+      "expected_outcome": "block",
+      "fixture_id": "fac_drift_001_stale_version",
+      "subcategory": "row_version_mismatch"
+    },
+    {
+      "category": "source_row_drift",
+      "expected_block_reason": "locator_row_version_drift",
+      "expected_outcome": "block",
+      "fixture_id": "fac_drift_002_stale_version",
+      "subcategory": "row_version_mismatch"
+    },
+    {
+      "category": "source_row_drift",
+      "expected_block_reason": "locator_row_version_drift",
+      "expected_outcome": "block",
+      "fixture_id": "fac_drift_003_stale_version",
+      "subcategory": "row_version_mismatch"
+    },
+    {
+      "category": "source_row_drift",
+      "expected_block_reason": "locator_row_version_drift",
+      "expected_outcome": "block",
+      "fixture_id": "fac_drift_004_stale_version",
+      "subcategory": "row_version_mismatch"
+    },
+    {
+      "category": "source_row_drift",
+      "expected_block_reason": "locator_row_version_drift",
+      "expected_outcome": "block",
+      "fixture_id": "fac_drift_005_stale_version",
+      "subcategory": "row_version_mismatch"
+    },
+    {
+      "category": "source_row_drift",
+      "expected_block_reason": "locator_row_version_drift",
+      "expected_outcome": "block",
+      "fixture_id": "fac_drift_006_stale_version",
+      "subcategory": "row_version_mismatch"
+    },
+    {
+      "category": "source_row_drift",
+      "expected_block_reason": "locator_row_version_drift",
+      "expected_outcome": "block",
+      "fixture_id": "fac_drift_007_stale_version",
+      "subcategory": "row_version_mismatch"
+    },
+    {
+      "category": "source_row_drift",
+      "expected_block_reason": "locator_row_version_drift",
+      "expected_outcome": "block",
+      "fixture_id": "fac_drift_008_stale_version",
+      "subcategory": "row_version_mismatch"
+    },
+    {
+      "category": "source_row_drift",
+      "expected_block_reason": "locator_row_version_drift",
+      "expected_outcome": "block",
+      "fixture_id": "fac_drift_009_stale_version",
+      "subcategory": "row_version_mismatch"
+    },
+    {
+      "category": "source_row_drift",
+      "expected_block_reason": "locator_row_version_drift",
+      "expected_outcome": "block",
+      "fixture_id": "fac_drift_010_stale_version",
+      "subcategory": "row_version_mismatch"
+    },
+    {
+      "category": "source_row_drift",
+      "expected_block_reason": "locator_row_version_drift",
+      "expected_outcome": "block",
+      "fixture_id": "fac_drift_011_stale_version",
+      "subcategory": "row_version_mismatch"
+    },
+    {
+      "category": "source_row_drift",
+      "expected_block_reason": "locator_row_version_drift",
+      "expected_outcome": "block",
+      "fixture_id": "fac_drift_012_stale_version",
+      "subcategory": "row_version_mismatch"
+    },
+    {
+      "category": "source_row_drift",
+      "expected_block_reason": "locator_row_version_drift",
+      "expected_outcome": "block",
+      "fixture_id": "fac_drift_013_stale_version",
+      "subcategory": "row_version_mismatch"
+    },
+    {
+      "category": "source_row_drift",
+      "expected_block_reason": "locator_row_version_drift",
+      "expected_outcome": "block",
+      "fixture_id": "fac_drift_014_stale_version",
+      "subcategory": "row_version_mismatch"
+    },
+    {
+      "category": "source_row_drift",
+      "expected_block_reason": "locator_row_version_drift",
+      "expected_outcome": "block",
+      "fixture_id": "fac_drift_015_stale_version",
+      "subcategory": "row_version_mismatch"
+    },
+    {
+      "category": "audit_ref_orphan",
+      "expected_block_reason": "audit_ref_orphan",
+      "expected_outcome": "block",
+      "fixture_id": "fac_orphan_001_daily_plan",
+      "subcategory": "pk_not_found"
+    },
+    {
+      "category": "audit_ref_orphan",
+      "expected_block_reason": "audit_ref_orphan",
+      "expected_outcome": "block",
+      "fixture_id": "fac_orphan_002_recommendation_log",
+      "subcategory": "pk_not_found"
+    },
+    {
+      "category": "audit_ref_orphan",
+      "expected_block_reason": "audit_ref_orphan",
+      "expected_outcome": "block",
+      "fixture_id": "fac_orphan_003_proposal_log",
+      "subcategory": "pk_not_found"
+    },
+    {
+      "category": "audit_ref_orphan",
+      "expected_block_reason": "audit_ref_orphan",
+      "expected_outcome": "block",
+      "fixture_id": "fac_orphan_004_x_rule_firing",
+      "subcategory": "pk_not_found"
+    },
+    {
+      "category": "audit_ref_orphan",
+      "expected_block_reason": "audit_ref_orphan",
+      "expected_outcome": "block",
+      "fixture_id": "fac_orphan_005_runtime_event_log",
+      "subcategory": "pk_not_found"
+    },
+    {
+      "category": "audit_ref_orphan",
+      "expected_block_reason": "audit_ref_orphan",
+      "expected_outcome": "block",
+      "fixture_id": "fac_orphan_006_sync_run_log",
+      "subcategory": "pk_not_found"
+    },
+    {
+      "category": "audit_ref_orphan",
+      "expected_block_reason": "audit_ref_orphan",
+      "expected_outcome": "block",
+      "fixture_id": "fac_orphan_007_unknown_table",
+      "subcategory": "table_not_in_whitelist"
+    },
+    {
+      "category": "audit_ref_orphan",
+      "expected_block_reason": "audit_ref_orphan",
+      "expected_outcome": "block",
+      "fixture_id": "fac_orphan_008_unknown_table",
+      "subcategory": "table_not_in_whitelist"
+    },
+    {
+      "category": "audit_ref_orphan",
+      "expected_block_reason": "audit_ref_orphan",
+      "expected_outcome": "block",
+      "fixture_id": "fac_orphan_009_unknown_table",
+      "subcategory": "table_not_in_whitelist"
+    },
+    {
+      "category": "audit_ref_orphan",
+      "expected_block_reason": "audit_ref_orphan",
+      "expected_outcome": "block",
+      "fixture_id": "fac_orphan_010_unknown_table",
+      "subcategory": "table_not_in_whitelist"
+    },
     {
       "category": "source_quality",
       "expected_block_reason": "locator_invalid",
@@ -267,6 +488,111 @@
       "subcategory": "locator_invalid"
     },
     {
+      "category": "source_signal_conflict",
+      "expected_block_reason": "source_signal_conflict",
+      "expected_outcome": "block",
+      "fixture_id": "fac_ssc_001_column_unknown",
+      "subcategory": "column_not_on_schema"
+    },
+    {
+      "category": "source_signal_conflict",
+      "expected_block_reason": "source_signal_conflict",
+      "expected_outcome": "block",
+      "fixture_id": "fac_ssc_002_column_unknown",
+      "subcategory": "column_not_on_schema"
+    },
+    {
+      "category": "source_signal_conflict",
+      "expected_block_reason": "source_signal_conflict",
+      "expected_outcome": "block",
+      "fixture_id": "fac_ssc_003_column_unknown",
+      "subcategory": "column_not_on_schema"
+    },
+    {
+      "category": "source_signal_conflict",
+      "expected_block_reason": "source_signal_conflict",
+      "expected_outcome": "block",
+      "fixture_id": "fac_ssc_004_column_unknown",
+      "subcategory": "column_not_on_schema"
+    },
+    {
+      "category": "source_signal_conflict",
+      "expected_block_reason": "source_signal_conflict",
+      "expected_outcome": "block",
+      "fixture_id": "fac_ssc_005_column_unknown",
+      "subcategory": "column_not_on_schema"
+    },
+    {
+      "category": "source_signal_conflict",
+      "expected_block_reason": "source_signal_conflict",
+      "expected_outcome": "block",
+      "fixture_id": "fac_ssc_006_column_unknown",
+      "subcategory": "column_not_on_schema"
+    },
+    {
+      "category": "source_signal_conflict",
+      "expected_block_reason": "source_signal_conflict",
+      "expected_outcome": "block",
+      "fixture_id": "fac_ssc_007_column_unknown",
+      "subcategory": "column_not_on_schema"
+    },
+    {
+      "category": "source_signal_conflict",
+      "expected_block_reason": "source_signal_conflict",
+      "expected_outcome": "block",
+      "fixture_id": "fac_ssc_008_column_unknown",
+      "subcategory": "column_not_on_schema"
+    },
+    {
+      "category": "source_signal_conflict",
+      "expected_block_reason": "source_signal_conflict",
+      "expected_outcome": "block",
+      "fixture_id": "fac_ssc_009_value_null",
+      "subcategory": "column_value_null"
+    },
+    {
+      "category": "source_signal_conflict",
+      "expected_block_reason": "source_signal_conflict",
+      "expected_outcome": "block",
+      "fixture_id": "fac_ssc_010_value_null",
+      "subcategory": "column_value_null"
+    },
+    {
+      "category": "source_signal_conflict",
+      "expected_block_reason": "source_signal_conflict",
+      "expected_outcome": "block",
+      "fixture_id": "fac_ssc_011_value_null",
+      "subcategory": "column_value_null"
+    },
+    {
+      "category": "source_signal_conflict",
+      "expected_block_reason": "source_signal_conflict",
+      "expected_outcome": "block",
+      "fixture_id": "fac_ssc_012_value_null",
+      "subcategory": "column_value_null"
+    },
+    {
+      "category": "source_signal_conflict",
+      "expected_block_reason": "source_signal_conflict",
+      "expected_outcome": "block",
+      "fixture_id": "fac_ssc_013_value_null",
+      "subcategory": "column_value_null"
+    },
+    {
+      "category": "source_signal_conflict",
+      "expected_block_reason": "source_signal_conflict",
+      "expected_outcome": "block",
+      "fixture_id": "fac_ssc_014_value_null",
+      "subcategory": "column_value_null"
+    },
+    {
+      "category": "source_signal_conflict",
+      "expected_block_reason": "source_signal_conflict",
+      "expected_outcome": "block",
+      "fixture_id": "fac_ssc_015_value_null",
+      "subcategory": "column_value_null"
+    },
+    {
       "category": "x_rule_conflict",
       "expected_block_reason": "x_rule_conflict_user_disagreed",
       "expected_outcome": "block",
@@ -373,5 +699,5 @@
     }
   ],
   "schema_version": "factuality_index.v1",
-  "total_fixtures": 45
+  "total_fixtures": 85
 }

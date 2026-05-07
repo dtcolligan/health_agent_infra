@@ -1,0 +1,26 @@
+{
+  "category": "source_signal_conflict",
+  "description": "Locator cites 'hrv_rmssd' on 2026-04-30 where the row's column value is NULL (variant 1).",
+  "expected_block_reason": "source_signal_conflict",
+  "expected_outcome": "block",
+  "fixture_id": "fac_ssc_010_value_null",
+  "input": {
+    "atom_text": "On 2026-04-30 your hrv_rmssd value supported the recommendation (variant 1).",
+    "atom_type": "quantitative",
+    "audit_refs": {},
+    "locator_set": [
+      {
+        "column": "hrv_rmssd",
+        "pk": {
+          "as_of_date": "2026-04-30",
+          "user_id": "u_factuality_corpus"
+        },
+        "row_version": "2026-04-30T19:00Z",
+        "table": "accepted_recovery_state_daily"
+      }
+    ],
+    "user_id": null
+  },
+  "schema_version": "factuality_fixture.v1",
+  "subcategory": "column_value_null"
+}

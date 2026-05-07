@@ -1,0 +1,20 @@
+{
+  "category": "audit_ref_orphan",
+  "description": "audit_ref to sync_run_log pk 77777 which does not exist.",
+  "expected_block_reason": "audit_ref_orphan",
+  "expected_outcome": "block",
+  "fixture_id": "fac_orphan_006_sync_run_log",
+  "input": {
+    "atom_text": "...",
+    "atom_type": "quantitative",
+    "audit_refs": {
+      "sync_run_log": [
+        77777
+      ]
+    },
+    "locator_set": [],
+    "user_id": null
+  },
+  "schema_version": "factuality_fixture.v1",
+  "subcategory": "pk_not_found"
+}

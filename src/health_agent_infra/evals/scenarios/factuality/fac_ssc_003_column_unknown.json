@@ -1,0 +1,26 @@
+{
+  "category": "source_signal_conflict",
+  "description": "Locator cites column 'training_load' not on accepted_recovery_state_daily row schema.",
+  "expected_block_reason": "source_signal_conflict",
+  "expected_outcome": "block",
+  "fixture_id": "fac_ssc_003_column_unknown",
+  "input": {
+    "atom_text": "Your training_load signal supports the claim.",
+    "atom_type": "quantitative",
+    "audit_refs": {},
+    "locator_set": [
+      {
+        "column": "training_load",
+        "pk": {
+          "as_of_date": "2026-04-28",
+          "user_id": "u_factuality_corpus"
+        },
+        "row_version": "2026-04-28T19:00Z",
+        "table": "accepted_recovery_state_daily"
+      }
+    ],
+    "user_id": null
+  },
+  "schema_version": "factuality_fixture.v1",
+  "subcategory": "column_not_on_schema"
+}

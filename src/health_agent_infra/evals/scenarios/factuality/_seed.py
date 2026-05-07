@@ -56,6 +56,25 @@ def seed_factuality_baseline(conn: sqlite3.Connection) -> None:
         "(?, ?, ?, 52, 65)",
         (SEED_DATE, SEED_USER_ID, SEED_ROW_VERSION),
     )
+    # NULL-signal rows for the source_signal_conflict (column-value-
+    # NULL) sub-category. Each row has at least one signal column
+    # NULL so locator-with-column citations against these dates fire
+    # the SOURCE_SIGNAL_CONFLICT lane.
+    conn.execute(
+        "INSERT OR IGNORE INTO accepted_recovery_state_daily VALUES "
+        "(?, ?, ?, NULL, 60)",
+        ("2026-04-29", SEED_USER_ID, "2026-04-29T19:00Z"),
+    )
+    conn.execute(
+        "INSERT OR IGNORE INTO accepted_recovery_state_daily VALUES "
+        "(?, ?, ?, 50, NULL)",
+        ("2026-04-30", SEED_USER_ID, "2026-04-30T19:00Z"),
+    )
+    conn.execute(
+        "INSERT OR IGNORE INTO accepted_recovery_state_daily VALUES "
+        "(?, ?, ?, NULL, NULL)",
+        ("2026-05-01", SEED_USER_ID, "2026-05-01T19:00Z"),
+    )
 
     conn.execute(
         "CREATE TABLE IF NOT EXISTS daily_plan ("

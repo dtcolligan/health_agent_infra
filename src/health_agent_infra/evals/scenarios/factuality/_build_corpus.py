@@ -377,16 +377,236 @@ def _build_x_rule_conflict_fixtures() -> list[FactualityFixture]:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# Category 3 — source_signal_conflict (≥15 known-bad)
+# ---------------------------------------------------------------------------
+
+
+def _build_source_signal_conflict_fixtures() -> list[FactualityFixture]:
+    """Locator cites a column that's either NOT on the row schema or
+    has a NULL value. Both detected by ``_resolve_locator_with_drift``
+    via the new ``SOURCE_SIGNAL_CONFLICT`` lane.
+
+    Note: the seed's accepted_recovery_state_daily row has
+    resting_hr=52 + hrv_rmssd=65 (both non-null). To exercise the
+    NULL path, fixtures cite columns that are seeded as NULL in
+    extended rows OR cite columns that don't exist on the schema.
+    """
+
+    out: list[FactualityFixture] = []
+    n = 0
+
+    # 3a. Column not on row schema (8 fixtures — varied missing
+    # column names that aren't on accepted_recovery_state_daily).
+    for col_variant in [
+        "vo2max",
+        "lactate_threshold",
+        "training_load",
+        "tss",
+        "sleep_score",
+        "stress_score",
+        "body_battery",
+        "calories_burned",
+    ]:
+        n += 1
+        out.append(FactualityFixture(
+            fixture_id=f"fac_ssc_{n:03d}_column_unknown",
+            category="source_signal_conflict",
+            subcategory="column_not_on_schema",
+            expected_outcome="block",
+            expected_block_reason="source_signal_conflict",
+            description=(
+                f"Locator cites column {col_variant!r} not on "
+                f"accepted_recovery_state_daily row schema."
+            ),
+            atom_text=f"Your {col_variant} signal supports the claim.",
+            atom_type="quantitative",
+            locator_set=[_good_locator(column=col_variant)],
+            audit_refs={},
+        ))
+
+    # 3b. Column exists on schema but value is NULL (7 fixtures —
+    # exercises the seed's NULL-bearing extended rows). Each tuple
+    # below is a (date, column) pair where the seeded row's column
+    # is explicitly NULL. The seed at ``_seed.py`` documents which
+    # pairs produce NULL.
+    null_pairs: list[tuple[str, str]] = [
+        ("2026-04-29", "resting_hr"),   # 2026-04-29 row has resting_hr=NULL
+        ("2026-04-30", "hrv_rmssd"),    # 2026-04-30 row has hrv_rmssd=NULL
+        ("2026-05-01", "resting_hr"),   # 2026-05-01 row has BOTH NULL
+        ("2026-05-01", "hrv_rmssd"),
+        # Repeat with varied row_version drift cleared (using each
+        # row's actual row_version so the lane fired is the column-
+        # NULL one, not the drift one).
+        ("2026-04-29", "resting_hr"),
+        ("2026-04-30", "hrv_rmssd"),
+        ("2026-05-01", "hrv_rmssd"),
+    ]
+    for idx, (date_v, col) in enumerate(null_pairs):
+        n += 1
+        out.append(FactualityFixture(
+            fixture_id=f"fac_ssc_{n:03d}_value_null",
+            category="source_signal_conflict",
+            subcategory="column_value_null",
+            expected_outcome="block",
+            expected_block_reason="source_signal_conflict",
+            description=(
+                f"Locator cites {col!r} on {date_v} where the row's "
+                f"column value is NULL (variant {idx})."
+            ),
+            atom_text=(
+                f"On {date_v} your {col} value supported the "
+                f"recommendation (variant {idx})."
+            ),
+            atom_type="quantitative",
+            locator_set=[{
+                "table": "accepted_recovery_state_daily",
+                "pk": {"as_of_date": date_v, "user_id": SEED_USER_ID},
+                "row_version": f"{date_v}T19:00Z",
+                "column": col,
+            }],
+            audit_refs={},
+        ))
+
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Category 4 — source_row_drift (≥15 known-bad)
+# ---------------------------------------------------------------------------
+
+
+def _build_source_row_drift_fixtures() -> list[FactualityFixture]:
+    """Locator validates and resolves, but the cited row_version
+    doesn't match the current row's row_version (supersession).
+    """
+
+    out: list[FactualityFixture] = []
+    n = 0
+
+    # Generate 15 drift fixtures with varied stale row_version values.
+    stale_versions = [
+        "2026-04-28T08:00Z",   # earlier same day
+        "2026-04-27T19:00Z",   # day before
+        "2026-04-20T10:00Z",   # week prior
+        "2026-04-01T12:00Z",   # month prior
+        "2025-12-31T23:59Z",   # year prior
+        "2026-04-28T18:59Z",   # 1-second drift
+        "2026-04-28T19:00:01Z", # 1-second after (still mismatched)
+        "v1",                  # ad-hoc version label
+        "snapshot_20260428_morning",  # custom label
+        "rev_001",             # numeric revision
+        "2026-04-28T19:00z",   # case-mismatched Z
+        "2026-04-28T19:00",    # missing Z
+        "2026-04-28 19:00:00", # space separator
+        "2026-04-28T19:00:00Z", # full seconds — still differs from seed's "2026-04-28T19:00Z"
+        "different_format_entirely",
+    ]
+    for stale in stale_versions:
+        n += 1
+        out.append(FactualityFixture(
+            fixture_id=f"fac_drift_{n:03d}_stale_version",
+            category="source_row_drift",
+            subcategory="row_version_mismatch",
+            expected_outcome="block",
+            expected_block_reason="locator_row_version_drift",
+            description=(
+                f"Cited row_version {stale!r} differs from current "
+                f"row_version {SEED_ROW_VERSION!r}."
+            ),
+            atom_text="On April 28 the resting heart rate was 52 bpm.",
+            atom_type="quantitative",
+            locator_set=[{
+                "table": "accepted_recovery_state_daily",
+                "pk": {"as_of_date": SEED_DATE, "user_id": SEED_USER_ID},
+                "row_version": stale,
+                # Omit column to isolate the drift lane (column-set
+                # would also exercise SOURCE_SIGNAL_CONFLICT).
+            }],
+            audit_refs={},
+        ))
+
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Category 5 — audit_ref_orphan (≥10 known-bad)
+# ---------------------------------------------------------------------------
+
+
+def _build_audit_ref_orphan_fixtures() -> list[FactualityFixture]:
+    """Audit-ref pk doesn't exist in the cited audit-chain table."""
+
+    out: list[FactualityFixture] = []
+    n = 0
+
+    # 5a. Each whitelisted audit-chain table with a non-existent PK
+    # (6 fixtures: daily_plan, recommendation_log, proposal_log,
+    # x_rule_firing, runtime_event_log, sync_run_log).
+    orphan_specs: list[tuple[str, Any]] = [
+        ("daily_plan", "plan_does_not_exist"),
+        ("recommendation_log", "rec_does_not_exist"),
+        ("proposal_log", "prop_does_not_exist"),
+        ("x_rule_firing", 99999),
+        ("runtime_event_log", 88888),
+        ("sync_run_log", 77777),
+    ]
+    for table, bad_pk in orphan_specs:
+        n += 1
+        out.append(FactualityFixture(
+            fixture_id=f"fac_orphan_{n:03d}_{table}",
+            category="audit_ref_orphan",
+            subcategory="pk_not_found",
+            expected_outcome="block",
+            expected_block_reason="audit_ref_orphan",
+            description=(
+                f"audit_ref to {table} pk {bad_pk!r} which does not "
+                f"exist."
+            ),
+            atom_text="...",
+            atom_type="quantitative",
+            locator_set=[],
+            audit_refs={table: [bad_pk]},
+        ))
+
+    # 5b. Audit-chain table not in W58D whitelist (4 fixtures).
+    for unknown_table in [
+        "synthesis_event",
+        "intake_log",
+        "user_memory",
+        "intent_state",
+    ]:
+        n += 1
+        out.append(FactualityFixture(
+            fixture_id=f"fac_orphan_{n:03d}_unknown_table",
+            category="audit_ref_orphan",
+            subcategory="table_not_in_whitelist",
+            expected_outcome="block",
+            expected_block_reason="audit_ref_orphan",
+            description=(
+                f"audit_ref table {unknown_table!r} not in W58D "
+                f"whitelist."
+            ),
+            atom_text="...",
+            atom_type="quantitative",
+            locator_set=[],
+            audit_refs={unknown_table: ["any-pk-value"]},
+        ))
+
+    return out
+
+
 def _all_fixtures() -> list[FactualityFixture]:
     """Aggregate every fixture across all currently-implemented
-    categories. Step 4 will extend this with sub-categories 3-5;
-    step 5 with the known-good corpus. The function signature stays
-    stable so the scoring runner just calls it.
+    categories. Step 5 will extend with the ≥75 known-good corpus.
     """
 
     out: list[FactualityFixture] = []
     out.extend(_build_source_quality_fixtures())
     out.extend(_build_x_rule_conflict_fixtures())
+    out.extend(_build_source_signal_conflict_fixtures())
+    out.extend(_build_source_row_drift_fixtures())
+    out.extend(_build_audit_ref_orphan_fixtures())
     return out
 
 

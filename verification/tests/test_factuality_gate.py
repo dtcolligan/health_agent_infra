@@ -645,6 +645,118 @@ def test_factuality_corpus_meets_step_3_minimums():
     assert len(cats.get("x_rule_conflict", [])) >= 15
 
 
+def test_factuality_corpus_meets_step_4_minimums():
+    """PLAN §2.F sub-categories 3-5 sums: ≥15 source_signal_conflict
+    + ≥15 source_row_drift + ≥10 audit_ref_orphan known-bad.
+    Combined with step 3 these total ≥85 known-bad (the round-1
+    sub-category-sum reconciliation per F-PLAN-06).
+    """
+
+    manifest = json.loads((_CORPUS_DIR / "index.json").read_text())
+    cats = manifest["categories"]
+    assert len(cats.get("source_signal_conflict", [])) >= 15
+    assert len(cats.get("source_row_drift", [])) >= 15
+    assert len(cats.get("audit_ref_orphan", [])) >= 10
+    # Total known-bad floor.
+    block_count = sum(
+        1 for f in manifest["fixtures"]
+        if f["expected_outcome"] == "block"
+    )
+    assert block_count >= 85, (
+        f"corpus has {block_count} known-bad fixtures; "
+        f"PLAN §2.F sub-category sum requires ≥85"
+    )
+
+
+# ---------------------------------------------------------------------------
+# 14. SOURCE_SIGNAL_CONFLICT lane (step 4 gate extension)
+# ---------------------------------------------------------------------------
+
+
+def test_gate_blocks_on_locator_column_not_on_row_schema():
+    """Locator cites a column that doesn't exist on the resolved
+    row's schema → SOURCE_SIGNAL_CONFLICT."""
+
+    c = _seeded_db()
+    try:
+        claim = ClaimGateInput(
+            atom_text="...",
+            atom_type="quantitative",
+            locator_set=[{
+                "table": "accepted_recovery_state_daily",
+                "pk": {
+                    "as_of_date": "2026-04-28",
+                    "user_id": "u_factuality_corpus",
+                },
+                "row_version": "2026-04-28T19:00Z",
+                "column": "vo2max",  # not on schema
+            }],
+        )
+        result = gate_claim(c, claim)
+        assert result.outcome == GateOutcome.BLOCK
+        assert (
+            result.block_reason == BlockReason.SOURCE_SIGNAL_CONFLICT
+        )
+        assert "not on row schema" in (result.block_detail or "")
+    finally:
+        c.close()
+
+
+def test_gate_blocks_on_locator_column_value_null():
+    """Locator cites a column whose value is NULL on the resolved
+    row → SOURCE_SIGNAL_CONFLICT."""
+
+    c = _seeded_db()
+    try:
+        # 2026-04-29 row is seeded with resting_hr=NULL.
+        claim = ClaimGateInput(
+            atom_text="...",
+            atom_type="quantitative",
+            locator_set=[{
+                "table": "accepted_recovery_state_daily",
+                "pk": {
+                    "as_of_date": "2026-04-29",
+                    "user_id": "u_factuality_corpus",
+                },
+                "row_version": "2026-04-29T19:00Z",
+                "column": "resting_hr",
+            }],
+        )
+        result = gate_claim(c, claim)
+        assert result.outcome == GateOutcome.BLOCK
+        assert (
+            result.block_reason == BlockReason.SOURCE_SIGNAL_CONFLICT
+        )
+        assert "is NULL" in (result.block_detail or "")
+    finally:
+        c.close()
+
+
+def test_gate_passes_when_locator_column_has_non_null_value():
+    """Sanity companion: locator cites a column whose value is
+    non-null → PASS. Confirms the lane is not over-strict."""
+
+    c = _seeded_db()
+    try:
+        claim = ClaimGateInput(
+            atom_text="...",
+            atom_type="quantitative",
+            locator_set=[{
+                "table": "accepted_recovery_state_daily",
+                "pk": {
+                    "as_of_date": "2026-04-28",
+                    "user_id": "u_factuality_corpus",
+                },
+                "row_version": "2026-04-28T19:00Z",
+                "column": "resting_hr",  # value is 52, non-null
+            }],
+        )
+        result = gate_claim(c, claim)
+        assert result.outcome == GateOutcome.PASS
+    finally:
+        c.close()
+
+
 def test_every_factuality_fixture_produces_its_expected_outcome():
     """Run each known-bad fixture through the gate and assert the
     outcome matches its declared ``expected_outcome`` +
