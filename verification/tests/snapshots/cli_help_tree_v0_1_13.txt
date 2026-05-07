@@ -50,6 +50,7 @@ hai restore: --base-dir,--bundle,--db-path,--help
 hai review record: --base-dir,--completed,--db-path,--disagreed-firings,--duration-minutes,--help,--intensity-delta,--outcome-json,--post-energy,--pre-energy
 hai review schedule: --base-dir,--db-path,--help,--recommendation-json
 hai review summary: --base-dir,--domain,--help,--user-id
+hai review weekly: --coverage-threshold,--db-path,--help,--include-history,--json,--markdown,--user-id,--week
 hai setup-skills: --dest,--force,--help
 hai state init: --db-path,--help
 hai state migrate: --db-path,--help

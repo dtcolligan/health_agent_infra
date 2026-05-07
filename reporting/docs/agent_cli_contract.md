@@ -63,7 +63,7 @@ JSON; this markdown is an at-a-glance overview for humans.
 
 ## Commands
 
-*67 commands; hai 0.1.18; schema agent_cli_contract.v1*
+*68 commands; hai 0.1.18; schema agent_cli_contract.v1*
 
 | Command | Mutation | Idempotent | JSON | Agent-safe | Exit codes | Description |
 |---|---|---|---|---|---|---|
@@ -119,6 +119,7 @@ JSON; this markdown is an at-a-glance overview for humans.
 | ``hai review record`` | ``writes-state`` | ``no`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Record a review_outcome against a review_event. Carries the migration-010 enrichment columns (completed, intensity_delta, pre/post_energy, disagreed_firing_ids). |
 | ``hai review schedule`` | ``writes-state`` | ``no`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Persist a pending review_event for a recommendation (used to schedule the next-day review question). |
 | ``hai review summary`` | ``read-only`` | ``n/a`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Summarize review_outcome counts (followed / not-followed, per-domain tallies). |
+| ``hai review weekly`` | ``read-only`` | ``n/a`` | ``opt-in`` | yes | ``OK``, ``USER_INPUT`` | Render the weekly review surface — markdown or JSON — from the canonical (non-superseded) plan evidence for the requested ISO week. Emits an abstain branch when fewer than the threshold of days have canonical plans. |
 | ``hai setup-skills`` | ``writes-skills-dir`` | ``yes`` | ``default`` | yes | ``OK`` | Copy the packaged skills/ tree to ~/.claude/skills/ so Claude Code discovers them. |
 | ``hai state init`` | ``writes-state`` | ``yes`` | ``default`` | yes | ``OK`` | Create the local SQLite state DB and apply all pending migrations. Idempotent — safe to call repeatedly. |
 | ``hai state migrate`` | ``writes-state`` | ``yes`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Apply any pending schema migrations to an already-initialized state DB. |

@@ -329,6 +329,7 @@ from health_agent_infra.cli.handlers.review import (  # noqa: E402
     cmd_review_record,
     cmd_review_schedule,
     cmd_review_summary,
+    cmd_review_weekly,
 )
 
 
@@ -1261,6 +1262,70 @@ def build_parser() -> argparse.ArgumentParser:
         description=(
             "Summarize review_outcome counts (followed / not-followed, "
             "per-domain tallies)."
+        ),
+    )
+
+    # v0.2.0 W52 — `hai review weekly` aggregation surface.
+    p_rweek = review_sub.add_parser(
+        "weekly",
+        help=(
+            "Aggregate the past week's plan evidence and render a "
+            "human-readable (markdown) or machine-readable (JSON) "
+            "review."
+        ),
+    )
+    p_rweek.add_argument(
+        "--week", required=True,
+        help="ISO week of shape 'YYYY-Www' (e.g. '2026-W18').",
+    )
+    output_group = p_rweek.add_mutually_exclusive_group()
+    output_group.add_argument(
+        "--json", dest="json", action="store_true",
+        help="Emit JSON output (default: markdown).",
+    )
+    output_group.add_argument(
+        "--markdown", dest="json", action="store_false",
+        help="Emit markdown output (default).",
+    )
+    p_rweek.set_defaults(json=False)
+    p_rweek.add_argument(
+        "--user-id", default="u_local_1",
+        help="User identifier (default: 'u_local_1').",
+    )
+    p_rweek.add_argument(
+        "--coverage-threshold", type=int, default=None,
+        help=(
+            "Override the partial-week abstain threshold (days with "
+            "canonical plans needed to render quantitative prose). "
+            "Default reads from thresholds.toml "
+            "policy.review_weekly.coverage_threshold_days (5)."
+        ),
+    )
+    p_rweek.add_argument(
+        "--include-history", action="store_true",
+        help=(
+            "Include superseded weekly_claim_card rows alongside "
+            "canonical-latest in --json output. Valid only with "
+            "--json (markdown shows canonical-latest only)."
+        ),
+    )
+    p_rweek.add_argument(
+        "--db-path", default=None,
+        help="State DB path (default: $HAI_STATE_DB or platform default).",
+    )
+    p_rweek.set_defaults(func=cmd_review_weekly)
+    annotate_contract(
+        p_rweek,
+        mutation="read-only",
+        idempotent="n/a",
+        json_output="opt-in",
+        exit_codes=("OK", "USER_INPUT"),
+        agent_safe=True,
+        description=(
+            "Render the weekly review surface — markdown or JSON — "
+            "from the canonical (non-superseded) plan evidence for "
+            "the requested ISO week. Emits an abstain branch when "
+            "fewer than the threshold of days have canonical plans."
         ),
     )
 

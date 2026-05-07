@@ -905,6 +905,80 @@ def test_prose_abstain_branch_emits_no_sections(tmp_path: Path):
         conn.close()
 
 
+# ---------------------------------------------------------------------------
+# CLI integration — `hai review weekly` (PLAN §2.D acceptance #11)
+# ---------------------------------------------------------------------------
+
+
+def test_cli_review_weekly_command_in_capabilities_manifest():
+    """`hai capabilities --json` exposes the new command. Acceptance
+    #11: capabilities-manifest snapshot regenerates in lockstep with
+    the new subcommand + flags.
+    """
+
+    import subprocess
+    result = subprocess.run(
+        ["uv", "run", "hai", "capabilities", "--json"],
+        capture_output=True, text=True, check=True,
+    )
+    manifest = json.loads(result.stdout)
+    weekly = [c for c in manifest.get("commands", [])
+              if c.get("command") == "hai review weekly"]
+    assert len(weekly) == 1, (
+        f"expected exactly one 'hai review weekly' entry; "
+        f"got {len(weekly)}"
+    )
+    entry = weekly[0]
+    assert entry["mutation"] == "read-only"
+    assert entry["agent_safe"] is True
+    assert "OK" in entry["exit_codes"]
+    assert "USER_INPUT" in entry["exit_codes"]
+    flag_names = {f["name"] for f in entry.get("flags", [])}
+    assert {
+        "--week", "--json", "--markdown", "--user-id",
+        "--coverage-threshold", "--include-history", "--db-path",
+    }.issubset(flag_names)
+
+
+def test_cli_review_weekly_rejects_bad_week_format(tmp_path: Path):
+    """`--week notvalid` exits USER_INPUT (1) with a clear stderr
+    message rather than a stack trace."""
+
+    import subprocess
+    result = subprocess.run(
+        [
+            "uv", "run", "hai", "review", "weekly",
+            "--week", "notvalid",
+            "--db-path", str(tmp_path / "no_db.db"),
+        ],
+        capture_output=True, text=True,
+    )
+    assert result.returncode == 1  # USER_INPUT
+    assert "review weekly rejected" in result.stderr.lower()
+    assert "yyyy-www" in result.stderr.lower()
+
+
+def test_cli_review_weekly_rejects_include_history_without_json(
+    tmp_path: Path,
+):
+    """`--include-history --markdown` is invalid (history is JSON-only).
+    Exits USER_INPUT with stderr disposition."""
+
+    import subprocess
+    result = subprocess.run(
+        [
+            "uv", "run", "hai", "review", "weekly",
+            "--week", "2026-W18",
+            "--markdown", "--include-history",
+            "--db-path", str(tmp_path / "no_db.db"),
+        ],
+        capture_output=True, text=True,
+    )
+    assert result.returncode == 1
+    assert "include-history" in result.stderr.lower()
+    assert "--json" in result.stderr
+
+
 def test_prose_load_primary_goal_returns_none_when_unset(tmp_path: Path):
     """`load_primary_goal` returns None when no active primary_goal
     exists in user_memory (honest abstain — never fabricated).

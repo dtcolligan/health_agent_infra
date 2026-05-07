@@ -4000,6 +4000,104 @@
     },
     {
       "agent_safe": true,
+      "command": "hai review weekly",
+      "description": "Render the weekly review surface \u2014 markdown or JSON \u2014 from the canonical (non-superseded) plan evidence for the requested ISO week. Emits an abstain branch when fewer than the threshold of days have canonical plans.",
+      "exit_codes": [
+        "OK",
+        "USER_INPUT"
+      ],
+      "flags": [
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "ISO week of shape 'YYYY-Www' (e.g. '2026-W18').",
+          "name": "--week",
+          "nargs": null,
+          "positional": false,
+          "required": true,
+          "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Emit JSON output (default: markdown).",
+          "name": "--json",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store_false",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Emit markdown output (default).",
+          "name": "--markdown",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": "u_local_1",
+          "help": "User identifier (default: 'u_local_1').",
+          "name": "--user-id",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "Override the partial-week abstain threshold (days with canonical plans needed to render quantitative prose). Default reads from thresholds.toml policy.review_weekly.coverage_threshold_days (5).",
+          "name": "--coverage-threshold",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "Include superseded weekly_claim_card rows alongside canonical-latest in --json output. Valid only with --json (markdown shows canonical-latest only).",
+          "name": "--include-history",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
+        },
+        {
+          "action": "store",
+          "aliases": [],
+          "choices": null,
+          "default": null,
+          "help": "State DB path (default: $HAI_STATE_DB or platform default).",
+          "name": "--db-path",
+          "nargs": null,
+          "positional": false,
+          "required": false,
+          "type": "str"
+        }
+      ],
+      "idempotent": "n/a",
+      "json_output": "opt-in",
+      "mutation": "read-only"
+    },
+    {
+      "agent_safe": true,
       "command": "hai setup-skills",
       "description": "Copy the packaged skills/ tree to ~/.claude/skills/ so Claude Code discovers them.",
       "exit_codes": [
@@ -5488,6 +5586,6 @@
     }
   },
   "generated_by": "core.capabilities.walker.build_manifest",
-  "hai_version": "0.1.17",
+  "hai_version": "0.1.18",
   "schema_version": "agent_cli_contract.v1"
 }

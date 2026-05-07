@@ -272,3 +272,143 @@ def cmd_review_summary(args: argparse.Namespace) -> int:
         ))
     _emit_json(summarize_review_history(outcomes, domain=domain_filter))
     return exit_codes.OK
+
+
+def cmd_review_weekly(args: argparse.Namespace) -> int:
+    """``hai review weekly`` — aggregate the past week's plan evidence
+    and render either markdown (default) or JSON output.
+
+    Per PLAN §2.D acceptance #1-#9: deterministic byte-stable output
+    over fixture-week corpora; partial-week abstain branch when fewer
+    than ``coverage_threshold`` days of canonical plans exist;
+    supersession reconciliation surfaces both rows on multi-canonical
+    days; data-quality rollup distinguishes ``stale_pull`` vs
+    ``retrospective_manual``; ``--include-history`` flag (JSON-only)
+    flips between canonical-latest and append-only history view.
+    """
+
+    from health_agent_infra.core.config import load_thresholds
+    from health_agent_infra.core.review.prose_builder import (
+        build_weekly_prose,
+    )
+    from health_agent_infra.core.review.render import (
+        render_json,
+        render_markdown,
+    )
+    from health_agent_infra.core.review.weekly import (
+        compute_data_quality_rollup,
+        evaluate_weekly_coverage,
+        iso_week_dates,
+        load_weekly_aggregation,
+    )
+    from health_agent_infra.core.state import (
+        open_connection,
+        resolve_db_path,
+    )
+
+    iso_week = args.week
+    # Validate the week shape eagerly so the user gets a clear
+    # USER_INPUT exit rather than a stack trace on bad input.
+    try:
+        iso_week_dates(iso_week)
+    except ValueError as exc:
+        print(
+            f"hai review weekly rejected: --week must be 'YYYY-Www' "
+            f"(e.g. '2026-W18'); got {iso_week!r} ({exc})",
+            file=sys.stderr,
+        )
+        return exit_codes.USER_INPUT
+
+    if (
+        getattr(args, "include_history", False)
+        and getattr(args, "json", False) is False
+    ):
+        print(
+            "hai review weekly rejected: --include-history is only "
+            "valid with --json (markdown shows canonical-latest only).",
+            file=sys.stderr,
+        )
+        return exit_codes.USER_INPUT
+
+    user_id = getattr(args, "user_id", None) or "u_local_1"
+
+    thresholds = load_thresholds()
+    weekly_block = thresholds.get("policy", {}).get("review_weekly", {})
+    coverage_threshold_days = (
+        args.coverage_threshold
+        if args.coverage_threshold is not None
+        else weekly_block.get("coverage_threshold_days", 5)
+    )
+    stale_pull_hours = weekly_block.get("data_quality_stale_pull_hours", 48)
+
+    db_path = resolve_db_path(getattr(args, "db_path", None))
+    if not db_path.exists():
+        # No state DB → equivalent to an empty week (zero plans). The
+        # abstain branch fires; the user gets the standard guidance.
+        print(
+            f"hai review weekly: no state DB at {db_path} — emitting "
+            f"abstain branch as if the week were empty.",
+            file=sys.stderr,
+        )
+
+    conn = open_connection(db_path) if db_path.exists() else None
+    try:
+        if conn is not None:
+            aggregation = load_weekly_aggregation(
+                conn, iso_week=iso_week, user_id=user_id,
+            )
+        else:
+            from health_agent_infra.core.review.weekly import (
+                WeeklyAggregation,
+            )
+            aggregation = WeeklyAggregation(
+                iso_week=iso_week, user_id=user_id,
+                week_dates=[
+                    d.isoformat() for d in iso_week_dates(iso_week)
+                ],
+                canonical_plans=[], recommendations=[],
+                x_rule_firings=[], review_outcomes=[],
+                evidence_cards=[], accepted_state_rows=[],
+                data_quality_rows=[], sync_runs=[], runtime_events=[],
+                intent_rows=[], target_rows=[],
+            )
+
+        coverage = evaluate_weekly_coverage(
+            aggregation, coverage_threshold_days=coverage_threshold_days,
+        )
+        rollup = compute_data_quality_rollup(
+            aggregation.sync_runs, stale_pull_hours=stale_pull_hours,
+        )
+        bundle = build_weekly_prose(
+            conn if conn is not None else _NullConn(),
+            aggregation, coverage, rollup,
+        ) if conn is not None else build_weekly_prose(
+            _NullConn(), aggregation, coverage, rollup,
+        )
+
+        if getattr(args, "json", False):
+            print(render_json(
+                bundle,
+                conn=conn,
+                include_history=getattr(args, "include_history", False),
+            ), end="")
+        else:
+            print(render_markdown(bundle), end="")
+    finally:
+        if conn is not None:
+            conn.close()
+
+    return exit_codes.OK
+
+
+class _NullConn:
+    """Minimal sqlite3-shaped stub for the no-state-DB abstain path.
+
+    The prose builder calls ``conn.execute(...)`` once for the
+    primary_goal lookup; we simulate "no rows" by raising
+    ``OperationalError`` which the loader catches.
+    """
+
+    def execute(self, *args, **kwargs):
+        import sqlite3
+        raise sqlite3.OperationalError("no state DB available")
