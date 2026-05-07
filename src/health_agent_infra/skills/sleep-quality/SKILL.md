@@ -21,7 +21,7 @@ Under `snapshot.sleep` you receive these blocks:
 - `history` — recent nights of sleep rows for context.
 - `signals` — the runtime-derived dict the classifier consumed: `sleep_hours`, `sleep_score_overall`, `sleep_awake_min`, `sleep_start_variance_minutes`, `sleep_history_hours_last_7`. Context only; never re-derive.
 - `classified_state` — `sleep_debt_band`, `sleep_quality_band`, `sleep_timing_consistency_band`, `sleep_efficiency_band`, `coverage_band`, `sleep_status`, `sleep_score`, `sleep_efficiency_pct`, `uncertainty`. **Source of truth.**
-- `policy_result` — `policy_decisions[]`, `forced_action`, `forced_action_detail`, `capped_confidence`. **Source of truth.**
+- `policy_result` — `policy_decisions[]`, `forced_action`, `forced_action_detail`, `capped_confidence`, and (v0.2.0 W-PROV-2) optional `evidence_locators[]`. The runtime always emits a row-level locator citing today's `accepted_sleep_state_daily`; an R-chronic-deprivation firing additionally cites `sleep_hours` per night in the trailing window. **Source of truth.**
 - `missingness` — per state_model_v1.md §5.
 
 ## Protocol
@@ -77,7 +77,7 @@ Emit a `SleepProposal` JSON and call `hai propose --domain sleep --proposal-json
 
 `proposal_id` = `prop_<for_date>_<user_id>_sleep_01` (idempotent on `(for_date, user_id, domain)`; re-running on the same night does not produce a new row).
 
-Copy `policy_result.policy_decisions` into the output's `policy_decisions` verbatim — the runtime decided them; you do not re-edit or add new ones.
+Copy `policy_result.policy_decisions` into the output's `policy_decisions` verbatim — the runtime decided them; you do not re-edit or add new ones. **v0.2.0 W-PROV-2:** if `policy_result.evidence_locators` is present, copy that list verbatim into the proposal's `evidence_locators` field — do NOT derive locators yourself; the runtime computed them. If the field is absent, omit `evidence_locators` from the proposal.
 
 ## Invariants
 

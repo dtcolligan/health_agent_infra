@@ -836,7 +836,23 @@ def build_snapshot(
             evidence=cleaned,
         )
         sleep_classified = classify_sleep_state(sleep_signals)
-        sleep_policy = evaluate_sleep_policy(sleep_classified, sleep_signals)
+        # v0.2.0 W-PROV-2: chronic-deprivation rule cites trailing-7
+        # nights, so the sleep version map mirrors recovery's
+        # lookback_days=7.
+        sleep_state_versions = _accepted_state_versions(
+            conn,
+            table="accepted_sleep_state_daily",
+            user_id=user_id,
+            end_date=as_of_date,
+            lookback_days=7,
+        )
+        sleep_policy = evaluate_sleep_policy(
+            sleep_classified,
+            sleep_signals,
+            for_date_iso=as_of_date.isoformat(),
+            user_id=user_id,
+            sleep_state_versions=sleep_state_versions,
+        )
         sleep_block["signals"] = sleep_signals
         sleep_block["classified_state"] = _sleep_classified_to_dict(sleep_classified)
         sleep_block["policy_result"] = _policy_to_dict(sleep_policy)
