@@ -918,9 +918,24 @@ def build_snapshot(
             ),
             "planned_session_type": cleaned.get("planned_session_type"),
         }
+        # v0.2.0 W-PROV-2: strength rules are single-day; lookback=0
+        # gets just today's row.
+        strength_state_versions = _accepted_state_versions(
+            conn,
+            table="accepted_resistance_training_state_daily",
+            user_id=user_id,
+            end_date=as_of_date,
+            lookback_days=0,
+        )
+        strength_today_row_version = strength_state_versions.get(
+            as_of_date.isoformat()
+        )
         strength_policy = evaluate_strength_policy(
             strength_classified,
             cold_start_context=strength_cold_start_ctx,
+            for_date_iso=as_of_date.isoformat(),
+            user_id=user_id,
+            strength_today_row_version=strength_today_row_version,
         )
         strength_block["signals"] = strength_signals
         strength_block["classified_state"] = _strength_classified_to_dict(strength_classified)

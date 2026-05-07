@@ -59,6 +59,11 @@ class StrengthPolicyResult:
     # D4 cold-start relaxation may add uncertainty tokens the snapshot
     # layer folds into classified_state.uncertainty.
     extra_uncertainty: tuple[str, ...] = ()
+    # v0.2.0 W-PROV-2: source-row locator(s). Always-emit baseline →
+    # 1 row-level locator on today's accepted_resistance_training_state_daily.
+    # Volume-spike firing adds a column-level citation
+    # (column="total_volume_kg_reps") on today's row.
+    evidence_locators: Optional[tuple[dict[str, Any], ...]] = None
 
 
 # ---------------------------------------------------------------------------
@@ -220,6 +225,10 @@ def evaluate_strength_policy(
     classified: ClassifiedStrengthState,
     thresholds: Optional[dict[str, Any]] = None,
     cold_start_context: Optional[dict[str, Any]] = None,
+    *,
+    for_date_iso: Optional[str] = None,
+    user_id: Optional[str] = None,
+    strength_today_row_version: Optional[str] = None,
 ) -> StrengthPolicyResult:
     """Apply strength R-rules to a classified strength state.
 
@@ -281,13 +290,66 @@ def evaluate_strength_policy(
     if unmatched_cap is not None and capped_confidence is None:
         capped_confidence = unmatched_cap
 
+    evidence_locators = _build_strength_locators(
+        for_date_iso=for_date_iso,
+        user_id=user_id,
+        strength_today_row_version=strength_today_row_version,
+        spike_fired=(
+            forced_action_detail is not None
+            and forced_action_detail.get("reason_token")
+            == "volume_spike_detected"
+        ),
+    )
+
     return StrengthPolicyResult(
         policy_decisions=tuple(decisions),
         forced_action=forced_action,
         forced_action_detail=forced_action_detail,
         capped_confidence=capped_confidence,
         extra_uncertainty=tuple(extra_uncertainty),
+        evidence_locators=evidence_locators,
     )
+
+
+def _build_strength_locators(
+    *,
+    for_date_iso: Optional[str],
+    user_id: Optional[str],
+    strength_today_row_version: Optional[str],
+    spike_fired: bool,
+) -> Optional[tuple[dict[str, Any], ...]]:
+    """v0.2.0 W-PROV-2 hybrid emission for strength.
+
+    Always-emit: 1 row-level locator on today's
+    ``accepted_resistance_training_state_daily``. Volume-spike
+    firing additionally appends a column-level locator citing
+    ``total_volume_kg_reps`` on today's row. The 28-day baseline the
+    spike compares against is implicit (in classified.volume_ratio +
+    detail.threshold_ratio); citing all 28 historical rows would be
+    over-cite per the spike note's "today's row only with column
+    citation" recommendation.
+    """
+
+    if for_date_iso is None or user_id is None:
+        return None
+    if strength_today_row_version is None:
+        return None
+
+    out: list[dict[str, Any]] = [
+        {
+            "table": "accepted_resistance_training_state_daily",
+            "pk": {"as_of_date": for_date_iso, "user_id": user_id},
+            "row_version": strength_today_row_version,
+        }
+    ]
+    if spike_fired:
+        out.append({
+            "table": "accepted_resistance_training_state_daily",
+            "pk": {"as_of_date": for_date_iso, "user_id": user_id},
+            "column": "total_volume_kg_reps",
+            "row_version": strength_today_row_version,
+        })
+    return tuple(out)
 
 
 # ---------------------------------------------------------------------------

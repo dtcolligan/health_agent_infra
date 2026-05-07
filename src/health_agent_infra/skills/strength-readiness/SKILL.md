@@ -21,7 +21,7 @@ Under `snapshot.strength` you receive these blocks:
 - `history` — trailing rows for 28-day context.
 - `signals` — runtime-derived dict the classifier consumed: `volume_ratio_7d_vs_28d_week_mean`, `sessions_last_7d`, `sessions_last_28d`, `days_since_heavy_by_group`, `today_volume_by_muscle_group`, `estimated_1rm_today`, `unmatched_exercise_tokens`, `goal_domain`. Context only; never re-derive.
 - `classified_state` — `recent_volume_band`, `freshness_band_by_group`, `coverage_band`, `strength_status`, `strength_score`, `volume_ratio`, `sessions_last_7d`, `sessions_last_28d`, `unmatched_exercise_tokens`, `uncertainty`. **Source of truth.**
-- `policy_result` — `policy_decisions[]`, `forced_action`, `forced_action_detail`, `capped_confidence`. **Source of truth.**
+- `policy_result` — `policy_decisions[]`, `forced_action`, `forced_action_detail`, `capped_confidence`, and (v0.2.0 W-PROV-2) optional `evidence_locators[]`. The runtime always emits a row-level locator citing today's `accepted_resistance_training_state_daily`; an R-volume-spike firing additionally cites `total_volume_kg_reps`. **Source of truth.**
 - `missingness` — per state_model_v1.md §5.
 
 ## Protocol
@@ -77,7 +77,7 @@ Emit a `StrengthProposal` JSON and call `hai propose --domain strength --proposa
 
 `proposal_id` = `prop_<for_date>_<user_id>_strength_01` (idempotent on `(for_date, user_id, domain)`; re-running on the same day does not produce a new row).
 
-Copy `policy_result.policy_decisions` into the output's `policy_decisions` verbatim — the runtime decided them; you do not re-edit or add new ones.
+Copy `policy_result.policy_decisions` into the output's `policy_decisions` verbatim — the runtime decided them; you do not re-edit or add new ones. **v0.2.0 W-PROV-2:** if `policy_result.evidence_locators` is present, copy that list verbatim into the proposal's `evidence_locators` field — do NOT derive locators yourself; the runtime computed them. If the field is absent, omit `evidence_locators` from the proposal.
 
 ## Invariants
 
