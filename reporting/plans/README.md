@@ -1,12 +1,13 @@
 # Planning Tree — Reading Order Index
 
-> **Last updated:** 2026-05-06 (v0.1.18 shipped + post-v0.1.18
-> strategic refresh: v0.1.19 cancelled per CP-2U-GATE-SPLIT + D16
-> [foreign-user gate split into install/wearable/dogfood];
-> `post_v0_1_18/strategic_plan_v2.md` supersedes v1 as canonical
-> strategic reference; companion `post_v0_1_18/v0_1_x_retro.md`
-> documents v0.1.x track close. **v0.2.0 (Wave 2 — weekly review +
-> factuality) is now next-active.**)
+> **Last updated:** 2026-05-07 (v0.2.0 ship-prep complete; D15 IR
+> in flight + maintainer manual TTY gate pending). Earlier 2026-05-06
+> entry: v0.1.18 shipped + post-v0.1.18 strategic refresh: v0.1.19
+> cancelled per CP-2U-GATE-SPLIT + D16 [foreign-user gate split into
+> install/wearable/dogfood]; `post_v0_1_18/strategic_plan_v2.md`
+> supersedes v1 as canonical strategic reference; companion
+> `post_v0_1_18/v0_1_x_retro.md` documents v0.1.x track close.
+> **v0.2.1 (insight ledger — W53) is next-active post-v0.2.0 ship.**
 
 This is the orientation guide to the `reporting/plans/` tree.
 Read this when you're returning cold and need to find the right
@@ -33,6 +34,7 @@ reporting/plans/
 ├── v0_1_17/                           ← shipped 2026-05-05 (maintainability + eval consolidation; W-29 cli.py split + W-B body-comp + W-D arm-2)
 ├── v0_1_18/                           ← shipped 2026-05-06 (onboarding-quality + intake-handler migration parity; 7 W-ids closed + W-OB-6 unfired)
 ├── v0_1_19/                           ← CANCELLED 2026-05-06 per CP-2U-GATE-SPLIT (foreign-user empirical re-tiered to opportunistic; W-2U-INSTALL closed verbal-only, W-2U-WEARABLE + W-2U-DOGFOOD deferred to v0.4 review)
+├── v0_2_0/                            ← ship-prep 2026-05-07 (Wave 2: weekly review W52 + factuality W58D + W-PROV-2 + evidence cards + atomic claims + Path A doc adjuncts; D15 IR in flight)
 ├── post_v0_1_10/                      ← historical between-cycle handoff (demo, Phase 4 audit)
 ├── post_v0_1_13/                      ← post-v0.1.13 strategic research + audit chain + CPs
 ├── post_v0_1_14/                      ← post-v0.1.14 carry-over findings + research notes
@@ -71,14 +73,12 @@ only when you need the snapshot of project posture at v0.1.10.
 
 1. `reporting/docs/current_system_state.md` — latest shipped truth.
 2. `tactical_plan_v0_1_x.md` — current release-in-flight rows
-   (§5E v0.1.18 onboarding-quality, §5F v0.1.19 foreign-user empirical).
-3. `v0_1_18/README.md` — next-active cycle workspace. PLAN.md authors
-   when the cycle opens (after v0.1.17 close-out hygiene is complete);
-   `v0_1_18/audit_findings.md` already accumulates pre-PLAN findings.
-4. `v0_1_19/README.md` — empirical-by-design cycle. PLAN.md authors
-   after a recorded foreign-user session against the post-v0.1.18
-   PyPI build exists.
-5. The opening cycle's `PLAN.md` once authored.
+   (v0.2.0 Wave 2 ship-prep complete, v0.2.1 next-active).
+3. `v0_2_0/PLAN.md` — current cycle scope (ship-prep complete).
+4. `v0_2_0/RELEASE_PROOF.md` — substantive-tier ship readiness;
+   honesty boundary gates G15-G17 + manual TTY ship sequence §8.
+5. The next cycle's `PLAN.md` once authored (v0.2.1 insight-ledger
+   W53).
 
 If you only have time for one: the open cycle's `PLAN.md` (or, when
 no cycle is open, `tactical_plan_v0_1_x.md` for the next two
@@ -195,6 +195,21 @@ Cycle directories preserve their own history:
   closes F-OB-PRE-01. W-OB-6 conditional did NOT fire. Schema head
   unchanged at 26. Test surface: 2722 passed, 5 skipped (broader
   warning gate). D14 7 → 3 close-in-place; D15 IR pending.
+- `v0_2_0/` — Wave 2 substantive cycle (ship-prep 2026-05-07; D15 IR
+  in flight + maintainer manual TTY ship gate pending). W52 weekly
+  review + W58D deterministic factuality gate + W-PROV-2 dormant-
+  domain locator emission + W-EVCARD-DAILY (migration 027) +
+  W-EVCARD-WEEKLY (migration 028) + W-FACT-ATOM atomic-claim corpus +
+  Path A doc adjuncts (W-MCP-THREAT, W-COMP-LANDSCAPE, W-NOF1-METHOD)
+  + W-EXPLAIN-UX-CARRY disposition tracker. Schema head 28
+  (W-EVCARD migrations 027 + 028). Test surface: 2940 passed, 4
+  skipped (broader warning gate, +184 vs v0.1.18 baseline). Persona
+  matrix 13/13 with 0 findings + 0 crashes. Factuality corpus
+  100/100 vs 97/99 thresholds. CLI surface: 68 commands. D14
+  10 → 5 → 3 → 1nit close. Honesty boundary gates G15-G17 reserve
+  foreign-user empirical (W-2U-WEARABLE/DOGFOOD), LLM-judge
+  factuality (W58J → v0.2.2), and insight-ledger persistence
+  (W53 → v0.2.1) for downstream cycles.
 
 Each cycle directory typically contains:
 - `PLAN.md` — cycle scope.

@@ -17,20 +17,21 @@ give that provider — that's the only path data leaves the machine,
 and it's not something `hai` controls.
 
 [![PyPI](https://img.shields.io/pypi/v/health-agent-infra)](https://pypi.org/project/health-agent-infra/)
-[![Tests](https://img.shields.io/badge/tests-2733_passing-green)](verification/tests/)
+[![Tests](https://img.shields.io/badge/tests-2940_passing-green)](verification/tests/)
 [![Python](https://img.shields.io/badge/python-3.11+-blue)](pyproject.toml)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-> **Status — `0.1.18` (2026-05-06).** Working maintainer-dogfooded
-> single-user software, packaged around Claude Code as the first
-> compatible host. The 2,733-test gate, 67-command CLI surface, and
-> end-to-end audit chain are maintainer-verified. Non-maintainer
-> full-flow validation: W-2U-INSTALL closed verbal-only by a
-> post-v0.1.18 foreign-machine session (maintainer's father);
-> W-2U-WEARABLE (full pipeline with wearable signal) and
+> **Status — `0.1.18` shipped; v0.2.0 ship-prep complete 2026-05-07,
+> PyPI publish gated on D15 IR settle + maintainer manual TTY gate.**
+> Working maintainer-dogfooded single-user software, packaged around
+> Claude Code as the first compatible host. The 2,940-test gate,
+> 68-command CLI surface, and end-to-end audit chain are maintainer-
+> verified. Non-maintainer full-flow validation: W-2U-INSTALL closed
+> verbal-only by a post-v0.1.18 foreign-machine session (maintainer's
+> father); W-2U-WEARABLE (full pipeline with wearable signal) and
 > W-2U-DOGFOOD (≥7d daily non-maintainer use) deferred to v0.4
-> review per CP-2U-GATE-SPLIT (AGENTS.md D16). v0.2.0 (Wave 2 —
-> weekly review + factuality) is now next-active.
+> review per CP-2U-GATE-SPLIT (AGENTS.md D16). **v0.2.1 (insight
+> ledger — W53) is next-active post-v0.2.0 ship.**
 
 ![A user conversation flows into a shell-capable agent. The agent invokes the hai governed tool surface, which validates, gates, and audits every write before persisting to local SQLite state, JSONL audit logs, and the OS keyring/config. A direct write attempt from the agent to local state is shown crossed out at the boundary. A read-only return path through hai today, explain, review, and backup feeds back to the agent.](assets/product_boundary.png)
 

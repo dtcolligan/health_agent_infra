@@ -138,7 +138,8 @@ non-maintainer use) deferred to v0.4 review.
 | Cycle | Role |
 |---|---|
 | ~~v0.1.19~~ | **CANCELLED 2026-05-06** per CP-2U-GATE-SPLIT (`reporting/plans/post_v0_1_18/CP-2U-GATE-SPLIT.md`) + AGENTS.md D16. Foreign-user empirical scope re-tiered to opportunistic-not-blocking; W-2U-INSTALL closed (verbal-only) by post-v0.1.18 father session; W-2U-WEARABLE + W-2U-DOGFOOD deferred to v0.4 review. |
-| v0.2.0 | **Next-active.** Weekly review (W52) + deterministic factuality (W58D) + Path A doc adjuncts (W-MCP-THREAT, W-COMP-LANDSCAPE, W-NOF1-METHOD, W-2U-GATE-2). Hard deps: v0.1.14 substrate (W-PROV-1 + W-AJ judge harness), already shipped. **Foreign-user empirical evidence re-tiered to opportunistic-not-blocking per D16.** |
+| v0.2.0 | **Ship-prep complete 2026-05-07.** Weekly review (W52) + deterministic factuality (W58D) + W-PROV-2 dormant-domain locators + W-EVCARD-DAILY (migration 027) + W-EVCARD-WEEKLY (migration 028) + W-FACT-ATOM corpus + Path A doc adjuncts (W-MCP-THREAT, W-COMP-LANDSCAPE, W-NOF1-METHOD) + W-EXPLAIN-UX-CARRY disposition tracker. D15 IR in flight; PyPI publish gated on IR settle + maintainer manual TTY gate per `reporting/plans/v0_2_0/RELEASE_PROOF.md` §8. **Foreign-user empirical evidence re-tiered to opportunistic-not-blocking per D16.** |
+| v0.2.1 | **Next-active post-v0.2.0 ship.** Insight ledger (W53) + carry-over from v0.2.0 IR if any findings flag-deferred. |
 
 ## How to update this file
 
