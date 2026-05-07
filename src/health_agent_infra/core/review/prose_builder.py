@@ -330,10 +330,10 @@ def _build_header_section(
         atoms.append(WeeklyAtom(
             atom_id="header.goal_abstain",
             atom_text=(
-                "No primary goal is recorded in user memory — the "
-                "review below is plan-driven and does not echo a goal "
+                "No primary goal is recorded in user memory — this "
+                "review is plan-driven and does not echo a goal "
                 "frame. Set one with `hai memory set primary_goal "
-                "\"<goal>\"` to ground future reviews."
+                "your-goal-here` to ground future reviews."
             ),
             atom_type="qualitative",
             derivation_path="literal",
@@ -462,16 +462,23 @@ def _build_deferred_domain_section(domain: str) -> WeeklyProseSection:
     """Deferred-domain section (F-PLAN-R3-01 + acceptance #8).
 
     When a domain fork-defers its W-PROV-2 emission to a later
-    cycle (e.g., v0.2.1 W-PROV-3), W52 emits NO quantitative or
-    comparative atoms for that domain. The single qualitative atom
-    surfaces the literal disposition string the test pins.
+    cycle, W52 emits NO quantitative or comparative atoms for that
+    domain. The single qualitative atom surfaces the literal
+    disposition string the test pins.
+
+    Disposition phrasing is deictic (no version-string numerics) so
+    the qualitative atom is genuinely non-factual under F-PLAN-10's
+    mechanical assertion. (Earlier wording read ``v0.2.1 W-PROV-3``;
+    the suffix matched ``\\b\\d+\\b`` which W-FACT-ATOM's parser
+    surfaced as a hidden alignment hole.)
     """
 
     atom = WeeklyAtom(
         atom_id=f"domain_{domain}.deferred",
         atom_text=(
             f"domain {domain}: insufficient provenance — quantitative "
-            f"and comparative claims suppressed pending v0.2.1 W-PROV-3"
+            f"and comparative claims suppressed pending the next "
+            f"provenance cycle"
         ),
         atom_type="qualitative",
         derivation_path="literal",
@@ -566,18 +573,20 @@ def _build_footer_section(
 ) -> WeeklyProseSection:
     """Footer — qualitative framing only. No factual past-week
     content (mechanical assertion: ``test_review_weekly`` confirms).
+
+    Deferred-domain status is already conveyed by (a) each deferred
+    domain's own qualitative disposition atom in its domain section,
+    (b) the ``deferred_domains`` field in the JSON output, and
+    (c) the ``## <Domain> (deferred)`` markdown heading. The footer
+    therefore does not name deferral counts — naming a count here
+    would emit a numeric token that violates F-PLAN-10's mechanical
+    assertion (W-FACT-ATOM finding).
     """
 
     text = (
         "This review is informational. Nothing here mutates intent, "
         "targets, or thresholds — that path is user-gated."
     )
-    if deferred_domains:
-        text += (
-            f" {len(deferred_domains)} domain"
-            f"{'s' if len(deferred_domains) != 1 else ''} are deferred "
-            f"this cycle and surface qualitative-only above."
-        )
     return WeeklyProseSection(
         section_id="footer",
         title="Notes",

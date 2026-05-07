@@ -5,13 +5,20 @@ Two concerns covered here:
 
   Acceptance #8 — Deferred-domain suppression (round-2 add per
   F-PLAN-R2-02; round-3 nit per F-PLAN-R3-01; round-4 nit per
-  F-PLAN-R4-01). When a domain fork-defers W-PROV-2 emission to
-  v0.2.1 W-PROV-3, W52 emits NO quantitative or comparative atoms
-  (and writes NO claim cards) for that domain. The domain section
+  F-PLAN-R4-01). When a domain fork-defers W-PROV-2 emission to a
+  later cycle, W52 emits NO quantitative or comparative atoms (and
+  writes NO claim cards) for that domain. The domain section
   renders with the literal disposition prose:
 
     "domain X: insufficient provenance — quantitative and
-     comparative claims suppressed pending v0.2.1 W-PROV-3"
+     comparative claims suppressed pending the next provenance
+     cycle"
+
+  The disposition phrasing is deliberately deictic (no version-
+  string numerics) so the qualitative atom is genuinely non-factual
+  under F-PLAN-10's mechanical assertion. (Earlier W52 step-8 wording
+  read ``v0.2.1 W-PROV-3``; that suffix matched ``\\b\\d+\\b`` which
+  W-FACT-ATOM's parser surfaced as a hidden F-PLAN-10 violation.)
 
   This test pins the exact disposition string + the three
   consequences:
@@ -173,10 +180,14 @@ def test_deferred_domain_emits_only_qualitative_disposition_atom(
         atom = running.atoms[0]
         assert atom.atom_type == "qualitative"
         # Pin the literal disposition string per F-PLAN-R3-01 +
-        # acceptance #8.
+        # acceptance #8. Phrasing avoids version-string numerics so
+        # the qualitative atom is genuinely non-factual under
+        # F-PLAN-10's mechanical assertion (W-FACT-ATOM finding —
+        # the prior `v0.2.1 W-PROV-3` suffix matched `\b\d+\b`).
         assert atom.atom_text == (
             "domain running: insufficient provenance — quantitative "
-            "and comparative claims suppressed pending v0.2.1 W-PROV-3"
+            "and comparative claims suppressed pending the next "
+            "provenance cycle"
         )
     finally:
         conn.close()
@@ -248,7 +259,7 @@ def test_deferred_domain_disposition_renders_in_markdown(tmp_path: Path):
         assert (
             "- domain running: insufficient provenance — "
             "quantitative and comparative claims suppressed "
-            "pending v0.2.1 W-PROV-3"
+            "pending the next provenance cycle"
         ) in md
         # The deferred section header still renders the domain name.
         assert "## Running (deferred)" in md
@@ -277,7 +288,53 @@ def test_deferred_domain_skips_when_no_recommendations(tmp_path: Path):
         atom = nutrition_sections[0].atoms[0]
         assert atom.atom_type == "qualitative"
         assert "nutrition" in atom.atom_text
-        assert "v0.2.1 W-PROV-3" in atom.atom_text
+        assert "the next provenance cycle" in atom.atom_text
+    finally:
+        conn.close()
+
+
+def test_deferred_domain_qualitative_atom_passes_f_plan_10_assertion(
+    tmp_path: Path,
+):
+    """W-FACT-ATOM finding regression: every qualitative atom in a
+    DEFERRED bundle must satisfy F-PLAN-10's mechanical assertion
+    (no numeric tokens, no month-name tokens, no comparison
+    operators).
+
+    The original W52 step-7 mechanical-assertion test
+    (``test_qualitative_atoms_pass_non_factual_mechanical_assertion``)
+    runs only against a non-deferred bundle, which left the deferred-
+    domain disposition atom unchecked. W-FACT-ATOM's structural
+    classifier surfaced that the original disposition string carried
+    ``v0.2.1 W-PROV-3``, matching ``\\b\\d+\\b`` and silently
+    violating F-PLAN-10. The disposition string is now deictic; this
+    test re-asserts the contract holds across all qualitative atoms
+    in deferred bundles for both single-domain and multi-domain
+    deferral cases.
+    """
+
+    from health_agent_infra.core.review.prose_builder import (
+        assert_qualitative_atom_is_non_factual,
+    )
+
+    conn = _db(tmp_path)
+    try:
+        _seed_full_week_with_recovery_and_running(conn)
+        # Single-domain deferral.
+        bundle = _build_bundle(conn, deferred_domains=["running"])
+        for section in bundle.sections:
+            for atom in section.atoms:
+                if atom.atom_type == "qualitative":
+                    assert_qualitative_atom_is_non_factual(atom)
+        # Multi-domain deferral — two deferred dispositions in one
+        # bundle, both must pass.
+        bundle2 = _build_bundle(
+            conn, deferred_domains=["running", "nutrition"],
+        )
+        for section in bundle2.sections:
+            for atom in section.atoms:
+                if atom.atom_type == "qualitative":
+                    assert_qualitative_atom_is_non_factual(atom)
     finally:
         conn.close()
 
