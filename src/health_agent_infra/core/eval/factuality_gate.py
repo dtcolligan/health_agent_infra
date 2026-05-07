@@ -379,8 +379,7 @@ def _resolve_audit_ref(
     pk_col = _AUDIT_CHAIN_TABLES_PK[table]
     try:
         row = conn.execute(
-            # nosec B608 — table from whitelist, pk_col is metadata-derived
-            f"SELECT 1 FROM {table} WHERE {pk_col} = ? LIMIT 1",
+            f"SELECT 1 FROM {table} WHERE {pk_col} = ? LIMIT 1",  # nosec B608 — table from whitelist, pk_col is metadata-derived
             (pk_value,),
         ).fetchone()
     except sqlite3.OperationalError as e:

@@ -1496,11 +1496,10 @@ def _accepted_state_versions(
     start = (end_date - timedelta(days=lookback_days)).isoformat()
     end = end_date.isoformat()
     sql = (
-        "SELECT as_of_date, projected_at "
-        f"FROM {table} "
+        f"SELECT as_of_date, projected_at FROM {table} "  # nosec B608 — table validated against _ALLOWED_TABLES_PK above
         "WHERE user_id = ? AND as_of_date BETWEEN ? AND ? "
         "ORDER BY as_of_date DESC"
-    )  # nosec B608 — table validated against _ALLOWED_TABLES_PK above
+    )
     rows = conn.execute(sql, (user_id, start, end)).fetchall()
     out: dict[str, str] = {}
     for row in rows:
