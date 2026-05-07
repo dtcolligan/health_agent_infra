@@ -263,6 +263,10 @@ _NON_DOMAIN_SCENARIO_DIRS: frozenset[str] = frozenset({
     # whose fixtures are markdown + ground-truth atom triples, not
     # review-listable scenarios. They have no ``scenario_id`` field.
     "atomic_claims",
+    # factuality (v0.2.0 W58D) is the deterministic factuality-gate
+    # corpus — known-bad and known-good ClaimGateInput payloads keyed
+    # by ``fixture_id``. Not review-listable as domain scenarios.
+    "factuality",
 })
 
 

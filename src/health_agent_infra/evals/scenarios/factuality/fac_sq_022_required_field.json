@@ -1,0 +1,21 @@
+{
+  "category": "source_quality",
+  "description": "Locator missing or null required field.",
+  "expected_block_reason": "locator_invalid",
+  "expected_outcome": "block",
+  "fixture_id": "fac_sq_022_required_field",
+  "input": {
+    "atom_text": "...",
+    "atom_type": "quantitative",
+    "audit_refs": {},
+    "locator_set": [
+      {
+        "row_version": "2026-04-28T19:00Z",
+        "table": "accepted_recovery_state_daily"
+      }
+    ],
+    "user_id": null
+  },
+  "schema_version": "factuality_fixture.v1",
+  "subcategory": "locator_invalid"
+}

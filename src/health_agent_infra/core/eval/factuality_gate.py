@@ -1,15 +1,23 @@
-"""Deterministic factuality gate — W58D step 1 (v0.2.0 §2.F).
+"""Deterministic factuality gate — W58D (v0.2.0 §2.F).
 
 PLAN §2.F gate logic. For each atomic claim from W-FACT-ATOM:
 
   1. If atom_type ∈ {quantitative, comparative}:
-       a. Resolve atom to a (claim_id, locator_set, audit_refs) tuple.
+       a. Resolve atom to a (claim_id, locator_set, audit_refs,
+          user_id) tuple.
        b. For each locator: assert locator validates per W-PROV-1
           AND the resolved row exists at the cited row_version.
        c. For each audit_ref: assert the referenced primary key
           exists in the cited audit-chain table.
-       d. If any locator or audit_ref fails to resolve: BLOCK.
-       e. If all resolve: PASS the atom.
+       d. For each ``x_rule_firing`` audit_ref (when ``user_id`` is
+          set): assert the firing_id is NOT in any of that user's
+          ``review_outcome.disagreed_firing_ids`` lists. The user
+          explicitly marking a firing as "I don't think this rule
+          should have fired" is a structural disagreement; a claim
+          citing such a firing is a known-stale fact.
+       e. If any locator, audit_ref, or x-rule-conflict check fails:
+          BLOCK.
+       f. If all resolve: PASS the atom.
   2. If atom_type == qualitative: pass through (gate does not
      validate — these are framing / disposition prose with no
      factual past-week content per F-PLAN-10).
@@ -39,6 +47,7 @@ SKIP path. Step 6 wires the gate to the real corpus
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from dataclasses import dataclass, field
 from enum import Enum
@@ -112,6 +121,13 @@ class BlockReason(str, Enum):
     """Audit-chain primary key is not present in its cited table
     (PLAN §2.F sub-category 5)."""
 
+    X_RULE_CONFLICT_USER_DISAGREED = "x_rule_conflict_user_disagreed"
+    """Audit_ref to an ``x_rule_firing`` whose firing_id appears in
+    the cited user's ``review_outcome.disagreed_firing_ids`` list
+    (PLAN §2.F sub-category 2). The user explicitly marked the rule
+    as "should not have fired" — a claim citing it is a known-stale
+    fact even though the firing_id resolves to a real row."""
+
     UNKNOWN_ATOM_TYPE = "unknown_atom_type"
     """Atom type is not in {quantitative, comparative, qualitative}.
     Fail-closed default (defensive: bad atoms shouldn't reach the
@@ -132,6 +148,13 @@ class ClaimGateInput:
     provenance the gate validates. ``claim_id`` is optional; when
     present it threads through into :class:`ClaimGateResult` so
     callers can correlate gate output with their input.
+
+    ``user_id`` is required to exercise the
+    :attr:`BlockReason.X_RULE_CONFLICT_USER_DISAGREED` lane (PLAN
+    §2.F sub-category 2). Without ``user_id`` the gate skips the
+    disagreement check — a structural choice consistent with v0.1.x
+    callers that don't yet thread user identity through the eval
+    surface.
     """
 
     atom_text: str
@@ -139,6 +162,7 @@ class ClaimGateInput:
     locator_set: list[dict[str, Any]] = field(default_factory=list)
     audit_refs: dict[str, list[Any]] = field(default_factory=dict)
     claim_id: Optional[str] = None
+    user_id: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -249,6 +273,60 @@ def _resolve_locator_with_drift(
     return (True, None, None)
 
 
+def _check_x_rule_user_disagreement(
+    conn: sqlite3.Connection,
+    user_id: str,
+    firing_id: Any,
+) -> tuple[bool, Optional[BlockReason], Optional[str]]:
+    """Check whether ``firing_id`` is in any of ``user_id``'s
+    ``review_outcome.disagreed_firing_ids`` lists.
+
+    Returns ``(ok, block_reason, detail)``. ``ok=True`` iff the
+    firing is NOT in any disagreement list. The ``review_outcome``
+    column is JSON-encoded TEXT (per migration 010); legacy NULL
+    values mean "the disagreement question was never asked" and
+    are treated as no-disagreement (``ok=True``).
+
+    Comparison is string-equality after ``str()`` coercion on both
+    sides — the ``firing_id`` typed as ``int`` in
+    :class:`WeeklyXRuleFiring` may surface as either ``int`` or
+    JSON-stringified ``str`` depending on the writer.
+    """
+
+    try:
+        rows = conn.execute(
+            "SELECT disagreed_firing_ids FROM review_outcome "
+            "WHERE user_id = ? AND disagreed_firing_ids IS NOT NULL",
+            (user_id,),
+        ).fetchall()
+    except sqlite3.OperationalError:
+        # review_outcome table missing — treat as no-disagreement.
+        # The gate is fail-closed on locator/audit-ref schemas, but
+        # the disagreement signal is opt-in (a missing table means
+        # the user has logged no outcomes, not that we should block).
+        return (True, None, None)
+
+    cited = str(firing_id)
+    for row in rows:
+        raw = row[0] if not hasattr(row, "keys") else row["disagreed_firing_ids"]
+        if not raw:
+            continue
+        try:
+            disagreed = json.loads(raw)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(disagreed, list):
+            continue
+        if any(str(d) == cited for d in disagreed):
+            return (
+                False,
+                BlockReason.X_RULE_CONFLICT_USER_DISAGREED,
+                f"firing_id {firing_id!r} appears in user {user_id!r}'s "
+                f"disagreed_firing_ids review_outcome history",
+            )
+    return (True, None, None)
+
+
 def _resolve_audit_ref(
     conn: sqlite3.Connection,
     table: str,
@@ -354,6 +432,27 @@ def gate_claim(
                     block_reason=reason,
                     block_detail=detail,
                 )
+            # X-rule-conflict lane (PLAN §2.F sub-category 2): only
+            # firings the user has explicitly disagreed with are
+            # blocked here. Requires ``user_id`` on the claim; absent
+            # it, the lane is a no-op (the structural check needs a
+            # user identity to look up the disagreement history).
+            if (
+                table == "x_rule_firing"
+                and claim.user_id is not None
+            ):
+                ok2, reason2, detail2 = _check_x_rule_user_disagreement(
+                    conn, claim.user_id, pk,
+                )
+                if not ok2:
+                    return ClaimGateResult(
+                        claim_id=claim.claim_id,
+                        atom_text=claim.atom_text,
+                        atom_type=claim.atom_type,
+                        outcome=GateOutcome.BLOCK,
+                        block_reason=reason2,
+                        block_detail=detail2,
+                    )
 
     return ClaimGateResult(
         claim_id=claim.claim_id,

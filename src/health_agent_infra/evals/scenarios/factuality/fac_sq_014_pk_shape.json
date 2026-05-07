@@ -1,0 +1,26 @@
+{
+  "category": "source_quality",
+  "description": "Locator pk shape malformed: extra column.",
+  "expected_block_reason": "locator_invalid",
+  "expected_outcome": "block",
+  "fixture_id": "fac_sq_014_pk_shape",
+  "input": {
+    "atom_text": "On April 28 your resting heart rate was 52 bpm.",
+    "atom_type": "quantitative",
+    "audit_refs": {},
+    "locator_set": [
+      {
+        "pk": {
+          "as_of_date": "2026-04-28",
+          "extra_column": "x",
+          "user_id": "u_factuality_corpus"
+        },
+        "row_version": "2026-04-28T19:00Z",
+        "table": "accepted_recovery_state_daily"
+      }
+    ],
+    "user_id": null
+  },
+  "schema_version": "factuality_fixture.v1",
+  "subcategory": "locator_invalid"
+}

@@ -1,0 +1,22 @@
+{
+  "category": "x_rule_conflict",
+  "description": "Mixed-citation atom: firings [9002, 9001, 9001]. The disagreed firing in the list triggers the conflict block.",
+  "expected_block_reason": "x_rule_conflict_user_disagreed",
+  "expected_outcome": "block",
+  "fixture_id": "fac_xc_009_mixed_disagreement",
+  "input": {
+    "atom_text": "Rules that adjusted the result after the skill ran: compound triggers.",
+    "atom_type": "comparative",
+    "audit_refs": {
+      "x_rule_firing": [
+        9002,
+        9001,
+        9001
+      ]
+    },
+    "locator_set": [],
+    "user_id": "u_factuality_corpus"
+  },
+  "schema_version": "factuality_fixture.v1",
+  "subcategory": "user_disagreed_mixed_citation"
+}

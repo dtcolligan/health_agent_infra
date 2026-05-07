@@ -11,6 +11,7 @@ dedicated fixture; the bundle-level aggregation is also exercised.
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from pathlib import Path
 
@@ -484,3 +485,216 @@ def test_load_thresholds_applies_float_override_for_factuality_gate(
     # Neither value is a bool after the round-trip.
     assert not isinstance(block["block_known_bad_min_pct"], bool)
     assert not isinstance(block["pass_known_good_min_pct"], bool)
+
+
+# ---------------------------------------------------------------------------
+# 12. X-rule-conflict — user-disagreement lane (step 3 gate extension)
+# ---------------------------------------------------------------------------
+
+
+def _seeded_db():
+    """Return a fresh in-memory connection seeded with the W58D
+    factuality baseline."""
+
+    from health_agent_infra.evals.scenarios.factuality._seed import (
+        seed_factuality_baseline,
+    )
+
+    c = sqlite3.connect(":memory:")
+    c.row_factory = sqlite3.Row
+    seed_factuality_baseline(c)
+    return c
+
+
+def test_gate_blocks_on_disagreed_x_rule_firing():
+    """Atom citing a firing in the user's disagreed_firing_ids list
+    blocks with the new X_RULE_CONFLICT_USER_DISAGREED reason.
+    """
+
+    from health_agent_infra.evals.scenarios.factuality._seed import (
+        SEED_DISAGREED_FIRING_ID, SEED_USER_ID,
+    )
+
+    c = _seeded_db()
+    try:
+        claim = ClaimGateInput(
+            atom_text="Rules that shaped the recommendation: low recovery (X1).",
+            atom_type="comparative",
+            audit_refs={"x_rule_firing": [SEED_DISAGREED_FIRING_ID]},
+            user_id=SEED_USER_ID,
+        )
+        result = gate_claim(c, claim)
+        assert result.outcome == GateOutcome.BLOCK
+        assert (
+            result.block_reason
+            == BlockReason.X_RULE_CONFLICT_USER_DISAGREED
+        )
+        assert "disagreed_firing_ids" in (result.block_detail or "")
+    finally:
+        c.close()
+
+
+def test_gate_passes_on_resolvable_x_rule_firing_no_disagreement():
+    """Atom citing a firing the user has NOT disagreed with passes."""
+
+    from health_agent_infra.evals.scenarios.factuality._seed import (
+        SEED_RESOLVABLE_FIRING_ID, SEED_USER_ID,
+    )
+
+    c = _seeded_db()
+    try:
+        claim = ClaimGateInput(
+            atom_text="Rules that shaped the recommendation: low recovery (X1).",
+            atom_type="comparative",
+            audit_refs={"x_rule_firing": [SEED_RESOLVABLE_FIRING_ID]},
+            user_id=SEED_USER_ID,
+        )
+        result = gate_claim(c, claim)
+        assert result.outcome == GateOutcome.PASS
+    finally:
+        c.close()
+
+
+def test_gate_passes_disagreed_firing_when_user_id_absent():
+    """Without user_id the disagreement lane is a no-op (the
+    structural check needs a user identity to look up history).
+    The firing exists, so audit-ref-orphan also passes.
+    """
+
+    from health_agent_infra.evals.scenarios.factuality._seed import (
+        SEED_DISAGREED_FIRING_ID,
+    )
+
+    c = _seeded_db()
+    try:
+        claim = ClaimGateInput(
+            atom_text="...",
+            atom_type="comparative",
+            audit_refs={"x_rule_firing": [SEED_DISAGREED_FIRING_ID]},
+            # user_id intentionally None — backward-compatible path
+        )
+        result = gate_claim(c, claim)
+        assert result.outcome == GateOutcome.PASS
+    finally:
+        c.close()
+
+
+def test_gate_disagreement_check_handles_review_outcome_table_missing():
+    """When ``review_outcome`` doesn't exist (legacy DB), the
+    disagreement lane treats it as no-disagreement (graceful
+    degradation; the audit-ref-orphan lane still fail-closes when
+    the firing itself is missing).
+    """
+
+    c = sqlite3.connect(":memory:")
+    c.row_factory = sqlite3.Row
+    # Seed only the x_rule_firing table — review_outcome absent.
+    c.execute(
+        "CREATE TABLE x_rule_firing (firing_id INTEGER PRIMARY KEY)"
+    )
+    c.execute("INSERT INTO x_rule_firing VALUES (12345)")
+    c.commit()
+    try:
+        claim = ClaimGateInput(
+            atom_text="...",
+            atom_type="comparative",
+            audit_refs={"x_rule_firing": [12345]},
+            user_id="some_user",
+        )
+        result = gate_claim(c, claim)
+        assert result.outcome == GateOutcome.PASS
+    finally:
+        c.close()
+
+
+# ---------------------------------------------------------------------------
+# 13. Corpus harness — every fixture produces its expected outcome
+# ---------------------------------------------------------------------------
+
+
+_CORPUS_DIR = (
+    Path(__file__).resolve().parents[1].parent
+    / "src" / "health_agent_infra" / "evals" / "scenarios" / "factuality"
+)
+
+
+def _load_factuality_fixtures():
+    return [
+        json.loads(p.read_text())
+        for p in sorted(_CORPUS_DIR.glob("fac_*.json"))
+    ]
+
+
+def test_factuality_corpus_index_manifest_total_matches_fixtures():
+    """``index.json`` cardinality matches on-disk ``fac_*.json`` count."""
+
+    manifest = json.loads((_CORPUS_DIR / "index.json").read_text())
+    on_disk = len(list(_CORPUS_DIR.glob("fac_*.json")))
+    assert manifest["total_fixtures"] == on_disk
+
+
+def test_factuality_corpus_meets_step_3_minimums():
+    """PLAN §2.F sub-category sums: ≥30 source_quality + ≥15
+    x_rule_conflict known-bad. The corpus may grow beyond these
+    minimums in step 4 + 5; the floors are pinned here.
+    """
+
+    manifest = json.loads((_CORPUS_DIR / "index.json").read_text())
+    cats = manifest["categories"]
+    assert len(cats.get("source_quality", [])) >= 30
+    assert len(cats.get("x_rule_conflict", [])) >= 15
+
+
+def test_every_factuality_fixture_produces_its_expected_outcome():
+    """Run each known-bad fixture through the gate and assert the
+    outcome matches its declared ``expected_outcome`` +
+    ``expected_block_reason``. This is the corpus-correctness gate
+    that prevents fixture rot — a fixture whose payload no longer
+    triggers the expected lane is a corpus bug.
+    """
+
+    import json as _json
+
+    c = _seeded_db()
+    try:
+        fixtures = _load_factuality_fixtures()
+        assert fixtures, "factuality corpus must not be empty"
+        for fixture in fixtures:
+            inp = fixture["input"]
+            claim = ClaimGateInput(
+                atom_text=inp["atom_text"],
+                atom_type=inp["atom_type"],
+                locator_set=inp.get("locator_set", []),
+                audit_refs=inp.get("audit_refs", {}),
+                user_id=inp.get("user_id"),
+            )
+            result = gate_claim(c, claim)
+            actual_outcome = result.outcome.value
+            assert actual_outcome == fixture["expected_outcome"], (
+                f"{fixture['fixture_id']}: expected outcome "
+                f"{fixture['expected_outcome']!r} but gate returned "
+                f"{actual_outcome!r} ({result.block_reason})"
+            )
+            if fixture["expected_outcome"] == "block":
+                expected_reason = fixture["expected_block_reason"]
+                actual_reason = (
+                    result.block_reason.value if result.block_reason
+                    else None
+                )
+                assert actual_reason == expected_reason, (
+                    f"{fixture['fixture_id']}: expected block_reason "
+                    f"{expected_reason!r} but gate returned "
+                    f"{actual_reason!r}"
+                )
+    finally:
+        c.close()
+
+
+def test_factuality_corpus_fixture_categories_complete():
+    """Every fixture in ``manifest.fixtures`` has a matching entry
+    in ``manifest.categories`` (no orphan IDs)."""
+
+    manifest = json.loads((_CORPUS_DIR / "index.json").read_text())
+    fixture_ids = {f["fixture_id"] for f in manifest["fixtures"]}
+    flat = {fid for ids in manifest["categories"].values() for fid in ids}
+    assert fixture_ids == flat

@@ -1,0 +1,30 @@
+{
+  "category": "x_rule_conflict",
+  "description": "Valid locator + disagreed firing (variant 3). Locator resolves cleanly; disagreement still blocks.",
+  "expected_block_reason": "x_rule_conflict_user_disagreed",
+  "expected_outcome": "block",
+  "fixture_id": "fac_xc_014_with_valid_locator",
+  "input": {
+    "atom_text": "On April 28 the recovery recommendation was \"easy recovery\" at high confidence, variant 3.",
+    "atom_type": "quantitative",
+    "audit_refs": {
+      "x_rule_firing": [
+        9002
+      ]
+    },
+    "locator_set": [
+      {
+        "column": "resting_hr",
+        "pk": {
+          "as_of_date": "2026-04-28",
+          "user_id": "u_factuality_corpus"
+        },
+        "row_version": "2026-04-28T19:00Z",
+        "table": "accepted_recovery_state_daily"
+      }
+    ],
+    "user_id": "u_factuality_corpus"
+  },
+  "schema_version": "factuality_fixture.v1",
+  "subcategory": "user_disagreed_with_locator"
+}

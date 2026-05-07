@@ -1,0 +1,25 @@
+{
+  "category": "source_quality",
+  "description": "Locator pk {'as_of_date': '2025-12-31', 'user_id': 'u_archived'} not seeded \u2014 row absent.",
+  "expected_block_reason": "locator_row_missing",
+  "expected_outcome": "block",
+  "fixture_id": "fac_sq_020_row_missing",
+  "input": {
+    "atom_text": "On a date the resting heart rate measurement was N bpm.",
+    "atom_type": "quantitative",
+    "audit_refs": {},
+    "locator_set": [
+      {
+        "pk": {
+          "as_of_date": "2025-12-31",
+          "user_id": "u_archived"
+        },
+        "row_version": "2026-04-28T19:00Z",
+        "table": "accepted_recovery_state_daily"
+      }
+    ],
+    "user_id": null
+  },
+  "schema_version": "factuality_fixture.v1",
+  "subcategory": "row_missing"
+}

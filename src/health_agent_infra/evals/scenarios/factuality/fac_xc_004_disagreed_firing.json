@@ -1,0 +1,20 @@
+{
+  "category": "x_rule_conflict",
+  "description": "Atom cites firing_id 9002 which the user explicitly disagreed with (variant 3).",
+  "expected_block_reason": "x_rule_conflict_user_disagreed",
+  "expected_outcome": "block",
+  "fixture_id": "fac_xc_004_disagreed_firing",
+  "input": {
+    "atom_text": "Rules that shaped the recommendation: low recovery signals (X4).",
+    "atom_type": "comparative",
+    "audit_refs": {
+      "x_rule_firing": [
+        9002
+      ]
+    },
+    "locator_set": [],
+    "user_id": "u_factuality_corpus"
+  },
+  "schema_version": "factuality_fixture.v1",
+  "subcategory": "user_disagreed_direct"
+}
