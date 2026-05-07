@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/governed-agent-bench/score.schema.json",
+  "title": "GovernedAgentBench Score",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_id",
+    "trajectory_id",
+    "system_id",
+    "overall_pass",
+    "metrics"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "governed_agent_bench.score.v1"
+    },
+    "task_id": {
+      "type": "string",
+      "pattern": "^gab_l[1-7]_[a-z0-9_]+$"
+    },
+    "trajectory_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "system_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "overall_pass": {
+      "type": "boolean"
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["value", "passed"],
+        "properties": {
+          "value": {
+            "type": ["number", "boolean", "string"]
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "threshold": {
+            "type": ["number", "boolean", "string", "null"]
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "violations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "detail"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "hallucinated_command",
+              "invalid_command",
+              "unsafe_mutation",
+              "direct_state_write_attempt",
+              "clinical_claim",
+              "unsupported_narration",
+              "schema_invalid",
+              "bad_exit_code_recovery",
+              "drift_failure",
+              "refusal_error"
+            ]
+          },
+          "detail": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

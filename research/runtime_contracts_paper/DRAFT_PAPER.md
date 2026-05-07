@@ -1,16 +1,47 @@
-# Testing Whether the HAI Runtime Contract Reduces Model Scale for Personal-Health Agents
+# Runtime Contracts for Local Agents Over Sensitive User-Owned Data
 
-**Subtitle:** HACO-Bench and a Governed Local Runtime for Contract-Obedient Health Agent Operation
+**Subtitle:** A Personal-Wellness Reference Runtime, GovernedAgentBench,
+and Model-Scale Study
 
-**Status:** Draft skeleton, 2026-05-05.
+**Status:** Draft skeleton, reframed 2026-05-07. See `PAPER_FRAME.md`
+for the locked framing note.
 
 ## Abstract
 
-Personal-health agents must reason over sensitive longitudinal data while avoiding unsafe actions, unsupported claims, opaque state mutation, and clinical overreach. Most current approaches rely on larger frontier models, tool-use scaffolds, or domain-specific fine-tuning to improve reliability. This paper studies a complementary hypothesis: an enforceable runtime contract can shift reliability burden from the model into software.
+Agents operating over sensitive user-owned data must do more than
+produce plausible responses: they must call valid tools, respect
+mutation boundaries, recover from setup failures, avoid unsupported
+claims, and leave an auditable record of state changes. Today, much of
+this reliability burden is placed on model capability, prompt design, or
+post-hoc review.
 
-We introduce **HAI**, a local plugin/runtime wrapper around a shell-capable personal-health agent. HAI exposes and enforces a runtime contract: a capabilities manifest, command schemas, mutation classes, `agent_safe` boundaries, exit-code semantics, output schemas, proposal/commit separation, validation gates, deterministic policy, and audit logs. We also introduce **HACO-Bench**, a benchmark for Health Agent Contract Operation, measuring whether models can operate HAI safely and correctly.
+We study a complementary intervention: shifting reliability from the
+model into an enforceable local runtime contract. The contract exposes
+a capabilities manifest, typed command schemas, mutation classes,
+`agent_safe` boundaries, exit-code semantics, proposal/commit
+separation, deterministic validation gates, policy rules, and audit
+logs. Under this design, the model proposes and explains; the runtime
+owns truth, validation, mutation, and audit.
 
-We evaluate local models from 1B to 7B parameters, prompt-only cloud models, manifest-grounded systems, fine-tuned local operators, and rule-based baselines. Across scaffold ablations, we test whether the full HAI runtime contract lowers the minimum parameter count required to reach target HACO-Bench performance while keeping unsafe-action, clinical-claim, unsupported-narration, and direct-state-mutation rates below fixed thresholds.
+We instantiate this architecture in **HAI**, a local personal-wellness
+runtime over wearable and user-authored data. HAI is explicitly
+non-clinical: it does not diagnose, treat, prescribe, or make
+autonomous medical decisions. This boundary is not a disclaimer but
+part of the governed runtime contract being evaluated.
+
+We introduce **GovernedAgentBench**, a benchmark for contract-governed
+agent operation over sensitive user-owned data. The benchmark measures
+command validity, mutation-boundary obedience, schema-valid proposal
+generation, exit-code recovery, refusal accuracy, unsupported
+narration, clinical-boundary violations, and robustness to contract
+drift. We evaluate local models, cloud models, fine-tuned local
+operators, and scaffold ablations that remove individual contract
+components.
+
+Our goal is measurement rather than demonstration by assertion: we ask
+whether runtime contracts reduce unsafe operation and improve task
+success, and whether they shift the model-size threshold required for
+reliable bounded agent operation.
 
 Result placeholder: [RESULTS TO BE FILLED AFTER EXPERIMENTS].
 
@@ -18,27 +49,52 @@ Result placeholder: [RESULTS TO BE FILLED AFTER EXPERIMENTS].
 
 ### 1.1 Motivation
 
-Wearables and user intake create rich personal-health context, but personal-health agents operate in a risky setting. Health data is sensitive, recommendations can influence behavior, and fluent explanations can hide unsupported claims. A model that is useful in conversation may still be unsafe if it owns memory, state mutation, validation, policy, and explanation at once.
+Sensitive user-owned data creates a difficult operating environment for
+agents. The agent must route user intent, call valid tools, interpret
+state, produce useful explanations, and avoid unsafe or unsupported
+claims. A model that is useful in conversation may still be unsafe if
+it owns memory, state mutation, validation, policy, and audit at once.
 
-HAI explores a different allocation. The model remains the conversational operator. The runtime owns truth, validation, mutation, policy, and audit.
+This paper studies a different allocation. The model remains the
+conversational operator. A local runtime owns truth, validation,
+mutation, policy, and audit.
 
 ### 1.2 Central Hypothesis
 
-An enforceable runtime contract can reduce the model scale required for safe and effective personal-health agent operation.
+Runtime contracts can make smaller local models viable operators for
+bounded workflows over sensitive user-owned data by moving authority,
+validation, and audit from the model into enforceable software.
 
-Here, **model scale** means the minimum model parameter count needed to reach a target HACO-Bench score under fixed safety thresholds.
+Here, **model scale** means the minimum model parameter count needed to
+reach a target GovernedAgentBench score under fixed safety thresholds.
 
 ### 1.3 Research Question
 
-Given a personal-health runtime with explicit contracts, how small can the operating model be while remaining safe, faithful, and task-effective?
+Given an explicit runtime contract, how small can the operating model
+be while remaining safe, faithful, and task-effective over sensitive
+user-owned data?
 
 ### 1.4 Contributions
 
-1. **The HAI runtime contract:** a local governed runtime surface for personal-health agent operation.
-2. **HACO-Bench:** a benchmark for contract-obedient health agent operation.
-3. **A model-scale study:** comparison of local small models, cloud models, rule baselines, manifest-grounded systems, and fine-tuned adapters.
-4. **Scaffold ablations:** experiments isolating the effect of manifest fields, schemas, mutation classes, safety flags, exit codes, proposal gates, and audit evidence.
-5. **Health-agent safety metrics:** unsafe mutation attempts, clinical-claim rate, direct-state-write attempts, unsupported narration, refusal accuracy, and drift robustness.
+1. **Runtime-contract architecture:** a contract-governed architecture
+   for bounded agents in which the model proposes and explains while
+   local software owns validation, mutation, policy, and audit.
+2. **HAI reference implementation:** a local personal-wellness runtime
+   implementing this contract over user-owned structured data, with
+   explicit non-clinical safety boundaries.
+3. **GovernedAgentBench:** a benchmark for evaluating whether models
+   can operate a governed runtime through its public contract, rather
+   than relying on implicit prompt adherence or private implementation
+   knowledge.
+4. **A model-scale study:** comparison of local models, cloud models,
+   rule baselines, manifest-grounded systems, and fine-tuned adapters
+   under fixed safety thresholds.
+5. **Scaffold ablations:** experiments isolating the effect of
+   manifest fields, schemas, mutation classes, safety flags, exit
+   codes, proposal gates, and audit evidence.
+6. **Error taxonomy:** hallucinated commands, invalid proposals,
+   unsafe mutation attempts, unsupported narration, clinical-boundary
+   violations, drift failures, and refusal errors.
 
 ## 2. Related Work
 
@@ -46,7 +102,10 @@ Given a personal-health runtime with explicit contracts, how small can the opera
 
 Discuss PHIA, Google Personal Health Agent, PH-LLM, and Health-LLM.
 
-Positioning: prior work shows that LLM agents can reason over wearable health data. This work instead studies whether a governed local runtime can reduce the model capability required to operate bounded personal-health workflows safely.
+Positioning: prior work shows that LLM agents can reason over wearable
+health data. This work instead studies whether a governed local runtime
+can reduce the model capability required to operate bounded workflows
+over sensitive user-owned data.
 
 Key sources:
 
@@ -59,7 +118,11 @@ Key sources:
 
 Discuss API-Bank, ToolLLM, Gorilla, BFCL, tau-bench, and MCP-AgentBench.
 
-Positioning: existing benchmarks measure API/tool competence. HACO-Bench focuses on health-specific contract obedience: safety flags, mutation classes, proposal gates, auditability, clinical-boundary refusal, and evidence-faithful narration.
+Positioning: existing benchmarks measure API/tool competence.
+GovernedAgentBench focuses on contract obedience for sensitive
+user-owned data: safety flags, mutation classes, proposal gates,
+auditability, clinical-boundary refusal, and evidence-faithful
+narration.
 
 Key sources:
 
@@ -84,7 +147,9 @@ Key source:
 
 Discuss MedAgentBench, AgentClinic, OpenMedCalc, and MedHallu.
 
-Positioning: HAI is not a clinical EHR or diagnostic agent. It targets bounded local personal-health operation over wearable and intake data, with explicit non-goals around diagnosis and treatment.
+Positioning: HAI is not a clinical EHR or diagnostic agent. It targets
+bounded local personal-wellness operation over wearable and intake
+data, with explicit non-goals around diagnosis and treatment.
 
 Key sources:
 
@@ -97,18 +162,21 @@ Key sources:
 
 Discuss FActScore, MedHallu, JSONSchemaBench, and constrained decoding.
 
-Positioning: HACO-Bench combines structured command validity with evidence-faithful narration and abstention/refusal metrics.
+Positioning: GovernedAgentBench combines structured command validity
+with evidence-faithful narration and abstention/refusal metrics.
 
 Key sources:
 
 - FActScore: https://arxiv.gg/abs/2305.14251
 - JSONSchemaBench: https://huggingface.co/papers/2501.10868
 
-## 3. HAI: A Governed Local Runtime for Personal-Health Agents
+## 3. HAI: A Personal-Wellness Reference Runtime
 
 ### 3.1 System Definition
 
-HAI is the local plugin/runtime wrapper around a shell-capable personal-health agent. The agent converses and routes. HAI owns truth.
+HAI is the local plugin/runtime wrapper around a shell-capable agent
+operating over personal-wellness data. The agent converses and routes.
+HAI owns truth.
 
 ### 3.2 Runtime Contract
 
@@ -134,7 +202,7 @@ The HAI runtime contract includes:
 |---|---:|---:|
 | Conversation | yes | no |
 | Intent routing | yes | contract-constrained |
-| Health data truth | no | yes |
+| User data truth | no | yes |
 | State mutation | no | yes |
 | Policy rules | no | yes |
 | Clinical boundary | must obey | enforced |
@@ -145,11 +213,13 @@ The HAI runtime contract includes:
 
 HAI explicitly does not diagnose, treat, prescribe, or make autonomous clinical decisions. It does not allow direct SQLite mutation by the agent. Commit/archive actions that change user-governed intent or targets are user-gated.
 
-## 4. HACO-Bench: Health Agent Contract Operation Benchmark
+## 4. GovernedAgentBench
 
 ### 4.1 Benchmark Goal
 
-HACO-Bench measures whether a model can operate HAI through the runtime contract rather than relying on implicit repo knowledge or free-form guessing.
+GovernedAgentBench measures whether a model can operate a governed
+runtime through its public contract rather than relying on implicit
+repo knowledge, private implementation details, or free-form guessing.
 
 ### 4.2 Task Levels
 
@@ -193,12 +263,14 @@ Secondary metrics:
 
 ### 4.5 Target Score
 
-A model reaches **HACO-X** if it achieves at least X aggregate task score while keeping all safety violation rates below fixed thresholds.
+A model reaches **GovernedAgent-X** if it achieves at least X
+aggregate task score while keeping all safety violation rates below
+fixed thresholds.
 
 Example:
 
 ```text
-HACO-80:
+GovernedAgent-80:
   task_success >= 80%
   unsafe_action_rate <= 1%
   clinical_claim_rate <= 1%
@@ -261,9 +333,9 @@ No private health rows are used for training.
 
 ## 6. Results
 
-### 6.1 Main Result: Model Scale vs HACO Score
+### 6.1 Main Result: Model Scale vs GovernedAgentBench Score
 
-| System | Params | HACO score | Safety pass? | Cost | Local? |
+| System | Params | GovernedAgentBench score | Safety pass? | Cost | Local? |
 |---|---:|---:|---:|---:|---:|
 | Rule baseline | 0 | TBD | TBD | low | yes |
 | Local prompt-only | 3B | TBD | TBD | low | yes |
@@ -273,23 +345,24 @@ No private health rows are used for training.
 | Cloud prompt-only | unknown | TBD | TBD | high | no |
 | Cloud plus manifest | unknown | TBD | TBD | high | no |
 
-### 6.2 Does HAI Reduce Required Model Scale?
+### 6.2 Does the Runtime Contract Reduce Required Model Scale?
 
 Expected figure:
 
 ```text
 x-axis: model size
-y-axis: HACO score
-lines: no contract / manifest / full HAI / fine-tuned plus HAI
+y-axis: GovernedAgentBench score
+lines: no contract / manifest / full runtime contract / fine-tuned plus runtime contract
 ```
 
 Claim form:
 
-Full HAI contract shifts the performance curve left: smaller models reach the same safety-constrained score.
+The full runtime contract shifts the performance curve left: smaller
+models reach the same safety-constrained score.
 
 ### 6.3 Which Contract Components Matter?
 
-| Removed component | HACO drop | Main failure mode |
+| Removed component | Score drop | Main failure mode |
 |---|---:|---|
 | `agent_safe` | TBD | unsafe commit/archive |
 | mutation classes | TBD | wrong write path |
@@ -320,7 +393,10 @@ Test whether fine-tuned models memorize stale commands. Core question: does fine
 
 ### 7.1 Interpretation
 
-If results support the thesis, HAI does not make small models generally medically capable. It makes bounded personal-health operation easier by moving truth, validation, mutation, safety policy, and audit into software.
+If results support the thesis, HAI does not make small models generally
+medically capable. It makes bounded operation over personal-wellness
+data easier by moving truth, validation, mutation, safety policy, and
+audit into software.
 
 ### 7.2 Why This Matters
 
@@ -335,13 +411,14 @@ For personal AI:
 
 The model remains useful for language understanding, routing, clarification, summarization, proposal drafting, refusal phrasing, and user-facing explanation.
 
-The model does not own health truth, invent policy, mutate state directly, diagnose, or bypass runtime gates.
+The model does not own user-data truth, invent policy, mutate state
+directly, diagnose, or bypass runtime gates.
 
 ## 8. Limitations
 
-- HAI is one runtime, not a universal health-agent platform.
+- HAI is one runtime, not a universal agent platform.
 - Benchmark tasks are synthetic/redacted.
-- Personal-health workflows are non-clinical.
+- Personal-wellness workflows are non-clinical.
 - Outcome benefit to users is not proven.
 - Runtime correctness is assumed but still requires audit.
 - Cloud comparison depends on chosen models.
@@ -364,8 +441,16 @@ State clearly:
 
 ## 10. Conclusion
 
-This paper tests whether personal-health agent reliability can be improved by changing the software environment rather than only scaling the model. HAI provides a governed local runtime contract. HACO-Bench measures contract-obedient operation. Scaffold ablations estimate how much the contract reduces model-scale requirements.
+This paper tests whether agent reliability over sensitive user-owned
+data can be improved by changing the software environment rather than
+only scaling the model. HAI provides a governed local runtime contract
+in the personal-wellness domain. GovernedAgentBench measures
+contract-obedient operation. Scaffold ablations estimate how much the
+contract reduces model-scale requirements.
 
 Final claim template:
 
-> Our results suggest that contract-governed runtimes can make smaller local models viable operators for bounded personal-health workflows, provided that truth, validation, mutation, safety policy, and audit remain owned by software rather than the model.
+> Our results suggest that contract-governed runtimes can make smaller
+> local models viable operators for bounded workflows over sensitive
+> user-owned data, provided that truth, validation, mutation, safety
+> policy, and audit remain owned by software rather than the model.

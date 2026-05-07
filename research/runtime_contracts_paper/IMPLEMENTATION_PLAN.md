@@ -1,21 +1,26 @@
-# HAI Runtime Contract Paper - Implementation Plan
+# Runtime Contracts Paper - Implementation Plan
 
-**Status:** Research execution plan, 2026-05-05.
+**Status:** Research execution plan, reframed 2026-05-07. See
+`PAPER_FRAME.md` for the locked framing note.
 
 ## Working Thesis
 
-The HAI runtime contract may reduce the model scale required for safe personal-health agent operation.
+Runtime contracts may reduce the model scale required for safe bounded
+agent operation over sensitive user-owned data.
 
 Measured version:
 
-> For a target HACO-Bench score X, estimate the smallest local model that reaches X while unsafe-action rate, clinical-claim rate, unsupported-narration rate, and direct-state-mutation attempts remain below fixed thresholds.
+> For a target GovernedAgentBench score X, estimate the smallest local
+> model that reaches X while unsafe-action rate, clinical-claim rate,
+> unsupported-narration rate, and direct-state-mutation attempts remain
+> below fixed thresholds.
 
 ## Target Artifact Set
 
-1. `hai`: governed local personal-health runtime.
-2. HACO-Bench: benchmark, fixtures, scorer, and baseline report.
+1. `hai`: governed local personal-wellness reference runtime.
+2. GovernedAgentBench: benchmark, fixtures, scorer, and baseline report.
 3. `hai-operator`: local small-model adapter or model recipe.
-4. Paper: empirical study of whether the HAI runtime contract reduces model scale.
+4. Paper: empirical study of whether the runtime contract reduces model scale.
 
 ## Phase 1 - Literature and Framing
 
@@ -26,11 +31,12 @@ Deliverables:
 - Related-work matrix covering PHIA, Google PHA, PH-LLM, Health-LLM, API-Bank, ToolLLM, Gorilla, BFCL, tau-bench, MCP-AgentBench, AgentSpec, OpenMedCalc, MedAgentBench, AgentClinic, FActScore, MedHallu, and JSONSchemaBench.
 - One-page paper thesis.
 - Draft contribution list.
-- Risk register for novelty, baselines, privacy, and health-safety claims.
+- Risk register for novelty, baselines, privacy, and personal-wellness safety claims.
 
 Decision gate:
 
-- Confirm that the paper is about model-scale reduction from runtime contracts, not about building a general health coach.
+- Confirm that the paper is about model-scale reduction from runtime
+  contracts, not about building a general health coach.
 
 ## Phase 2 - Freeze the HAI Operator Contract
 
@@ -49,7 +55,7 @@ Acceptance criteria:
 - A model or human can read the manifest and operate HAI without implicit repo knowledge.
 - No benchmark task requires private health rows.
 
-## Phase 3 - Build HACO-Bench
+## Phase 3 - Build GovernedAgentBench
 
 **Timing:** June 11-July 1.
 
@@ -153,7 +159,7 @@ Deliverables:
 
 Ablations:
 
-- full HAI runtime contract
+- full runtime contract
 - no manifest
 - stale manifest
 - no `agent_safe`
@@ -195,26 +201,29 @@ Venue strategy:
 
 - First goal: strong Imperial-supervised preprint and public artifact.
 - Then target a health-AI or ML systems/agent workshop depending on results.
-- A main-track submission is realistic only if HACO-Bench is reusable, baselines are fair, scaffold ablations are strong, and the model-scale reduction result is clear.
+- A main-track submission is realistic only if GovernedAgentBench is
+  reusable, baselines are fair, scaffold ablations are strong, and the
+  model-scale reduction result is clear.
 
 ## Scientific Success Criteria
 
 Minimum publishable result:
 
-- HACO-Bench is well-defined and reusable.
-- HAI runtime contract is documented and enforceable.
+- GovernedAgentBench is well-defined and reusable.
+- The HAI reference runtime contract is documented and enforceable.
 - Scaffold ablations show which contract components affect safety and task success.
 - At least one local model condition improves materially over prompt-only local operation.
 
 Strong result:
 
-- 3B local plus full HAI runtime contract beats cloud prompt-only on safety.
-- 3B local plus full HAI runtime contract competes with cloud plus manifest on bounded task success.
+- 3B local plus full runtime contract beats cloud prompt-only on safety.
+- 3B local plus full runtime contract competes with cloud plus manifest on bounded task success.
 - Fine-tuned local plus live manifest is better than fine-tuned local alone under drift.
 
 Best result:
 
-- The full HAI runtime contract reduces the minimum model size needed to reach HACO-X while satisfying strict safety thresholds.
+- The full runtime contract reduces the minimum model size needed to
+  reach GovernedAgent-X while satisfying strict safety thresholds.
 
 ## Failure Modes to Watch
 
@@ -230,6 +239,6 @@ Best result:
 
 1. Convert the paper skeleton into a live outline with citation keys.
 2. Create a related-work reading tracker.
-3. Define HACO-Bench task JSON schema.
-4. Decide HACO-X thresholds before model experiments.
+3. Define GovernedAgentBench task JSON schema.
+4. Decide GovernedAgent-X thresholds before model experiments.
 5. Build a small pilot benchmark for L1, L2, L5, L6, and L7 before any fine-tuning.

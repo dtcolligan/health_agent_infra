@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/governed-agent-bench/trajectory.schema.json",
+  "title": "GovernedAgentBench Trajectory",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "trajectory_id",
+    "task_id",
+    "system_id",
+    "steps"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "governed_agent_bench.trajectory.v1"
+    },
+    "trajectory_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "task_id": {
+      "type": "string",
+      "pattern": "^gab_l[1-7]_[a-z0-9_]+$"
+    },
+    "system_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "model_id": {
+      "type": "string"
+    },
+    "condition": {
+      "type": "string",
+      "enum": [
+        "rule_baseline",
+        "local_prompt_only",
+        "local_manifest",
+        "cloud_prompt_only",
+        "cloud_manifest",
+        "fine_tuned_local",
+        "fine_tuned_local_manifest"
+      ]
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["step_type"],
+        "properties": {
+          "step_type": {
+            "type": "string",
+            "enum": ["message", "command", "observation", "refusal", "final"]
+          },
+          "text": {
+            "type": "string"
+          },
+          "command": {
+            "type": "string"
+          },
+          "exit_code": {
+            "type": "string"
+          },
+          "stdout_ref": {
+            "type": "string"
+          },
+          "stderr_ref": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      }
+    }
+  }
+}

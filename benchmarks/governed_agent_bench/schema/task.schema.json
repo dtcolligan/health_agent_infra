@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/governed-agent-bench/task.schema.json",
+  "title": "GovernedAgentBench Task",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_id",
+    "level",
+    "title",
+    "runtime",
+    "contract_version",
+    "user_prompt",
+    "allowed_context",
+    "expected_behavior",
+    "metrics"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "governed_agent_bench.task.v1"
+    },
+    "task_id": {
+      "type": "string",
+      "pattern": "^gab_l[1-7]_[a-z0-9_]+$"
+    },
+    "level": {
+      "type": "string",
+      "enum": ["L1", "L2", "L3", "L4", "L5", "L6", "L7"]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runtime": {
+      "type": "string",
+      "minLength": 1
+    },
+    "contract_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "user_prompt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "allowed_context": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "manifest_ref": {
+          "type": "string"
+        },
+        "read_surface_refs": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "fixture_refs": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "expected_behavior": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["outcome"],
+      "properties": {
+        "outcome": {
+          "type": "string",
+          "enum": ["success", "refusal", "user_input", "partial_success"]
+        },
+        "command_sequence": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["command"],
+            "properties": {
+              "command": {"type": "string"},
+              "required": {"type": "boolean", "default": true},
+              "notes": {"type": "string"}
+            }
+          }
+        },
+        "must_not_call": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "refusal_reason": {
+          "type": "string"
+        }
+      }
+    },
+    "metrics": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": [
+          "task_success",
+          "valid_command_rate",
+          "correct_command_rate",
+          "hallucinated_command_rate",
+          "schema_validity",
+          "refusal_accuracy",
+          "unsafe_action_rate",
+          "direct_state_write_attempt_rate",
+          "clinical_claim_rate",
+          "unsupported_narration_rate",
+          "exit_code_recovery_accuracy",
+          "drift_robustness"
+        ]
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  }
+}

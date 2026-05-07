@@ -1,37 +1,55 @@
-# Health Agent Infra
+# Runtime Contracts for Local Agents
 
-Health Agent Infra is the local plugin/runtime wrapper around a
-shell-capable personal-health agent. You talk to the agent. The
-agent invokes the local `hai` CLI. In parallel, the runtime absorbs
-passive evidence — wearable data today via intervals.icu, bloodwork
-and richer passive sources next — without you having to narrate the
-data. `hai` is the governed tool surface that tells the agent what
-it may do, which local substrates each command may mutate, which
-outputs must validate, and which actions are refused.
+This repository is organized around a research question: can runtime
+contracts make smaller local models viable operators for bounded
+workflows over sensitive user-owned data?
+
+It contains three active artifacts:
+
+| Artifact | Role |
+|---|---|
+| **Runtime contract** | The architecture/intervention: manifest, typed commands, mutation classes, `agent_safe`, schemas, proposal/commit separation, deterministic validation, policy gates, and audit. |
+| **HAI** | The personal-wellness reference runtime, packaged as `health-agent-infra` and exposed through the local `hai` CLI. |
+| **GovernedAgentBench** | The benchmark scaffold for measuring contract-governed agent operation. |
+
+HAI is the first reference implementation. You talk to a
+shell-capable agent; the agent invokes the local `hai` CLI. In
+parallel, the runtime absorbs passive evidence - wearable data today
+via intervals.icu, bloodwork and richer passive sources next - without
+you having to narrate the data. `hai` is the governed tool surface
+that tells the agent what it may do, which local substrates each
+command may mutate, which outputs must validate, and which actions are
+refused.
 
 **Local-only by construction.** No telemetry, no hosted backend, no
-cloud sync. State lives on your machine in SQLite + JSONL audit
-logs; credentials live in the OS keyring. The package never phones
-home. A host agent provider may still receive whatever context you
-give that provider — that's the only path data leaves the machine,
-and it's not something `hai` controls.
+cloud sync. State lives on your machine in SQLite + JSONL audit logs;
+credentials live in the OS keyring. The package never phones home. A
+host agent provider may still receive whatever context you give that
+provider. That is the only path data leaves the machine, and it is not
+something `hai` controls.
 
 [![PyPI](https://img.shields.io/pypi/v/health-agent-infra)](https://pypi.org/project/health-agent-infra/)
 [![Tests](https://img.shields.io/badge/tests-2943_passing-green)](verification/tests/)
 [![Python](https://img.shields.io/badge/python-3.11+-blue)](pyproject.toml)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-> **Status — `0.1.18` shipped; v0.2.0 ship-prep complete 2026-05-07,
-> PyPI publish gated on D15 IR settle + maintainer manual TTY gate.**
-> Working maintainer-dogfooded single-user software, packaged around
-> Claude Code as the first compatible host. The 2,943-test gate,
-> 68-command CLI surface, and end-to-end audit chain are maintainer-
-> verified. Non-maintainer full-flow validation: W-2U-INSTALL closed
-> verbal-only by a post-v0.1.18 foreign-machine session (maintainer's
-> father); W-2U-WEARABLE (full pipeline with wearable signal) and
-> W-2U-DOGFOOD (≥7d daily non-maintainer use) deferred to v0.4
-> review per CP-2U-GATE-SPLIT (AGENTS.md D16). **v0.2.1 (insight
-> ledger — W53) is next-active post-v0.2.0 ship.**
+> **Status - runtime-contract research monorepo, with HAI `0.2.0` as
+> the current reference runtime.** HAI is working
+> maintainer-dogfooded single-user software, packaged around Claude
+> Code as the first compatible host. The 2,943-test gate, 68-command
+> CLI surface, and end-to-end audit chain are maintainer-verified.
+> GovernedAgentBench is a new benchmark scaffold; it is not yet a
+> release-ready benchmark.
+
+## Repository Map
+
+| Path | Purpose |
+|---|---|
+| [`src/health_agent_infra/`](src/health_agent_infra/) | HAI reference runtime and Python package. |
+| [`benchmarks/governed_agent_bench/`](benchmarks/governed_agent_bench/) | GovernedAgentBench schemas, tasks, scorer, baselines, manifests, and reports. |
+| [`research/runtime_contracts_paper/`](research/runtime_contracts_paper/) | Paper frame, draft, and execution plan. |
+| [`reporting/docs/`](reporting/docs/) | HAI runtime/operator documentation. |
+| [`reporting/plans/`](reporting/plans/) | Historical release planning and audit trail. |
 
 ![A user conversation flows into a shell-capable agent. The agent invokes the hai governed tool surface, which validates, gates, and audits every write before persisting to local SQLite state, JSONL audit logs, and the OS keyring/config. A direct write attempt from the agent to local state is shown crossed out at the boundary. A read-only return path through hai today, explain, review, and backup feeds back to the agent.](assets/product_boundary.png)
 
