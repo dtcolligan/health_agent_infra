@@ -1043,10 +1043,24 @@ def build_snapshot(
         else:
             # Future-dated snapshot — defensive; treat as not-end-of-day.
             _is_end_of_day = False
+        # v0.2.0 W-PROV-2: nutrition rule cites today's row only.
+        nutrition_state_versions = _accepted_state_versions(
+            conn,
+            table="accepted_nutrition_state_daily",
+            user_id=user_id,
+            end_date=as_of_date,
+            lookback_days=0,
+        )
+        nutrition_today_row_version = nutrition_state_versions.get(
+            as_of_date.isoformat()
+        )
         nutrition_policy = evaluate_nutrition_policy(
             nutrition_classified,
             meals_count=_nutrition_meals_count,
             is_end_of_day=_is_end_of_day,
+            for_date_iso=as_of_date.isoformat(),
+            user_id=user_id,
+            nutrition_today_row_version=nutrition_today_row_version,
         )
         nutrition_block["signals"] = nutrition_signals
         nutrition_block["classified_state"] = _nutrition_classified_to_dict(nutrition_classified)

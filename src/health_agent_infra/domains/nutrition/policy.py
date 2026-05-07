@@ -63,6 +63,13 @@ class NutritionPolicyResult:
     forced_action: Optional[str] = None
     forced_action_detail: Optional[dict[str, Any]] = None
     capped_confidence: Optional[str] = None
+    # v0.2.0 W-PROV-2: source-row locator(s). Always-emit baseline →
+    # 1 row-level locator on today's accepted_nutrition_state_daily.
+    # Extreme-deficiency firing adds two column-level locators
+    # (column="calories" + column="protein_g") on today's row.
+    # Partial-day suppression of extreme_deficiency keeps the
+    # always-emit row-level intact.
+    evidence_locators: Optional[tuple[dict[str, Any], ...]] = None
 
 
 # ---------------------------------------------------------------------------
@@ -230,6 +237,9 @@ def evaluate_nutrition_policy(
     *,
     meals_count: Optional[int] = None,
     is_end_of_day: Optional[bool] = None,
+    for_date_iso: Optional[str] = None,
+    user_id: Optional[str] = None,
+    nutrition_today_row_version: Optional[str] = None,
 ) -> NutritionPolicyResult:
     """Apply nutrition R-rules to a classified nutrition state.
 
@@ -238,6 +248,14 @@ def evaluate_nutrition_policy(
     R-coverage short-circuits action selection; R-extreme-deficiency
     overrides even if R-coverage allows; R-sparse caps confidence
     independently of action.
+
+    v0.2.0 W-PROV-2: when ``for_date_iso`` / ``user_id`` /
+    ``nutrition_today_row_version`` are provided, the result carries
+    an always-emit row-level locator citing today's
+    ``accepted_nutrition_state_daily``. When R-extreme-deficiency
+    fires (NOT in the partial-day suppression branch), additional
+    column-level locators citing ``calories`` and ``protein_g`` on
+    today's row are appended.
     """
 
     t = thresholds if thresholds is not None else load_thresholds()
@@ -268,9 +286,69 @@ def evaluate_nutrition_policy(
     if cap_value is not None:
         capped_confidence = cap_value
 
+    evidence_locators = _build_nutrition_locators(
+        for_date_iso=for_date_iso,
+        user_id=user_id,
+        nutrition_today_row_version=nutrition_today_row_version,
+        extreme_deficiency_fired=(
+            forced_action_detail is not None
+            and forced_action_detail.get("reason_token")
+            == "extreme_deficiency_detected"
+        ),
+    )
+
     return NutritionPolicyResult(
         policy_decisions=tuple(decisions),
         forced_action=forced_action,
         forced_action_detail=forced_action_detail,
         capped_confidence=capped_confidence,
+        evidence_locators=evidence_locators,
     )
+
+
+def _build_nutrition_locators(
+    *,
+    for_date_iso: Optional[str],
+    user_id: Optional[str],
+    nutrition_today_row_version: Optional[str],
+    extreme_deficiency_fired: bool,
+) -> Optional[tuple[dict[str, Any], ...]]:
+    """v0.2.0 W-PROV-2 hybrid emission for nutrition.
+
+    Always-emit: 1 row-level locator on today's
+    ``accepted_nutrition_state_daily``. Extreme-deficiency-emit
+    (additional, non-suppressed firing only): 2 column-level
+    locators citing ``calories`` + ``protein_g`` on today's row,
+    matching the rule's two source metrics
+    (``calorie_deficit_kcal`` and ``protein_ratio``). Partial-day
+    suppression of the rule keeps the row-level locator intact;
+    only the column-level citations are skipped.
+    """
+
+    if for_date_iso is None or user_id is None:
+        return None
+    if nutrition_today_row_version is None:
+        return None
+
+    pk = {"as_of_date": for_date_iso, "user_id": user_id}
+    out: list[dict[str, Any]] = [
+        {
+            "table": "accepted_nutrition_state_daily",
+            "pk": pk,
+            "row_version": nutrition_today_row_version,
+        }
+    ]
+    if extreme_deficiency_fired:
+        out.append({
+            "table": "accepted_nutrition_state_daily",
+            "pk": pk,
+            "column": "calories",
+            "row_version": nutrition_today_row_version,
+        })
+        out.append({
+            "table": "accepted_nutrition_state_daily",
+            "pk": pk,
+            "column": "protein_g",
+            "row_version": nutrition_today_row_version,
+        })
+    return tuple(out)

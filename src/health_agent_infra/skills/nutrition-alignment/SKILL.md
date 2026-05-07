@@ -21,7 +21,7 @@ Under `snapshot.nutrition` you receive these blocks:
 - `history` — trailing rows for lookback context.
 - `signals` — runtime-derived dict the classifier consumed: `today_row`, `goal_domain`, plus (v0.1.15 W-A) optional `is_partial_day` (bool) and `target_status` (`"present"` | `"absent"` | `"unavailable"`). Context only; never re-derive.
 - `classified_state` — `calorie_balance_band`, `protein_sufficiency_band`, `hydration_band`, `micronutrient_coverage`, `coverage_band`, `nutrition_status`, `nutrition_score`, `calorie_deficit_kcal`, `protein_ratio`, `hydration_ratio`, `derivation_path`, `uncertainty`. **Source of truth.**
-- `policy_result` — `policy_decisions[]`, `forced_action`, `forced_action_detail`, `capped_confidence`. **Source of truth.**
+- `policy_result` — `policy_decisions[]`, `forced_action`, `forced_action_detail`, `capped_confidence`, and (v0.2.0 W-PROV-2) optional `evidence_locators[]`. The runtime always emits a row-level locator citing today's `accepted_nutrition_state_daily`; an R-extreme-deficiency firing additionally cites `calories` + `protein_g`. Partial-day suppression keeps the row-level locator intact and skips the column-level citations. **Source of truth.**
 - `missingness` — per state_model_v1.md §5.
 
 ## Protocol
@@ -81,7 +81,7 @@ Emit a `NutritionProposal` JSON and call `hai propose --domain nutrition --propo
 
 `proposal_id` = `prop_<for_date>_<user_id>_nutrition_01` (idempotent on `(for_date, user_id, domain)`; re-running on the same day does not produce a new row).
 
-Copy `policy_result.policy_decisions` into the output's `policy_decisions` verbatim — the runtime decided them; you do not re-edit or add new ones.
+Copy `policy_result.policy_decisions` into the output's `policy_decisions` verbatim — the runtime decided them; you do not re-edit or add new ones. **v0.2.0 W-PROV-2:** if `policy_result.evidence_locators` is present, copy that list verbatim into the proposal's `evidence_locators` field — do NOT derive locators yourself; the runtime computed them. If the field is absent, omit `evidence_locators` from the proposal.
 
 ## Invariants
 
