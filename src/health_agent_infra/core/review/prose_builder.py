@@ -65,7 +65,33 @@ from health_agent_infra.core.review.weekly import (
     WeeklyRecommendation,
     WeeklyXRuleFiring,
 )
+from health_agent_infra.core.review.weekly_card import (
+    project_weekly_card,
+)
 from health_agent_infra.core.synthesis_policy import public_name_for
+
+
+# Atom types that emit a weekly_claim_card row when the prose ships.
+# Qualitative atoms emit no card per F-PLAN-10 (qualitative atoms
+# contain no factual past-week content and so have no claim to gate).
+_CARD_EMITTING_ATOM_TYPES = frozenset({"quantitative", "comparative"})
+
+
+# Mechanical assertion alphabet for `assert_qualitative_atom_is_non_factual`
+# per F-PLAN-10 round-1 addition. Qualitative atoms must contain none of:
+#   - numeric tokens (\d+)
+#   - month-name date tokens (January, February, ...)
+#   - comparison operators (<, >, <=, >=, ratio language)
+_NUMERIC_RE = __import__("re").compile(r"\b\d+\b")
+_DATE_MONTH_RE = __import__("re").compile(
+    r"\b(January|February|March|April|May|June|July|August|"
+    r"September|October|November|December)\b"
+)
+_COMPARISON_TOKENS = frozenset({
+    "more than", "less than", "greater than", "fewer than",
+    "above", "below", "above the", "below the",
+    "↑", "↓", "→", ">", "<", ">=", "<=",
+})
 
 
 # Six domain order for stable section emission.
@@ -741,6 +767,99 @@ def _phase_a_b_framing(
     return " ".join(parts) if parts else (
         "No rules fired against this recommendation."
     )
+
+
+def emit_weekly_claim_cards(
+    conn: sqlite3.Connection,
+    bundle: WeeklyProseBundle,
+    *,
+    computed_at: Optional[str] = None,
+    commit_after: bool = True,
+) -> int:
+    """Persist a ``weekly_claim_card`` row for every quantitative +
+    comparative atom in the bundle's sections.
+
+    Per PLAN §2.D acceptance #6: the count of cards equals the count
+    of (quantitative + comparative) atoms in non-abstain prose.
+    Qualitative atoms emit NO card per F-PLAN-10 (they carry no
+    factual past-week content; W58D has no claim to gate).
+
+    Per W-EVCARD-WEEKLY's append-only contract: every call appends new
+    rows with fresh ``card_id`` (UUID-suffixed) and fresh
+    ``computed_at``; consumers dedup at the canonical-latest view.
+
+    On the abstain branch (``coverage.weekly_status ==
+    'insufficient_data'``) returns 0 — no cards are written
+    (validation is structurally simpler via deterministic substitution
+    from coverage; see step 2 PLAN §2.D round-1 correction).
+
+    Returns the count of cards persisted.
+    """
+
+    if bundle.coverage.weekly_status == "insufficient_data":
+        return 0
+
+    written = 0
+    for section in bundle.sections:
+        for atom in section.atoms:
+            if atom.atom_type not in _CARD_EMITTING_ATOM_TYPES:
+                continue
+            project_weekly_card(
+                conn,
+                user_id=bundle.user_id,
+                iso_week=bundle.iso_week,
+                claim_atom_text=atom.atom_text,
+                atom_type=atom.atom_type,
+                derivation_path=atom.derivation_path,
+                locator_set=list(atom.locator_set),
+                audit_refs=dict(atom.audit_refs),
+                computed_at=computed_at,
+                commit_after=False,
+            )
+            written += 1
+
+    if commit_after:
+        conn.commit()
+    return written
+
+
+def assert_qualitative_atom_is_non_factual(atom: WeeklyAtom) -> None:
+    """F-PLAN-10 mechanical assertion (round-1 addition).
+
+    Qualitative atoms must contain NO factual past-week content —
+    no numeric tokens, no date tokens (month names), no comparison
+    operators / ratio language. The structural argument: qualitative
+    atoms exist for framing and disposition, not for past-week
+    claims; if a "qualitative" atom carries a date or a number, it's
+    actually a quantitative claim mis-tagged and W58D would miss it.
+
+    Raises :class:`AssertionError` when the atom violates the
+    invariant. Used by the test suite as a mechanical
+    closed-set check at prose-builder output time.
+    """
+
+    if atom.atom_type != "qualitative":
+        return
+    text = atom.atom_text
+    numeric_match = _NUMERIC_RE.search(text)
+    assert numeric_match is None, (
+        f"qualitative atom {atom.atom_id!r} contains numeric token "
+        f"{numeric_match.group()!r} — re-tag as quantitative or "
+        f"strip the factual content. atom_text={text!r}"
+    )
+    date_match = _DATE_MONTH_RE.search(text)
+    assert date_match is None, (
+        f"qualitative atom {atom.atom_id!r} contains date token "
+        f"{date_match.group()!r} — re-tag as quantitative or strip "
+        f"the factual content. atom_text={text!r}"
+    )
+    lower = text.lower()
+    for token in _COMPARISON_TOKENS:
+        assert token not in lower, (
+            f"qualitative atom {atom.atom_id!r} contains comparison "
+            f"token {token!r} — re-tag as comparative or strip the "
+            f"factual content. atom_text={text!r}"
+        )
 
 
 def _rule_phrase(rule_id: str) -> str:

@@ -1316,8 +1316,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_rweek.set_defaults(func=cmd_review_weekly)
     annotate_contract(
         p_rweek,
-        mutation="read-only",
-        idempotent="n/a",
+        mutation="writes-state",
+        idempotent="no",
         json_output="opt-in",
         exit_codes=("OK", "USER_INPUT"),
         agent_safe=True,
@@ -1325,7 +1325,12 @@ def build_parser() -> argparse.ArgumentParser:
             "Render the weekly review surface — markdown or JSON — "
             "from the canonical (non-superseded) plan evidence for "
             "the requested ISO week. Emits an abstain branch when "
-            "fewer than the threshold of days have canonical plans."
+            "fewer than the threshold of days have canonical plans. "
+            "On the non-abstain path also persists weekly_claim_card "
+            "rows (one per quantitative + comparative atomic claim) "
+            "for downstream W58D factuality validation; cards are "
+            "append-only so re-running with corrected data adds "
+            "rows and the canonical-latest view returns the newest set."
         ),
     )
 

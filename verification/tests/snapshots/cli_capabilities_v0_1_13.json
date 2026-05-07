@@ -4001,7 +4001,7 @@
     {
       "agent_safe": true,
       "command": "hai review weekly",
-      "description": "Render the weekly review surface \u2014 markdown or JSON \u2014 from the canonical (non-superseded) plan evidence for the requested ISO week. Emits an abstain branch when fewer than the threshold of days have canonical plans.",
+      "description": "Render the weekly review surface \u2014 markdown or JSON \u2014 from the canonical (non-superseded) plan evidence for the requested ISO week. Emits an abstain branch when fewer than the threshold of days have canonical plans. On the non-abstain path also persists weekly_claim_card rows (one per quantitative + comparative atomic claim) for downstream W58D factuality validation; cards are append-only so re-running with corrected data adds rows and the canonical-latest view returns the newest set.",
       "exit_codes": [
         "OK",
         "USER_INPUT"
@@ -4092,9 +4092,9 @@
           "type": "str"
         }
       ],
-      "idempotent": "n/a",
+      "idempotent": "no",
       "json_output": "opt-in",
-      "mutation": "read-only"
+      "mutation": "writes-state"
     },
     {
       "agent_safe": true,

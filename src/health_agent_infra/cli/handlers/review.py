@@ -290,6 +290,7 @@ def cmd_review_weekly(args: argparse.Namespace) -> int:
     from health_agent_infra.core.config import load_thresholds
     from health_agent_infra.core.review.prose_builder import (
         build_weekly_prose,
+        emit_weekly_claim_cards,
     )
     from health_agent_infra.core.review.render import (
         render_json,
@@ -385,6 +386,17 @@ def cmd_review_weekly(args: argparse.Namespace) -> int:
         ) if conn is not None else build_weekly_prose(
             _NullConn(), aggregation, coverage, rollup,
         )
+
+        # Emit weekly_claim_card rows for every quantitative +
+        # comparative atom in non-abstain prose (PLAN §2.D acceptance
+        # #6). Append-only per W-EVCARD-WEEKLY: re-running for the
+        # same week with corrected data appends new rows and the
+        # canonical-latest view returns the newest set.
+        if (
+            conn is not None
+            and coverage.weekly_status == "ok"
+        ):
+            emit_weekly_claim_cards(conn, bundle)
 
         if getattr(args, "json", False):
             print(render_json(

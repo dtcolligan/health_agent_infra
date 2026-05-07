@@ -28,11 +28,19 @@ import sqlite3
 from datetime import date
 from pathlib import Path
 
+import pytest
+
 from health_agent_infra.core.review.prose_builder import (
     WeeklyAtom,
     WeeklyProseBundle,
+    assert_qualitative_atom_is_non_factual,
     build_weekly_prose,
+    emit_weekly_claim_cards,
     load_primary_goal,
+)
+from health_agent_infra.core.review.weekly_card import (
+    load_canonical_latest_for_week,
+    load_full_history_for_week,
 )
 from health_agent_infra.core.review.weekly import (
     ACCEPTED_STATE_TABLES,
@@ -929,7 +937,10 @@ def test_cli_review_weekly_command_in_capabilities_manifest():
         f"got {len(weekly)}"
     )
     entry = weekly[0]
-    assert entry["mutation"] == "read-only"
+    # Step 7 flips mutation to writes-state (cards persisted on
+    # non-abstain path); agent_safe stays True per W-EVCARD-WEEKLY's
+    # append-only design (no destructive overwrites).
+    assert entry["mutation"] == "writes-state"
     assert entry["agent_safe"] is True
     assert "OK" in entry["exit_codes"]
     assert "USER_INPUT" in entry["exit_codes"]
@@ -977,6 +988,175 @@ def test_cli_review_weekly_rejects_include_history_without_json(
     assert result.returncode == 1
     assert "include-history" in result.stderr.lower()
     assert "--json" in result.stderr
+
+
+# ---------------------------------------------------------------------------
+# Tests — weekly claim-card emission (PLAN §2.D acceptance #6 + F-PLAN-10)
+# ---------------------------------------------------------------------------
+
+
+def test_emit_weekly_claim_cards_count_matches_quant_comparative_atoms(
+    tmp_path: Path,
+):
+    """PLAN §2.D acceptance #6: cards count = (quantitative +
+    comparative) atoms count. Qualitative atoms emit no card.
+    """
+
+    conn = _db(tmp_path)
+    try:
+        _seed_full_week(conn)
+        bundle = _build_prose_for_full_week(conn)
+
+        # Count quantitative + comparative atoms in the bundle.
+        emitting_atoms = [
+            atom
+            for section in bundle.sections
+            for atom in section.atoms
+            if atom.atom_type in ("quantitative", "comparative")
+        ]
+        qualitative_atoms = [
+            atom
+            for section in bundle.sections
+            for atom in section.atoms
+            if atom.atom_type == "qualitative"
+        ]
+        assert len(emitting_atoms) > 0
+        assert len(qualitative_atoms) > 0
+
+        written = emit_weekly_claim_cards(conn, bundle)
+        assert written == len(emitting_atoms)
+
+        # Verify cards persist with the right atom_types.
+        cards = load_full_history_for_week(
+            conn, user_id=USER, iso_week="2026-W18",
+        )
+        card_atom_types = [c["atom_type"] for c in cards]
+        assert all(
+            t in ("quantitative", "comparative")
+            for t in card_atom_types
+        )
+        # No card for any qualitative atom.
+        for qa in qualitative_atoms:
+            assert not any(
+                c["claim_atom_text"] == qa.atom_text for c in cards
+            )
+    finally:
+        conn.close()
+
+
+def test_emit_weekly_claim_cards_no_cards_on_abstain(tmp_path: Path):
+    """Abstain branch (`weekly_status='insufficient_data'`) writes
+    NO cards. F-PLAN-03 round-1 rationale: abstain validation is
+    structurally simpler (deterministic substitution from coverage),
+    so claim cards are unnecessary on this path.
+    """
+
+    conn = _db(tmp_path)
+    try:
+        # Seed only 2 plan days — under threshold.
+        for d in ("2026-04-27", "2026-04-29"):
+            _insert_plan(
+                conn,
+                daily_plan_id=f"plan_{d}_abstain",
+                for_date=d,
+            )
+        conn.commit()
+
+        agg = load_weekly_aggregation(
+            conn, iso_week="2026-W18", user_id=USER,
+        )
+        coverage = evaluate_weekly_coverage(
+            agg, coverage_threshold_days=5,
+        )
+        rollup = compute_data_quality_rollup(
+            agg.sync_runs, stale_pull_hours=48,
+        )
+        bundle = build_weekly_prose(conn, agg, coverage, rollup)
+
+        assert coverage.weekly_status == "insufficient_data"
+        written = emit_weekly_claim_cards(conn, bundle)
+        assert written == 0
+        # Confirm DB state — no rows in weekly_claim_card.
+        cards = load_full_history_for_week(
+            conn, user_id=USER, iso_week="2026-W18",
+        )
+        assert cards == []
+    finally:
+        conn.close()
+
+
+def test_emit_weekly_claim_cards_appends_on_rerun(tmp_path: Path):
+    """W-EVCARD-WEEKLY append-only contract: re-running for the
+    same week appends new rows (different card_id, different
+    computed_at) but the canonical-latest view stays at one row
+    per claim_id (the most-recent computed_at wins).
+    """
+
+    conn = _db(tmp_path)
+    try:
+        _seed_full_week(conn)
+        bundle = _build_prose_for_full_week(conn)
+        n1 = emit_weekly_claim_cards(conn, bundle)
+
+        # Second run with the same content.
+        n2 = emit_weekly_claim_cards(conn, bundle)
+        assert n1 == n2  # same atom set → same card count per run
+
+        # Full history shows BOTH runs.
+        full = load_full_history_for_week(
+            conn, user_id=USER, iso_week="2026-W18",
+        )
+        assert len(full) == n1 + n2
+
+        # Canonical-latest shows ONE row per claim_id.
+        canonical = load_canonical_latest_for_week(
+            conn, user_id=USER, iso_week="2026-W18",
+        )
+        assert len(canonical) == n1
+    finally:
+        conn.close()
+
+
+def test_qualitative_atoms_pass_non_factual_mechanical_assertion(
+    tmp_path: Path,
+):
+    """F-PLAN-10 round-1 mechanical assertion: every qualitative
+    atom in the prose-builder output contains NO factual past-week
+    content (no numeric tokens, no month-name dates, no comparison
+    operators). The argument: a "qualitative" atom carrying a date
+    is a quantitative claim mis-tagged that W58D would miss.
+    """
+
+    conn = _db(tmp_path)
+    try:
+        _seed_full_week(conn)
+        bundle = _build_prose_for_full_week(conn)
+        for section in bundle.sections:
+            for atom in section.atoms:
+                if atom.atom_type == "qualitative":
+                    # This raises AssertionError if any qualitative
+                    # atom carries factual content.
+                    assert_qualitative_atom_is_non_factual(atom)
+    finally:
+        conn.close()
+
+
+def test_qualitative_assertion_catches_numeric_token():
+    """Sanity: the mechanical assertion FIRES when given a
+    deliberately-bad qualitative atom (numeric token). Negative
+    test against the assertion itself.
+    """
+
+    bad_atom = WeeklyAtom(
+        atom_id="test.bad",
+        atom_text="You ran 3 sessions this week.",
+        atom_type="qualitative",
+        derivation_path="literal",
+        domain=None,
+    )
+    with pytest.raises(AssertionError) as exc_info:
+        assert_qualitative_atom_is_non_factual(bad_atom)
+    assert "numeric" in str(exc_info.value)
 
 
 def test_prose_load_primary_goal_returns_none_when_unset(tmp_path: Path):
