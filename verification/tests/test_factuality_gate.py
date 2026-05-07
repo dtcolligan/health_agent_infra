@@ -48,13 +48,17 @@ def conn() -> sqlite3.Connection:
     c = sqlite3.connect(":memory:")
     c.row_factory = sqlite3.Row
 
-    # Locator-resolved table — accepted_recovery_state_daily with a
-    # row_version column so drift testing is possible.
+    # Locator-resolved table — accepted_recovery_state_daily. The
+    # canonical row_version column for accepted-state tables is
+    # ``projected_at`` (per `_ROW_VERSION_COLUMN` mapping in
+    # core/provenance/locator.py); the synthetic schema mirrors that
+    # so tests exercise the same drift-resolution path the real
+    # schema uses (v0.2.0 IR R1 F-IR-01).
     c.execute(
         "CREATE TABLE accepted_recovery_state_daily ("
         " as_of_date TEXT NOT NULL,"
         " user_id TEXT NOT NULL,"
-        " row_version TEXT NOT NULL,"
+        " projected_at TEXT NOT NULL,"
         " resting_hr INTEGER,"
         " hrv_rmssd INTEGER,"
         " PRIMARY KEY (as_of_date, user_id))"
@@ -210,6 +214,84 @@ def test_gate_claim_blocks_on_row_version_drift(conn):
     assert result.block_reason == BlockReason.LOCATOR_ROW_VERSION_DRIFT
     assert "2026-04-28T08:00Z" in (result.block_detail or "")
     assert "2026-04-28T19:00Z" in (result.block_detail or "")
+
+
+def test_gate_claim_drift_runs_against_real_accepted_state_schema(
+    tmp_path,
+):
+    """v0.2.0 IR R1 F-IR-01 regression. The synthetic conn fixture
+    uses the same projected_at column the real schema does, but the
+    fix landed via the ``_ROW_VERSION_COLUMN`` mapping rather than
+    by renaming a synthetic column. This test pins the resolution
+    end-to-end against ``initialize_database()`` so a future schema
+    drift, mapping omission, or accidental rename of the projected_at
+    column on accepted-state tables fails loudly here. Without the
+    fix the drift lane returned PASS for stale locators because
+    ``row.get('row_version')`` returned None on real rows.
+    """
+
+    from health_agent_infra.core.state import initialize_database, open_connection
+
+    db_path = tmp_path / "state.db"
+    initialize_database(db_path)
+    real_conn = open_connection(db_path)
+    try:
+        # Insert one accepted_recovery_state_daily row with a known
+        # projected_at value. derived_from + source + ingest_actor
+        # are NOT NULL on the real schema; fill with placeholder
+        # values that are valid for the test's purpose (no synthesis
+        # path consumes them here). Only the resting_hr column is
+        # named by the locator below.
+        real_conn.execute(
+            "INSERT INTO accepted_recovery_state_daily "
+            "(as_of_date, user_id, resting_hr, "
+            " derived_from, source, ingest_actor, projected_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (
+                "2026-04-28", "u_real", 52,
+                "[]", "test", "test_harness",
+                "2026-04-28T19:00:00Z",
+            ),
+        )
+        real_conn.commit()
+
+        # Stale locator: row_version is one earlier snapshot than
+        # the row's actual projected_at. The drift lane must fire.
+        stale_locator = {
+            "table": "accepted_recovery_state_daily",
+            "pk": {"as_of_date": "2026-04-28", "user_id": "u_real"},
+            "row_version": "2026-04-28T08:00:00Z",
+            "column": "resting_hr",
+        }
+        result = gate_claim(
+            real_conn,
+            ClaimGateInput(
+                atom_text="...",
+                atom_type="quantitative",
+                locator_set=[stale_locator],
+            ),
+        )
+        assert result.outcome == GateOutcome.BLOCK
+        assert result.block_reason == BlockReason.LOCATOR_ROW_VERSION_DRIFT
+        assert "2026-04-28T08:00:00Z" in (result.block_detail or "")
+        assert "2026-04-28T19:00:00Z" in (result.block_detail or "")
+
+        # Sanity: matching row_version (the row's projected_at value)
+        # passes against the same real-schema row.
+        fresh_locator = dict(stale_locator)
+        fresh_locator["row_version"] = "2026-04-28T19:00:00Z"
+        ok = gate_claim(
+            real_conn,
+            ClaimGateInput(
+                atom_text="...",
+                atom_type="quantitative",
+                locator_set=[fresh_locator],
+            ),
+        )
+        assert ok.outcome == GateOutcome.PASS
+        assert ok.block_reason is None
+    finally:
+        real_conn.close()
 
 
 # ---------------------------------------------------------------------------

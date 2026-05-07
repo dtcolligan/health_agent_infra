@@ -45,6 +45,33 @@ _ALLOWED_TABLES_PK: dict[str, tuple[str, ...]] = {
 }
 
 
+# Per-table mapping from the W-PROV-1 locator `row_version` field to
+# the schema column whose value the locator was emitted against. This
+# is the canonical resolution used by the W58D factuality gate when
+# checking for row-version drift (`core/eval/factuality_gate.py`).
+#
+# v0.1.14 W-PROV-1 + v0.2.0 W-PROV-2 only emit locators for accepted-
+# state tables; all six use `projected_at` (per `state_model_v1.md`
+# §0/§8 + `domains/recovery/policy.py:273` and the
+# `_accepted_state_versions` snapshot helper at
+# `core/state/snapshot.py:1467`). `source_daily_garmin` has no
+# canonical row_version column today; emission against it is out of
+# v0.1.14 scope per `source_row_provenance.md` "Out of v0.1.14 scope"
+# (hash-based row_version for source tables without a timestamp
+# column is a future-cycle item). The `None` entry below documents
+# that explicitly so the gate skips drift comparison rather than
+# fabricating one.
+_ROW_VERSION_COLUMN: dict[str, Optional[str]] = {
+    "accepted_nutrition_state_daily": "projected_at",
+    "accepted_recovery_state_daily": "projected_at",
+    "accepted_resistance_training_state_daily": "projected_at",
+    "accepted_running_state_daily": "projected_at",
+    "accepted_sleep_state_daily": "projected_at",
+    "accepted_stress_state_daily": "projected_at",
+    "source_daily_garmin": None,
+}
+
+
 class LocatorValidationError(ValueError):
     """Raised when a locator dict violates the schema contract."""
 

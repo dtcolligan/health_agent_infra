@@ -54,6 +54,7 @@ from enum import Enum
 from typing import Any, Optional
 
 from health_agent_infra.core.provenance.locator import (
+    _ROW_VERSION_COLUMN,
     LocatorValidationError,
     resolve_locator,
     validate_locator,
@@ -235,13 +236,24 @@ def _resolve_locator_with_drift(
     """Validate + resolve a locator and check for ``row_version`` drift.
 
     Returns ``(ok, block_reason, detail)``. ``ok=True`` iff the
-    locator validates, the row exists, AND (when both sides expose
-    a ``row_version`` column) the cited row_version matches the
-    current row's row_version.
+    locator validates, the row exists, AND (when the table has a
+    canonical row-version column per ``locator._ROW_VERSION_COLUMN``)
+    the cited ``row_version`` matches the current row's value at
+    that column.
 
-    The drift check is intentionally tolerant when the resolved row
-    has no ``row_version`` column — not every whitelist table carries
-    one. PLAN §2.F sub-category 4 names the drift case as a separate
+    The drift check resolves the comparison column per the
+    ``_ROW_VERSION_COLUMN`` mapping rather than expecting the row
+    to carry a literal ``row_version`` column. Real accepted-state
+    rows expose ``projected_at``, not ``row_version``; the mapping
+    makes that explicit so the drift lane fires against the real
+    schema (v0.2.0 IR R1 F-IR-01 caught the prior bug where the
+    drift check ran against ``row.get("row_version")``, returning
+    ``None`` on real schema rows and silently passing every stale
+    locator). Tables with no canonical row-version column (e.g.,
+    ``source_daily_garmin`` today) skip the drift comparison and
+    the locator passes once row resolution succeeds.
+
+    PLAN §2.F sub-category 4 names the drift case as a separate
     block reason from row-missing so corpus authors can author both
     failure modes independently.
     """
@@ -266,11 +278,14 @@ def _resolve_locator_with_drift(
         )
 
     cited_row_version = locator.get("row_version")
-    actual_row_version = row.get("row_version")
+    row_version_col = _ROW_VERSION_COLUMN.get(locator["table"])
+    actual_row_version = (
+        row.get(row_version_col) if row_version_col is not None else None
+    )
     if (
         cited_row_version is not None
         and actual_row_version is not None
-        and cited_row_version != actual_row_version
+        and cited_row_version != str(actual_row_version)
     ):
         return (
             False,

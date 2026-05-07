@@ -3,9 +3,14 @@
 Seeds an in-memory sqlite3 connection with the minimum row set the
 factuality fixtures need:
 
-  * One ``accepted_recovery_state_daily`` row exposing ``row_version``
-    so locator-pass + locator-row-missing + locator-row-version-drift
-    fixtures can all be expressed against the same shared schema.
+  * One ``accepted_recovery_state_daily`` row exposing
+    ``projected_at`` (the canonical W-PROV-1 row_version column for
+    accepted-state tables, per ``_ROW_VERSION_COLUMN`` in
+    ``core/provenance/locator.py``) so locator-pass + locator-row-
+    missing + locator-row-version-drift fixtures can all be
+    expressed against the same shared schema and the drift lane
+    fires against the same column the real schema exposes
+    (v0.2.0 IR R1 F-IR-01).
   * One ``daily_plan`` row, one ``recommendation_log`` row, and one
     ``x_rule_firing`` row for audit-ref pass + audit-ref-orphan
     fixtures.
@@ -46,7 +51,7 @@ def seed_factuality_baseline(conn: sqlite3.Connection) -> None:
         "CREATE TABLE IF NOT EXISTS accepted_recovery_state_daily ("
         " as_of_date TEXT NOT NULL,"
         " user_id TEXT NOT NULL,"
-        " row_version TEXT NOT NULL,"
+        " projected_at TEXT NOT NULL,"
         " resting_hr INTEGER,"
         " hrv_rmssd INTEGER,"
         " PRIMARY KEY (as_of_date, user_id))"
