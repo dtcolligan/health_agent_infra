@@ -11,6 +11,27 @@ Per-release detail lives under `reporting/plans/<version>/`.
 
 ---
 
+## [Unreleased] — v0.2.0 in flight
+
+### Behaviour change
+
+- **Per-domain source-row provenance now populated for
+  recommendations** (W-PROV-2). The five dormant domains (running,
+  sleep, stress, strength, nutrition) now emit source-row locators
+  on their `policy_result.evidence_locators` field — always-emit
+  row-level baseline citing today's accepted-state row, with
+  additional column-level citations when the domain's spike-shaped
+  R-rule fires (ACWR spike on running, chronic-deprivation on
+  sleep, sustained-stress on stress, volume-spike on strength,
+  extreme-deficiency on nutrition). Locator emission is hybrid
+  (PLAN §2.A option C): every recommendation now carries provenance
+  to the row it was derived from, regardless of which R-rule
+  fired. Per-domain choices documented at
+  `reporting/docs/per_domain_locator_emission.md`. Recovery's
+  v0.1.14 W-PROV-1 emission path is unchanged.
+
+---
+
 ## [0.1.18] — 2026-05-06
 
 **Tier:** substantive — 7 W-ids, onboarding-quality + intake-handler
