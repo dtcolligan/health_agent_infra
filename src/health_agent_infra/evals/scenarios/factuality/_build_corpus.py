@@ -195,7 +195,7 @@ def _build_source_quality_fixtures() -> list[FactualityFixture]:
         ))
 
     # 1d. Locator missing required field (5 fixtures).
-    bad_locators = [
+    bad_locators: list[dict[str, Any]] = [
         {"pk": {"as_of_date": SEED_DATE, "user_id": SEED_USER_ID},
          "row_version": SEED_ROW_VERSION},  # missing table
         {"table": "accepted_recovery_state_daily",

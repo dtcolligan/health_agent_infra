@@ -28,6 +28,7 @@ import json
 import sqlite3
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
+from collections.abc import Sequence
 from typing import Any, Optional
 
 from health_agent_infra.core.review.prose_builder import (
@@ -200,9 +201,9 @@ def _aggregation(
     *,
     canonical_plans: list[CanonicalPlanRow],
     recommendations: list[WeeklyRecommendation],
-    firings: list[WeeklyXRuleFiring] = (),
-    sync_runs: list[WeeklySyncRunRow] = (),
-    runtime_events: list[WeeklyRuntimeEventRow] = (),
+    firings: Sequence[WeeklyXRuleFiring] = (),
+    sync_runs: Sequence[WeeklySyncRunRow] = (),
+    runtime_events: Sequence[WeeklyRuntimeEventRow] = (),
 ) -> WeeklyAggregation:
     return WeeklyAggregation(
         iso_week=ISO_WEEK,

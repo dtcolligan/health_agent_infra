@@ -1248,14 +1248,14 @@ def run_synthesis(
             accepted, raw = _split_locators_by_lane(
                 recommendation.get("evidence_locators") or []
             )
+            proposal_id = proposal_id_by_domain.get(domain)
+            planned_id = planned_id_by_domain.get(domain)
             payload = build_evidence_card_payload(
                 recommendation,
                 accepted_state_rows=accepted,
                 raw_source_refs=raw,
-                proposal_log_ids=[proposal_id_by_domain.get(domain)]
-                    if proposal_id_by_domain.get(domain) else [],
-                planned_ids=[planned_id_by_domain.get(domain)]
-                    if planned_id_by_domain.get(domain) else [],
+                proposal_log_ids=[proposal_id] if proposal_id else [],
+                planned_ids=[planned_id] if planned_id else [],
                 recommendation_log_ids=[recommendation["recommendation_id"]],
                 x_rule_firing_ids=firing_ids_by_domain.get(domain, []),
             )

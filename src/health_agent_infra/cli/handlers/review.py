@@ -380,12 +380,15 @@ def cmd_review_weekly(args: argparse.Namespace) -> int:
         rollup = compute_data_quality_rollup(
             aggregation.sync_runs, stale_pull_hours=stale_pull_hours,
         )
-        bundle = build_weekly_prose(
-            conn if conn is not None else _NullConn(),
-            aggregation, coverage, rollup,
-        ) if conn is not None else build_weekly_prose(
-            _NullConn(), aggregation, coverage, rollup,
-        )
+        if conn is not None:
+            bundle = build_weekly_prose(
+                conn, aggregation, coverage, rollup,
+            )
+        else:
+            bundle = build_weekly_prose(
+                _NullConn(),  # type: ignore[arg-type]  # duck-typed Connection.execute for abstain path
+                aggregation, coverage, rollup,
+            )
 
         # v0.2.0 W58D — deterministic factuality gate. Runs against
         # every quantitative + comparative atom in non-abstain
@@ -422,6 +425,10 @@ def cmd_review_weekly(args: argparse.Namespace) -> int:
             outcome = run_factuality_gate(conn, claims)
             if not outcome.all_passed:
                 first = outcome.first_block()
+                assert first is not None, (
+                    "all_passed=False implies first_block() returns a "
+                    "ClaimGateResult"
+                )
                 print(
                     f"hai review weekly: factuality gate BLOCKED — "
                     f"atom {first.claim_id!r} failed to resolve "

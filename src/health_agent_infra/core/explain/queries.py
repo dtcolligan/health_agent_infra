@@ -25,11 +25,29 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date
 from typing import Any, Optional
 
 from health_agent_infra.core.schemas import canonical_daily_plan_id
+
+
+def _make_row_getter(row: Any, columns: list[str]) -> Callable[[str], Any]:
+    """Return a column-name accessor for either ``sqlite3.Row`` (which
+    supports ``row[name]``) or a plain tuple-shaped row (which supports
+    only positional indexing). The W-EVCARD load path may run against
+    either depending on whether the connection has its row_factory set.
+    """
+
+    if hasattr(row, "keys"):
+        def by_name(k: str) -> Any:
+            return row[k]
+        return by_name
+
+    def by_index(k: str) -> Any:
+        return row[columns.index(k)]
+    return by_index
 from health_agent_infra.core.synthesis_policy import (
     description_for,
     public_name_for,
@@ -450,16 +468,13 @@ def _load_evidence_cards_for_plan(
         return []
 
     out: list[ExplainEvidenceCard] = []
+    _card_columns = [
+        "card_id", "daily_plan_id", "recommendation_id",
+        "planned_id", "proposal_id", "domain",
+        "schema_version", "payload_json", "computed_at",
+    ]
     for row in rows:
-        get = (
-            (lambda k: row[k]) if hasattr(row, "keys")
-            else (lambda k, _r=row: _r[
-                ["card_id", "daily_plan_id", "recommendation_id",
-                 "planned_id", "proposal_id", "domain",
-                 "schema_version", "payload_json", "computed_at"
-                ].index(k)
-            ])
-        )
+        get = _make_row_getter(row, _card_columns)
         out.append(ExplainEvidenceCard(
             card_id=get("card_id"),
             daily_plan_id=get("daily_plan_id"),
