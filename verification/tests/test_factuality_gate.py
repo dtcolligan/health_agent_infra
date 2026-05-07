@@ -797,6 +797,102 @@ def test_factuality_corpus_known_good_category_present_with_floor():
     assert len(cats.get("known_good", [])) >= 75
 
 
+# ---------------------------------------------------------------------------
+# 16. Step 6 — scoring runner
+# ---------------------------------------------------------------------------
+
+
+def _capture_factuality_scoring(json_output: bool = True) -> tuple[int, dict]:
+    """Run the factuality scoring runner programmatically and return
+    (exit_code, parsed_json_payload)."""
+
+    import argparse as _argparse
+    import contextlib
+    import io
+
+    from health_agent_infra.evals.cli import (
+        _run_factuality_corpus_scoring,
+    )
+
+    args = _argparse.Namespace(json=json_output)
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        rc = _run_factuality_corpus_scoring(args)
+    out = buf.getvalue()
+    if json_output:
+        payload = json.loads(out) if out else {}
+    else:
+        payload = {"_text": out}
+    return rc, payload
+
+
+def test_factuality_scoring_runner_meets_thresholds():
+    """``hai eval run --scenario-set factuality`` returns OK when
+    the corpus meets both 97/99 thresholds. With the current corpus
+    (every fixture verified by the harness), both percentages should
+    be 100.00.
+    """
+
+    from health_agent_infra.core import exit_codes
+
+    rc, payload = _capture_factuality_scoring(json_output=True)
+    assert rc == exit_codes.OK
+    assert payload["overall_pass"] is True
+    assert payload["known_bad"]["meets_threshold"] is True
+    assert payload["known_good"]["meets_threshold"] is True
+    # Empirical: gate is structurally correct, every fixture matches.
+    assert payload["known_bad"]["block_pct"] >= 97.0
+    assert payload["known_good"]["pass_pct"] >= 99.0
+
+
+def test_factuality_scoring_runner_emits_per_category_counts():
+    """The runner exposes per-category match counts so corpus
+    authors can spot a category that's regressing without reading
+    every individual fixture."""
+
+    rc, payload = _capture_factuality_scoring(json_output=True)
+    per_cat = payload["per_category"]
+    expected_categories = {
+        "source_quality", "x_rule_conflict",
+        "source_signal_conflict", "source_row_drift",
+        "audit_ref_orphan", "known_good",
+    }
+    assert set(per_cat.keys()) == expected_categories
+    for cat, counts in per_cat.items():
+        assert counts["total"] >= 1
+        assert counts["matched"] <= counts["total"]
+
+
+def test_factuality_scoring_runner_computes_pcts_from_manifest_cardinality():
+    """F-PLAN-06 round-1 invariant: pass/block percentages compute
+    from manifest cardinality, NOT hard-coded counts. The runner's
+    output ``known_bad.total`` + ``known_good.total`` must equal the
+    manifest's expected_outcome_counts.
+    """
+
+    manifest = json.loads((_CORPUS_DIR / "index.json").read_text())
+    counts = manifest["expected_outcome_counts"]
+    expected_known_bad = counts["block"]
+    expected_known_good = counts["pass"] + counts["skip"]
+
+    _, payload = _capture_factuality_scoring(json_output=True)
+    assert payload["known_bad"]["total"] == expected_known_bad
+    assert payload["known_good"]["total"] == expected_known_good
+
+
+def test_factuality_scoring_runner_human_output_is_readable():
+    """Human-readable output (``--json`` absent) emits a summary
+    that names the fixture count + per-bucket pass/fail markers.
+    Provides a regression on the user-facing surface."""
+
+    rc, payload = _capture_factuality_scoring(json_output=False)
+    text = payload["_text"]
+    assert "factuality corpus:" in text
+    assert "known-bad:" in text
+    assert "known-good:" in text
+    assert "PASS" in text  # both buckets PASS today
+
+
 def test_every_factuality_fixture_produces_its_expected_outcome():
     """Run each known-bad fixture through the gate and assert the
     outcome matches its declared ``expected_outcome`` +

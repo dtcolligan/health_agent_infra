@@ -1081,10 +1081,11 @@
             "stress",
             "synthesis",
             "judge_adversarial",
+            "factuality",
             "all"
           ],
           "default": null,
-          "help": "Run a named scenario set (v0.1.14 W-AN). 'all' runs every domain + synthesis (judge_adversarial is fixture-only and skipped from 'all' until v0.2.2 W58J wires the judge harness). 'judge_adversarial' enumerates the v0.1.14 W-AI fixture corpus shape-only \u2014 no scoring.",
+          "help": "Run a named scenario set (v0.1.14 W-AN; v0.2.0 W58D adds 'factuality'). 'all' runs every domain + synthesis + factuality (judge_adversarial is fixture-only and skipped from 'all' until v0.2.2 W58J wires the judge harness). 'judge_adversarial' enumerates the v0.1.14 W-AI fixture corpus shape-only \u2014 no scoring. 'factuality' scores the v0.2.0 W58D deterministic corpus against the policy.factuality_gate thresholds.",
           "name": "--scenario-set",
           "nargs": null,
           "positional": false,

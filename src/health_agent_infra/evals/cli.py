@@ -31,6 +31,8 @@ def cmd_eval_run(args: argparse.Namespace) -> int:
     if scenario_set:
         if scenario_set == "judge_adversarial":
             return _emit_judge_adversarial_summary(args)
+        if scenario_set == "factuality":
+            return _run_factuality_corpus_scoring(args)
         if scenario_set == "all":
             return _run_all_scenario_sets(args)
         if scenario_set == "synthesis":
@@ -95,6 +97,194 @@ def cmd_eval_run(args: argparse.Namespace) -> int:
     # when at least one failed — failed scenarios indicate a rubric /
     # runtime delta the caller can investigate, not a runtime crash.
     return exit_codes.OK if failed == 0 else exit_codes.USER_INPUT
+
+
+def _run_factuality_corpus_scoring(args: argparse.Namespace) -> int:
+    """v0.2.0 W58D: run the deterministic factuality corpus through
+    the gate, compute pass/block percentages, and compare to the
+    thresholds in ``policy.factuality_gate``.
+
+    Output (JSON or human):
+      - total fixtures, known-bad / known-good split
+      - block_known_bad_pct (actual %) vs threshold
+      - pass_known_good_pct (actual %) vs threshold
+      - per-category counts
+
+    Exit codes:
+      - OK: both thresholds met
+      - USER_INPUT: at least one threshold missed (scoring delta the
+        caller can investigate, not a runtime crash — same convention
+        as the domain runner)
+      - INTERNAL: corpus or gate import failed
+    """
+
+    import sqlite3
+    from importlib.resources import files
+
+    from health_agent_infra.core import exit_codes
+    from health_agent_infra.core.config import load_thresholds
+    from health_agent_infra.core.eval import (
+        ClaimGateInput,
+        gate_claim,
+    )
+
+    fac_root = files("health_agent_infra").joinpath(
+        "evals", "scenarios", "factuality"
+    )
+    index_path = fac_root.joinpath("index.json")
+    if not index_path.is_file():
+        print(
+            "factuality index missing; v0.2.0 W58D corpus is incomplete",
+            file=sys.stderr,
+        )
+        return exit_codes.INTERNAL
+
+    index = json.loads(index_path.read_text(encoding="utf-8"))
+    fixture_ids = [f["fixture_id"] for f in index["fixtures"]]
+
+    # Seed an in-memory baseline DB. Importing here (not at module
+    # top) keeps the corpus seed module out of the import surface
+    # for non-W58D callers.
+    from health_agent_infra.evals.scenarios.factuality._seed import (
+        seed_factuality_baseline,
+    )
+
+    conn = sqlite3.connect(":memory:")
+    conn.row_factory = sqlite3.Row
+    seed_factuality_baseline(conn)
+
+    known_bad_total = 0
+    known_bad_blocked = 0
+    known_good_total = 0
+    known_good_passed = 0  # outcome != block
+    per_category: dict[str, dict[str, int]] = {}
+    failures: list[dict] = []
+
+    for fixture_id in fixture_ids:
+        fixture_path = fac_root.joinpath(f"{fixture_id}.json")
+        fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+        category = fixture["category"]
+        expected = fixture["expected_outcome"]
+        cat_bucket = per_category.setdefault(
+            category, {"total": 0, "matched": 0},
+        )
+        cat_bucket["total"] += 1
+
+        inp = fixture["input"]
+        claim = ClaimGateInput(
+            atom_text=inp["atom_text"],
+            atom_type=inp["atom_type"],
+            locator_set=inp.get("locator_set", []),
+            audit_refs=inp.get("audit_refs", {}),
+            user_id=inp.get("user_id"),
+        )
+        result = gate_claim(conn, claim)
+        actual = result.outcome.value
+
+        if expected == "block":
+            known_bad_total += 1
+            if actual == "block":
+                known_bad_blocked += 1
+                cat_bucket["matched"] += 1
+            else:
+                failures.append({
+                    "fixture_id": fixture_id,
+                    "expected": expected,
+                    "actual": actual,
+                    "block_reason": (
+                        result.block_reason.value if result.block_reason
+                        else None
+                    ),
+                })
+        else:
+            known_good_total += 1
+            if actual != "block":
+                known_good_passed += 1
+                cat_bucket["matched"] += 1
+            else:
+                failures.append({
+                    "fixture_id": fixture_id,
+                    "expected": expected,
+                    "actual": actual,
+                    "block_reason": (
+                        result.block_reason.value if result.block_reason
+                        else None
+                    ),
+                })
+
+    conn.close()
+
+    # Compute percentages from manifest cardinality (no hard-coded
+    # counts per F-PLAN-06).
+    block_pct = (
+        100.0 * known_bad_blocked / known_bad_total
+        if known_bad_total else 0.0
+    )
+    pass_pct = (
+        100.0 * known_good_passed / known_good_total
+        if known_good_total else 0.0
+    )
+
+    thresholds = load_thresholds()
+    gate_thresholds = thresholds["policy"]["factuality_gate"]
+    block_min = float(gate_thresholds["block_known_bad_min_pct"])
+    pass_min = float(gate_thresholds["pass_known_good_min_pct"])
+
+    block_meets = block_pct >= block_min
+    pass_meets = pass_pct >= pass_min
+    overall_pass = block_meets and pass_meets
+
+    payload = {
+        "scenario_set": "factuality",
+        "total_fixtures": len(fixture_ids),
+        "known_bad": {
+            "total": known_bad_total,
+            "blocked": known_bad_blocked,
+            "block_pct": round(block_pct, 4),
+            "threshold_min_pct": block_min,
+            "meets_threshold": block_meets,
+        },
+        "known_good": {
+            "total": known_good_total,
+            "passed": known_good_passed,
+            "pass_pct": round(pass_pct, 4),
+            "threshold_min_pct": pass_min,
+            "meets_threshold": pass_meets,
+        },
+        "per_category": per_category,
+        "failures": failures[:10],  # cap output size
+        "failure_count": len(failures),
+        "overall_pass": overall_pass,
+    }
+
+    if getattr(args, "json", False):
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print(f"factuality corpus: {len(fixture_ids)} fixtures")
+        print(
+            f"  known-bad: {known_bad_blocked}/{known_bad_total} "
+            f"blocked ({block_pct:.2f}% — threshold ≥{block_min}%) "
+            f"{'PASS' if block_meets else 'FAIL'}"
+        )
+        print(
+            f"  known-good: {known_good_passed}/{known_good_total} "
+            f"passed ({pass_pct:.2f}% — threshold ≥{pass_min}%) "
+            f"{'PASS' if pass_meets else 'FAIL'}"
+        )
+        for cat, counts in sorted(per_category.items()):
+            print(
+                f"  {cat}: {counts['matched']}/{counts['total']}"
+            )
+        if failures:
+            print(f"  failures ({len(failures)}):")
+            for f in failures[:10]:
+                print(
+                    f"    - {f['fixture_id']}: expected "
+                    f"{f['expected']}, got {f['actual']} "
+                    f"({f['block_reason']})"
+                )
+
+    return exit_codes.OK if overall_pass else exit_codes.USER_INPUT
 
 
 def _emit_judge_adversarial_summary(args: argparse.Namespace) -> int:
@@ -267,13 +457,19 @@ def register_eval_subparser(sub: argparse._SubParsersAction) -> None:
     )
     group.add_argument(
         "--scenario-set",
-        choices=sorted(SUPPORTED_DOMAINS) + ["synthesis", "judge_adversarial", "all"],
+        choices=(
+            sorted(SUPPORTED_DOMAINS)
+            + ["synthesis", "judge_adversarial", "factuality", "all"]
+        ),
         help=(
-            "Run a named scenario set (v0.1.14 W-AN). 'all' runs every "
-            "domain + synthesis (judge_adversarial is fixture-only and "
+            "Run a named scenario set (v0.1.14 W-AN; v0.2.0 W58D adds "
+            "'factuality'). 'all' runs every domain + synthesis + "
+            "factuality (judge_adversarial is fixture-only and "
             "skipped from 'all' until v0.2.2 W58J wires the judge "
             "harness). 'judge_adversarial' enumerates the v0.1.14 W-AI "
-            "fixture corpus shape-only — no scoring."
+            "fixture corpus shape-only — no scoring. 'factuality' "
+            "scores the v0.2.0 W58D deterministic corpus against the "
+            "policy.factuality_gate thresholds."
         ),
     )
     p_run.add_argument(
