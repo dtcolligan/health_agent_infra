@@ -12,7 +12,7 @@
 
 **Theme.** v0.1.x produced a runtime trustworthy enough to point at on a single-day surface. v0.2.0 extends that trust across calendar time: weekly review aggregation with source-row provenance, paired with a deterministic factuality gate that blocks any quoted quantitative claim that doesn't resolve to evidence. The cycle ships against v0.1.14 substrate (W-PROV-1 locator dataclass + W-AJ judge harness), already shipped. **Foreign-user empirical evidence re-tiered to opportunistic-not-blocking per AGENTS.md D16** (CP-2U-GATE-SPLIT post-v0.1.18); v0.2.0's only remaining hard dep is v0.1.14 substrate.
 
-**Honesty boundary.** v0.2.0 ships W58D **deterministic-only** (W58J judge ships v0.2.2 shadow-by-default per CP-PATH-A). v0.2.0's claim is "every quoted quantitative claim in W52 prose resolves to a source-row locator OR a write-side audit-chain reference" — a deterministic claim, not a factuality-judgment claim. The deterministic corpus + percentage thresholds (per maintainer Q2 adjudication) are honest about false-negative tolerance.
+**Honesty boundary.** v0.2.0 ships W58D **deterministic-only** (W58J judge ships v0.2.2 shadow-by-default per CP-PATH-A). v0.2.0's claim is **"every quoted quantitative or comparative factual claim in W52 prose resolves to a source-row locator OR a write-side audit-chain reference"** — a deterministic claim, not a factuality-judgment claim. **Qualitative atoms are constrained to non-factual narration only** (per F-PLAN-10 round-1 alignment); the W52 prose-builder is structurally prevented from emitting factual qualitative claims about the past week. The deterministic corpus + percentage thresholds (per maintainer Q2 adjudication) are honest about false-negative tolerance.
 
 **Source inputs:**
 - `reporting/plans/v0_2_0/README.md` — workspace stub + provisional W-id catalogue.
@@ -127,7 +127,7 @@ Recommended commit cadence: atomic per-W-id commits where possible (W-PROV-2 spl
 - v0.2.2 — W58J LLM judge shadow-by-default + W-JUDGE-BIAS bias panel.
 - v0.2.3 — W58J flip to blocking + W-30 capabilities-manifest schema freeze.
 
-Reconciliation C6 (post-v0.1.13 strategic refresh) caps each release at **one schema group**. v0.2.0's group is "evidence-card family + weekly aggregation tables" — daily card (027) + weekly card (028) + W52 weekly aggregation tables. Conceptually one schema family per C6; F-PHASE0-09 (Codex) + F-PHASE0-12 (Codex) sharpen the architecture.
+Reconciliation C6 (post-v0.1.13 strategic refresh) caps each release at **one schema group**. v0.2.0's group is the **evidence-card family**: migration 027 (`recommendation_evidence_card`, daily) + migration 028 (`weekly_claim_card`, weekly). **There are no separate W52 aggregation tables** — W52 produces in-memory aggregations from existing tables (accepted-state + audit-chain) plus reads/writes to `weekly_claim_card`; W52 itself ships no migration. **(Round-1 correction per F-PLAN-05: original "evidence-card family + weekly aggregation tables" wording implied W52 had its own tables; clarified that the only W52 weekly persistence surface is `weekly_claim_card` from migration 028.)** Conceptually one schema family per C6; F-PHASE0-09 (Codex) + F-PHASE0-12 (Codex) sharpen the architecture.
 
 **Chain B — Phase 0 sweep (2026-05-06).** 13 `F-PHASE0-*` findings consolidated. 5 `revises-scope` shape this PLAN materially:
 
@@ -143,7 +143,7 @@ Reconciliation C6 (post-v0.1.13 strategic refresh) caps each release at **one sc
 2. **Percentage thresholds over larger corpus.** W58D acceptance is `block ≥X% / pass ≥Y%` over ≥M fixtures. PLAN proposes 97% / 99% / 150 fixtures; D14 pressure-tests.
 3. **W-2U-GATE-2 honors D16 v0.4 destination.** README:39 + tactical §6.1:880-882 drift per F-PHASE0-11 fixes during this PLAN's authoring; AGENTS.md D16 unchanged.
 
-**Cycle thesis.** **v0.2.0 ships when claims about the past week resolve to source rows or audit-chain references, deterministically, with no LLM in the gate.** A user can run `hai review weekly --week 2026-W18 --json` and every quoted number traces back to a row the user can inspect. The factuality gate enforces it; the carriers ship the substrate; the locator emission populates the substrate; the doc-only adjuncts position the cycle for v0.3 prereqs.
+**Cycle thesis.** **v0.2.0 ships when quantitative and comparative factual claims about the past week resolve to source rows or audit-chain references, deterministically, with no LLM in the gate.** A user can run `hai review weekly --week 2026-W18 --json` and every quoted number AND every comparison ("higher than last week", "below baseline") traces back to a row the user can inspect. Qualitative atoms in the prose are constrained to non-factual narration. The factuality gate enforces this scope; the carriers ship the substrate; the locator emission populates the substrate; the doc-only adjuncts position the cycle for v0.3 prereqs. **(Round-1 alignment per F-PLAN-10: the "every atomic claim" framing was inconsistent with the W-FACT-ATOM scope (quantitative + comparative; qualitative pass-through). The cycle thesis now matches the gate.)**
 
 **Honesty boundary (re-stated for §3 ship gates).** v0.2.0 does NOT ship the LLM judge layer (W58J, v0.2.2). v0.2.0 does NOT freeze the capabilities-manifest schema (v0.2.3 W-30). v0.2.0 does NOT ship the insight ledger (W53, v0.2.1). v0.2.0 does NOT add new domains, new live-data sources, autonomous threshold mutation, or any clinical claims (per AGENTS.md "Do Not Do" + W57 invariant). v0.2.0 ships against W58D's deterministic-only contract; the percentage-threshold framing per Q2 adjudication is honest about false-negative tolerance.
 
@@ -162,7 +162,7 @@ Reconciliation C6 (post-v0.1.13 strategic refresh) caps each release at **one sc
 - `src/health_agent_infra/core/writeback/proposal.py:273-300` — proposal-acceptance path; reads `evidence_locators` if present.
 - `verification/tests/test_provenance_locator_emission.py` (new) — pinned regression test covering one R-rule emission per domain (5 new test cases minimum).
 
-**Whitelist extension (PLAN-author proposal).** Add 5 accepted-state-table entries:
+**Whitelist extension (corrected per F-PLAN-01 round-1; verified against `core/synthesis.py:466-473` `_ACCEPTED_STATE_TABLES` mapping):**
 
 ```python
 _ALLOWED_TABLES_PK: dict[str, tuple[str, ...]] = {
@@ -170,7 +170,7 @@ _ALLOWED_TABLES_PK: dict[str, tuple[str, ...]] = {
     "accepted_running_state_daily": ("as_of_date", "user_id"),
     "accepted_sleep_state_daily": ("as_of_date", "user_id"),
     "accepted_stress_state_daily": ("as_of_date", "user_id"),
-    "accepted_strength_state_daily": ("as_of_date", "user_id"),
+    "accepted_resistance_training_state_daily": ("as_of_date", "user_id"),
     "accepted_nutrition_state_daily": ("as_of_date", "user_id"),
     "source_daily_garmin": (
         "as_of_date", "user_id", "export_batch_id", "csv_row_index",
@@ -178,18 +178,19 @@ _ALLOWED_TABLES_PK: dict[str, tuple[str, ...]] = {
 }
 ```
 
-PLAN-author note: actual accepted-state-table names verified at implementation against current schema; the entries above match the canonical shape but spelling may shift if any domain's accepted-state table uses a different PK column (e.g., `for_date` vs `as_of_date`). D14 round 1 should verify against `core/state/migrations/`.
+**Round-1 correction (F-PLAN-01):** The strength-domain accepted-state table is `accepted_resistance_training_state_daily` (per `core/state/migrations/001_initial.sql:281` + `core/synthesis.py:471`), NOT `accepted_strength_state_daily`. The original PLAN proposal had a non-existent table name; corrected. Acceptance #5 below adds an introspection check against `_ACCEPTED_STATE_TABLES` to prevent recurrence.
 
 **W-PROV-1 contract intact.** The whitelist contains **only evidence + accepted-state tables**. Per `source_row_provenance.md:42-46`: "never a write-side table (no `recommendation_log`, no `proposal_log`, no `daily_plan`). Self-citation is meaningless and a classification bug; the validator rejects it." Audit-chain references (recommendation_id, planned_id, proposal_id, firing_id, outcome_id) go in claim-card payloads (W-EVCARD-DAILY + W-EVCARD-WEEKLY), NOT in `SourceRowLocator` instances.
 
 **Acceptance.**
-1. `_ALLOWED_TABLES_PK` extended with 5 accepted-state-table entries (one per dormant domain). Validation roundtrip test passes for each.
-2. Each domain's policy module emits ≥1 locator construction path. Wire shape mirrors `domains/recovery/policy.py:215-230`'s conditional emission. Domain may choose: (a) per-rule conditional (recovery R6 model — emit on specific R-rule firing); (b) always-emit (every classification result carries locators back to its accepted-state row).
+1. `_ALLOWED_TABLES_PK` extended with 5 accepted-state-table entries (one per dormant domain), table names matching `core/synthesis.py:_ACCEPTED_STATE_TABLES` exactly. Validation roundtrip test passes for each.
+2. Each of the 5 dormant domains (running, sleep, stress, strength, nutrition) emits ≥1 locator construction path. Wire shape mirrors `domains/recovery/policy.py:215-230`'s conditional emission. Domain may choose: (a) per-rule conditional (recovery R6 model — emit on specific R-rule firing); (b) always-emit (every classification result carries locators back to its accepted-state row).
 3. Conditional vs always-emit choice is documented per domain in a new `reporting/docs/per_domain_locator_emission.md` artifact (~1 page). Documents which classification paths emit, which don't, and why.
-4. `recommendation_log.evidence_locators_json` populated in ≥80% of new rows post-W-PROV-2 across the 5 dormant domains. Metric: regression test seeds a fixture state DB, runs `hai daily`, asserts ≥4 of 6 domains' rows carry non-null locators.
-5. No write-side audit-chain table in `_ALLOWED_TABLES_PK`. Validator-roundtrip negative test asserts `recommendation_log`, `proposal_log`, `daily_plan`, `intent_item`, `target`, `x_rule_firing`, `review_outcome`, `data_quality_daily` all reject.
-6. Full pytest suite (narrow + broader warning gates) green post-W-PROV-2.
-7. `CHANGELOG.md` v0.2.0 entry names W-PROV-2 with user-facing wording "per-domain source-row provenance now populated for recommendations."
+4. **All 5 dormant domains emit at least one locator across a fixture state DB run.** Metric: regression test seeds a fixture state DB exercising one R-rule firing or always-emit path per dormant domain; asserts **5 of 5 dormant domains** produce ≥1 row with non-null `evidence_locators_json` in `recommendation_log`. Recovery is NOT in the denominator — its R6 conditional emission already shipped at v0.1.14 and is not under W-PROV-2's scope. **(Round-1 correction per F-PLAN-02: original "≥4 of 6 domains" denominator conflated already-wired recovery with W-PROV-2 scope.)**
+5. **Whitelist introspection check** — new test (`test_provenance_whitelist_against_synthesis.py`) asserts `_ALLOWED_TABLES_PK` keys for accepted-state tables match `core/synthesis.py:_ACCEPTED_STATE_TABLES` first-element values. Prevents future drift like F-PLAN-01.
+6. No write-side audit-chain table in `_ALLOWED_TABLES_PK`. Validator-roundtrip negative test asserts `recommendation_log`, `proposal_log`, `daily_plan`, `intent_item`, `target`, `x_rule_firing`, `review_outcome`, `data_quality_daily` all reject.
+7. Full pytest suite (narrow + broader warning gates) green post-W-PROV-2.
+8. `CHANGELOG.md` v0.2.0 entry names W-PROV-2 with user-facing wording "per-domain source-row provenance now populated for recommendations."
 
 **What this WS does NOT do.**
 - Does not extend the whitelist with audit-chain tables (F-PHASE0-12 correction; those go in claim-card payloads).
@@ -197,7 +198,9 @@ PLAN-author note: actual accepted-state-table names verified at implementation a
 - Does not change proposal-acceptance behaviour for proposals that omit `evidence_locators` (still optional per `proposal.py:278`).
 - Does not introduce new R-rules or classification paths.
 
-**Ship-claim gate:** acceptance items 1, 4, 5 are **release-blocker**. The contract claim "every quoted quantitative claim in W52 prose resolves to evidence" depends on populated substrate.
+**Ship-claim gate:** acceptance items 1, **2**, 4, 5, 6 are **release-blocker**. **(Round-1 correction per F-PLAN-02: item 2 (per-domain emission ≥1 path) is now release-blocker — without it, dormant-domain claims have no provenance to resolve to.)** The contract claim "every quoted quantitative claim in W52 prose resolves to evidence" depends on populated substrate across all 5 dormant domains.
+
+**Partial-closure path (per F-PLAN-02 + Codex Q3 disposition).** If W-PROV-2 cannot land all 5 dormant domains within the 6d abort budget (R-V0.2.0-01), fork-defer the late-domain(s) to v0.2.1 W-PROV-3 with explicit named-partial-closure in CARRY_OVER.md. **W52 must then suppress quantitative claims for deferred-domain prose** — the weekly review renders qualitative-only sections for any domain without locator emission, with explicit "domain X: insufficient provenance — quantitative claims suppressed pending v0.2.1 W-PROV-3" disposition.
 
 ### §2.B W-EVCARD-DAILY — Daily `recommendation_evidence_card.v1` carrier
 
@@ -275,34 +278,38 @@ CREATE INDEX idx_evidence_card_recommendation ON recommendation_evidence_card (r
 
 ```sql
 CREATE TABLE weekly_claim_card (
-    card_id TEXT PRIMARY KEY,
+    card_id TEXT PRIMARY KEY,                -- UUID — append-only per F-PLAN-OQ1 disposition
     user_id TEXT NOT NULL,
     iso_week TEXT NOT NULL,                  -- YYYY-Www format
-    claim_id TEXT NOT NULL,                  -- stable hash of (week + user + atom)
+    claim_id TEXT NOT NULL,                  -- stable content hash; same content → same claim_id
     claim_atom_text TEXT NOT NULL,           -- the prose claim itself
+    atom_type TEXT NOT NULL,                 -- 'quantitative' | 'comparative' (qualitative atoms emit no card per F-PLAN-10)
     derivation_path TEXT NOT NULL,           -- 'aggregate' | 'comparison' | 'literal'
     locator_set_json TEXT NOT NULL,          -- JSON list of SourceRowLocator dicts
     audit_refs_json TEXT NOT NULL,           -- JSON object: {recommendation_log: [], x_rule_firing: [], ...}
     computed_at TEXT NOT NULL,
     source TEXT NOT NULL,
     ingest_actor TEXT NOT NULL,
-    agent_version TEXT
+    agent_version TEXT,
+    CHECK (atom_type IN ('quantitative', 'comparative'))
 );
 CREATE INDEX idx_weekly_card_iso_week ON weekly_claim_card (iso_week, user_id);
-CREATE INDEX idx_weekly_card_claim_id ON weekly_claim_card (claim_id);
-CREATE UNIQUE INDEX idx_weekly_card_unique_claim
-  ON weekly_claim_card(iso_week, user_id, claim_id);
+CREATE INDEX idx_weekly_card_claim_id ON weekly_claim_card (claim_id, computed_at DESC);
+-- No UNIQUE constraint on (iso_week, user_id, claim_id) — append-only per F-PLAN-OQ1.
+-- Canonical-view query: latest computed_at per (iso_week, user_id, claim_id).
 ```
 
-**Cardinality.** One card per *atomic claim* in W52's prose output. A weekly review with N quoted numbers + M qualitative comparisons produces N+M cards. The `claim_id` is a stable hash so re-running W52 for the same week is idempotent at the card level (existing cards updated in place via `INSERT OR REPLACE`; UNIQUE constraint enforces).
+**Cardinality.** One card per *quantitative or comparative atomic claim* in W52's prose output (per F-PLAN-10 round-1 scope alignment). A weekly review with N quoted numbers + M comparisons produces N+M cards; qualitative atoms emit no card. The `claim_id` is a stable hash; re-running W52 for the same week is idempotent at the *content* level — same prose + same data → same `claim_id`.
+
+**Append-only audit history (round-1 per Codex OQ-1 disposition).** Cards persist append-only; re-running W52 for the same week with corrected data produces a new row with a new `computed_at` AND a new `card_id` (UUID-suffixed if `claim_id` already exists). The latest card per `(iso_week, user_id, claim_id)` is the canonical view; superseded cards remain as audit history. **(Round-1 correction: original PLAN proposed `INSERT OR REPLACE` (latest-only) which lost audit history; Codex OQ-1 flagged the trade-off. Per maintainer rigor preference (`feedback_pick_rigor_over_velocity.md`), append-only is the more rigorous choice.)** Migration 028 schema updated below to reflect this — UNIQUE constraint moves from `(iso_week, user_id, claim_id)` to `card_id` only; canonical-view query joins on latest `computed_at` per claim.
 
 **Payload separation per F-PHASE0-12.** `locator_set_json` carries `SourceRowLocator[]` validated per W-PROV-1 contract (evidence + accepted-state tables only). `audit_refs_json` carries write-side primary-key references as a plain JSON object with one key per audit-chain table — these are NOT `SourceRowLocator` instances and bypass the W-PROV-1 whitelist (the validator is intentionally permissive on `audit_refs_json`).
 
 **Acceptance.**
 1. Migration 028 lands; `weekly_claim_card` table + indexes created.
 2. Card construction validates: `locator_set_json` entries validate per W-PROV-1; `audit_refs_json` matches the schema (object with optional keys for each audit-chain table; values are arrays of plain PK strings or composite-PK objects).
-3. `claim_id` hashing is deterministic (same prose + same week + same user → same hash). Idempotency test: run W52 twice for same week, assert no duplicate cards (UNIQUE constraint upheld).
-4. `INSERT OR REPLACE` on claim_id collision preserves card history via the `computed_at` field (test: re-run with different derivation_path, assert latest `computed_at` wins).
+3. `claim_id` hashing is deterministic (same prose content → same `claim_id`). Idempotency test: run W52 twice for same week with same data, assert no card content drift (latest-by-`computed_at` query returns identical content).
+4. **Append-only audit history**: re-running W52 for the same week with corrected data produces a new card row (new `card_id`, same `claim_id`, newer `computed_at`); superseded cards remain in the table. Test: run W52, mutate a fixture row, re-run W52, assert two rows for the affected `claim_id` with distinct `computed_at`. **(Round-1 update per F-PLAN-OQ1 — append-only replaces original `INSERT OR REPLACE` shape.)**
 5. `hai review weekly --json` output includes top-level `claim_cards` field with one entry per card for the requested week.
 6. Test count grows ≥ 8 vs W-EVCARD-DAILY baseline (migration 2 + cardinality 2 + payload-separation 2 + idempotency 2).
 7. `CHANGELOG.md` v0.2.0 entry names W-EVCARD-WEEKLY with user-facing wording "weekly review claims now persist with source-row provenance."
@@ -373,13 +380,22 @@ Days without plans: 2026-04-27, 2026-04-28, 2026-04-29, 2026-05-01, 2026-05-03.
 Run `hai daily` on past days where you have data, then re-run this command.
 ```
 
-No claim cards written on abstain (the abstain prose is itself non-quantitative; no atoms to validate).
+**Abstain metadata IS quantitative and IS validated** (round-1 correction per F-PLAN-03). The numbers `3`, `7`, `5` and the date lists are deterministic claims about the past week. They are validated **outside W58D** via a deterministic-by-construction path:
 
-**Data-quality rollup (per F-PHASE0-03).** Distinguish `stale_pull` from `retrospective_manual`:
+- Counts (`3 of 7`) derive directly from the SQL query result (`SELECT COUNT(*) FROM daily_plan WHERE for_date IN iso_week_dates AND superseded_by_plan_id IS NULL` for the numerator; `7` is constant). No prose authoring is involved; the integer is a literal substitution from query output.
+- Threshold (`5`) is a literal substitution from `thresholds.toml` `policy.review_weekly.coverage_threshold_days`, validated at threshold-injection-seam time per D13.
+- Date lists are direct enumerations of the SQL result rows.
 
-- `stale_pull`: `for_date < last_pull_at - data_quality_stale_pull_hours` AND `entry_mode='auto'` (or null/default treating as auto).
-- `retrospective_manual`: `for_date < last_pull_at` AND `entry_mode='manual'`.
-- The `entry_mode` column may need adding to existing `sync_run_log` rows if not present; ALTER stays in W52 if needed (additive, defaults to 'auto'). **D14 round 1 should verify whether `entry_mode` exists today and whether ALTER is needed.**
+W52's abstain-branch render is asserted by a deterministic test (`test_review_weekly_abstain_metadata.py`): the test seeds a fixture state DB with 3 plan-days in a 7-day window, runs `hai review weekly --week`, asserts the rendered prose substitutes the queried counts + the configured threshold + the queried date lists exactly. **No claim cards written on abstain because the validation is structurally simpler (literal substitution from query output)**, not because the prose is non-quantitative. The structural argument: if the substitution is byte-stable AND the query is correct, the prose claim is correct.
+
+**Round-1 framing correction.** The original PLAN said "no claim cards written on abstain (the abstain prose is itself non-quantitative; no atoms to validate)." That framing was incorrect — the abstain prose IS quantitative. The correct framing: claim cards are not written on abstain because abstain metadata uses a stricter deterministic-substitution path that doesn't go through prose authoring at all. The non-abstain (full-render) path uses claim cards because prose authoring introduces the risk W58D blocks.
+
+**Data-quality rollup (per F-PHASE0-03; round-1 corrected per F-PLAN-04).** Distinguish `stale_pull` from `retrospective_manual` using the **existing `sync_run_log.mode` column** (verified at `core/state/migrations/008_sync_run_log.sql:41`; current call sites use `mode="manual"` for manual intake and `mode="csv"` / `mode="live"` for pull paths per `cli/handlers/intake.py:162-167` + `cli/handlers/recommend.py:528-539`):
+
+- `stale_pull`: `for_date < started_at - data_quality_stale_pull_hours` AND `mode IN ('csv', 'live')` (auto-pull paths).
+- `retrospective_manual`: `for_date < started_at` AND `mode = 'manual'` (deliberate retrospective entry).
+
+**No new schema column.** The original PLAN proposed a new `entry_mode` column; that conflicted with the schema-group budget AND duplicated the existing `mode` column. **(Round-1 correction per F-PLAN-04: PLAN now derives `retrospective_manual` from existing `mode` + `source` without ALTER.)**
 
 **Supersession-reconciliation (per F-PHASE0-07).** All queries filter `superseded_by_plan_id IS NULL`. Multi-canonical day handling: if two non-superseded plans exist for the same `for_date`, surface BOTH in the weekly prose with explicit "multiple plans on this day" disposition (not silent latest-wins).
 
@@ -391,7 +407,7 @@ No claim cards written on abstain (the abstain prose is itself non-quantitative;
 3. Coverage threshold reads from `thresholds.toml` per D13 contract; threshold-injection-seam validation exists (negative test: invalid threshold value rejected at `load_thresholds` boundary).
 4. Supersession reconciliation correct: fixture week containing the 04-24 5-version chain renders with both `_v3` and `_v5` canonical plans surfaced; mid-chain `_v1`, `_v2`, `_v4` not surfaced.
 5. Data-quality rollup distinguishes `stale_pull` vs `retrospective_manual` with ≥4 fixture cases (auto-pull stale, manual-recent fresh, manual-retrospective, auto-pull fresh).
-6. Weekly claim cards (W-EVCARD-WEEKLY consumer) populated for every quantitative claim in non-abstain output. Test: count cards = count atomic claims in prose.
+6. Weekly claim cards (W-EVCARD-WEEKLY consumer) populated for every quantitative + comparative atomic claim in non-abstain output. Test: count cards = count of (quantitative + comparative) atoms in prose. **Qualitative atoms emit no card** — but a separate test asserts qualitative atoms contain no factual past-week content (mechanical: no numeric tokens, no date tokens, no comparison operators in qualitative atom_text). **(Round-1 addition per F-PLAN-10: qualitative-non-factual mechanical assertion.)**
 7. W-EXPLAIN-UX-CARRY consumed: each prose obligation from v0.1.14 review doc has been implemented OR explicitly deferred with named cycle destination in `reporting/plans/v0_2_0/explain_ux_obligations.md` (new file).
 8. Test count grows ≥ 18 vs W-EVCARD-WEEKLY baseline (aggregation 5 + abstain 3 + supersession 2 + data-quality 4 + claim-card 2 + W-EXPLAIN-UX 2).
 9. `hai capabilities --json` regenerates with new `hai review weekly` command + 3 flags. Snapshot regenerates in lockstep.
@@ -456,27 +472,34 @@ No claim cards written on abstain (the abstain prose is itself non-quantitative;
 8. Aggregate: weekly review render is BLOCKED if any atom is blocked.
 ```
 
-**Corpus shape (per maintainer Q2).** ≥150 fixtures. Composition (PLAN-author proposal):
+**Corpus shape (per maintainer Q2; round-1 corrected per F-PLAN-06).** ≥150 fixtures. Composition (PLAN-author proposal):
 
+- ≥85 known-bad fixtures (claim doesn't resolve; gate must block). **(Round-1 correction: was ≥75, raised to ≥85 to match the sub-category sum and remove the under-specified "overlap budget."** Sub-categories below sum to 85 with no overlap; corpus may grow beyond 85 known-bad with overlap explicitly tagged.)
 - ≥75 known-good fixtures (claim resolves cleanly).
-- ≥75 known-bad fixtures (claim doesn't resolve; gate must block).
+- Total ≥150.
 
-Sub-categories per `review_codex.md:1597-1602`:
-- Source-quality fixtures (stale, partial, absent, unavailable, pending) — ≥30 known-bad.
-- X-rule-conflict fixtures (user disagreed with firing) — ≥15 known-bad.
-- Source-signal-conflict fixtures — ≥15 known-bad.
-- Source-row drift (cited row_version no longer matches current; supersession case) — ≥15 known-bad.
-- Audit-ref orphan (cited audit-chain PK doesn't exist) — ≥10 known-bad. Subtotal ≥85 known-bad with overlap budget for cross-category fixtures.
+**Sub-categories** — provenance corrected per F-PLAN-06: 3 categories from `reporting/plans/future_strategy_2026-04-29/review_codex.md:1597-1602` (source-quality, x-rule-conflict, source-signal-conflict); 2 added by W58D (source-row-drift, audit-ref-orphan):
+
+| # | Category | Source | Min count |
+|---|---|---|---|
+| 1 | Source-quality (stale, partial, absent, unavailable, pending user input) | `review_codex.md:1599-1600` | ≥30 known-bad |
+| 2 | X-rule-conflict (user marked `disagreed_firing_ids`) | `review_codex.md:1601` | ≥15 known-bad |
+| 3 | Source-signal-conflict (deterministic detector exists) | `review_codex.md:1602` | ≥15 known-bad |
+| 4 | Source-row drift (cited row_version no longer matches current; supersession case) | W58D-specific (NOT in `review_codex.md`) | ≥15 known-bad |
+| 5 | Audit-ref orphan (cited audit-chain PK doesn't exist) | W58D-specific (NOT in `review_codex.md`) | ≥10 known-bad |
+| **Sum** | | | **85 known-bad** |
+
+**Manifest contract.** `evals/scenarios/factuality/index.json` exposes per-fixture `category` + `expected_outcome` (`block` or `pass`) tags + a stable `fixture_id`. The scoring runner reads the manifest and computes pass/block percentages from actual counts. **No hard-coded "73 of 75" examples** — all thresholds compute from manifest cardinality. **(Round-1 correction per F-PLAN-06.)**
 
 **Threshold acceptance (per maintainer Q2 + PLAN proposal; D14 pressure-tests):**
-- **Block ≥97% of known-bad** atoms. PLAN proposal: 73 of 75 minimum.
-- **Pass ≥99% of known-good** atoms. PLAN proposal: 74 of 75 minimum.
+- **Block ≥97% of known-bad** atoms (computed: `block_count / known_bad_count ≥ 0.97`).
+- **Pass ≥99% of known-good** atoms (computed: `pass_count / known_good_count ≥ 0.99`).
 
 **False-negative tolerance is named.** The "97% block / 99% pass" framing admits ≤3% false-negatives on bad atoms and ≤1% false-positives on good atoms. The cycle thesis is that this is honest, scalable, and pressure-tested over time as the corpus grows. **D14 round 1 should challenge whether 97% is the right block threshold — could be tighter (99%) or looser (95%) depending on corpus shape.**
 
 **Acceptance.**
 1. `core/eval/factuality_gate.py` implements gate logic per the proposal above. No LLM imports.
-2. Deterministic corpus at `evals/scenarios/factuality/` has ≥150 fixtures (≥75 known-good, ≥75 known-bad with sub-category coverage per the table above).
+2. Deterministic corpus at `evals/scenarios/factuality/` has ≥150 fixtures (≥75 known-good, ≥85 known-bad with sub-category coverage per the table above; round-1 raised from ≥75 known-bad to ≥85 per F-PLAN-06 sub-category-sum reconciliation).
 3. `hai eval run --scenario-set factuality` runs the gate over the corpus and reports `block ≥97% known-bad / pass ≥99% known-good`.
 4. `hai review weekly` invokes the gate by default; if any atom blocks, the command exits with `INTERNAL` exit code and stderr names the blocked atom + reason. `--bypass-factuality-gate` flag exists for developer-only override (logs WARN; not in agent_safe surface; not in capabilities `agent_safe: true` set).
 5. Threshold values live in `thresholds.toml`:
@@ -602,7 +625,9 @@ Sub-categories per `review_codex.md:1597-1602`:
 
 **G3. `hai eval run --scenario-set factuality` reports `block ≥97% / pass ≥99%`** over the deterministic corpus (≥150 fixtures).
 
-**G4. `hai eval run --scenario-set all` 100% pass-rate** maintained from v0.1.18 baseline (135 deterministic + 30 judge_adversarial + new factuality corpus = ≥315 fixtures).
+**G4a. `hai eval run --scenario-set all` 100% pass-rate over scored fixtures** (per F-PLAN-07 split). Scope: 135 deterministic domain/synthesis fixtures + the new W58D factuality corpus. **(Round-1 correction: judge_adversarial fixtures NOT counted in this gate — they are shape-only summary per `evals/cli.py:100-138` until v0.2.2 W58J wires real scoring. Counting shape-only fixtures in a 100% pass-rate gate is meaningless.)** **Implementation note:** v0.2.0 extends `--scenario-set all` semantics to fan out to deterministic + factuality scoring; W58D acceptance includes the CLI-semantics change.
+
+**G4b. `hai eval run --scenario-set judge_adversarial` shape-integrity summary** continues to emit `total_fixtures: 30` + per-category counts (existing v0.1.14 W-AI behaviour). No scoring assertion until v0.2.2 W58J. **(Round-1 split per F-PLAN-07.)**
 
 **G5. Persona matrix 13/13 with 0 findings + 0 crashes** (HAI_RUN_PERSONA_MATRIX=1; opt-in). Baseline holds from v0.1.18 close.
 
@@ -634,6 +659,22 @@ Sub-categories per `review_codex.md:1597-1602`:
 
 **G17. RELEASE_PROOF does NOT claim insight-ledger persistence** — v0.2.0 ships claim-cards (per-claim provenance), not insight-ledger (multi-week insights). Insight ledger is v0.2.1 W53.
 
+### 3.4 Abort + rollback shape (per F-PHASE0-13 + F-PLAN-08)
+
+**Schema-bearing release; rollback is forward-only.** v0.2.0 introduces migrations 027 + 028. Once shipped to PyPI, **never `git revert` of the schema-bearing release** — `pipx install` users have already applied 027 + 028 and a revert would leave them on schema-head pointing at deleted migration files. Hotfix shape: `v0.2.0.1` introduces a forward migration 029 that null-defaults columns, drops a flag, or reverses a problematic column-shape via additive change. Same pattern as v0.1.15.1 + v0.1.14.1 hotfixes.
+
+**Cycle abort triggers (in-cycle, pre-ship):**
+
+| Trigger | Action |
+|---|---|
+| W-PROV-2 cannot land all 5 dormant domains within 6d budget (R-V0.2.0-01) | Fork-defer late-domain(s) to v0.2.1 W-PROV-3 with named-partial-closure; W52 suppresses quantitative claims for deferred domains. Cycle proceeds. |
+| W58D cannot meet `block ≥97% / pass ≥99%` thresholds after corpus + threshold revision (R-V0.2.0-02) | **Cycle abort at G3.** Two paths: (a) re-author thresholds with explicit thesis-change CP + D14 rerun before re-opening; (b) defer W58D to v0.2.1 with explicit `partial-closure → v0.2.1 W58D-2` and `aborts-cycle-thesis` finding logged. Cycle does NOT ship if neither path adopts. |
+| Effort upper bound (37d) exceeded with W52 not yet at IR (R-V0.2.0-03) | Fork-defer ONE carrier (daily OR weekly) to v0.2.1 with explicit `partial-closure → v0.2.1 W-EVCARD-{DAILY,WEEKLY}-2`. **Stub-then-fill is NOT an option** (per F-PLAN-09 round-1 correction; honest partial-closure naming is the discipline). The choice between which carrier defers is a maintainer call at the trigger moment. |
+| F-PHASE0-08 absorption decision (R-V0.2.0-04) | If failed-run rows missing error_class affect ≥10% of any fixture week's daily plans → absorb into v0.2.0 as new W-RUNTIME-EVENT-OBSERVABILITY (additive, ~0.5d). If <10% → defer to v0.2.1 with named destination. |
+| Schema-group count drift (R-V0.2.0-05) | If D14 forces 2-group split despite C6, fork-defer ONE carrier (per F-PLAN-09 above). NOT a stub-then-fill. |
+
+**Post-ship hotfix shape.** A v0.2.0 critical bug surfaced post-PyPI ships as `v0.2.0.1` (hotfix tier per D15). Forward-only migration if schema fix needed. Lightweight RELEASE_PROOF; abbreviated audit chain. v0.1.14.1 + v0.1.15.1 are the precedents.
+
 ---
 
 ## 4. Risks register
@@ -662,9 +703,9 @@ Sub-categories per `review_codex.md:1597-1602`:
 
 **Severity.** Cycle-shape risk (not a single-WS risk).
 
-**Trigger.** Cumulative effort drift. Cycle approaches week-5 mid-IR with W-FACT-ATOM + W58D not yet at acceptance.
+**Trigger.** Cumulative effort drift. Cycle approaches 30d wall-clock at W52 IR open with W-FACT-ATOM + W58D not yet at acceptance.
 
-**Mitigation.** **Daily-card carrier (W-EVCARD-DAILY) ships as stub-then-fill split if effort tightens** — skeleton table + minimal payload in v0.2.0; full payload population in v0.2.1. **This is a deliberate cut from the maintainer-rigor-default per `feedback_pick_rigor_over_velocity.md`'s "if effort tightens, defer with named destination cycle" clause.** Trigger: cycle exceeds 30d wall-clock at W52 IR open.
+**Mitigation (round-1 corrected per F-PLAN-09).** **Honest partial-closure with named destination cycle** — fork-defer ONE carrier (daily OR weekly per maintainer call at trigger time) to v0.2.1 as `partial-closure → v0.2.1 W-EVCARD-{DAILY,WEEKLY}-2`. Acceptance + RELEASE_PROOF wording explicitly names the partial closure. **Stub-then-fill is NOT an option** — that conflicts with W-EVCARD-* release-blocker contract per F-PLAN-09 + AGENTS.md "honest partial-closure naming" pattern. The maintainer-rigor preference (`feedback_pick_rigor_over_velocity.md`) explicitly says "if effort tightens, defer with named destination cycle" — that is fork-defer, not stub-then-fill.
 
 **Probability.** Moderate (30%). v0.1.x retro Lesson 1 ("audit chains settle, not converge") implies D14 + IR rounds will surface scope-shape issues that absorb effort.
 
@@ -686,11 +727,11 @@ W52 surfaces "N failures, error_class missing in M of N rows" as honest data-qua
 
 **Severity.** Plan-coherence risk.
 
-**Trigger.** D14 surfaces an argument that migration 027 (daily card) + 028 (weekly card) + W52's aggregation tables are conceptually two or three schema groups, not one — thereby violating reconciliation C6 (one group per release).
+**Trigger.** D14 round 2+ surfaces an argument that migration 027 (daily card) + 028 (weekly card) are conceptually two schema groups, not one — thereby violating reconciliation C6 (one group per release).
 
-**Mitigation.** PLAN explicit framing: "evidence-card family + weekly aggregation tables" is one conceptual group per the W52 ↔ W58D design coupling per CP5. F-PHASE0-09 (Codex review of F-PHASE0-04) supports this: "schema-group count can remain one." If D14 disagrees, three options: (a) accept D14's recount + defer one carrier to v0.2.1 (changes cycle thesis); (b) merge 027 + 028 into one migration (preserves group count, slightly worse rollback granularity); (c) reopen reconciliation C6 with a fresh CP.
+**Mitigation (round-1 corrected per F-PLAN-05).** PLAN's framing is **"evidence-card family"** = migration 027 + 028 only. **W52 produces no migration of its own** — it reads existing tables (accepted-state, audit-chain) and writes to `weekly_claim_card` (migration 028). The C6 schema-group count is 1, not 2 or 3. F-PHASE0-09 (Codex Phase 0) supports this: "schema-group count can remain one." If D14 round 2+ disagrees, three options: (a) accept D14's recount + fork-defer ONE carrier to v0.2.1 with named-partial-closure (per §3.4 abort table + F-PLAN-09); (b) merge 027 + 028 into one migration file (preserves group count, slightly worse rollback granularity); (c) reopen reconciliation C6 with a fresh CP.
 
-**Probability.** Low (20%). Two senior reviewers (Claude Phase 0 sweep + Codex round 1) both held the one-group framing.
+**Probability.** Low (15%). The §1.4 round-1 clarification eliminates the original ambiguity; both senior reviewers (Claude Phase 0 sweep + Codex round 1 F-PLAN-05) now hold the one-group framing with W52 = no migration.
 
 ---
 
@@ -719,21 +760,27 @@ W52 surfaces "N failures, error_class missing in M of N rows" as honest data-qua
 
 ---
 
-## 6. Open questions for D14 round 1
+## 6. Open questions for D14 round 2+
 
-**OQ-1. Per-domain locator emission shape.** PLAN proposes the recovery R6 conditional shape; should every domain follow that, or should any domain use always-emit instead? Trade-off: conditional matches the R-rule firing model (locators only when interesting); always-emit matches the W52-needs-it-everywhere consumption pattern. **PLAN-author leaning: per-domain choice documented in `per_domain_locator_emission.md`; D14 to verify whether the per-domain split is honest or whether one model dominates.**
+**Closed in round 1 (Codex D14 round 1, 2026-05-07):**
 
-**OQ-2. W58D threshold values (97% / 99%).** No published baseline. Should the proposal be tighter (99% / 99.5%) or looser (95% / 98%)? Trade-off: tighter = stronger story but more brittle as corpus grows; looser = more scalable but less defensible "honest factuality" claim. **PLAN-author leaning: 97/99 holds; D14 may pressure-test toward 99/99.5.**
+- ~~**OQ-1.** Per-domain locator emission shape.~~ **Closed.** Per-domain choice retained; D14 round 1 did not pressure-test this.
+- ~~**OQ-2.** W58D threshold values.~~ **Held at 97% / 99%** through D14 round 1; threshold computation now manifest-driven per F-PLAN-06 (no hard-coded examples).
+- ~~**OQ-3.** Daily evidence-card revision shape.~~ **Held at per-recommendation** through D14 round 1; superseded cards remain as audit history without a new column.
+- ~~**OQ-4.** F-PHASE0-08 absorption.~~ **Defer to v0.2.1** (default); criterion in §3.4 abort table.
+- ~~**OQ-5.** Schema-group count.~~ **One group** confirmed; §1.4 + §4 R-V0.2.0-05 + §2.D clarified per F-PLAN-05.
+- ~~**OQ-6.** Doc-only adjunct timing.~~ Held: parallelisable through Phase 2; W-MCP-THREAT load-bearing for ship-time.
+- ~~**OQ-7.** W52 capabilities-manifest delta.~~ Held: forward-compat handled by parser-tree contract.
 
-**OQ-3. Daily evidence-card revision shape.** PLAN defaults to per-recommendation (not per-recommendation-per-revision). When a recommendation supersedes another, the new recommendation gets a new card; old card stays as audit history but is marked superseded via the existing supersession chain (not a new column). **PLAN-author leaning: per-recommendation; D14 to verify whether per-revision-too is needed for v0.2.2 W58J judge consumption.**
+**Codex round 1 OQs adjudicated:**
 
-**OQ-4. F-PHASE0-08 absorption.** PLAN defaults to defer to v0.2.1; should v0.2.0 absorb the runtime_event_log error_class fix? **PLAN-author leaning: defer; absorbs only if ≥10% of fixture-week daily plans have failed runs lacking error_class.**
+- ~~**Codex Q1.** Append-only vs latest-only weekly cards.~~ **Append-only** per maintainer rigor preference; §2.C migration 028 schema updated.
+- ~~**Codex Q2.** W52 data-quality column choice.~~ **Existing `sync_run_log.mode`**; no schema delta per F-PLAN-04.
+- ~~**Codex Q3.** W-PROV-2 abort + deferred-domain shape.~~ **W52 suppresses quantitative claims for deferred domains** per §2.A partial-closure path + §3.4 abort table.
 
-**OQ-5. Schema-group count.** PLAN holds "one group" per F-PHASE0-09 + reconciliation C6. D14 may disagree. **PLAN-author leaning: one group; if D14 forces split, daily-card carrier defers to v0.2.1.**
+**Open for D14 round 2+ (none new from round 1; round 2 prompt may surface fresh items):**
 
-**OQ-6. Doc-only adjunct timing.** PLAN runs W-MCP-THREAT + W-COMP-LANDSCAPE + W-NOF1-METHOD in Phase 1 parallel. Is that realistic given single-maintainer + Phase 1's W-PROV-2 dominance? **PLAN-author leaning: doc-only adjuncts can lag into Phase 2; load-bearing constraint is W-MCP-THREAT lands by ship-time (v0.3 prereq).**
-
-**OQ-7. W52 capabilities-manifest delta.** New `hai review weekly` command + 3 flags. Manifest schema freeze is v0.2.3 W-30; v0.2.0 adds without freezing. Any forward-compat risk for the v0.2.3 freeze? **PLAN-author leaning: no — `hai review weekly` follows the same shape as existing `hai review` subcommands (`record`, `schedule`, `summary`). Forward-compat handled by the existing parser-tree contract.**
+PLAN-author note: the round-1 settling cleanly closed all 7 original OQs + Codex's 3 round-1 OQs. Round 2 will pressure-test whether round-1 fixes propagated everywhere (the canonical second-order issue per v0.1.x retro Lesson 1: round-2 catches what round-1 fixes introduced).
 
 ---
 
