@@ -1,0 +1,56 @@
+{
+  "category": "data_quality_variety",
+  "description": "Mixed sync run modes \u2014 fresh + stale_pull + retrospective.",
+  "expected": {
+    "atom_count": 7,
+    "atoms": [
+      {
+        "atom_text": "Your primary goal \u2014 lean cut \u2014 frames how this week's evidence reads.",
+        "atom_type": "qualitative",
+        "derivation_path": "literal",
+        "section_id": "header"
+      },
+      {
+        "atom_text": "This review is grounded in plan evidence from the canonical (non-superseded) version of each day.",
+        "atom_type": "qualitative",
+        "derivation_path": "literal",
+        "section_id": "header"
+      },
+      {
+        "atom_text": "You received 1 recovery recommendation on April 27.",
+        "atom_type": "quantitative",
+        "derivation_path": "aggregate",
+        "section_id": "domain_recovery"
+      },
+      {
+        "atom_text": "On April 27 the recovery recommendation was \"easy recovery\" at high confidence.",
+        "atom_type": "quantitative",
+        "derivation_path": "aggregate",
+        "section_id": "domain_recovery"
+      },
+      {
+        "atom_text": "Of 5 sync runs this week, 3 ran for the same day they covered, 1 pulled data older than 48 hours from upstream (stale-pull lane), 1 were manual backfill entries, and 0 could not be classified.",
+        "atom_type": "quantitative",
+        "derivation_path": "aggregate",
+        "section_id": "data_quality"
+      },
+      {
+        "atom_text": "You ran `hai daily` on 1 of 7 days this week.",
+        "atom_type": "quantitative",
+        "derivation_path": "aggregate",
+        "section_id": "cadence"
+      },
+      {
+        "atom_text": "This review is informational. Nothing here mutates intent, targets, or thresholds \u2014 that path is user-gated.",
+        "atom_type": "qualitative",
+        "derivation_path": "literal",
+        "section_id": "footer"
+      }
+    ]
+  },
+  "fixture_id": "ac_020_dq_mixed_modes",
+  "input": {
+    "markdown": "# Weekly review \u2014 2026-W18\n\n- Your primary goal \u2014 lean cut \u2014 frames how this week's evidence reads.\n- This review is grounded in plan evidence from the canonical (non-superseded) version of each day.\n\n## Recovery\n\n- You received 1 recovery recommendation on April 27.\n- On April 27 the recovery recommendation was \"easy recovery\" at high confidence.\n\n## Data quality\n\n- Of 5 sync runs this week, 3 ran for the same day they covered, 1 pulled data older than 48 hours from upstream (stale-pull lane), 1 were manual backfill entries, and 0 could not be classified.\n\n## Cadence\n\n- You ran `hai daily` on 1 of 7 days this week.\n\n## Notes\n\n- This review is informational. Nothing here mutates intent, targets, or thresholds \u2014 that path is user-gated.\n"
+  },
+  "schema_version": "atomic_claims_fixture.v1"
+}

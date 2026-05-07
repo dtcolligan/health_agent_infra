@@ -1,0 +1,13 @@
+{
+  "category": "abstain_branch",
+  "description": "Insufficient data \u2014 3 of 7 days have plans (under threshold of 5).",
+  "expected": {
+    "atom_count": 0,
+    "atoms": []
+  },
+  "fixture_id": "ac_017_abstain_three_days",
+  "input": {
+    "markdown": "# Weekly review \u2014 2026-W18\n\n**Insufficient data for this week.**\n\nPlans found: 3 of 7 days (threshold: \u22655).\nDays with plans: 2026-04-27, 2026-04-28, 2026-04-29.\nDays without plans: 2026-04-30, 2026-05-01, 2026-05-02, 2026-05-03.\n\nRun `hai daily` on past days where you have data, then re-run this command.\n"
+  },
+  "schema_version": "atomic_claims_fixture.v1"
+}

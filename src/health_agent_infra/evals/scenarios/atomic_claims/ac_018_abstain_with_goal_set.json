@@ -1,0 +1,13 @@
+{
+  "category": "abstain_branch",
+  "description": "Insufficient data even though primary goal set; goal does not change abstain disposition.",
+  "expected": {
+    "atom_count": 0,
+    "atoms": []
+  },
+  "fixture_id": "ac_018_abstain_with_goal_set",
+  "input": {
+    "markdown": "# Weekly review \u2014 2026-W18\n\n**Insufficient data for this week.**\n\nPlans found: 2 of 7 days (threshold: \u22655).\nDays with plans: 2026-04-27, 2026-04-28.\nDays without plans: 2026-04-29, 2026-04-30, 2026-05-01, 2026-05-02, 2026-05-03.\n\nRun `hai daily` on past days where you have data, then re-run this command.\n"
+  },
+  "schema_version": "atomic_claims_fixture.v1"
+}

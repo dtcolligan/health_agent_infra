@@ -1,0 +1,203 @@
+{
+  "categories": {
+    "abstain_branch": [
+      "ac_016_abstain_zero_days",
+      "ac_017_abstain_three_days",
+      "ac_018_abstain_with_goal_set"
+    ],
+    "cadence_variety": [
+      "ac_023_cadence_zero_runs",
+      "ac_024_cadence_seven_runs",
+      "ac_025_cadence_three_runs"
+    ],
+    "data_quality_variety": [
+      "ac_019_dq_all_fresh",
+      "ac_020_dq_mixed_modes",
+      "ac_021_dq_all_unclassifiable",
+      "ac_022_dq_high_stale_pull"
+    ],
+    "deferred_domain": [
+      "ac_011_one_deferred_running",
+      "ac_012_two_deferred",
+      "ac_013_three_deferred",
+      "ac_014_all_six_deferred",
+      "ac_015_deferred_with_goal_unset"
+    ],
+    "edge_cases": [
+      "ac_026_long_primary_goal",
+      "ac_027_special_chars_action",
+      "ac_028_single_rec_week",
+      "ac_029_high_atom_density",
+      "ac_030_rec_with_locator_lead_in"
+    ],
+    "full_render_minimal": [
+      "ac_001_one_domain_goal_set",
+      "ac_002_three_domains_goal_set",
+      "ac_003_six_domains_goal_set",
+      "ac_004_one_domain_goal_unset",
+      "ac_005_three_domains_goal_unset"
+    ],
+    "full_render_with_firings": [
+      "ac_006_phase_a_only_soften",
+      "ac_007_phase_b_only_adjust",
+      "ac_008_phase_a_and_b",
+      "ac_009_multiple_phase_a",
+      "ac_010_firings_across_recs"
+    ]
+  },
+  "description": "30-fixture corpus for W-FACT-ATOM parser precision validation (PLAN \u00a72.E acceptance #1). Each fixture pairs a W52-rendered markdown surface with its ground-truth atom triples (atom_text, atom_type, derivation_path, section_id). The ground truth is W52's own emission tagging \u2014 the legitimate target the parser is measured against.",
+  "fixtures": [
+    {
+      "atom_count": 9,
+      "category": "full_render_minimal",
+      "fixture_id": "ac_001_one_domain_goal_set"
+    },
+    {
+      "atom_count": 11,
+      "category": "full_render_minimal",
+      "fixture_id": "ac_002_three_domains_goal_set"
+    },
+    {
+      "atom_count": 17,
+      "category": "full_render_minimal",
+      "fixture_id": "ac_003_six_domains_goal_set"
+    },
+    {
+      "atom_count": 9,
+      "category": "full_render_minimal",
+      "fixture_id": "ac_004_one_domain_goal_unset"
+    },
+    {
+      "atom_count": 11,
+      "category": "full_render_minimal",
+      "fixture_id": "ac_005_three_domains_goal_unset"
+    },
+    {
+      "atom_count": 8,
+      "category": "full_render_with_firings",
+      "fixture_id": "ac_006_phase_a_only_soften"
+    },
+    {
+      "atom_count": 8,
+      "category": "full_render_with_firings",
+      "fixture_id": "ac_007_phase_b_only_adjust"
+    },
+    {
+      "atom_count": 8,
+      "category": "full_render_with_firings",
+      "fixture_id": "ac_008_phase_a_and_b"
+    },
+    {
+      "atom_count": 8,
+      "category": "full_render_with_firings",
+      "fixture_id": "ac_009_multiple_phase_a"
+    },
+    {
+      "atom_count": 11,
+      "category": "full_render_with_firings",
+      "fixture_id": "ac_010_firings_across_recs"
+    },
+    {
+      "atom_count": 8,
+      "category": "deferred_domain",
+      "fixture_id": "ac_011_one_deferred_running"
+    },
+    {
+      "atom_count": 9,
+      "category": "deferred_domain",
+      "fixture_id": "ac_012_two_deferred"
+    },
+    {
+      "atom_count": 12,
+      "category": "deferred_domain",
+      "fixture_id": "ac_013_three_deferred"
+    },
+    {
+      "atom_count": 11,
+      "category": "deferred_domain",
+      "fixture_id": "ac_014_all_six_deferred"
+    },
+    {
+      "atom_count": 8,
+      "category": "deferred_domain",
+      "fixture_id": "ac_015_deferred_with_goal_unset"
+    },
+    {
+      "atom_count": 0,
+      "category": "abstain_branch",
+      "fixture_id": "ac_016_abstain_zero_days"
+    },
+    {
+      "atom_count": 0,
+      "category": "abstain_branch",
+      "fixture_id": "ac_017_abstain_three_days"
+    },
+    {
+      "atom_count": 0,
+      "category": "abstain_branch",
+      "fixture_id": "ac_018_abstain_with_goal_set"
+    },
+    {
+      "atom_count": 7,
+      "category": "data_quality_variety",
+      "fixture_id": "ac_019_dq_all_fresh"
+    },
+    {
+      "atom_count": 7,
+      "category": "data_quality_variety",
+      "fixture_id": "ac_020_dq_mixed_modes"
+    },
+    {
+      "atom_count": 7,
+      "category": "data_quality_variety",
+      "fixture_id": "ac_021_dq_all_unclassifiable"
+    },
+    {
+      "atom_count": 7,
+      "category": "data_quality_variety",
+      "fixture_id": "ac_022_dq_high_stale_pull"
+    },
+    {
+      "atom_count": 7,
+      "category": "cadence_variety",
+      "fixture_id": "ac_023_cadence_zero_runs"
+    },
+    {
+      "atom_count": 7,
+      "category": "cadence_variety",
+      "fixture_id": "ac_024_cadence_seven_runs"
+    },
+    {
+      "atom_count": 7,
+      "category": "cadence_variety",
+      "fixture_id": "ac_025_cadence_three_runs"
+    },
+    {
+      "atom_count": 7,
+      "category": "edge_cases",
+      "fixture_id": "ac_026_long_primary_goal"
+    },
+    {
+      "atom_count": 7,
+      "category": "edge_cases",
+      "fixture_id": "ac_027_special_chars_action"
+    },
+    {
+      "atom_count": 7,
+      "category": "edge_cases",
+      "fixture_id": "ac_028_single_rec_week"
+    },
+    {
+      "atom_count": 18,
+      "category": "edge_cases",
+      "fixture_id": "ac_029_high_atom_density"
+    },
+    {
+      "atom_count": 7,
+      "category": "edge_cases",
+      "fixture_id": "ac_030_rec_with_locator_lead_in"
+    }
+  ],
+  "schema_version": "atomic_claims_index.v1",
+  "total_fixtures": 30
+}
