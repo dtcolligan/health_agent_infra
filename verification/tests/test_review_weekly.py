@@ -939,15 +939,19 @@ def test_cli_review_weekly_command_in_capabilities_manifest():
     entry = weekly[0]
     # Step 7 flips mutation to writes-state (cards persisted on
     # non-abstain path); agent_safe stays True per W-EVCARD-WEEKLY's
-    # append-only design (no destructive overwrites).
+    # append-only design (no destructive overwrites). v0.2.0 W58D
+    # step 7 adds --bypass-factuality-gate (developer-only override)
+    # + INTERNAL exit code (gate-blocked render).
     assert entry["mutation"] == "writes-state"
     assert entry["agent_safe"] is True
     assert "OK" in entry["exit_codes"]
     assert "USER_INPUT" in entry["exit_codes"]
+    assert "INTERNAL" in entry["exit_codes"]
     flag_names = {f["name"] for f in entry.get("flags", [])}
     assert {
         "--week", "--json", "--markdown", "--user-id",
         "--coverage-threshold", "--include-history", "--db-path",
+        "--bypass-factuality-gate",
     }.issubset(flag_names)
 
 

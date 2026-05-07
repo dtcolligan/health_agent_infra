@@ -1313,13 +1313,27 @@ def build_parser() -> argparse.ArgumentParser:
         "--db-path", default=None,
         help="State DB path (default: $HAI_STATE_DB or platform default).",
     )
+    p_rweek.add_argument(
+        "--bypass-factuality-gate",
+        action="store_true",
+        help=(
+            "DEVELOPER-ONLY override — disables the v0.2.0 W58D "
+            "deterministic factuality gate. The default path runs the "
+            "gate over every quantitative + comparative atom in the "
+            "rendered prose; if any atom fails to resolve against "
+            "source state the command exits INTERNAL and names the "
+            "blocked atom on stderr. With this flag set the gate is "
+            "skipped and a WARN is logged. Agents MUST NOT use this "
+            "flag — its presence on a render is an audit-chain hazard."
+        ),
+    )
     p_rweek.set_defaults(func=cmd_review_weekly)
     annotate_contract(
         p_rweek,
         mutation="writes-state",
         idempotent="no",
         json_output="opt-in",
-        exit_codes=("OK", "USER_INPUT"),
+        exit_codes=("OK", "USER_INPUT", "INTERNAL"),
         agent_safe=True,
         description=(
             "Render the weekly review surface — markdown or JSON — "

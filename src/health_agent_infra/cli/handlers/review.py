@@ -387,6 +387,65 @@ def cmd_review_weekly(args: argparse.Namespace) -> int:
             _NullConn(), aggregation, coverage, rollup,
         )
 
+        # v0.2.0 W58D — deterministic factuality gate. Runs against
+        # every quantitative + comparative atom in non-abstain
+        # prose. ``--bypass-factuality-gate`` skips the gate (logs
+        # WARN; developer-only override). Abstain branch runs no
+        # claim cards and no gate (validation is structurally simpler
+        # via deterministic substitution per F-PHASE0-02 + F-PLAN-03).
+        bypass = getattr(args, "bypass_factuality_gate", False)
+        if (
+            conn is not None
+            and coverage.weekly_status == "ok"
+            and not bypass
+        ):
+            from health_agent_infra.core.eval import (
+                ClaimGateInput,
+                run_factuality_gate,
+            )
+
+            claims = []
+            for section in bundle.sections:
+                for atom in section.atoms:
+                    if atom.atom_type not in (
+                        "quantitative", "comparative",
+                    ):
+                        continue
+                    claims.append(ClaimGateInput(
+                        atom_text=atom.atom_text,
+                        atom_type=atom.atom_type,
+                        locator_set=list(atom.locator_set),
+                        audit_refs=dict(atom.audit_refs),
+                        user_id=user_id,
+                        claim_id=atom.atom_id,
+                    ))
+            outcome = run_factuality_gate(conn, claims)
+            if not outcome.all_passed:
+                first = outcome.first_block()
+                print(
+                    f"hai review weekly: factuality gate BLOCKED — "
+                    f"atom {first.claim_id!r} failed to resolve "
+                    f"({first.block_reason.value if first.block_reason else 'unknown'}): "
+                    f"{first.block_detail}",
+                    file=sys.stderr,
+                )
+                print(
+                    f"  ({outcome.blocked} of "
+                    f"{outcome.total - outcome.skipped} validated atoms "
+                    f"blocked; rerun after data is corrected, or pass "
+                    f"--bypass-factuality-gate for a developer-only "
+                    f"render).",
+                    file=sys.stderr,
+                )
+                return exit_codes.INTERNAL
+        elif bypass:
+            print(
+                "hai review weekly: WARN — --bypass-factuality-gate "
+                "skipped W58D validation. Output may cite stale or "
+                "absent source state.",
+                file=sys.stderr,
+            )
+
         # Emit weekly_claim_card rows for every quantitative +
         # comparative atom in non-abstain prose (PLAN §2.D acceptance
         # #6). Append-only per W-EVCARD-WEEKLY: re-running for the

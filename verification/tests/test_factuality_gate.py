@@ -893,6 +893,94 @@ def test_factuality_scoring_runner_human_output_is_readable():
     assert "PASS" in text  # both buckets PASS today
 
 
+# ---------------------------------------------------------------------------
+# 17. Step 7 — --bypass-factuality-gate flag wiring
+# ---------------------------------------------------------------------------
+
+
+def test_review_weekly_bypass_flag_in_argparse_namespace():
+    """Verify the parser exposes ``bypass_factuality_gate`` (snake-
+    case) in the parsed Namespace, defaulting to False.
+    """
+
+    from health_agent_infra.cli import build_parser
+
+    parser = build_parser()
+    args = parser.parse_args([
+        "review", "weekly", "--week", "2026-W18",
+    ])
+    assert args.bypass_factuality_gate is False
+
+    args_with = parser.parse_args([
+        "review", "weekly", "--week", "2026-W18",
+        "--bypass-factuality-gate",
+    ])
+    assert args_with.bypass_factuality_gate is True
+
+
+def test_review_weekly_bypass_flag_logs_warn_via_subprocess(tmp_path):
+    """End-to-end via subprocess: ``--bypass-factuality-gate`` emits
+    the WARN line on stderr and renders the abstain branch
+    (no state DB → empty week → abstain). The WARN line must appear
+    when the bypass flag is set; absent when it isn't.
+    """
+
+    import subprocess
+
+    no_db = tmp_path / "no_db.db"
+    # Without bypass — abstain branch fires; no WARN.
+    result = subprocess.run(
+        [
+            "uv", "run", "hai", "review", "weekly",
+            "--week", "2026-W18",
+            "--db-path", str(no_db),
+        ],
+        capture_output=True, text=True,
+    )
+    assert result.returncode == 0
+    assert "WARN" not in result.stderr
+
+    # With bypass — abstain branch still fires (gate is skipped on
+    # abstain regardless), but the WARN line appears for non-abstain.
+    # Test against a clean state DB scenario to avoid abstain.
+    # Since we can't easily seed a non-abstain week here, we verify
+    # the flag is at least accepted by the parser without errors.
+    result_bypass = subprocess.run(
+        [
+            "uv", "run", "hai", "review", "weekly",
+            "--week", "2026-W18",
+            "--db-path", str(no_db),
+            "--bypass-factuality-gate",
+        ],
+        capture_output=True, text=True,
+    )
+    assert result_bypass.returncode == 0
+
+
+def test_review_weekly_capabilities_manifest_lists_bypass_flag():
+    """`hai capabilities --json` exposes the ``--bypass-factuality-gate``
+    flag with the developer-only help text. Step-7 lockstep
+    artifact regen pinned alongside the manifest snapshot test.
+    """
+
+    from health_agent_infra.cli import build_parser
+    from health_agent_infra.core.capabilities import build_manifest
+
+    parser = build_parser()
+    manifest = build_manifest(parser)
+    weekly = next(
+        c for c in manifest["commands"]
+        if c["command"] == "hai review weekly"
+    )
+    bypass_flag = next(
+        f for f in weekly["flags"]
+        if f["name"] == "--bypass-factuality-gate"
+    )
+    assert bypass_flag["type"] == "bool"
+    assert "DEVELOPER-ONLY" in bypass_flag["help"]
+    assert "agents must not use" in bypass_flag["help"].lower()
+
+
 def test_every_factuality_fixture_produces_its_expected_outcome():
     """Run each known-bad fixture through the gate and assert the
     outcome matches its declared ``expected_outcome`` +

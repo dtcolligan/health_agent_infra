@@ -4005,7 +4005,8 @@
       "description": "Render the weekly review surface \u2014 markdown or JSON \u2014 from the canonical (non-superseded) plan evidence for the requested ISO week. Emits an abstain branch when fewer than the threshold of days have canonical plans. On the non-abstain path also persists weekly_claim_card rows (one per quantitative + comparative atomic claim) for downstream W58D factuality validation; cards are append-only so re-running with corrected data adds rows and the canonical-latest view returns the newest set.",
       "exit_codes": [
         "OK",
-        "USER_INPUT"
+        "USER_INPUT",
+        "INTERNAL"
       ],
       "flags": [
         {
@@ -4091,6 +4092,18 @@
           "positional": false,
           "required": false,
           "type": "str"
+        },
+        {
+          "action": "store_true",
+          "aliases": [],
+          "choices": null,
+          "default": false,
+          "help": "DEVELOPER-ONLY override \u2014 disables the v0.2.0 W58D deterministic factuality gate. The default path runs the gate over every quantitative + comparative atom in the rendered prose; if any atom fails to resolve against source state the command exits INTERNAL and names the blocked atom on stderr. With this flag set the gate is skipped and a WARN is logged. Agents MUST NOT use this flag \u2014 its presence on a render is an audit-chain hazard.",
+          "name": "--bypass-factuality-gate",
+          "nargs": 0,
+          "positional": false,
+          "required": false,
+          "type": "bool"
         }
       ],
       "idempotent": "no",
