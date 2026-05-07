@@ -28,23 +28,31 @@
 ```bash
 pwd                                          # /Users/domcolligan/health_agent_infra
 git branch --show-current                    # main
-git log --oneline 20c2129..HEAD              # the 6 round-1 response commits
+git log --oneline 20c2129..HEAD              # round-1 fix commits + this prompt + any meta
 git status                                   # clean (untracked planning artifacts ok)
 ```
 
-Expected `git log` output (top → bottom):
+The round-1 → round-2 commit window starts at the round-1 IR
+prompt commit (`20c2129`). The required content is the 5 fix
+commits + 1 IR-response artifact commit; this prompt and any
+subsequent doc-only meta-commits ride on top and are expected
+extras, not Step-0 mismatches. Confirm the 5 + 1 are present:
 
-```
-294e82d fix(v0.2.0): IR R1 F-IR-01 — W58D drift lane uses real-schema column
-7a5f7ac fix(v0.2.0): IR R1 F-IR-05 — multi-canonical disposition reachable
-bc3ba80 fix(v0.2.0): IR R1 F-IR-02 — mypy ship gate clean
-b8e10e4 docs(v0.2.0): D15 IR round 1 response — SHIP_WITH_FIXES verdict
-ccf3cbd fix(v0.2.0): IR R1 F-IR-03 — bandit B608 nosec placement
-ea4c432 fix(v0.2.0): IR R1 F-IR-04 — summary-surface freshness sweep
+```bash
+git log --oneline --grep='^fix(v0.2.0): IR R1' 20c2129..HEAD
+git log --oneline --grep='IR round 1 response' 20c2129..HEAD
 ```
 
-If anything mismatches, stop and surface. Ignore
-`/Users/domcolligan/Documents/`.
+The first command must list **exactly 5** commits with subjects
+matching `fix(v0.2.0): IR R1 F-IR-{01,02,03,04,05}`. The second
+command must list **exactly 1** commit (`docs(v0.2.0): D15 IR
+round 1 response — SHIP_WITH_FIXES verdict`). The diff window
+also includes this round-2 prompt and any doc-only follow-ups
+the maintainer added (e.g., a Step-0 tolerance fix); those are
+the expected meta-commits, not findings.
+
+If the `--grep` searches return the wrong count (≠ 5 / ≠ 1),
+stop and surface. Ignore `/Users/domcolligan/Documents/`.
 
 ---
 
