@@ -3,6 +3,8 @@
 A 10-minute guided read of the HAI reference runtime, for someone
 (including future-you) coming back cold. For the repo-wide research
 frame, read [`../../PROJECT_FRAME.md`](../../PROJECT_FRAME.md) first.
+For the HAI operator manual, read
+[`hai_reference_runtime.md`](hai_reference_runtime.md).
 For exact HAI version, schema head, command count, and release posture, read
 [`current_system_state.md`](current_system_state.md) first.
 

@@ -26,9 +26,11 @@ When opening a fresh session, read in this order:
 3. **`research/runtime_contracts_paper/PAPER_FRAME.md`** — locked paper /
    benchmark framing.
 4. **`benchmarks/governed_agent_bench/README.md`** — benchmark scope.
-5. **`README.md`** — repo story + HAI quickstart.
-6. **`ARCHITECTURE.md`** + **`REPO_MAP.md`** if you need to find something.
-7. **`reporting/plans/README.md`** only when you need HAI release history or
+5. **`README.md`** — research-facing repo overview.
+6. **`reporting/docs/hai_reference_runtime.md`** if you need HAI install,
+   operator workflow, domains, or CLI surface.
+7. **`ARCHITECTURE.md`** + **`REPO_MAP.md`** if you need to find something.
+8. **`reporting/plans/README.md`** only when you need HAI release history or
    a specific HAI runtime cycle plan.
 
 For a "what just shipped" question, read

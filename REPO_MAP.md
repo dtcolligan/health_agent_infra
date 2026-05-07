@@ -2,9 +2,9 @@
 
 One-page orientation: what every top-level entry is, what is current
 versus historical, and where to look next. Pair with
-[`README.md`](README.md) for the product story and
-[`reporting/docs/tour.md`](reporting/docs/tour.md) for the 10-minute
-guided read.
+[`README.md`](README.md) for the research-facing repo overview and
+[`reporting/docs/hai_reference_runtime.md`](reporting/docs/hai_reference_runtime.md)
+for the HAI operator manual.
 
 ## Top-level entries
 
@@ -16,7 +16,7 @@ guided read.
 | [`src/`](src/health_agent_infra/) | active runtime | The `health_agent_infra` Python package: CLI, core orchestration, per-domain logic, packaged skills, packaged eval framework, the committed Garmin CSV fixture. This is the shipped wheel. |
 | [`reporting/`](reporting/) | HAI docs + proof + plans + frozen prototypes | HAI reference-runtime narrative material. See [`reporting/README.md`](reporting/README.md) for the four-subdir map. |
 | [`verification/`](verification/) | active tests + active evals + legacy scripts | The repo verification surface: pytest suite, eval docs/scenarios, harnesses, drift checks, and legacy verification scripts. See [`verification/README.md`](verification/README.md) for the layout, including the symlinks into local generated data. |
-| [`README.md`](README.md) | active docs | Repo overview, HAI install, CLI surface, roadmap pointers. |
+| [`README.md`](README.md) | active docs | Research-facing repo overview, artifact map, current priority, and read-next links. |
 | [`CHANGELOG.md`](CHANGELOG.md) | active docs | Public release history. |
 | [`AGENTS.md`](AGENTS.md) | active docs | Agent-facing operating contract for Codex, Claude Code, and similar coding agents. |
 | [`CLAUDE.md`](CLAUDE.md) | active docs | Claude Code shim that imports `AGENTS.md` and adds Claude-specific notes. |
@@ -54,7 +54,7 @@ checked-in repo shape.
 |---|---|
 | Understand the current objective | [`PROJECT_FRAME.md`](PROJECT_FRAME.md), then [`research/runtime_contracts_paper/PAPER_FRAME.md`](research/runtime_contracts_paper/PAPER_FRAME.md) |
 | Understand the benchmark | [`benchmarks/governed_agent_bench/README.md`](benchmarks/governed_agent_bench/README.md) |
-| Understand HAI as software | [`README.md`](README.md) |
+| Understand HAI as software | [`reporting/docs/hai_reference_runtime.md`](reporting/docs/hai_reference_runtime.md), then [`reporting/docs/tour.md`](reporting/docs/tour.md) |
 | Know what is shipped right now | [`reporting/docs/current_system_state.md`](reporting/docs/current_system_state.md), then [`CHANGELOG.md`](CHANGELOG.md) and [`AUDIT.md`](AUDIT.md) |
 | Take the guided 10-minute tour | [`reporting/docs/tour.md`](reporting/docs/tour.md) |
 | Read the architecture | [`reporting/docs/architecture.md`](reporting/docs/architecture.md) |

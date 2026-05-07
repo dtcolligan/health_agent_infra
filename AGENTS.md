@@ -47,7 +47,9 @@ Authoritative orientation:
 - `PROJECT_FRAME.md` - canonical research framing and priority order
 - `research/runtime_contracts_paper/PAPER_FRAME.md` - locked paper frame
 - `benchmarks/governed_agent_bench/README.md` - benchmark scope and MVP
-- `README.md` - product story, install, CLI surface
+- `README.md` - research-facing repo overview
+- `reporting/docs/hai_reference_runtime.md` - HAI install, operator
+  workflow, domains, and CLI surface
 - `ARCHITECTURE.md` - one-page architecture
 - `REPO_MAP.md` - every top-level entry classified active/historical
 - `reporting/docs/current_system_state.md` - latest shipped truth
@@ -349,7 +351,9 @@ Drift in any of these is the trust hazard a second user hits first:
 - [ ] `AUDIT.md` has a new entry for the just-shipped cycle (round table +
   outcome verdict + RELEASE_PROOF link). v0.1.10/v0.1.11/etc. cannot
   silently fall off the index.
-- [ ] `README.md` "Now/Next" or equivalent reflects current state.
+- [ ] `README.md` reflects the research frame and current artifact status.
+- [ ] `reporting/docs/hai_reference_runtime.md` reflects HAI install,
+  operator workflow, domains, and CLI surface.
   Historical "v0.1.X added Y" prose can stay.
 - [ ] `PROJECT_FRAME.md` and
   `research/runtime_contracts_paper/PAPER_FRAME.md` still match any
@@ -543,10 +547,11 @@ CI runs `verification/tests/`. The suite includes docs and skill/CLI drift check
 ## When In Doubt
 
 Read `PROJECT_FRAME.md`, `research/runtime_contracts_paper/PAPER_FRAME.md`,
-`README.md`, `REPO_MAP.md`, `reporting/docs/architecture.md`,
-`reporting/docs/non_goals.md`, and `ROADMAP.md`. If the question is about
-HAI release history, then read `reporting/plans/README.md` and the relevant
-cycle plan. If still unclear, ask Dom rather than guessing.
+`README.md`, `REPO_MAP.md`, `ROADMAP.md`, `reporting/docs/architecture.md`,
+and `reporting/docs/non_goals.md`. If the question is about HAI operation,
+also read `reporting/docs/hai_reference_runtime.md`. If the question is
+about HAI release history, then read `reporting/plans/README.md` and the
+relevant cycle plan. If still unclear, ask Dom rather than guessing.
 
 The planning tree under `reporting/plans/` has a structured shape as of
 2026-04-29:

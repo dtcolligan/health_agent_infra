@@ -130,13 +130,15 @@ If you only have time for one: `success_framework_v1.md`.
 
 **Read in order:**
 
-1. `AGENTS.md` (project root) — operating contract.
-2. `README.md` (project root) — product story + quickstart.
-3. `ARCHITECTURE.md` (project root) — runtime shape.
-4. `REPO_MAP.md` (project root) — every directory classified.
-5. `PROJECT_FRAME.md` — current research frame.
-6. `research/runtime_contracts_paper/PAPER_FRAME.md` — paper frame.
-7. `reporting/plans/post_v0_1_18/strategic_plan_v2.md` — HAI runtime
+1. `PROJECT_FRAME.md` — current research frame.
+2. `AGENTS.md` (project root) — operating contract.
+3. `research/runtime_contracts_paper/PAPER_FRAME.md` — paper frame.
+4. `README.md` (project root) — research-facing repo overview.
+5. `REPO_MAP.md` (project root) — every directory classified.
+6. `reporting/docs/hai_reference_runtime.md` — HAI operator manual,
+   if the task touches HAI software.
+7. `ARCHITECTURE.md` (project root) — runtime shape.
+8. `reporting/plans/post_v0_1_18/strategic_plan_v2.md` — HAI runtime
    strategy before the research reframe.
 
 ## I'm reviewing a specific past release.

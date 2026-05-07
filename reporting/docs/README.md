@@ -1,8 +1,9 @@
 # HAI Docs — Index
 
 Current documentation for the HAI reference runtime. Start with
-`current_system_state.md` if you need the latest HAI runtime truth;
-start with `architecture.md` if this is your first architecture read.
+`hai_reference_runtime.md` if you want the operator/product manual,
+`current_system_state.md` if you need the latest HAI runtime truth, and
+`architecture.md` if this is your first architecture read.
 
 Project-wide research framing lives at
 [`../../PROJECT_FRAME.md`](../../PROJECT_FRAME.md) and
@@ -28,6 +29,9 @@ itself (docs / artifacts / plans / experiments), see
 - [`current_system_state.md`](current_system_state.md) — current package
   version, schema head, command count, release posture, and next-cycle
   roles. This is the shortest "what is true now?" document.
+- [`hai_reference_runtime.md`](hai_reference_runtime.md) — HAI-specific
+  operator manual: install, daily workflow, domains, data paths,
+  boundaries, and command groups.
 - [`architecture.md`](architecture.md) — pipeline diagram,
   code-vs-skill boundary, R-rule / X-rule intro, package layout.
 - [`host_agent_contract.md`](host_agent_contract.md) — compact
@@ -49,7 +53,7 @@ itself (docs / artifacts / plans / experiments), see
 | Reader | Read |
 |---|---|
 | Research / benchmark contributor | [`../../PROJECT_FRAME.md`](../../PROJECT_FRAME.md), [`../../research/runtime_contracts_paper/PAPER_FRAME.md`](../../research/runtime_contracts_paper/PAPER_FRAME.md), [`../../benchmarks/governed_agent_bench/README.md`](../../benchmarks/governed_agent_bench/README.md) |
-| User | [`current_system_state.md`](current_system_state.md), [`privacy.md`](privacy.md), [`non_goals.md`](non_goals.md), [`backup_and_recovery.md`](backup_and_recovery.md) |
+| User | [`hai_reference_runtime.md`](hai_reference_runtime.md), [`current_system_state.md`](current_system_state.md), [`privacy.md`](privacy.md), [`non_goals.md`](non_goals.md), [`backup_and_recovery.md`](backup_and_recovery.md) |
 | Host-agent integrator | [`host_agent_contract.md`](host_agent_contract.md), [`agent_integration.md`](agent_integration.md), [`agent_cli_contract.md`](agent_cli_contract.md), [`cli_exit_codes.md`](cli_exit_codes.md), [`glossary.md`](glossary.md) |
 | Runtime contributor | [`architecture.md`](architecture.md), [`state_model_v1.md`](state_model_v1.md), [`domains/README.md`](domains/README.md), [`how_to_add_a_domain.md`](how_to_add_a_domain.md), [`how_to_add_a_pull_adapter.md`](how_to_add_a_pull_adapter.md) |
 | Release auditor / maintainer | [`current_system_state.md`](current_system_state.md), [`../../AUDIT.md`](../../AUDIT.md), [`../../ROADMAP.md`](../../ROADMAP.md), [`../plans/README.md`](../plans/README.md) |

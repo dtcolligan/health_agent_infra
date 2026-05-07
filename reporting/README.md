@@ -17,7 +17,7 @@ This directory has four subdirectories, each with a distinct role.
 
 | Path | Class | Role |
 |---|---|---|
-| [`docs/`](docs/) | active HAI docs (with `archive/` for pre-rebuild doctrine) | HAI reference-runtime documentation: current system state, architecture, x-rules, non-goals, state model, tour, extension paths, positioning, query taxonomy, memory model, explainability, grounded-expert scope. Start at [`docs/README.md`](docs/README.md). |
+| [`docs/`](docs/) | active HAI docs (with `archive/` for pre-rebuild doctrine) | HAI reference-runtime documentation: operator manual, current system state, architecture, x-rules, non-goals, state model, tour, extension paths, positioning, query taxonomy, memory model, explainability, grounded-expert scope. Start at [`docs/README.md`](docs/README.md). |
 | [`artifacts/`](artifacts/) | active proof + archived bundles | The sole canonical checked-in proof root. Active proof is the multi-domain eval capture under `flagship_loop_proof/`; older single-domain bundles live under `archive/`; the Phase 0 preflight capture is preserved under `phase_0/`. See [`artifacts/README.md`](artifacts/README.md). |
 | [`plans/`](plans/) | mixed HAI strategy + release history + historical archive | HAI runtime strategic/tactical docs, per-cycle audit folders (`v0_1_*`, `v0_2_*`), historical superseded docs under `historical/`, and deep strategy reviews under dated subdirs. See [`plans/README.md`](plans/README.md). |
 | [`experiments/`](experiments/) | historical / archived prototypes | Throwaway prototypes from Phase 0.5 and Phase 2.5 that decided whether to commit to specific architectural bets. Frozen as proof of those decisions; **not** living code. See [`experiments/README.md`](experiments/README.md). |
