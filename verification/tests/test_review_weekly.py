@@ -23,10 +23,17 @@ prose builder + render + CLI tests.
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 from datetime import date
 from pathlib import Path
 
+from health_agent_infra.core.review.prose_builder import (
+    WeeklyAtom,
+    WeeklyProseBundle,
+    build_weekly_prose,
+    load_primary_goal,
+)
 from health_agent_infra.core.review.weekly import (
     ACCEPTED_STATE_TABLES,
     DATA_QUALITY_CLASSIFICATIONS,
@@ -34,6 +41,7 @@ from health_agent_infra.core.review.weekly import (
     WeeklySyncRunRow,
     classify_sync_run_quality,
     compute_data_quality_rollup,
+    evaluate_weekly_coverage,
     iso_week_dates,
     load_weekly_aggregation,
 )
@@ -582,3 +590,346 @@ def test_accepted_state_tables_whitelist_covers_six_domains():
             "recovery", "running", "sleep",
             "stress", "strength", "nutrition",
         }
+
+
+# ---------------------------------------------------------------------------
+# Tests 12-17 — prose-builder obligation hooks (W-EXPLAIN-UX-CARRY 1-6)
+# ---------------------------------------------------------------------------
+
+
+def _seed_full_week(conn: sqlite3.Connection) -> None:
+    """Seed a full 7-day week (5 plan-days + 2 missing) with one
+    recovery recommendation + an X9 firing on the same plan + a
+    user_memory primary_goal entry. Used by the obligation hook
+    tests that need real prose to assert against.
+    """
+
+    # 5 plan-days — over the abstain threshold so the prose builder
+    # produces real sections.
+    plan_dates = [
+        "2026-04-27", "2026-04-28", "2026-04-29",
+        "2026-04-30", "2026-05-01",
+    ]
+    for d in plan_dates:
+        _insert_plan(
+            conn,
+            daily_plan_id=f"plan_{d}_full",
+            for_date=d,
+            superseded_by=None,
+        )
+        _insert_recommendation(
+            conn,
+            recommendation_id=f"rec_{d}_full",
+            daily_plan_id=f"plan_{d}_full",
+            for_date=d,
+            domain="recovery",
+            action="easy_recovery",
+        )
+    # X9 firing on the 04-28 plan (Phase B).
+    conn.execute(
+        "INSERT INTO x_rule_firing ("
+        "  daily_plan_id, user_id, x_rule_id, tier, affected_domain, "
+        "  trigger_note, mutation_json, source_signals_json, fired_at"
+        ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (
+            "plan_2026-04-28_full", USER, "X9", "adjust", "recovery",
+            "training intensity bump", None, "{}",
+            "2026-04-28T07:00:01Z",
+        ),
+    )
+    # Phase A (X1a) firing on the 04-29 plan.
+    conn.execute(
+        "INSERT INTO x_rule_firing ("
+        "  daily_plan_id, user_id, x_rule_id, tier, affected_domain, "
+        "  trigger_note, mutation_json, source_signals_json, fired_at"
+        ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (
+            "plan_2026-04-29_full", USER, "X1a", "soften", "recovery",
+            "sleep debt moderate", None, "{}",
+            "2026-04-29T07:00:01Z",
+        ),
+    )
+    # primary_goal in user_memory.
+    conn.execute(
+        "INSERT INTO user_memory ("
+        "  memory_id, user_id, category, key, value, "
+        "  domain, created_at, archived_at, source, ingest_actor"
+        ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (
+            "mem_goal_1", USER, "goal", "primary_goal",
+            "lean cut while preserving strength",
+            None, "2026-04-25T10:00:00Z", None,
+            "user_manual", "claude_agent_v1",
+        ),
+    )
+    conn.commit()
+
+
+def _build_prose_for_full_week(
+    conn: sqlite3.Connection,
+    *,
+    deferred_domains: list[str] | None = None,
+) -> WeeklyProseBundle:
+    agg = load_weekly_aggregation(
+        conn, iso_week="2026-W18", user_id=USER,
+    )
+    coverage = evaluate_weekly_coverage(
+        agg, coverage_threshold_days=5,
+    )
+    rollup = compute_data_quality_rollup(
+        agg.sync_runs, stale_pull_hours=48,
+    )
+    return build_weekly_prose(
+        conn, agg, coverage, rollup,
+        deferred_domains=deferred_domains,
+    )
+
+
+def _all_atom_text(bundle: WeeklyProseBundle) -> str:
+    return "\n".join(
+        atom.atom_text
+        for section in bundle.sections
+        for atom in section.atoms
+    )
+
+
+def test_prose_header_echoes_primary_goal(tmp_path: Path):
+    """W-EXPLAIN-UX-CARRY obligation #5 (F-EXPLAIN-05): weekly-
+    review prose contains the user's primary_goal value as the
+    first noun phrase of the body, sourced from user_memory.
+    """
+
+    conn = _db(tmp_path)
+    try:
+        _seed_full_week(conn)
+        bundle = _build_prose_for_full_week(conn)
+        assert bundle.primary_goal == "lean cut while preserving strength"
+        # First section is the header; first atom is the goal echo.
+        header = bundle.sections[0]
+        assert header.section_id == "header"
+        first_atom = header.atoms[0]
+        assert first_atom.atom_id == "header.goal_echo"
+        assert "lean cut while preserving strength" in first_atom.atom_text
+    finally:
+        conn.close()
+
+
+def test_prose_no_xrule_id_outside_parens(tmp_path: Path):
+    """W-EXPLAIN-UX-CARRY obligation #1 (F-EXPLAIN-01): weekly-
+    review prose contains zero opaque `X<N>` rule-ID strings outside
+    parentheses. `X9` and `X1a` from the seeded firings must surface
+    only in `(X9)` / `(X1a)` audit citations.
+    """
+
+    conn = _db(tmp_path)
+    try:
+        _seed_full_week(conn)
+        bundle = _build_prose_for_full_week(conn)
+        text = _all_atom_text(bundle)
+        # Find every "X<N>" or "X<Nx>" pattern in the prose.
+        for match in re.finditer(r"X\d+[a-z]?", text):
+            start = match.start()
+            end = match.end()
+            # Look for the nearest "(" before and ")" after — the
+            # string must be inside a parenthetical group.
+            before = text[:start]
+            open_idx = before.rfind("(")
+            close_idx = before.rfind(")")
+            assert open_idx > close_idx, (
+                f"raw rule-ID {match.group()} at offset {start} "
+                f"appears outside parentheses in:\n{text}"
+            )
+            after = text[end:]
+            assert ")" in after.split("\n", 1)[0], (
+                f"raw rule-ID {match.group()} at offset {start} "
+                f"is not closed by ')' on the same line:\n{text}"
+            )
+    finally:
+        conn.close()
+
+
+def test_prose_no_phase_a_b_raw_strings(tmp_path: Path):
+    """W-EXPLAIN-UX-CARRY obligation #2 (F-EXPLAIN-02): markdown
+    weekly-review never exposes raw `phase_a` / `phase_b` keys.
+    The runtime concept surfaces as inline prose ("rules that
+    shaped the recommendation" / "rules that adjusted the result
+    after the skill ran").
+    """
+
+    conn = _db(tmp_path)
+    try:
+        _seed_full_week(conn)
+        bundle = _build_prose_for_full_week(conn)
+        text = _all_atom_text(bundle)
+        assert "phase_a" not in text
+        assert "phase_b" not in text
+        # Inline prose IS present for the seeded firings.
+        assert (
+            "rules that shaped the recommendation" in text.lower()
+            or "rules that adjusted the result" in text.lower()
+        )
+    finally:
+        conn.close()
+
+
+def test_prose_no_synthesis_meta_string(tmp_path: Path):
+    """W-EXPLAIN-UX-CARRY obligation #3 (F-EXPLAIN-03): markdown
+    weekly-review never contains the string `synthesis_meta`. The
+    JSON render layer (step 5) keeps it; prose does not.
+    """
+
+    conn = _db(tmp_path)
+    try:
+        _seed_full_week(conn)
+        bundle = _build_prose_for_full_week(conn)
+        text = _all_atom_text(bundle)
+        assert "synthesis_meta" not in text
+    finally:
+        conn.close()
+
+
+def test_prose_no_raw_caveat_tokens(tmp_path: Path):
+    """W-EXPLAIN-UX-CARRY obligation #4 P0 (F-EXPLAIN-04): no
+    caveat-token string (e.g. `calorie_surplus_trend`,
+    `resting_hr_spike_3_days_running`) appears in weekly-review
+    prose. Rationale routes through translate_caveat.
+
+    Test: seed a recommendation with a known caveat token in its
+    rationale; assert the rendered prose contains the translation
+    but NOT the raw token.
+    """
+
+    conn = _db(tmp_path)
+    try:
+        _seed_full_week(conn)
+        # Override the 04-27 recommendation to carry a reason_token
+        # in its rationale.
+        conn.execute(
+            "UPDATE recommendation_log SET payload_json = ? "
+            "WHERE recommendation_id = 'rec_2026-04-27_full'",
+            (json.dumps({
+                "action": "easy_recovery",
+                "domain": "recovery",
+                "rationale": [
+                    {"reason_token": "resting_hr_spike_3_days_running"},
+                ],
+            }),),
+        )
+        conn.commit()
+        bundle = _build_prose_for_full_week(conn)
+        text = _all_atom_text(bundle)
+        # The raw token must NOT appear.
+        assert "resting_hr_spike_3_days_running" not in text
+        # The translated phrase MUST appear.
+        assert (
+            "resting heart rate has been elevated for 3 days running"
+            in text
+        )
+    finally:
+        conn.close()
+
+
+def test_prose_locator_cited_lead_in(tmp_path: Path):
+    """W-EXPLAIN-UX-CARRY obligation #6 (F-EXPLAIN-07): every claim
+    with `evidence_locators` is preceded by prose that names at
+    least one of the locator's pk-fields.
+    """
+
+    conn = _db(tmp_path)
+    try:
+        _seed_full_week(conn)
+        # Stamp a locator on the 04-28 recommendation.
+        locator = {
+            "table": "accepted_recovery_state_daily",
+            "pk": {"as_of_date": "2026-04-28", "user_id": USER},
+            "row_version": "2026-04-28T07:00:00Z",
+        }
+        conn.execute(
+            "UPDATE recommendation_log "
+            "SET evidence_locators_json = ? "
+            "WHERE recommendation_id = 'rec_2026-04-28_full'",
+            (json.dumps([locator]),),
+        )
+        conn.commit()
+        bundle = _build_prose_for_full_week(conn)
+        text = _all_atom_text(bundle)
+        # The lead-in names the date pk-field (April 28).
+        assert "April 28" in text
+        # And it precedes the recommendation atom.
+        rec_atom = next(
+            atom
+            for section in bundle.sections
+            for atom in section.atoms
+            if atom.atom_id.endswith("rec_2026-04-28_full")
+        )
+        assert rec_atom.atom_text.startswith("Looking at")
+        assert "April 28" in rec_atom.atom_text
+    finally:
+        conn.close()
+
+
+def test_prose_abstain_branch_emits_no_sections(tmp_path: Path):
+    """When coverage.weekly_status == 'insufficient_data', the prose
+    bundle's sections list is empty (the render layer surfaces the
+    abstain template directly from coverage metadata; no claim
+    cards on abstain).
+    """
+
+    conn = _db(tmp_path)
+    try:
+        # Seed only 2 plan days — under the 5-day threshold.
+        for d in ("2026-04-27", "2026-04-29"):
+            _insert_plan(
+                conn,
+                daily_plan_id=f"plan_{d}_partial",
+                for_date=d,
+            )
+        conn.commit()
+
+        agg = load_weekly_aggregation(
+            conn, iso_week="2026-W18", user_id=USER,
+        )
+        coverage = evaluate_weekly_coverage(
+            agg, coverage_threshold_days=5,
+        )
+        rollup = compute_data_quality_rollup(
+            agg.sync_runs, stale_pull_hours=48,
+        )
+        bundle = build_weekly_prose(conn, agg, coverage, rollup)
+        assert coverage.weekly_status == "insufficient_data"
+        assert bundle.sections == []
+        # The bundle still carries the coverage + rollup so the
+        # render layer can produce the abstain template.
+        assert bundle.coverage is coverage
+    finally:
+        conn.close()
+
+
+def test_prose_load_primary_goal_returns_none_when_unset(tmp_path: Path):
+    """`load_primary_goal` returns None when no active primary_goal
+    exists in user_memory (honest abstain — never fabricated).
+    """
+
+    conn = _db(tmp_path)
+    try:
+        assert load_primary_goal(conn, user_id=USER) is None
+        # Insert a goal then archive it; load returns None again.
+        conn.execute(
+            "INSERT INTO user_memory ("
+            "  memory_id, user_id, category, key, value, "
+            "  domain, created_at, archived_at, source, ingest_actor"
+            ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                "mem_archived", USER, "goal", "primary_goal",
+                "old goal", None, "2026-04-01T10:00:00Z",
+                "2026-04-25T10:00:00Z",
+                "user_manual", "claude_agent_v1",
+            ),
+        )
+        conn.commit()
+        # Archived → load_primary_goal still returns None.
+        assert load_primary_goal(conn, user_id=USER) is None
+    finally:
+        conn.close()
+
+
