@@ -596,10 +596,266 @@ def _build_audit_ref_orphan_fixtures() -> list[FactualityFixture]:
     return out
 
 
-def _all_fixtures() -> list[FactualityFixture]:
-    """Aggregate every fixture across all currently-implemented
-    categories. Step 5 will extend with the ≥75 known-good corpus.
+# ---------------------------------------------------------------------------
+# Category 6 — known_good (≥75 fixtures)
+# ---------------------------------------------------------------------------
+
+
+def _build_known_good_fixtures() -> list[FactualityFixture]:
+    """Fixtures the gate must NOT block.
+
+    Distribution:
+      - 10 qualitative atoms (gate SKIPs — no validation, framing
+        prose only)
+      - 15 vacuous quantitative + comparative atoms (no provenance,
+        gate passes)
+      - 20 quantitative atoms with single valid locator (varied:
+        with/without column, both seeded resting_hr + hrv_rmssd
+        columns)
+      - 15 with single valid audit_ref (varied tables, including
+        x_rule_firing without disagreement)
+      - 10 with combined valid locator + audit_ref
+      - 5 with multiple valid locators or multiple valid audit_refs
+
+    Total ≥75 (PLAN §2.F threshold). Each fixture declares
+    ``expected_outcome="pass"`` for quant/comp atoms or ``"skip"``
+    for qualitative atoms; both count as "known-good passed" in the
+    scoring runner.
     """
+
+    out: list[FactualityFixture] = []
+    n = 0
+
+    # 6a. Qualitative atoms — SKIP (10 fixtures with varied prose).
+    qualitative_texts = [
+        "This review is informational. Nothing here mutates intent, "
+        "targets, or thresholds — that path is user-gated.",
+        "Your primary goal — lean cut — frames how this week's evidence reads.",
+        "This review is grounded in plan evidence from the canonical "
+        "(non-superseded) version of each day.",
+        "No primary goal is recorded in user memory — this review is "
+        "plan-driven and does not echo a goal frame.",
+        "domain running: insufficient provenance — quantitative and "
+        "comparative claims suppressed pending the next provenance cycle",
+        "domain stress: insufficient provenance — quantitative and "
+        "comparative claims suppressed pending the next provenance cycle",
+        "Set a primary goal with `hai memory set primary_goal "
+        "your-goal-here` to ground future reviews.",
+        "domain sleep: insufficient provenance — quantitative and "
+        "comparative claims suppressed pending the next provenance cycle",
+        "Looking ahead, the cadence here reflects a steady pattern.",
+        "No structural disposition pending — review reads cleanly.",
+    ]
+    for idx, text in enumerate(qualitative_texts):
+        n += 1
+        out.append(FactualityFixture(
+            fixture_id=f"fac_kg_{n:03d}_qualitative_skip",
+            category="known_good",
+            subcategory="qualitative_skip",
+            expected_outcome="skip",
+            expected_block_reason=None,
+            description=f"Qualitative atom {idx} — gate SKIPs.",
+            atom_text=text,
+            atom_type="qualitative",
+            locator_set=[],
+            audit_refs={},
+        ))
+
+    # 6b. Vacuous quantitative + comparative — PASS with no
+    # provenance to validate (15 fixtures).
+    vacuous_specs: list[tuple[str, str]] = [
+        ("quantitative", "You ran `hai daily` on 5 of 7 days this week."),
+        ("quantitative", "You received 3 recovery recommendations."),
+        ("quantitative", "Of 5 sync runs this week, 5 ran fresh."),
+        ("quantitative", "On April 28 the recommendation was 'easy recovery'."),
+        ("quantitative", "Of 7 days, 6 had populated plans."),
+        ("comparative", "Rules that shaped the recommendation: low recovery (X1)."),
+        ("comparative", "Rules that adjusted the result after the skill ran: cap_confidence (X5)."),
+        ("comparative", "Rules that shaped the recommendation: high stress (X4)."),
+        ("comparative", "No rules fired against this recommendation."),
+        ("comparative", "Rules that adjusted the result after the skill ran: restructure (X6)."),
+        ("quantitative", "Plans found: 6 of 7 days."),
+        ("quantitative", "On April 27 you had 1 sleep recommendation."),
+        ("comparative", "Rules that shaped the recommendation: low HRV trend (X8)."),
+        ("quantitative", "On April 30 your stress was elevated."),
+        ("comparative", "Rules that adjusted the result after the skill ran: soften (X9)."),
+    ]
+    for atom_type, text in vacuous_specs:
+        n += 1
+        out.append(FactualityFixture(
+            fixture_id=f"fac_kg_{n:03d}_vacuous_pass",
+            category="known_good",
+            subcategory="vacuous_pass",
+            expected_outcome="pass",
+            expected_block_reason=None,
+            description=(
+                f"Vacuous {atom_type} atom — no provenance, gate passes."
+            ),
+            atom_text=text,
+            atom_type=atom_type,
+            locator_set=[],
+            audit_refs={},
+        ))
+
+    # 6c. Single valid locator (20 fixtures: 10 with column, 10
+    # without). All cite the seeded 2026-04-28 row with the matching
+    # row_version. Variations: column=resting_hr (8), column=hrv_rmssd (2),
+    # no column (10).
+    locator_variants: list[Optional[str]] = (
+        ["resting_hr"] * 8 + ["hrv_rmssd"] * 2 + [None] * 10
+    )
+    for idx, col in enumerate(locator_variants):
+        n += 1
+        loc = {
+            "table": "accepted_recovery_state_daily",
+            "pk": {"as_of_date": SEED_DATE, "user_id": SEED_USER_ID},
+            "row_version": SEED_ROW_VERSION,
+        }
+        if col is not None:
+            loc["column"] = col
+        out.append(FactualityFixture(
+            fixture_id=f"fac_kg_{n:03d}_valid_locator",
+            category="known_good",
+            subcategory="locator_pass",
+            expected_outcome="pass",
+            expected_block_reason=None,
+            description=(
+                f"Single valid locator (variant {idx}, "
+                f"column={col!r})."
+            ),
+            atom_text="On April 28 your resting heart rate was 52 bpm.",
+            atom_type="quantitative",
+            locator_set=[loc],
+            audit_refs={},
+        ))
+
+    # 6d. Single valid audit_ref (15 fixtures across the 4 seeded
+    # tables; variants reuse the same PK with different surrounding
+    # atom_text to avoid fixture_id collision but pin lane behavior).
+    audit_ref_specs: list[tuple[str, Any]] = [
+        ("daily_plan", SEED_DAILY_PLAN_ID),
+        ("daily_plan", SEED_DAILY_PLAN_ID),
+        ("daily_plan", SEED_DAILY_PLAN_ID),
+        ("daily_plan", SEED_DAILY_PLAN_ID),
+        ("recommendation_log", SEED_RECOMMENDATION_ID),
+        ("recommendation_log", SEED_RECOMMENDATION_ID),
+        ("recommendation_log", SEED_RECOMMENDATION_ID),
+        ("recommendation_log", SEED_RECOMMENDATION_ID),
+        ("x_rule_firing", SEED_RESOLVABLE_FIRING_ID),
+        ("x_rule_firing", SEED_RESOLVABLE_FIRING_ID),
+        ("x_rule_firing", SEED_RESOLVABLE_FIRING_ID),
+        ("x_rule_firing", SEED_RESOLVABLE_FIRING_ID),
+        ("x_rule_firing", SEED_RESOLVABLE_FIRING_ID),
+        ("x_rule_firing", SEED_RESOLVABLE_FIRING_ID),
+        ("x_rule_firing", SEED_RESOLVABLE_FIRING_ID),
+    ]
+    for idx, (table, pk) in enumerate(audit_ref_specs):
+        n += 1
+        out.append(FactualityFixture(
+            fixture_id=f"fac_kg_{n:03d}_valid_audit_ref",
+            category="known_good",
+            subcategory="audit_ref_pass",
+            expected_outcome="pass",
+            expected_block_reason=None,
+            description=(
+                f"Single valid audit_ref to {table} (variant {idx})."
+            ),
+            atom_text=(
+                f"On April 28 the recommendation was issued (variant "
+                f"{idx})."
+            ),
+            atom_type="quantitative",
+            locator_set=[],
+            audit_refs={table: [pk]},
+            user_id=(
+                SEED_USER_ID if table == "x_rule_firing" else None
+            ),
+        ))
+
+    # 6e. Combined valid locator + valid audit_ref (10 fixtures).
+    for idx in range(10):
+        n += 1
+        out.append(FactualityFixture(
+            fixture_id=f"fac_kg_{n:03d}_combined_pass",
+            category="known_good",
+            subcategory="combined_pass",
+            expected_outcome="pass",
+            expected_block_reason=None,
+            description=(
+                f"Combined valid locator + valid audit_ref (variant "
+                f"{idx})."
+            ),
+            atom_text=(
+                f"On April 28 your resting heart rate was 52 bpm; the "
+                f"recommendation was issued (variant {idx})."
+            ),
+            atom_type="quantitative",
+            locator_set=[_good_locator()],
+            audit_refs={
+                "daily_plan": [SEED_DAILY_PLAN_ID],
+                "recommendation_log": [SEED_RECOMMENDATION_ID],
+            },
+        ))
+
+    # 6f. Multiple valid locators or multiple valid audit_refs
+    # (5 fixtures). Each fixture exercises the gate's per-element
+    # iteration without short-circuiting on a non-failure.
+    for idx in range(5):
+        n += 1
+        if idx % 2 == 0:
+            # Two locators citing different columns of the seeded row.
+            out.append(FactualityFixture(
+                fixture_id=f"fac_kg_{n:03d}_multi_locator",
+                category="known_good",
+                subcategory="multi_locator_pass",
+                expected_outcome="pass",
+                expected_block_reason=None,
+                description=(
+                    f"Two valid locators citing different columns "
+                    f"(variant {idx})."
+                ),
+                atom_text=(
+                    "On April 28 both resting heart rate and HRV "
+                    "supported the recommendation."
+                ),
+                atom_type="quantitative",
+                locator_set=[
+                    _good_locator(column="resting_hr"),
+                    _good_locator(column="hrv_rmssd"),
+                ],
+                audit_refs={},
+            ))
+        else:
+            # Multiple audit_refs across tables.
+            out.append(FactualityFixture(
+                fixture_id=f"fac_kg_{n:03d}_multi_audit_ref",
+                category="known_good",
+                subcategory="multi_audit_ref_pass",
+                expected_outcome="pass",
+                expected_block_reason=None,
+                description=(
+                    f"Multiple valid audit_refs across two tables "
+                    f"(variant {idx})."
+                ),
+                atom_text=(
+                    "Plan and recommendation both exist in the audit "
+                    "chain."
+                ),
+                atom_type="comparative",
+                locator_set=[],
+                audit_refs={
+                    "daily_plan": [SEED_DAILY_PLAN_ID],
+                    "recommendation_log": [SEED_RECOMMENDATION_ID],
+                    "x_rule_firing": [SEED_RESOLVABLE_FIRING_ID],
+                },
+                user_id=SEED_USER_ID,
+            ))
+
+    return out
+
+
+def _all_fixtures() -> list[FactualityFixture]:
+    """Aggregate every fixture across all categories."""
 
     out: list[FactualityFixture] = []
     out.extend(_build_source_quality_fixtures())
@@ -607,6 +863,7 @@ def _all_fixtures() -> list[FactualityFixture]:
     out.extend(_build_source_signal_conflict_fixtures())
     out.extend(_build_source_row_drift_fixtures())
     out.extend(_build_audit_ref_orphan_fixtures())
+    out.extend(_build_known_good_fixtures())
     return out
 
 
@@ -652,6 +909,9 @@ def build_corpus(out_dir: Path = CORPUS_DIR) -> dict[str, Any]:
             ),
             "pass": sum(
                 1 for f in fixtures_meta if f["expected_outcome"] == "pass"
+            ),
+            "skip": sum(
+                1 for f in fixtures_meta if f["expected_outcome"] == "skip"
             ),
         },
         "fixtures": sorted(

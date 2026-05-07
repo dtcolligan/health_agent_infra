@@ -1,0 +1,26 @@
+{
+  "category": "known_good",
+  "description": "Multiple valid audit_refs across two tables (variant 3).",
+  "expected_block_reason": null,
+  "expected_outcome": "pass",
+  "fixture_id": "fac_kg_074_multi_audit_ref",
+  "input": {
+    "atom_text": "Plan and recommendation both exist in the audit chain.",
+    "atom_type": "comparative",
+    "audit_refs": {
+      "daily_plan": [
+        "plan_2026-04-28_factuality"
+      ],
+      "recommendation_log": [
+        "rec_2026-04-28_recovery_factuality"
+      ],
+      "x_rule_firing": [
+        9001
+      ]
+    },
+    "locator_set": [],
+    "user_id": "u_factuality_corpus"
+  },
+  "schema_version": "factuality_fixture.v1",
+  "subcategory": "multi_audit_ref_pass"
+}

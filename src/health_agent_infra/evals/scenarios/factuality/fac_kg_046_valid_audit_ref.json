@@ -1,0 +1,20 @@
+{
+  "category": "known_good",
+  "description": "Single valid audit_ref to daily_plan (variant 0).",
+  "expected_block_reason": null,
+  "expected_outcome": "pass",
+  "fixture_id": "fac_kg_046_valid_audit_ref",
+  "input": {
+    "atom_text": "On April 28 the recommendation was issued (variant 0).",
+    "atom_type": "quantitative",
+    "audit_refs": {
+      "daily_plan": [
+        "plan_2026-04-28_factuality"
+      ]
+    },
+    "locator_set": [],
+    "user_id": null
+  },
+  "schema_version": "factuality_fixture.v1",
+  "subcategory": "audit_ref_pass"
+}

@@ -1,0 +1,20 @@
+{
+  "category": "known_good",
+  "description": "Single valid audit_ref to x_rule_firing (variant 8).",
+  "expected_block_reason": null,
+  "expected_outcome": "pass",
+  "fixture_id": "fac_kg_054_valid_audit_ref",
+  "input": {
+    "atom_text": "On April 28 the recommendation was issued (variant 8).",
+    "atom_type": "quantitative",
+    "audit_refs": {
+      "x_rule_firing": [
+        9001
+      ]
+    },
+    "locator_set": [],
+    "user_id": "u_factuality_corpus"
+  },
+  "schema_version": "factuality_fixture.v1",
+  "subcategory": "audit_ref_pass"
+}

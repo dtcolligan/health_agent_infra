@@ -1,0 +1,33 @@
+{
+  "category": "known_good",
+  "description": "Combined valid locator + valid audit_ref (variant 1).",
+  "expected_block_reason": null,
+  "expected_outcome": "pass",
+  "fixture_id": "fac_kg_062_combined_pass",
+  "input": {
+    "atom_text": "On April 28 your resting heart rate was 52 bpm; the recommendation was issued (variant 1).",
+    "atom_type": "quantitative",
+    "audit_refs": {
+      "daily_plan": [
+        "plan_2026-04-28_factuality"
+      ],
+      "recommendation_log": [
+        "rec_2026-04-28_recovery_factuality"
+      ]
+    },
+    "locator_set": [
+      {
+        "column": "resting_hr",
+        "pk": {
+          "as_of_date": "2026-04-28",
+          "user_id": "u_factuality_corpus"
+        },
+        "row_version": "2026-04-28T19:00Z",
+        "table": "accepted_recovery_state_daily"
+      }
+    ],
+    "user_id": null
+  },
+  "schema_version": "factuality_fixture.v1",
+  "subcategory": "combined_pass"
+}

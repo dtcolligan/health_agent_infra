@@ -1,0 +1,16 @@
+{
+  "category": "known_good",
+  "description": "Qualitative atom 0 \u2014 gate SKIPs.",
+  "expected_block_reason": null,
+  "expected_outcome": "skip",
+  "fixture_id": "fac_kg_001_qualitative_skip",
+  "input": {
+    "atom_text": "This review is informational. Nothing here mutates intent, targets, or thresholds \u2014 that path is user-gated.",
+    "atom_type": "qualitative",
+    "audit_refs": {},
+    "locator_set": [],
+    "user_id": null
+  },
+  "schema_version": "factuality_fixture.v1",
+  "subcategory": "qualitative_skip"
+}

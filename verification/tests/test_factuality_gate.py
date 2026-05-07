@@ -757,6 +757,46 @@ def test_gate_passes_when_locator_column_has_non_null_value():
         c.close()
 
 
+# ---------------------------------------------------------------------------
+# 15. Step 5 — known-good corpus floor (≥75)
+# ---------------------------------------------------------------------------
+
+
+def test_factuality_corpus_meets_step_5_known_good_minimum():
+    """PLAN §2.F threshold-acceptance #2: ≥75 known-good fixtures.
+    Combined with the ≥85 known-bad floor from steps 3-4, the total
+    corpus is ≥150.
+
+    Known-good = expected_outcome ∈ {"pass", "skip"}. Qualitative
+    atoms (gate SKIP) and quantitative/comparative atoms with valid
+    provenance (gate PASS) both count — neither blocks the bundle.
+    """
+
+    manifest = json.loads((_CORPUS_DIR / "index.json").read_text())
+    counts = manifest["expected_outcome_counts"]
+    known_good = counts.get("pass", 0) + counts.get("skip", 0)
+    assert known_good >= 75, (
+        f"corpus has {known_good} known-good fixtures "
+        f"(pass={counts.get('pass', 0)}, "
+        f"skip={counts.get('skip', 0)}); "
+        f"PLAN §2.F threshold-acceptance #2 requires ≥75"
+    )
+    # Total corpus floor.
+    assert manifest["total_fixtures"] >= 150
+
+
+def test_factuality_corpus_known_good_category_present_with_floor():
+    """The ``known_good`` category specifically holds ≥75 fixtures
+    (vs the bare ≥75 known-good floor which could in principle be
+    distributed across categories). Pinning the category-specific
+    count keeps the corpus shape comprehensible.
+    """
+
+    manifest = json.loads((_CORPUS_DIR / "index.json").read_text())
+    cats = manifest["categories"]
+    assert len(cats.get("known_good", [])) >= 75
+
+
 def test_every_factuality_fixture_produces_its_expected_outcome():
     """Run each known-bad fixture through the gate and assert the
     outcome matches its declared ``expected_outcome`` +

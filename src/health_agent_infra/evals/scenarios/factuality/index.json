@@ -12,6 +12,83 @@
       "fac_orphan_009_unknown_table",
       "fac_orphan_010_unknown_table"
     ],
+    "known_good": [
+      "fac_kg_001_qualitative_skip",
+      "fac_kg_002_qualitative_skip",
+      "fac_kg_003_qualitative_skip",
+      "fac_kg_004_qualitative_skip",
+      "fac_kg_005_qualitative_skip",
+      "fac_kg_006_qualitative_skip",
+      "fac_kg_007_qualitative_skip",
+      "fac_kg_008_qualitative_skip",
+      "fac_kg_009_qualitative_skip",
+      "fac_kg_010_qualitative_skip",
+      "fac_kg_011_vacuous_pass",
+      "fac_kg_012_vacuous_pass",
+      "fac_kg_013_vacuous_pass",
+      "fac_kg_014_vacuous_pass",
+      "fac_kg_015_vacuous_pass",
+      "fac_kg_016_vacuous_pass",
+      "fac_kg_017_vacuous_pass",
+      "fac_kg_018_vacuous_pass",
+      "fac_kg_019_vacuous_pass",
+      "fac_kg_020_vacuous_pass",
+      "fac_kg_021_vacuous_pass",
+      "fac_kg_022_vacuous_pass",
+      "fac_kg_023_vacuous_pass",
+      "fac_kg_024_vacuous_pass",
+      "fac_kg_025_vacuous_pass",
+      "fac_kg_026_valid_locator",
+      "fac_kg_027_valid_locator",
+      "fac_kg_028_valid_locator",
+      "fac_kg_029_valid_locator",
+      "fac_kg_030_valid_locator",
+      "fac_kg_031_valid_locator",
+      "fac_kg_032_valid_locator",
+      "fac_kg_033_valid_locator",
+      "fac_kg_034_valid_locator",
+      "fac_kg_035_valid_locator",
+      "fac_kg_036_valid_locator",
+      "fac_kg_037_valid_locator",
+      "fac_kg_038_valid_locator",
+      "fac_kg_039_valid_locator",
+      "fac_kg_040_valid_locator",
+      "fac_kg_041_valid_locator",
+      "fac_kg_042_valid_locator",
+      "fac_kg_043_valid_locator",
+      "fac_kg_044_valid_locator",
+      "fac_kg_045_valid_locator",
+      "fac_kg_046_valid_audit_ref",
+      "fac_kg_047_valid_audit_ref",
+      "fac_kg_048_valid_audit_ref",
+      "fac_kg_049_valid_audit_ref",
+      "fac_kg_050_valid_audit_ref",
+      "fac_kg_051_valid_audit_ref",
+      "fac_kg_052_valid_audit_ref",
+      "fac_kg_053_valid_audit_ref",
+      "fac_kg_054_valid_audit_ref",
+      "fac_kg_055_valid_audit_ref",
+      "fac_kg_056_valid_audit_ref",
+      "fac_kg_057_valid_audit_ref",
+      "fac_kg_058_valid_audit_ref",
+      "fac_kg_059_valid_audit_ref",
+      "fac_kg_060_valid_audit_ref",
+      "fac_kg_061_combined_pass",
+      "fac_kg_062_combined_pass",
+      "fac_kg_063_combined_pass",
+      "fac_kg_064_combined_pass",
+      "fac_kg_065_combined_pass",
+      "fac_kg_066_combined_pass",
+      "fac_kg_067_combined_pass",
+      "fac_kg_068_combined_pass",
+      "fac_kg_069_combined_pass",
+      "fac_kg_070_combined_pass",
+      "fac_kg_071_multi_locator",
+      "fac_kg_072_multi_audit_ref",
+      "fac_kg_073_multi_locator",
+      "fac_kg_074_multi_audit_ref",
+      "fac_kg_075_multi_locator"
+    ],
     "source_quality": [
       "fac_sq_001_table_unknown",
       "fac_sq_002_table_unknown",
@@ -99,7 +176,8 @@
   "description": "Factuality-gate corpus (PLAN \u00a72.F). Each fixture pairs a ClaimGateInput payload with the expected gate outcome. Step 6's scoring runner computes pass/block percentages from manifest cardinality (no hard-coded counts per F-PLAN-06).",
   "expected_outcome_counts": {
     "block": 85,
-    "pass": 0
+    "pass": 65,
+    "skip": 10
   },
   "fixtures": [
     {
@@ -206,6 +284,531 @@
       "expected_outcome": "block",
       "fixture_id": "fac_drift_015_stale_version",
       "subcategory": "row_version_mismatch"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "skip",
+      "fixture_id": "fac_kg_001_qualitative_skip",
+      "subcategory": "qualitative_skip"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "skip",
+      "fixture_id": "fac_kg_002_qualitative_skip",
+      "subcategory": "qualitative_skip"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "skip",
+      "fixture_id": "fac_kg_003_qualitative_skip",
+      "subcategory": "qualitative_skip"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "skip",
+      "fixture_id": "fac_kg_004_qualitative_skip",
+      "subcategory": "qualitative_skip"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "skip",
+      "fixture_id": "fac_kg_005_qualitative_skip",
+      "subcategory": "qualitative_skip"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "skip",
+      "fixture_id": "fac_kg_006_qualitative_skip",
+      "subcategory": "qualitative_skip"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "skip",
+      "fixture_id": "fac_kg_007_qualitative_skip",
+      "subcategory": "qualitative_skip"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "skip",
+      "fixture_id": "fac_kg_008_qualitative_skip",
+      "subcategory": "qualitative_skip"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "skip",
+      "fixture_id": "fac_kg_009_qualitative_skip",
+      "subcategory": "qualitative_skip"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "skip",
+      "fixture_id": "fac_kg_010_qualitative_skip",
+      "subcategory": "qualitative_skip"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_011_vacuous_pass",
+      "subcategory": "vacuous_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_012_vacuous_pass",
+      "subcategory": "vacuous_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_013_vacuous_pass",
+      "subcategory": "vacuous_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_014_vacuous_pass",
+      "subcategory": "vacuous_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_015_vacuous_pass",
+      "subcategory": "vacuous_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_016_vacuous_pass",
+      "subcategory": "vacuous_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_017_vacuous_pass",
+      "subcategory": "vacuous_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_018_vacuous_pass",
+      "subcategory": "vacuous_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_019_vacuous_pass",
+      "subcategory": "vacuous_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_020_vacuous_pass",
+      "subcategory": "vacuous_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_021_vacuous_pass",
+      "subcategory": "vacuous_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_022_vacuous_pass",
+      "subcategory": "vacuous_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_023_vacuous_pass",
+      "subcategory": "vacuous_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_024_vacuous_pass",
+      "subcategory": "vacuous_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_025_vacuous_pass",
+      "subcategory": "vacuous_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_026_valid_locator",
+      "subcategory": "locator_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_027_valid_locator",
+      "subcategory": "locator_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_028_valid_locator",
+      "subcategory": "locator_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_029_valid_locator",
+      "subcategory": "locator_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_030_valid_locator",
+      "subcategory": "locator_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_031_valid_locator",
+      "subcategory": "locator_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_032_valid_locator",
+      "subcategory": "locator_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_033_valid_locator",
+      "subcategory": "locator_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_034_valid_locator",
+      "subcategory": "locator_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_035_valid_locator",
+      "subcategory": "locator_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_036_valid_locator",
+      "subcategory": "locator_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_037_valid_locator",
+      "subcategory": "locator_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_038_valid_locator",
+      "subcategory": "locator_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_039_valid_locator",
+      "subcategory": "locator_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_040_valid_locator",
+      "subcategory": "locator_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_041_valid_locator",
+      "subcategory": "locator_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_042_valid_locator",
+      "subcategory": "locator_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_043_valid_locator",
+      "subcategory": "locator_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_044_valid_locator",
+      "subcategory": "locator_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_045_valid_locator",
+      "subcategory": "locator_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_046_valid_audit_ref",
+      "subcategory": "audit_ref_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_047_valid_audit_ref",
+      "subcategory": "audit_ref_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_048_valid_audit_ref",
+      "subcategory": "audit_ref_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_049_valid_audit_ref",
+      "subcategory": "audit_ref_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_050_valid_audit_ref",
+      "subcategory": "audit_ref_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_051_valid_audit_ref",
+      "subcategory": "audit_ref_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_052_valid_audit_ref",
+      "subcategory": "audit_ref_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_053_valid_audit_ref",
+      "subcategory": "audit_ref_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_054_valid_audit_ref",
+      "subcategory": "audit_ref_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_055_valid_audit_ref",
+      "subcategory": "audit_ref_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_056_valid_audit_ref",
+      "subcategory": "audit_ref_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_057_valid_audit_ref",
+      "subcategory": "audit_ref_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_058_valid_audit_ref",
+      "subcategory": "audit_ref_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_059_valid_audit_ref",
+      "subcategory": "audit_ref_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_060_valid_audit_ref",
+      "subcategory": "audit_ref_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_061_combined_pass",
+      "subcategory": "combined_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_062_combined_pass",
+      "subcategory": "combined_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_063_combined_pass",
+      "subcategory": "combined_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_064_combined_pass",
+      "subcategory": "combined_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_065_combined_pass",
+      "subcategory": "combined_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_066_combined_pass",
+      "subcategory": "combined_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_067_combined_pass",
+      "subcategory": "combined_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_068_combined_pass",
+      "subcategory": "combined_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_069_combined_pass",
+      "subcategory": "combined_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_070_combined_pass",
+      "subcategory": "combined_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_071_multi_locator",
+      "subcategory": "multi_locator_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_072_multi_audit_ref",
+      "subcategory": "multi_audit_ref_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_073_multi_locator",
+      "subcategory": "multi_locator_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_074_multi_audit_ref",
+      "subcategory": "multi_audit_ref_pass"
+    },
+    {
+      "category": "known_good",
+      "expected_block_reason": null,
+      "expected_outcome": "pass",
+      "fixture_id": "fac_kg_075_multi_locator",
+      "subcategory": "multi_locator_pass"
     },
     {
       "category": "audit_ref_orphan",
@@ -699,5 +1302,5 @@
     }
   ],
   "schema_version": "factuality_index.v1",
-  "total_fixtures": 85
+  "total_fixtures": 160
 }

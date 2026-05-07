@@ -1,0 +1,16 @@
+{
+  "category": "known_good",
+  "description": "Qualitative atom 8 \u2014 gate SKIPs.",
+  "expected_block_reason": null,
+  "expected_outcome": "skip",
+  "fixture_id": "fac_kg_009_qualitative_skip",
+  "input": {
+    "atom_text": "Looking ahead, the cadence here reflects a steady pattern.",
+    "atom_type": "qualitative",
+    "audit_refs": {},
+    "locator_set": [],
+    "user_id": null
+  },
+  "schema_version": "factuality_fixture.v1",
+  "subcategory": "qualitative_skip"
+}

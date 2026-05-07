@@ -1,0 +1,16 @@
+{
+  "category": "known_good",
+  "description": "Vacuous quantitative atom \u2014 no provenance, gate passes.",
+  "expected_block_reason": null,
+  "expected_outcome": "pass",
+  "fixture_id": "fac_kg_022_vacuous_pass",
+  "input": {
+    "atom_text": "On April 27 you had 1 sleep recommendation.",
+    "atom_type": "quantitative",
+    "audit_refs": {},
+    "locator_set": [],
+    "user_id": null
+  },
+  "schema_version": "factuality_fixture.v1",
+  "subcategory": "vacuous_pass"
+}

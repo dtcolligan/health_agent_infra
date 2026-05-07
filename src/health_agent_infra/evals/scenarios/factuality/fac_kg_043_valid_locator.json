@@ -1,0 +1,25 @@
+{
+  "category": "known_good",
+  "description": "Single valid locator (variant 17, column=None).",
+  "expected_block_reason": null,
+  "expected_outcome": "pass",
+  "fixture_id": "fac_kg_043_valid_locator",
+  "input": {
+    "atom_text": "On April 28 your resting heart rate was 52 bpm.",
+    "atom_type": "quantitative",
+    "audit_refs": {},
+    "locator_set": [
+      {
+        "pk": {
+          "as_of_date": "2026-04-28",
+          "user_id": "u_factuality_corpus"
+        },
+        "row_version": "2026-04-28T19:00Z",
+        "table": "accepted_recovery_state_daily"
+      }
+    ],
+    "user_id": null
+  },
+  "schema_version": "factuality_fixture.v1",
+  "subcategory": "locator_pass"
+}
