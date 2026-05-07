@@ -253,6 +253,34 @@ class WeeklyTargetRow:
 
 
 @dataclass(frozen=True)
+class WeeklyCoverage:
+    """Coverage decision for the week — drives the abstain branch.
+
+    Per PLAN §2.D, this is the structurally simpler validation path:
+    the prose layer reads the populated counts, threshold value, and
+    date lists directly, so the rendered abstain prose is a literal
+    substitution from query output (counts + dates) plus a literal
+    substitution from `thresholds.toml` (threshold). No prose
+    authoring sits between the data and the rendered string, which
+    is why the abstain branch writes no claim cards (validation is
+    by construction; W58D is unnecessary on this path).
+
+    `weekly_status` is `"insufficient_data"` when fewer days have
+    canonical plans than the configured threshold; otherwise `"ok"`.
+    Multi-canonical days (F-PHASE0-07: two non-superseded plans on
+    the same `for_date`) count once toward `days_with_plans` — the
+    metric is "days with plan evidence", not "plans count".
+    """
+
+    weekly_status: str
+    iso_week: str
+    days_with_plans: int
+    coverage_threshold: int
+    populated_dates: list[str]
+    missing_dates: list[str]
+
+
+@dataclass(frozen=True)
 class WeeklyAggregation:
     """All loaded rows for one week, deterministically structured."""
 
@@ -275,6 +303,53 @@ class WeeklyAggregation:
 # ---------------------------------------------------------------------------
 # Public entry point
 # ---------------------------------------------------------------------------
+
+
+def evaluate_weekly_coverage(
+    aggregation: WeeklyAggregation,
+    *,
+    coverage_threshold_days: int,
+) -> WeeklyCoverage:
+    """Determine whether the week has enough plan evidence to render
+    quantitative prose, or should fall through to the
+    ``insufficient_data`` abstain branch.
+
+    Per PLAN §2.D acceptance #2, the abstain branch fires when fewer
+    than ``coverage_threshold_days`` of the 7 ISO-week days carry a
+    canonical (non-superseded) daily_plan. Multi-canonical days count
+    once toward the day count — both rows surface in the aggregation
+    but the coverage metric is "days with plan evidence".
+
+    The returned :class:`WeeklyCoverage` carries the four substitution
+    inputs the abstain prose template needs (per PLAN §2.D abstain
+    output shape): ``days_with_plans``, ``coverage_threshold``,
+    ``populated_dates``, ``missing_dates``. The substitution is
+    deterministic — same week + same DB → byte-identical metadata.
+
+    The threshold value is passed in (D13 trust-by-design contract).
+    Production callers resolve it via
+    ``core.config.load_thresholds()['policy']['review_weekly']
+    ['coverage_threshold_days']`` so type validation runs at the
+    threshold-injection seam, not here.
+    """
+
+    populated_dates = sorted({plan.for_date for plan in aggregation.canonical_plans})
+    populated_set = set(populated_dates)
+    missing_dates = [d for d in aggregation.week_dates if d not in populated_set]
+    days_with_plans = len(populated_dates)
+    weekly_status = (
+        "insufficient_data"
+        if days_with_plans < coverage_threshold_days
+        else "ok"
+    )
+    return WeeklyCoverage(
+        weekly_status=weekly_status,
+        iso_week=aggregation.iso_week,
+        days_with_plans=days_with_plans,
+        coverage_threshold=coverage_threshold_days,
+        populated_dates=populated_dates,
+        missing_dates=missing_dates,
+    )
 
 
 def load_weekly_aggregation(

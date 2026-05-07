@@ -525,6 +525,30 @@ DEFAULT_THRESHOLDS: dict[str, Any] = {
             "mixed_token_lower_bound": 0.4,
             "mixed_token_upper_bound": 0.6,
         },
+        # v0.2.0 W52 — weekly-review threshold surface (PLAN §2.D).
+        # Tunes the partial-week abstain branch + the data-quality
+        # rollup distinguishing `stale_pull` from `retrospective_manual`
+        # in `hai review weekly`. Threshold-injection-seam validation
+        # via `_validate_threshold_types` rejects bool overrides (D13).
+        "review_weekly": {
+            # Days with a canonical (non-superseded) daily_plan needed
+            # before the weekly view will render quantitative prose.
+            # Below this threshold the surface emits an
+            # `insufficient_data` abstain branch with the substituted
+            # counts + threshold + date lists (per PLAN §2.D acceptance
+            # #2). Five-of-seven is the conservative floor — fewer than
+            # five days of plan evidence is too sparse to assert
+            # week-level patterns honestly.
+            "coverage_threshold_days": 5,
+            # A sync_run_log row whose `for_date` is older than
+            # `started_at` minus this many hours classifies as
+            # `stale_pull` (auto-pull paths only — `mode IN ('csv',
+            # 'live')`). Manual retrospective entries are unaffected:
+            # `mode='manual'` always classifies as `retrospective_manual`
+            # regardless of the gap. 48h matches the
+            # `gap_detection.snapshot_staleness_max_hours` precedent.
+            "data_quality_stale_pull_hours": 48,
+        },
     },
     "synthesis": {
         "x_rules": {
@@ -992,6 +1016,22 @@ recovery_adjacent_compromised = 0.20
 # X3b (>=1.5 -> block any hard session) so the running domain has its own
 # forced action even when synthesis is not run.
 r_acwr_spike_min_ratio = 1.5
+
+# ---------------------------------------------------------------------------
+# Weekly review (v0.2.0 W52) — partial-week abstain + data-quality rollup
+# ---------------------------------------------------------------------------
+
+[policy.review_weekly]
+# Days with a canonical (non-superseded) daily_plan needed before
+# `hai review weekly` will render quantitative prose. Below this
+# the surface emits an `insufficient_data` abstain branch.
+coverage_threshold_days = 5
+
+# A sync_run_log row whose `for_date` is older than `started_at`
+# minus this many hours classifies as `stale_pull` (auto-pull paths
+# only). Manual retrospective entries always classify as
+# `retrospective_manual` regardless of the gap.
+data_quality_stale_pull_hours = 48
 
 # ---------------------------------------------------------------------------
 # Synthesis layer — X-rule triggers
