@@ -154,12 +154,13 @@ def _format_atom_markdown(atom: WeeklyAtom) -> str:
 
 
 def _multi_canonical_day_count(coverage: Any) -> int:
-    """Heuristic from coverage metadata — populated dates with
-    multiple distinct plans are not visible in coverage alone, so
-    this returns 0 unless future revisions add a multi-canonical
-    flag. Kept as a hook for the disposition footer.
+    """Number of dates within the rendered week that have 2+ non-
+    superseded canonical plans (F-PHASE0-07). Drives the markdown
+    "multiple plans on this day" disposition footer per PLAN §409.
+    Reads ``coverage.multi_canonical_dates`` (added v0.2.0 IR R1
+    F-IR-05); legacy/test instances without the field default to 0.
     """
-    return 0
+    return len(getattr(coverage, "multi_canonical_dates", ()) or ())
 
 
 # ---------------------------------------------------------------------------
@@ -205,6 +206,9 @@ def render_json(
             "coverage_threshold": bundle.coverage.coverage_threshold,
             "populated_dates": list(bundle.coverage.populated_dates),
             "missing_dates": list(bundle.coverage.missing_dates),
+            "multi_canonical_dates": list(
+                getattr(bundle.coverage, "multi_canonical_dates", []) or []
+            ),
         },
         "data_quality_rollup": {
             "threshold_hours": bundle.data_quality_rollup.threshold_hours,

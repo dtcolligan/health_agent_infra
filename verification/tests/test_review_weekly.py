@@ -38,6 +38,10 @@ from health_agent_infra.core.review.prose_builder import (
     emit_weekly_claim_cards,
     load_primary_goal,
 )
+from health_agent_infra.core.review.render import (
+    render_json,
+    render_markdown,
+)
 from health_agent_infra.core.review.weekly_card import (
     load_canonical_latest_for_week,
     load_full_history_for_week,
@@ -1187,6 +1191,139 @@ def test_prose_load_primary_goal_returns_none_when_unset(tmp_path: Path):
         conn.commit()
         # Archived → load_primary_goal still returns None.
         assert load_primary_goal(conn, user_id=USER) is None
+    finally:
+        conn.close()
+
+
+# ---------------------------------------------------------------------------
+# F-IR-05 — multi-canonical disposition surfaces in markdown + JSON
+# ---------------------------------------------------------------------------
+
+
+def test_multi_canonical_disposition_surfaces_in_markdown_and_json(
+    tmp_path: Path,
+):
+    """PLAN §409: a week with 2+ non-superseded plans on the same
+    `for_date` must surface the explicit "multiple plans on this day"
+    disposition (no silent latest-wins). v0.2.0 IR R1 F-IR-05 caught
+    that ``_multi_canonical_day_count`` always returned 0 because
+    ``WeeklyCoverage`` carried no metadata. The fix adds
+    ``multi_canonical_dates`` to coverage; this test asserts the
+    metadata flows from the loader through coverage into both the
+    markdown disposition footer and the JSON ``coverage`` block.
+    """
+
+    conn = _db(tmp_path)
+    try:
+        # Week 2026-W18: 5 plan-days (over abstain threshold), and
+        # 2026-04-29 has two non-superseded plans (multi-canonical).
+        plan_dates = [
+            "2026-04-27", "2026-04-28", "2026-04-29",
+            "2026-04-30", "2026-05-01",
+        ]
+        for d in plan_dates:
+            _insert_plan(
+                conn,
+                daily_plan_id=f"plan_{d}_canonical",
+                for_date=d,
+                superseded_by=None,
+            )
+        _insert_plan(
+            conn,
+            daily_plan_id="plan_2026-04-29_second",
+            for_date="2026-04-29",
+            superseded_by=None,
+        )
+        conn.execute(
+            "INSERT INTO user_memory ("
+            "  memory_id, user_id, category, key, value, "
+            "  domain, created_at, archived_at, source, ingest_actor"
+            ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                "mem_goal_multi", USER, "goal", "primary_goal",
+                "lean cut while preserving strength",
+                None, "2026-04-25T10:00:00Z", None,
+                "user_manual", "claude_agent_v1",
+            ),
+        )
+        conn.commit()
+
+        agg = load_weekly_aggregation(
+            conn, iso_week="2026-W18", user_id=USER,
+        )
+        coverage = evaluate_weekly_coverage(
+            agg, coverage_threshold_days=5,
+        )
+        assert coverage.weekly_status == "ok"
+        assert coverage.multi_canonical_dates == ["2026-04-29"]
+
+        rollup = compute_data_quality_rollup(
+            agg.sync_runs, stale_pull_hours=48,
+        )
+        bundle = build_weekly_prose(conn, agg, coverage, rollup)
+        markdown = render_markdown(bundle)
+        assert "Multiple plans on this day" in markdown, markdown
+
+        payload = json.loads(render_json(bundle, conn=conn))
+        assert payload["coverage"]["multi_canonical_dates"] == [
+            "2026-04-29"
+        ]
+    finally:
+        conn.close()
+
+
+def test_multi_canonical_disposition_absent_when_no_collision(
+    tmp_path: Path,
+):
+    """Negative case for F-IR-05: a week with no multi-canonical
+    days emits no disposition footer, and the JSON list is empty.
+    Prevents the disposition from appearing on every render.
+    """
+
+    conn = _db(tmp_path)
+    try:
+        plan_dates = [
+            "2026-04-27", "2026-04-28", "2026-04-29",
+            "2026-04-30", "2026-05-01",
+        ]
+        for d in plan_dates:
+            _insert_plan(
+                conn,
+                daily_plan_id=f"plan_{d}_solo",
+                for_date=d,
+                superseded_by=None,
+            )
+        conn.execute(
+            "INSERT INTO user_memory ("
+            "  memory_id, user_id, category, key, value, "
+            "  domain, created_at, archived_at, source, ingest_actor"
+            ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                "mem_goal_solo", USER, "goal", "primary_goal",
+                "lean cut while preserving strength",
+                None, "2026-04-25T10:00:00Z", None,
+                "user_manual", "claude_agent_v1",
+            ),
+        )
+        conn.commit()
+
+        agg = load_weekly_aggregation(
+            conn, iso_week="2026-W18", user_id=USER,
+        )
+        coverage = evaluate_weekly_coverage(
+            agg, coverage_threshold_days=5,
+        )
+        assert coverage.multi_canonical_dates == []
+
+        rollup = compute_data_quality_rollup(
+            agg.sync_runs, stale_pull_hours=48,
+        )
+        bundle = build_weekly_prose(conn, agg, coverage, rollup)
+        markdown = render_markdown(bundle)
+        assert "Multiple plans on this day" not in markdown
+
+        payload = json.loads(render_json(bundle, conn=conn))
+        assert payload["coverage"]["multi_canonical_dates"] == []
     finally:
         conn.close()
 

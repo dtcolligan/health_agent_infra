@@ -326,6 +326,10 @@ class WeeklyCoverage:
     Multi-canonical days (F-PHASE0-07: two non-superseded plans on
     the same `for_date`) count once toward `days_with_plans` — the
     metric is "days with plan evidence", not "plans count".
+    `multi_canonical_dates` carries the dates that exhibit this
+    shape so the markdown renderer can surface the explicit
+    "multiple plans on this day" disposition required by PLAN
+    §409 (no silent latest-wins).
     """
 
     weekly_status: str
@@ -334,6 +338,7 @@ class WeeklyCoverage:
     coverage_threshold: int
     populated_dates: list[str]
     missing_dates: list[str]
+    multi_canonical_dates: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -519,6 +524,12 @@ def evaluate_weekly_coverage(
     populated_set = set(populated_dates)
     missing_dates = [d for d in aggregation.week_dates if d not in populated_set]
     days_with_plans = len(populated_dates)
+    plans_per_date: dict[str, int] = {}
+    for plan in aggregation.canonical_plans:
+        plans_per_date[plan.for_date] = plans_per_date.get(plan.for_date, 0) + 1
+    multi_canonical_dates = sorted(
+        d for d, n in plans_per_date.items() if n > 1
+    )
     weekly_status = (
         "insufficient_data"
         if days_with_plans < coverage_threshold_days
@@ -531,6 +542,7 @@ def evaluate_weekly_coverage(
         coverage_threshold=coverage_threshold_days,
         populated_dates=populated_dates,
         missing_dates=missing_dates,
+        multi_canonical_dates=multi_canonical_dates,
     )
 
 
