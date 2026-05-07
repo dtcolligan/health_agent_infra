@@ -29,7 +29,11 @@ from pathlib import Path
 
 from health_agent_infra.core.review.weekly import (
     ACCEPTED_STATE_TABLES,
+    DATA_QUALITY_CLASSIFICATIONS,
     TABLE_TO_DOMAIN,
+    WeeklySyncRunRow,
+    classify_sync_run_quality,
+    compute_data_quality_rollup,
     iso_week_dates,
     load_weekly_aggregation,
 )
@@ -405,6 +409,153 @@ def test_load_weekly_aggregation_on_empty_db_returns_empty_lists(
 # ---------------------------------------------------------------------------
 # Test 6 — accepted-state-table whitelist invariants
 # ---------------------------------------------------------------------------
+
+
+def _sync_run(
+    *,
+    sync_id: int,
+    source: str,
+    mode: str,
+    started_at: str,
+    for_date: str | None,
+    user_id: str = USER,
+) -> WeeklySyncRunRow:
+    """Build a WeeklySyncRunRow stub for direct classifier testing."""
+    return WeeklySyncRunRow(
+        sync_id=sync_id,
+        source=source,
+        user_id=user_id,
+        mode=mode,
+        started_at=started_at,
+        completed_at=started_at,
+        status="ok",
+        for_date=for_date,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Tests 7-10 — data-quality classifier (PLAN §2.D acceptance #5)
+# ---------------------------------------------------------------------------
+
+
+def test_classify_sync_run_csv_pull_with_old_for_date_is_stale_pull():
+    """`mode='csv'` AND for_date older than 48h before started_at →
+    `stale_pull`. The Garmin CSV adapter wrote data for a for_date
+    already 48+h stale at sync time — the upstream export is lagging.
+    """
+
+    run = _sync_run(
+        sync_id=1, source="garmin", mode="csv",
+        started_at="2026-04-29T10:00:00Z",
+        for_date="2026-04-26",  # 80h before started_at
+    )
+    out = classify_sync_run_quality(run, stale_pull_hours=48)
+    assert out.classification == "stale_pull"
+    assert out.gap_hours is not None and out.gap_hours > 48.0
+
+
+def test_classify_sync_run_manual_intake_for_past_date_is_retrospective_manual():
+    """`mode='manual'` AND for_date strictly before started_at civil
+    date → `retrospective_manual`. The user deliberately backfilled.
+    Distinguished from stale_pull because the gap is intentional.
+    """
+
+    run = _sync_run(
+        sync_id=2, source="user_manual", mode="manual",
+        started_at="2026-04-29T20:00:00Z",
+        for_date="2026-04-27",  # 2 days back
+    )
+    out = classify_sync_run_quality(run, stale_pull_hours=48)
+    assert out.classification == "retrospective_manual"
+
+
+def test_classify_sync_run_same_day_is_fresh_regardless_of_mode():
+    """Sync ran for the same civil date as started_at → `fresh`.
+    Holds for both auto-pull (csv/live) and manual modes — a manual
+    same-day log is not retrospective.
+    """
+
+    csv_today = _sync_run(
+        sync_id=3, source="garmin", mode="csv",
+        started_at="2026-04-29T10:00:00Z",
+        for_date="2026-04-29",
+    )
+    manual_today = _sync_run(
+        sync_id=4, source="user_manual", mode="manual",
+        started_at="2026-04-29T20:00:00Z",
+        for_date="2026-04-29",
+    )
+    assert classify_sync_run_quality(
+        csv_today, stale_pull_hours=48,
+    ).classification == "fresh"
+    assert classify_sync_run_quality(
+        manual_today, stale_pull_hours=48,
+    ).classification == "fresh"
+
+
+def test_classify_sync_run_unclassifiable_when_for_date_missing():
+    """A sync_run_log row with NULL for_date (legitimate per
+    migration 008 — not every source carries a civil-date frame)
+    classifies as `unclassifiable`. Surfaced honestly, not silently
+    dropped.
+    """
+
+    run = _sync_run(
+        sync_id=5, source="garmin", mode="live",
+        started_at="2026-04-29T10:00:00Z",
+        for_date=None,
+    )
+    out = classify_sync_run_quality(run, stale_pull_hours=48)
+    assert out.classification == "unclassifiable"
+    assert out.gap_hours is None
+
+
+def test_compute_data_quality_rollup_aggregates_counts_per_classification():
+    """The rollup aggregates per-sync classifications into the four
+    count buckets the prose layer cites for the week-level summary.
+    """
+
+    runs = [
+        # 2 stale_pull (csv adapter lagging)
+        _sync_run(
+            sync_id=10, source="garmin", mode="csv",
+            started_at="2026-04-29T10:00:00Z",
+            for_date="2026-04-25",
+        ),
+        _sync_run(
+            sync_id=11, source="intervals_icu", mode="live",
+            started_at="2026-04-30T10:00:00Z",
+            for_date="2026-04-26",
+        ),
+        # 1 retrospective_manual
+        _sync_run(
+            sync_id=12, source="user_manual", mode="manual",
+            started_at="2026-04-30T20:00:00Z",
+            for_date="2026-04-28",
+        ),
+        # 1 fresh
+        _sync_run(
+            sync_id=13, source="garmin", mode="csv",
+            started_at="2026-04-30T10:00:00Z",
+            for_date="2026-04-30",
+        ),
+        # 1 unclassifiable
+        _sync_run(
+            sync_id=14, source="garmin", mode="live",
+            started_at="2026-04-30T10:00:00Z",
+            for_date=None,
+        ),
+    ]
+    rollup = compute_data_quality_rollup(runs, stale_pull_hours=48)
+    assert rollup.threshold_hours == 48
+    assert rollup.stale_pull_count == 2
+    assert rollup.retrospective_manual_count == 1
+    assert rollup.fresh_count == 1
+    assert rollup.unclassifiable_count == 1
+    # Plain-set assertion: every classification we emit is in the
+    # frozen set of allowed classifications.
+    for entry in rollup.per_sync:
+        assert entry.classification in DATA_QUALITY_CLASSIFICATIONS
 
 
 def test_accepted_state_tables_whitelist_covers_six_domains():

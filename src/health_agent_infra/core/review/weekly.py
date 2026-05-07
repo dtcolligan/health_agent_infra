@@ -32,8 +32,31 @@ from __future__ import annotations
 import json
 import sqlite3
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from typing import Any, Optional
+
+
+# Data-quality classifications surfaced in the weekly view per
+# F-PHASE0-03 + F-PLAN-04 round-1 correction. The four cases:
+#
+#   * ``stale_pull`` — auto-pull path (sync_run_log.mode in {csv, live})
+#     wrote data for a `for_date` older than the configured staleness
+#     threshold from `started_at`. Means the upstream export is lagging.
+#   * ``retrospective_manual`` — manual intake path (mode='manual')
+#     logged data for any past `for_date` strictly before the sync's
+#     `started_at` date. Distinguished from `stale_pull` because the
+#     user *intends* to backfill — it's not a sync-quality bug.
+#   * ``fresh`` — sync ran for the same civil date as `started_at`
+#     (or future-dated for_date, which the runtime treats as today).
+#   * ``unclassifiable`` — for_date or started_at missing; cannot
+#     compute the gap. Surfaces honestly rather than fabricating a
+#     classification.
+DATA_QUALITY_CLASSIFICATIONS = frozenset({
+    "stale_pull",
+    "retrospective_manual",
+    "fresh",
+    "unclassifiable",
+})
 
 
 # Mirrors the W-PROV-1 whitelist for accepted-state tables (verified
@@ -253,6 +276,39 @@ class WeeklyTargetRow:
 
 
 @dataclass(frozen=True)
+class DataQualityClassification:
+    """Per-sync_run_log classification + the inputs the prose layer
+    cites. The PLAN §2.D data-quality rollup is the per-sync result
+    aggregated across the week's sync_runs.
+    """
+
+    sync_id: int
+    source: str
+    mode: str
+    started_at: str
+    for_date: Optional[str]
+    gap_hours: Optional[float]
+    classification: str  # one of DATA_QUALITY_CLASSIFICATIONS
+
+
+@dataclass(frozen=True)
+class WeeklyDataQualityRollup:
+    """Aggregated data-quality view for one week.
+
+    The prose layer reads `per_sync` to author per-source claims
+    ("intervals_icu pulled stale data on 2 of 4 syncs this week")
+    and reads the count buckets for the week-level summary line.
+    """
+
+    threshold_hours: int
+    per_sync: list[DataQualityClassification]
+    fresh_count: int
+    stale_pull_count: int
+    retrospective_manual_count: int
+    unclassifiable_count: int
+
+
+@dataclass(frozen=True)
 class WeeklyCoverage:
     """Coverage decision for the week — drives the abstain branch.
 
@@ -303,6 +359,132 @@ class WeeklyAggregation:
 # ---------------------------------------------------------------------------
 # Public entry point
 # ---------------------------------------------------------------------------
+
+
+def classify_sync_run_quality(
+    sync_run: WeeklySyncRunRow,
+    *,
+    stale_pull_hours: int,
+) -> DataQualityClassification:
+    """Classify one ``sync_run_log`` row per F-PLAN-04 round-1 rules.
+
+    Rule order matches PLAN §2.D:
+
+    1. ``mode IN ('csv', 'live')`` AND
+       ``for_date < started_at - stale_pull_hours``  → ``stale_pull``.
+       The pull adapter wrote data for a for_date that's already
+       ``stale_pull_hours`` old relative to the sync wall clock.
+
+    2. ``mode == 'manual'`` AND
+       ``for_date < started_at_civil_date``  → ``retrospective_manual``.
+       The user deliberately backfilled. Not a sync-quality bug —
+       the prose layer surfaces this as informational.
+
+    3. Otherwise (and ``for_date`` resolvable) → ``fresh``.
+
+    4. ``for_date`` or ``started_at`` malformed → ``unclassifiable``.
+       Surfaced honestly, not silently dropped.
+
+    Note ``stale_pull_hours`` is hours-strict: a sync at 48.0h on the
+    nose passes (not stale); 48.01h+ is stale.
+    """
+
+    if not sync_run.started_at or not sync_run.for_date:
+        return DataQualityClassification(
+            sync_id=sync_run.sync_id,
+            source=sync_run.source,
+            mode=sync_run.mode,
+            started_at=sync_run.started_at,
+            for_date=sync_run.for_date,
+            gap_hours=None,
+            classification="unclassifiable",
+        )
+
+    try:
+        started_dt = _parse_iso_datetime(sync_run.started_at)
+        # for_date is a civil date — anchor at midnight UTC for the
+        # gap computation. Civil-date ⇄ wall-clock comparison is
+        # intentionally coarse: the threshold is in the 24h+ range.
+        for_date_dt = datetime.fromisoformat(
+            sync_run.for_date + "T00:00:00+00:00"
+        )
+    except ValueError:
+        return DataQualityClassification(
+            sync_id=sync_run.sync_id,
+            source=sync_run.source,
+            mode=sync_run.mode,
+            started_at=sync_run.started_at,
+            for_date=sync_run.for_date,
+            gap_hours=None,
+            classification="unclassifiable",
+        )
+
+    gap_hours = (started_dt - for_date_dt).total_seconds() / 3600.0
+
+    if sync_run.mode in ("csv", "live"):
+        classification = (
+            "stale_pull" if gap_hours > float(stale_pull_hours)
+            else "fresh"
+        )
+    elif sync_run.mode == "manual":
+        # Civil-date comparison: a manual log "for today" is fresh,
+        # a manual log "for yesterday" is retrospective_manual.
+        started_civil = started_dt.astimezone(timezone.utc).date()
+        for_date_civil = date.fromisoformat(sync_run.for_date)
+        classification = (
+            "retrospective_manual"
+            if for_date_civil < started_civil
+            else "fresh"
+        )
+    else:
+        # Unknown mode: treat as unclassifiable rather than fabricate.
+        classification = "unclassifiable"
+
+    return DataQualityClassification(
+        sync_id=sync_run.sync_id,
+        source=sync_run.source,
+        mode=sync_run.mode,
+        started_at=sync_run.started_at,
+        for_date=sync_run.for_date,
+        gap_hours=round(gap_hours, 2),
+        classification=classification,
+    )
+
+
+def compute_data_quality_rollup(
+    sync_runs: list[WeeklySyncRunRow],
+    *,
+    stale_pull_hours: int,
+) -> WeeklyDataQualityRollup:
+    """Aggregate per-sync data-quality classifications for the week.
+
+    Per F-PLAN-04 round-1 + PLAN §2.D acceptance #5: distinguishes
+    `stale_pull` (auto-pull stale) from `retrospective_manual`
+    (deliberate manual backfill) using the existing
+    ``sync_run_log.mode`` column. NO new schema column.
+    """
+
+    per_sync = [
+        classify_sync_run_quality(sr, stale_pull_hours=stale_pull_hours)
+        for sr in sync_runs
+    ]
+    counts = {c: 0 for c in DATA_QUALITY_CLASSIFICATIONS}
+    for entry in per_sync:
+        counts[entry.classification] += 1
+    return WeeklyDataQualityRollup(
+        threshold_hours=stale_pull_hours,
+        per_sync=per_sync,
+        fresh_count=counts["fresh"],
+        stale_pull_count=counts["stale_pull"],
+        retrospective_manual_count=counts["retrospective_manual"],
+        unclassifiable_count=counts["unclassifiable"],
+    )
+
+
+def _parse_iso_datetime(s: str) -> datetime:
+    """Parse an ISO datetime, accepting trailing 'Z' as UTC."""
+
+    return datetime.fromisoformat(s.replace("Z", "+00:00"))
 
 
 def evaluate_weekly_coverage(
