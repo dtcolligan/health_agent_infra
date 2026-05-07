@@ -12,6 +12,22 @@ This file is a high-level pointer; for actual scope, read those plans.
 
 ## Now
 
+- **v0.2.0 ship-prep complete (2026-05-07; PyPI publish pending D15
+  IR + maintainer manual TTY gate).** Wave 2 gateway: provenance +
+  weekly review + deterministic factuality. 11 W-ids closed
+  (W-PROV-2, W-EVCARD-DAILY, W-EVCARD-WEEKLY, W52, W-FACT-ATOM,
+  W58D, W-MCP-THREAT, W-COMP-LANDSCAPE, W-NOF1-METHOD,
+  W-EXPLAIN-UX-CARRY); W-2U-GATE-2 did NOT fire (opportunistic-
+  not-blocking per D16). New surface: `hai review weekly` (markdown
+  + JSON, abstain branch, supersession reconciliation, data-quality
+  rollup, claim-card emission, W58D gate by default). Schema head
+  26 → 28 (migrations 027 daily evidence card + 028 weekly claim
+  card). **Empirical: factuality corpus 100/100 vs 97/99 thresholds;
+  parser precision 100% over 30-fixture corpus; persona matrix 13/13
+  with 0 findings + 0 crashes.** Test surface: 2,940 passed, 4
+  skipped (broader warning gate; +184 vs v0.1.18 baseline of 2,756,
+  exceeded the +86 floor 2.1×).
+  See [`reporting/plans/v0_2_0/RELEASE_PROOF.md`](reporting/plans/v0_2_0/RELEASE_PROOF.md).
 - **v0.1.17 shipped (2026-05-05).** Maintainability + eval-substrate
   consolidation. 10 W-ids closed at 100% acceptance: W-29 cli.py
   9,927 LOC mechanical split into 1 main + 1 shared + 11 handler-group
@@ -54,11 +70,9 @@ This file is a high-level pointer; for actual scope, read those plans.
   the post-v0.1.18 maintainer's-father session; W-2U-WEARABLE +
   W-2U-DOGFOOD (≥7d daily non-maintainer use) deferred to v0.4
   review. See [`reporting/plans/v0_1_19/README.md`](reporting/plans/v0_1_19/README.md).
-- **v0.2.0 next-active (Wave 2 — weekly review + factuality).**
-  Hard deps: v0.1.14 substrate (W-PROV-1 + W-AJ judge harness),
-  already shipped. **NOT** dependent on v0.1.17/v0.1.18 — runs in
-  parallel. Foreign-user empirical evidence re-tiered per D16
-  (opportunistic-not-blocking).
+- **v0.2.1 next-active (insight ledger).** W53 multi-week insight
+  persistence; one schema group. **Hard deps:** v0.2.0 W52 weekly-
+  review surface + W58D factuality gate, both shipped 2026-05-07.
 - **v0.1.16 cancelled (2026-05-04).** The named foreign-user candidate
   became unavailable; empirical scope renumbered to v0.1.19 (which
   itself was cancelled 2026-05-06).
@@ -88,21 +102,10 @@ This file is a high-level pointer; for actual scope, read those plans.
 
 ## Next
 
-- **v0.2.0 — weekly review + deterministic factuality (Path A
-  release 1 of 4).** **Next-active cycle.** W52 weekly review with
-  source-row locators (uses v0.1.14 W-PROV-1), W58D deterministic
-  claim-block (blocking from day 1), W-FACT-ATOM atomic
-  decomposition, plus 4 doc-only adjuncts (W-MCP-THREAT,
-  W-COMP-LANDSCAPE, W-NOF1-METHOD, W-2U-GATE-2 second
-  foreign-machine session, opportunistic-not-blocking per D16).
-  One schema group per release (honors C6). **v0.2.0 hard deps
-  post-D16:** v0.1.14 substrate (W-PROV-1 + W-AJ judge harness),
-  already shipped. **NOT** dependent on v0.1.17/v0.1.18
-  maintainability work. Foreign-user empirical evidence
-  re-tiered to opportunistic-not-blocking per
-  CP-2U-GATE-SPLIT (D16).
-- **v0.2.1 — insight ledger (Path A release 2 of 4).** W53 only;
-  one schema group.
+- **v0.2.1 — insight ledger (Path A release 2 of 4).** **Next-
+  active cycle.** W53 multi-week insight persistence; one schema
+  group. Hard deps: v0.2.0 W52 + W-EVCARD-WEEKLY substrate, both
+  shipped.
 - **v0.2.2 — LLM judge shadow-by-default (Path A release 3 of 4).**
   W58J + W-JUDGE-BIAS bias panel. One schema group.
 - **v0.2.3 — judge promotion to blocking + W-30 capabilities-

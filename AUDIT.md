@@ -4,6 +4,36 @@ Health Agent Infra uses structured Codex review before substantive releases.
 The review is not a badge; the artifact is the value. This file indexes the
 existing release-cycle audit records so they are visible from the repo root.
 
+## v0.2.0 - 2026-05-07
+
+Wave 2 gateway: provenance + weekly review + deterministic factuality.
+11 W-ids closed: W-PROV-2 (locator emission across 5 dormant
+domains), W-EVCARD-DAILY (migration 027 daily evidence card),
+W-EVCARD-WEEKLY (migration 028 append-only weekly claim card),
+W52 (`hai review weekly` aggregation surface — 12 acceptance items),
+W-FACT-ATOM (atomic-claim parser, 100% precision over 30-fixture
+corpus), W58D (deterministic factuality gate, 100/100 vs 97/99
+thresholds over 160-fixture corpus), W-MCP-THREAT (OWASP MCP Top
+10 threat-model artifact), W-COMP-LANDSCAPE (competitive landscape
+doc), W-NOF1-METHOD (N-of-1 methodology doc), W-EXPLAIN-UX-CARRY
+(6 obligations consumed in W52). W-2U-GATE-2 did NOT fire
+(opportunistic-not-blocking per D16). **Tier:** substantive
+(≥3 release-blocker workstreams; 4-session compressed
+Phase 1 + 2 + 3 + 5).
+
+Plus W-FACT-ATOM-discovered F-PLAN-10 alignment fix (4 hidden
+W52 alignment holes in qualitative atoms — closed in `bfc8722`)
+and the parser-corpus W-PROV-1 finding (bool sneak-through in
+`pk_value_scalar`; deferred to a future cycle as a tightening
+opportunity, documented in v0.2.0 RELEASE_PROOF §5).
+
+| Round | Artifact | Result |
+|---|---|---|
+| D14 plan-audit | `reporting/plans/v0_2_0/codex_plan_audit_round_4_response.md` | `PLAN_COHERENT` (4 rounds, 10 → 5 → 3 → 1-nit settling) |
+| D15 IR | (drafted by maintainer post-Phase-3 close; see `reporting/plans/v0_2_0/codex_implementation_review_prompt.md` once authored) | pending |
+
+See [`reporting/plans/v0_2_0/RELEASE_PROOF.md`](reporting/plans/v0_2_0/RELEASE_PROOF.md).
+
 ## v0.1.18 - 2026-05-06
 
 Onboarding-quality + intake-handler migration parity. 7 W-ids closed:

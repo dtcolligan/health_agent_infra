@@ -1,6 +1,8 @@
 # Current system state
 
-**Status:** current truth as of v0.1.18 ship on 2026-05-06.
+**Status:** current truth as of v0.2.0 Phase-3 close on 2026-05-07
+(Phase 5 ship-prep complete; D15 IR + maintainer manual TTY ship
+gate pending).
 
 This file is the short operational answer to "what is true now?"
 Use it before reading cycle-level audit history. Release artifacts
@@ -11,13 +13,13 @@ the provenance trail; this file is the current-state map.
 
 | Surface | Current value | Source of truth |
 |---|---|---|
-| Package version | `0.1.18` | `pyproject.toml`, `CHANGELOG.md` |
-| Published posture | v0.1.18 shipped 2026-05-06; D15 IR closed at R3 SHIP_WITH_NOTES (settling 4 → 2 → 1-nit); PyPI publish remaining gated only on maintainer manual TTY ship gate per RELEASE_PROOF §3. **v0.1.19 cancelled 2026-05-06 per CP-2U-GATE-SPLIT (AGENTS.md D16); v0.2.0 (Wave 2 — weekly review + factuality) is next-active.** | `reporting/plans/v0_1_18/RELEASE_PROOF.md`, [PyPI](https://pypi.org/project/health-agent-infra/) |
-| Schema head | `26` (unchanged from v0.1.17 — `body_comp` added v0.1.17 W-B; v0.1.18 has no schema additions) | `src/health_agent_infra/core/state/migrations/` |
-| CLI commands | 67 annotated `hai` commands (unchanged from v0.1.17 — v0.1.18 W-OB-2 added `--non-interactive` flag at `hai init`, not a new command). New flag count on `hai init`: 11. | `hai capabilities --json` |
-| CLI source layout | `cli/__init__.py` (~3140 LOC parser-tree builder + dispatch) + `cli/handlers/{auth,pull_clean,state,config_init,intake,intent,target,recommend,review,inspect,tools}.py` (each <2500 LOC). W-29 mechanical split landed v0.1.17. | `src/health_agent_infra/cli/` |
-| Test gate at release | 2733 passed, 5 skipped (full suite, broader `-W error::Warning` gate, ~130s; post-IR-R2 fix-and-reland-2 +11 regression tests across F-IR-03 + F-IR-04 + F-IR-R2-01); `hai eval run --scenario-set all` 135/135 PASS; persona matrix 13/13 with 0 findings + 0 crashes (opt-in via `HAI_RUN_PERSONA_MATRIX=1`) | `reporting/plans/v0_1_18/RELEASE_PROOF.md` |
-| Eval scenario corpus | 135 deterministic fixtures (20 per domain × 6 + 15 synthesis) + 30 judge_adversarial fixtures | `src/health_agent_infra/evals/scenarios/` |
+| Package version | `0.1.18` (v0.2.0 ship-prep complete; version bump + tag at maintainer manual TTY gate) | `pyproject.toml`, `CHANGELOG.md` |
+| Published posture | v0.2.0 ship-prep complete 2026-05-07; D15 IR pending; PyPI publish remaining gated on D15 IR settle + maintainer manual TTY ship gate per `reporting/plans/v0_2_0/RELEASE_PROOF.md` §8. **v0.2.1 (insight ledger — W53) is next-active post-v0.2.0 ship.** | `reporting/plans/v0_2_0/RELEASE_PROOF.md`, [PyPI](https://pypi.org/project/health-agent-infra/) |
+| Schema head | `28` (v0.2.0 W-EVCARD-DAILY migration 027 + W-EVCARD-WEEKLY migration 028; was 26 at v0.1.18 close) | `src/health_agent_infra/core/state/migrations/` |
+| CLI commands | 68 annotated `hai` commands (v0.2.0 adds `hai review weekly`; v0.1.17/v0.1.18 baseline was 67). New `hai review weekly` flags: `--week`, `--json`/`--markdown`, `--user-id`, `--coverage-threshold`, `--include-history`, `--db-path`, `--bypass-factuality-gate`. New `--scenario-set factuality` choice on `hai eval run`. | `hai capabilities --json` |
+| CLI source layout | `cli/__init__.py` (~3200 LOC parser-tree builder + dispatch) + `cli/handlers/{auth,pull_clean,state,config_init,intake,intent,target,recommend,review,inspect,tools}.py` (each <2500 LOC). W-29 mechanical split landed v0.1.17. | `src/health_agent_infra/cli/` |
+| Test gate at release | 2940 passed, 4 skipped (full suite, broader `-W error::Warning` gate, ~140s; +184 vs v0.1.18 baseline of 2756, exceeded the +86 PLAN G2 floor 2.1×); `hai eval run --scenario-set all` 100% across deterministic + factuality fan-out; `hai eval run --scenario-set factuality` 100/100 vs 97/99 thresholds; persona matrix 13/13 with 0 findings + 0 crashes (opt-in via `HAI_RUN_PERSONA_MATRIX=1`) | `reporting/plans/v0_2_0/RELEASE_PROOF.md` |
+| Eval scenario corpus | 135 deterministic fixtures (20 per domain × 6 + 15 synthesis) + 30 judge_adversarial fixtures + 30 atomic_claims fixtures (W-FACT-ATOM corpus) + 160 factuality fixtures (W58D corpus, 85 known-bad + 75 known-good) | `src/health_agent_infra/evals/scenarios/` |
 | Domains | recovery, running, sleep, stress, strength, nutrition | `src/health_agent_infra/domains/` |
 | Runtime state | local SQLite by default; no package telemetry | `reporting/docs/privacy.md`, `SECURITY.md` |
 

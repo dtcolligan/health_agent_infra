@@ -63,6 +63,81 @@ Per-release detail lives under `reporting/plans/<version>/`.
   Locator entries validate per W-PROV-1; audit-chain refs live in
   a separate JSON-object lane per F-PHASE0-12.
 
+### New surface
+
+- **`hai review weekly`** (W52). Aggregates the past week's plan
+  evidence into a markdown (default) or JSON (opt-in via
+  `--json`) review. Partial-week abstain branch fires when fewer
+  than `policy.review_weekly.coverage_threshold_days` (default 5)
+  days have canonical (non-superseded) plans; the abstain prose
+  is a deterministic substitution of counts + threshold + date
+  lists, no claim cards. Multi-canonical day handling surfaces
+  both rows. Data-quality rollup distinguishes `stale_pull` (auto-
+  pull adapter wrote stale data) from `retrospective_manual` (user
+  deliberately backfilled) using the existing `sync_run_log.mode`
+  column. Cadence section reports `hai daily` runs vs the 7-day
+  week. Per-recommendation atoms emit Phase A / Phase B framing
+  prose (no raw `phase_a` / `phase_b` strings). Caveats route
+  through the W-EXPLAIN-UX caveat-translation registry. The
+  `--include-history` flag (JSON-only) flips between the
+  canonical-latest view (default) and the full append-only weekly
+  claim-card history. Output is byte-stable across runs at fixture
+  parity.
+
+- **Deterministic factuality gate over weekly-review prose**
+  (W58D). `hai review weekly` invokes the gate by default before
+  rendering. Every quantitative or comparative atom is validated
+  against four lanes: ① locator validates per W-PROV-1 + resolves
+  to a row at the cited `row_version` (drift detection), ② locator-
+  cited `column` is non-NULL on the row (source-signal-conflict),
+  ③ each audit-chain primary key resolves in its cited table
+  (audit-ref-orphan), ④ `x_rule_firing` audit_refs are not in the
+  user's `review_outcome.disagreed_firing_ids` history (x-rule-
+  conflict). If any atom blocks: `INTERNAL` exit with stderr
+  naming the blocked atom + reason. Qualitative atoms pass
+  through. The `--bypass-factuality-gate` flag is a developer-only
+  override (logs WARN; agents must not use it). Threshold values
+  in `thresholds.toml [policy.factuality_gate]` (defaults
+  `block_known_bad_min_pct=97.0`, `pass_known_good_min_pct=99.0`)
+  are validated at load time per D13. The gate's deterministic
+  corpus at `evals/scenarios/factuality/` ships 160 fixtures (85
+  known-bad across 5 sub-categories + 75 known-good across 6
+  shapes); empirical pass-rate this cycle: 100% / 100%.
+
+- **`hai eval run --scenario-set factuality`** scores the W58D
+  corpus against the threshold values. **`hai eval run --scenario-
+  set all`** now fans out to deterministic domain + synthesis
+  + factuality scoring (BOTH at 100%); `judge_adversarial` stays
+  shape-only summary until v0.2.2 W58J wires the judge harness.
+
+- **Atomic-claim parser** (W-FACT-ATOM, `core/eval/atomic_claims.py`).
+  Structural inverse of the W52 markdown render. Recovers
+  `(atom_text, atom_type, derivation_path)` triples from rendered
+  prose deterministically (regex + heading + bullet splitter; no
+  LLM). Atom-type classifier mirrors W52's prose-builder tagging:
+  comparative > quantitative > qualitative. ≥98% precision contract
+  pinned by the 30-fixture corpus at
+  `evals/scenarios/atomic_claims/`. Empirical: 100% precision +
+  100% recall over 243 ground-truth atoms.
+
+### Bug fix
+
+- **W52 deferred-domain disposition + goal-abstain prose tightened
+  to satisfy F-PLAN-10's mechanical assertion.** Four hidden
+  alignment holes were surfaced by the W-FACT-ATOM parser's
+  structural classifier and closed in the same cycle: ① deferred-
+  domain disposition `pending v0.2.1 W-PROV-3` → `pending the next
+  provenance cycle` (version-string numerics matched `\b\d+\b`);
+  ② goal-abstain shell example `"<goal>"` → `your-goal-here`
+  (angle-bracket placeholder matched `<` / `>`); ③ goal-abstain
+  prose `the review below is plan-driven` → `this review is plan-
+  driven` (positional `below` matched the `below` comparison
+  token); ④ footer conditional `{N} domain(s) are deferred` → no
+  conditional (the deferred status is conveyed by the per-domain
+  disposition + JSON `deferred_domains` field + `(deferred)`
+  heading suffix). The F-PLAN-10 mechanical assertion now exercises
+  deferred bundles too via a new regression test.
+
 ---
 
 ## [0.1.18] — 2026-05-06
