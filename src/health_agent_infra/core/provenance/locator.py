@@ -17,11 +17,25 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 
-# v0.1.14 demo whitelist — recovery domain only. Other domains add
-# entries here as they adopt locator emission. Keep alphabetised by
-# table name for deterministic error messages.
+# Locator whitelist. Entries are evidence + accepted-state tables only —
+# never write-side audit-chain tables (no recommendation_log, no
+# proposal_log, no daily_plan). The W-PROV-1 contract at
+# `reporting/docs/archive/cycle_artifacts/source_row_provenance.md:42-46`
+# names this invariant; F-PHASE0-12 reaffirms it. Audit-chain references
+# go in evidence-card payload lanes (W-EVCARD-DAILY / W-EVCARD-WEEKLY),
+# NOT here.
+#
+# v0.1.14 W-PROV-1 shipped recovery + garmin source. v0.2.0 W-PROV-2
+# extends with the 5 dormant domains' accepted-state tables; PK shape
+# matches `core/synthesis.py:_ACCEPTED_STATE_TABLES`. Keep alphabetised
+# by table name for deterministic error messages.
 _ALLOWED_TABLES_PK: dict[str, tuple[str, ...]] = {
+    "accepted_nutrition_state_daily": ("as_of_date", "user_id"),
     "accepted_recovery_state_daily": ("as_of_date", "user_id"),
+    "accepted_resistance_training_state_daily": ("as_of_date", "user_id"),
+    "accepted_running_state_daily": ("as_of_date", "user_id"),
+    "accepted_sleep_state_daily": ("as_of_date", "user_id"),
+    "accepted_stress_state_daily": ("as_of_date", "user_id"),
     "source_daily_garmin": (
         "as_of_date",
         "user_id",
