@@ -1,6 +1,6 @@
 """Grounded-expert research surface — allowlisted, read-only, cite-or-abstain.
 
-See ``reporting/docs/grounded_expert_scope.md`` for the scope / policy
+See ``docs/hai/grounded_expert_scope.md`` for the scope / policy
 contract this module implements.
 """
 

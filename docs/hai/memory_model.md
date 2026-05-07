@@ -257,7 +257,7 @@ The runtime does not, and in this cycle will not:
 
 This is a locked non-goal (see
 [`non_goals.md`](non_goals.md) "Not a learning loop (yet)" and
-[`reporting/plans/historical/post_v0_1_roadmap.md`](../plans/historical/post_v0_1_roadmap.md)
+[`reporting/plans/historical/post_v0_1_roadmap.md`](../../reporting/plans/historical/post_v0_1_roadmap.md)
 §3.1 locked decision 4). The reasoning:
 
 - Adaptive behavior that hides inside a threshold is the opposite of

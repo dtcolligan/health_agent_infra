@@ -346,7 +346,7 @@ def test_privacy_doc_exists_and_covers_required_topics():
 
     privacy_md = (
         Path(__file__).parents[2]
-        / "reporting" / "docs" / "privacy.md"
+        / "docs" / "hai" / "privacy.md"
     )
     assert privacy_md.exists()
     text = privacy_md.read_text(encoding="utf-8").lower()

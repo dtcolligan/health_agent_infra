@@ -162,7 +162,7 @@ sees the data and is expected to reason.
 - **Where it touches HAI.** Direct comparable for any future HAI
   MCP read-surface (v0.3-v0.4). Garmy's posture: raw rows out,
   reasoning is the LLM's job. HAI's posture (per
-  `reporting/docs/mcp_threat_model.md`): governance layer first;
+  `docs/hai/mcp_threat_model.md`): governance layer first;
   MCP surface as a structured-output channel after.
 
 ### 4.2 Open Wearables (the-momentum)
@@ -194,7 +194,7 @@ sees the data and is expected to reason.
 
 **Verdict for category 3.** HAI does not currently expose an MCP
 surface; v0.3-v0.4 will, with the explicit governance posture
-documented in `reporting/docs/mcp_threat_model.md`.
+documented in `docs/hai/mcp_threat_model.md`.
 
 ---
 
@@ -431,10 +431,10 @@ substantive-cycle Phase 0 D11 bug-hunt pattern.
 - **`reporting/plans/post_v0_1_13/strategic_research_2026-05-01.md`**
   — the deeper-research artifact backing the
   category claims.
-- **`reporting/docs/mcp_threat_model.md`** (this cycle, v0.2.0
+- **`docs/hai/mcp_threat_model.md`** (this cycle, v0.2.0
   W-MCP-THREAT) — the governance posture HAI brings to the MCP
   category.
-- **`reporting/docs/non_goals.md`** — what HAI deliberately does
+- **`docs/hai/non_goals.md`** — what HAI deliberately does
   not do, complementing what it does.
 
 ---

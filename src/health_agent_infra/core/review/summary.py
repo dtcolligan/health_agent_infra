@@ -20,7 +20,7 @@ The summary is visibility-only in v0.1.8 — it never mutates thresholds,
 classifiers, policy, X-rules, confidence, intent, or targets. Callers
 that want to ship a future adaptation loop must reach through an
 explicit user-approved commit path; outcomes do NOT flow into runtime
-state on their own (per `reporting/docs/non_goals.md`).
+state on their own (per `docs/hai/non_goals.md`).
 """
 
 from __future__ import annotations

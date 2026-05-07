@@ -14,7 +14,7 @@ allowlist or explicitly abstained. You never mutate state. You never
 diagnose. You never act.
 
 The scope doc is
-[`reporting/docs/grounded_expert_scope.md`](../../../../reporting/docs/grounded_expert_scope.md) —
+[`docs/hai/grounded_expert_scope.md`](../../../../docs/hai/grounded_expert_scope.md) —
 it defines the allowed source classes, the privacy rules, the citation
 policy, and the out-of-scope list. Treat that doc as the spec; treat
 this skill as the protocol.
@@ -102,7 +102,7 @@ action). A moderate band softens rather than blocks.
 Citations:
 - [state_model_sleep_debt_band] Recovery domain's sleep_debt_band enum — src/health_agent_infra/domains/recovery/classify.py
   > **sleep_debt_band**: {none, mild, moderate, elevated, unknown}, from
-- [x_rules_x1b_sleep_debt_blocks] X1b — elevated sleep debt blocks a hard proposal — reporting/docs/x_rules.md
+- [x_rules_x1b_sleep_debt_blocks] X1b — elevated sleep debt blocks a hard proposal — docs/hai/x_rules.md
   > X1b | ``sleep.classified_state.sleep_debt_band == elevated``
 
 This is a read-only explanation. It does not change today's plan.
@@ -116,7 +116,7 @@ retrieved excerpt, stop. Emit:
 ```
 I can't answer that from the allowlisted sources.
 Abstain reason: <result.abstain_reason>
-See reporting/docs/grounded_expert_scope.md §2 for the source
+See docs/hai/grounded_expert_scope.md §2 for the source
 allowlist and §4 for the cite-or-abstain policy.
 ```
 

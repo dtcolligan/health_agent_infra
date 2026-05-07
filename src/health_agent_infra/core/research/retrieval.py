@@ -2,7 +2,7 @@
 
 This is the only callable surface the grounded-expert skill reaches
 through when it needs to back a substantive claim. It enforces three
-invariants from ``reporting/docs/grounded_expert_scope.md``:
+invariants from ``docs/hai/grounded_expert_scope.md``:
 
 - **Cite or abstain** (§4): every call returns either a non-empty
   ``sources`` list or an ``abstain_reason`` — never both empty, never
@@ -100,12 +100,12 @@ def retrieve(query: RetrievalQuery) -> RetrievalResult:
     if query.user_context_sent and not query.operator_initiated:
         raise PrivacyViolation(
             "retrieval refuses user-context payload; see "
-            "reporting/docs/grounded_expert_scope.md §3 rule 2"
+            "docs/hai/grounded_expert_scope.md §3 rule 2"
         )
     if query.user_context_sent and query.operator_initiated:
         raise PrivacyViolation(
             "v0.1-F ships no operator-initiated off-device retrieval "
-            "path; see reporting/docs/grounded_expert_scope.md §3 rule 3"
+            "path; see docs/hai/grounded_expert_scope.md §3 rule 3"
         )
 
     if query.topic not in ALLOWLISTED_TOPICS:
@@ -114,7 +114,7 @@ def retrieve(query: RetrievalQuery) -> RetrievalResult:
             sources=[],
             abstain_reason=(
                 f"topic {query.topic!r} is not on the allowlist; "
-                f"see reporting/docs/grounded_expert_scope.md §2"
+                f"see docs/hai/grounded_expert_scope.md §2"
             ),
         )
 

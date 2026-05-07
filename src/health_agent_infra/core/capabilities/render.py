@@ -1,4 +1,4 @@
-"""Render a manifest as Markdown for ``reporting/docs/agent_cli_contract.md``.
+"""Render a manifest as Markdown for ``docs/hai/agent_cli_contract.md``.
 
 The markdown output is deterministic (rows sorted, no timestamps) so
 the committed file only changes when the annotations themselves
@@ -22,7 +22,7 @@ by invoking ``hai capabilities --json`` and piping through the same
 renderer.
 
 Schema: see ``core/capabilities/walker.py``. Exit codes follow
-``reporting/docs/cli_exit_codes.md``. Every handler is on the stable
+``docs/hai/cli_exit_codes.md``. Every handler is on the stable
 taxonomy; the ``LEGACY_0_2`` sentinel is retained in the schema for
 forward-compatibility but is not currently emitted.
 

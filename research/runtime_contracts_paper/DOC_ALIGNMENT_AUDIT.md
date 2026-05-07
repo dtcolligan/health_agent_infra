@@ -24,11 +24,11 @@ The repo should communicate this hierarchy consistently:
 
 | Area | Finding | Fix direction |
 |---|---|---|
-| Root orientation | `README.md` was partially reframed but still behaved like the HAI product manual after the first screen. | Add `PROJECT_FRAME.md`, rewrite root `README.md` as the research-facing landing page, and move HAI operator material to `reporting/docs/hai_reference_runtime.md`. |
+| Root orientation | `README.md` was partially reframed but still behaved like the HAI product manual after the first screen. | Add `PROJECT_FRAME.md`, rewrite root `README.md` as the research-facing landing page, and move HAI operator material to `docs/hai/hai_reference_runtime.md`. |
 | Agent onboarding | `AGENTS.md` and `CLAUDE.md` still opened with HAI as the whole project and routed readers to old HAI strategy docs. | Update session-start reading order and add a settled research-reframe decision. |
 | Repo map | `REPO_MAP.md` did not classify `research/` or `benchmarks/` as first-class active roots. | Add both and demote old HAI release plans to reference-runtime / historical scope. |
 | Roadmap | `ROADMAP.md` was a HAI release chain, not the project roadmap under the new objective. | Recast as research-first roadmap with HAI runtime backlog as a support lane. |
-| Reporting indexes | `reporting/README.md` and `reporting/docs/README.md` called themselves current v1 docs, which reads as project-wide. | Clarify that `reporting/docs/` is HAI reference-runtime documentation and make `hai_reference_runtime.md` the HAI manual. |
+| Reporting indexes | `reporting/README.md` and `docs/hai/README.md` called themselves current v1 docs, which reads as project-wide. | Clarify that `docs/hai/` is HAI reference-runtime documentation and make `hai_reference_runtime.md` the HAI manual. |
 | Current truth | `current_system_state.md` mixed stale v0.1.18 status with v0.2.0 source state and lacked research status. | Add repo-level research status and fix HAI source-truth table. |
 | Paper/benchmark | New frame existed but was isolated. | Keep `PAPER_FRAME.md` as locked research frame; link from root and agent docs. |
 | Operating memory | Several ideas from the reframe existed only in conversation: documentation-first gate, external research-engineering audience, local/cloud/fine-tune scope, scaffold ablations, and HAI polish subordination. | Add `PROJECT_OPERATING_MODEL.md` and `RESEARCH_EVAL_STRATEGY.md`. |

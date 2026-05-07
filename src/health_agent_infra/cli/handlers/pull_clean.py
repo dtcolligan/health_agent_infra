@@ -181,7 +181,7 @@ def cmd_pull(args: argparse.Namespace) -> int:
                 f"intervals.icu pull error: {exc}\n"
                 f"Check credentials with `hai auth status`; run "
                 f"`hai doctor --deep` to classify the live-API "
-                f"failure (see `reporting/docs/intervals_icu_403_triage.md`).",
+                f"failure (see `docs/hai/intervals_icu_403_triage.md`).",
                 file=sys.stderr,
             )
             return exit_codes.USER_INPUT

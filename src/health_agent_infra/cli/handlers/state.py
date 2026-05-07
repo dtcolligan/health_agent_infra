@@ -290,7 +290,7 @@ def cmd_state_migrate(args: argparse.Namespace) -> int:
 def cmd_backup(args: argparse.Namespace) -> int:
     """Write a versioned backup tarball of state DB + JSONL audit logs.
 
-    See ``reporting/docs/backup_and_recovery.md`` for the recovery contract.
+    See ``docs/hai/backup_and_recovery.md`` for the recovery contract.
     """
 
     from datetime import datetime, timezone

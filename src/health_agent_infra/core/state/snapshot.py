@@ -1157,7 +1157,7 @@ def build_snapshot(
         # for the additive review_summary / data_quality / intent /
         # target fields. v1 consumers ignore the new fields gracefully
         # (no v1 field is removed or changed in shape); see
-        # ``reporting/docs/agent_integration.md`` for the transition note.
+        # ``docs/hai/agent_integration.md`` for the transition note.
         "schema_version": "state_snapshot.v2",
         "as_of_date": as_of_date.isoformat(),
         "user_id": user_id,

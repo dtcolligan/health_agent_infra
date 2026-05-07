@@ -10,7 +10,7 @@ shell-capable personal-health agent. The agent remains the conversational
 operator. `hai` is the governed tool surface that tells the agent what it
 may do, which substrates each command may mutate, which outputs must
 validate, and which actions are refused. For the full architecture, see
-[`reporting/docs/architecture.md`](reporting/docs/architecture.md).
+[`docs/hai/architecture.md`](docs/hai/architecture.md).
 
 ## Single Rule
 
@@ -118,7 +118,7 @@ matching skill. The synthesis layer reconciles proposals through 11 X-rules:
 `hai capabilities --json` emits the authoritative machine-readable manifest
 of every subcommand: mutation class, idempotency, JSON behavior, agent-safe
 flag, exit codes, flags, and selected output schemas. The human mirror is
-[`reporting/docs/agent_cli_contract.md`](reporting/docs/agent_cli_contract.md).
+[`docs/hai/agent_cli_contract.md`](docs/hai/agent_cli_contract.md).
 
 The `intent-router` skill consumes this manifest as the natural-language to
 CLI mapping surface. If a workflow is absent from the manifest, the agent
@@ -159,9 +159,9 @@ Full agent-facing guidance is in [AGENTS.md](AGENTS.md).
 
 ## Read Deeper
 
-- [`reporting/docs/architecture.md`](reporting/docs/architecture.md) - full pipeline
-- [`reporting/docs/explainability.md`](reporting/docs/explainability.md) - three-state audit detail
-- [`reporting/docs/x_rules.md`](reporting/docs/x_rules.md) - X-rule catalogue
-- [`reporting/docs/state_model_v1.md`](reporting/docs/state_model_v1.md) - state schema
-- [`reporting/docs/non_goals.md`](reporting/docs/non_goals.md) - scope discipline
-- [`reporting/docs/tour.md`](reporting/docs/tour.md) - 10-minute reading tour
+- [`docs/hai/architecture.md`](docs/hai/architecture.md) - full pipeline
+- [`docs/hai/explainability.md`](docs/hai/explainability.md) - three-state audit detail
+- [`docs/hai/x_rules.md`](docs/hai/x_rules.md) - X-rule catalogue
+- [`docs/hai/state_model_v1.md`](docs/hai/state_model_v1.md) - state schema
+- [`docs/hai/non_goals.md`](docs/hai/non_goals.md) - scope discipline
+- [`docs/hai/tour.md`](docs/hai/tour.md) - 10-minute reading tour

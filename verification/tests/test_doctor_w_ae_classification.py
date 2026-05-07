@@ -6,7 +6,7 @@ Three surfaces are pinned here:
      contract tokens (`OK`, `CAUSE_1_CLOUDFLARE_UA`, `CAUSE_2_CREDS`,
      `NETWORK`, `OTHER`) for every reasonable input. The tokens are
      part of the doctor JSON contract — a renaming would silently
-     break `reporting/docs/intervals_icu_403_triage.md`'s references.
+     break `docs/hai/intervals_icu_403_triage.md`'s references.
 
   2. `check_onboarding_readiness` warns when the user has not yet
      authored intent / target / wellness pull, and goes ok once all
@@ -135,7 +135,7 @@ def test_classify_other_on_unrecognised_failure():
 
 def test_outcome_classes_set_matches_documented_five():
     """Drift guard: the contract surface in
-    `reporting/docs/intervals_icu_403_triage.md` enumerates these five
+    `docs/hai/intervals_icu_403_triage.md` enumerates these five
     strings. A change here must move in lockstep with that doc.
     """
 

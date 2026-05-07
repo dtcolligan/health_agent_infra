@@ -15,7 +15,7 @@ Consumers:
 
 - ``hai capabilities --json`` — emits the manifest to stdout (see
   ``cmd_capabilities`` in ``cli.py``).
-- ``reporting/docs/agent_cli_contract.md`` — the human-readable doc,
+- ``docs/hai/agent_cli_contract.md`` — the human-readable doc,
   regenerated from the manifest on commit.
 - The authoritative intent-routing skill (Phase 5) — consumes the
   manifest programmatically instead of maintaining its own mapping

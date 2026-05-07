@@ -296,7 +296,7 @@ def check_auth_intervals_icu(
     v0.1.13 W-AE: when ``probe_result`` carries an ``outcome_class``,
     surface it on the row alongside an actionable ``next_step`` from
     `OUTCOME_NEXT_STEPS`. The class string is the contract surface
-    that `reporting/docs/intervals_icu_403_triage.md` references.
+    that `docs/hai/intervals_icu_403_triage.md` references.
     """
 
     status = store.intervals_icu_status()

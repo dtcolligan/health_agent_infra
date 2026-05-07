@@ -171,7 +171,7 @@ established a five-element wrapper contract that v1 understated:
 - The agent declares what commands exist via `hai capabilities --json`.
 - The runtime declares which substrates each command may mutate
   (the nine mutation classes documented at
-  `reporting/docs/host_agent_contract.md`).
+  `docs/hai/host_agent_contract.md`).
 - The runtime declares which outputs must validate against schema.
 - The runtime declares which authority is refused to the agent
   (W57 invariant; `agent_safe == false` flags).
@@ -606,7 +606,7 @@ re-tiered to opportunistic-not-blocking per D16.**
 data sources.
 
 - **v0.2.0** — *threat-model artifact authored* at
-  `reporting/docs/mcp_threat_model.md` as W-MCP-THREAT (doc-only
+  `docs/hai/mcp_threat_model.md` as W-MCP-THREAT (doc-only
   adjunct). Pre-requisite for v0.3 PLAN-audit.
 - **v0.3** — *plans* MCP server. Read-surface design only. Provenance
   import contract drafted.
@@ -807,7 +807,7 @@ This doc is built on:
   Source of H1–H5, settled decisions D1–D12, comparable-OSS survey,
   category claim, wave structure. Lifted forward where still
   load-bearing; updated where v0.1.11–v0.1.18 evidence shifted.
-- **`reporting/docs/current_system_state.md`** (2026-05-06).
+- **`docs/hai/current_system_state.md`** (2026-05-06).
   Source of v0.1.18 shipped baseline.
 - **`reporting/plans/post_v0_1_15/docs_overhaul_report.md`**
   (2026-05-04). Source of agent-wrapper framing + diagram surface

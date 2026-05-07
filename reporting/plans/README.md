@@ -84,7 +84,7 @@ only when you need the snapshot of project posture at v0.1.10.
 
 **Read in order:**
 
-1. `reporting/docs/current_system_state.md` — latest shipped truth.
+1. `../../docs/hai/current_system_state.md` — latest shipped truth.
 2. `tactical_plan_v0_1_x.md` — current release-in-flight rows
    (v0.2.0 source-tree shipped; v0.2.1 insight ledger is HAI backlog).
 3. The next cycle's `PLAN.md` once authored.
@@ -147,7 +147,7 @@ If you only have time for one: `success_framework_v1.md`.
 3. `research/runtime_contracts_paper/PAPER_FRAME.md` — paper frame.
 4. `README.md` (project root) — research-facing repo overview.
 5. `REPO_MAP.md` (project root) — every directory classified.
-6. `reporting/docs/hai_reference_runtime.md` — HAI operator manual,
+6. `../../docs/hai/hai_reference_runtime.md` — HAI operator manual,
    if the task touches HAI software.
 7. `ARCHITECTURE.md` (project root) — runtime shape.
 8. `reporting/plans/post_v0_1_18/strategic_plan_v2.md` — HAI runtime
@@ -322,7 +322,8 @@ Post-v0.1.18 strategic refresh + v0.1.x track close. Current contents:
 - `strategic_plan_v2.md` — fresh-authored strategic plan
   (2026-05-06). Supersedes `strategic_plan_v1.md` as the HAI
   reference-runtime forward reference. Cites v1 as primary source.
-  The repo-wide research frame now lives at `../../PROJECT_FRAME.md`.
+  The repo-wide research frame now lives at `../../PROJECT_FRAME.md`
+  and `../../PROJECT_OPERATING_MODEL.md`.
 - `v0_1_x_retro.md` — companion retro on what 18 cycles taught
   us. External-readable; intended for portfolio / careers
   context as well as project continuity.
@@ -334,7 +335,7 @@ Post-v0.1.18 strategic refresh + v0.1.x track close. Current contents:
 When a new doc is added or an old doc retired:
 
 1. Add or remove the entry above.
-2. Update `reporting/docs/current_system_state.md` if the change affects
+2. Update `../../docs/hai/current_system_state.md` if the change affects
    current truth, schema head, command count, or next-cycle role.
 3. Update the relevant cycle PLAN.md to reflect the doc relationship.
 4. Bump the "Last updated" date at top.

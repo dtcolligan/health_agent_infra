@@ -32,7 +32,7 @@ When opening a fresh session, read in this order:
    model/baseline/ablation evaluation strategy.
 7. **`benchmarks/governed_agent_bench/README.md`** — benchmark scope.
 8. **`README.md`** — research-facing repo overview.
-9. **`reporting/docs/hai_reference_runtime.md`** if you need HAI install,
+9. **`docs/hai/hai_reference_runtime.md`** if you need HAI install,
    operator workflow, domains, or CLI surface.
 10. **`ARCHITECTURE.md`** + **`REPO_MAP.md`** if you need to find something.
 11. **`reporting/plans/README.md`** only when you need HAI release history or
@@ -61,7 +61,7 @@ uvx --from build python -m build --wheel --sdist
 
 # CLI surface checks
 uv run hai capabilities --json
-uv run hai capabilities --markdown > reporting/docs/agent_cli_contract.md
+uv run hai capabilities --markdown > docs/hai/agent_cli_contract.md
 uv run hai doctor
 
 # Persona matrix (13 personas, ~5 min; P13 is matrix-only — added

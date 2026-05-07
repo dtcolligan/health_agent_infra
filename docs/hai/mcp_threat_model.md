@@ -19,7 +19,7 @@ freshly-invented intuition.
 - AGENTS.md "Do Not Do" entry on MCP autoload — provenance:
   post-v0.1.13 strategic research §17 Sc-5 + CP-DO-NOT-DO-ADDITIONS.
 - `SECURITY.md` (project root) — threat model, scope, reporting.
-- `reporting/docs/privacy.md` — data-handling posture.
+- `docs/hai/privacy.md` — data-handling posture.
 
 This doc cross-references all four; if any drift, this doc is
 authoritative for v0.3 audit and the others are sources of truth
@@ -190,7 +190,7 @@ gap named with destination cycle if mitigation isn't yet shipped.
   a project-file-driven `.mcp.json` mechanism (CVE-2025-59536
   precedent).
 - **Gap.** Wave 3 SBOM publication. Destination: v0.3 ship-time
-  freshness sweep adds a `reporting/docs/sbom.md` row.
+  freshness sweep adds a `docs/hai/sbom.md` row.
 
 ### MCP05 — Command Injection & Execution
 
@@ -342,7 +342,7 @@ gap named with destination cycle if mitigation isn't yet shipped.
 | MCP read-surface lands | v0.3 (per strategic plan v2 §10 Wave 3) | This doc is the pre-condition for that PLAN's audit. |
 | Token redaction tests on MCP responses | v0.3 (MCP01 mitigation) | Release-blocker for v0.3. |
 | Capability-manifest `write_path: false` markers | v0.3 (MCP02 mitigation) | Pairs with v0.2.3 schema freeze. |
-| SBOM publication | v0.3 (MCP04 mitigation) | New `reporting/docs/sbom.md`. |
+| SBOM publication | v0.3 (MCP04 mitigation) | New `docs/hai/sbom.md`. |
 | Bandit on `src/health_agent_infra/mcp/` | v0.3 (MCP05 mitigation) | New ship gate. |
 | Mechanical prose injection-detection | v0.4 (MCP06 mitigation) | New workstream W-INJ-MITIGATION (not yet scheduled). |
 | `runtime_event_log` MCP source enumeration | v0.3 (MCP08 mitigation) | Migration delta. |
@@ -376,7 +376,7 @@ mitigations that need empirical evidence to design.
 
 - **`SECURITY.md`** — project-root threat model, vulnerability
   reporting, scope of trust + out-of-scope.
-- **`reporting/docs/privacy.md`** — data-handling posture,
+- **`docs/hai/privacy.md`** — data-handling posture,
   "Host-agent caveat" disclosure for HAI users running over
   Claude Code / Codex / hosted LLMs.
 - **`AGENTS.md`** "Do Not Do" entries (post-v0.1.13 additions):

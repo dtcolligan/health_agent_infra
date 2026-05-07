@@ -10,7 +10,7 @@ Two assertions:
 
   1. Every `Bash(hai <subcommand> ...)` token in a SKILL.md resolves to
      a command currently listed in `hai capabilities --json`.
-  2. Every `hai <subcommand>` reference in `reporting/docs/*.md` also
+  2. Every `hai <subcommand>` reference in `docs/hai/*.md` also
      resolves.
 
 The check is structural — it catches command renames/removals, not
@@ -32,7 +32,7 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SKILLS_DIR = REPO_ROOT / "src" / "health_agent_infra" / "skills"
-DOCS_DIR = REPO_ROOT / "reporting" / "docs"
+DOCS_DIR = REPO_ROOT / "docs" / "hai"
 
 
 def _current_hai_commands() -> set[str]:
@@ -190,7 +190,7 @@ def test_skill_md_body_hai_refs_resolve() -> None:
 
 
 def test_reporting_docs_hai_refs_resolve() -> None:
-    """Every `hai <subcommand>` reference under `reporting/docs/` must
+    """Every `hai <subcommand>` reference under `docs/hai/` must
     resolve. Caught at commit time so drift can't sneak into a release.
     """
     commands = _current_hai_commands()
@@ -208,14 +208,14 @@ def test_reporting_docs_hai_refs_resolve() -> None:
                     f"which is not in the current manifest."
                 )
 
-    # Soft-fail for now: reporting/docs includes historical plans that
+    # Soft-fail for now: docs/hai may include prose examples that
     # may name retired commands. Treat docs integrity as warn-only until
     # Workstream E's contract-test pass explicitly scopes which docs
     # must stay current.
     if errors:
         pytest.skip(
-            "reporting/docs contains references to commands not in the "
-            "current manifest. This is expected for historical plan "
-            "docs; retire or scope-limit this test under Workstream E. "
+            "docs/hai contains references to commands not in the "
+            "current manifest. Retire or scope-limit this test under "
+            "Workstream E if the references are intentional. "
             f"Refs: {errors[:10]}"
         )

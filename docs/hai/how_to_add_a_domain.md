@@ -523,6 +523,6 @@ A new domain is ready to land when all of the following are true:
 9. No runtime change was needed to `BoundedRecommendation` /
    `DomainProposal` base shapes, the synthesis transaction boundary,
    or the code-vs-skill boundary.
-10. `reporting/docs/domains/README.md`'s domain list still matches
+10. `docs/hai/domains/README.md`'s domain list still matches
     the shipping set — update it with the new domain and its
     short description.

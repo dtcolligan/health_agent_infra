@@ -3,7 +3,7 @@
 One-page orientation: what every top-level entry is, what is current
 versus historical, and where to look next. Pair with
 [`README.md`](README.md) for the research-facing repo overview and
-[`reporting/docs/hai_reference_runtime.md`](reporting/docs/hai_reference_runtime.md)
+[`docs/hai/hai_reference_runtime.md`](docs/hai/hai_reference_runtime.md)
 for the HAI operator manual.
 
 ## Top-level entries
@@ -14,8 +14,9 @@ for the HAI operator manual.
 | [`PROJECT_OPERATING_MODEL.md`](PROJECT_OPERATING_MODEL.md) | active docs | Internal operating model for the post-reframe repo: documentation gate, artifact hierarchy, decision rules, and success conditions. |
 | [`research/`](research/) | active research | Paper frame, draft, execution plan, and documentation-alignment audit for the runtime-contract / GovernedAgentBench direction. |
 | [`benchmarks/`](benchmarks/) | active benchmark | GovernedAgentBench scaffold: schemas, tasks, manifests, scorer, baselines, and reports. |
+| [`docs/`](docs/) | active docs | Current public/project documentation that is not root-control material. `docs/hai/` is the HAI reference-runtime documentation. |
 | [`src/`](src/health_agent_infra/) | active runtime | The `health_agent_infra` Python package: CLI, core orchestration, per-domain logic, packaged skills, packaged eval framework, the committed Garmin CSV fixture. This is the shipped wheel. |
-| [`reporting/`](reporting/) | HAI docs + proof + plans + frozen prototypes | HAI reference-runtime narrative material. See [`reporting/README.md`](reporting/README.md) for the four-subdir map. |
+| [`reporting/`](reporting/) | proof + plans + frozen prototypes | HAI release proof, audit trail, historical planning, legacy docs archive, and frozen prototypes. See [`reporting/README.md`](reporting/README.md) for the four-subdir map. |
 | [`verification/`](verification/) | active tests + active evals + legacy scripts | The repo verification surface: pytest suite, eval docs/scenarios, harnesses, drift checks, and legacy verification scripts. See [`verification/README.md`](verification/README.md) for the layout, including the symlinks into local generated data. |
 | [`README.md`](README.md) | active docs | Research-facing repo overview, artifact map, current priority, and read-next links. |
 | [`CHANGELOG.md`](CHANGELOG.md) | active docs | Public release history. |
@@ -55,12 +56,12 @@ checked-in repo shape.
 |---|---|
 | Understand the current objective | [`PROJECT_FRAME.md`](PROJECT_FRAME.md), then [`PROJECT_OPERATING_MODEL.md`](PROJECT_OPERATING_MODEL.md), then [`research/runtime_contracts_paper/PAPER_FRAME.md`](research/runtime_contracts_paper/PAPER_FRAME.md) |
 | Understand the benchmark | [`benchmarks/governed_agent_bench/README.md`](benchmarks/governed_agent_bench/README.md), then [`research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`](research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md) |
-| Understand HAI as software | [`reporting/docs/hai_reference_runtime.md`](reporting/docs/hai_reference_runtime.md), then [`reporting/docs/tour.md`](reporting/docs/tour.md) |
-| Know what is shipped right now | [`reporting/docs/current_system_state.md`](reporting/docs/current_system_state.md), then [`CHANGELOG.md`](CHANGELOG.md) and [`AUDIT.md`](AUDIT.md) |
-| Take the guided 10-minute tour | [`reporting/docs/tour.md`](reporting/docs/tour.md) |
-| Read the architecture | [`reporting/docs/architecture.md`](reporting/docs/architecture.md) |
-| See how `hai explain` works (three-state audit) | [`reporting/docs/explainability.md`](reporting/docs/explainability.md) |
-| Read the agent CLI contract | [`reporting/docs/agent_cli_contract.md`](reporting/docs/agent_cli_contract.md) |
+| Understand HAI as software | [`docs/hai/hai_reference_runtime.md`](docs/hai/hai_reference_runtime.md), then [`docs/hai/tour.md`](docs/hai/tour.md) |
+| Know what is shipped right now | [`docs/hai/current_system_state.md`](docs/hai/current_system_state.md), then [`CHANGELOG.md`](CHANGELOG.md) and [`AUDIT.md`](AUDIT.md) |
+| Take the guided 10-minute tour | [`docs/hai/tour.md`](docs/hai/tour.md) |
+| Read the architecture | [`docs/hai/architecture.md`](docs/hai/architecture.md) |
+| See how `hai explain` works (three-state audit) | [`docs/hai/explainability.md`](docs/hai/explainability.md) |
+| Read the agent CLI contract | [`docs/hai/agent_cli_contract.md`](docs/hai/agent_cli_contract.md) |
 | Add runtime code or a skill | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
 | See the forward roadmap | [`reporting/plans/README.md`](reporting/plans/README.md) (reading-order index for the planning tree) |
 | Read the current roadmap | [`ROADMAP.md`](ROADMAP.md) |
@@ -80,7 +81,7 @@ checked-in repo shape.
   `ARCHITECTURE.md`, `AUDIT.md`, `PROJECT_OPERATING_MODEL.md`,
   `HYPOTHESES.md`, `ROADMAP.md`, `SECURITY.md`, `CITATION.cff`,
   `CONTRIBUTING.md`, `REPO_MAP.md`,
-  current docs directly under `reporting/docs/`
+  current docs directly under `docs/hai/`
   (including `agent_cli_contract.md` — generated from `hai
   capabilities --json`; `current_system_state.md` is the current-truth
   summary),
@@ -109,6 +110,7 @@ checked-in repo shape.
   `reporting/docs/archive/doctrine/`,
   `reporting/docs/archive/cycle_artifacts/`,
   `reporting/docs/archive/merge_human_inputs/`,
+  `reporting/docs/launch/`,
   `reporting/artifacts/archive/`, `reporting/artifacts/phase_0/`,
   `reporting/experiments/`,
   `reporting/plans/docs_overhaul/codex_review.md`,

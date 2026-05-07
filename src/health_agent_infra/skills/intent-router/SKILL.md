@@ -296,7 +296,7 @@ that the same as `USER_INPUT`.
   yourself. Those are code-owned or domain-skill-owned.
 - Never promise learning, adaptation, cloud sync, multi-user, or
   meal-level nutrition — those are explicit non-goals (see
-  `reporting/docs/non_goals.md`).
+  `docs/hai/non_goals.md`).
 - Never bypass the `safety` skill. Its hard refusals (diagnostic
   language, medication advice, emergencies) apply across every
   intent; when a user's request crosses one of those boundaries,

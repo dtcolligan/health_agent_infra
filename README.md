@@ -99,7 +99,7 @@ hai today
 ```
 
 The full HAI operator and product documentation is in
-[`reporting/docs/hai_reference_runtime.md`](reporting/docs/hai_reference_runtime.md).
+[`docs/hai/hai_reference_runtime.md`](docs/hai/hai_reference_runtime.md).
 
 ## Health Boundary
 
@@ -124,7 +124,7 @@ after the fact.
 | [`research/runtime_contracts_paper/`](research/runtime_contracts_paper/) | Paper frame, draft, implementation plan, and documentation audit. |
 | [`benchmarks/governed_agent_bench/`](benchmarks/governed_agent_bench/) | GovernedAgentBench schemas, tasks, manifests, scorer, baselines, and reports. |
 | [`src/health_agent_infra/`](src/health_agent_infra/) | HAI reference-runtime source package. |
-| [`reporting/docs/`](reporting/docs/) | HAI runtime/operator documentation. |
+| [`docs/hai/`](docs/hai/) | HAI runtime/operator documentation. |
 | [`reporting/plans/`](reporting/plans/) | HAI release history, audit trail, and pre-reframe strategy docs. |
 | [`verification/`](verification/) | Pytest suite, runtime eval fixtures, drift checks, and harnesses. |
 
@@ -147,9 +147,9 @@ See [`ROADMAP.md`](ROADMAP.md) for the research-first roadmap.
 | Reader | Best next docs |
 |---|---|
 | Research / benchmark reviewer | [`PROJECT_FRAME.md`](PROJECT_FRAME.md), [`PROJECT_OPERATING_MODEL.md`](PROJECT_OPERATING_MODEL.md), [`HYPOTHESES.md`](HYPOTHESES.md), [`research/runtime_contracts_paper/PAPER_FRAME.md`](research/runtime_contracts_paper/PAPER_FRAME.md), [`research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`](research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md), [`benchmarks/governed_agent_bench/README.md`](benchmarks/governed_agent_bench/README.md) |
-| HAI user or operator | [`reporting/docs/hai_reference_runtime.md`](reporting/docs/hai_reference_runtime.md), [`reporting/docs/current_system_state.md`](reporting/docs/current_system_state.md), [`reporting/docs/privacy.md`](reporting/docs/privacy.md), [`reporting/docs/non_goals.md`](reporting/docs/non_goals.md) |
-| Host-agent integrator | [`reporting/docs/host_agent_contract.md`](reporting/docs/host_agent_contract.md), [`reporting/docs/agent_integration.md`](reporting/docs/agent_integration.md), [`reporting/docs/agent_cli_contract.md`](reporting/docs/agent_cli_contract.md) |
-| Runtime contributor | [`CONTRIBUTING.md`](CONTRIBUTING.md), [`reporting/docs/architecture.md`](reporting/docs/architecture.md), [`reporting/docs/domains/README.md`](reporting/docs/domains/README.md), [`reporting/docs/x_rules.md`](reporting/docs/x_rules.md) |
+| HAI user or operator | [`docs/hai/hai_reference_runtime.md`](docs/hai/hai_reference_runtime.md), [`docs/hai/current_system_state.md`](docs/hai/current_system_state.md), [`docs/hai/privacy.md`](docs/hai/privacy.md), [`docs/hai/non_goals.md`](docs/hai/non_goals.md) |
+| Host-agent integrator | [`docs/hai/host_agent_contract.md`](docs/hai/host_agent_contract.md), [`docs/hai/agent_integration.md`](docs/hai/agent_integration.md), [`docs/hai/agent_cli_contract.md`](docs/hai/agent_cli_contract.md) |
+| Runtime contributor | [`CONTRIBUTING.md`](CONTRIBUTING.md), [`docs/hai/architecture.md`](docs/hai/architecture.md), [`docs/hai/domains/README.md`](docs/hai/domains/README.md), [`docs/hai/x_rules.md`](docs/hai/x_rules.md) |
 | Maintainer or release auditor | [`REPO_MAP.md`](REPO_MAP.md), [`AUDIT.md`](AUDIT.md), [`ROADMAP.md`](ROADMAP.md), [`CHANGELOG.md`](CHANGELOG.md), [`reporting/plans/README.md`](reporting/plans/README.md) |
 
 ## License

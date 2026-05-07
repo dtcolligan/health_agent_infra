@@ -85,7 +85,7 @@ Never:
    `ROADMAP.md`, `AUDIT.md`,
    `research/runtime_contracts_paper/PAPER_FRAME.md`,
    `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`, and the
-   active HAI docs under `reporting/docs/` still agree.
+   active HAI docs under `docs/hai/` still agree.
 4. If you touched a skill: verify the corresponding skill-boundary
    tests still pass.
 5. If you touched a migration/projector/schema: verify the relevant
@@ -125,6 +125,6 @@ Start with these:
 - `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`
 - `benchmarks/governed_agent_bench/README.md`
 - `AUDIT.md`
-- `reporting/docs/architecture.md`
-- `reporting/docs/non_goals.md`
-- `reporting/docs/tour.md`
+- `docs/hai/architecture.md`
+- `docs/hai/non_goals.md`
+- `docs/hai/tour.md`

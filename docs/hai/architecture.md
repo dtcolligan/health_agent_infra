@@ -344,7 +344,7 @@ into a bounded CLI workflow without changing the governance model:
 - **Authoritative intent-router skill.** Maps NL intent to CLI
   workflow sequences by reading the capabilities manifest as its
   source of truth. Teaches the agent `hai` the way Claude already
-  knows `gh`. See [``agent_operable_runtime_plan.md``](../plans/historical/agent_operable_runtime_plan.md)
+  knows `gh`. See [``agent_operable_runtime_plan.md``](../../reporting/plans/historical/agent_operable_runtime_plan.md)
   for the full cycle context.
 
 ## Command contract and mutation substrates

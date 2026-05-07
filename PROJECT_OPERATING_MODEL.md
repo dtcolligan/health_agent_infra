@@ -44,8 +44,8 @@ complete when the control docs agree on:
 |---|---|---|---|
 | 1 | Paper frame | Defines the research claim and external audience. | `research/runtime_contracts_paper/PAPER_FRAME.md`, `research/runtime_contracts_paper/DRAFT_PAPER.md` |
 | 2 | GovernedAgentBench | Makes the claim measurable and inspectable by others. | `benchmarks/governed_agent_bench/README.md`, `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md` |
-| 3 | Runtime contract | The intervention being evaluated. | `PROJECT_FRAME.md`, `ARCHITECTURE.md`, `reporting/docs/agent_cli_contract.md` |
-| 4 | HAI | Reference runtime and concrete demonstrator. | `reporting/docs/hai_reference_runtime.md`, `reporting/docs/current_system_state.md` |
+| 3 | Runtime contract | The intervention being evaluated. | `PROJECT_FRAME.md`, `ARCHITECTURE.md`, `docs/hai/agent_cli_contract.md` |
+| 4 | HAI | Reference runtime and concrete demonstrator. | `docs/hai/hai_reference_runtime.md`, `docs/hai/current_system_state.md` |
 | 5 | HAI v1 polish | Useful backlog only when it supports the research artifact. | `reporting/plans/` |
 
 ## Research Posture
@@ -105,8 +105,9 @@ The repo should have a clear separation of concerns:
 | `ROADMAP.md` | Research-first roadmap. |
 | `research/runtime_contracts_paper/` | Paper, evaluation strategy, implementation plan, and documentation audit. |
 | `benchmarks/governed_agent_bench/` | Benchmark artifact. |
-| `reporting/docs/hai_reference_runtime.md` | HAI operator/product manual. |
+| `docs/hai/` | Current HAI reference-runtime documentation. |
 | `reporting/plans/` | HAI release history, support-lane backlog, and pre-reframe strategy provenance. |
+| `reporting/docs/` | Legacy documentation archive and launch drafts only. |
 
 Historical docs should not be rewritten to pretend they always had the
 new frame. Instead, their headers and indexes should say what they are:

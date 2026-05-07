@@ -190,7 +190,7 @@ class ExplainUserMemory:
     and are therefore not part of the audit chain proper; they are
     exposed here as *context* that was active when the plan landed, so
     a reader can see what durable user context the skills had access
-    to. See ``reporting/docs/explainability.md`` §3 + ``memory_model.md``
+    to. See ``docs/hai/explainability.md`` §3 + ``memory_model.md``
     §2.1 for framing.
     """
 

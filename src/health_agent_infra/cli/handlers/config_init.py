@@ -942,7 +942,7 @@ def _onboarding_default_pull_runner(
                 "Run `hai doctor --deep` to classify the failure into "
                 "one of {OK, CAUSE_1_CLOUDFLARE_UA, CAUSE_2_CREDS, "
                 "NETWORK, OTHER}. See "
-                "reporting/docs/intervals_icu_403_triage.md."
+                "docs/hai/intervals_icu_403_triage.md."
             ),
         }
     except RuntimeError as exc:

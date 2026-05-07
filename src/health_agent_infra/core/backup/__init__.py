@@ -10,7 +10,7 @@ Three operations:
 - :func:`export_jsonl` — consolidate existing partial export
   surfaces into a single structured stream.
 
-See ``reporting/docs/backup_and_recovery.md`` for the recovery contract.
+See ``docs/hai/backup_and_recovery.md`` for the recovery contract.
 """
 
 from health_agent_infra.core.backup.bundle import (

@@ -37,8 +37,8 @@ hosted service, no live web fetch, no embedding store.
 
 | Class id | What it covers | Origin |
 |---|---|---|
-| `internal_state_model` | band definitions, projector semantics, missingness grammar | `reporting/docs/state_model_v1.md`, `src/health_agent_infra/domains/*/classify.py` |
-| `internal_x_rules` | X-rule triggers and tiers | `reporting/docs/x_rules.md`, `src/health_agent_infra/core/synthesis_policy.py` |
+| `internal_state_model` | band definitions, projector semantics, missingness grammar | `docs/hai/state_model_v1.md`, `src/health_agent_infra/domains/*/classify.py` |
+| `internal_x_rules` | X-rule triggers and tiers | `docs/hai/x_rules.md`, `src/health_agent_infra/core/synthesis_policy.py` |
 | `internal_skill_contract` | what a skill is and is not allowed to do when it composes rationale over a shipped signal (e.g. Garmin body battery) | `src/health_agent_infra/skills/**/SKILL.md` |
 
 Each source record carries a `source_id`, `title`, `source_class`,

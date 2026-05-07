@@ -3,7 +3,7 @@
 Every row in :data:`SOURCES` is a citation the prototype is allowed to
 emit. The registry is frozen at import time — a later commit cannot add
 an *external* source without touching this file and
-``reporting/docs/grounded_expert_scope.md`` together, so the scope and
+``docs/hai/grounded_expert_scope.md`` together, so the scope and
 the retrieval surface never drift apart silently.
 
 Three load-bearing invariants hold across every record:
@@ -16,7 +16,7 @@ Three load-bearing invariants hold across every record:
 3. Every source's ``source_class`` is drawn from
    :data:`ALLOWLISTED_SOURCE_CLASSES`. There is no "other" bucket.
 
-See ``reporting/docs/grounded_expert_scope.md`` §2 for the policy this
+See ``docs/hai/grounded_expert_scope.md`` §2 for the policy this
 module enforces.
 """
 
@@ -87,7 +87,7 @@ SOURCES: tuple[Source, ...] = (
         source_id="x_rules_x1a_sleep_debt_softens",
         title="X1a — moderate sleep debt softens a hard proposal",
         source_class="internal_x_rules",
-        origin_path="reporting/docs/x_rules.md",
+        origin_path="docs/hai/x_rules.md",
         excerpt=(
             "X1a | sleep-debt-softens-hard | "
             "``sleep.classified_state.sleep_debt_band == moderate``"
@@ -98,7 +98,7 @@ SOURCES: tuple[Source, ...] = (
         source_id="x_rules_x1b_sleep_debt_blocks",
         title="X1b — elevated sleep debt blocks a hard proposal",
         source_class="internal_x_rules",
-        origin_path="reporting/docs/x_rules.md",
+        origin_path="docs/hai/x_rules.md",
         excerpt=(
             "X1b | sleep-debt-blocks-hard | "
             "``sleep.classified_state.sleep_debt_band == elevated``"
@@ -109,7 +109,7 @@ SOURCES: tuple[Source, ...] = (
         source_id="x_rules_x2_nutrition_deficit_softens_strength",
         title="X2 — low protein or calorie deficit softens strength / recovery",
         source_class="internal_x_rules",
-        origin_path="reporting/docs/x_rules.md",
+        origin_path="docs/hai/x_rules.md",
         excerpt=(
             "X2 | underfuelling-softens-hard | "
             "``nutrition.classified_state.calorie_deficit_kcal ≥ 500``"
@@ -132,7 +132,7 @@ SOURCES: tuple[Source, ...] = (
         source_id="x_rules_x6a_low_battery_softens",
         title="X6a — body battery under 30 softens a hard proposal",
         source_class="internal_x_rules",
-        origin_path="reporting/docs/x_rules.md",
+        origin_path="docs/hai/x_rules.md",
         excerpt=(
             "X6a | body-battery-low-softens-hard | "
             "``stress.today_body_battery < 30``"

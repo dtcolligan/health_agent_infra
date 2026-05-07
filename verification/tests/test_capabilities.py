@@ -303,22 +303,22 @@ def test_render_markdown_is_stable():
 
 
 def test_committed_contract_doc_matches_generated():
-    """The committed reporting/docs/agent_cli_contract.md must match
+    """The committed docs/hai/agent_cli_contract.md must match
     what render_markdown produces now. If this fails, regenerate:
 
-        hai capabilities --markdown > reporting/docs/agent_cli_contract.md
+        hai capabilities --markdown > docs/hai/agent_cli_contract.md
 
     and commit the result alongside whatever annotation change triggered
     the drift."""
 
     manifest = build_manifest(build_parser())
     current = render_markdown(manifest)
-    path = Path("reporting/docs/agent_cli_contract.md")
+    path = Path("docs/hai/agent_cli_contract.md")
     if not path.exists():
         pytest.skip("contract doc not present (non-checkout test env)")
     committed = path.read_text(encoding="utf-8")
     assert current == committed, (
         "agent_cli_contract.md has drifted from the manifest. "
         "Regenerate with: hai capabilities --markdown > "
-        "reporting/docs/agent_cli_contract.md"
+        "docs/hai/agent_cli_contract.md"
     )

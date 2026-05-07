@@ -401,11 +401,11 @@ revise them.
   prohibition (post-v0.1.13 strategic research §18) is the
   governance-side complement to this doc's methodological-side
   posture.
-- **`reporting/docs/competitive_landscape.md`** §6 — multi-agent
+- **`docs/hai/competitive_landscape.md`** §6 — multi-agent
   research frameworks (PHA, PHIA, Bloom, SePA) are the academic
   competitive surface for N-of-1; HAI's substrate-first chain
   is the local-first equivalent.
-- **`reporting/docs/mcp_threat_model.md`** — security posture
+- **`docs/hai/mcp_threat_model.md`** — security posture
   the MCP read-surface (Wave 3) will bring; v0.5 substrate is
   what the v0.4 surface ultimately exposes data from.
 

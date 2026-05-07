@@ -8,7 +8,7 @@ by invoking ``hai capabilities --json`` and piping through the same
 renderer.
 
 Schema: see ``core/capabilities/walker.py``. Exit codes follow
-``reporting/docs/cli_exit_codes.md``. Every handler is on the stable
+``docs/hai/cli_exit_codes.md``. Every handler is on the stable
 taxonomy; the ``LEGACY_0_2`` sentinel is retained in the schema for
 forward-compatibility but is not currently emitted.
 
@@ -71,7 +71,7 @@ JSON; this markdown is an at-a-glance overview for humans.
 | ``hai auth intervals-icu`` | ``writes-credentials`` | ``yes`` | ``default`` | no | ``OK``, ``USER_INPUT`` | Store Intervals.icu credentials in the OS keyring. Interactive by default; operator-only (requires a live API key). |
 | ``hai auth remove`` | ``writes-credentials`` | ``yes`` | ``default`` | no | ``OK`` | Remove stored credentials from the OS keyring. Idempotent — removing absent credentials is a no-op. Env-var-supplied credentials are never touched. |
 | ``hai auth status`` | ``read-only`` | ``n/a`` | ``default`` | yes | ``OK`` | Report whether Garmin and Intervals.icu credentials are configured. Presence only — never emits the secret itself. |
-| ``hai backup`` | ``read-only`` | ``yes`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Versioned tarball of state.db + JSONL audit logs + manifest. Read-only on local state. See reporting/docs/backup_and_recovery.md for the recovery contract. |
+| ``hai backup`` | ``read-only`` | ``yes`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Versioned tarball of state.db + JSONL audit logs + manifest. Read-only on local state. See docs/hai/backup_and_recovery.md for the recovery contract. |
 | ``hai capabilities`` | ``read-only`` | ``n/a`` | ``opt-out`` | yes | ``OK`` | Emit the agent-CLI-contract manifest describing every subcommand's mutation class, idempotency, JSON output, and exit codes. The authoritative surface the routing skill consumes. |
 | ``hai clean`` | ``writes-state`` | ``yes`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Normalize pulled evidence into CleanedEvidence + RawSummary JSON and project accepted state rows. Best-effort projection when --db-path is absent. |
 | ``hai config diff`` | ``read-only`` | ``n/a`` | ``default`` | yes | ``OK``, ``USER_INPUT`` | Diff user thresholds.toml against DEFAULT_THRESHOLDS, leaf by leaf. |

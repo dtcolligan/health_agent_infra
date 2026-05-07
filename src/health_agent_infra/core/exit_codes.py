@@ -26,7 +26,7 @@ user-input errors down to ``1`` and transient errors stayed at ``2``;
 shifting TRANSIENT would have broken those retry loops.
 
 Migration scope is documented in
-``reporting/docs/cli_exit_codes.md`` — only a handful of handlers are
+``docs/hai/cli_exit_codes.md`` — only a handful of handlers are
 on the taxonomy as of M1; the rest still return the legacy mix of ``0``
 and ``2`` until their follow-up PRs land.
 """

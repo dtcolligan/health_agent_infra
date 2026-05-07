@@ -104,7 +104,7 @@ PHASE_B_TARGETS: dict[str, frozenset[str]] = {
 # Naming pattern: ``<trigger>-<tier_verb>-<target>``. Tier verbs follow the
 # tier taxonomy — ``softens`` / ``blocks`` / ``caps-confidence`` / ``bumps``.
 # Registering a new rule means appending a row here *and* adding the column
-# to the Phase A / Phase B tables in ``reporting/docs/x_rules.md`` so the
+# to the Phase A / Phase B tables in ``docs/hai/x_rules.md`` so the
 # internal id and public name never diverge between code and docs.
 # ---------------------------------------------------------------------------
 X_RULE_PUBLIC_NAMES: dict[str, str] = {

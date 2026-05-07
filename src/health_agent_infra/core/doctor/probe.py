@@ -71,7 +71,7 @@ class ProbeResult:
 # ---------------------------------------------------------------------------
 
 # The five outcome classes — one success + four failure classes.
-# Names referenced by `reporting/docs/intervals_icu_403_triage.md`;
+# Names referenced by `docs/hai/intervals_icu_403_triage.md`;
 # changing a token here is a breaking change for that doc.
 OUTCOME_CLASSES: frozenset[str] = frozenset({
     "OK",
@@ -164,13 +164,13 @@ OUTCOME_NEXT_STEPS: dict[str, str] = {
         "Cloudflare bot-protection blocked the request at the edge — "
         "the credentials never reached intervals.icu. Verify the "
         "client User-Agent is not the urllib default; see "
-        "`reporting/docs/intervals_icu_403_triage.md` (CAUSE_1)."
+        "`docs/hai/intervals_icu_403_triage.md` (CAUSE_1)."
     ),
     "CAUSE_2_CREDS": (
         "intervals.icu rejected the credentials (HTTP 401/403). "
         "Re-run `hai auth intervals-icu` to refresh the API key, or "
         "verify athlete_id matches the API key's account. See "
-        "`reporting/docs/intervals_icu_403_triage.md` (CAUSE_2)."
+        "`docs/hai/intervals_icu_403_triage.md` (CAUSE_2)."
     ),
     "NETWORK": (
         "Could not reach intervals.icu (network or DNS layer). "
@@ -179,7 +179,7 @@ OUTCOME_NEXT_STEPS: dict[str, str] = {
     "OTHER": (
         "Unclassified probe failure. Inspect the error body in the "
         "doctor JSON (`probe.error_body`) and consult "
-        "`reporting/docs/intervals_icu_403_triage.md` (OTHER)."
+        "`docs/hai/intervals_icu_403_triage.md` (OTHER)."
     ),
 }
 

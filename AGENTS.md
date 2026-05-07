@@ -53,14 +53,14 @@ Authoritative orientation:
   project-wide evaluation strategy
 - `benchmarks/governed_agent_bench/README.md` - benchmark scope and MVP
 - `README.md` - research-facing repo overview
-- `reporting/docs/hai_reference_runtime.md` - HAI install, operator
+- `docs/hai/hai_reference_runtime.md` - HAI install, operator
   workflow, domains, and CLI surface
 - `ARCHITECTURE.md` - one-page architecture
 - `REPO_MAP.md` - every top-level entry classified active/historical
-- `reporting/docs/current_system_state.md` - latest shipped truth
+- `docs/hai/current_system_state.md` - latest shipped truth
   (version, schema head, CLI command count, release posture, next cycle)
-- `reporting/docs/architecture.md` - full pipeline and code-vs-skill boundary
-- `reporting/docs/non_goals.md` - scope discipline
+- `docs/hai/architecture.md` - full pipeline and code-vs-skill boundary
+- `docs/hai/non_goals.md` - scope discipline
 - `reporting/plans/README.md` - reading-order index for the planning tree
 - `reporting/plans/post_v0_1_18/strategic_plan_v2.md` - HAI reference-runtime
   strategy before the research reframe; useful context, not the current
@@ -371,13 +371,13 @@ Drift in any of these is the trust hazard a second user hits first:
 - [ ] `PROJECT_OPERATING_MODEL.md`, `HYPOTHESES.md`, and
   `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md` still
   reflect the current objective.
-- [ ] `reporting/docs/hai_reference_runtime.md` reflects HAI install,
+- [ ] `docs/hai/hai_reference_runtime.md` reflects HAI install,
   operator workflow, domains, and CLI surface.
   Historical "v0.1.X added Y" prose can stay.
 - [ ] `PROJECT_FRAME.md` and
   `research/runtime_contracts_paper/PAPER_FRAME.md` still match any
   project-priority or paper-framing changes.
-- [ ] `reporting/docs/current_system_state.md` reflects the just-shipped
+- [ ] `docs/hai/current_system_state.md` reflects the just-shipped
   package version, schema head, command count, test gate, and next-cycle role.
 - [ ] `reporting/plans/README.md` reading-order index marks the just-
   shipped cycle as shipped (not "in flight").
@@ -436,7 +436,7 @@ The canonical sites that must reflect the partial scope:
 - `ROADMAP.md` "Now" / "Next" rows
 - `reporting/plans/tactical_plan_v0_1_x.md` §3.1 / §3.2 / §4
 - `CHANGELOG.md` bullet
-- Any `reporting/docs/<workstream>.md` design doc
+- Any `docs/hai/<workstream>.md` design doc
 - CLI help text (if a flag/command was scoped down)
 
 Missing one is the canonical IR-round-2-finds-it bug. Origin:
@@ -500,7 +500,7 @@ CI runs `verification/tests/`. The suite includes docs and skill/CLI drift check
 | Concern | Lives in |
 |---|---|
 | New domain | `src/health_agent_infra/domains/<d>/` plus a sibling skill |
-| New pull source | `src/health_agent_infra/core/pull/`; see `reporting/docs/how_to_add_a_pull_adapter.md` |
+| New pull source | `src/health_agent_infra/core/pull/`; see `docs/hai/how_to_add_a_pull_adapter.md` |
 | Cross-domain logic | `src/health_agent_infra/core/synthesis.py` and `synthesis_policy.py` |
 | New CLI command | `src/health_agent_infra/cli.py`; annotate capabilities metadata |
 | New audit field | Add to the write path and to `hai explain` rendering |
@@ -569,9 +569,9 @@ Read `PROJECT_FRAME.md`, `PROJECT_OPERATING_MODEL.md`,
 `research/runtime_contracts_paper/PAPER_FRAME.md`,
 `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`,
 `HYPOTHESES.md`, `README.md`, `REPO_MAP.md`, `ROADMAP.md`,
-`reporting/docs/architecture.md`, and `reporting/docs/non_goals.md`. If
+`docs/hai/architecture.md`, and `docs/hai/non_goals.md`. If
 the question is about HAI operation, also read
-`reporting/docs/hai_reference_runtime.md`. If the question is about HAI
+`docs/hai/hai_reference_runtime.md`. If the question is about HAI
 release history, then read `reporting/plans/README.md` and the relevant
 cycle plan. If still unclear, ask Dom rather than guessing.
 

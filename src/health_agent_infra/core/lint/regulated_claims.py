@@ -66,7 +66,7 @@ REGULATED_TERMS: frozenset[str] = frozenset({
 # Packaged skills whose SKILL.md content gets the exception path.
 # v0.1.13 ship-set: `expert-explainer` only (the one packaged skill
 # whose explicit purpose is bounded definitional / quoted explanation
-# per `reporting/docs/grounded_expert_scope.md`). Code-owned research
+# per `docs/hai/grounded_expert_scope.md`). Code-owned research
 # surfaces under `core/research/` are NOT allowlisted because they
 # are CLI/runtime surfaces and run strict regime per constraint (4).
 ALLOWLISTED_SKILLS: frozenset[str] = frozenset({

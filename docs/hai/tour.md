@@ -81,7 +81,7 @@ deterministic runtime behaviour on frozen scenarios.
   three-state audit bundle (planned → adapted → performed).
 - [`agent_cli_contract.md`](agent_cli_contract.md) — generated
   per-command contract manifest the intent-router skill consumes.
-- [`../plans/tactical_plan_v0_1_x.md`](../plans/tactical_plan_v0_1_x.md)
+- [`../../reporting/plans/tactical_plan_v0_1_x.md`](../../reporting/plans/tactical_plan_v0_1_x.md)
   — HAI runtime backlog and release-history plan. Repo-wide research
   priority lives in [`../../PROJECT_FRAME.md`](../../PROJECT_FRAME.md)
   and [`../../research/runtime_contracts_paper/PAPER_FRAME.md`](../../research/runtime_contracts_paper/PAPER_FRAME.md).

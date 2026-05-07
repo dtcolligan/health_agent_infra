@@ -1,6 +1,6 @@
 """Phase F — grounded-expert prototype tests.
 
-Locks the scope contract from ``reporting/docs/grounded_expert_scope.md``:
+Locks the scope contract from ``docs/hai/grounded_expert_scope.md``:
 
 - every shipped source's origin file exists and carries the declared
   excerpt verbatim (§2, §6);
@@ -280,8 +280,8 @@ def test_skill_file_is_read_only() -> None:
 def test_scope_doc_present_and_names_key_sections() -> None:
     scope_path = (
         REPO_ROOT
-        / "reporting"
         / "docs"
+        / "hai"
         / "grounded_expert_scope.md"
     )
     assert scope_path.exists()

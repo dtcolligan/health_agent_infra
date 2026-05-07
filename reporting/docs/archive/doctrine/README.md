@@ -6,7 +6,7 @@ preserved here for historical context but are NOT authoritative for
 the current v1 multi-domain runtime.
 
 Every claim below is superseded by the current docs at
-``reporting/docs/``:
+``docs/hai/``:
 
 | Archived doc | Superseded by |
 |---|---|
@@ -29,5 +29,5 @@ Specifically note:
   synthesis layer that reconciles them into a daily_plan.
 
 Do not cite these docs as current truth. If a reader lands here
-expecting an overview, redirect them to ``reporting/docs/README.md``
+expecting an overview, redirect them to ``docs/hai/README.md``
 or the top-level ``README.md``.

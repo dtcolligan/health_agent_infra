@@ -144,7 +144,7 @@
     {
       "agent_safe": true,
       "command": "hai backup",
-      "description": "Versioned tarball of state.db + JSONL audit logs + manifest. Read-only on local state. See reporting/docs/backup_and_recovery.md for the recovery contract.",
+      "description": "Versioned tarball of state.db + JSONL audit logs + manifest. Read-only on local state. See docs/hai/backup_and_recovery.md for the recovery contract.",
       "exit_codes": [
         "OK",
         "USER_INPUT"

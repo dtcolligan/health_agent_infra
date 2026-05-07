@@ -6,7 +6,7 @@ review persistence. Markdown skills in the sibling ``skills/`` directory own
 rationale, uncertainty, and clarification over actions the runtime has already
 bounded.
 
-See ``reporting/docs/tour.md`` for the architecture walkthrough.
+See ``docs/hai/tour.md`` for the architecture walkthrough.
 """
 
 from importlib.metadata import PackageNotFoundError, version as _metadata_version

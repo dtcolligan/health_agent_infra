@@ -178,6 +178,6 @@ Every new X-rule needs a scenario under
 - [ ] Migrations committed (if new tables)
 - [ ] Tests for schema / classify / policy / skill-gates
 - [ ] Eval scenarios ≥ 3 committed
-- [ ] ``reporting/docs/state_model_v1.md`` updated with the new table
-- [ ] ``reporting/docs/architecture.md`` pipeline ASCII updated
-- [ ] ``reporting/docs/x_rules.md`` updated if an X-rule changed
+- [ ] ``docs/hai/state_model_v1.md`` updated with the new table
+- [ ] ``docs/hai/architecture.md`` pipeline ASCII updated
+- [ ] ``docs/hai/x_rules.md`` updated if an X-rule changed

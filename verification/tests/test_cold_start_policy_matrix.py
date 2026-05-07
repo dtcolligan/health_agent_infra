@@ -1,5 +1,5 @@
 """W24 — pin the per-domain cold-start decisions documented in
-``reporting/docs/cold_start_policy_matrix.md``.
+``docs/hai/cold_start_policy_matrix.md``.
 
 The matrix preserves an intentional asymmetry:
 
@@ -111,7 +111,7 @@ def test_matrix_doc_exists_and_covers_all_six_domains():
     from pathlib import Path
     matrix_path = (
         Path(__file__).resolve().parents[2]
-        / "reporting" / "docs" / "cold_start_policy_matrix.md"
+        / "docs" / "hai" / "cold_start_policy_matrix.md"
     )
     assert matrix_path.exists(), (
         "v0.1.7 W24: cold_start_policy_matrix.md must exist"

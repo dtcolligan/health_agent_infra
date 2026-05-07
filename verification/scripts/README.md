@@ -29,7 +29,7 @@ demo shim."
 
 For the current runtime, see [`../../README.md`](../../README.md)
 ("CLI surface" and "Read this repo in 5 minutes") and
-[`../../reporting/docs/tour.md`](../../reporting/docs/tour.md). The
+[`../../docs/hai/tour.md`](../../docs/hai/tour.md). The
 canonical end-to-end flow is the `hai daily` orchestrator and the
 `hai pull → hai propose → hai synthesize → hai review` chain — not
 this shim.

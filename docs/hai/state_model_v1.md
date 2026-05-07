@@ -226,7 +226,7 @@ surfaces and lands in the same raw tables.
 
 ## Where to read next
 
-- `reporting/docs/architecture.md` — full pipeline
-- `reporting/docs/x_rules.md` — synthesis rule catalogue
-- `reporting/docs/non_goals.md` — scope boundaries
+- `docs/hai/architecture.md` — full pipeline
+- `docs/hai/x_rules.md` — synthesis rule catalogue
+- `docs/hai/non_goals.md` — scope boundaries
 - `README.md` — repo-level overview

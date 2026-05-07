@@ -43,7 +43,7 @@ and
 | Test gate at release | 2943 passed, 4 skipped (full suite, broader `-W error::Warning` gate, ~140s; +187 vs v0.1.18 baseline of 2756, exceeded the +86 PLAN G2 floor 2.2×; +3 over the Phase-3 close 2940 baseline are the IR R1 regression tests for F-IR-01 + F-IR-05); `hai eval run --scenario-set all` 100% across deterministic + factuality fan-out; `hai eval run --scenario-set factuality` 100/100 vs 97/99 thresholds; persona matrix 13/13 with 0 findings + 0 crashes (opt-in via `HAI_RUN_PERSONA_MATRIX=1`) | `reporting/plans/v0_2_0/RELEASE_PROOF.md` |
 | Eval scenario corpus | 135 deterministic fixtures (20 per domain × 6 + 15 synthesis) + 30 judge_adversarial fixtures + 30 atomic_claims fixtures (W-FACT-ATOM corpus) + 160 factuality fixtures (W58D corpus, 85 known-bad + 75 known-good) | `src/health_agent_infra/evals/scenarios/` |
 | Domains | recovery, running, sleep, stress, strength, nutrition | `src/health_agent_infra/domains/` |
-| Runtime state | local SQLite by default; no package telemetry | `reporting/docs/privacy.md`, `SECURITY.md` |
+| Runtime state | local SQLite by default; no package telemetry | `docs/hai/privacy.md`, `SECURITY.md` |
 
 ## HAI reference-runtime claim
 
@@ -183,5 +183,5 @@ non-maintainer use) deferred to v0.4 review.
 Update this file after any release that changes package version,
 schema head, command count, test gate, product claim, or next-cycle
 role. Do not mirror detailed CLI command metadata here; regenerate
-`reporting/docs/agent_cli_contract.md` from
+`docs/hai/agent_cli_contract.md` from
 `hai capabilities --markdown` instead.

@@ -2358,7 +2358,7 @@ def build_parser() -> argparse.ArgumentParser:
         description=(
             "Versioned tarball of state.db + JSONL audit logs + "
             "manifest. Read-only on local state. See "
-            "reporting/docs/backup_and_recovery.md for the recovery contract."
+            "docs/hai/backup_and_recovery.md for the recovery contract."
         ),
     )
 
@@ -3189,7 +3189,7 @@ def main(argv: list[str] | None = None) -> int:
         # Top-level safety net (added in v0.1.6 per Codex r2 / internal
         # audit). No CLI handler should escape as a raw Python traceback;
         # an agent calling `hai` should always see one of the documented
-        # exit codes (`reporting/docs/cli_exit_codes.md`). When this
+        # exit codes (`docs/hai/cli_exit_codes.md`). When this
         # path fires it indicates either a missed local guard in a
         # handler (file it as a bug) or a genuine internal invariant
         # tripping (also a bug). We surface the exception type + message
