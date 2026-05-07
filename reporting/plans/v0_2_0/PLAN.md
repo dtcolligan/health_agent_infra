@@ -45,7 +45,7 @@
 
 - **W52** ships `hai review weekly --week YYYY-Www [--json|--markdown]`. Aggregates accepted state + intent_item + target + recommendation_log + x_rule_firing + review_outcome + data_quality_daily + sync_run_log + runtime_event_log. Filters on `superseded_by_plan_id IS NULL`. Partial-week abstain branch (`weekly_status='insufficient_data'` if coverage < threshold) per F-PHASE0-02. Data-quality rollup distinguishes `stale_pull` vs `retrospective_manual` per F-PHASE0-03. Consumes v0.1.14 W-EXPLAIN-UX prose obligations as carry-forward.
 - **W-FACT-ATOM** is FActScore-shaped atomic-claim decomposition. Folds into W58D as the parsing layer that splits W52 prose into atom-level claims.
-- **W58D** is the deterministic factuality gate. Every atomic claim resolves to a locator OR audit-chain reference; otherwise the gate blocks. **Own deterministic corpus + scoring runner** (NOT the existing `judge_adversarial` shape-only fixtures per F-PHASE0-10). Acceptance: `block ≥97% known-bad / pass ≥99% known-good` over corpus of ≥150 fixtures (per maintainer Q2 adjudication; D14 pressure-tests the percentages).
+- **W58D** is the deterministic factuality gate. Every quantitative or comparative factual atom resolves to a locator OR audit-chain reference; otherwise the gate blocks. **Qualitative atoms are constrained to non-factual narration and are not gated** (per F-PLAN-10 + F-PLAN-R2-01 round-2 alignment). **Own deterministic corpus + scoring runner** (NOT the existing `judge_adversarial` shape-only fixtures per F-PHASE0-10). Acceptance: `block ≥97% known-bad / pass ≥99% known-good` over corpus of ≥150 fixtures (per maintainer Q2 adjudication; D14 pressure-tests the percentages).
 
 **Thread 3 — Doc-only adjuncts (parallel).** Four documentation artifacts that ship alongside Threads 1+2:
 
@@ -67,7 +67,7 @@
 | 2.C | **W-EVCARD-WEEKLY** | Weekly claim-card carrier (migration 028). Keyed by week + user + claim_id + prose-span + derivation + locator-set; payload carries source-row locators AND audit-chain refs as separate lanes | 2-4d | F-PHASE0-09 + F-PHASE0-12 | release-blocker (W52 + W58D both consume) |
 | 2.D | **W52** | `hai review weekly --week YYYY-Www [--json\|--markdown]` aggregation. Filter on `superseded_by_plan_id IS NULL`; partial-week `weekly_status='insufficient_data'` abstain branch with threshold in `thresholds.toml`; data-quality rollup distinguishes `stale_pull` vs `retrospective_manual` | 6-9d | tactical §6.1 + F-PHASE0-02 + F-PHASE0-03 + F-PHASE0-07 + W-EXPLAIN-UX-CARRY consumption | release-blocker (cycle thesis depends) |
 | 2.E | **W-FACT-ATOM** | FActScore-shaped atomic-claim decomposition. Parser splits W52 prose into atom-level claims. Folds into W58D | 2-3d | tactical §6.1 + F-PHASE0-10 | release-blocker (W58D depends) |
-| 2.F | **W58D** | Deterministic factuality gate. Every atomic claim resolves to a locator OR audit-chain ref; otherwise gate blocks. **Own deterministic corpus + scoring runner** (NOT W-AI judge_adversarial shape-only fixtures). Acceptance: `block ≥97% known-bad / pass ≥99% known-good` over corpus of ≥150 fixtures | 5-8d | tactical §6.1 + F-PHASE0-10 + maintainer Q2 (% over larger corpus) | release-blocker (cycle thesis depends; blocking from day 1) |
+| 2.F | **W58D** | Deterministic factuality gate. Every quantitative or comparative factual atom resolves to a locator OR audit-chain ref; otherwise gate blocks. Qualitative atoms not gated (per F-PLAN-R2-01). **Own deterministic corpus + scoring runner** (NOT W-AI judge_adversarial shape-only fixtures). Acceptance: `block ≥97% known-bad / pass ≥99% known-good` over corpus of ≥150 fixtures | 5-8d | tactical §6.1 + F-PHASE0-10 + maintainer Q2 (% over larger corpus) | release-blocker (cycle thesis depends; blocking from day 1) |
 | 2.G | **W-MCP-THREAT** | `reporting/docs/mcp_threat_model.md`. OWASP MCP Top 10 mapping. Pre-req for v0.3 PLAN-audit per CP-MCP-THREAT-FORWARD | 2-3d | tactical §6.1 + CP-MCP-THREAT-FORWARD | doctrine-gap (load-bearing for v0.3 prereqs) |
 | 2.H | **W-COMP-LANDSCAPE** | `reporting/docs/competitive_landscape.md`. 2026-Q2 evidence refresh of comparable-OSS survey | 1-2d | tactical §6.1 | doctrine-gap (positioning artifact) |
 | 2.I | **W-NOF1-METHOD** | `reporting/docs/n_of_1_methodology.md`. Substrate-then-estimator chain methodology | 1-2d | tactical §6.1 | doctrine-gap (Wave-4 positioning) |
@@ -113,7 +113,7 @@
 - W-EVCARD-WEEKLY in `core/state/migrations/028_*.sql` + `core/review/weekly_card.py` (new).
 - W52 in `cli/handlers/review.py` + `core/review/weekly.py` (new) + `core/review/render.py` (new) + capabilities manifest extension.
 - W-FACT-ATOM in `core/eval/atomic_claims.py` (new).
-- W58D in `core/eval/factuality_gate.py` (new) + `evals/scenarios/factuality/` (new corpus dir).
+- W58D in `core/eval/factuality_gate.py` (new) + `evals/scenarios/factuality/` (new corpus dir) + `evals/cli.py` (extend `--scenario-set all` semantics to fan out factuality scenarios per F-PLAN-07 round-1 + F-PLAN-R2-05 round-2 propagation).
 - Doc-only: `reporting/docs/{mcp_threat_model,competitive_landscape,n_of_1_methodology}.md`.
 
 Recommended commit cadence: atomic per-W-id commits where possible (W-PROV-2 splits to 1-per-domain; carriers split to schema + emission; W52 may split to aggregation + render; W58D may split to corpus + runner). Total estimated commits: 18-25.
@@ -333,6 +333,8 @@ CREATE INDEX idx_weekly_card_claim_id ON weekly_claim_card (claim_id, computed_a
 - `src/health_agent_infra/cli/__init__.py` parser-tree — new subcommand + flags.
 - `verification/tests/test_review_weekly.py` (new) — aggregation correctness + abstain branch + supersession + data-quality semantics.
 - `verification/tests/test_review_weekly_byte_stable.py` (new) — fixture-week deterministic output.
+- `verification/tests/test_review_weekly_abstain_metadata.py` (new — round-1 add per F-PLAN-03) — deterministic-substitution test for abstain-branch metadata claims (counts, threshold, date lists).
+- `verification/tests/test_review_weekly_deferred_domain_suppression.py` (new — round-2 add per F-PLAN-R2-02) — fork-defer fixture asserting deferred-domain prose renders qualitative-only with explicit "insufficient provenance" disposition.
 
 **CLI surface (PLAN-author proposal):**
 
@@ -409,9 +411,11 @@ W52's abstain-branch render is asserted by a deterministic test (`test_review_we
 5. Data-quality rollup distinguishes `stale_pull` vs `retrospective_manual` with ≥4 fixture cases (auto-pull stale, manual-recent fresh, manual-retrospective, auto-pull fresh).
 6. Weekly claim cards (W-EVCARD-WEEKLY consumer) populated for every quantitative + comparative atomic claim in non-abstain output. Test: count cards = count of (quantitative + comparative) atoms in prose. **Qualitative atoms emit no card** — but a separate test asserts qualitative atoms contain no factual past-week content (mechanical: no numeric tokens, no date tokens, no comparison operators in qualitative atom_text). **(Round-1 addition per F-PLAN-10: qualitative-non-factual mechanical assertion.)**
 7. W-EXPLAIN-UX-CARRY consumed: each prose obligation from v0.1.14 review doc has been implemented OR explicitly deferred with named cycle destination in `reporting/plans/v0_2_0/explain_ux_obligations.md` (new file).
-8. Test count grows ≥ 18 vs W-EVCARD-WEEKLY baseline (aggregation 5 + abstain 3 + supersession 2 + data-quality 4 + claim-card 2 + W-EXPLAIN-UX 2).
-9. `hai capabilities --json` regenerates with new `hai review weekly` command + 3 flags. Snapshot regenerates in lockstep.
-10. `CHANGELOG.md` v0.2.0 entry names W52 with user-facing wording "weekly review with source-row provenance."
+8. **Deferred-domain suppression** (round-2 add per F-PLAN-R2-02): if W-PROV-2 fork-defers any dormant domain to v0.2.1 W-PROV-3, W52 emits no quantitative or comparative atoms (and writes no claim cards) for that domain in the weekly review; the domain section renders with explicit "domain X: insufficient provenance — quantitative claims suppressed pending v0.2.1 W-PROV-3" disposition. **Test:** fixture state DB with one dormant domain marked W-PROV-3-deferred; `hai review weekly` for a populated week asserts (a) no claim cards exist for that domain in `weekly_claim_card`, (b) the JSON output includes `deferred_domains: ["<domain>"]`, (c) the markdown output renders the suppression disposition prose.
+9. **Append-only output semantics** (round-2 add per F-PLAN-R2-03): `hai review weekly --json` returns `claim_cards` as the **canonical-latest view** — for each `(iso_week, user_id, claim_id)` tuple in the table, only the row with maximum `computed_at` is emitted. Historical (superseded) rows remain in `weekly_claim_card` but are NOT in the default JSON output. A new `--include-history` flag exposes the full append-only history (latest + superseded). **Test:** rerun fixture — run W52, mutate one fixture row, rerun W52, assert (a) `weekly_claim_card` has 2 rows for the affected `claim_id` (append-only preserved), (b) default `--json` returns 1 row per `claim_id` (canonical-latest), (c) `--json --include-history` returns both rows.
+10. Test count grows ≥ 23 vs W-EVCARD-WEEKLY baseline (aggregation 5 + abstain 3 + supersession 2 + data-quality 4 + claim-card 2 + W-EXPLAIN-UX 2 + abstain-metadata 2 + deferred-domain 2 + canonical-latest-rerun 1). **(Round-2 update per F-PLAN-R2-05: count raised from 18 to 23 to absorb the round-1 + round-2 added test surfaces.)**
+11. `hai capabilities --json` regenerates with new `hai review weekly` command + 4 flags (round-2: added `--include-history` per acceptance #9). Snapshot regenerates in lockstep.
+12. `CHANGELOG.md` v0.2.0 entry names W52 with user-facing wording "weekly review with source-row provenance."
 
 **What this WS does NOT do.**
 - Does not run an LLM judge over the prose (W58J, v0.2.2).
@@ -419,7 +423,7 @@ W52's abstain-branch render is asserted by a deterministic test (`test_review_we
 - Does not autonomously author intent/target rows from outcomes (per W57 invariant).
 - Does not extend `hai today` rendering (separate v0.2.1+ candidate).
 
-**Ship-claim gate:** acceptance items 1, 2, 4, 6, 7 are **release-blocker**. Cycle thesis depends on byte-stable output + abstain branch + supersession correctness.
+**Ship-claim gate:** acceptance items 1, 2, 4, 6, 7, **8**, **9** are **release-blocker** (round-2: items 8 + 9 added per F-PLAN-R2-02 + F-PLAN-R2-03). Cycle thesis depends on byte-stable output + abstain branch + supersession correctness + deferred-domain suppression + canonical-latest output semantics.
 
 ### §2.E W-FACT-ATOM — Atomic-claim decomposition
 
@@ -509,15 +513,17 @@ W52's abstain-branch render is asserted by a deterministic test (`test_review_we
    pass_known_good_min_pct = 99.0
    ```
    Threshold-injection seam validates per D13.
-6. Test count grows ≥ 25 vs W-FACT-ATOM baseline (gate logic 8 + corpus coverage 12 + threshold 3 + bypass-flag 2).
-7. `CHANGELOG.md` v0.2.0 entry names W58D with user-facing wording "deterministic factuality gate over weekly-review prose."
+6. **`--scenario-set all` semantics extension** (round-2 add per F-PLAN-R2-05 propagation; corresponds to §3.1 G4a). v0.2.0 modifies `evals/cli.py` so `hai eval run --scenario-set all` fans out to deterministic domain/synthesis fixtures + W58D factuality fixtures (BOTH scored at 100%), while `--scenario-set judge_adversarial` preserves the v0.1.14 W-AI shape-only summary behaviour (no scoring assertion until v0.2.2 W58J). Existing v0.1.18 baseline behaviour for `judge_adversarial` is unchanged; the only `all`-set semantics change is adding factuality to the fan-out.
+7. Test count grows ≥ 26 vs W-FACT-ATOM baseline (gate logic 8 + corpus coverage 12 + threshold 3 + bypass-flag 2 + scenario-set-all-semantics 1). **(Round-2: count raised from 25 to 26 to absorb item 6's CLI-semantics change.)**
+8. `CHANGELOG.md` v0.2.0 entry names W58D with user-facing wording "deterministic factuality gate over weekly-review prose."
 
 **What this WS does NOT do.**
 - Does not run an LLM judge (W58J, v0.2.2).
 - Does not auto-correct blocked claims (gate blocks; user reads stderr; W52 is re-run after data is fixed).
 - Does not autonomously mutate thresholds (per AGENTS.md "Do Not Do").
+- Does not change `--scenario-set judge_adversarial` behaviour — it stays shape-only summary per `evals/cli.py:100-138`.
 
-**Ship-claim gate:** acceptance items 1, 2, 3, 4 are **release-blocker**. Cycle thesis depends on the gate working blocking from day 1.
+**Ship-claim gate:** acceptance items 1, 2, 3, 4, **6** are **release-blocker** (round-2: item 6 added per F-PLAN-R2-05). Cycle thesis depends on the gate working blocking from day 1 + the `--scenario-set all` semantics aligning with G4a.
 
 ### §2.G W-MCP-THREAT — MCP threat-model artifact
 
@@ -621,7 +627,7 @@ W52's abstain-branch render is asserted by a deterministic test (`test_review_we
 
 **G1. All 10 active W-ids' release-blocker acceptance items pass.** W-PROV-2, W-EVCARD-DAILY, W-EVCARD-WEEKLY, W52, W-FACT-ATOM, W58D, W-MCP-THREAT, W-COMP-LANDSCAPE, W-NOF1-METHOD, W-EXPLAIN-UX-CARRY. W-2U-GATE-2 is opportunistic; "did not fire" is acceptable.
 
-**G2. Full pytest suite green** (broader `-W error::Warning` gate). Test count target ≥ v0.1.18 + 80 (rough projection: W-PROV-2 +6, W-EVCARD-DAILY +12, W-EVCARD-WEEKLY +8, W52 +18, W-FACT-ATOM +8, W58D +25, others minor). Maintainer to verify final count.
+**G2. Full pytest suite green** (broader `-W error::Warning` gate). Test count target ≥ v0.1.18 + 86 (rough projection: W-PROV-2 +6, W-EVCARD-DAILY +12, W-EVCARD-WEEKLY +8, W52 +23 (round-2 raised from +18 per F-PLAN-R2-05 absorbing abstain-metadata + deferred-domain + canonical-latest-rerun tests), W-FACT-ATOM +8, W58D +26 (round-2 raised from +25 per scenario-set-all semantics test), others minor). Maintainer to verify final count.
 
 **G3. `hai eval run --scenario-set factuality` reports `block ≥97% / pass ≥99%`** over the deterministic corpus (≥150 fixtures).
 
@@ -669,9 +675,9 @@ W52's abstain-branch render is asserted by a deterministic test (`test_review_we
 |---|---|
 | W-PROV-2 cannot land all 5 dormant domains within 6d budget (R-V0.2.0-01) | Fork-defer late-domain(s) to v0.2.1 W-PROV-3 with named-partial-closure; W52 suppresses quantitative claims for deferred domains. Cycle proceeds. |
 | W58D cannot meet `block ≥97% / pass ≥99%` thresholds after corpus + threshold revision (R-V0.2.0-02) | **Cycle abort at G3.** Two paths: (a) re-author thresholds with explicit thesis-change CP + D14 rerun before re-opening; (b) defer W58D to v0.2.1 with explicit `partial-closure → v0.2.1 W58D-2` and `aborts-cycle-thesis` finding logged. Cycle does NOT ship if neither path adopts. |
-| Effort upper bound (37d) exceeded with W52 not yet at IR (R-V0.2.0-03) | Fork-defer ONE carrier (daily OR weekly) to v0.2.1 with explicit `partial-closure → v0.2.1 W-EVCARD-{DAILY,WEEKLY}-2`. **Stub-then-fill is NOT an option** (per F-PLAN-09 round-1 correction; honest partial-closure naming is the discipline). The choice between which carrier defers is a maintainer call at the trigger moment. |
+| Effort upper bound (37d) exceeded with W52 not yet at IR (R-V0.2.0-03) | **Cycle aborts at G1; D14 re-author required before re-opening.** **(Round-2 correction per F-PLAN-R2-04: original wording "fork-defer ONE carrier (daily OR weekly)" was unsound — the carriers are NOT interchangeable.** Deferring weekly removes W52/W58D's claim-card surface entirely (cycle thesis breaks). Deferring daily contradicts the §1.3 weekly-aggregates-over-daily dependency unless W52 is reauthored with a non-daily-card evidence path — that reauthor IS the abort-and-D14-re-author path. Stub-then-fill remains NOT an option per F-PLAN-09.) |
 | F-PHASE0-08 absorption decision (R-V0.2.0-04) | If failed-run rows missing error_class affect ≥10% of any fixture week's daily plans → absorb into v0.2.0 as new W-RUNTIME-EVENT-OBSERVABILITY (additive, ~0.5d). If <10% → defer to v0.2.1 with named destination. |
-| Schema-group count drift (R-V0.2.0-05) | If D14 forces 2-group split despite C6, fork-defer ONE carrier (per F-PLAN-09 above). NOT a stub-then-fill. |
+| Schema-group count drift (R-V0.2.0-05) | If D14 forces 2-group split despite C6, **cycle aborts; D14 re-author required.** **(Round-2 correction per F-PLAN-R2-04: same DAG-conflict reasoning — single-carrier deferral is unsound; either both carriers ship or D14 re-authors the dependency design.)** |
 
 **Post-ship hotfix shape.** A v0.2.0 critical bug surfaced post-PyPI ships as `v0.2.0.1` (hotfix tier per D15). Forward-only migration if schema fix needed. Lightweight RELEASE_PROOF; abbreviated audit chain. v0.1.14.1 + v0.1.15.1 are the precedents.
 
@@ -685,7 +691,7 @@ W52's abstain-branch render is asserted by a deterministic test (`test_review_we
 
 **Trigger.** Per-domain locator emission turns out to be harder than the recovery R6 reference shape implies — e.g., a domain's classify path doesn't have a clean accepted-state-table mapping; or the per-domain accepted-state row needs additional columns added to make locator emission meaningful.
 
-**Mitigation.** PLAN-author estimate is 2-4d; abort trigger is **>6d**. If W-PROV-2 exceeds 6d during Phase 1, fork-defer the late-domains to v0.2.1 W-PROV-3 with explicit named-defer in CARRY_OVER.md. v0.2.0 ships W52 + W58D against partial substrate (whichever domains landed by the 6d budget) with explicit "domains X, Y deferred" disposition in RELEASE_PROOF.
+**Mitigation.** PLAN-author estimate is 2-4d; abort trigger is **>6d**. If W-PROV-2 exceeds 6d during Phase 1, fork-defer the late-domain(s) to v0.2.1 W-PROV-3 with explicit named-defer in CARRY_OVER.md. v0.2.0 ships W52 + W58D against partial substrate (whichever domains landed by the 6d budget) with explicit "domains X, Y deferred" disposition in RELEASE_PROOF. **W52 must suppress quantitative and comparative claims for deferred domains** per §2.D acceptance #8 (round-2 add per F-PLAN-R2-02): the deferred-domain section renders qualitative-only with explicit "insufficient provenance" disposition; no claim cards written; `deferred_domains` field surfaced in JSON output.
 
 **Probability.** Moderate (35%). The recovery R6 path is real existing code, not theoretical, but it took the v0.1.14 cycle a non-trivial amount of work and there are 5 dormant domains, not 1.
 
@@ -705,7 +711,7 @@ W52's abstain-branch render is asserted by a deterministic test (`test_review_we
 
 **Trigger.** Cumulative effort drift. Cycle approaches 30d wall-clock at W52 IR open with W-FACT-ATOM + W58D not yet at acceptance.
 
-**Mitigation (round-1 corrected per F-PLAN-09).** **Honest partial-closure with named destination cycle** — fork-defer ONE carrier (daily OR weekly per maintainer call at trigger time) to v0.2.1 as `partial-closure → v0.2.1 W-EVCARD-{DAILY,WEEKLY}-2`. Acceptance + RELEASE_PROOF wording explicitly names the partial closure. **Stub-then-fill is NOT an option** — that conflicts with W-EVCARD-* release-blocker contract per F-PLAN-09 + AGENTS.md "honest partial-closure naming" pattern. The maintainer-rigor preference (`feedback_pick_rigor_over_velocity.md`) explicitly says "if effort tightens, defer with named destination cycle" — that is fork-defer, not stub-then-fill.
+**Mitigation (round-2 corrected per F-PLAN-R2-04).** **Cycle aborts at G1 if either carrier cannot ship within budget; D14 re-author required before re-opening.** The carriers are NOT interchangeable: weekly aggregates over daily per §1.3, so deferring weekly removes the W52/W58D claim-card surface entirely (cycle thesis breaks); deferring daily contradicts the weekly-aggregates-over-daily dependency unless W52 is reauthored with a non-daily-card evidence path — and that reauthor IS the abort-and-D14-re-author path. The original round-1 mitigation (fork-defer ONE carrier) was unsound; round-2 corrects to abort-and-re-author. Stub-then-fill also remains NOT an option per F-PLAN-09. **Maintainer-rigor preference (`feedback_pick_rigor_over_velocity.md`):** "if effort tightens, defer with named destination cycle" — for v0.2.0, that destination is "v0.2.0 PLAN re-author + re-D14" not "v0.2.1 W-EVCARD-{DAILY,WEEKLY}-2" because the dependency design is load-bearing.
 
 **Probability.** Moderate (30%). v0.1.x retro Lesson 1 ("audit chains settle, not converge") implies D14 + IR rounds will surface scope-shape issues that absorb effort.
 
@@ -729,7 +735,7 @@ W52 surfaces "N failures, error_class missing in M of N rows" as honest data-qua
 
 **Trigger.** D14 round 2+ surfaces an argument that migration 027 (daily card) + 028 (weekly card) are conceptually two schema groups, not one — thereby violating reconciliation C6 (one group per release).
 
-**Mitigation (round-1 corrected per F-PLAN-05).** PLAN's framing is **"evidence-card family"** = migration 027 + 028 only. **W52 produces no migration of its own** — it reads existing tables (accepted-state, audit-chain) and writes to `weekly_claim_card` (migration 028). The C6 schema-group count is 1, not 2 or 3. F-PHASE0-09 (Codex Phase 0) supports this: "schema-group count can remain one." If D14 round 2+ disagrees, three options: (a) accept D14's recount + fork-defer ONE carrier to v0.2.1 with named-partial-closure (per §3.4 abort table + F-PLAN-09); (b) merge 027 + 028 into one migration file (preserves group count, slightly worse rollback granularity); (c) reopen reconciliation C6 with a fresh CP.
+**Mitigation (round-1 corrected per F-PLAN-05; round-2 corrected per F-PLAN-R2-04).** PLAN's framing is **"evidence-card family"** = migration 027 + 028 only. **W52 produces no migration of its own** — it reads existing tables (accepted-state, audit-chain) and writes to `weekly_claim_card` (migration 028). The C6 schema-group count is 1, not 2 or 3. F-PHASE0-09 (Codex Phase 0) + F-PLAN-05 + F-PLAN-R2-04 (Codex D14) all support this: "schema-group count can remain one." If D14 round 3+ disagrees, two options: (a) **cycle aborts; D14 re-author required** (per §3.4 abort table + F-PLAN-R2-04 — single-carrier fork-defer is unsound because carriers are not interchangeable); (b) merge 027 + 028 into one migration file (preserves group count, slightly worse rollback granularity); (c) reopen reconciliation C6 with a fresh CP. **Round-2 correction:** original option (a) "fork-defer ONE carrier" was unsound and is replaced with abort-and-re-author per F-PLAN-R2-04's DAG-conflict argument.
 
 **Probability.** Low (15%). The §1.4 round-1 clarification eliminates the original ambiguity; both senior reviewers (Claude Phase 0 sweep + Codex round 1 F-PLAN-05) now hold the one-group framing with W52 = no migration.
 
