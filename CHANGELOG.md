@@ -45,6 +45,24 @@ Per-release detail lives under `reporting/plans/<version>/`.
   daily card is the substrate W52 weekly review (this cycle) and
   v0.2.2 W58J judge harness (next cycle group) consume.
 
+- **Weekly review claims now persist with source-row provenance**
+  (W-EVCARD-WEEKLY, migration 028). The `weekly_claim_card` table
+  + helpers (`core/review/weekly_card.py`) ship the carrier W52
+  consumes when emitting weekly-review prose. Each row carries one
+  quantitative or comparative atomic claim — qualitative atoms
+  emit no card. `claim_id` is a deterministic content hash; same
+  prose + same data → same `claim_id`. Append-only audit history
+  per Codex Q1 disposition: re-running the weekly review with
+  corrected data appends a new row (new UUID-suffixed `card_id`,
+  same `claim_id`, newer `computed_at`); superseded rows remain
+  in the table. Two consumer helpers ship:
+  `load_canonical_latest_for_week` (the canonical-latest-by-
+  `computed_at` view, default for `--json`) and
+  `load_full_history_for_week` (consumed by W52's
+  `--include-history` flag, ships with the W52 surface itself).
+  Locator entries validate per W-PROV-1; audit-chain refs live in
+  a separate JSON-object lane per F-PHASE0-12.
+
 ---
 
 ## [0.1.18] — 2026-05-06
