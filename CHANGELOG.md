@@ -11,7 +11,7 @@ Per-release detail lives under `reporting/plans/<version>/`.
 
 ---
 
-## [Unreleased] — v0.2.0 in flight
+## [0.2.0] — 2026-05-07
 
 ### Behaviour change
 
