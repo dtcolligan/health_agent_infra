@@ -5,15 +5,18 @@ falsification criterion. Stated explicitly so future audits can ask
 "is this still true?" rather than re-derive the entire strategic
 case.
 
-This file is a stable lift from the (now superseded)
+This file is a stable HAI reference-runtime hypothesis ledger, lifted
+from the (now superseded)
 [`reporting/plans/historical/multi_release_roadmap.md § 3`](reporting/plans/historical/multi_release_roadmap.md).
-The current working strategy lives in
+The current repo-wide strategy lives in [`PROJECT_FRAME.md`](PROJECT_FRAME.md)
+and the paper frame in
+[`research/runtime_contracts_paper/PAPER_FRAME.md`](research/runtime_contracts_paper/PAPER_FRAME.md).
+The HAI runtime strategy context lives in
 [`reporting/plans/post_v0_1_18/strategic_plan_v2.md`](reporting/plans/post_v0_1_18/strategic_plan_v2.md)
-(supersedes
-[`strategic_plan_v1.md`](reporting/plans/strategic_plan_v1.md) as of
-2026-05-06; v1 preserved as historical evidence). This file is the
-citable artifact for the H1-H5 hypotheses themselves; v2 §3 carries
-the v0.1.x evidence accumulation per bet.
+(supersedes `strategic_plan_v1.md` as of 2026-05-06; v1 preserved as
+historical evidence). This file remains the citable artifact for the
+H1-H5 HAI hypotheses themselves; v2 §3 carries the v0.1.x evidence
+accumulation per bet.
 
 ---
 

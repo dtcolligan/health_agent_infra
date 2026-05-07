@@ -1,17 +1,20 @@
-# Planning Tree — Reading Order Index
+# HAI Planning Tree — Reading Order Index
 
-> **Last updated:** 2026-05-07 (v0.2.0 ship-prep complete; D15 IR
-> in flight + maintainer manual TTY gate pending). Earlier 2026-05-06
+> **Last updated:** 2026-05-07 (v0.2.0 source tree shipped; D15 IR
+> round 3 verdict `SHIP`; repo reframed around runtime-contract
+> research + GovernedAgentBench). Earlier 2026-05-06
 > entry: v0.1.18 shipped + post-v0.1.18 strategic refresh: v0.1.19
 > cancelled per CP-2U-GATE-SPLIT + D16 [foreign-user gate split into
 > install/wearable/dogfood]; `post_v0_1_18/strategic_plan_v2.md`
-> supersedes v1 as canonical strategic reference; companion
+> supersedes v1 as HAI reference-runtime strategic reference; companion
 > `post_v0_1_18/v0_1_x_retro.md` documents v0.1.x track close.
-> **v0.2.1 (insight ledger — W53) is next-active post-v0.2.0 ship.**
+> Project-wide priority now lives in `../../PROJECT_FRAME.md` and
+> `../../research/runtime_contracts_paper/PAPER_FRAME.md`.
 
-This is the orientation guide to the `reporting/plans/` tree.
-Read this when you're returning cold and need to find the right
-doc by intent.
+This is the orientation guide to the `reporting/plans/` tree. Read this
+when you need HAI runtime release history, audit records, or backlog
+provenance. For current project priority, start at
+[`../../PROJECT_FRAME.md`](../../PROJECT_FRAME.md).
 
 ## Tree at a glance
 
@@ -34,7 +37,7 @@ reporting/plans/
 ├── v0_1_17/                           ← shipped 2026-05-05 (maintainability + eval consolidation; W-29 cli.py split + W-B body-comp + W-D arm-2)
 ├── v0_1_18/                           ← shipped 2026-05-06 (onboarding-quality + intake-handler migration parity; 7 W-ids closed + W-OB-6 unfired)
 ├── v0_1_19/                           ← CANCELLED 2026-05-06 per CP-2U-GATE-SPLIT (foreign-user empirical re-tiered to opportunistic; W-2U-INSTALL closed verbal-only, W-2U-WEARABLE + W-2U-DOGFOOD deferred to v0.4 review)
-├── v0_2_0/                            ← ship-prep 2026-05-07 (Wave 2: weekly review W52 + factuality W58D + W-PROV-2 + evidence cards + atomic claims + Path A doc adjuncts; D15 IR in flight)
+├── v0_2_0/                            ← source-tree shipped 2026-05-07 (Wave 2: weekly review W52 + factuality W58D + W-PROV-2 + evidence cards + atomic claims + Path A doc adjuncts; D15 IR R3 SHIP)
 ├── post_v0_1_10/                      ← historical between-cycle handoff (demo, Phase 4 audit)
 ├── post_v0_1_13/                      ← post-v0.1.13 strategic research + audit chain + CPs
 ├── post_v0_1_14/                      ← post-v0.1.14 carry-over findings + research notes
@@ -47,7 +50,11 @@ reporting/plans/
 
 ---
 
-## I want to understand the project's strategic direction.
+## I want to understand HAI runtime strategy.
+
+For project-wide strategy under the research reframe, read
+`../../PROJECT_FRAME.md` and
+`../../research/runtime_contracts_paper/PAPER_FRAME.md` first.
 
 **Read in order:**
 
@@ -62,23 +69,20 @@ reporting/plans/
 4. `risks_and_open_questions.md` — what could derail this + what
    decisions remain.
 
-If you only have time for one: `post_v0_1_18/strategic_plan_v2.md`.
+If you only have time for one HAI strategy doc:
+`post_v0_1_18/strategic_plan_v2.md`.
 
 `strategic_plan_v1.md` is preserved as v2's primary source; read v1
 only when you need the snapshot of project posture at v0.1.10.
 
-## I want to scope the next release.
+## I want to scope the next HAI runtime release.
 
 **Read in order:**
 
 1. `reporting/docs/current_system_state.md` — latest shipped truth.
 2. `tactical_plan_v0_1_x.md` — current release-in-flight rows
-   (v0.2.0 Wave 2 ship-prep complete, v0.2.1 next-active).
-3. `v0_2_0/PLAN.md` — current cycle scope (ship-prep complete).
-4. `v0_2_0/RELEASE_PROOF.md` — substantive-tier ship readiness;
-   honesty boundary gates G15-G17 + manual TTY ship sequence §8.
-5. The next cycle's `PLAN.md` once authored (v0.2.1 insight-ledger
-   W53).
+   (v0.2.0 source-tree shipped; v0.2.1 insight ledger is HAI backlog).
+3. The next cycle's `PLAN.md` once authored.
 
 If you only have time for one: the open cycle's `PLAN.md` (or, when
 no cycle is open, `tactical_plan_v0_1_x.md` for the next two
@@ -130,9 +134,10 @@ If you only have time for one: `success_framework_v1.md`.
 2. `README.md` (project root) — product story + quickstart.
 3. `ARCHITECTURE.md` (project root) — runtime shape.
 4. `REPO_MAP.md` (project root) — every directory classified.
-5. `reporting/plans/post_v0_1_18/strategic_plan_v2.md` — strategic
-   frame (supersedes v1).
-6. `reporting/plans/tactical_plan_v0_1_x.md` — execution frame.
+5. `PROJECT_FRAME.md` — current research frame.
+6. `research/runtime_contracts_paper/PAPER_FRAME.md` — paper frame.
+7. `reporting/plans/post_v0_1_18/strategic_plan_v2.md` — HAI runtime
+   strategy before the research reframe.
 
 ## I'm reviewing a specific past release.
 
@@ -183,8 +188,7 @@ Cycle directories preserve their own history:
   `hai sync purge`. Schema head 26. Test surface: 2683 passed,
   4 skipped. D14 11 → 5 → 3 → CLOSE; D15 IR 6 → 1-nit.
 - `v0_1_18/` — onboarding-quality + intake-handler migration parity
-  (ship-prep 2026-05-06; PyPI publish pending D15 IR + maintainer
-  manual TTY gate). 7 W-ids closed: W-OB-1 README pivot ratified;
+  (shipped 2026-05-06). 7 W-ids closed: W-OB-1 README pivot ratified;
   W-OB-2 `hai init` interactive default with `--non-interactive` +
   `HAI_INIT_NON_INTERACTIVE=1` opt-outs (release-blocker); W-OB-3
   `--guided` post-prompt `next_action_hint` + skip-input affordance
@@ -193,10 +197,11 @@ Cycle directories preserve their own history:
   with manifest-consistency invariant; W-OB-7 intake-handler migration
   parity via additive `open_connection_with_migrations` helper —
   closes F-OB-PRE-01. W-OB-6 conditional did NOT fire. Schema head
-  unchanged at 26. Test surface: 2722 passed, 5 skipped (broader
-  warning gate). D14 7 → 3 close-in-place; D15 IR pending.
-- `v0_2_0/` — Wave 2 substantive cycle (ship-prep 2026-05-07; D15 IR
-  in flight + maintainer manual TTY ship gate pending). W52 weekly
+  unchanged at 26. Test surface: 2756 passed, 4 skipped at close after
+  follow-on release-surface fixes. D14 7 → 3 close-in-place; D15 IR
+  closed at R3 SHIP_WITH_NOTES.
+- `v0_2_0/` — Wave 2 substantive cycle (source-tree shipped 2026-05-07;
+  D15 IR R3 verdict `SHIP`). W52 weekly
   review + W58D deterministic factuality gate + W-PROV-2 dormant-
   domain locator emission + W-EVCARD-DAILY (migration 027) +
   W-EVCARD-WEEKLY (migration 028) + W-FACT-ATOM atomic-claim corpus +
@@ -207,8 +212,8 @@ Cycle directories preserve their own history:
   over the Phase-3 close 2940 are IR R1 regression tests landed for
   F-IR-01 + F-IR-05). Persona matrix 13/13 with 0 findings + 0
   crashes. Factuality corpus 100/100 vs 97/99 thresholds. CLI
-  surface: 68 commands. D14 10 → 5 → 3 → 1nit close. D15 IR R1
-  SHIP_WITH_FIXES (5 findings, all closed in 6 commits). Honesty
+  surface: 68 commands. D14 10 → 5 → 3 → 1nit close. D15 IR settled
+  R1 `SHIP_WITH_FIXES` → R2 `SHIP_WITH_FIXES` → R3 `SHIP`. Honesty
   boundary gates G15-G17 reserve
   foreign-user empirical (W-2U-WEARABLE/DOGFOOD), LLM-judge
   factuality (W58J → v0.2.2), and insight-ledger persistence
@@ -301,8 +306,9 @@ Post-v0.1.18 strategic refresh + v0.1.x track close. Current contents:
   wearable + dogfood deferred to v0.4 review). AGENTS.md D16
   applied.
 - `strategic_plan_v2.md` — fresh-authored strategic plan
-  (2026-05-06). Supersedes `strategic_plan_v1.md` as canonical
-  forward reference. Cites v1 as primary source.
+  (2026-05-06). Supersedes `strategic_plan_v1.md` as the HAI
+  reference-runtime forward reference. Cites v1 as primary source.
+  The repo-wide research frame now lives at `../../PROJECT_FRAME.md`.
 - `v0_1_x_retro.md` — companion retro on what 18 cycles taught
   us. External-readable; intended for portfolio / careers
   context as well as project continuity.

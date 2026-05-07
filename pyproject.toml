@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "health_agent_infra"
 version = "0.2.0"
-description = "Governed runtime + skills for a multi-domain personal health agent (recovery, running, sleep, stress, strength, nutrition)."
+description = "Reference governed runtime for local agents operating over personal-wellness data."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
@@ -19,7 +19,7 @@ dependencies = [
   "keyrings.alt",
   "garminconnect>=0.2",
 ]
-keywords = ["health", "agents", "cli", "claude", "skills"]
+keywords = ["health", "agents", "cli", "claude", "skills", "runtime-contracts", "evals"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Environment :: Console",

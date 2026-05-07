@@ -1,10 +1,12 @@
 cff-version: 1.2.0
 message: "If you use this software in research, please cite it as below."
-title: "Health Agent Infra: A governed runtime for personal-health agents"
+title: "Runtime Contracts for Local Agents Over Sensitive User-Owned Data"
 abstract: >-
-  An agent-native local governance runtime for personal-health agents. A user
-  talks to an LLM in natural language; the agent operates the local hai CLI;
-  deterministic code owns the rules, state, and commit path.
+  A runtime-contract research project studying whether enforceable local
+  software contracts can make smaller local models viable operators for
+  bounded workflows over sensitive user-owned data. HAI is the
+  personal-wellness reference runtime; GovernedAgentBench is the benchmark
+  scaffold.
 type: software
 authors:
   - given-names: Dom
@@ -16,13 +18,16 @@ keywords:
   - personal-health
   - LLM-agents
   - runtime-enforcement
+  - runtime-contracts
+  - agent-evals
+  - GovernedAgentBench
   - local-first
   - deterministic-policy
   - intervals.icu
   - garmin
   - claude-code
-version: "0.1.15.1"
-date-released: "2026-05-03"
+version: "0.2.0"
+date-released: "2026-05-07"
 # Once a Zenodo DOI is registered, uncomment and fill in:
 # identifiers:
 #   - type: doi
@@ -30,7 +35,7 @@ date-released: "2026-05-03"
 #     description: "Concept DOI for all versions"
 #   - type: doi
 #     value: "10.5281/zenodo.YYYYYYY"
-#     description: "DOI for v0.1.15.1"
+#     description: "DOI for v0.2.0"
 references:
   - type: article
     title: "AgentSpec: Customizable Runtime Enforcement for Agentic LLMs"

@@ -1,10 +1,14 @@
 # Architecture
 
-One-page architecture. Health Agent Infra is the local plugin/runtime wrapper
-around a shell-capable personal-health agent. The agent remains the
-conversational operator. `hai` is the governed tool surface that tells the
-agent what it may do, which substrates each command may mutate, which outputs
-must validate, and which actions are refused. For the full architecture, see
+One-page architecture for the HAI reference runtime. The repo-wide research
+frame is in [`PROJECT_FRAME.md`](PROJECT_FRAME.md); this file explains the
+runtime contract HAI contributes to that frame.
+
+Health Agent Infra is the local plugin/runtime wrapper around a
+shell-capable personal-health agent. The agent remains the conversational
+operator. `hai` is the governed tool surface that tells the agent what it
+may do, which substrates each command may mutate, which outputs must
+validate, and which actions are refused. For the full architecture, see
 [`reporting/docs/architecture.md`](reporting/docs/architecture.md).
 
 ## Single Rule

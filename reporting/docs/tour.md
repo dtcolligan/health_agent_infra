@@ -1,8 +1,9 @@
-# Reading Tour
+# HAI Reading Tour
 
-A 10-minute guided read of the v1 multi-domain runtime, for someone
-(including future-you) coming back cold. For exact version, schema
-head, command count, and release posture, read
+A 10-minute guided read of the HAI reference runtime, for someone
+(including future-you) coming back cold. For the repo-wide research
+frame, read [`../../PROJECT_FRAME.md`](../../PROJECT_FRAME.md) first.
+For exact HAI version, schema head, command count, and release posture, read
 [`current_system_state.md`](current_system_state.md) first.
 
 ## 1. What you're looking at
@@ -46,8 +47,12 @@ reporting/
     plans/                   # roadmap + release/audit plans
     experiments/             # Phase 0.5 / 2.5 throwaway prototypes
 verification/
-    tests/                   # unit + contract + integration (2631 passed at v0.1.15.1)
+    tests/                   # unit + contract + integration (2943 passed at v0.2.0)
     evals/                   # dev-reference docs + Phase E skill-harness pilot
+benchmarks/
+    governed_agent_bench/    # benchmark scaffold for contract-governed operation
+research/
+    runtime_contracts_paper/ # paper frame, draft, execution plan
 ```
 
 Rule of thumb: if the file is ``.py``, it's code; if it's
@@ -66,18 +71,16 @@ deterministic runtime behaviour on frozen scenarios.
 - [`x_rules.md`](x_rules.md) — the full cross-domain X-rule
   catalogue, including sentence-form human explanations per rule.
 - [`state_model_v1.md`](state_model_v1.md) — table-by-table state
-  schema (schema head 025 as of v0.1.15.1; migrations remain the
+  schema (schema head 028 as of v0.2.0; migrations remain the
   source of truth).
 - [`explainability.md`](explainability.md) — `hai explain` and the
   three-state audit bundle (planned → adapted → performed).
 - [`agent_cli_contract.md`](agent_cli_contract.md) — generated
   per-command contract manifest the intent-router skill consumes.
 - [`../plans/tactical_plan_v0_1_x.md`](../plans/tactical_plan_v0_1_x.md)
-  — current release plan; see also
-  [`../plans/strategic_plan_v1.md`](../plans/strategic_plan_v1.md) for
-  the longer horizon. The earlier
-  [`../plans/historical/multi_release_roadmap.md`](../plans/historical/multi_release_roadmap.md)
-  is superseded.
+  — HAI runtime backlog and release-history plan. Repo-wide research
+  priority lives in [`../../PROJECT_FRAME.md`](../../PROJECT_FRAME.md)
+  and [`../../research/runtime_contracts_paper/PAPER_FRAME.md`](../../research/runtime_contracts_paper/PAPER_FRAME.md).
 - [`how_to_add_a_domain.md`](how_to_add_a_domain.md) —
   conceptual walk-through for adding a seventh domain; paired with
   the [`domains/README.md`](domains/README.md) checklist.
@@ -134,9 +137,9 @@ runs.
 
 ``reporting/artifacts/flagship_loop_proof/2026-04-18-multi-domain-evals/``
 captures the original Phase 6 proof pass across all six domains +
-synthesis: 28 scenarios, all green. The packaged eval scenario tree has
-since grown to 66 JSON scenarios total (35 non-judge scenarios plus the
-adversarial judge set).
+synthesis. The packaged eval scenario tree has since grown to 135
+deterministic domain/synthesis fixtures plus atomic-claim and factuality
+corpora used by v0.2.0.
 
 Pre-rebuild artifacts live under
 ``reporting/artifacts/archive/`` and no longer reflect the runtime.

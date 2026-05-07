@@ -3,6 +3,11 @@
 What this project refuses to build. Stated explicitly so scope
 discipline is load-bearing, not aspirational.
 
+This file applies to HAI, the personal-wellness reference runtime. For
+the paper, these boundaries are part of the evaluated runtime contract:
+HAI is not clinical software and does not diagnose, treat, prescribe, or
+make autonomous medical decisions.
+
 ## Not a medical device
 
 - No diagnostic output. The runtime interprets observed state — it

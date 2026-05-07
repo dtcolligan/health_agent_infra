@@ -20,14 +20,16 @@ Claude session efficient.
 
 When opening a fresh session, read in this order:
 
-1. **`AGENTS.md`** — the operating contract (governance invariants, settled
-   decisions D1-D15, architectural seams, "Do Not Do").
-2. **`README.md`** — product story + quickstart.
-3. **`reporting/plans/README.md`** — reading-order index for the planning
-   tree (decides which doc to open next).
-4. **Current cycle's `reporting/plans/v0_1_X/PLAN.md`** if mid-cycle.
-   The cycle dir holds every audit artifact for that release.
-5. **`ARCHITECTURE.md`** + **`REPO_MAP.md`** if you need to find something.
+1. **`PROJECT_FRAME.md`** — current research framing and priority order.
+2. **`AGENTS.md`** — the operating contract (governance invariants, settled
+   decisions D1-D17, architectural seams, "Do Not Do").
+3. **`research/runtime_contracts_paper/PAPER_FRAME.md`** — locked paper /
+   benchmark framing.
+4. **`benchmarks/governed_agent_bench/README.md`** — benchmark scope.
+5. **`README.md`** — repo story + HAI quickstart.
+6. **`ARCHITECTURE.md`** + **`REPO_MAP.md`** if you need to find something.
+7. **`reporting/plans/README.md`** only when you need HAI release history or
+   a specific HAI runtime cycle plan.
 
 For a "what just shipped" question, read
 `reporting/plans/v0_1_X/RELEASE_PROOF.md` for the most recent X.
@@ -167,7 +169,7 @@ push (`! git push origin main`) or open a PR via `gh pr create`.
 
 | AGENTS.md (universal) | CLAUDE.md (this file) |
 |---|---|
-| Project description, code-vs-skill boundary, CLI boundaries, six domains, governance invariants, settled decisions, architectural seams, "Do Not Do" | Session-start orientation, common commands, cycle-pattern signposts, audit empirical settling shapes, partial-closure naming convention, plan-mode triggers, release toolchain |
+| Project description, research reframe, code-vs-skill boundary, CLI boundaries, six domains, governance invariants, settled decisions, architectural seams, "Do Not Do" | Session-start orientation, common commands, cycle-pattern signposts, audit empirical settling shapes, partial-closure naming convention, plan-mode triggers, release toolchain |
 
 If a contract decision applies to all AI agents (Codex, Claude, etc.),
 it goes in AGENTS.md. If it's a Claude-Code session-efficiency

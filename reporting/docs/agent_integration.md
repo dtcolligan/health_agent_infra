@@ -2,7 +2,7 @@
 
 Health Agent Infra is the local plugin/runtime wrapper around a
 shell-capable personal-health agent. This doc explains how a host agent
-installs and uses the v1 runtime. Claude Code is the first compatible
+installs and uses the current HAI reference runtime. Claude Code is the first compatible
 host surface, but the durable contract is the local `hai` CLI plus
 `hai capabilities --json`. The human product loop is natural language;
 the agent translates that intent into validated `hai` commands.
@@ -44,7 +44,7 @@ Immediately after a new PyPI publish, a pinned CDN-bypass install may be
 needed for a few minutes:
 
 ```bash
-pipx install --force --pip-args="--no-cache-dir --index-url https://pypi.org/simple/" 'health-agent-infra==0.1.15.1'
+pipx install --force --pip-args="--no-cache-dir --index-url https://pypi.org/simple/" 'health-agent-infra==0.2.0'
 ```
 
 Verify:
@@ -337,8 +337,9 @@ new sibling fields it can ignore.
 
 ## MCP
 
-No MCP server ships in v1. A future wrapper exposing CLI
-subcommands as MCP tools is tracked as Phase 7 scope.
+No MCP server ships in the current reference runtime. A future wrapper
+exposing CLI subcommands as MCP tools remains a deferred HAI support-lane
+item unless it becomes paper-critical benchmark infrastructure.
 
 ## Where tools expect paths
 

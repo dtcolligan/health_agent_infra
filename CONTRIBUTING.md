@@ -2,9 +2,12 @@
 
 ## Mental model
 
-Health Agent Infra wraps a shell-capable personal-health agent with a
-governed local tool surface. The project has two implementation surfaces.
-Everything you contribute lands in one of them:
+This repo is a runtime-contract research project with HAI as the first
+reference runtime and GovernedAgentBench as the benchmark artifact.
+Read [`PROJECT_FRAME.md`](PROJECT_FRAME.md) before assuming HAI product
+polish is the next priority.
+
+Most HAI contributions land in one of two implementation surfaces:
 
 - **Python runtime** under `src/health_agent_infra/` — deterministic
   data acquisition, projection, classification, policy, synthesis,
@@ -12,6 +15,14 @@ Everything you contribute lands in one of them:
 - **Markdown skills** under `src/health_agent_infra/skills/` — the
   agent's judgment layer: rationale, uncertainty surfacing, and
   clarification during narration.
+
+Research and benchmark contributions land under:
+
+- **GovernedAgentBench** under `benchmarks/governed_agent_bench/` —
+  task schemas, frozen manifests, trajectories, scorer logic, baselines,
+  and reports.
+- **Paper artifacts** under `research/runtime_contracts_paper/` —
+  framing, experiment plans, and reproducibility docs.
 
 The rebuild's central rule is simple:
 
@@ -68,8 +79,9 @@ Never:
 1. `uv run pytest verification/tests -q`
 2. If you touched packaging or versioning: `uv run python -m build --wheel --sdist`
 3. If you touched docs: make sure `README.md`, `CHANGELOG.md`,
-   `ROADMAP.md`, `AUDIT.md`, and the active docs under `reporting/docs/`
-   still agree.
+   `PROJECT_FRAME.md`, `ROADMAP.md`, `AUDIT.md`,
+   `research/runtime_contracts_paper/PAPER_FRAME.md`, and the active HAI
+   docs under `reporting/docs/` still agree.
 4. If you touched a skill: verify the corresponding skill-boundary
    tests still pass.
 5. If you touched a migration/projector/schema: verify the relevant
@@ -80,6 +92,8 @@ Never:
 - Strengthen a contract test in `verification/tests/` for malformed proposal
   or recommendation JSON.
 - Add eval scenarios or rubric coverage under `verification/evals/`.
+- Add GovernedAgentBench pilot tasks, recorded trajectories, or scorer
+  checks under `benchmarks/governed_agent_bench/`.
 - Improve a domain classifier/policy test at a boundary condition.
 - Fix active docs that drift from shipped runtime behavior.
 
@@ -90,14 +104,19 @@ Never:
 - Meal-level nutrition / food taxonomy in v1.
 - A learning loop / ML calibration of confidence.
 - New wearable sources unless the product scope changes intentionally.
+- Consumer-product polish that does not support the paper, benchmark, or
+  reference-runtime contract.
 
 ## If you're not sure
 
 Start with these:
 
 - `README.md`
+- `PROJECT_FRAME.md`
 - `REPO_MAP.md` — one-page orientation of every top-level entry
 - `ROADMAP.md`
+- `research/runtime_contracts_paper/PAPER_FRAME.md`
+- `benchmarks/governed_agent_bench/README.md`
 - `AUDIT.md`
 - `reporting/docs/architecture.md`
 - `reporting/docs/non_goals.md`

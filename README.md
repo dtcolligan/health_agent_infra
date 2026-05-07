@@ -12,6 +12,10 @@ It contains three active artifacts:
 | **HAI** | The personal-wellness reference runtime, packaged as `health-agent-infra` and exposed through the local `hai` CLI. |
 | **GovernedAgentBench** | The benchmark scaffold for measuring contract-governed agent operation. |
 
+The canonical project-memory file is [`PROJECT_FRAME.md`](PROJECT_FRAME.md).
+Read it before treating old HAI release plans as current project
+priority.
+
 HAI is the first reference implementation. You talk to a
 shell-capable agent; the agent invokes the local `hai` CLI. In
 parallel, the runtime absorbs passive evidence - wearable data today
@@ -45,6 +49,7 @@ something `hai` controls.
 
 | Path | Purpose |
 |---|---|
+| [`PROJECT_FRAME.md`](PROJECT_FRAME.md) | Canonical research framing and priority order. |
 | [`src/health_agent_infra/`](src/health_agent_infra/) | HAI reference runtime and Python package. |
 | [`benchmarks/governed_agent_bench/`](benchmarks/governed_agent_bench/) | GovernedAgentBench schemas, tasks, scorer, baselines, manifests, and reports. |
 | [`research/runtime_contracts_paper/`](research/runtime_contracts_paper/) | Paper frame, draft, and execution plan. |
@@ -189,12 +194,16 @@ this command under an agent token. 60 commands carry this
 contract. The agent doesn't guess what's safe; it reads the
 manifest.
 
-## What hai enables for AI in personal health
+## What HAI Enables In The Reference Domain
 
-`hai` is the substrate. The agent is the operator. Together they
-give an LLM the authority and scaffolding to do real work inside a
-personal-health loop without being asked to *also* be the
-database, the validator, or the auditor.
+`hai` is the reference runtime substrate. The agent is the operator.
+Together they give an LLM the authority and scaffolding to do bounded
+work inside a personal-wellness loop without being asked to *also* be
+the database, the validator, or the auditor.
+
+For the research paper, personal wellness is the demonstrator domain.
+The broader claim is contract-governed operation over sensitive
+user-owned structured data.
 
 ### Already achieved
 
@@ -305,12 +314,13 @@ build on. The full integration contract is in
 
 | Surface | Current value |
 |---|---|
-| Package version | `0.1.18` (2026-05-06) |
-| Schema head | migration `026` (`body_comp` table added v0.1.17; unchanged at v0.1.18) |
-| CLI surface | 67 annotated commands |
-| Test gate at release | 2,733 passed, 5 skipped |
+| Source package version | `0.2.0` (2026-05-07 source tree) |
+| Schema head | migration `028` (`recommendation_evidence_card` + `weekly_claim_card`) |
+| CLI surface | 68 annotated commands |
+| Test gate at release | 2,943 passed, 4 skipped |
 | Live source | intervals.icu only; Garmin marked `unreliable` |
-| Posture | maintainer-dogfooded; W-2U-INSTALL closed verbal-only by post-v0.1.18 foreign-machine session; W-2U-WEARABLE + W-2U-DOGFOOD deferred to v0.4 review per CP-2U-GATE-SPLIT (AGENTS.md D16); v0.2.0 next-active |
+| HAI posture | maintainer-dogfooded reference runtime; W-2U-INSTALL closed verbal-only by post-v0.1.18 foreign-machine session; W-2U-WEARABLE + W-2U-DOGFOOD deferred to v0.4 review per CP-2U-GATE-SPLIT (AGENTS.md D16). |
+| Research posture | GovernedAgentBench scaffold exists; next priority is benchmark MVP + paper-supporting contract freeze. |
 
 For the terse release-truth map, read
 [`reporting/docs/current_system_state.md`](reporting/docs/current_system_state.md).

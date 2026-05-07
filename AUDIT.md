@@ -30,7 +30,9 @@ opportunity, documented in v0.2.0 RELEASE_PROOF §5).
 | Round | Artifact | Result |
 |---|---|---|
 | D14 plan-audit | `reporting/plans/v0_2_0/codex_plan_audit_round_4_response.md` | `PLAN_COHERENT` (4 rounds, 10 → 5 → 3 → 1-nit settling) |
-| D15 IR | (drafted by maintainer post-Phase-3 close; see `reporting/plans/v0_2_0/codex_implementation_review_prompt.md` once authored) | pending |
+| D15 IR round 1 | [`reporting/plans/v0_2_0/codex_implementation_review_response.md`](reporting/plans/v0_2_0/codex_implementation_review_response.md) | `SHIP_WITH_FIXES` (5 findings: W58D real-schema drift, mypy, bandit, freshness sweep, W52 multi-canonical disposition) |
+| D15 IR round 2 | [`reporting/plans/v0_2_0/codex_implementation_review_round_2_response.md`](reporting/plans/v0_2_0/codex_implementation_review_round_2_response.md) | `SHIP_WITH_FIXES` (1 freshness finding: ship-time 2943 / +187 propagation) |
+| D15 IR round 3 | [`reporting/plans/v0_2_0/codex_implementation_review_round_3_response.md`](reporting/plans/v0_2_0/codex_implementation_review_round_3_response.md) | `SHIP` |
 
 See [`reporting/plans/v0_2_0/RELEASE_PROOF.md`](reporting/plans/v0_2_0/RELEASE_PROOF.md).
 

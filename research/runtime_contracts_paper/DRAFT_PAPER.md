@@ -355,7 +355,7 @@ y-axis: GovernedAgentBench score
 lines: no contract / manifest / full runtime contract / fine-tuned plus runtime contract
 ```
 
-Claim form:
+Claim form, if supported by results:
 
 The full runtime contract shifts the performance curve left: smaller
 models reach the same safety-constrained score.

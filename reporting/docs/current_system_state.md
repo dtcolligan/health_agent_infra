@@ -1,20 +1,40 @@
 # Current system state
 
-**Status:** current truth as of v0.2.0 Phase-3 close on 2026-05-07
-(Phase 5 ship-prep complete; D15 IR + maintainer manual TTY ship
-gate pending).
+**Status:** current truth as of the v0.2.0 source tree and
+runtime-contract research reframe on 2026-05-07.
 
 This file is the short operational answer to "what is true now?"
 Use it before reading cycle-level audit history. Release artifacts
 (`PLAN.md`, `RELEASE_PROOF.md`, `REPORT.md`, Codex responses) remain
 the provenance trail; this file is the current-state map.
 
+## Repo-level frame
+
+The repo is now a runtime-contract research repo with three active
+artifacts:
+
+- **Runtime contract** — capabilities manifest, typed commands,
+  mutation classes, `agent_safe`, schemas, proposal/commit separation,
+  deterministic gates, policy, and audit.
+- **HAI** — personal-wellness reference runtime packaged as
+  `health-agent-infra`.
+- **GovernedAgentBench** — benchmark scaffold for measuring
+  contract-governed agent operation.
+
+Current priority is paper + GovernedAgentBench + paper-critical HAI
+contract work. HAI v1 polish is subordinate unless it supports those
+artifacts. Canonical sources:
+[`../../PROJECT_FRAME.md`](../../PROJECT_FRAME.md),
+[`../../research/runtime_contracts_paper/PAPER_FRAME.md`](../../research/runtime_contracts_paper/PAPER_FRAME.md),
+and
+[`../../benchmarks/governed_agent_bench/README.md`](../../benchmarks/governed_agent_bench/README.md).
+
 ## Shipped baseline
 
 | Surface | Current value | Source of truth |
 |---|---|---|
-| Package version | `0.1.18` (v0.2.0 ship-prep complete; version bump + tag at maintainer manual TTY gate) | `pyproject.toml`, `CHANGELOG.md` |
-| Published posture | v0.2.0 ship-prep complete 2026-05-07; D15 IR pending; PyPI publish remaining gated on D15 IR settle + maintainer manual TTY ship gate per `reporting/plans/v0_2_0/RELEASE_PROOF.md` §8. **v0.2.1 (insight ledger — W53) is next-active post-v0.2.0 ship.** | `reporting/plans/v0_2_0/RELEASE_PROOF.md`, [PyPI](https://pypi.org/project/health-agent-infra/) |
+| Source package version | `0.2.0` | `pyproject.toml`, `CHANGELOG.md` |
+| Published posture | Source tree is at v0.2.0 after D15 IR round 3 `SHIP`; PyPI availability is external and should be checked separately when publishing or installing. | `reporting/plans/v0_2_0/codex_implementation_review_round_3_response.md`, [PyPI](https://pypi.org/project/health-agent-infra/) |
 | Schema head | `28` (v0.2.0 W-EVCARD-DAILY migration 027 + W-EVCARD-WEEKLY migration 028; was 26 at v0.1.18 close) | `src/health_agent_infra/core/state/migrations/` |
 | CLI commands | 68 annotated `hai` commands (v0.2.0 adds `hai review weekly`; v0.1.17/v0.1.18 baseline was 67). New `hai review weekly` flags: `--week`, `--json`/`--markdown`, `--user-id`, `--coverage-threshold`, `--include-history`, `--db-path`, `--bypass-factuality-gate`. New `--scenario-set factuality` choice on `hai eval run`. | `hai capabilities --json` |
 | CLI source layout | `cli/__init__.py` (~3200 LOC parser-tree builder + dispatch) + `cli/handlers/{auth,pull_clean,state,config_init,intake,intent,target,recommend,review,inspect,tools}.py` (each <2500 LOC). W-29 mechanical split landed v0.1.17. | `src/health_agent_infra/cli/` |
@@ -23,7 +43,7 @@ the provenance trail; this file is the current-state map.
 | Domains | recovery, running, sleep, stress, strength, nutrition | `src/health_agent_infra/domains/` |
 | Runtime state | local SQLite by default; no package telemetry | `reporting/docs/privacy.md`, `SECURITY.md` |
 
-## Product claim
+## HAI reference-runtime claim
 
 Health Agent Infra is the local plugin/runtime wrapper around a
 shell-capable personal-health agent. The maintainer dogfoods it daily.
@@ -49,7 +69,21 @@ post-v0.1.18 maintainer's-father session; **W-2U-WEARABLE** (full
 pipeline with wearable signal) and **W-2U-DOGFOOD** (≥7d daily
 non-maintainer use) deferred to v0.4 review.
 
-## v0.1.18 shipped (D15 IR closed at R3; PyPI publish gated only on maintainer manual TTY ship gate)
+## v0.2.0 shipped in source tree
+
+- W-PROV-2: locator emission across five dormant domains.
+- W-EVCARD-DAILY: `recommendation_evidence_card` table, one card per
+  committed recommendation.
+- W-EVCARD-WEEKLY: append-only `weekly_claim_card` carrier.
+- W52: `hai review weekly` aggregation surface.
+- W-FACT-ATOM: deterministic atomic-claim parser.
+- W58D: deterministic factuality gate over quantitative and comparative
+  weekly-review claims.
+- W-MCP-THREAT, W-COMP-LANDSCAPE, W-NOF1-METHOD, W-EXPLAIN-UX-CARRY:
+  doc and carry-forward adjuncts.
+- D15 IR round 3 verdict: `SHIP`.
+
+## v0.1.18 shipped
 
 - W-OB-1: README quickstart pivot to bare `hai init` as the primary
   first-run command (post-W-OB-2 default-flip shape; W-OB-2 auto-
@@ -138,8 +172,9 @@ non-maintainer use) deferred to v0.4 review.
 | Cycle | Role |
 |---|---|
 | ~~v0.1.19~~ | **CANCELLED 2026-05-06** per CP-2U-GATE-SPLIT (`reporting/plans/post_v0_1_18/CP-2U-GATE-SPLIT.md`) + AGENTS.md D16. Foreign-user empirical scope re-tiered to opportunistic-not-blocking; W-2U-INSTALL closed (verbal-only) by post-v0.1.18 father session; W-2U-WEARABLE + W-2U-DOGFOOD deferred to v0.4 review. |
-| v0.2.0 | **Ship-prep complete 2026-05-07.** Weekly review (W52) + deterministic factuality (W58D) + W-PROV-2 dormant-domain locators + W-EVCARD-DAILY (migration 027) + W-EVCARD-WEEKLY (migration 028) + W-FACT-ATOM corpus + Path A doc adjuncts (W-MCP-THREAT, W-COMP-LANDSCAPE, W-NOF1-METHOD) + W-EXPLAIN-UX-CARRY disposition tracker. D15 IR in flight; PyPI publish gated on IR settle + maintainer manual TTY gate per `reporting/plans/v0_2_0/RELEASE_PROOF.md` §8. **Foreign-user empirical evidence re-tiered to opportunistic-not-blocking per D16.** |
-| v0.2.1 | **Next-active post-v0.2.0 ship.** Insight ledger (W53) + carry-over from v0.2.0 IR if any findings flag-deferred. |
+| GovernedAgentBench MVP | **Research priority.** Frozen manifest, pilot tasks, recorded trajectories, offline scorer, and baseline report. |
+| Paper-supporting HAI contract freeze | **Research priority.** Make the public `hai` contract stable enough for benchmark tasks and reproducible baselines. |
+| v0.2.1 HAI insight ledger | Valuable HAI backlog item, but subordinate unless selected as paper-critical or benchmark-critical. |
 
 ## How to update this file
 

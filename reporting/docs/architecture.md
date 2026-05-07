@@ -314,7 +314,7 @@ See [``x_rules.md``](x_rules.md) for the full catalogue.
 See [``state_model_v1.md``](state_model_v1.md) for the human-readable
 table-by-table schema. Each accepted_*_state_daily table is
 deterministically derived from one or more raw + source tables by
-the projector. Schema head is 025 as of v0.1.15. The exact migration
+the projector. Schema head is 028 as of v0.2.0. The exact migration
 ledger lives in the migration files; `state_model_v1.md` carries the
 human-readable table map and the latest notable deltas.
 
@@ -445,7 +445,7 @@ src/health_agent_infra/
             projector.py            # orchestrator
             projectors/{recovery,running_activity,sleep,stress,strength,nutrition}.py
             # accepted running daily projection still lives in projector.py
-            migrations/001…025.sql
+            migrations/001…028.sql
         clean/                      # hai clean deterministic prep
         pull/                       # CSV fixture, intervals.icu, Garmin live + auth
         review/                     # schedule / record / summarize

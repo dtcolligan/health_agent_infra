@@ -224,15 +224,37 @@ the prompts, or the model.
   open + R-rule-driven, with `hai explain` reconciling every
   decision.
 
-### 5.3 Fitbit AI Coach
-- **Shape.** Fitbit's premium AI coaching layer over Fitbit
-  Sense / Charge metrics.
-- **Where it touches HAI.** Same vendor-lock pattern. Fitbit's
-  recent direction (consolidation under Google Health) further
-  underscores the brittleness vendors face when they own the
-  whole stack.
+### 5.3 Google Health Coach / Google Health
+- **Primary source.** [Google Health app announcement, 2026-05-07](https://blog.google/products-and-platforms/products/google-health/google-health-app/)
+  + [Google Health Coach availability and pricing, 2026-05-07](https://blog.google/products-and-platforms/products/google-health/google-health-coach/)
+  + [Fitbit Air announcement, 2026-05-07](https://blog.google/products-and-platforms/devices/fitbit/fitbit-air/).
+- **Shape.** Fitbit app rebrands into Google Health on 2026-05-19;
+  Gemini-built Google Health Coach exits preview as part of Google
+  Health Premium ($9.99/month or $99/year, bundled into Google AI
+  Pro/Ultra). The app centralizes wearable, app, Apple Health /
+  Health Connect, and U.S. medical-record data; Fitbit Air is a
+  $99.99 screenless wearable designed to feed the coach.
+- **Where it touches HAI.** This is the clearest consumer-market
+  signal that the paid layer is AI synthesis over personal data, not
+  governance. HAI should not compete as a consumer coach. Its defensible
+  value is the research claim: local contract-governed operation,
+  reproducible evaluation, and auditable mutation boundaries.
 
-### 5.4 (Cancelled comparable) Apple Health+
+### 5.4 Bevel
+- **Primary source.** [Bevel website](https://www.bevel.health/) +
+  [App Store listing](https://apps.apple.com/us/app/bevel-all-in-one-health-app/id6456176249).
+- **Shape.** iOS / Apple Watch health companion with recovery,
+  sleep, strain, nutrition, health records, and Bevel Intelligence
+  as the AI guidance layer. The public site presents Bevel as a
+  connected health coach with wearable and bloodwork support and
+  `4.8 / 28.6k` global ratings.
+- **Where it touches HAI.** Bevel validates demand for cross-domain
+  AI synthesis over user health data and shows that consumer apps will
+  push toward proactive coaching, health records, generated plans, and
+  polished mobile UX. That makes HAI-as-consumer-product less credible,
+  and HAI-as-research-artifact more credible.
+
+### 5.5 (Cancelled comparable) Apple Health+
 - **Primary source.** [Apple Health AI coach shelved (Feb 2026)](https://livity-app.com/en/blog/apple-health-ai-coach-shelved).
 - **Shape.** Apple's planned AI coaching layer (codename
   Mulberry); shelved Feb 2026.
@@ -244,9 +266,11 @@ the prompts, or the model.
   ship the multi-domain prose-driven architecture; HAI's narrower
   scope + tighter contract is the alternative path.
 
-**Verdict for category 4.** Vendor coaches ship narration over
-fixed metrics; HAI ships a governed runtime over user-controlled
-metrics. Different products.
+**Verdict for category 4.** Vendor coaches and Bevel-like consumer
+companions compete on polished AI synthesis, app UX, and proprietary
+or cloud-backed data aggregation. HAI should not try to win that
+market. Its live value is as a governed local reference runtime and
+research substrate for GovernedAgentBench.
 
 ---
 

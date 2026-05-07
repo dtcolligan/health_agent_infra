@@ -1,16 +1,31 @@
-# AGENTS.md - Health Agent Infra
+# AGENTS.md - Runtime Contracts / Health Agent Infra
 
 Briefing for any AI coding agent opening a session in this repo. Read this
 first; it is the project-specific operating contract.
 
 ## What This Project Is
 
-Health Agent Infra is the local plugin/runtime wrapper around a
-shell-capable personal-health agent. A user talks to the host agent in
+This repository is organized around runtime-contract research:
+can enforceable local software contracts make smaller local models
+viable operators for bounded workflows over sensitive user-owned data?
+
+It has three active artifacts:
+
+- **Runtime contract** - the architecture/intervention: capabilities
+  manifest, typed commands, mutation classes, `agent_safe`, schemas,
+  proposal/commit separation, deterministic gates, policy, and audit.
+- **HAI** - the personal-wellness reference runtime, packaged as
+  `health-agent-infra` and exposed through the local `hai` CLI.
+- **GovernedAgentBench** - the benchmark artifact for contract-governed
+  agent operation.
+
+HAI is still active software. A user talks to the host agent in
 natural language; the agent operates the local `hai` CLI, reads governed
 snapshots, uses packaged skills to compose bounded proposals, and relies on
 the Python runtime to validate, reconcile, and commit decisions to local
-SQLite state.
+SQLite state. Under the new project frame, HAI is the reference runtime
+and personal wellness is the demonstrator domain, not the whole research
+claim.
 
 The unit of shipping is a Python wheel (`health-agent-infra`) plus markdown
 skills consumed by the agent at runtime. The maintainer's daily development
@@ -29,6 +44,9 @@ codex_plan_audit_response F-PLAN-12.)
 
 Authoritative orientation:
 
+- `PROJECT_FRAME.md` - canonical research framing and priority order
+- `research/runtime_contracts_paper/PAPER_FRAME.md` - locked paper frame
+- `benchmarks/governed_agent_bench/README.md` - benchmark scope and MVP
 - `README.md` - product story, install, CLI surface
 - `ARCHITECTURE.md` - one-page architecture
 - `REPO_MAP.md` - every top-level entry classified active/historical
@@ -37,8 +55,10 @@ Authoritative orientation:
 - `reporting/docs/architecture.md` - full pipeline and code-vs-skill boundary
 - `reporting/docs/non_goals.md` - scope discipline
 - `reporting/plans/README.md` - reading-order index for the planning tree
-- `reporting/plans/strategic_plan_v1.md` - 12-24 month strategic vision
-- `reporting/plans/tactical_plan_v0_1_x.md` - next 6-8 releases
+- `reporting/plans/post_v0_1_18/strategic_plan_v2.md` - HAI reference-runtime
+  strategy before the research reframe; useful context, not the current
+  project-wide priority order
+- `reporting/plans/tactical_plan_v0_1_x.md` - HAI reference-runtime backlog
 - `reporting/plans/eval_strategy/v1.md` - how correctness is measured
 - `reporting/plans/success_framework_v1.md` - how project value is measured
 - `reporting/plans/risks_and_open_questions.md` - what could derail + decisions needed
@@ -274,6 +294,19 @@ write a cycle proposal in `reporting/plans/`; do not act unilaterally.
   closure is verbal-only and a future cycle's D14 may flag this as
   weak provenance. Origin: post-v0.1.18 CP-2U-GATE-SPLIT
   (`reporting/plans/post_v0_1_18/CP-2U-GATE-SPLIT.md`).
+- **(D17, 2026-05-07) Research reframe is canonical.** The repo's
+  active objective is the runtime-contract paper plus
+  GovernedAgentBench. HAI continues as the personal-wellness reference
+  runtime, but HAI v1 polish is subordinate unless it directly supports
+  the paper, benchmark, contract freeze, or reproducible baselines.
+  The paper frame is conservative and measurement-first: architecture
+  first, benchmark second, experiments third. The health boundary is
+  non-clinical by design (no diagnosis, treatment, prescribing, or
+  autonomous medical decisions). Do not reopen HACO-Bench naming or
+  health-agent-first framing without an explicit maintainer decision.
+  Canonical sources: `PROJECT_FRAME.md`,
+  `research/runtime_contracts_paper/PAPER_FRAME.md`, and
+  `research/runtime_contracts_paper/DOC_ALIGNMENT_AUDIT.md`.
 
 ## Release Cycle Expectation
 
@@ -318,6 +351,9 @@ Drift in any of these is the trust hazard a second user hits first:
   silently fall off the index.
 - [ ] `README.md` "Now/Next" or equivalent reflects current state.
   Historical "v0.1.X added Y" prose can stay.
+- [ ] `PROJECT_FRAME.md` and
+  `research/runtime_contracts_paper/PAPER_FRAME.md` still match any
+  project-priority or paper-framing changes.
 - [ ] `reporting/docs/current_system_state.md` reflects the just-shipped
   package version, schema head, command count, test gate, and next-cycle role.
 - [ ] `HYPOTHESES.md` references current strategic plan, not a
@@ -477,6 +513,11 @@ CI runs `verification/tests/`. The suite includes docs and skill/CLI drift check
   manifest; this entry is provenance only. Capabilities-manifest
   schema-freeze clause retained until v0.2.3.**)
 - Do not add micronutrient or food-taxonomy features.
+- Do not treat HAI v1 polish as the default next priority when a
+  paper-critical benchmark, contract, or experiment task is available.
+- Do not frame this repo as a consumer health-product bet; the active
+  external artifact is research engineering (paper + benchmark +
+  reference runtime).
 - Do not treat raw SQLite reads as the normal inspection surface; use
   `hai today`, `hai explain`, and `hai doctor`.
 - Do not anchor a data path on Strava — directly or via an upstream
@@ -501,16 +542,18 @@ CI runs `verification/tests/`. The suite includes docs and skill/CLI drift check
 
 ## When In Doubt
 
-Read `README.md`, `REPO_MAP.md`, `reporting/docs/architecture.md`,
-`reporting/docs/non_goals.md`, `reporting/plans/README.md` (the planning
-tree's reading-order index), then the current cycle's plan. If still
-unclear, ask Dom rather than guessing.
+Read `PROJECT_FRAME.md`, `research/runtime_contracts_paper/PAPER_FRAME.md`,
+`README.md`, `REPO_MAP.md`, `reporting/docs/architecture.md`,
+`reporting/docs/non_goals.md`, and `ROADMAP.md`. If the question is about
+HAI release history, then read `reporting/plans/README.md` and the relevant
+cycle plan. If still unclear, ask Dom rather than guessing.
 
 The planning tree under `reporting/plans/` has a structured shape as of
 2026-04-29:
 
-- `strategic_plan_v1.md` — 12-24 month vision.
-- `tactical_plan_v0_1_x.md` — next 6-8 releases.
+- `post_v0_1_18/strategic_plan_v2.md` — HAI reference-runtime strategy
+  before the research reframe.
+- `tactical_plan_v0_1_x.md` — HAI reference-runtime backlog.
 - `eval_strategy/v1.md` — how correctness is measured.
 - `success_framework_v1.md` — how project value is measured.
 - `risks_and_open_questions.md` — what could go wrong + decisions needed.

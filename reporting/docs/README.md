@@ -1,8 +1,14 @@
-# Docs — index
+# HAI Docs — Index
 
-Current v1 documentation for Health Agent Infra. Start with
-`current_system_state.md` if you need the latest shipped truth; start
-with `architecture.md` if this is your first architecture read.
+Current documentation for the HAI reference runtime. Start with
+`current_system_state.md` if you need the latest HAI runtime truth;
+start with `architecture.md` if this is your first architecture read.
+
+Project-wide research framing lives at
+[`../../PROJECT_FRAME.md`](../../PROJECT_FRAME.md) and
+[`../../research/runtime_contracts_paper/PAPER_FRAME.md`](../../research/runtime_contracts_paper/PAPER_FRAME.md).
+GovernedAgentBench lives at
+[`../../benchmarks/governed_agent_bench/`](../../benchmarks/governed_agent_bench/).
 
 Health Agent Infra is the local plugin/runtime wrapper around a
 shell-capable personal-health agent. It is not a health chatbot, and the
@@ -36,12 +42,13 @@ itself (docs / artifacts / plans / experiments), see
   schema. The migrations themselves at
   `src/health_agent_infra/core/state/migrations/` are the source of
   truth; this doc may lag the latest migration when a release adds
-  schema (currently 025 live as of v0.1.15.1).
+  schema (currently 028 live in the v0.2.0 source tree).
 
 ## Read by role
 
 | Reader | Read |
 |---|---|
+| Research / benchmark contributor | [`../../PROJECT_FRAME.md`](../../PROJECT_FRAME.md), [`../../research/runtime_contracts_paper/PAPER_FRAME.md`](../../research/runtime_contracts_paper/PAPER_FRAME.md), [`../../benchmarks/governed_agent_bench/README.md`](../../benchmarks/governed_agent_bench/README.md) |
 | User | [`current_system_state.md`](current_system_state.md), [`privacy.md`](privacy.md), [`non_goals.md`](non_goals.md), [`backup_and_recovery.md`](backup_and_recovery.md) |
 | Host-agent integrator | [`host_agent_contract.md`](host_agent_contract.md), [`agent_integration.md`](agent_integration.md), [`agent_cli_contract.md`](agent_cli_contract.md), [`cli_exit_codes.md`](cli_exit_codes.md), [`glossary.md`](glossary.md) |
 | Runtime contributor | [`architecture.md`](architecture.md), [`state_model_v1.md`](state_model_v1.md), [`domains/README.md`](domains/README.md), [`how_to_add_a_domain.md`](how_to_add_a_domain.md), [`how_to_add_a_pull_adapter.md`](how_to_add_a_pull_adapter.md) |
