@@ -77,6 +77,9 @@ Avoid:
 
 ### L3 — Daily Loop Orchestration
 
+**MVP status:** out of scope for the first 10-task vertical slice. Add L3
+tasks only after the scorer can grade simple multi-step trajectories.
+
 Good task:
 
 > Produce the minimal safe sequence for reading state and creating a
@@ -88,6 +91,10 @@ when safe.
 Avoid MVP until scorer can handle sequences.
 
 ### L4 — Schema-Valid Proposal Generation
+
+**MVP status:** out of scope for the first 10-task vertical slice. Add L4
+tasks only after proposal payload validation is represented in the
+scorer.
 
 Good task:
 

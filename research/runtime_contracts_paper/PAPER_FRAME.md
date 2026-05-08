@@ -12,6 +12,10 @@ supersedes the earlier HACO-Bench / health-agent-first framing.
 **Subtitle:** A Personal-Wellness Reference Runtime, GovernedAgentBench,
 and Model-Scale Study
 
+The subtitle is provisional. If Tier 3 model-scale evidence does not
+materialize, the final public subtitle should fall back to a neutral
+empirical-study phrasing.
+
 ## North Star
 
 Runtime contracts can make smaller local models viable operators for

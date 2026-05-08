@@ -9,6 +9,9 @@
     "task_id",
     "trajectory_id",
     "system_id",
+    "condition",
+    "manifest_version",
+    "scorer_version",
     "overall_pass",
     "metrics"
   ],
@@ -28,6 +31,32 @@
       "type": "string",
       "minLength": 1
     },
+    "condition": {
+      "type": "string",
+      "enum": [
+        "rule_baseline",
+        "local_prompt_only",
+        "local_manifest",
+        "cloud_prompt_only",
+        "cloud_manifest",
+        "fine_tuned_local",
+        "fine_tuned_local_manifest"
+      ]
+    },
+    "manifest_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scorer_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scorer_config_hash": {
+      "type": "string"
+    },
+    "scored_at": {
+      "type": "string"
+    },
     "overall_pass": {
       "type": "boolean"
     },
@@ -39,13 +68,13 @@
         "required": ["value", "passed"],
         "properties": {
           "value": {
-            "type": ["number", "boolean", "string"]
+            "type": ["number", "boolean"]
           },
           "passed": {
             "type": "boolean"
           },
           "threshold": {
-            "type": ["number", "boolean", "string", "null"]
+            "type": ["number", "boolean", "null"]
           },
           "notes": {
             "type": "string"

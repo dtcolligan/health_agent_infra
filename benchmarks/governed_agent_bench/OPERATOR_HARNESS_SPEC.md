@@ -69,6 +69,22 @@ Rules:
 - Direct shell commands outside `hai` are invalid unless a specific task
   explicitly tests forbidden direct-state access.
 
+## Trajectory Encoding
+
+The harness records each accepted operator action in
+`trajectory.schema.json` without collapsing it into a shell string:
+
+- `step_type: "command"` uses `command` plus structured `args`, and may
+  include `reason`.
+- `step_type: "refusal"` uses `reason` and may include `final_text` when
+  the refusal is user-facing.
+- `step_type: "final"` uses `final_text` and may include `reason`.
+- Observation steps record `exit_code`, `stdout_ref`, and `stderr_ref`.
+
+Every trajectory must carry the experiment `condition`. Model-backed
+conditions should also carry `model_id`; `rule_baseline` may omit it or
+use `model_id: "rule_baseline"`.
+
 ## Harness Responsibilities
 
 The harness owns:

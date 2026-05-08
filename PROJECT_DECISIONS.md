@@ -32,6 +32,7 @@ These are intentionally not locked yet:
 |---|---|---|
 | OD-PROJ-001 | Which workshop or preprint venue is the target for the first public paper package? | Keep docs venue-neutral: "workshop / preprint push" means a public preprint plus GovernedAgentBench release candidate, with venue selected once results and CFPs are known. |
 | OD-PROJ-002 | When does the HAI support lane resume v0.3+ work such as MCP and N-of-1 surfaces? | Defer unless the work is paper-critical, benchmark-critical, or explicitly reopened by the maintainer after the research push. |
+| OD-PROJ-003 | Should the title keep "Model-Scale Study" before Tier 3 evidence exists? | Treat it as a working subtitle only. The final public title must match the achieved claim tier. |
 
 ## D-PROJ-001: Research Repo, Not HAI Product Repo
 
@@ -113,6 +114,10 @@ and Model-Scale Study
 **Rationale.** The benchmark matters, but the paper should lead with the
 research claim and architecture. GovernedAgentBench is the evaluation
 artifact supporting that claim.
+
+**Current caveat.** "Model-Scale Study" is a working subtitle, not a
+promise of a Tier 3 result. The final public title must match the
+achieved evidence tier.
 
 ## D-PROJ-006: Conservative Measurement Posture
 

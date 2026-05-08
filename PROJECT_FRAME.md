@@ -72,11 +72,16 @@ Cold agents should read in this order:
 4. `AGENTS.md`
 5. `research/runtime_contracts_paper/PAPER_FRAME.md`
 6. `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`
-7. `benchmarks/governed_agent_bench/README.md`
-8. `README.md`
-9. `ROADMAP.md`
-10. `docs/hai/hai_reference_runtime.md` if the task touches HAI
-11. `docs/hai/current_system_state.md`
+7. `research/runtime_contracts_paper/PROJECT_EXECUTION_PLAN.md`
+8. `research/runtime_contracts_paper/WORK_PACKETS.md` before assigning
+   implementation work
+9. `benchmarks/governed_agent_bench/README.md`
+10. `benchmarks/governed_agent_bench/BENCHMARK_SPEC.md` if the task
+    touches benchmark design
+11. `README.md`
+12. `ROADMAP.md`
+13. `docs/hai/hai_reference_runtime.md` if the task touches HAI
+14. `docs/hai/current_system_state.md`
 
 Historical release plans under `reporting/plans/` explain how HAI got
 here. They are not the default source of current project priority when

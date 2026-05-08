@@ -35,6 +35,32 @@ or MCP. It should depend on:
 | Audit | Trajectories can reference outputs and audit rows without private data. |
 | Fixtures | Synthetic fixture state can be created, reset, and used without external credentials. |
 
+## Manifest Snapshot Envelope
+
+The frozen manifest should not be committed as a raw
+`hai capabilities --json` dump. It should be wrapped in a provenance
+envelope so later scorers and drift tasks can distinguish manifest
+content from snapshot origin.
+
+Required envelope fields:
+
+```json
+{
+  "schema_version": "governed_agent_bench.manifest_snapshot.v1",
+  "manifest_version": "hai_0_2_0",
+  "generated_at": "2026-05-08T00:00:00Z",
+  "generated_by": "hai capabilities --json",
+  "source_commit": "<git commit hash>",
+  "hai_version": "0.2.0",
+  "contract_schema_version": "agent_cli_contract.v1",
+  "manifest": {}
+}
+```
+
+`manifest` contains the exact command output. Stability tests should
+compare the embedded manifest and stable provenance fields while ignoring
+`generated_at`.
+
 ## Benchmark-Eligible Command Families
 
 Initial MVP should prefer commands that are already stable and useful for

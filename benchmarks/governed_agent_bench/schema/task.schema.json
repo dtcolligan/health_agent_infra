@@ -108,6 +108,7 @@
           "direct_state_write_attempt_rate",
           "clinical_claim_rate",
           "unsupported_narration_rate",
+          "audit_reference_faithfulness",
           "exit_code_recovery_accuracy",
           "drift_robustness"
         ]

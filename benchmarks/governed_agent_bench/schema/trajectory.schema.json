@@ -9,6 +9,7 @@
     "trajectory_id",
     "task_id",
     "system_id",
+    "condition",
     "steps"
   ],
   "properties": {
@@ -58,6 +59,16 @@
             "type": "string"
           },
           "command": {
+            "type": "string"
+          },
+          "args": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "reason": {
+            "type": "string"
+          },
+          "final_text": {
             "type": "string"
           },
           "exit_code": {

@@ -77,12 +77,15 @@ Inputs:
 
 Outputs:
 
-- `benchmarks/governed_agent_bench/manifests/hai_0_2_0.json`
+- `benchmarks/governed_agent_bench/manifests/hai_0_2_0.json` as a
+  manifest snapshot envelope, not a raw manifest dump
 - provenance note in `benchmarks/governed_agent_bench/manifests/README.md`
+- `verification/tests/test_benchmark_manifest_snapshot.py`
 
 Allowed files:
 
 - `benchmarks/governed_agent_bench/manifests/`
+- `verification/tests/test_benchmark_manifest_snapshot.py`
 - docs that reference the manifest count/current state
 
 Forbidden files:
@@ -95,19 +98,70 @@ Dependencies: planning gate complete.
 Acceptance criteria:
 
 - Snapshot is generated from the current source tree.
+- Envelope records `schema_version`, `manifest_version`, `generated_at`,
+  `generated_by`, `source_commit`, `hai_version`,
+  `contract_schema_version`, and embedded `manifest`.
 - Provenance command is documented.
-- Snapshot is stable under repeated generation.
+- Embedded manifest is stable under repeated generation, ignoring
+  `generated_at`.
 - Existing capabilities tests still pass.
 
 Tests:
 
 - `uv run pytest verification/tests/test_capabilities.py -q`
+- `uv run pytest verification/tests/test_benchmark_manifest_snapshot.py -q`
 - `uv run pytest verification/tests/test_project_reframe_docs_alignment.py -q`
 
 Manual review needed: yes, confirm snapshot is appropriate for paper
 contract freeze.
 
 Non-goals: MCP, model adapters, scorer.
+
+## WP-RUNTIME-FIX-NNN — Runtime Defect Packet Template
+
+Use this template only when a contract-freeze or benchmark packet finds
+a real runtime defect that blocks the packet.
+
+Goal: Fix one runtime defect required by a named research packet.
+
+Inputs:
+
+- parent packet ID;
+- failing command, test, or fixture setup;
+- relevant HAI operator docs.
+
+Outputs:
+
+- minimal runtime patch;
+- targeted regression test;
+- note in parent packet or docs explaining why the runtime fix was
+  research-critical.
+
+Allowed files:
+
+- the smallest affected runtime module(s);
+- `verification/tests/`;
+- docs that describe the corrected contract behavior.
+
+Forbidden files:
+
+- unrelated runtime refactors;
+- new product surfaces;
+- MCP unless the parent packet is explicitly MCP-scoped.
+
+Dependencies: parent packet is blocked on this fix.
+
+Acceptance criteria:
+
+- Parent packet can resume without changing its scope.
+- Existing HAI runtime tests still pass.
+- The fix does not broaden the benchmark beyond the approved subset.
+
+Tests: targeted regression plus the parent packet's listed tests.
+
+Manual review needed: yes.
+
+Non-goals: opportunistic cleanup.
 
 ## WP-CONTRACT-002 — Fixture-State Plan
 
@@ -148,6 +202,60 @@ Tests: docs integrity only.
 Manual review needed: yes.
 
 Non-goals: creating fixture databases.
+
+## WP-CONTRACT-003 — Fixture Implementation
+
+Goal: Implement deterministic synthetic fixture state for benchmark and
+harness work.
+
+Inputs:
+
+- `benchmarks/governed_agent_bench/fixtures/README.md`
+- `RUNTIME_CONTRACT_FREEZE_PLAN.md`
+- HAI state docs and migrations
+
+Outputs:
+
+- constructible fixtures under
+  `benchmarks/governed_agent_bench/fixtures/`
+- fixture reset/load utility under the benchmark tree if needed
+- tests proving reset determinism and absence of private data
+
+Allowed files:
+
+- `benchmarks/governed_agent_bench/fixtures/`
+- benchmark-local fixture loader code
+- `verification/tests/` for fixture determinism tests
+- docs that reference fixture count/current state
+
+Forbidden files:
+
+- real user data;
+- live credentials;
+- runtime migrations unless separately scoped through a
+  `WP-RUNTIME-FIX-NNN` packet.
+
+Dependencies:
+
+- WP-CONTRACT-002.
+
+Acceptance criteria:
+
+- Each planned fixture is constructible from committed synthetic inputs.
+- Repeated resets produce equivalent state.
+- Harness can receive a fixture path through the documented environment
+  or config surface.
+- No fixture contains private health rows, credentials, or clinical
+  records.
+
+Tests:
+
+- targeted fixture determinism tests;
+- docs integrity.
+
+Manual review needed: yes.
+
+Non-goals: model execution, scorer implementation, live integrations.
 
 ## WP-GAB-001 — Operator Action Schema
 
@@ -360,7 +468,7 @@ Dependencies:
 
 - WP-GAB-001;
 - WP-CONTRACT-001;
-- fixture implementation packet not yet written.
+- WP-CONTRACT-003.
 
 Acceptance criteria:
 
@@ -405,7 +513,8 @@ Forbidden files:
 Dependencies:
 
 - WP-GAB-002;
-- WP-GAB-003.
+- WP-GAB-003;
+- WP-CONTRACT-003.
 
 Acceptance criteria:
 
@@ -418,6 +527,13 @@ Tests: targeted pytest.
 Manual review needed: no, unless results force task redesign.
 
 Non-goals: model comparison.
+
+## Future Packets — Expand Before Assignment
+
+The packets below are strategic placeholders. They must be expanded to
+the full packet template before any coding agent is assigned to them:
+Inputs, Outputs, Allowed files, Forbidden files, Dependencies,
+Acceptance criteria, Tests, Manual review needed, and Non-goals.
 
 ## WP-MODEL-001 — Local Model Adapter
 

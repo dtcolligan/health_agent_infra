@@ -3,6 +3,9 @@
 **Subtitle:** A Personal-Wellness Reference Runtime, GovernedAgentBench,
 and Model-Scale Study
 
+Subtitle is provisional; final wording must match the achieved claim
+tier.
+
 **Status:** Draft skeleton, reframed 2026-05-07. See `PAPER_FRAME.md`
 for the locked framing note.
 

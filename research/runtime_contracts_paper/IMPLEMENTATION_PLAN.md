@@ -4,6 +4,12 @@
 `PAPER_FRAME.md` for the locked framing note and
 `PROJECT_EXECUTION_PLAN.md` for the operational master plan.
 
+The dates below are planning estimates, not authoritative gates. The
+milestone exits in `PROJECT_EXECUTION_PLAN.md` control sequencing. If
+calendar pressure forces scope cuts, drop optional 7B runs first, then
+fine-tuning, then ablation depth, then model count. Preserve the
+benchmark MVP, scorer, paper floor, and non-clinical safety boundary.
+
 ## Working Thesis
 
 Runtime contracts may reduce the model scale required for safe bounded
