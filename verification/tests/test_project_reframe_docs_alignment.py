@@ -89,7 +89,7 @@ def test_research_frame_content_is_pinned_on_primary_surfaces() -> None:
     assert "runtime contracts" in readme_head
     assert "research" in readme_head
     assert "Research lane" in roadmap
-    assert "Documentation alignment gate" in roadmap
+    assert "Planning Gate 1" in roadmap
     assert "GovernedAgentBench MVP" in roadmap
 
     for i in range(1, 7):

@@ -1,7 +1,8 @@
 # Runtime Contracts Paper - Implementation Plan
 
-**Status:** Research execution plan, reframed 2026-05-07. See
-`PAPER_FRAME.md` for the locked framing note.
+**Status:** Coarse research phase plan, reframed 2026-05-07. See
+`PAPER_FRAME.md` for the locked framing note and
+`PROJECT_EXECUTION_PLAN.md` for the operational master plan.
 
 ## Working Thesis
 

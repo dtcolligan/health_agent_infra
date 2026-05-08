@@ -22,9 +22,10 @@ research-engineering package:
 
 ## Current Work Gate
 
-Before implementation work resumes, internal documentation should be good
-enough that a cold agent can recover the new objective without chat
-history.
+Before implementation work resumes, internal documentation and execution
+planning should be good enough that a cold agent can recover the new
+objective without chat history and then pick up a bounded work packet
+without making strategic decisions.
 
 This gate is not complete just because the root README is short. It is
 complete when the control docs agree on:
@@ -144,5 +145,27 @@ alone:
 - What safety boundaries are non-negotiable?
 - Why is HAI v1 polish not the default next task?
 
-Until those answers are obvious, documentation alignment remains the
-current focus.
+Those answers are now encoded in the control docs and guarded by tests.
+If future edits make them unclear, documentation alignment becomes the
+first priority again.
+
+## Planning Gate 1
+
+After documentation alignment, the next gate is end-to-end
+research-program planning. Implementation should resume only when the repo
+contains:
+
+- a master execution plan;
+- claim ladder;
+- prior-art positioning plan;
+- runtime-contract freeze plan;
+- benchmark specification;
+- operator-harness specification;
+- scoring specification;
+- task-authoring guide;
+- baseline and ablation plan;
+- work packets with allowed files, dependencies, acceptance criteria,
+  tests, and non-goals.
+
+These live under `research/runtime_contracts_paper/` and
+`benchmarks/governed_agent_bench/`.

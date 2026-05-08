@@ -23,6 +23,11 @@ This directory is the benchmark skeleton. The next milestone is an MVP
 that can score recorded trajectories without running model backends.
 The implementation schedule is tracked in
 [`../../research/runtime_contracts_paper/IMPLEMENTATION_PLAN.md`](../../research/runtime_contracts_paper/IMPLEMENTATION_PLAN.md).
+The operational benchmark specs are:
+[`BENCHMARK_SPEC.md`](BENCHMARK_SPEC.md),
+[`OPERATOR_HARNESS_SPEC.md`](OPERATOR_HARNESS_SPEC.md),
+[`SCORING_SPEC.md`](SCORING_SPEC.md), and
+[`TASK_AUTHORING_GUIDE.md`](TASK_AUTHORING_GUIDE.md).
 
 ## Current State
 
@@ -37,8 +42,8 @@ As of 2026-05-08, this directory is intentionally a scaffold:
 | Baselines | README only; no rule, local-model, cloud-model, or fine-tuned baselines yet. |
 | Reports | README only; no pilot report yet. |
 
-This empty state is not a validity claim. It records that the
-documentation-alignment gate currently precedes benchmark task authoring.
+This empty state is not a validity claim. It records that Planning Gate 1
+currently precedes benchmark task authoring.
 
 Task levels:
 
@@ -62,6 +67,10 @@ Task levels:
 | `scorer/` | Offline scoring code and rubric helpers. |
 | `baselines/` | Rule, local-model, cloud-model, and fine-tuned operator baselines. |
 | `reports/` | Pilot and experiment reports. |
+| `BENCHMARK_SPEC.md` | Benchmark object, task levels, trajectory/score anatomy, and benchmark-card requirements. |
+| `OPERATOR_HARNESS_SPEC.md` | Model-agnostic harness contract for non-Claude model evaluation. |
+| `SCORING_SPEC.md` | Deterministic scoring metrics, violation taxonomy, pass logic, and thresholds. |
+| `TASK_AUTHORING_GUIDE.md` | How to author L1-L7 tasks safely and scoreably. |
 
 ## MVP Exit Criteria
 

@@ -135,13 +135,14 @@ after the fact.
 
 Until the workshop / preprint push is complete, default priority is:
 
-1. Paper-critical runtime contract documentation and stabilization.
-2. GovernedAgentBench MVP: schemas, tasks, frozen manifests, scorer,
+1. Planning Gate 1: master execution specs and bounded work packets.
+2. Paper-critical runtime contract documentation and stabilization.
+3. GovernedAgentBench MVP: schemas, tasks, frozen manifests, scorer,
    baselines, and reports.
-3. Experiments: local models, cloud models, fine-tuned local operators,
+4. Experiments: local models, cloud models, fine-tuned local operators,
    and scaffold ablations.
-4. HAI reference-runtime maintenance needed by the paper.
-5. HAI v1 polish only when it directly supports the paper or benchmark.
+5. HAI reference-runtime maintenance needed by the paper.
+6. HAI v1 polish only when it directly supports the paper or benchmark.
 
 See [`ROADMAP.md`](ROADMAP.md) for the research-first roadmap.
 
@@ -149,7 +150,7 @@ See [`ROADMAP.md`](ROADMAP.md) for the research-first roadmap.
 
 | Reader | Best next docs |
 |---|---|
-| Research / benchmark reviewer | [`PROJECT_FRAME.md`](PROJECT_FRAME.md), [`PROJECT_DECISIONS.md`](PROJECT_DECISIONS.md), [`PROJECT_OPERATING_MODEL.md`](PROJECT_OPERATING_MODEL.md), [`HYPOTHESES.md`](HYPOTHESES.md), [`research/runtime_contracts_paper/PAPER_FRAME.md`](research/runtime_contracts_paper/PAPER_FRAME.md), [`research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`](research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md), [`benchmarks/governed_agent_bench/README.md`](benchmarks/governed_agent_bench/README.md) |
+| Research / benchmark reviewer | [`PROJECT_FRAME.md`](PROJECT_FRAME.md), [`PROJECT_DECISIONS.md`](PROJECT_DECISIONS.md), [`PROJECT_OPERATING_MODEL.md`](PROJECT_OPERATING_MODEL.md), [`HYPOTHESES.md`](HYPOTHESES.md), [`research/runtime_contracts_paper/PAPER_FRAME.md`](research/runtime_contracts_paper/PAPER_FRAME.md), [`research/runtime_contracts_paper/PROJECT_EXECUTION_PLAN.md`](research/runtime_contracts_paper/PROJECT_EXECUTION_PLAN.md), [`research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`](research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md), [`benchmarks/governed_agent_bench/README.md`](benchmarks/governed_agent_bench/README.md) |
 | HAI user or operator | [`docs/hai/hai_reference_runtime.md`](docs/hai/hai_reference_runtime.md), [`docs/hai/current_system_state.md`](docs/hai/current_system_state.md), [`docs/hai/privacy.md`](docs/hai/privacy.md), [`docs/hai/non_goals.md`](docs/hai/non_goals.md) |
 | Host-agent integrator | [`docs/hai/host_agent_contract.md`](docs/hai/host_agent_contract.md), [`docs/hai/agent_integration.md`](docs/hai/agent_integration.md), [`docs/hai/agent_cli_contract.md`](docs/hai/agent_cli_contract.md) |
 | Runtime contributor | [`CONTRIBUTING.md`](CONTRIBUTING.md), [`docs/hai/architecture.md`](docs/hai/architecture.md), [`docs/hai/domains/README.md`](docs/hai/domains/README.md), [`docs/hai/x_rules.md`](docs/hai/x_rules.md) |

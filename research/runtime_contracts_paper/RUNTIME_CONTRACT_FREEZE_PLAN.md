@@ -1,0 +1,112 @@
+# Runtime Contract Freeze Plan
+
+**Status:** Paper-critical HAI runtime slice plan, 2026-05-08.
+
+This file defines the minimum HAI runtime contract that must be frozen
+before GovernedAgentBench can produce meaningful tasks and trajectories.
+It is deliberately narrower than "finish HAI."
+
+## Goal
+
+Freeze the interface a model-agnostic benchmark harness can use to
+operate HAI through a public contract.
+
+The benchmark should not depend on Claude Code, private repo knowledge,
+or MCP. It should depend on:
+
+- a frozen capabilities manifest;
+- documented command/argument/output behavior;
+- deterministic exit-code semantics;
+- fixture state setup and reset;
+- read surfaces;
+- validation and audit surfaces.
+
+## Contract Components
+
+| Component | Freeze requirement |
+|---|---|
+| Capabilities manifest | A committed `hai capabilities --json` snapshot with provenance command, source version, schema version, and generation date. |
+| Command set | Benchmark-eligible commands identified; non-agent-safe commands marked and tested as forbidden when relevant. |
+| Arguments | Required and optional args represented in the manifest or documented alongside it. |
+| Output schemas | JSON/plain read surfaces documented enough for scoring. |
+| Exit codes | `OK`, `USER_INPUT`, validation errors, and refusal/error behavior documented for benchmark subset. |
+| Mutation classes | Read-only, proposal, commit, review, backup, and destructive classes identified. |
+| Proposal/commit split | User-owned intent/target activation remains outside agent-safe paths. |
+| Audit | Trajectories can reference outputs and audit rows without private data. |
+| Fixtures | Synthetic fixture state can be created, reset, and used without external credentials. |
+
+## Benchmark-Eligible Command Families
+
+Initial MVP should prefer commands that are already stable and useful for
+contract-obedience tasks:
+
+- `hai capabilities` — manifest access.
+- `hai doctor` — setup/status and `USER_INPUT` recovery.
+- `hai today` — read surface for narration and state awareness.
+- `hai explain` — audit/faithfulness read surface.
+- `hai propose` — schema-valid proposal generation.
+- `hai intent` / `hai target` proposal paths — useful for user-owned
+  proposal/commit boundary tasks, with commit paths forbidden to agents.
+- `hai intake` read/write paths — only where synthetic fixture state is
+  safe and deterministic.
+
+MVP should avoid:
+
+- live wearable pulls;
+- real credentials;
+- backup/restore as first tasks;
+- MCP;
+- N-of-1 and future HAI support-lane surfaces.
+
+## Fixture-State Requirements
+
+The benchmark needs fixture states that are:
+
+- synthetic;
+- small enough to inspect manually;
+- deterministic under repeated runs;
+- non-clinical;
+- free of private rows;
+- compatible with `hai today`, `hai doctor`, `hai explain`, and proposal
+  validation.
+
+Fixture categories:
+
+| Fixture | Purpose |
+|---|---|
+| `empty_user` | L2 setup recovery and `USER_INPUT` behavior. |
+| `ready_user_minimal` | L1 routing and L3 daily-loop tasks. |
+| `read_surface_user` | L5 faithful narration from `today` / `explain`. |
+| `governance_user` | L6 refusal and forbidden mutation attempts. |
+| `drift_user` | L7 stale manifest / changed command behavior. |
+
+## Freeze Acceptance Criteria
+
+- A human can read the manifest and operate the benchmark subset without
+  reading HAI internals.
+- A model can be prompted with the frozen manifest and asked to emit a
+  structured operator action.
+- The operator harness can execute benchmark-eligible commands through
+  the CLI and record observations.
+- No benchmark task requires a real wearable account, real credentials,
+  private health rows, or clinical judgment.
+
+## Runtime Work Allowed Before Benchmark MVP
+
+Allowed:
+
+- manifest snapshot command/documentation;
+- narrow JSON output consistency fixes for benchmark subset;
+- deterministic fixture setup/reset utilities if no existing path is
+  sufficient;
+- docs clarifying command behavior;
+- tests proving fixture/reset determinism.
+
+Not allowed:
+
+- MCP transport;
+- additional health domains;
+- new wearable integrations;
+- HAI v1 product surfaces;
+- N-of-1 features;
+- broad CLI refactors not required by the freeze.

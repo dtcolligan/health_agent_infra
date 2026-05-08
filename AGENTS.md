@@ -367,6 +367,7 @@ unless Dom explicitly scopes a full release cycle:
 
 1. Read `PROJECT_FRAME.md`, `PROJECT_DECISIONS.md`,
    `PROJECT_OPERATING_MODEL.md`,
+   `research/runtime_contracts_paper/PROJECT_EXECUTION_PLAN.md`,
    `research/runtime_contracts_paper/PAPER_FRAME.md`,
    `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`, and
    `benchmarks/governed_agent_bench/README.md`.

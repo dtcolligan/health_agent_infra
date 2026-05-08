@@ -16,13 +16,13 @@ is [`research/runtime_contracts_paper/PAPER_FRAME.md`](research/runtime_contract
 
 ## Now
 
-- **Documentation alignment gate.** Current focus. Make the internal docs
-  strong enough that a cold session can recover the new objective without
-  conversation memory: runtime-contract research repo; HAI as reference
-  runtime; GovernedAgentBench as benchmark; personal wellness as
-  non-clinical demonstrator domain; historical HAI plans as provenance,
-  not current priority. Gate doc:
-  [`PROJECT_OPERATING_MODEL.md`](PROJECT_OPERATING_MODEL.md).
+- **Planning Gate 1.** Current focus. Documentation alignment is now
+  sufficient to recover the new objective; before implementation resumes,
+  the project needs end-to-end research-program specs and bounded work
+  packets so coding agents can execute slices without making strategic
+  decisions. Gate docs:
+  [`PROJECT_OPERATING_MODEL.md`](PROJECT_OPERATING_MODEL.md) and
+  [`research/runtime_contracts_paper/PROJECT_EXECUTION_PLAN.md`](research/runtime_contracts_paper/PROJECT_EXECUTION_PLAN.md).
 - **Freeze the HAI operator contract for research.** Stabilize the
   public manifest, command schemas, mutation classes, exit-code
   semantics, proposal/commit separation, validation gates, privacy caveat,
@@ -82,6 +82,7 @@ unless explicitly needed for benchmark validity or paper experiments:
 | Milestone | Exit criterion |
 |---|---|
 | Frame locked | `PROJECT_FRAME.md`, `PROJECT_DECISIONS.md`, `PAPER_FRAME.md`, and cold-start docs agree. |
+| Planning Gate 1 | Master plan, benchmark specs, contract-freeze plan, baseline/ablation plan, and work packets exist. |
 | Contract freeze | A model or human can operate HAI from the manifest and docs without private repo knowledge. |
 | Benchmark MVP | Schemas, pilot tasks, frozen manifests, trajectories, and scorer run offline. |
 | Baselines | Rule, local, cloud, and manifest-grounded systems scored under one harness. |
