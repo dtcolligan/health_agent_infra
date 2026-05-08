@@ -28,10 +28,13 @@ is [`research/runtime_contracts_paper/PAPER_FRAME.md`](research/runtime_contract
   behavior, synthetic fixtures, stable read surfaces, exit-code
   semantics, proposal/commit separation, validation gates, privacy
   caveat, and non-clinical boundary.
-- **GovernedAgentBench MVP.** Build the offline benchmark skeleton into a
-  runnable artifact: frozen manifest snapshot, 10+ pilot tasks across
-  L1/L2/L5/L6/L7, recorded trajectories, and a scorer that needs no
-  network access or private health rows.
+- **GovernedAgentBench measurement-readiness.** Create a benchmark that
+  can evaluate governed agent operation and prove it can score known-good
+  and known-bad trajectories, so it can be the measurement instrument for
+  baselines, models, and ablations. The first runnable slice is a frozen
+  manifest snapshot, 10+ pilot tasks across L1/L2/L5/L6/L7, recorded
+  trajectories, and a scorer that needs no network access or private
+  health rows.
 - **Paper scaffold.** Convert the draft skeleton into a live paper outline
   with related-work matrix, contribution list, experimental definitions,
   and pre-registered safety thresholds.
@@ -62,7 +65,7 @@ unless explicitly needed for benchmark validity or paper experiments:
 
 | HAI item | Research relevance | Default disposition |
 |---|---|---|
-| v0.2.1 insight ledger (W53) | Useful if the paper evaluates longer-horizon review faithfulness; not required for the minimum benchmark MVP. | Defer unless chosen as a benchmark task family. |
+| v0.2.1 insight ledger (W53) | Useful if the paper evaluates longer-horizon review faithfulness; not required for the first measurement-ready benchmark slice. | Defer unless chosen as a benchmark task family. |
 | v0.2.2 LLM judge shadow (W58J) | Potential secondary evaluation axis; the paper should not depend on an LLM judge for primary safety claims. | Optional after deterministic scorer exists. |
 | v0.2.3 capabilities-manifest schema freeze | Valuable for reproducibility and drift tests. | Keep if it stabilizes GovernedAgentBench manifests. |
 | MCP read surface | Interesting runtime portability artifact. | Defer unless it becomes the benchmark plug-in API. |
@@ -85,7 +88,7 @@ unless explicitly needed for benchmark validity or paper experiments:
 | Frame locked | `PROJECT_FRAME.md`, `PROJECT_DECISIONS.md`, `PAPER_FRAME.md`, and cold-start docs agree. |
 | Planning Gate 1 | Master plan, benchmark specs, HAI paper-readiness plan, baseline/ablation plan, and work packets exist. |
 | HAI paper-readiness | A model or human can operate the benchmark subset of HAI from fixtures, manifest, and docs without private repo knowledge. |
-| Benchmark MVP | Schemas, pilot tasks, frozen manifests, trajectories, and scorer run offline. |
+| GovernedAgentBench measurement-readiness | Known-good and known-bad trajectories score as expected across schemas, pilot tasks, frozen manifests, and offline scorer. |
 | Baselines | Rule, local, cloud, and manifest-grounded systems scored under one harness. |
 | Fine-tuning | Public/synthetic training data + reproducible local-operator recipe. |
 | Ablations | Contract-component removals measured against fixed safety thresholds. |

@@ -121,7 +121,7 @@ Fixture categories:
 - No benchmark task requires a real wearable account, real credentials,
   private health rows, or clinical judgment.
 
-## Runtime Work Allowed Before Benchmark MVP
+## Runtime Work Allowed Before GovernedAgentBench Measurement-Readiness
 
 Allowed:
 

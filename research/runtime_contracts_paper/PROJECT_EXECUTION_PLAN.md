@@ -117,10 +117,12 @@ reference runtime.
 doc updates, output-shape stabilization, and narrow runtime fixes only
 if they are required for the benchmark subset.
 
-### M2 — Benchmark Vertical Slice
+### M2 — GovernedAgentBench Measurement-Readiness
 
-**Purpose.** Prove that GovernedAgentBench can score model-agnostic
-trajectories without any live model backend.
+**Purpose.** Create a benchmark that can evaluate governed agent
+operation and prove it can score known-good and known-bad trajectories,
+so it can serve as the measurement instrument for baselines, models, and
+ablations without any live model backend.
 
 **Exit criteria.**
 
@@ -128,6 +130,8 @@ trajectories without any live model backend.
 - Each task validates against `task.schema.json`.
 - At least one passing and one failing hand-authored trajectory exist.
 - The scorer can grade those trajectories offline.
+- Known-good and known-bad trajectories produce the expected pass/fail
+  outcomes.
 - The score output validates against `score.schema.json`.
 - The benchmark README reports real counts instead of scaffold-only
   state.
@@ -219,7 +223,7 @@ card, reproducible evaluation.
 Work is in scope when it directly advances one of:
 
 - HAI paper-readiness engineering;
-- benchmark MVP;
+- GovernedAgentBench measurement-readiness;
 - scorer;
 - operator harness;
 - baselines;

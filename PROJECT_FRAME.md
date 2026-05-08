@@ -39,8 +39,9 @@ Until the workshop / preprint push is complete, default priority is:
 
 1. HAI paper-readiness engineering: make the reference runtime usable by
    the paper and benchmark.
-2. GovernedAgentBench MVP: schemas, tasks, frozen manifests, scorer,
-   baselines, and reports.
+2. GovernedAgentBench measurement-readiness: create a benchmark that can
+   evaluate governed agent operation and prove it can score known-good
+   and known-bad trajectories, so it can support paper experiments.
 3. Experiments: local models, cloud models, fine-tuned local operators,
    and scaffold ablations.
 4. HAI reference-runtime maintenance needed by the paper.

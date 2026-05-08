@@ -85,12 +85,13 @@ def test_research_frame_content_is_pinned_on_primary_surfaces() -> None:
     hypotheses = _read("HYPOTHESES.md")
     paper_frame = _read("research/runtime_contracts_paper/PAPER_FRAME.md")
     bench_readme = _read("benchmarks/governed_agent_bench/README.md")
+    bench_readme_flat = " ".join(bench_readme.split())
 
     assert "runtime contracts" in readme_head
     assert "research" in readme_head
     assert "Research lane" in roadmap
     assert "Planning Gate 1" in roadmap
-    assert "GovernedAgentBench MVP" in roadmap
+    assert "GovernedAgentBench measurement-readiness" in roadmap
 
     for i in range(1, 7):
         assert f"## H{i}." in hypotheses
@@ -102,6 +103,8 @@ def test_research_frame_content_is_pinned_on_primary_surfaces() -> None:
     assert "PROJECT_FRAME.md" in bench_readme
     assert "PROJECT_DECISIONS.md" in bench_readme
     assert "RESEARCH_EVAL_STRATEGY.md" in bench_readme
+    assert "measurement-readiness" in bench_readme
+    assert "known-good and known-bad trajectories" in bench_readme_flat
     assert "0 committed tasks" in bench_readme
     assert "0 frozen manifests" in bench_readme
 

@@ -40,7 +40,7 @@ and
 | Paper draft | Live skeleton exists; empirical sections remain placeholders until benchmark tasks, baselines, fine-tuning, and ablations run. | `research/runtime_contracts_paper/DRAFT_PAPER.md` |
 | Evaluation strategy | Local, cloud, fine-tuned, rule, and scaffold-ablation conditions are in scope; deterministic safety metrics are primary. | `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md` |
 | GovernedAgentBench | Scaffold only: 0 frozen manifests, 0 pilot tasks, 0 recorded trajectories, no scorer implementation, no baselines, no reports. | `benchmarks/governed_agent_bench/README.md` |
-| Experiments | Not run yet. Next step is benchmark MVP before model backends. | `ROADMAP.md`, `research/runtime_contracts_paper/IMPLEMENTATION_PLAN.md` |
+| Experiments | Not run yet. Next step is GovernedAgentBench measurement-readiness before model backends. | `ROADMAP.md`, `research/runtime_contracts_paper/IMPLEMENTATION_PLAN.md` |
 
 ## Shipped baseline
 
@@ -185,7 +185,7 @@ non-maintainer use) deferred to v0.4 review.
 | Cycle | Role |
 |---|---|
 | ~~v0.1.19~~ | **CANCELLED 2026-05-06** per CP-2U-GATE-SPLIT (`reporting/plans/post_v0_1_18/CP-2U-GATE-SPLIT.md`) + AGENTS.md D16. Foreign-user empirical scope re-tiered to opportunistic-not-blocking; W-2U-INSTALL closed (verbal-only) by post-v0.1.18 father session; W-2U-WEARABLE + W-2U-DOGFOOD deferred to v0.4 review. |
-| GovernedAgentBench MVP | **Research priority.** Frozen manifest, pilot tasks, recorded trajectories, offline scorer, and baseline report. |
+| GovernedAgentBench measurement-readiness | **Research priority.** Create a benchmark that can evaluate governed agent operation and prove it can score known-good and known-bad trajectories. |
 | HAI paper-readiness engineering | **Research priority.** Make HAI usable by the paper and benchmark through public contracts, synthetic fixtures, stable read surfaces, and reproducible baselines. |
 | v0.2.1 HAI insight ledger | Valuable HAI backlog item, but subordinate unless selected as paper-critical or benchmark-critical. |
 

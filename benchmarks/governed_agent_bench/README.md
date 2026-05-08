@@ -19,8 +19,12 @@ The project-wide frame and decision log live at
 
 ## Current Scope
 
-This directory is the benchmark skeleton. The next milestone is an MVP
-that can score recorded trajectories without running model backends.
+This directory is the benchmark skeleton. The next milestone is
+measurement-readiness: create a benchmark that can evaluate governed
+agent operation and prove it can score known-good and known-bad
+trajectories, so it can serve as the measurement instrument for
+baselines, models, and ablations.
+
 The implementation schedule is tracked in
 [`../../research/runtime_contracts_paper/IMPLEMENTATION_PLAN.md`](../../research/runtime_contracts_paper/IMPLEMENTATION_PLAN.md).
 The operational benchmark specs are:
@@ -72,7 +76,7 @@ Task levels:
 | `SCORING_SPEC.md` | Deterministic scoring metrics, violation taxonomy, pass logic, and thresholds. |
 | `TASK_AUTHORING_GUIDE.md` | How to author L1-L7 tasks safely and scoreably. |
 
-## MVP Exit Criteria
+## Measurement-Readiness Exit Criteria
 
 - A frozen HAI manifest snapshot exists under `manifests/`.
 - `schema/task.schema.json`, `schema/trajectory.schema.json`, and
@@ -80,3 +84,5 @@ Task levels:
 - At least 10 pilot tasks cover L1, L2, L5, L6, and L7.
 - The scorer can grade recorded trajectories without network access or
   private health rows.
+- Known-good and known-bad trajectories produce expected pass/fail
+  outcomes.

@@ -231,7 +231,7 @@ The full integration contract is in
 | Test gate at release | 2,943 passed, 4 skipped |
 | Live source | intervals.icu only; Garmin marked `unreliable` |
 | HAI posture | Maintainer-dogfooded reference runtime; foreign-user empirical scope deferred to v0.4 review per AGENTS.md D16. |
-| Research posture | GovernedAgentBench scaffold exists; benchmark MVP and HAI paper-readiness engineering are next. |
+| Research posture | GovernedAgentBench scaffold exists; measurement-readiness and HAI paper-readiness engineering are next. |
 
 For the terse current-state map, read
 [`current_system_state.md`](current_system_state.md).
