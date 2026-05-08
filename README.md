@@ -1,6 +1,7 @@
 # Runtime Contracts for Local Agents
 
-This repository studies a runtime-governance question:
+This repository is a research project studying a runtime-governance
+question:
 
 > Can enforceable local software contracts make smaller local models
 > viable operators for bounded workflows over sensitive user-owned data?

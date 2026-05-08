@@ -156,8 +156,8 @@ available. See [`explainability.md`](explainability.md) for the
 bundle shape and [`query_taxonomy.md`](query_taxonomy.md) §2.3 for
 the question class it answers.
 
-**Why it exists.** This is the project's strongest differentiator. The
-runtime does not just tell the user what to do — it retains an
+**Why it exists.** This is one of HAI's strongest reference-runtime
+differentiators. The runtime does not just tell the user what to do — it retains an
 auditable chain that any reader can walk: accepted state →
 proposal → firing → mutation → final recommendation.
 

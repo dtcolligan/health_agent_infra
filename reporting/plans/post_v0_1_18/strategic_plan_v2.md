@@ -29,6 +29,13 @@
 > engineer opening the HAI runtime cold, but superseded for repo-wide
 > project strategy.
 >
+> **Reading rule after the research reframe.** Every Wave, version, and
+> v1.0 reference below is a conditional HAI reference-runtime support-lane
+> roadmap. Do not treat it as the active project calendar. The active
+> project calendar is the paper / GovernedAgentBench / runtime-contract
+> path in `PROJECT_FRAME.md`, `PROJECT_DECISIONS.md`,
+> `PROJECT_OPERATING_MODEL.md`, and `ROADMAP.md`.
+>
 > **Companion docs.**
 > - `tactical_plan_v0_1_x.md` — release-by-release execution.
 > - `eval_strategy/v1.md` — HAI runtime correctness strategy.
@@ -412,7 +419,7 @@ crashes**. v0.1.14 added P13 (low-domain-knowledge persona for
 `hai explain` review). v0.1.17 added an opt-in regression test
 pinning the contract.
 
-The harness is now the project's strongest non-maintainer signal
+The harness is now HAI's strongest non-maintainer signal
 surface — it absorbs assumption bugs the single-user dogfood can't
 catch. The original v1 framing ("informally given findings detector
 heuristics") understated this; the harness is now load-bearing
@@ -493,7 +500,11 @@ foreign user" sequence v0.1.16 cancellation forced.
 
 ---
 
-## 6. Strategic posture for the next 12–18 months
+## 6. HAI support-lane strategic posture for the next 12–18 months
+
+> **Reframe reading rule.** This section is not the project-wide
+> strategy after 2026-05-07. It is the HAI reference-runtime support-lane
+> posture preserved for provenance and future resumption.
 
 Three postures, refreshed with v0.1.x evidence.
 
@@ -554,7 +565,12 @@ the methodology contribution as one coherent submission.
 
 ---
 
-## 7. Major waves to v1.0 (re-baselined from 2026-05-06)
+## 7. HAI support-lane waves to v1.0 (re-baselined from 2026-05-06)
+
+> **Reframe reading rule.** The waves below are parked HAI runtime
+> roadmap material. They are subordinate to the runtime-contract paper
+> and GovernedAgentBench unless a specific item is declared
+> paper-critical.
 
 v1's wave structure stays intact. Timeline re-baselines from
 2026-05-06 (v0.1.18 ship + v0.1.19 cancellation).
@@ -650,7 +666,11 @@ v1.0 horizon is unchanged because the back-half calendar gates
 
 ---
 
-## 8. Scope-expansion exploration (speculative, with new evidence)
+## 8. HAI support-lane scope-expansion exploration (speculative, with new evidence)
+
+> **Reframe reading rule.** This is not current project scope. Treat it
+> as HAI backlog/provenance until the research lane no longer owns the
+> priority.
 
 Same shape as v1 §8. New empirical evidence integrated.
 
@@ -705,7 +725,11 @@ point.
 
 ---
 
-## 9. What v1.0 looks like, written today
+## 9. What HAI v1.0 looked like before the research reframe
+
+> **Reframe reading rule.** This is a preserved HAI target-state sketch,
+> not an active commitment to ship HAI v1.0 before the paper,
+> GovernedAgentBench, and reproducible baselines.
 
 Refresh of v1 §9. Most criteria hold; v0.1.x changes the
 provenance for several.
@@ -759,7 +783,11 @@ boundary; v1.0 is a snapshot, not a release in the disruptive sense.
 
 ---
 
-## 10. Decision branches between here and v1.0
+## 10. HAI support-lane decision branches between here and v1.0
+
+> **Reframe reading rule.** These branches are dormant unless they become
+> paper-critical, benchmark-critical, or are explicitly reopened by the
+> maintainer after the research push.
 
 Same five branches as v1; dates updated.
 

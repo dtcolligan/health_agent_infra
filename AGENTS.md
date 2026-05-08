@@ -359,6 +359,27 @@ Do not ship a substantive release without release proof. Smaller doc-only
 changes can be scoped by Dom, but do not silently weaken the audit
 convention.
 
+## Research Lane Cycle Expectation
+
+The release-cycle ceremony above is for HAI runtime releases under
+`reporting/plans/`. Research-lane work uses a lighter artifact shape
+unless Dom explicitly scopes a full release cycle:
+
+1. Read `PROJECT_FRAME.md`, `PROJECT_DECISIONS.md`,
+   `PROJECT_OPERATING_MODEL.md`,
+   `research/runtime_contracts_paper/PAPER_FRAME.md`,
+   `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`, and
+   `benchmarks/governed_agent_bench/README.md`.
+2. Name the research unit before writing code: paper section, benchmark
+   task family, scorer, manifest freeze, baseline run, fine-tuning
+   recipe, or scaffold ablation.
+3. Record planning changes in `research/runtime_contracts_paper/` or
+   `benchmarks/governed_agent_bench/`, not in HAI release-cycle docs,
+   unless the work is explicitly a HAI runtime support-lane task.
+4. Prefer deterministic benchmark/scorer artifacts before model runs.
+5. Treat HAI runtime changes as support work only when they stabilize the
+   contract, unblock the benchmark, or make baselines reproducible.
+
 ### Ship-time freshness checklist (v0.1.12 W-AC / reconciliation A8)
 
 Before declaring a substantive release shipped, verify every line below.

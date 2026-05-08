@@ -1,7 +1,7 @@
 # HAI Docs — Index
 
 Current documentation for the HAI reference runtime. Start with
-`hai_reference_runtime.md` if you want the operator/product manual,
+`hai_reference_runtime.md` if you want the operator manual,
 `current_system_state.md` if you need the latest HAI runtime truth, and
 `architecture.md` if this is your first architecture read.
 

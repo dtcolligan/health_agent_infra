@@ -8,7 +8,7 @@ For the repo-wide research frame, start with
 [`../../PROJECT_FRAME.md`](../../PROJECT_FRAME.md),
 [`../../PROJECT_DECISIONS.md`](../../PROJECT_DECISIONS.md), and
 [`../../PROJECT_OPERATING_MODEL.md`](../../PROJECT_OPERATING_MODEL.md).
-This document is the HAI-specific operator and product manual.
+This document is the HAI-specific reference-runtime operator manual.
 
 ## What HAI Is
 

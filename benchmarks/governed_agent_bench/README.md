@@ -13,11 +13,32 @@ treatment, prescribing, or autonomous medical decisions.
 
 The project-wide benchmark/evaluation strategy lives at
 [`../../research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`](../../research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md).
+The project-wide frame and decision log live at
+[`../../PROJECT_FRAME.md`](../../PROJECT_FRAME.md) and
+[`../../PROJECT_DECISIONS.md`](../../PROJECT_DECISIONS.md).
 
 ## Current Scope
 
 This directory is the benchmark skeleton. The next milestone is an MVP
 that can score recorded trajectories without running model backends.
+The implementation schedule is tracked in
+[`../../research/runtime_contracts_paper/IMPLEMENTATION_PLAN.md`](../../research/runtime_contracts_paper/IMPLEMENTATION_PLAN.md).
+
+## Current State
+
+As of 2026-05-08, this directory is intentionally a scaffold:
+
+| Surface | Current state |
+|---|---|
+| Frozen manifests | 0 frozen manifests / 0 committed snapshots. First planned snapshot: `manifests/hai_0_2_0.json`. |
+| Pilot tasks | 0 committed tasks. MVP target: at least 10 across L1, L2, L5, L6, and L7. |
+| Recorded trajectories | 0 committed trajectories. |
+| Scorer | README and schemas only; offline scoring code not yet implemented. |
+| Baselines | README only; no rule, local-model, cloud-model, or fine-tuned baselines yet. |
+| Reports | README only; no pilot report yet. |
+
+This empty state is not a validity claim. It records that the
+documentation-alignment gate currently precedes benchmark task authoring.
 
 Task levels:
 

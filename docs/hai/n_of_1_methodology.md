@@ -2,12 +2,22 @@
 
 **Cycle of record.** v0.2.0 W-NOF1-METHOD.
 
+**Research-reframe status.** This is an HAI reference-runtime
+support-lane methodology note, not the current project calendar. The
+project-wide objective is the runtime-contract paper plus
+GovernedAgentBench; see [`../../PROJECT_FRAME.md`](../../PROJECT_FRAME.md),
+[`../../PROJECT_DECISIONS.md`](../../PROJECT_DECISIONS.md), and
+[`../../PROJECT_OPERATING_MODEL.md`](../../PROJECT_OPERATING_MODEL.md).
+All v0.5/v0.6/v0.7/v1.0 references below are conditional HAI-runtime
+forward plans that resume only when they support, or no longer compete
+with, the paper / benchmark push.
+
 **Forward-looking.** This doc is a positioning artifact for Wave 4
 (v0.5–v0.6 per `reporting/plans/post_v0_1_18/strategic_plan_v2.md`
-§7). v0.2.0 ships none of the surface this doc describes; the goal
-is to land a methodologically-honest contract for the substrate +
-estimator before authoring code, so a future PLAN-audit has
-something to pressure-test against.
+§7). v0.2.0 ships none of the surface this doc describes; the HAI
+support-lane goal is to preserve a methodologically-honest contract
+for the substrate + estimator before any future HAI PLAN-audit
+authors code.
 
 **The single load-bearing claim.** HAI's v0.5–v0.6 N-of-1 surface
 will not be a fast layer. It will be a **substrate-first chain**:
@@ -17,9 +27,10 @@ quadruple ledger must mature for ≥90 days of clean operation
 "turn on N-of-1" the day they install HAI; the data needs to
 exist first.
 
-This is the project's strongest commitment to *not* shipping
+This is the HAI support lane's strongest commitment to *not* shipping
 unfounded individualised inference: the calendar gate is the
-methodological honesty layer.
+methodological honesty layer if and when this surface becomes active
+again.
 
 ---
 
@@ -295,7 +306,7 @@ Both gates are *negative-evidence* gates: the absence of bugs /
 incidents is what passes them. There is no feature-completion
 checkbox to skip the wait.
 
-This is the project's strongest concession to the
+This is the HAI support lane's strongest concession to the
 **maturity-vs-velocity tradeoff**. The strategic plan v2 §7 is
 explicit: "the substrate-maturation gates (v0.5 → 90d → v0.6,
 v0.7 → 90d → v1.0) cannot be compressed; they are

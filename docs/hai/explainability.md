@@ -9,7 +9,8 @@ the supported surface the [`query_taxonomy.md`](query_taxonomy.md) §2.3
 This doc pairs with [`memory_model.md`](memory_model.md) (where each
 audit row lives on disk) and
 [`personal_health_agent_positioning.md`](personal_health_agent_positioning.md)
-(why the audit chain is the project's strongest differentiator).
+(why the audit chain is one of HAI's strongest reference-runtime
+differentiators).
 
 ## 1. What it is, in one paragraph
 

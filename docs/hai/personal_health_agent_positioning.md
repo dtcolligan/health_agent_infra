@@ -1,13 +1,14 @@
-# Personal Health Agent Positioning
+# HAI Reference-Runtime Positioning
 
 This document names what Health Agent Infra is, how it relates to the
 broader "personal health agent" idea as framed by Google Research, and
 why its shape is deliberately local-first and governed.
 
 Under the current repo frame, this is an HAI reference-runtime
-positioning doc. The project-wide research frame lives at
-[`../../PROJECT_FRAME.md`](../../PROJECT_FRAME.md); personal health is
-the demonstrator domain, not the whole research claim.
+support-lane positioning doc. The project-wide research frame lives at
+[`../../PROJECT_FRAME.md`](../../PROJECT_FRAME.md) and
+[`../../PROJECT_DECISIONS.md`](../../PROJECT_DECISIONS.md); personal
+health is the demonstrator domain, not the whole research claim.
 
 It is a framing document, not an architecture rewrite. The shipped
 architecture is described in

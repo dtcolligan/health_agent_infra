@@ -24,6 +24,15 @@ HAI operator docs under `docs/hai/`.
 | D-PROJ-010 | Documentation alignment is the current work gate. | If a cold agent would recover the old objective, fix docs before new implementation. |
 | D-PROJ-011 | Current docs and historical provenance must stay separated. | Active docs live at root, `research/`, `benchmarks/`, and `docs/hai/`; `reporting/` is proof/history. |
 
+## Open Project Decisions
+
+These are intentionally not locked yet:
+
+| ID | Question | Default until decided |
+|---|---|---|
+| OD-PROJ-001 | Which workshop or preprint venue is the target for the first public paper package? | Keep docs venue-neutral: "workshop / preprint push" means a public preprint plus GovernedAgentBench release candidate, with venue selected once results and CFPs are known. |
+| OD-PROJ-002 | When does the HAI support lane resume v0.3+ work such as MCP and N-of-1 surfaces? | Defer unless the work is paper-critical, benchmark-critical, or explicitly reopened by the maintainer after the research push. |
+
 ## D-PROJ-001: Research Repo, Not HAI Product Repo
 
 **Decision.** This repository is no longer best understood as "the HAI

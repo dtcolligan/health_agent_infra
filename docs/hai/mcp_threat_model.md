@@ -2,12 +2,21 @@
 
 **Cycle of record.** v0.2.0 W-MCP-THREAT.
 
-**Pre-req for.** v0.3 PLAN-audit (CP-MCP-THREAT-FORWARD,
-post-v0.1.13). v0.3-v0.4 is when the project's first MCP
-read-surface is currently *scheduled to land*; this doc captures
-the threat posture **before** that surface is authored, so the
-v0.3 PLAN can audit against a written contract rather than against
-freshly-invented intuition.
+**Research-reframe status.** This is an HAI reference-runtime
+support-lane threat model, not a current commitment to ship MCP. The
+project-wide objective is the runtime-contract paper plus
+GovernedAgentBench; see [`../../PROJECT_FRAME.md`](../../PROJECT_FRAME.md),
+[`../../PROJECT_DECISIONS.md`](../../PROJECT_DECISIONS.md), and
+[`../../PROJECT_OPERATING_MODEL.md`](../../PROJECT_OPERATING_MODEL.md).
+MCP remains deferred unless it becomes paper-critical benchmark
+infrastructure or the HAI support lane resumes after the paper /
+benchmark push.
+
+**Pre-req for.** A future HAI MCP PLAN-audit if the support lane
+reopens MCP work (originally CP-MCP-THREAT-FORWARD,
+post-v0.1.13). The pre-reframe HAI plan scheduled the first MCP
+read-surface for v0.3-v0.4; after the research reframe, this doc
+captures the threat posture to preserve, not an active ship target.
 
 **Source provenance.**
 
@@ -38,10 +47,11 @@ agent auto-spawn one; there is no reachable MCP-over-network
 attack surface.
 
 The threat model here is therefore primarily **forward-looking**:
-when v0.3-v0.4 introduces a read-only MCP surface (per the strategic
-plan v2 §10 Wave 3 row), the posture below applies. The "currently
-applies / mitigation in place / gap deferred" disposition is
-recorded against that planned surface, not against today's surface.
+if a future HAI support-lane cycle introduces a read-only MCP surface
+(the pre-reframe strategic plan v2 §10 Wave 3 row), the posture below
+applies. The "currently applies / mitigation in place / gap deferred"
+disposition is recorded against that parked surface, not against
+today's paper / benchmark priority.
 
 **Settled architectural decision** (AGENTS.md "Do Not Do",
 post-v0.1.13):
