@@ -8,8 +8,8 @@ anything. Its purpose is to make future implementation work decomposable
 into bounded slices that coding agents can execute without making
 strategic decisions.
 
-For project framing, read `PROJECT_FRAME.md`, `PROJECT_DECISIONS.md`,
-and `PROJECT_OPERATING_MODEL.md` first. For the paper frame, read
+For project framing, read `project/FRAME.md`, `project/DECISIONS.md`,
+and `project/OPERATING_MODEL.md` first. For the paper frame, read
 `PAPER_FRAME.md`. The older `IMPLEMENTATION_PLAN.md` is retained as the
 coarse phase plan; this file is the more operational master plan.
 
@@ -101,7 +101,7 @@ reference runtime.
 **Exit criteria.**
 
 - A frozen `hai capabilities --json` snapshot exists under
-  `benchmarks/governed_agent_bench/manifests/`.
+  `benchmark/governed_agent_bench/manifests/`.
 - The snapshot is generated from the source tree and has a documented
   provenance command.
 - The benchmark subset of command behavior is documented:

@@ -20,7 +20,7 @@ The threat model assumes:
   `hai synthesize`, `hai review record`, `hai intake`, and user-gated
   `hai intent/target commit` paths.
 - An untrusted future maintainer: governance invariants are tested under
-  `verification/tests/`, not left as convention.
+  `hai/verification/tests/`, not left as convention.
 
 Explicitly out of scope:
 
@@ -29,7 +29,7 @@ Explicitly out of scope:
 - Adversarial co-resident processes that can already read the user's files.
 - Complete prompt-injection defense inside third-party model providers.
 
-Privacy details are in [`reporting/docs/privacy.md`](reporting/docs/privacy.md).
+Privacy details are in [`hai/docs/privacy.md`](hai/docs/privacy.md).
 
 ## Reporting A Vulnerability
 

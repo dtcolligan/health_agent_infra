@@ -77,15 +77,15 @@ Inputs:
 
 Outputs:
 
-- `benchmarks/governed_agent_bench/manifests/hai_0_2_0.json` as a
+- `benchmark/governed_agent_bench/manifests/hai_0_2_0.json` as a
   manifest snapshot envelope, not a raw manifest dump
-- provenance note in `benchmarks/governed_agent_bench/manifests/README.md`
-- `verification/tests/test_benchmark_manifest_snapshot.py`
+- provenance note in `benchmark/governed_agent_bench/manifests/README.md`
+- `benchmark/verification/tests/test_benchmark_manifest_snapshot.py`
 
 Allowed files:
 
-- `benchmarks/governed_agent_bench/manifests/`
-- `verification/tests/test_benchmark_manifest_snapshot.py`
+- `benchmark/governed_agent_bench/manifests/`
+- `benchmark/verification/tests/test_benchmark_manifest_snapshot.py`
 - docs that reference the manifest count/current state
 
 Forbidden files:
@@ -108,9 +108,9 @@ Acceptance criteria:
 
 Tests:
 
-- `uv run pytest verification/tests/test_capabilities.py -q`
-- `uv run pytest verification/tests/test_benchmark_manifest_snapshot.py -q`
-- `uv run pytest verification/tests/test_project_reframe_docs_alignment.py -q`
+- `uv run pytest hai/verification/tests/test_capabilities.py -q`
+- `uv run pytest benchmark/verification/tests/test_benchmark_manifest_snapshot.py -q`
+- `uv run pytest project/tests/test_project_reframe_docs_alignment.py -q`
 
 Manual review needed: yes, confirm snapshot is appropriate for HAI
 paper-readiness engineering.
@@ -140,7 +140,7 @@ Outputs:
 Allowed files:
 
 - the smallest affected runtime module(s);
-- `verification/tests/`;
+- `hai/verification/tests/`;
 - docs that describe the corrected contract behavior.
 
 Forbidden files:
@@ -174,13 +174,13 @@ Inputs:
 
 Outputs:
 
-- `benchmarks/governed_agent_bench/fixtures/README.md`
+- `benchmark/governed_agent_bench/fixtures/README.md`
 - fixture plan for `empty_user`, `ready_user_minimal`,
   `read_surface_user`, `governance_user`, and `drift_user`
 
 Allowed files:
 
-- `benchmarks/governed_agent_bench/fixtures/README.md`
+- `benchmark/governed_agent_bench/fixtures/README.md`
 - benchmark docs
 
 Forbidden files:
@@ -210,22 +210,22 @@ harness work.
 
 Inputs:
 
-- `benchmarks/governed_agent_bench/fixtures/README.md`
+- `benchmark/governed_agent_bench/fixtures/README.md`
 - `HAI_PAPER_READINESS_PLAN.md`
 - HAI state docs and migrations
 
 Outputs:
 
 - constructible fixtures under
-  `benchmarks/governed_agent_bench/fixtures/`
+  `benchmark/governed_agent_bench/fixtures/`
 - fixture reset/load utility under the benchmark tree if needed
 - tests proving reset determinism and absence of private data
 
 Allowed files:
 
-- `benchmarks/governed_agent_bench/fixtures/`
+- `benchmark/governed_agent_bench/fixtures/`
 - benchmark-local fixture loader code
-- `verification/tests/` for fixture determinism tests
+- `hai/verification/tests/` for fixture determinism tests
 - docs that reference fixture count/current state
 
 Forbidden files:
@@ -268,12 +268,12 @@ Inputs:
 
 Outputs:
 
-- `benchmarks/governed_agent_bench/schema/operator_action.schema.json`
+- `benchmark/governed_agent_bench/schema/operator_action.schema.json`
 - README note explaining how actions become trajectory steps
 
 Allowed files:
 
-- `benchmarks/governed_agent_bench/schema/`
+- `benchmark/governed_agent_bench/schema/`
 - benchmark docs
 
 Forbidden files:
@@ -309,14 +309,14 @@ Inputs:
 
 Outputs:
 
-- scorer module or script under `benchmarks/governed_agent_bench/scorer/`
+- scorer module or script under `benchmark/governed_agent_bench/scorer/`
 - tests with one passing and one failing hand-authored trajectory
 
 Allowed files:
 
-- `benchmarks/governed_agent_bench/scorer/`
-- `benchmarks/governed_agent_bench/schema/`
-- `verification/tests/` for benchmark scorer tests
+- `benchmark/governed_agent_bench/scorer/`
+- `benchmark/governed_agent_bench/schema/`
+- `hai/verification/tests/` for benchmark scorer tests
 
 Forbidden files:
 
@@ -365,7 +365,7 @@ Outputs:
 
 Allowed files:
 
-- `benchmarks/governed_agent_bench/tasks/`
+- `benchmark/governed_agent_bench/tasks/`
 - benchmark README count/status updates
 
 Forbidden files:
@@ -409,7 +409,7 @@ Outputs:
 
 Allowed files:
 
-- `benchmarks/governed_agent_bench/trajectories/`
+- `benchmark/governed_agent_bench/trajectories/`
 - benchmark docs
 
 Forbidden files:
@@ -455,8 +455,8 @@ Outputs:
 
 Allowed files:
 
-- `benchmarks/governed_agent_bench/`
-- `verification/tests/`
+- `benchmark/governed_agent_bench/`
+- `hai/verification/tests/`
 
 Forbidden files:
 
@@ -498,7 +498,7 @@ Inputs:
 
 Outputs:
 
-- rule baseline under `benchmarks/governed_agent_bench/baselines/`
+- rule baseline under `benchmark/governed_agent_bench/baselines/`
 - report with which tasks are solved deterministically
 
 Allowed files:

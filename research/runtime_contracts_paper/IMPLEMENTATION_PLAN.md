@@ -246,7 +246,7 @@ Best result:
 ## Immediate Next Steps
 
 0. Finish the documentation-alignment gate in
-   `PROJECT_OPERATING_MODEL.md` so the repo can recover the new objective
+   `project/OPERATING_MODEL.md` so the repo can recover the new objective
    without conversation memory.
 1. Convert the paper skeleton into a live outline with citation keys.
 2. Create a related-work reading tracker.

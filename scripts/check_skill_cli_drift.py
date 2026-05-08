@@ -1,6 +1,6 @@
 """Skill ↔ CLI drift checker.
 
-For every SKILL.md under ``src/health_agent_infra/skills/``, scan
+For every SKILL.md under ``hai/src/health_agent_infra/skills/``, scan
 fenced code blocks for ``hai <subcommand>`` invocations and the
 ``--flag`` tokens that appear alongside them. Cross-reference each
 (command, flag) pair against the authoritative
@@ -19,7 +19,7 @@ This is the v0.1.6 W3 audit-driven safety net. Background:
     its own body examples.
 
 Drift accumulates silently between releases. This validator runs as
-a pytest test (``verification/tests/test_skill_cli_drift.py``) so any new
+a pytest test (``hai/verification/tests/test_skill_cli_drift.py``) so any new
 divergence fails CI immediately.
 
 Run from repo root::
@@ -40,7 +40,7 @@ from pathlib import Path
 from typing import Iterable
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SKILLS_DIR = REPO_ROOT / "src" / "health_agent_infra" / "skills"
+SKILLS_DIR = REPO_ROOT / "hai" / "src" / "health_agent_infra" / "skills"
 
 _FLAG_RE = re.compile(r"--([a-z][a-z0-9-]*)")
 

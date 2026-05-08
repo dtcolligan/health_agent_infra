@@ -4,25 +4,25 @@
 
 This repo is a runtime-contract research project with HAI as the first
 reference runtime and GovernedAgentBench as the benchmark artifact.
-Read [`PROJECT_FRAME.md`](PROJECT_FRAME.md) before assuming HAI product
+Read [`project/FRAME.md`](project/FRAME.md) before assuming HAI product
 polish is the next priority. Read
-[`PROJECT_DECISIONS.md`](PROJECT_DECISIONS.md) before reopening a
+[`project/DECISIONS.md`](project/DECISIONS.md) before reopening a
 post-reframe project choice. Read
-[`PROJECT_OPERATING_MODEL.md`](PROJECT_OPERATING_MODEL.md) before changing
+[`project/OPERATING_MODEL.md`](project/OPERATING_MODEL.md) before changing
 project direction, benchmark scope, or paper-facing claims.
 
 Most HAI contributions land in one of two implementation surfaces:
 
-- **Python runtime** under `src/health_agent_infra/` — deterministic
+- **Python runtime** under `hai/src/health_agent_infra/` — deterministic
   data acquisition, projection, classification, policy, synthesis,
   validation, review, and persistence.
-- **Markdown skills** under `src/health_agent_infra/skills/` — the
+- **Markdown skills** under `hai/src/health_agent_infra/skills/` — the
   agent's judgment layer: rationale, uncertainty surfacing, and
   clarification during narration.
 
 Research and benchmark contributions land under:
 
-- **GovernedAgentBench** under `benchmarks/governed_agent_bench/` —
+- **GovernedAgentBench** under `benchmark/governed_agent_bench/` —
   task schemas, frozen manifests, trajectories, scorer logic, baselines,
   and reports.
 - **Paper artifacts** under `research/runtime_contracts_paper/` —
@@ -45,9 +45,9 @@ The rebuild's central rule is simple:
      `signals.py`/`intake.py`)
 2. Add typed functions/classes. No hidden state, no silent global
    mutation.
-3. Wire a CLI surface in `src/health_agent_infra/cli.py` only if the
+3. Wire a CLI surface in `hai/src/health_agent_infra/cli.py` only if the
    agent or operator genuinely needs it.
-4. Add deterministic tests under `verification/tests/`.
+4. Add deterministic tests under `hai/verification/tests/`.
 5. If the change crosses a schema boundary, update the producing and
    consuming paths in the same commit.
 
@@ -61,7 +61,7 @@ Never:
 ## How to add or edit a skill
 
 1. Edit the existing packaged skill under
-   `src/health_agent_infra/skills/<skill-name>/SKILL.md`, or create a
+   `hai/src/health_agent_infra/skills/<skill-name>/SKILL.md`, or create a
    new skill directory there if the new surface is real.
 2. Keep frontmatter valid (`name`, `description`, `allowed-tools`,
    `disable-model-invocation`).
@@ -80,14 +80,14 @@ Never:
 
 ## Before opening a PR
 
-1. `uv run pytest verification/tests -q`
+1. `uv run pytest hai/verification/tests -q`
 2. If you touched packaging or versioning: `uv run python -m build --wheel --sdist`
 3. If you touched docs: make sure `README.md`, `CHANGELOG.md`,
-   `PROJECT_FRAME.md`, `PROJECT_OPERATING_MODEL.md`, `HYPOTHESES.md`,
-   `PROJECT_DECISIONS.md`, `ROADMAP.md`, `AUDIT.md`,
+   `project/FRAME.md`, `project/OPERATING_MODEL.md`, `project/HYPOTHESES.md`,
+   `project/DECISIONS.md`, `project/ROADMAP.md`, `hai/reporting/AUDIT.md`,
    `research/runtime_contracts_paper/PAPER_FRAME.md`,
    `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`, and the
-   active HAI docs under `docs/hai/` still agree.
+   active HAI docs under `hai/docs/` still agree.
 4. If you touched a skill: verify the corresponding skill-boundary
    tests still pass.
 5. If you touched a migration/projector/schema: verify the relevant
@@ -95,11 +95,11 @@ Never:
 
 ## Good first changes
 
-- Strengthen a contract test in `verification/tests/` for malformed proposal
+- Strengthen a contract test in `hai/verification/tests/` for malformed proposal
   or recommendation JSON.
-- Add eval scenarios or rubric coverage under `verification/evals/`.
+- Add eval scenarios or rubric coverage under `hai/verification/evals/`.
 - Add GovernedAgentBench pilot tasks, recorded trajectories, or scorer
-  checks under `benchmarks/governed_agent_bench/`.
+  checks under `benchmark/governed_agent_bench/`.
 - Improve a domain classifier/policy test at a boundary condition.
 - Fix active docs that drift from shipped runtime behavior.
 
@@ -117,17 +117,17 @@ Never:
 
 Start with these:
 
-- `PROJECT_FRAME.md`
-- `PROJECT_DECISIONS.md`
-- `PROJECT_OPERATING_MODEL.md`
-- `HYPOTHESES.md`
+- `project/FRAME.md`
+- `project/DECISIONS.md`
+- `project/OPERATING_MODEL.md`
+- `project/HYPOTHESES.md`
 - `README.md`
-- `REPO_MAP.md` — one-page orientation of every top-level entry
-- `ROADMAP.md`
+- `project/REPO_MAP.md` — one-page orientation of every top-level entry
+- `project/ROADMAP.md`
 - `research/runtime_contracts_paper/PAPER_FRAME.md`
 - `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`
-- `benchmarks/governed_agent_bench/README.md`
-- `AUDIT.md`
-- `docs/hai/architecture.md`
-- `docs/hai/non_goals.md`
-- `docs/hai/tour.md`
+- `benchmark/governed_agent_bench/README.md`
+- `hai/reporting/AUDIT.md`
+- `hai/docs/architecture.md`
+- `hai/docs/non_goals.md`
+- `hai/docs/tour.md`

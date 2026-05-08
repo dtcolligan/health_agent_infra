@@ -39,51 +39,48 @@ behind, head at commit `2811669 Phase H: implement conversational
 intake`); ignore it unless explicitly working on historical
 provenance. Every session should `pwd` and `git log -1` before
 reading or writing planning/source files. (Origin: 2026-05-02
-evening; see `reporting/plans/v0_1_15/PLAN.md` §4 item 8 +
+evening; see `hai/reporting/plans/v0_1_15/PLAN.md` §4 item 8 +
 codex_plan_audit_response F-PLAN-12.)
 
 Authoritative orientation:
 
-- `PROJECT_FRAME.md` - canonical research framing and priority order
-- `PROJECT_DECISIONS.md` - post-reframe decision log for project-level
+- `project/FRAME.md` - canonical research framing and priority order
+- `project/DECISIONS.md` - post-reframe decision log for project-level
   choices that should survive cold starts
-- `PROJECT_OPERATING_MODEL.md` - internal operating model, documentation
+- `project/OPERATING_MODEL.md` - internal operating model, documentation
   gate, artifact hierarchy, and decision rules
-- Target owner model: root is tooling/entrypoint only; `project/`,
-  `hai/`, `benchmark/`, and `research/` are the conceptual lanes.
-  Current `src/`, `docs/hai/`, `verification/`, `reporting/`, and
-  `benchmarks/` paths are transitional until a bounded migration packet
-  moves them by owner.
-- `HYPOTHESES.md` - current research hypotheses
+- Owner model: root is tooling/entrypoint only; `project/`, `hai/`,
+  `benchmark/`, and `research/` are the physical owner lanes.
+- `project/HYPOTHESES.md` - current research hypotheses
 - `research/runtime_contracts_paper/PAPER_FRAME.md` - locked paper frame
 - `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md` - current
   project-wide evaluation strategy
-- `benchmarks/governed_agent_bench/README.md` - benchmark scope and
+- `benchmark/governed_agent_bench/README.md` - benchmark scope and
   measurement-readiness milestone
 - `README.md` - research-facing repo overview
-- `docs/hai/hai_reference_runtime.md` - HAI install, operator
+- `hai/docs/hai_reference_runtime.md` - HAI install, operator
   workflow, domains, and CLI surface
-- `ARCHITECTURE.md` - one-page architecture
-- `REPO_MAP.md` - every top-level entry classified active/historical
-- `docs/hai/current_system_state.md` - latest shipped truth
+- `hai/docs/runtime_contract_overview.md` - one-page architecture
+- `project/REPO_MAP.md` - every top-level entry classified active/historical
+- `hai/docs/current_system_state.md` - latest shipped truth
   (version, schema head, CLI command count, release posture, next cycle)
-- `docs/hai/architecture.md` - full pipeline and code-vs-skill boundary
-- `docs/hai/non_goals.md` - scope discipline
-- `reporting/plans/README.md` - reading-order index for the planning tree
-- `reporting/plans/post_v0_1_18/strategic_plan_v2.md` - HAI reference-runtime
+- `hai/docs/architecture.md` - full pipeline and code-vs-skill boundary
+- `hai/docs/non_goals.md` - scope discipline
+- `hai/reporting/plans/README.md` - reading-order index for the planning tree
+- `hai/reporting/plans/post_v0_1_18/strategic_plan_v2.md` - HAI reference-runtime
   strategy before the research reframe; useful context, not the current
   project-wide priority order
-- `reporting/plans/tactical_plan_v0_1_x.md` - HAI reference-runtime backlog
-- `reporting/plans/eval_strategy/v1.md` - pre-reframe HAI runtime
+- `hai/reporting/plans/tactical_plan_v0_1_x.md` - HAI reference-runtime backlog
+- `hai/reporting/plans/eval_strategy/v1.md` - pre-reframe HAI runtime
   correctness strategy; not project-wide research evaluation
-- `reporting/plans/success_framework_v1.md` - pre-reframe HAI value
+- `hai/reporting/plans/success_framework_v1.md` - pre-reframe HAI value
   framework; not project-wide research success criteria
-- `reporting/plans/risks_and_open_questions.md` - pre-reframe HAI risk
+- `hai/reporting/plans/risks_and_open_questions.md` - pre-reframe HAI risk
   register; useful provenance/support-lane input
-- `verification/dogfood/README.md` - persona harness operating guide
-- `AUDIT.md` - release-by-release audit index
+- `hai/verification/dogfood/README.md` - persona harness operating guide
+- `hai/reporting/AUDIT.md` - release-by-release audit index
 
-The 2026-04-25 `reporting/plans/historical/multi_release_roadmap.md`
+The 2026-04-25 `hai/reporting/plans/historical/multi_release_roadmap.md`
 is SUPERSEDED. Read it only as historical provenance; use the
 strategic + tactical plans above for current scope.
 
@@ -91,10 +88,10 @@ strategic + tactical plans above for current scope.
 
 The project has two surfaces. Every contribution lands in exactly one:
 
-- **Python runtime** (`src/health_agent_infra/`) - deterministic, testable
+- **Python runtime** (`hai/src/health_agent_infra/`) - deterministic, testable
   source of truth for data acquisition, projection, classification bands,
   R-rules, X-rules, synthesis, validation, persistence, and CLI behavior.
-- **Markdown skills** (`src/health_agent_infra/skills/`) - judgment layer for
+- **Markdown skills** (`hai/src/health_agent_infra/skills/`) - judgment layer for
   rationale prose, uncertainty surfacing, clarification, and free-text intake
   routing.
 
@@ -163,7 +160,7 @@ micronutrient features without a new scoped plan.
 ## Settled Decisions - Do Not Reopen Casually
 
 These were decided across audit cycles. If you think one needs revisiting,
-write a cycle proposal in `reporting/plans/`; do not act unilaterally.
+write a cycle proposal in `hai/reporting/plans/`; do not act unilaterally.
 
 - **W37 original shape is dead.** Skills do not compute review-outcome
   pattern tokens. W48 replaced it with code-owned
@@ -178,8 +175,8 @@ write a cycle proposal in `reporting/plans/`; do not act unilaterally.
   parser/capabilities regression test landed, so the mechanical
   split itself is the deliverable; redestination v0.1.15 → v0.1.17
   on 2026-05-02 evening per the v0.1.15 scope-restructure round-0
-  self-audit — see `reporting/plans/v0_1_15/PLAN.md` §1.4 and
-  `reporting/plans/v0_1_17/README.md`). Capabilities-manifest
+  self-audit — see `hai/reporting/plans/v0_1_15/PLAN.md` §1.4 and
+  `hai/reporting/plans/v0_1_17/README.md`). Capabilities-manifest
   schema freeze scheduled for **v0.2.3** after all v0.2.x schema
   additions land (**W52 + W58D claim-block (v0.2.0), W53 (v0.2.1),
   W58J (v0.2.2)**). (Origin: v0.1.12 CP1 + CP2, paired acceptance;
@@ -195,13 +192,13 @@ write a cycle proposal in `reporting/plans/`; do not act unilaterally.
   foreign-user candidate unavailable, foreign-user empirical work
   renumbered to v0.1.19, with new v0.1.18 onboarding cycle inserted
   before it; W-29 destination unchanged at v0.1.17. See
-  `reporting/plans/v0_1_16/README.md`,
-  `reporting/plans/v0_1_18/README.md`, and
-  `reporting/plans/v0_1_19/README.md`. **W-29 closed at v0.1.17**
+  `hai/reporting/plans/v0_1_16/README.md`,
+  `hai/reporting/plans/v0_1_18/README.md`, and
+  `hai/reporting/plans/v0_1_19/README.md`. **W-29 closed at v0.1.17**
   (mechanical split landed; cli.py 9927 LOC → 1 main + 1 shared +
   11 handler-group modules, all <2500 LOC; manifest byte-stable;
   refreshed boundary note at
-  `reporting/plans/v0_1_17/w29_boundary_refresh.md`). W-30 regression-
+  `hai/reporting/plans/v0_1_17/w29_boundary_refresh.md`). W-30 regression-
   test scaffold landed at v0.1.17; capabilities-manifest schema freeze
   itself remains scheduled for v0.2.3 per the unchanged provenance
   chain above.)
@@ -218,8 +215,8 @@ write a cycle proposal in `reporting/plans/`; do not act unilaterally.
 - **No `STATUS.md`.** Status lives in CHANGELOG, AUDIT, ROADMAP, and
   ARCHITECTURE; do not resurrect a parallel status file without a new
   maintainer decision.
-- **(D10, v0.1.10) Persona harness lives in `verification/dogfood/`,
-  not `verification/tests/`.** Full matrix runs are not part of CI. CI
+- **(D10, v0.1.10) Persona harness lives in `hai/verification/dogfood/`,
+  not `hai/verification/tests/`.** Full matrix runs are not part of CI. CI
   stays fast; persona matrix is invoked on release.
 - **(D11, v0.1.10) Pre-PLAN bug-hunt phase is permanent pattern.**
   Substantive releases run a structured hunt (internal sweep +
@@ -240,7 +237,7 @@ write a cycle proposal in `reporting/plans/`; do not act unilaterally.
   `load_thresholds` is a code-review concern. Defensive D12 coercer use
   at consumer sites is the second line of defence. Origin: v0.1.11 W-T
   audit (Codex round 3 SHIP_WITH_NOTES note 1, F-CDX-IR-R3-N1). See
-  `reporting/plans/v0_1_11/W_T_audit.md` for the call-site survey.
+  `hai/reporting/plans/v0_1_11/W_T_audit.md` for the call-site survey.
 - **(D14, v0.1.11) Pre-cycle Codex plan-audit is permanent pattern for
   substantive PLAN.md revisions.** Before Phase 0 (D11) bug-hunt opens,
   Codex reviews PLAN.md against a `codex_plan_audit_prompt.md` and
@@ -311,7 +308,7 @@ write a cycle proposal in `reporting/plans/`; do not act unilaterally.
   factuality gate is the structural mitigation. The W-2U-INSTALL
   closure is verbal-only and a future cycle's D14 may flag this as
   weak provenance. Origin: post-v0.1.18 CP-2U-GATE-SPLIT
-  (`reporting/plans/post_v0_1_18/CP-2U-GATE-SPLIT.md`).
+  (`hai/reporting/plans/post_v0_1_18/CP-2U-GATE-SPLIT.md`).
 - **(D17, 2026-05-07) Research reframe is canonical.** The repo's
   active objective is the runtime-contract paper plus
   GovernedAgentBench. HAI continues as the personal-wellness reference
@@ -322,8 +319,8 @@ write a cycle proposal in `reporting/plans/`; do not act unilaterally.
   non-clinical by design (no diagnosis, treatment, prescribing, or
   autonomous medical decisions). Do not reopen HACO-Bench naming or
   health-agent-first framing without an explicit maintainer decision.
-  Canonical sources: `PROJECT_FRAME.md`, `PROJECT_DECISIONS.md`,
-  `PROJECT_OPERATING_MODEL.md`, `HYPOTHESES.md`,
+  Canonical sources: `project/FRAME.md`, `project/DECISIONS.md`,
+  `project/OPERATING_MODEL.md`, `project/HYPOTHESES.md`,
   `research/runtime_contracts_paper/PAPER_FRAME.md`, and
   `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`.
 - **(D18, 2026-05-07) Documentation alignment is the current gate.**
@@ -332,12 +329,12 @@ write a cycle proposal in `reporting/plans/`; do not act unilaterally.
   internally engineered for the new goal first: cold-start docs,
   project-wide hypotheses, evaluation strategy, roadmap, and HAI
   planning provenance must all agree on the new objective. Canonical
-  gate: `PROJECT_OPERATING_MODEL.md`.
+  gate: `project/OPERATING_MODEL.md`.
 
 ## Release Cycle Expectation
 
 Substantive releases run structured Codex audit/response rounds under
-`reporting/plans/v0_1_X/`. v0.1.8 stabilized the four-round pattern;
+`hai/reporting/plans/v0_1_X/`. v0.1.8 stabilized the four-round pattern;
 v0.1.10 added the pre-PLAN bug-hunt phase (D11); v0.1.11 added the
 pre-cycle plan-audit phase (D14):
 
@@ -368,21 +365,21 @@ convention.
 ## Research Lane Cycle Expectation
 
 The release-cycle ceremony above is for HAI runtime releases under
-`reporting/plans/`. Research-lane work uses a lighter artifact shape
+`hai/reporting/plans/`. Research-lane work uses a lighter artifact shape
 unless Dom explicitly scopes a full release cycle:
 
-1. Read `PROJECT_FRAME.md`, `PROJECT_DECISIONS.md`,
-   `PROJECT_OPERATING_MODEL.md`,
+1. Read `project/FRAME.md`, `project/DECISIONS.md`,
+   `project/OPERATING_MODEL.md`,
    `research/runtime_contracts_paper/PROJECT_EXECUTION_PLAN.md`,
    `research/runtime_contracts_paper/PAPER_FRAME.md`,
    `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`,
    `research/runtime_contracts_paper/HAI_PAPER_READINESS_PLAN.md`, and
-   `benchmarks/governed_agent_bench/README.md`.
+   `benchmark/governed_agent_bench/README.md`.
 2. Name the research unit before writing code: paper section, HAI
    paper-readiness task, benchmark task family, scorer, manifest
    snapshot, baseline run, fine-tuning recipe, or scaffold ablation.
 3. Record planning changes in `research/runtime_contracts_paper/` or
-   `benchmarks/governed_agent_bench/`, not in HAI release-cycle docs,
+   `benchmark/governed_agent_bench/`, not in HAI release-cycle docs,
    unless the work is explicitly a HAI runtime support-lane task.
 4. Prefer deterministic benchmark/scorer artifacts before model runs.
 5. Treat HAI runtime changes as support work only when they stabilize the
@@ -393,35 +390,35 @@ unless Dom explicitly scopes a full release cycle:
 Before declaring a substantive release shipped, verify every line below.
 Drift in any of these is the trust hazard a second user hits first:
 
-- [ ] `ROADMAP.md` "Now" section names the just-shipped version + the
+- [ ] `project/ROADMAP.md` "Now" section names the just-shipped version + the
   current in-flight version. No "v0.1.X current" string for an older X.
-- [ ] `AUDIT.md` has a new entry for the just-shipped cycle (round table +
+- [ ] `hai/reporting/AUDIT.md` has a new entry for the just-shipped cycle (round table +
   outcome verdict + RELEASE_PROOF link). v0.1.10/v0.1.11/etc. cannot
   silently fall off the index.
 - [ ] `README.md` reflects the research frame and current artifact status.
-- [ ] `PROJECT_DECISIONS.md`, `PROJECT_OPERATING_MODEL.md`,
-  `HYPOTHESES.md`, and
+- [ ] `project/DECISIONS.md`, `project/OPERATING_MODEL.md`,
+  `project/HYPOTHESES.md`, and
   `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md` still
   reflect the current objective.
-- [ ] `docs/hai/hai_reference_runtime.md` reflects HAI install,
+- [ ] `hai/docs/hai_reference_runtime.md` reflects HAI install,
   operator workflow, domains, and CLI surface.
   Historical "v0.1.X added Y" prose can stay.
-- [ ] `PROJECT_FRAME.md` and
+- [ ] `project/FRAME.md` and
   `research/runtime_contracts_paper/PAPER_FRAME.md` still match any
   project-priority or paper-framing changes.
-- [ ] `docs/hai/current_system_state.md` reflects the just-shipped
+- [ ] `hai/docs/current_system_state.md` reflects the just-shipped
   package version, schema head, command count, test gate, and next-cycle role.
-- [ ] `reporting/plans/README.md` reading-order index marks the just-
+- [ ] `hai/reporting/plans/README.md` reading-order index marks the just-
   shipped cycle as shipped (not "in flight").
-- [ ] `reporting/plans/tactical_plan_v0_1_x.md` next-cycle row reflects
+- [ ] `hai/reporting/plans/tactical_plan_v0_1_x.md` next-cycle row reflects
   the just-authored next-cycle PLAN, not the pre-revision shape.
-- [ ] `reporting/plans/success_framework_v1.md`,
-  `reporting/plans/eval_strategy/v1.md`, and
-  `reporting/plans/risks_and_open_questions.md` are still clearly marked
+- [ ] `hai/reporting/plans/success_framework_v1.md`,
+  `hai/reporting/plans/eval_strategy/v1.md`, and
+  `hai/reporting/plans/risks_and_open_questions.md` are still clearly marked
   as HAI pre-reframe/support-lane docs, not current project-wide
   strategy.
 
-`verification/tests/test_doc_freshness_assertions.py` (added v0.1.12)
+`hai/verification/tests/test_doc_freshness_assertions.py` (added v0.1.12)
 catches version-tag drift in the most common offenders mechanically.
 The checklist above covers the human-judgement freshness items the
 test cannot mechanise.
@@ -465,10 +462,10 @@ The canonical sites that must reflect the partial scope:
 - `RELEASE_PROOF.md` §5 out-of-scope items
 - `REPORT.md` §3 highlights + §4 deferrals + §6 lessons
 - `CARRY_OVER.md` §1/§2/§3 disposition rows
-- `ROADMAP.md` "Now" / "Next" rows
-- `reporting/plans/tactical_plan_v0_1_x.md` §3.1 / §3.2 / §4
+- `project/ROADMAP.md` "Now" / "Next" rows
+- `hai/reporting/plans/tactical_plan_v0_1_x.md` §3.1 / §3.2 / §4
 - `CHANGELOG.md` bullet
-- Any `docs/hai/<workstream>.md` design doc
+- Any `hai/docs/<workstream>.md` design doc
 - CLI help text (if a flag/command was scoped down)
 
 Missing one is the canonical IR-round-2-finds-it bug. Origin:
@@ -507,8 +504,8 @@ always finds something round 1 introduced.
 Future cycles should not author Codex audit prompts from scratch.
 Templates live at:
 
-- `reporting/plans/_templates/codex_plan_audit_prompt.template.md`
-- `reporting/plans/_templates/codex_implementation_review_prompt.template.md`
+- `hai/reporting/plans/_templates/codex_plan_audit_prompt.template.md`
+- `hai/reporting/plans/_templates/codex_implementation_review_prompt.template.md`
 
 Copy the relevant template into the cycle dir and customise the
 "Why this round" + step-1 reading list + step-2 audit questions
@@ -518,26 +515,26 @@ step 4 / step 5 / step 6 / step 7 stay stable across cycles.
 ## Test Commands
 
 ```bash
-uv run pytest verification/tests -q
-uv run pytest verification/tests/test_<area>.py -q
+uv run pytest hai/verification/tests -q
+uv run pytest hai/verification/tests/test_<area>.py -q
 uv run python -m build --wheel --sdist     # if packaging changed
 uv run hai capabilities --json             # if CLI surface changed
 uv run hai doctor                          # if migrations/state changed
 ```
 
-CI runs `verification/tests/`. The suite includes docs and skill/CLI drift checks.
+CI runs `hai/verification/tests/`. The suite includes docs and skill/CLI drift checks.
 
 ## Architectural Seams
 
 | Concern | Lives in |
 |---|---|
-| New domain | `src/health_agent_infra/domains/<d>/` plus a sibling skill |
-| New pull source | `src/health_agent_infra/core/pull/`; see `docs/hai/how_to_add_a_pull_adapter.md` |
-| Cross-domain logic | `src/health_agent_infra/core/synthesis.py` and `synthesis_policy.py` |
-| New CLI command | `src/health_agent_infra/cli.py`; annotate capabilities metadata |
+| New domain | `hai/src/health_agent_infra/domains/<d>/` plus a sibling skill |
+| New pull source | `hai/src/health_agent_infra/core/pull/`; see `hai/docs/how_to_add_a_pull_adapter.md` |
+| Cross-domain logic | `hai/src/health_agent_infra/core/synthesis.py` and `synthesis_policy.py` |
+| New CLI command | `hai/src/health_agent_infra/cli.py`; annotate capabilities metadata |
 | New audit field | Add to the write path and to `hai explain` rendering |
-| New skill | `src/health_agent_infra/skills/<name>/SKILL.md` with valid frontmatter |
-| New persona archetype | `verification/dogfood/personas/p<N>_<slug>.py` + register in `personas/__init__.py`'s `ALL_PERSONAS` |
+| New skill | `hai/src/health_agent_infra/skills/<name>/SKILL.md` with valid frontmatter |
+| New persona archetype | `hai/verification/dogfood/personas/p<N>_<slug>.py` + register in `personas/__init__.py`'s `ALL_PERSONAS` |
 | New threshold consumer | Always use `core.config.coerce_int / coerce_float / coerce_bool` (D12) |
 
 ## Do Not Do
@@ -559,8 +556,8 @@ CI runs `verification/tests/`. The suite includes docs and skill/CLI drift check
   v0.1.15 → v0.1.17 destination redestinated 2026-05-02 evening per
   the v0.1.15 scope-restructure self-audit to keep the foreign-user-
   ready package cycle free of cli.py merge friction with W-A/W-C/W-D
-  CLI extensions — see `reporting/plans/v0_1_15/PLAN.md` §1.4 and
-  `reporting/plans/v0_1_17/README.md`; v0.1.17 promoted to next-active
+  CLI extensions — see `hai/reporting/plans/v0_1_15/PLAN.md` §1.4 and
+  `hai/reporting/plans/v0_1_17/README.md`; v0.1.17 promoted to next-active
   cycle 2026-05-04 after v0.1.16 cancelled, foreign-user empirical
   work renumbered to v0.1.19 with new v0.1.18 onboarding cycle before
   it — destination unchanged at v0.1.17. **W-29 cli.py-split clause
@@ -591,24 +588,24 @@ CI runs `verification/tests/`. The suite includes docs and skill/CLI drift check
   an explicit user-commit step. The v0.7 governed-adaptation
   surface requires user approval per recommendation; any drift
   toward "the agent retunes thresholds based on outcomes" is a
-  hidden learning loop, prohibited by ROADMAP.md "Explicitly Out
+  hidden learning loop, prohibited by project/ROADMAP.md "Explicitly Out
   Of Scope" + W57 governance invariant. (Origin: post-v0.1.13
   strategic research §18 + CP-DO-NOT-DO-ADDITIONS.)
 
 ## When In Doubt
 
-Read `PROJECT_FRAME.md`, `PROJECT_DECISIONS.md`,
-`PROJECT_OPERATING_MODEL.md`,
+Read `project/FRAME.md`, `project/DECISIONS.md`,
+`project/OPERATING_MODEL.md`,
 `research/runtime_contracts_paper/PAPER_FRAME.md`,
 `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`,
-`HYPOTHESES.md`, `README.md`, `REPO_MAP.md`, `ROADMAP.md`,
-`docs/hai/architecture.md`, and `docs/hai/non_goals.md`. If
+`project/HYPOTHESES.md`, `README.md`, `project/REPO_MAP.md`, `project/ROADMAP.md`,
+`hai/docs/architecture.md`, and `hai/docs/non_goals.md`. If
 the question is about HAI operation, also read
-`docs/hai/hai_reference_runtime.md`. If the question is about HAI
-release history, then read `reporting/plans/README.md` and the relevant
+`hai/docs/hai_reference_runtime.md`. If the question is about HAI
+release history, then read `hai/reporting/plans/README.md` and the relevant
 cycle plan. If still unclear, ask Dom rather than guessing.
 
-The planning tree under `reporting/plans/` has a structured shape as of
+The planning tree under `hai/reporting/plans/` has a structured shape as of
 2026-04-29:
 
 - `post_v0_1_18/strategic_plan_v2.md` — HAI reference-runtime strategy
@@ -624,5 +621,5 @@ The planning tree under `reporting/plans/` has a structured shape as of
 - `future_strategy_2026-04-29/` — Claude/Codex deep strategy review +
   reconciliation. Drives the v0.1.12+ refresh.
 
-The `reporting/plans/README.md` index disambiguates which doc to read
+The `hai/reporting/plans/README.md` index disambiguates which doc to read
 when. Always check there before authoring a new plan doc.

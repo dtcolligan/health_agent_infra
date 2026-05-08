@@ -3,9 +3,9 @@
 Research-facing artifacts live here. These are separate from the HAI
 runtime package and from historical release-planning records.
 
-This is already the target owner lane for the paper. HAI implementation,
-HAI verification, and HAI release proof should be owned by `hai/` in the
-target repo shape; GovernedAgentBench should be owned by `benchmark/`.
+This is the owner lane for the paper. HAI implementation, HAI
+verification, and HAI release proof are owned by `hai/`; GovernedAgentBench
+is owned by `benchmark/`.
 
 | Path | Purpose |
 |---|---|
@@ -21,7 +21,7 @@ target repo shape; GovernedAgentBench should be owned by `benchmark/`.
 | `runtime_contracts_paper/IMPLEMENTATION_PLAN.md` | Coarse phase plan retained for timing context; `PROJECT_EXECUTION_PLAN.md` is the operational master plan. |
 | `runtime_contracts_paper/DOC_ALIGNMENT_AUDIT.md` | Audit of documentation surfaces against the new frame. |
 
-The repo-wide memory files are [`../PROJECT_FRAME.md`](../PROJECT_FRAME.md),
-[`../PROJECT_DECISIONS.md`](../PROJECT_DECISIONS.md), and
-[`../PROJECT_OPERATING_MODEL.md`](../PROJECT_OPERATING_MODEL.md).
-Historical cycle plans and release proofs remain under `reporting/plans/`.
+The repo-wide memory files are [`../project/FRAME.md`](../project/FRAME.md),
+[`../project/DECISIONS.md`](../project/DECISIONS.md), and
+[`../project/OPERATING_MODEL.md`](../project/OPERATING_MODEL.md).
+Historical cycle plans and release proofs remain under `hai/reporting/plans/`.

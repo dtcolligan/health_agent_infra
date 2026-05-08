@@ -8,7 +8,7 @@ Claude session efficient.
 ## Claude Code Specifics
 
 - This is the maintainer's daily-driver loop. Skills under
-  `src/health_agent_infra/skills/` are also user-installed at
+  `hai/src/health_agent_infra/skills/` are also user-installed at
   `~/.claude/skills/` via `hai setup-skills`. Edit the packaged copy,
   not the installed copy.
 - Path-scoped rules live in `.claude/rules/` when present.
@@ -20,62 +20,62 @@ Claude session efficient.
 
 When opening a fresh session, read in this order:
 
-1. **`PROJECT_FRAME.md`** — current research framing and priority order.
-2. **`PROJECT_DECISIONS.md`** — post-reframe decision log and locked
+1. **`project/FRAME.md`** — current research framing and priority order.
+2. **`project/DECISIONS.md`** — post-reframe decision log and locked
    project choices.
-3. **`PROJECT_OPERATING_MODEL.md`** — internal operating model and
+3. **`project/OPERATING_MODEL.md`** — internal operating model and
    documentation-alignment gate.
 4. **`AGENTS.md`** — the operating contract (governance invariants, settled
    decisions D1-D18, architectural seams, "Do Not Do").
-5. **`HYPOTHESES.md`** — current research hypotheses.
+5. **`project/HYPOTHESES.md`** — current research hypotheses.
 6. **`research/runtime_contracts_paper/PAPER_FRAME.md`** — locked paper /
    benchmark framing.
 7. **`research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`** —
    model/baseline/ablation evaluation strategy.
-8. **`benchmarks/governed_agent_bench/README.md`** — benchmark scope.
+8. **`benchmark/governed_agent_bench/README.md`** — benchmark scope.
 9. **`README.md`** — research-facing repo overview.
-10. **`docs/hai/hai_reference_runtime.md`** if you need HAI install,
+10. **`hai/docs/hai_reference_runtime.md`** if you need HAI install,
    operator workflow, domains, or CLI surface.
-11. **`ARCHITECTURE.md`** + **`REPO_MAP.md`** if you need to find something.
-12. **`reporting/plans/README.md`** only when you need HAI release history or
+11. **`hai/docs/runtime_contract_overview.md`** + **`project/REPO_MAP.md`** if you need to find something.
+12. **`hai/reporting/plans/README.md`** only when you need HAI release history or
    a specific HAI runtime cycle plan.
 
 For a "what just shipped" question, read
-`reporting/plans/v0_1_X/RELEASE_PROOF.md` for the most recent X.
+`hai/reporting/plans/v0_1_X/RELEASE_PROOF.md` for the most recent X.
 
 ## Common commands
 
 ```bash
 # Test suite (full)
-uv run pytest verification/tests -q
+uv run pytest hai/verification/tests -q
 
 # Targeted test file
-uv run pytest verification/tests/test_<area>.py -q
+uv run pytest hai/verification/tests/test_<area>.py -q
 
 # Type-check (uses uvx because the project venv lacks mypy)
-uvx mypy src/health_agent_infra
+uvx mypy hai/src/health_agent_infra
 
 # Security scan
-uvx bandit -ll -r src/health_agent_infra
+uvx bandit -ll -r hai/src/health_agent_infra
 
 # Build wheel + sdist (uses uvx because the project venv lacks build)
 uvx --from build python -m build --wheel --sdist
 
 # CLI surface checks
 uv run hai capabilities --json
-uv run hai capabilities --markdown > docs/hai/agent_cli_contract.md
+uv run hai capabilities --markdown > hai/docs/agent_cli_contract.md
 uv run hai doctor
 
 # Persona matrix (13 personas, ~5 min; P13 is matrix-only — added
 # v0.1.14 W-EXPLAIN-UX as a low-domain-knowledge maintainer-substitute
 # reader for `hai explain` confusion review)
-uv run python -m verification.dogfood.runner /tmp/persona_run
+uv run python hai/verification/dogfood/runner.py /tmp/persona_run
 
 # Warning gates (broader gate restored at v0.1.13 W-N-broader; clean
 # through v0.1.14.1 ship-time)
-uv run pytest verification/tests \
+uv run pytest hai/verification/tests \
     -W error::pytest.PytestUnraisableExceptionWarning -q   # narrow (v0.1.11+)
-uv run pytest verification/tests -W error::Warning -q      # broader (v0.1.13+)
+uv run pytest hai/verification/tests -W error::Warning -q      # broader (v0.1.13+)
 ```
 
 The project venv intentionally does not bundle `mypy`, `bandit`, or
@@ -85,7 +85,7 @@ The project venv intentionally does not bundle `mypy`, `bandit`, or
 ## Cycle pattern signposts
 
 A release cycle produces the following files under
-`reporting/plans/v0_1_X/`:
+`hai/reporting/plans/v0_1_X/`:
 
 | Phase | Files |
 |---|---|

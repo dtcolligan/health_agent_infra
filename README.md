@@ -11,7 +11,7 @@ runtime in this repo, is the first reference implementation used to make
 the claim testable.
 
 [![PyPI](https://img.shields.io/pypi/v/health-agent-infra)](https://pypi.org/project/health-agent-infra/)
-[![Tests](https://img.shields.io/badge/tests-2943_passing-green)](verification/tests/)
+[![Tests](https://img.shields.io/badge/tests-2943_passing-green)](hai/verification/tests/)
 [![Python](https://img.shields.io/badge/python-3.11+-blue)](pyproject.toml)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
@@ -25,9 +25,9 @@ the claim testable.
 | **Paper** | Research-engineering systems/evals paper around local governed agents and model-scale reduction. | Frame locked; empirical design and benchmark buildout in progress. |
 
 The canonical internal project-memory file is
-[`PROJECT_FRAME.md`](PROJECT_FRAME.md). The post-reframe decision log is
-[`PROJECT_DECISIONS.md`](PROJECT_DECISIONS.md). The internal operating
-model is [`PROJECT_OPERATING_MODEL.md`](PROJECT_OPERATING_MODEL.md). The
+[`project/FRAME.md`](project/FRAME.md). The post-reframe decision log is
+[`project/DECISIONS.md`](project/DECISIONS.md). The internal operating
+model is [`project/OPERATING_MODEL.md`](project/OPERATING_MODEL.md). The
 locked paper frame lives at
 [`research/runtime_contracts_paper/PAPER_FRAME.md`](research/runtime_contracts_paper/PAPER_FRAME.md).
 
@@ -78,7 +78,7 @@ The intended benchmark compares systems under the same tasks and scorer:
   proposal gate, stale manifest, and no audit references.
 
 Start at
-[`benchmarks/governed_agent_bench/README.md`](benchmarks/governed_agent_bench/README.md).
+[`benchmark/governed_agent_bench/README.md`](benchmark/governed_agent_bench/README.md).
 
 ## HAI Reference Runtime
 
@@ -100,8 +100,8 @@ hai daily
 hai today
 ```
 
-The full HAI operator and product documentation is in
-[`docs/hai/hai_reference_runtime.md`](docs/hai/hai_reference_runtime.md).
+The full HAI operator and reference-runtime documentation is in
+[`hai/docs/hai_reference_runtime.md`](hai/docs/hai_reference_runtime.md).
 
 ## Health Boundary
 
@@ -123,7 +123,7 @@ The intended repo architecture is owner-based:
 | Owner lane | Purpose |
 |---|---|
 | `project/` | Project memory: frame, decisions, operating model, roadmap, hypotheses, repo map, and project-level alignment tests. |
-| `hai/` | HAI reference-runtime lane: implementation, HAI docs, HAI verification/evals, and HAI release proof/provenance. |
+| `hai/` | HAI reference-runtime lane: implementation, HAI docs, HAI verification/evals, HAI assets, and HAI release proof/provenance. |
 | `benchmark/` | GovernedAgentBench lane: benchmark specs, schemas, tasks, scorer, baselines, reports, and benchmark verification. |
 | `research/` | Paper lane: paper frame, draft, prior art, claim ladder, experiment design, and release planning. |
 
@@ -133,20 +133,16 @@ Root is for tooling, entrypoints, and repository metadata only:
 metadata. `AGENTS.md`, `CLAUDE.md`, `pyproject.toml`, and `uv.lock` stay
 at root because external tools discover them there.
 
-The current physical tree is transitional. The map below shows the
-current paths and their target owners.
+The physical tree now follows that owner model. The map below shows the
+current top-level lanes and tool-discovered root files.
 
 | Path | Purpose |
 |---|---|
-| [`PROJECT_FRAME.md`](PROJECT_FRAME.md), [`PROJECT_DECISIONS.md`](PROJECT_DECISIONS.md), [`PROJECT_OPERATING_MODEL.md`](PROJECT_OPERATING_MODEL.md), [`HYPOTHESES.md`](HYPOTHESES.md), [`ROADMAP.md`](ROADMAP.md), [`REPO_MAP.md`](REPO_MAP.md) | Transitional project-control docs; target owner `project/`. |
-| [`research/runtime_contracts_paper/`](research/runtime_contracts_paper/) | Paper frame, draft, implementation plan, and documentation audit; target owner `research/`. |
-| [`benchmarks/governed_agent_bench/`](benchmarks/governed_agent_bench/) | GovernedAgentBench schemas, tasks, manifests, scorer, baselines, and reports; target owner `benchmark/`. |
-| [`src/health_agent_infra/`](src/health_agent_infra/) | HAI reference-runtime source package; target owner `hai/`. |
-| [`docs/hai/`](docs/hai/) | HAI runtime/operator documentation; target owner `hai/`. |
-| [`ARCHITECTURE.md`](ARCHITECTURE.md) | HAI one-page architecture summary; target owner `hai/docs/`. |
-| [`reporting/`](reporting/) | HAI release history, audit trail, pre-reframe strategy docs, and proof artifacts; target owner `hai/`. |
-| [`AUDIT.md`](AUDIT.md) | HAI release-audit index; target owner `hai/reporting/`. |
-| [`verification/`](verification/) | Transitional verification root. HAI tests/evals belong under `hai/verification/`; benchmark tests belong under `benchmark/verification/`; project alignment tests belong under `project/tests/`. |
+| [`project/`](project/) | Project frame, decisions, operating model, roadmap, hypotheses, repo map, and project-level alignment tests. |
+| [`hai/`](hai/) | HAI source package, runtime docs, HAI verification/evals, HAI assets, release proof, and historical HAI provenance. |
+| [`benchmark/`](benchmark/) | GovernedAgentBench specs, schemas, tasks, manifests, scorer, baselines, reports, and benchmark verification. |
+| [`research/`](research/) | Paper frame, draft, implementation plan, prior art, claim ladder, and experiment planning. |
+| [`AGENTS.md`](AGENTS.md), [`CLAUDE.md`](CLAUDE.md), [`pyproject.toml`](pyproject.toml), [`uv.lock`](uv.lock) | Root tool entrypoints and package metadata that external tools expect at the repository root. |
 
 ## Current Priority
 
@@ -164,17 +160,17 @@ Until the workshop / preprint push is complete, default priority is:
 5. HAI reference-runtime maintenance needed by the paper.
 6. HAI v1 polish only when it directly supports the paper or benchmark.
 
-See [`ROADMAP.md`](ROADMAP.md) for the research-first roadmap.
+See [`project/ROADMAP.md`](project/ROADMAP.md) for the research-first roadmap.
 
 ## Read Next
 
 | Reader | Best next docs |
 |---|---|
-| Research / benchmark reviewer | [`PROJECT_FRAME.md`](PROJECT_FRAME.md), [`PROJECT_DECISIONS.md`](PROJECT_DECISIONS.md), [`PROJECT_OPERATING_MODEL.md`](PROJECT_OPERATING_MODEL.md), [`HYPOTHESES.md`](HYPOTHESES.md), [`research/runtime_contracts_paper/PAPER_FRAME.md`](research/runtime_contracts_paper/PAPER_FRAME.md), [`research/runtime_contracts_paper/PROJECT_EXECUTION_PLAN.md`](research/runtime_contracts_paper/PROJECT_EXECUTION_PLAN.md), [`research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`](research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md), [`benchmarks/governed_agent_bench/README.md`](benchmarks/governed_agent_bench/README.md) |
-| HAI user or operator | [`docs/hai/hai_reference_runtime.md`](docs/hai/hai_reference_runtime.md), [`docs/hai/current_system_state.md`](docs/hai/current_system_state.md), [`docs/hai/privacy.md`](docs/hai/privacy.md), [`docs/hai/non_goals.md`](docs/hai/non_goals.md) |
-| Host-agent integrator | [`docs/hai/host_agent_contract.md`](docs/hai/host_agent_contract.md), [`docs/hai/agent_integration.md`](docs/hai/agent_integration.md), [`docs/hai/agent_cli_contract.md`](docs/hai/agent_cli_contract.md) |
-| Runtime contributor | [`CONTRIBUTING.md`](CONTRIBUTING.md), [`docs/hai/architecture.md`](docs/hai/architecture.md), [`docs/hai/domains/README.md`](docs/hai/domains/README.md), [`docs/hai/x_rules.md`](docs/hai/x_rules.md) |
-| Maintainer or release auditor | [`REPO_MAP.md`](REPO_MAP.md), [`AUDIT.md`](AUDIT.md), [`ROADMAP.md`](ROADMAP.md), [`CHANGELOG.md`](CHANGELOG.md), [`reporting/plans/README.md`](reporting/plans/README.md) |
+| Research / benchmark reviewer | [`project/FRAME.md`](project/FRAME.md), [`project/DECISIONS.md`](project/DECISIONS.md), [`project/OPERATING_MODEL.md`](project/OPERATING_MODEL.md), [`project/HYPOTHESES.md`](project/HYPOTHESES.md), [`research/runtime_contracts_paper/PAPER_FRAME.md`](research/runtime_contracts_paper/PAPER_FRAME.md), [`research/runtime_contracts_paper/PROJECT_EXECUTION_PLAN.md`](research/runtime_contracts_paper/PROJECT_EXECUTION_PLAN.md), [`research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`](research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md), [`benchmark/governed_agent_bench/README.md`](benchmark/governed_agent_bench/README.md) |
+| HAI user or operator | [`hai/docs/hai_reference_runtime.md`](hai/docs/hai_reference_runtime.md), [`hai/docs/current_system_state.md`](hai/docs/current_system_state.md), [`hai/docs/privacy.md`](hai/docs/privacy.md), [`hai/docs/non_goals.md`](hai/docs/non_goals.md) |
+| Host-agent integrator | [`hai/docs/host_agent_contract.md`](hai/docs/host_agent_contract.md), [`hai/docs/agent_integration.md`](hai/docs/agent_integration.md), [`hai/docs/agent_cli_contract.md`](hai/docs/agent_cli_contract.md) |
+| Runtime contributor | [`CONTRIBUTING.md`](CONTRIBUTING.md), [`hai/docs/architecture.md`](hai/docs/architecture.md), [`hai/docs/domains/README.md`](hai/docs/domains/README.md), [`hai/docs/x_rules.md`](hai/docs/x_rules.md) |
+| Maintainer or release auditor | [`project/REPO_MAP.md`](project/REPO_MAP.md), [`hai/reporting/AUDIT.md`](hai/reporting/AUDIT.md), [`project/ROADMAP.md`](project/ROADMAP.md), [`CHANGELOG.md`](CHANGELOG.md), [`hai/reporting/plans/README.md`](hai/reporting/plans/README.md) |
 
 ## License
 

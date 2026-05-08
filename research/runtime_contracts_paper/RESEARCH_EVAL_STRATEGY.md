@@ -3,7 +3,7 @@
 **Status:** Current project-wide evaluation strategy, 2026-05-07.
 
 This document is distinct from
-`reporting/plans/eval_strategy/v1.md`, which is the pre-reframe HAI
+`hai/reporting/plans/eval_strategy/v1.md`, which is the pre-reframe HAI
 runtime correctness strategy. This file defines the evaluation strategy
 for the runtime-contract paper and GovernedAgentBench.
 

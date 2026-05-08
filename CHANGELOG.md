@@ -7,7 +7,7 @@ the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 with the v0.x caveat that breaking changes can land in minor releases
 until v1.0.
 
-Per-release detail lives under `reporting/plans/<version>/`.
+Per-release detail lives under `hai/reporting/plans/<version>/`.
 
 ---
 
@@ -27,7 +27,7 @@ Per-release detail lives under `reporting/plans/<version>/`.
   (PLAN §2.A option C): every recommendation now carries provenance
   to the row it was derived from, regardless of which R-rule
   fired. Per-domain choices documented at
-  `reporting/docs/per_domain_locator_emission.md`. Recovery's
+  `hai/reporting/docs/per_domain_locator_emission.md`. Recovery's
   v0.1.14 W-PROV-1 emission path is unchanged.
 
 - **Per-recommendation evidence cards now persist alongside the
@@ -249,7 +249,7 @@ signature matching AGENTS.md empirical norm).
   incomplete; opt-outs documented; `--guided` retained as
   explicit-force spelling). `agent_integration.md:27` install-lead
   summary updated to match. Historical launch material under
-  `reporting/docs/launch/` (v0.1.0-era drafts) intentionally left
+  `hai/reporting/docs/launch/` (v0.1.0-era drafts) intentionally left
   as-is per provenance discipline.
 
 ### Internal
@@ -296,7 +296,7 @@ empirical norm).
 
 - **W-29 cli.py mechanical split.** The 9927-LOC `cli.py` decomposes
   into 1 main + 1 shared module + 11 handler-group modules under
-  `src/health_agent_infra/cli/handlers/`. Every group <2500 LOC;
+  `hai/src/health_agent_infra/cli/handlers/`. Every group <2500 LOC;
   manifest byte-stable post-split. New `test_cli_handler_dispatch_smoke.py`
   + `test_cli_handler_group_loc_ceiling.py` regression contracts.
 - **W-30 capabilities-manifest schema regression test** at
@@ -352,10 +352,10 @@ empirical norm).
 
 ### Removed
 
-- `verification/tests/test_readme_structure.py` (D3 v0.1.4 — six structural
+- `hai/verification/tests/test_readme_structure.py` (D3 v0.1.4 — six structural
   contracts pinning `## Reading your plan` / `## Recording your day`
   sections + the architecture "prefer `hai today` over raw SQL" bullet).
-- `verification/tests/test_readme_quickstart_smoke.py` (W-AF v0.1.13 — the
+- `hai/verification/tests/test_readme_quickstart_smoke.py` (W-AF v0.1.13 — the
   CI-runnable ` ```bash quickstart ``` ` fenced-block smoke test that
   executed each command end-to-end against a stubbed intervals.icu fixture).
 
@@ -411,7 +411,7 @@ empirical norm).
 > validation; W-C state-model edit + W-GYM-SETID schema-data migration
 > + F-PV14-01 audit-chain edit). Empirical-validation session against
 > the named foreign-user candidate feeds v0.1.16 post-publish per the
-> publish-first pivot (see `reporting/plans/v0_1_15/RELEASE_PROOF.md` §5).
+> publish-first pivot (see `hai/reporting/plans/v0_1_15/RELEASE_PROOF.md` §5).
 
 ### Added
 - **`hai intake gaps` `present` block + `is_partial_day` +
@@ -517,7 +517,7 @@ empirical norm).
   `--source garmin_live`. Origin: 2026-05-02 maintainer session in
   which a Claude Code agent invoked `garmin_live` as part of a routine
   data-freshness sweep, hitting the documented HTTP 429 / Cloudflare
-  403 failure mode. See `reporting/plans/v0_1_14_1/`.
+  403 failure mode. See `hai/reporting/plans/v0_1_14_1/`.
 
 ### Added
 - `core.capabilities.annotate_choice_metadata(action, metadata)` —
@@ -527,20 +527,20 @@ empirical norm).
 - `core.capabilities.RELIABILITY_VALUES` — `{"reliable", "unreliable"}`.
   Absence of an entry on a choice is itself the signal (consumers
   default to "reliable").
-- `verification/tests/test_capabilities_choice_metadata.py` — 9 tests
+- `hai/verification/tests/test_capabilities_choice_metadata.py` — 9 tests
   covering validation + walker round-trip + production-parser wiring.
-- `verification/tests/test_pull_garmin_live_warning.py` — 6 tests
+- `hai/verification/tests/test_pull_garmin_live_warning.py` — 6 tests
   covering stderr warning fires for `garmin_live` (both via
   `--source` and legacy `--live`), does not fire for
   `intervals_icu` / `csv`, and the warning text references the
   capabilities-manifest signal.
 
 ### Changed
-- `verification/tests/test_capabilities_flags_contract.py`:
+- `hai/verification/tests/test_capabilities_flags_contract.py`:
   `test_flag_entry_shape_is_stable` updated to recognise
   `choice_metadata` as an optional schema key.
-- `reporting/docs/agent_cli_contract.md` — regenerated.
-- `verification/tests/snapshots/cli_capabilities_v0_1_13.json` —
+- `hai/reporting/docs/agent_cli_contract.md` — regenerated.
+- `hai/verification/tests/snapshots/cli_capabilities_v0_1_13.json` —
   regenerated with the new `choice_metadata` field on the `--source`
   flag of `hai pull` and `hai daily`.
 
@@ -570,30 +570,30 @@ empirical norm).
 ### Added
 - W-PROV-1 source-row locator value type + recovery R6 demo.
   Migration 023, `core/provenance/locator.py`,
-  `reporting/docs/archive/cycle_artifacts/source_row_provenance.md`
+  `hai/reporting/docs/archive/cycle_artifacts/source_row_provenance.md`
   (now archived as cycle provenance).
 - W-BACKUP `hai backup` / `hai restore` / `hai export` (3 new
   top-level CLI subcommands), `core/backup/`,
-  `reporting/docs/backup_and_recovery.md`.
+  `hai/reporting/docs/backup_and_recovery.md`.
 - W-AJ LLM-judge harness scaffold (`core/eval/judge_harness.py`).
 - W-AL calibration-eval schema (`core/eval/calibration_schema.py`),
-  `reporting/docs/archive/cycle_artifacts/calibration_eval_design.md`
+  `hai/reporting/docs/archive/cycle_artifacts/calibration_eval_design.md`
   (now archived as cycle provenance).
 - W-AI 30 judge-adversarial fixtures (10 each: prompt_injection /
   source_conflict / bias_probe).
 - W-AN `hai eval run --scenario-set <set>` flag.
 - W-EXPLAIN-UX P13 (low-domain-knowledge) persona,
-  `reporting/docs/archive/cycle_artifacts/explain_ux_review_2026_05.md`
+  `hai/reporting/docs/archive/cycle_artifacts/explain_ux_review_2026_05.md`
   with 8 findings + 6 v0.2.0 W52 prose obligations +
   carries-forward-to-v0.1.15 section.
-- W-DOMAIN-SYNC `verification/tests/test_domain_sync_contract.py`.
+- W-DOMAIN-SYNC `hai/verification/tests/test_domain_sync_contract.py`.
 - W-FRESH-EXT extension for W-id refs across summary surfaces +
   persona-runner pre-flight cleanup hook (F-PHASE0-01 absorption).
 - W-Vb-3 demo fixtures for P2 / P3 / P6 (cumulative 6 of 12 across
   v0.1.13 + v0.1.14; remaining 6 fork-deferred to v0.1.15 W-Vb-4).
 - README opener: "domain-pinned AgentSpec for personal health"
   framing per OQ-J option 2.
-- 5 cycle proposals at `reporting/plans/post_v0_1_13/cycle_proposals/`.
+- 5 cycle proposals at `hai/reporting/plans/post_v0_1_13/cycle_proposals/`.
 
 ### Deferred (with named destinations)
 - W-2U-GATE foreign-machine onboarding empirical proof →
@@ -613,15 +613,15 @@ empirical norm).
   named-change-accepted W-AN + W-BACKUP + W-PROV-1 surfaces.
 
 ### Documentation
-- `reporting/docs/archive/cycle_artifacts/source_row_provenance.md`
+- `hai/reporting/docs/archive/cycle_artifacts/source_row_provenance.md`
   (new in v0.1.14, archived post-v0.1.15).
-- `reporting/docs/backup_and_recovery.md` (new as `recovery.md`,
+- `hai/reporting/docs/backup_and_recovery.md` (new as `recovery.md`,
   renamed post-v0.1.15).
-- `reporting/docs/archive/cycle_artifacts/explain_ux_review_2026_05.md`
+- `hai/reporting/docs/archive/cycle_artifacts/explain_ux_review_2026_05.md`
   (new in v0.1.14, archived post-v0.1.15).
-- `reporting/docs/archive/cycle_artifacts/calibration_eval_design.md`
+- `hai/reporting/docs/archive/cycle_artifacts/calibration_eval_design.md`
   (new in v0.1.14, archived post-v0.1.15).
-- `reporting/docs/agent_cli_contract.md` regenerated (59
+- `hai/reporting/docs/agent_cli_contract.md` regenerated (59
   commands).
 
 ---
@@ -663,7 +663,7 @@ empirical norm).
   mid-flow surfaces `USER_INPUT` exit code with actionable
   next-step prose. Operator demo SLO target ≤5 min wall-clock
   documented in
-  `reporting/docs/archive/cycle_artifacts/onboarding_slo.md` (target,
+  `hai/reporting/docs/archive/cycle_artifacts/onboarding_slo.md` (target,
   not CI gate, per F-PLAN-08; now archived as cycle provenance).
 - **`hai capabilities --human`** (W-AB) — workflow-grouped
   one-page rendering of the CLI surface. Existing `--json` and
@@ -672,7 +672,7 @@ empirical norm).
   classified into 5 outcome classes: `OK`, `CAUSE_1_CLOUDFLARE_UA`,
   `CAUSE_2_CREDS`, `NETWORK`, `OTHER`. Each carries a specific
   actionable next-step. Documented at
-  `reporting/docs/intervals_icu_403_triage.md`. Closes the
+  `hai/reporting/docs/intervals_icu_403_triage.md`. Closes the
   original F-DEMO-01 detection gap (W-CF-UA fixed the symptom in
   v0.1.12.1).
 - **`hai daily --re-propose-all` runtime semantics** (W-FBC-2,
@@ -682,7 +682,7 @@ empirical norm).
   older than `RE_PROPOSE_ALL_FRESHNESS_THRESHOLD` (60s default).
   Token surfaces in `hai today` markdown / plain / JSON +
   `hai explain`. Option A default per
-  `reporting/docs/archive/cycle_artifacts/supersede_domain_coverage.md`;
+  `hai/reporting/docs/archive/cycle_artifacts/supersede_domain_coverage.md`;
   option B
   per-domain fingerprint primitive NOT shipped (runtime is
   domain-agnostic via `_carryover_token_for_domain()`); option C
@@ -725,16 +725,16 @@ empirical norm).
   quickstart` fenced block from README; runs each command in a
   temp dir with stubbed intervals.icu fixture. Catches README
   drift within one CI build of any README change.
-- **`reporting/docs/archive/cycle_artifacts/cli_boundary_table.md`**
+- **`hai/reporting/docs/archive/cycle_artifacts/cli_boundary_table.md`**
   (W-29-prep) —
   derived live from `hai capabilities --json`, names the proposed
   v0.1.14 W-29 mechanical-split handler-group assignment per
   subcommand. Three legitimate post-baseline snapshot
   regenerations recorded (45319da freeze → 03fab4f W-AA `--guided`
   → bd11be3 W-FBC-2 `--re-propose-all` help text).
-- **`reporting/docs/archive/cycle_artifacts/onboarding_slo.md`** —
+- **`hai/reporting/docs/archive/cycle_artifacts/onboarding_slo.md`** —
   operator demo SLO reference (manual demo protocol per F-PLAN-08).
-- **`reporting/docs/intervals_icu_403_triage.md`** — in-tree
+- **`hai/reporting/docs/intervals_icu_403_triage.md`** — in-tree
   triage doc for `hai doctor --deep`.
 
 ### Changed
@@ -855,18 +855,18 @@ empirical norm).
 - **`STRENGTH_STATUS_VALUES`** constant + capabilities-manifest
   `enum_surface` annotation on `hai today` (W-FCC).
 - **Packaged demo-fixture path + loader** (W-Vb partial closure,
-  reconciliation C3) at `src/health_agent_infra/demo/fixtures/`
+  reconciliation C3) at `hai/src/health_agent_infra/demo/fixtures/`
   + `core/demo/fixtures.py`. Wheel-install-reachable via
   `importlib.resources`. End-to-end persona-replay deferred to
   v0.1.13.
 - **Six cycle proposals (CP1-CP6)** at
-  `reporting/plans/v0_1_12/cycle_proposals/CP{1..6}.md`.
+  `hai/reporting/plans/v0_1_12/cycle_proposals/CP{1..6}.md`.
   CP1+CP2 paired AGENTS.md edit (lift cli.py-split + manifest-
   freeze deferrals). CP3 four-tier cycle-weight classification
   (D15). CP4 staged MCP-exposure plan (extends Wave 3). CP5
   v0.2.0 single-substantial-with-shadow shape. CP6 §6.3 framing
   edit (authored v0.1.12, applied v0.1.13).
-- **`reporting/docs/archive/cycle_artifacts/supersede_domain_coverage.md`**
+- **`hai/reporting/docs/archive/cycle_artifacts/supersede_domain_coverage.md`**
   (W-FBC) — policy decision doc.
 
 ### Changed
@@ -887,11 +887,11 @@ empirical norm).
 - **tactical_plan_v0_1_x.md** §3 rebaselined to actual carry-over
   scope; §6 v0.2.0 reshaped per CP5 (W58D + W58J split,
   `HAI_W58_JUDGE_MODE` flag).
-- **ROADMAP.md** rewritten Now/Next per CP4 + CP5.
-- **AUDIT.md** added v0.1.10 + v0.1.11 entries.
+- **project/ROADMAP.md** rewritten Now/Next per CP4 + CP5.
+- **hai/reporting/AUDIT.md** added v0.1.10 + v0.1.11 entries.
 - **success_framework_v1.md** §3.5 anti-gaming note on defer rate
   (reconciliation C9).
-- **`reporting/docs/privacy.md`** updated for `hai auth remove`
+- **`hai/reporting/docs/privacy.md`** updated for `hai auth remove`
   and "forget one day" deferral.
 
 ### Carry-over closure (v0.1.11 named-defers)
@@ -931,7 +931,7 @@ empirical norm).
 > **Cycle pattern note.** First release shipped under the D14
 > pre-cycle Codex plan-audit pattern. Plan-audit settled at round
 > 4 (PLAN_COHERENT) with 18 findings closed before any code
-> changed. See `reporting/plans/v0_1_11/codex_plan_audit_response*.md`.
+> changed. See `hai/reporting/plans/v0_1_11/codex_plan_audit_response*.md`.
 
 ### Added
 
@@ -960,7 +960,7 @@ empirical norm).
   hybrid, P12 vacation-returner.
 - **Property-based tests for the policy DSL** (W-P).
 - **Persona harness drift guards** (W-S, F-CDX-IR-06).
-- **`reporting/docs/archive/cycle_artifacts/demo_flow.md`** (W-Z).
+- **`hai/reporting/docs/archive/cycle_artifacts/demo_flow.md`** (W-Z).
 
 ### Changed
 
@@ -1004,7 +1004,7 @@ empirical norm).
 
 > **Theme.** Persona harness, running-activity rollup wire, and
 > threshold-consumer type hardening. v0.1.10 introduces the
-> `verification/dogfood/` persona harness as permanent regression
+> `hai/verification/dogfood/` persona harness as permanent regression
 > infrastructure, wires the existing-but-unused `running_activity`
 > daily aggregator into the clean flow (closes a load-bearing gap
 > that affected every intervals.icu user), and hardens threshold
@@ -1024,11 +1024,11 @@ empirical norm).
 > sweep missed live threshold consumers; the test suite was not
 > hermetic under configured live credentials; and the audit-chain
 > deferral did not match the release framing. Round 2 closes all
-> four. Detail in `reporting/plans/v0_1_10/`.
+> four. Detail in `hai/reporting/plans/v0_1_10/`.
 
 ### Added
 
-- **Persona dogfood harness** — `verification/dogfood/` with 8 synthetic
+- **Persona dogfood harness** — `hai/verification/dogfood/` with 8 synthetic
   user personas spanning age, sex, sport mix, data source, and history
   length. Drives each persona through `pull → clean → daily → today →
   explain` against an isolated state DB. Permanent regression
@@ -1037,7 +1037,7 @@ empirical norm).
 - **`coerce_int` / `coerce_float` / `coerce_bool` helpers** in
   `core/config.py` with new `ConfigCoerceError`. Strict numeric
   coercion that rejects bools (closes v0.1.9 backlog B1 type-hardening).
-- **Pre-PLAN audit pattern** — `reporting/plans/v0_1_10/PRE_AUDIT_PLAN.md`
+- **Pre-PLAN audit pattern** — `hai/reporting/plans/v0_1_10/PRE_AUDIT_PLAN.md`
   introduces a structured bug-hunt phase before formal PLAN.md, ensuring
   release scope reflects systematic audit output rather than opportunistic
   findings.
@@ -1108,7 +1108,7 @@ empirical norm).
   23 auto-fixed (unused imports + unused locals). One required manual
   intervention: `applied_action_mutation` in `core/synthesis_policy.py`
   was confirmed dead code via grep, deleted with explanatory comment.
-- **Test-suite hermeticity (F-CDX-IR-03)** — `verification/tests/`
+- **Test-suite hermeticity (F-CDX-IR-03)** — `hai/verification/tests/`
   now sets an autouse pytest fixture in `conftest.py` that disables
   `_intervals_icu_configured()` by default. Eight tests in
   `test_intake_readiness`, `test_intake_gaps`, and
@@ -1122,14 +1122,14 @@ empirical norm).
 ### Documented
 
 - **27 audit findings** consolidated in
-  `reporting/plans/v0_1_10/audit_findings.md` across Phase A (internal
+  `hai/reporting/plans/v0_1_10/audit_findings.md` across Phase A (internal
   sweep), Phase B (audit-chain integrity probe), and Phase C (persona
   dogfood matrix). 9 fixed in v0.1.10, 18 deferred to v0.1.11.
-- **`verification/dogfood/README.md`** — harness usage + isolation
+- **`hai/verification/dogfood/README.md`** — harness usage + isolation
   discipline + persona authorship guide.
-- **`reporting/plans/v0_1_10/PLAN.md`** — workstream catalogue,
+- **`hai/reporting/plans/v0_1_10/PLAN.md`** — workstream catalogue,
   acceptance criteria, sequencing.
-- **`reporting/plans/v0_1_10/codex_audit_prompt.md`** — external audit
+- **`hai/reporting/plans/v0_1_10/codex_audit_prompt.md`** — external audit
   prompt for the post-fix Codex review. Bug-hunt question stays
   scoped to bugs the internal sweep + persona matrix did not catch.
 
@@ -1242,7 +1242,7 @@ machine has live intervals.icu credentials configured.
 - Promoted the README daily-loop explanation above install and tightened
   it around v0.1.9 fail-closed clean and direct-synthesize completeness
   semantics.
-- Regenerated `reporting/docs/agent_cli_contract.md` for `hai 0.1.9`.
+- Regenerated `hai/reporting/docs/agent_cli_contract.md` for `hai 0.1.9`.
 
 ### Deferred
 
@@ -1263,19 +1263,19 @@ machine has live intervals.icu credentials configured.
 
 ### Added
 
-- **Test fixture-factory module** (`verification/tests/_fixtures/`) — pure
+- **Test fixture-factory module** (`hai/verification/tests/_fixtures/`) — pure
   dict builders `make_intent_row`, `make_target_row`,
   `make_outcome_chain`, `make_data_quality_row` plus a SQLite
   `seed_outcome_chain` helper for the existing
   `recommendation_log → review_event → review_outcome` chain. Lands
-  ahead of v0.1.8 W48–W51 per `reporting/plans/v0_1_8/PLAN.md` § 0
+  ahead of v0.1.8 W48–W51 per `hai/reporting/plans/v0_1_8/PLAN.md` § 0
   fixture-factory precondition so the ~80–120 forthcoming tests share
   one seeding API. Smoke-covered by
-  `verification/tests/test_fixture_factory.py`.
+  `hai/verification/tests/test_fixture_factory.py`.
 
 ### Changed
 
-- **`reporting/docs/non_goals.md`** (W57) — distinguishes
+- **`hai/reporting/docs/non_goals.md`** (W57) — distinguishes
   *autonomous* training/diet plan generation (still forbidden) from
   *user-authored intent and targets* (now allowed via the W49 intent
   ledger and W50 target ledger). Adds an explicit "what is allowed"
@@ -1309,7 +1309,7 @@ machine has live intervals.icu credentials configured.
   only in v0.1.8.
 - **`snapshot.<domain>.review_summary`** field attached to all six
   per-domain blocks by `build_snapshot` (W48). 13 regression tests
-  in `verification/tests/test_review_summary.py` cover every token rule,
+  in `hai/verification/tests/test_review_summary.py` cover every token rule,
   window scoping, per-domain isolation, aggregate roll-up, re-link
   counter, threshold overrides, and snapshot integration.
 - **`hai stats --outcomes [--domain <d>] [--since N] [--json]`**
@@ -1332,7 +1332,7 @@ machine has live intervals.icu credentials configured.
   readiness skills' `allowed-tools` extended with
   `Bash(hai intent list *)` so they can consume the snapshot's
   intent context. 13 new tests in
-  `verification/tests/test_intent_ledger.py`.
+  `hai/verification/tests/test_intent_ledger.py`.
 - **Target ledger MVP** (W50, migration 020). New `target` table
   + `core/target/` module (`add_target`, `list_target`,
   `list_active_target`, `archive_target`, `supersede_target`).
@@ -1344,7 +1344,7 @@ machine has live intervals.icu credentials configured.
   `snapshot.target` block carries every active row whose effective
   window covers `as_of_date`. Per-domain readiness skills'
   `allowed-tools` extended with `Bash(hai target list *)`. 13 new
-  tests in `verification/tests/test_target_ledger.py`.
+  tests in `hai/verification/tests/test_target_ledger.py`.
 - **Data quality ledger** (W51, migration 021). New
   `data_quality_daily` table + `core/data_quality/` projector +
   `hai stats --data-quality` CLI mode. Per-source / per-domain row
@@ -1353,7 +1353,7 @@ machine has live intervals.icu credentials configured.
   integration: `snapshot.<domain>.data_quality` block carries the
   fields without requiring the projector to have run. Subsumes the
   v0.1.7 cold-start visibility gap — `cold_start_window_state` is
-  pinned by `verification/tests/test_data_quality_cold_start_consistency.py`
+  pinned by `hai/verification/tests/test_data_quality_cold_start_consistency.py`
   to match `snapshot.<domain>.cold_start` per the W51 maintainer
   refinement. 7 new tests across `test_data_quality_ledger.py` +
   `test_data_quality_cold_start_consistency.py`.
@@ -1363,7 +1363,7 @@ machine has live intervals.icu credentials configured.
   so the user can inspect what numbers the runtime is using without
   reading SQL. Read-only; no recomputation in the CLI — every band
   is the snapshot's classification. 3 new tests in
-  `verification/tests/test_cli_stats_baselines.py`.
+  `hai/verification/tests/test_cli_stats_baselines.py`.
 - **`hai config validate` + `hai config diff`** (W39). Discoverable
   authoring + diffing for the user's `thresholds.toml`. Validate
   parses the TOML, walks every leaf, and reports `unknown_key` /
@@ -1373,14 +1373,14 @@ machine has live intervals.icu credentials configured.
   (and flags unknown keys with `key_known=false`). Outcomes never
   write thresholds — those paths only land via the existing
   `hai config init` scaffold. 7 new tests in
-  `verification/tests/test_cli_config_validate_diff.py`.
+  `hai/verification/tests/test_cli_config_validate_diff.py`.
 - **`hai stats --funnel [--since N] [--json]`** (W46). Mode on
   `hai stats` that aggregates `runtime_event_log.context_json` for
   `command='daily'` runs in the window: daily run count,
   overall_status histogram, missing-domain frequency,
   blocking-action count. Closes the v0.1.7 proposal-gate telemetry
   carry-over. 2 new tests in
-  `verification/tests/test_cli_stats_funnel.py`.
+  `hai/verification/tests/test_cli_stats_funnel.py`.
 - **`hai daily --auto --explain` thick JSON** (W43). New
   `--explain` flag on `hai daily` adds a per-stage `explain` block
   to the output (pull / clean / snapshot / gaps / proposal_gate /
@@ -1388,7 +1388,7 @@ machine has live intervals.icu credentials configured.
   already-computed stage data; never recomputes or fabricates
   fields. Plain `hai daily` and `hai daily --auto` (no `--explain`)
   remain byte-identical — the block is opt-in via the explicit
-  flag. 3 new tests in `verification/tests/test_cli_daily_auto_explain.py`.
+  flag. 3 new tests in `hai/verification/tests/test_cli_daily_auto_explain.py`.
 - **Skill harness extended to running** (W41). Added `running` to
   `SUPPORTED_DOMAINS`, `_running_snapshot_block` driving the real
   `derive_running_signals` + `classify_running_state` +
@@ -1398,17 +1398,17 @@ machine has live intervals.icu credentials configured.
   `rubrics/running.md`. Replay mode runs in normal CI; live capture
   remains operator-gated via `HAI_SKILL_HARNESS_LIVE=1`.
 - **Synthesis-skill scoring harness** (W42). New
-  `verification/evals/synthesis_harness/` with `runner.py`,
+  `hai/verification/evals/synthesis_harness/` with `runner.py`,
   `rubrics/synthesis.md`, and 3 fixture scenarios (clean / partial
   X1a soften / escalated X3b block). Scorer applies four rubric
   invariants over a candidate synthesis output: every Phase A firing
   cited or summarised, no invented X-rule, no invented band, no
   action mutation claimed by prose. 7 new tests in
-  `verification/tests/test_synthesis_harness.py` exercise both
+  `hai/verification/tests/test_synthesis_harness.py` exercise both
   passing-output and each failure mode so the rubric localises the
   broken rationale line.
 - **W0.1.8 replay / property tests** (W45). New
-  `verification/tests/property/test_v0_1_8_replay_properties.py` pins
+  `hai/verification/tests/property/test_v0_1_8_replay_properties.py` pins
   determinism contracts for the new state surfaces: intent
   supersession-chain replay, late-arriving target does not
   retroactively change a past snapshot, intent / target
@@ -1417,7 +1417,7 @@ machine has live intervals.icu credentials configured.
   counts/tokens, and the same summary call is order-stable. 6 new
   tests.
 - **Standards mapping doc** (W55,
-  `reporting/docs/standards_mapping.md`). Maps HAI's evidence /
+  `hai/reporting/docs/standards_mapping.md`). Maps HAI's evidence /
   accepted-state / recommendation / plan / review / intent /
   target / data-quality / provenance ledgers to FHIR + Open
   mHealth + Open Wearables analogues with explicit "NOT a FHIR
@@ -1524,7 +1524,7 @@ machine has live intervals.icu credentials configured.
   `command_argv` (or `command_root` + `command_template`), `blocking`
   / `safe_to_retry` hints, and an `after_success` routing pointer. An
   agent can plan a fixture day end-to-end from the manifest alone —
-  proven by `verification/tests/test_daily_auto_manifest_fixture.py` (W35).
+  proven by `hai/verification/tests/test_daily_auto_manifest_fixture.py` (W35).
 - **`hai planned-session-types`** read-only command surfaces the
   canonical vocabulary for `--planned-session-type` so agents can
   discover the recognised tokens without README lookup (W33).
@@ -1535,7 +1535,7 @@ machine has live intervals.icu credentials configured.
   `apply_pending_migrations(..., strict=True)` +
   `SchemaVersionGapError` for library callers.
 - **Cold-start policy matrix** documented at
-  `reporting/docs/cold_start_policy_matrix.md` (W24) with a test
+  `hai/reporting/docs/cold_start_policy_matrix.md` (W24) with a test
   pinning the per-domain decisions.
 - **`runtime_event_log.context_json`** carries the daily
   proposal-gate outcome so future telemetry surfaces can query
@@ -1641,7 +1641,7 @@ an end-to-end audit. Closes the safety, recovery, privacy, and
 wearable-data-reaches-agent gaps that the earlier `0.1.4` implicitly
 assumed.
 
-Full detail: [`reporting/plans/v0_1_4/release_notes.md`](reporting/plans/v0_1_4/release_notes.md).
+Full detail: [`hai/reporting/plans/v0_1_4/release_notes.md`](hai/reporting/plans/v0_1_4/release_notes.md).
 
 ### Added
 
@@ -1651,7 +1651,7 @@ Full detail: [`reporting/plans/v0_1_4/release_notes.md`](reporting/plans/v0_1_4/
 - **`hai propose --replace`** — explicit revision of the canonical leaf per D1 re-author semantics.
 - **`hai synthesize --supersede`** — keeps prior plan, writes new at `<canonical_id>_v<N>`.
 - **`hai explain --operator`** — canonical operator-report flag.
-- **Privacy hardening** — `core/privacy.py` enforces 0o700 directories + 0o600 files on POSIX across DB, JSONL audit logs, intake roots. `reporting/docs/privacy.md` covers what's stored / where / inspect / export / delete / migrate.
+- **Privacy hardening** — `core/privacy.py` enforces 0o700 directories + 0o600 files on POSIX across DB, JSONL audit logs, intake roots. `hai/reporting/docs/privacy.md` covers what's stored / where / inspect / export / delete / migrate.
 - **D1–D4 design docs** — re-author semantics, intake write paths, user-facing narration, cold-start coverage.
 - **Five new e2e test scenarios** — re-author journey, first-run user, credential lifecycle, multi-day review, running activity journey.
 - **Snapshot golden tests** — five `hai today --format plain` goldens (green, mixed, no-plan, cold-start, superseded).
@@ -1687,7 +1687,7 @@ Full detail: [`reporting/plans/v0_1_4/release_notes.md`](reporting/plans/v0_1_4/
 - DB + WAL/SHM/journal siblings locked to 0o600 on POSIX.
 - Every JSONL audit log + base directory locked to 0o600 / 0o700 on POSIX after each write.
 - Packaged Garmin CSV fixture documented as synthetic; PII regression test scans for emails, phones, GPS, device serials, identity columns.
-- `reporting/docs/privacy.md` covers what's stored / where / how to inspect / export / delete / migrate.
+- `hai/reporting/docs/privacy.md` covers what's stored / where / how to inspect / export / delete / migrate.
 
 ### Migrations applied (forward-only)
 
