@@ -11,6 +11,7 @@ runtime package and from historical release-planning records.
 | `runtime_contracts_paper/IMPLEMENTATION_PLAN.md` | Research execution plan. |
 | `runtime_contracts_paper/DOC_ALIGNMENT_AUDIT.md` | Audit of documentation surfaces against the new frame. |
 
-The repo-wide memory files are [`../PROJECT_FRAME.md`](../PROJECT_FRAME.md)
-and [`../PROJECT_OPERATING_MODEL.md`](../PROJECT_OPERATING_MODEL.md).
+The repo-wide memory files are [`../PROJECT_FRAME.md`](../PROJECT_FRAME.md),
+[`../PROJECT_DECISIONS.md`](../PROJECT_DECISIONS.md), and
+[`../PROJECT_OPERATING_MODEL.md`](../PROJECT_OPERATING_MODEL.md).
 Historical cycle plans and release proofs remain under `reporting/plans/`.

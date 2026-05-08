@@ -1,6 +1,6 @@
 # Documentation Alignment Audit
 
-**Status:** Internal audit, updated 2026-05-07.
+**Status:** Internal audit, updated 2026-05-08.
 
 ## Problem
 
@@ -22,19 +22,39 @@ The repo should communicate this hierarchy consistently:
 
 ## Audit Findings
 
-| Area | Finding | Fix direction |
+| Area | Finding | Current state |
 |---|---|---|
-| Root orientation | `README.md` was partially reframed but still behaved like the HAI product manual after the first screen. | Add `PROJECT_FRAME.md`, rewrite root `README.md` as the research-facing landing page, and move HAI operator material to `docs/hai/hai_reference_runtime.md`. |
-| Agent onboarding | `AGENTS.md` and `CLAUDE.md` still opened with HAI as the whole project and routed readers to old HAI strategy docs. | Update session-start reading order and add a settled research-reframe decision. |
-| Repo map | `REPO_MAP.md` did not classify `research/` or `benchmarks/` as first-class active roots. | Add both and demote old HAI release plans to reference-runtime / historical scope. |
-| Roadmap | `ROADMAP.md` was a HAI release chain, not the project roadmap under the new objective. | Recast as research-first roadmap with HAI runtime backlog as a support lane. |
-| Reporting indexes | `reporting/README.md` and `docs/hai/README.md` called themselves current v1 docs, which reads as project-wide. | Clarify that `docs/hai/` is HAI reference-runtime documentation and make `hai_reference_runtime.md` the HAI manual. |
-| Current truth | `current_system_state.md` mixed stale v0.1.18 status with v0.2.0 source state and lacked research status. | Add repo-level research status and fix HAI source-truth table. |
-| Paper/benchmark | New frame existed but was isolated. | Keep `PAPER_FRAME.md` as locked research frame; link from root and agent docs. |
-| Operating memory | Several ideas from the reframe existed only in conversation: documentation-first gate, external research-engineering audience, local/cloud/fine-tune scope, scaffold ablations, and HAI polish subordination. | Add `PROJECT_OPERATING_MODEL.md` and `RESEARCH_EVAL_STRATEGY.md`. |
-| Hypotheses | Root `HYPOTHESES.md` still carried HAI product/runtime hypotheses, despite being a top-level active doc. | Rewrite root `HYPOTHESES.md` as current research hypotheses; preserve HAI hypotheses in historical strategy docs. |
-| Pre-reframe planning docs | `strategic_plan_v2.md`, `success_framework_v1.md`, `eval_strategy/v1.md`, and `risks_and_open_questions.md` could be mistaken for current project-wide strategy. | Add explicit research-reframe notes and mark them as HAI support-lane/provenance docs. |
-| Market context | Vendor-coach context shifted on 2026-05-07 with Google Health Coach and Bevel's AI layer. | Update competitive landscape with dated primary-source links, without making HAI a consumer-product bet. |
+| Root orientation | `README.md` was partially reframed but still behaved like the HAI product manual after the first screen. | Fixed: root `README.md` is research-facing; HAI operator material lives in `docs/hai/hai_reference_runtime.md`. |
+| Agent onboarding | `AGENTS.md` and `CLAUDE.md` still opened with HAI as the whole project and routed readers to old HAI strategy docs. | Fixed: cold-start reading order begins with project frame, decision log, operating model, paper frame, eval strategy, and benchmark scope. |
+| Repo map | `REPO_MAP.md` did not classify `research/` or `benchmarks/` as first-class active roots. | Fixed: `research/`, `benchmarks/`, `docs/`, `src/`, and `reporting/` have distinct active/historical roles. |
+| Roadmap | `ROADMAP.md` was a HAI release chain, not the project roadmap under the new objective. | Fixed: roadmap is research-first, with HAI runtime support lane. |
+| Reporting indexes | `reporting/README.md` and HAI docs called themselves current v1 docs, which read as project-wide. | Fixed: active HAI docs moved to `docs/hai/`; `reporting/docs/` is legacy archive / launch drafts only. |
+| Current truth | `current_system_state.md` mixed stale v0.1.18 status with v0.2.0 source state and lacked research status. | Fixed: `docs/hai/current_system_state.md` names the runtime-contract reframe, source version, research priority, and next cycles. |
+| Paper/benchmark | New frame existed but was isolated. | Fixed: `PAPER_FRAME.md`, `RESEARCH_EVAL_STRATEGY.md`, `IMPLEMENTATION_PLAN.md`, and benchmark docs are linked from root and agent docs. |
+| Operating memory | Several ideas from the reframe existed only in conversation: documentation-first gate, external research-engineering audience, local/cloud/fine-tune scope, scaffold ablations, and HAI polish subordination. | Fixed: `PROJECT_OPERATING_MODEL.md`, `RESEARCH_EVAL_STRATEGY.md`, and `PROJECT_DECISIONS.md` capture the internal memory. |
+| Hypotheses | Root `HYPOTHESES.md` still carried HAI product/runtime hypotheses, despite being a top-level active doc. | Fixed: root hypotheses now describe runtime-contract research hypotheses. Historical HAI hypotheses remain in planning provenance. |
+| Pre-reframe planning docs | `strategic_plan_v2.md`, `success_framework_v1.md`, `eval_strategy/v1.md`, and `risks_and_open_questions.md` could be mistaken for current project-wide strategy. | Fixed via indexes and headers: these are HAI support-lane/provenance docs, not current project-wide strategy. |
+| Market context | Vendor-coach context shifted on 2026-05-07 with Google Health Coach and Bevel's AI layer. | Fixed in `docs/hai/competitive_landscape.md`, without turning HAI back into a consumer-product bet. |
+| Project decisions | The new frame's choices were spread across multiple files and conversation memory. | Fixed: `PROJECT_DECISIONS.md` records post-reframe decisions and is wired into cold-start docs. |
+
+## Current Alignment State
+
+As of 2026-05-08, the repo's current documentation architecture is:
+
+- root control docs for project memory and governance;
+- `research/runtime_contracts_paper/` for the paper and evaluation
+  strategy;
+- `benchmarks/governed_agent_bench/` for the benchmark artifact;
+- `docs/hai/` for the HAI reference-runtime manual and contract docs;
+- `reporting/` for release proof, historical planning, archives, and
+  frozen prototypes.
+
+The highest-risk drift class is no longer "root README says the wrong
+thing." It is subtler: a future agent could treat historical HAI planning
+docs as active priority, or could add HAI polish before benchmark tasks
+because the polish feels concrete. The guardrails for that risk are
+`PROJECT_FRAME.md`, `PROJECT_DECISIONS.md`,
+`PROJECT_OPERATING_MODEL.md`, `ROADMAP.md`, and `REPO_MAP.md`.
 
 ## Non-Fixes
 

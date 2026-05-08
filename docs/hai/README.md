@@ -7,6 +7,7 @@ Current documentation for the HAI reference runtime. Start with
 
 Project-wide research framing lives at
 [`../../PROJECT_FRAME.md`](../../PROJECT_FRAME.md),
+[`../../PROJECT_DECISIONS.md`](../../PROJECT_DECISIONS.md),
 [`../../PROJECT_OPERATING_MODEL.md`](../../PROJECT_OPERATING_MODEL.md), and
 [`../../research/runtime_contracts_paper/PAPER_FRAME.md`](../../research/runtime_contracts_paper/PAPER_FRAME.md).
 GovernedAgentBench lives at
@@ -53,7 +54,7 @@ itself (docs / artifacts / plans / experiments), see
 
 | Reader | Read |
 |---|---|
-| Research / benchmark contributor | [`../../PROJECT_FRAME.md`](../../PROJECT_FRAME.md), [`../../PROJECT_OPERATING_MODEL.md`](../../PROJECT_OPERATING_MODEL.md), [`../../HYPOTHESES.md`](../../HYPOTHESES.md), [`../../research/runtime_contracts_paper/PAPER_FRAME.md`](../../research/runtime_contracts_paper/PAPER_FRAME.md), [`../../research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`](../../research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md), [`../../benchmarks/governed_agent_bench/README.md`](../../benchmarks/governed_agent_bench/README.md) |
+| Research / benchmark contributor | [`../../PROJECT_FRAME.md`](../../PROJECT_FRAME.md), [`../../PROJECT_DECISIONS.md`](../../PROJECT_DECISIONS.md), [`../../PROJECT_OPERATING_MODEL.md`](../../PROJECT_OPERATING_MODEL.md), [`../../HYPOTHESES.md`](../../HYPOTHESES.md), [`../../research/runtime_contracts_paper/PAPER_FRAME.md`](../../research/runtime_contracts_paper/PAPER_FRAME.md), [`../../research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`](../../research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md), [`../../benchmarks/governed_agent_bench/README.md`](../../benchmarks/governed_agent_bench/README.md) |
 | User | [`hai_reference_runtime.md`](hai_reference_runtime.md), [`current_system_state.md`](current_system_state.md), [`privacy.md`](privacy.md), [`non_goals.md`](non_goals.md), [`backup_and_recovery.md`](backup_and_recovery.md) |
 | Host-agent integrator | [`host_agent_contract.md`](host_agent_contract.md), [`agent_integration.md`](agent_integration.md), [`agent_cli_contract.md`](agent_cli_contract.md), [`cli_exit_codes.md`](cli_exit_codes.md), [`glossary.md`](glossary.md) |
 | Runtime contributor | [`architecture.md`](architecture.md), [`state_model_v1.md`](state_model_v1.md), [`domains/README.md`](domains/README.md), [`how_to_add_a_domain.md`](how_to_add_a_domain.md), [`how_to_add_a_pull_adapter.md`](how_to_add_a_pull_adapter.md) |

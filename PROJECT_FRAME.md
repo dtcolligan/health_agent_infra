@@ -1,6 +1,6 @@
 # Project Frame
 
-**Status:** Canonical project frame, 2026-05-07.
+**Status:** Canonical project frame, 2026-05-08.
 
 This repository is no longer best understood as "the HAI product
 repo." It is a runtime-contract research repo with HAI as the first
@@ -14,6 +14,15 @@ validation, and audit from the model into enforceable local software.
 
 The model proposes, routes, clarifies, and explains. The runtime owns
 truth, validation, mutation, policy, and audit.
+
+## Decision Log
+
+Project-level decisions from the reframe are recorded in
+[`PROJECT_DECISIONS.md`](PROJECT_DECISIONS.md). Use that file to recover
+decisions that would otherwise depend on conversation memory: the
+research-first repo identity, GovernedAgentBench naming, title package,
+measurement posture, health boundary, experiment scope, MVP domain scope,
+and documentation architecture.
 
 ## Active Artifacts
 
@@ -58,15 +67,16 @@ footer disclaimer.
 Cold agents should read in this order:
 
 1. `PROJECT_FRAME.md`
-2. `PROJECT_OPERATING_MODEL.md`
-3. `AGENTS.md`
-4. `research/runtime_contracts_paper/PAPER_FRAME.md`
-5. `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`
-6. `benchmarks/governed_agent_bench/README.md`
-7. `README.md`
-8. `ROADMAP.md`
-9. `docs/hai/hai_reference_runtime.md` if the task touches HAI
-10. `docs/hai/current_system_state.md`
+2. `PROJECT_DECISIONS.md`
+3. `PROJECT_OPERATING_MODEL.md`
+4. `AGENTS.md`
+5. `research/runtime_contracts_paper/PAPER_FRAME.md`
+6. `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`
+7. `benchmarks/governed_agent_bench/README.md`
+8. `README.md`
+9. `ROADMAP.md`
+10. `docs/hai/hai_reference_runtime.md` if the task touches HAI
+11. `docs/hai/current_system_state.md`
 
 Historical release plans under `reporting/plans/` explain how HAI got
 here. They are not the default source of current project priority when

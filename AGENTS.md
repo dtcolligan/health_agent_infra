@@ -45,6 +45,8 @@ codex_plan_audit_response F-PLAN-12.)
 Authoritative orientation:
 
 - `PROJECT_FRAME.md` - canonical research framing and priority order
+- `PROJECT_DECISIONS.md` - post-reframe decision log for project-level
+  choices that should survive cold starts
 - `PROJECT_OPERATING_MODEL.md` - internal operating model, documentation
   gate, artifact hierarchy, and decision rules
 - `HYPOTHESES.md` - current research hypotheses
@@ -314,7 +316,7 @@ write a cycle proposal in `reporting/plans/`; do not act unilaterally.
   non-clinical by design (no diagnosis, treatment, prescribing, or
   autonomous medical decisions). Do not reopen HACO-Bench naming or
   health-agent-first framing without an explicit maintainer decision.
-  Canonical sources: `PROJECT_FRAME.md`,
+  Canonical sources: `PROJECT_FRAME.md`, `PROJECT_DECISIONS.md`,
   `PROJECT_OPERATING_MODEL.md`, `HYPOTHESES.md`,
   `research/runtime_contracts_paper/PAPER_FRAME.md`, and
   `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`.
@@ -368,7 +370,8 @@ Drift in any of these is the trust hazard a second user hits first:
   outcome verdict + RELEASE_PROOF link). v0.1.10/v0.1.11/etc. cannot
   silently fall off the index.
 - [ ] `README.md` reflects the research frame and current artifact status.
-- [ ] `PROJECT_OPERATING_MODEL.md`, `HYPOTHESES.md`, and
+- [ ] `PROJECT_DECISIONS.md`, `PROJECT_OPERATING_MODEL.md`,
+  `HYPOTHESES.md`, and
   `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md` still
   reflect the current objective.
 - [ ] `docs/hai/hai_reference_runtime.md` reflects HAI install,
@@ -565,7 +568,8 @@ CI runs `verification/tests/`. The suite includes docs and skill/CLI drift check
 
 ## When In Doubt
 
-Read `PROJECT_FRAME.md`, `PROJECT_OPERATING_MODEL.md`,
+Read `PROJECT_FRAME.md`, `PROJECT_DECISIONS.md`,
+`PROJECT_OPERATING_MODEL.md`,
 `research/runtime_contracts_paper/PAPER_FRAME.md`,
 `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`,
 `HYPOTHESES.md`, `README.md`, `REPO_MAP.md`, `ROADMAP.md`,

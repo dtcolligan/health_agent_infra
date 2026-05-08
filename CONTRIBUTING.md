@@ -6,6 +6,8 @@ This repo is a runtime-contract research project with HAI as the first
 reference runtime and GovernedAgentBench as the benchmark artifact.
 Read [`PROJECT_FRAME.md`](PROJECT_FRAME.md) before assuming HAI product
 polish is the next priority. Read
+[`PROJECT_DECISIONS.md`](PROJECT_DECISIONS.md) before reopening a
+post-reframe project choice. Read
 [`PROJECT_OPERATING_MODEL.md`](PROJECT_OPERATING_MODEL.md) before changing
 project direction, benchmark scope, or paper-facing claims.
 
@@ -82,7 +84,7 @@ Never:
 2. If you touched packaging or versioning: `uv run python -m build --wheel --sdist`
 3. If you touched docs: make sure `README.md`, `CHANGELOG.md`,
    `PROJECT_FRAME.md`, `PROJECT_OPERATING_MODEL.md`, `HYPOTHESES.md`,
-   `ROADMAP.md`, `AUDIT.md`,
+   `PROJECT_DECISIONS.md`, `ROADMAP.md`, `AUDIT.md`,
    `research/runtime_contracts_paper/PAPER_FRAME.md`,
    `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`, and the
    active HAI docs under `docs/hai/` still agree.
@@ -116,6 +118,7 @@ Never:
 Start with these:
 
 - `PROJECT_FRAME.md`
+- `PROJECT_DECISIONS.md`
 - `PROJECT_OPERATING_MODEL.md`
 - `HYPOTHESES.md`
 - `README.md`

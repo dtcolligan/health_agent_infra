@@ -81,7 +81,7 @@ unless explicitly needed for benchmark validity or paper experiments:
 
 | Milestone | Exit criterion |
 |---|---|
-| Frame locked | `PROJECT_FRAME.md`, `PAPER_FRAME.md`, and cold-start docs agree. |
+| Frame locked | `PROJECT_FRAME.md`, `PROJECT_DECISIONS.md`, `PAPER_FRAME.md`, and cold-start docs agree. |
 | Contract freeze | A model or human can operate HAI from the manifest and docs without private repo knowledge. |
 | Benchmark MVP | Schemas, pilot tasks, frozen manifests, trajectories, and scorer run offline. |
 | Baselines | Rule, local, cloud, and manifest-grounded systems scored under one harness. |

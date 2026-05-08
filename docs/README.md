@@ -2,10 +2,11 @@
 
 Current public/project documentation that is not root-control material.
 
-Root-level files such as `PROJECT_FRAME.md`, `PROJECT_OPERATING_MODEL.md`,
-`HYPOTHESES.md`, and `ROADMAP.md` remain at the repo root because they are
-the project control plane. Research artifacts remain under `research/`;
-benchmark artifacts remain under `benchmarks/`.
+Root-level files such as `PROJECT_FRAME.md`, `PROJECT_DECISIONS.md`,
+`PROJECT_OPERATING_MODEL.md`, `HYPOTHESES.md`, and `ROADMAP.md` remain at
+the repo root because they are the project control plane. Research
+artifacts remain under `research/`; benchmark artifacts remain under
+`benchmarks/`.
 
 | Path | Purpose |
 |---|---|

@@ -21,21 +21,23 @@ Claude session efficient.
 When opening a fresh session, read in this order:
 
 1. **`PROJECT_FRAME.md`** — current research framing and priority order.
-2. **`PROJECT_OPERATING_MODEL.md`** — internal operating model and
+2. **`PROJECT_DECISIONS.md`** — post-reframe decision log and locked
+   project choices.
+3. **`PROJECT_OPERATING_MODEL.md`** — internal operating model and
    documentation-alignment gate.
-3. **`AGENTS.md`** — the operating contract (governance invariants, settled
+4. **`AGENTS.md`** — the operating contract (governance invariants, settled
    decisions D1-D18, architectural seams, "Do Not Do").
-4. **`HYPOTHESES.md`** — current research hypotheses.
-5. **`research/runtime_contracts_paper/PAPER_FRAME.md`** — locked paper /
+5. **`HYPOTHESES.md`** — current research hypotheses.
+6. **`research/runtime_contracts_paper/PAPER_FRAME.md`** — locked paper /
    benchmark framing.
-6. **`research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`** —
+7. **`research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`** —
    model/baseline/ablation evaluation strategy.
-7. **`benchmarks/governed_agent_bench/README.md`** — benchmark scope.
-8. **`README.md`** — research-facing repo overview.
-9. **`docs/hai/hai_reference_runtime.md`** if you need HAI install,
+8. **`benchmarks/governed_agent_bench/README.md`** — benchmark scope.
+9. **`README.md`** — research-facing repo overview.
+10. **`docs/hai/hai_reference_runtime.md`** if you need HAI install,
    operator workflow, domains, or CLI surface.
-10. **`ARCHITECTURE.md`** + **`REPO_MAP.md`** if you need to find something.
-11. **`reporting/plans/README.md`** only when you need HAI release history or
+11. **`ARCHITECTURE.md`** + **`REPO_MAP.md`** if you need to find something.
+12. **`reporting/plans/README.md`** only when you need HAI release history or
    a specific HAI runtime cycle plan.
 
 For a "what just shipped" question, read

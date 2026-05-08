@@ -1,6 +1,6 @@
 # Project Operating Model
 
-**Status:** Canonical internal operating model, 2026-05-07.
+**Status:** Canonical internal operating model, 2026-05-08.
 
 This document exists because the project was heavily reframed. A future
 agent should not need conversation memory to understand what the repo is
@@ -32,6 +32,8 @@ complete when the control docs agree on:
 - HAI is the reference runtime, not the whole project.
 - Personal wellness is the demonstrator domain, not the paper topic.
 - GovernedAgentBench is the benchmark artifact.
+- `PROJECT_DECISIONS.md` records the project-level decisions that would
+  otherwise depend on conversation memory.
 - The paper is conservative and measurement-first.
 - Health safety is non-clinical by contract: no diagnosis, treatment,
   prescribing, or autonomous medical decisions.
@@ -100,6 +102,7 @@ The repo should have a clear separation of concerns:
 |---|---|
 | `README.md` | Public research-facing repo overview. |
 | `PROJECT_FRAME.md` | Short canonical frame and priority order. |
+| `PROJECT_DECISIONS.md` | Post-reframe decision log and locked project choices. |
 | `PROJECT_OPERATING_MODEL.md` | Internal operating model and current work gate. |
 | `HYPOTHESES.md` | Current research hypotheses, not old HAI product bets. |
 | `ROADMAP.md` | Research-first roadmap. |
@@ -132,6 +135,7 @@ A cold agent is aligned when it can answer these questions from repo docs
 alone:
 
 - What is the research claim?
+- Which project-level decisions are locked?
 - Why is HAI still in the repo?
 - What is GovernedAgentBench supposed to measure?
 - Which docs are current and which are historical?

@@ -11,6 +11,7 @@ for the HAI operator manual.
 | Path | Class | What it is |
 |---|---|---|
 | [`PROJECT_FRAME.md`](PROJECT_FRAME.md) | active docs | Canonical research framing and priority order for cold agents. |
+| [`PROJECT_DECISIONS.md`](PROJECT_DECISIONS.md) | active docs | Post-reframe project decision log: research-first identity, GovernedAgentBench naming, title package, experiment scope, and documentation architecture. |
 | [`PROJECT_OPERATING_MODEL.md`](PROJECT_OPERATING_MODEL.md) | active docs | Internal operating model for the post-reframe repo: documentation gate, artifact hierarchy, decision rules, and success conditions. |
 | [`research/`](research/) | active research | Paper frame, draft, execution plan, and documentation-alignment audit for the runtime-contract / GovernedAgentBench direction. |
 | [`benchmarks/`](benchmarks/) | active benchmark | GovernedAgentBench scaffold: schemas, tasks, manifests, scorer, baselines, and reports. |
@@ -54,7 +55,7 @@ checked-in repo shape.
 
 | You want to | Start at |
 |---|---|
-| Understand the current objective | [`PROJECT_FRAME.md`](PROJECT_FRAME.md), then [`PROJECT_OPERATING_MODEL.md`](PROJECT_OPERATING_MODEL.md), then [`research/runtime_contracts_paper/PAPER_FRAME.md`](research/runtime_contracts_paper/PAPER_FRAME.md) |
+| Understand the current objective | [`PROJECT_FRAME.md`](PROJECT_FRAME.md), then [`PROJECT_DECISIONS.md`](PROJECT_DECISIONS.md), then [`PROJECT_OPERATING_MODEL.md`](PROJECT_OPERATING_MODEL.md), then [`research/runtime_contracts_paper/PAPER_FRAME.md`](research/runtime_contracts_paper/PAPER_FRAME.md) |
 | Understand the benchmark | [`benchmarks/governed_agent_bench/README.md`](benchmarks/governed_agent_bench/README.md), then [`research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`](research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md) |
 | Understand HAI as software | [`docs/hai/hai_reference_runtime.md`](docs/hai/hai_reference_runtime.md), then [`docs/hai/tour.md`](docs/hai/tour.md) |
 | Know what is shipped right now | [`docs/hai/current_system_state.md`](docs/hai/current_system_state.md), then [`CHANGELOG.md`](CHANGELOG.md) and [`AUDIT.md`](AUDIT.md) |
@@ -73,7 +74,7 @@ checked-in repo shape.
 ## Active vs historical at a glance
 
 - **Active research frame**: `PROJECT_FRAME.md`,
-  `PROJECT_OPERATING_MODEL.md`, `HYPOTHESES.md`,
+  `PROJECT_DECISIONS.md`, `PROJECT_OPERATING_MODEL.md`, `HYPOTHESES.md`,
   `research/runtime_contracts_paper/`, and
   `benchmarks/governed_agent_bench/`.
 - **Active runtime**: `src/health_agent_infra/`.
