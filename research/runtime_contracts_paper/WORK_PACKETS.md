@@ -66,13 +66,13 @@ Manual review needed: yes, for citation quality.
 
 Non-goals: writing the related-work section.
 
-## WP-CONTRACT-001 — Freeze HAI Manifest Snapshot
+## WP-HAI-001 — Capture HAI Manifest Snapshot
 
 Goal: Commit the first frozen manifest used by GovernedAgentBench.
 
 Inputs:
 
-- `RUNTIME_CONTRACT_FREEZE_PLAN.md`
+- `HAI_PAPER_READINESS_PLAN.md`
 - source-tree `hai capabilities --json`
 
 Outputs:
@@ -112,15 +112,15 @@ Tests:
 - `uv run pytest verification/tests/test_benchmark_manifest_snapshot.py -q`
 - `uv run pytest verification/tests/test_project_reframe_docs_alignment.py -q`
 
-Manual review needed: yes, confirm snapshot is appropriate for paper
-contract freeze.
+Manual review needed: yes, confirm snapshot is appropriate for HAI
+paper-readiness engineering.
 
 Non-goals: MCP, model adapters, scorer.
 
 ## WP-RUNTIME-FIX-NNN — Runtime Defect Packet Template
 
-Use this template only when a contract-freeze or benchmark packet finds
-a real runtime defect that blocks the packet.
+Use this template only when a HAI paper-readiness or benchmark packet
+finds a real runtime defect that blocks the packet.
 
 Goal: Fix one runtime defect required by a named research packet.
 
@@ -163,13 +163,13 @@ Manual review needed: yes.
 
 Non-goals: opportunistic cleanup.
 
-## WP-CONTRACT-002 — Fixture-State Plan
+## WP-HAI-002 — Fixture-State Plan
 
 Goal: Define synthetic fixture-state requirements before implementation.
 
 Inputs:
 
-- `RUNTIME_CONTRACT_FREEZE_PLAN.md`
+- `HAI_PAPER_READINESS_PLAN.md`
 - HAI state docs and migrations
 
 Outputs:
@@ -203,7 +203,7 @@ Manual review needed: yes.
 
 Non-goals: creating fixture databases.
 
-## WP-CONTRACT-003 — Fixture Implementation
+## WP-HAI-003 — Fixture Implementation
 
 Goal: Implement deterministic synthetic fixture state for benchmark and
 harness work.
@@ -211,7 +211,7 @@ harness work.
 Inputs:
 
 - `benchmarks/governed_agent_bench/fixtures/README.md`
-- `RUNTIME_CONTRACT_FREEZE_PLAN.md`
+- `HAI_PAPER_READINESS_PLAN.md`
 - HAI state docs and migrations
 
 Outputs:
@@ -237,7 +237,7 @@ Forbidden files:
 
 Dependencies:
 
-- WP-CONTRACT-002.
+- WP-HAI-002.
 
 Acceptance criteria:
 
@@ -376,8 +376,8 @@ Forbidden files:
 
 Dependencies:
 
-- WP-CONTRACT-001 preferred for manifest references.
-- WP-CONTRACT-002 preferred for fixture references.
+- WP-HAI-001 preferred for manifest references.
+- WP-HAI-002 preferred for fixture references.
 
 Acceptance criteria:
 
@@ -467,8 +467,8 @@ Forbidden files:
 Dependencies:
 
 - WP-GAB-001;
-- WP-CONTRACT-001;
-- WP-CONTRACT-003.
+- WP-HAI-001;
+- WP-HAI-003.
 
 Acceptance criteria:
 
@@ -514,7 +514,7 @@ Dependencies:
 
 - WP-GAB-002;
 - WP-GAB-003;
-- WP-CONTRACT-003.
+- WP-HAI-003.
 
 Acceptance criteria:
 

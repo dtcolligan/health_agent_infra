@@ -48,7 +48,7 @@ PROJECT_FRAME / PROJECT_DECISIONS
 PAPER_FRAME + CLAIM_LADDER + PRIOR_ART_POSITIONING
         |
         v
-RUNTIME_CONTRACT_FREEZE_PLAN
+HAI_PAPER_READINESS_PLAN
         |
         v
 BENCHMARK_SPEC + OPERATOR_HARNESS_SPEC + SCORING_SPEC
@@ -85,17 +85,18 @@ can implement bounded work packets.
   before paper writing.
 - `BENCHMARK_SPEC.md`, `OPERATOR_HARNESS_SPEC.md`, `SCORING_SPEC.md`,
   and `TASK_AUTHORING_GUIDE.md` define GovernedAgentBench.
-- `RUNTIME_CONTRACT_FREEZE_PLAN.md` defines the paper-critical HAI
-  contract slice.
+- `HAI_PAPER_READINESS_PLAN.md` defines the paper-critical HAI
+  engineering slice.
 - `BASELINES_AND_ABLATIONS_PLAN.md` defines systems and ablations.
 - `WORK_PACKETS.md` contains agent-executable tasks with file scopes,
   dependencies, acceptance criteria, tests, and non-goals.
 
 **Implementation allowed.** Documentation/specification only.
 
-### M1 — Contract Freeze
+### M1 — HAI Paper-Readiness Engineering
 
-**Purpose.** Freeze the HAI contract subset that the benchmark will use.
+**Purpose.** Engineer HAI so the paper and benchmark can use it as a
+reference runtime.
 
 **Exit criteria.**
 
@@ -108,12 +109,13 @@ can implement bounded work packets.
   exit-code semantics, and audit surface.
 - Synthetic fixture-state requirements are specified without private
   health data.
-- Any HAI runtime gap discovered during freeze is either fixed through a
-  separate bounded work packet or explicitly deferred as non-critical.
+- Any HAI runtime gap discovered while making the paper-ready slice is
+  either fixed through a separate bounded work packet or explicitly
+  deferred as non-critical.
 
-**Implementation allowed.** Contract snapshotting, fixture planning,
-doc updates, narrow runtime fixes only if they are required for the
-benchmark subset.
+**Implementation allowed.** Manifest snapshotting, fixture planning,
+doc updates, output-shape stabilization, and narrow runtime fixes only
+if they are required for the benchmark subset.
 
 ### M2 — Benchmark Vertical Slice
 
@@ -216,7 +218,7 @@ card, reproducible evaluation.
 
 Work is in scope when it directly advances one of:
 
-- contract freeze;
+- HAI paper-readiness engineering;
 - benchmark MVP;
 - scorer;
 - operator harness;

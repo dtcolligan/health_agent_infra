@@ -310,7 +310,7 @@ write a cycle proposal in `reporting/plans/`; do not act unilaterally.
   active objective is the runtime-contract paper plus
   GovernedAgentBench. HAI continues as the personal-wellness reference
   runtime, but HAI v1 polish is subordinate unless it directly supports
-  the paper, benchmark, contract freeze, or reproducible baselines.
+  the paper, benchmark, HAI paper-readiness, or reproducible baselines.
   The paper frame is conservative and measurement-first: architecture
   first, benchmark second, experiments third. The health boundary is
   non-clinical by design (no diagnosis, treatment, prescribing, or
@@ -369,11 +369,12 @@ unless Dom explicitly scopes a full release cycle:
    `PROJECT_OPERATING_MODEL.md`,
    `research/runtime_contracts_paper/PROJECT_EXECUTION_PLAN.md`,
    `research/runtime_contracts_paper/PAPER_FRAME.md`,
-   `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`, and
+   `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`,
+   `research/runtime_contracts_paper/HAI_PAPER_READINESS_PLAN.md`, and
    `benchmarks/governed_agent_bench/README.md`.
-2. Name the research unit before writing code: paper section, benchmark
-   task family, scorer, manifest freeze, baseline run, fine-tuning
-   recipe, or scaffold ablation.
+2. Name the research unit before writing code: paper section, HAI
+   paper-readiness task, benchmark task family, scorer, manifest
+   snapshot, baseline run, fine-tuning recipe, or scaffold ablation.
 3. Record planning changes in `research/runtime_contracts_paper/` or
    `benchmarks/governed_agent_bench/`, not in HAI release-cycle docs,
    unless the work is explicitly a HAI runtime support-lane task.

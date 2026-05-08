@@ -23,10 +23,11 @@ is [`research/runtime_contracts_paper/PAPER_FRAME.md`](research/runtime_contract
   decisions. Gate docs:
   [`PROJECT_OPERATING_MODEL.md`](PROJECT_OPERATING_MODEL.md) and
   [`research/runtime_contracts_paper/PROJECT_EXECUTION_PLAN.md`](research/runtime_contracts_paper/PROJECT_EXECUTION_PLAN.md).
-- **Freeze the HAI operator contract for research.** Stabilize the
-  public manifest, command schemas, mutation classes, exit-code
-  semantics, proposal/commit separation, validation gates, privacy caveat,
-  and non-clinical boundary that benchmark tasks will consume.
+- **Engineer HAI for paper use.** Make the reference runtime usable by a
+  model-agnostic benchmark harness: public manifest, documented command
+  behavior, synthetic fixtures, stable read surfaces, exit-code
+  semantics, proposal/commit separation, validation gates, privacy
+  caveat, and non-clinical boundary.
 - **GovernedAgentBench MVP.** Build the offline benchmark skeleton into a
   runnable artifact: frozen manifest snapshot, 10+ pilot tasks across
   L1/L2/L5/L6/L7, recorded trajectories, and a scorer that needs no
@@ -82,8 +83,8 @@ unless explicitly needed for benchmark validity or paper experiments:
 | Milestone | Exit criterion |
 |---|---|
 | Frame locked | `PROJECT_FRAME.md`, `PROJECT_DECISIONS.md`, `PAPER_FRAME.md`, and cold-start docs agree. |
-| Planning Gate 1 | Master plan, benchmark specs, contract-freeze plan, baseline/ablation plan, and work packets exist. |
-| Contract freeze | A model or human can operate HAI from the manifest and docs without private repo knowledge. |
+| Planning Gate 1 | Master plan, benchmark specs, HAI paper-readiness plan, baseline/ablation plan, and work packets exist. |
+| HAI paper-readiness | A model or human can operate the benchmark subset of HAI from fixtures, manifest, and docs without private repo knowledge. |
 | Benchmark MVP | Schemas, pilot tasks, frozen manifests, trajectories, and scorer run offline. |
 | Baselines | Rule, local, cloud, and manifest-grounded systems scored under one harness. |
 | Fine-tuning | Public/synthetic training data + reproducible local-operator recipe. |

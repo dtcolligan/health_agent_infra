@@ -142,3 +142,34 @@ def test_active_control_docs_do_not_reintroduce_product_first_sentinels() -> Non
         body = _read(rel_path)
         for phrase in banned:
             assert phrase not in body, f"{rel_path}: {phrase}"
+
+
+def test_hai_paper_readiness_is_the_active_runtime_planning_label() -> None:
+    active_planning_docs = (
+        "README.md",
+        "PROJECT_FRAME.md",
+        "PROJECT_DECISIONS.md",
+        "PROJECT_OPERATING_MODEL.md",
+        "ROADMAP.md",
+        "AGENTS.md",
+        "research/README.md",
+        "research/runtime_contracts_paper/HAI_PAPER_READINESS_PLAN.md",
+        "research/runtime_contracts_paper/PROJECT_EXECUTION_PLAN.md",
+        "research/runtime_contracts_paper/WORK_PACKETS.md",
+        "docs/hai/hai_reference_runtime.md",
+        "docs/hai/current_system_state.md",
+    )
+
+    assert (
+        REPO_ROOT / "research/runtime_contracts_paper/HAI_PAPER_READINESS_PLAN.md"
+    ).exists()
+
+    for rel_path in active_planning_docs:
+        body = _read(rel_path)
+        assert "RUNTIME_CONTRACT_FREEZE_PLAN" not in body, rel_path
+        assert "contract freeze" not in body.lower(), rel_path
+
+    assert "HAI paper-readiness" in _read("PROJECT_FRAME.md")
+    assert "HAI Paper-Readiness Engineering" in _read(
+        "research/runtime_contracts_paper/PROJECT_EXECUTION_PLAN.md"
+    )

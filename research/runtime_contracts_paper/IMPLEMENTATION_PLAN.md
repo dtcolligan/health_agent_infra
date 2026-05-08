@@ -45,7 +45,7 @@ Decision gate:
 - Confirm that the paper is about model-scale reduction from runtime
   contracts, not about building a general health coach.
 
-## Phase 2 - Freeze the HAI Operator Contract
+## Phase 2 - Engineer HAI For Paper Use
 
 **Timing:** May 25-June 10.
 

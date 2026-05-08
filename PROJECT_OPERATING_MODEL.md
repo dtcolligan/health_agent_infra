@@ -16,8 +16,9 @@ research-engineering package:
 
 1. a conservative paper;
 2. GovernedAgentBench;
-3. a documented runtime contract;
-4. HAI as the reference implementation;
+3. a paper-ready HAI runtime slice: manifest, command behavior,
+   fixtures, stable outputs, and safety boundary;
+4. HAI as the maintained reference implementation;
 5. reproducible local/cloud/fine-tuned/ablation experiments.
 
 ## Current Work Gate
@@ -122,8 +123,8 @@ useful HAI provenance, not current project-wide strategy.
 When choosing between tasks:
 
 1. If a doc still teaches the wrong project objective, fix the doc first.
-2. If a HAI task is required for the paper, benchmark, contract freeze, or
-   reproducible baselines, keep it.
+2. If a HAI task is required for the paper, benchmark,
+   HAI paper-readiness, or reproducible baselines, keep it.
 3. If a HAI task is product polish only, defer it until after the paper /
    benchmark push.
 4. If a benchmark task requires private health rows, redesign the task.
@@ -158,7 +159,7 @@ contains:
 - a master execution plan;
 - claim ladder;
 - prior-art positioning plan;
-- runtime-contract freeze plan;
+- HAI paper-readiness plan;
 - benchmark specification;
 - operator-harness specification;
 - scoring specification;

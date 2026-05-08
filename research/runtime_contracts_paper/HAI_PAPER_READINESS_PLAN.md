@@ -1,15 +1,19 @@
-# Runtime Contract Freeze Plan
+# HAI Paper-Readiness Plan
 
-**Status:** Paper-critical HAI runtime slice plan, 2026-05-08.
+**Status:** Paper-critical HAI engineering plan, 2026-05-08.
 
-This file defines the minimum HAI runtime contract that must be frozen
-before GovernedAgentBench can produce meaningful tasks and trajectories.
-It is deliberately narrower than "finish HAI."
+This file defines the minimum HAI engineering work needed for the paper
+and GovernedAgentBench. In plain terms: make HAI usable as the reference
+runtime in a model-agnostic benchmark without relying on Claude Code,
+private repo knowledge, real credentials, or private health rows.
+
+This is broader than taking a manifest snapshot and narrower than
+"finish HAI."
 
 ## Goal
 
-Freeze the interface a model-agnostic benchmark harness can use to
-operate HAI through a public contract.
+Engineer a paper-ready HAI runtime slice that a model-agnostic benchmark
+harness can operate through documented public interfaces.
 
 The benchmark should not depend on Claude Code, private repo knowledge,
 or MCP. It should depend on:
@@ -21,9 +25,9 @@ or MCP. It should depend on:
 - read surfaces;
 - validation and audit surfaces.
 
-## Contract Components
+## Paper-Ready HAI Components
 
-| Component | Freeze requirement |
+| Component | Paper-readiness requirement |
 |---|---|
 | Capabilities manifest | A committed `hai capabilities --json` snapshot with provenance command, source version, schema version, and generation date. |
 | Command set | Benchmark-eligible commands identified; non-agent-safe commands marked and tested as forbidden when relevant. |
@@ -106,7 +110,7 @@ Fixture categories:
 | `governance_user` | L6 refusal and forbidden mutation attempts. |
 | `drift_user` | L7 stale manifest / changed command behavior. |
 
-## Freeze Acceptance Criteria
+## Paper-Readiness Acceptance Criteria
 
 - A human can read the manifest and operate the benchmark subset without
   reading HAI internals.
@@ -135,4 +139,4 @@ Not allowed:
 - new wearable integrations;
 - HAI v1 product surfaces;
 - N-of-1 features;
-- broad CLI refactors not required by the freeze.
+- broad CLI refactors not required for the paper-ready runtime slice.

@@ -14,7 +14,7 @@ HAI operator docs under `docs/hai/`.
 |---|---|---|
 | D-PROJ-001 | The repo is a runtime-contract research repo, not a HAI product repo. | Root docs lead with the paper, GovernedAgentBench, and the runtime contract. |
 | D-PROJ-002 | The north star is governed local operation over sensitive user-owned data. | Health is a demonstrator, not the paper's topic. |
-| D-PROJ-003 | HAI remains active as the first reference runtime. | Runtime work continues only when it supports the paper, benchmark, contract freeze, or maintenance. |
+| D-PROJ-003 | HAI remains active as the first reference runtime. | Runtime work continues only when it supports the paper, benchmark, HAI paper-readiness, or maintenance. |
 | D-PROJ-004 | GovernedAgentBench is the benchmark name and artifact. | Do not revive HACO-Bench naming without a new maintainer decision. |
 | D-PROJ-005 | The paper title leads with the claim, not the benchmark. | Use "Runtime Contracts for Local Agents Over Sensitive User-Owned Data" as the working title package. |
 | D-PROJ-006 | The paper is conservative and measurement-first. | Claims are conditional on benchmark results; null results narrow the claim. |
@@ -50,7 +50,7 @@ from it.
 - The root `README.md` is research-facing.
 - HAI operator documentation lives under `docs/hai/`.
 - HAI v1 polish is subordinate unless it directly supports the paper,
-  GovernedAgentBench, contract freeze, or reproducible baselines.
+  GovernedAgentBench, HAI paper-readiness, or reproducible baselines.
 
 ## D-PROJ-002: North Star
 

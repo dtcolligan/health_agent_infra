@@ -186,7 +186,7 @@ non-maintainer use) deferred to v0.4 review.
 |---|---|
 | ~~v0.1.19~~ | **CANCELLED 2026-05-06** per CP-2U-GATE-SPLIT (`reporting/plans/post_v0_1_18/CP-2U-GATE-SPLIT.md`) + AGENTS.md D16. Foreign-user empirical scope re-tiered to opportunistic-not-blocking; W-2U-INSTALL closed (verbal-only) by post-v0.1.18 father session; W-2U-WEARABLE + W-2U-DOGFOOD deferred to v0.4 review. |
 | GovernedAgentBench MVP | **Research priority.** Frozen manifest, pilot tasks, recorded trajectories, offline scorer, and baseline report. |
-| Paper-supporting HAI contract freeze | **Research priority.** Make the public `hai` contract stable enough for benchmark tasks and reproducible baselines. |
+| HAI paper-readiness engineering | **Research priority.** Make HAI usable by the paper and benchmark through public contracts, synthetic fixtures, stable read surfaces, and reproducible baselines. |
 | v0.2.1 HAI insight ledger | Valuable HAI backlog item, but subordinate unless selected as paper-critical or benchmark-critical. |
 
 ## How to update this file

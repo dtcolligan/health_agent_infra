@@ -37,7 +37,8 @@ and documentation architecture.
 
 Until the workshop / preprint push is complete, default priority is:
 
-1. Paper-critical runtime contract documentation and stabilization.
+1. HAI paper-readiness engineering: make the reference runtime usable by
+   the paper and benchmark.
 2. GovernedAgentBench MVP: schemas, tasks, frozen manifests, scorer,
    baselines, and reports.
 3. Experiments: local models, cloud models, fine-tuned local operators,
@@ -73,15 +74,17 @@ Cold agents should read in this order:
 5. `research/runtime_contracts_paper/PAPER_FRAME.md`
 6. `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`
 7. `research/runtime_contracts_paper/PROJECT_EXECUTION_PLAN.md`
-8. `research/runtime_contracts_paper/WORK_PACKETS.md` before assigning
+8. `research/runtime_contracts_paper/HAI_PAPER_READINESS_PLAN.md` if
+   the task touches HAI runtime work
+9. `research/runtime_contracts_paper/WORK_PACKETS.md` before assigning
    implementation work
-9. `benchmarks/governed_agent_bench/README.md`
-10. `benchmarks/governed_agent_bench/BENCHMARK_SPEC.md` if the task
+10. `benchmarks/governed_agent_bench/README.md`
+11. `benchmarks/governed_agent_bench/BENCHMARK_SPEC.md` if the task
     touches benchmark design
-11. `README.md`
-12. `ROADMAP.md`
-13. `docs/hai/hai_reference_runtime.md` if the task touches HAI
-14. `docs/hai/current_system_state.md`
+12. `README.md`
+13. `ROADMAP.md`
+14. `docs/hai/hai_reference_runtime.md` if the task touches HAI
+15. `docs/hai/current_system_state.md`
 
 Historical release plans under `reporting/plans/` explain how HAI got
 here. They are not the default source of current project priority when

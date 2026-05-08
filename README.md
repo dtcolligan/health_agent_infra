@@ -19,7 +19,7 @@ the claim testable.
 
 | Artifact | Role | Status |
 |---|---|---|
-| **Runtime contract** | The intervention: capabilities manifest, typed commands, mutation classes, `agent_safe`, output schemas, proposal/commit separation, deterministic gates, policy, and audit. | Implemented in HAI; being frozen for experiments. |
+| **Runtime contract** | The intervention: capabilities manifest, typed commands, mutation classes, `agent_safe`, output schemas, proposal/commit separation, deterministic gates, policy, and audit. | Implemented in HAI; HAI is being engineered for paper use. |
 | **GovernedAgentBench** | Benchmark for contract-governed agent operation over sensitive user-owned structured data. | Scaffold exists; MVP tasks, scorer, baselines, and reports are next. |
 | **HAI** | Personal-wellness reference runtime, packaged as `health-agent-infra` and exposed through the local `hai` CLI. | Working maintainer-dogfooded runtime at source version `0.2.0`. |
 | **Paper** | Research-engineering systems/evals paper around local governed agents and model-scale reduction. | Frame locked; empirical design and benchmark buildout in progress. |
@@ -136,7 +136,8 @@ after the fact.
 Until the workshop / preprint push is complete, default priority is:
 
 1. Planning Gate 1: master execution specs and bounded work packets.
-2. Paper-critical runtime contract documentation and stabilization.
+2. HAI paper-readiness engineering: make the reference runtime usable by
+   the paper and benchmark.
 3. GovernedAgentBench MVP: schemas, tasks, frozen manifests, scorer,
    baselines, and reports.
 4. Experiments: local models, cloud models, fine-tuned local operators,
