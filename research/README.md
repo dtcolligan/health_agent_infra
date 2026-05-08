@@ -3,6 +3,10 @@
 Research-facing artifacts live here. These are separate from the HAI
 runtime package and from historical release-planning records.
 
+This is already the target owner lane for the paper. HAI implementation,
+HAI verification, and HAI release proof should be owned by `hai/` in the
+target repo shape; GovernedAgentBench should be owned by `benchmark/`.
+
 | Path | Purpose |
 |---|---|
 | `runtime_contracts_paper/PAPER_FRAME.md` | Locked paper framing note. |

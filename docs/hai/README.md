@@ -5,6 +5,11 @@ Current documentation for the HAI reference runtime. Start with
 `current_system_state.md` if you need the latest HAI runtime truth, and
 `architecture.md` if this is your first architecture read.
 
+This directory is transitional. Under the target owner-based repo shape,
+these docs move under `hai/docs/`, HAI-specific tests/evals move under
+`hai/verification/`, and HAI release proof/provenance moves under
+`hai/reporting/`.
+
 Project-wide research framing lives at
 [`../../PROJECT_FRAME.md`](../../PROJECT_FRAME.md),
 [`../../PROJECT_DECISIONS.md`](../../PROJECT_DECISIONS.md),

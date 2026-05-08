@@ -4,6 +4,10 @@ Benchmarks in this repo measure contract-governed agent operation. The
 first benchmark is GovernedAgentBench, which uses HAI as the reference
 runtime while keeping the benchmark schema separate from HAI internals.
 
+This directory is transitional. Under the target owner-based repo shape,
+GovernedAgentBench belongs under `benchmark/governed_agent_bench/`, and
+benchmark-specific tests belong under `benchmark/verification/`.
+
 Read [`../PROJECT_FRAME.md`](../PROJECT_FRAME.md),
 [`../PROJECT_DECISIONS.md`](../PROJECT_DECISIONS.md),
 [`../PROJECT_OPERATING_MODEL.md`](../PROJECT_OPERATING_MODEL.md),

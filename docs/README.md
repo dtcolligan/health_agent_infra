@@ -2,15 +2,18 @@
 
 Current public/project documentation that is not root-control material.
 
-Root-level files such as `PROJECT_FRAME.md`, `PROJECT_DECISIONS.md`,
-`PROJECT_OPERATING_MODEL.md`, `HYPOTHESES.md`, and `ROADMAP.md` remain at
-the repo root because they are the project control plane. Research
-artifacts remain under `research/`; benchmark artifacts remain under
-`benchmarks/`.
+This directory is transitional. Under the target owner-based repo shape,
+HAI documentation belongs under `hai/docs/`, project-control
+documentation belongs under `project/`, benchmark documentation belongs
+under `benchmark/`, and paper artifacts remain under `research/`. The
+project-level decision log remains
+[`../PROJECT_DECISIONS.md`](../PROJECT_DECISIONS.md) until the
+`project/` migration happens.
 
 | Path | Purpose |
 |---|---|
-| [`hai/`](hai/) | Current HAI reference-runtime documentation: operator manual, architecture, command contract, state model, domains, privacy, non-goals, extension guides, and current system state. |
+| [`hai/`](hai/) | Current HAI reference-runtime documentation: operator manual, architecture, command contract, state model, domains, privacy, non-goals, extension guides, and current system state. Target owner: `hai/docs/`. |
 
 Historical docs, launch drafts, release proofs, and cycle artifacts remain
-under [`../reporting/`](../reporting/).
+under [`../reporting/`](../reporting/) today; target owner:
+`hai/reporting/`.

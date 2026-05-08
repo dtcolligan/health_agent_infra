@@ -1,30 +1,51 @@
 # Repo map
 
-One-page orientation: what every top-level entry is, what is current
-versus historical, and where to look next. Pair with
+One-page orientation: what every top-level entry is, which owner lane it
+belongs to, what is current versus historical, and where to look next. Pair with
 [`README.md`](README.md) for the research-facing repo overview and
 [`docs/hai/hai_reference_runtime.md`](docs/hai/hai_reference_runtime.md)
 for the HAI operator manual.
+
+## Target ownership model
+
+The target top-level shape is owner-based:
+
+| Target owner | Owns |
+|---|---|
+| `project/` | Project memory, decisions, operating model, roadmap, hypotheses, repo map, and project-level alignment tests. |
+| `hai/` | HAI implementation, HAI docs, HAI verification/evals, release proof, support-lane backlog, and historical HAI provenance. |
+| `benchmark/` | GovernedAgentBench specs, schemas, tasks, manifests, scorer, baselines, reports, and benchmark-specific verification. |
+| `research/` | Paper frame, draft, prior art, claim ladder, experiment design, and release planning. |
+
+Root is for tool-discovered entrypoints and repository metadata only:
+`README.md`, `AGENTS.md`, `CLAUDE.md`, `pyproject.toml`, `uv.lock`,
+`CHANGELOG.md`, citation/license/security/contribution files, and CI
+metadata.
+
+The current physical tree is transitional. Do not infer the project
+architecture from support-function roots such as `verification/` or
+`reporting/`; those should be absorbed by their owner lanes in a future
+bounded migration.
 
 ## Top-level entries
 
 | Path | Class | What it is |
 |---|---|---|
-| [`PROJECT_FRAME.md`](PROJECT_FRAME.md) | active docs | Canonical research framing and priority order for cold agents. |
-| [`PROJECT_DECISIONS.md`](PROJECT_DECISIONS.md) | active docs | Post-reframe project decision log: research-first identity, GovernedAgentBench naming, title package, experiment scope, and documentation architecture. |
-| [`PROJECT_OPERATING_MODEL.md`](PROJECT_OPERATING_MODEL.md) | active docs | Internal operating model for the post-reframe repo: documentation gate, artifact hierarchy, decision rules, and success conditions. |
+| [`PROJECT_FRAME.md`](PROJECT_FRAME.md) | transitional project docs | Canonical research framing and priority order for cold agents. Target owner: `project/`. |
+| [`PROJECT_DECISIONS.md`](PROJECT_DECISIONS.md) | transitional project docs | Post-reframe project decision log: research-first identity, GovernedAgentBench naming, title package, experiment scope, and documentation architecture. Target owner: `project/`. |
+| [`PROJECT_OPERATING_MODEL.md`](PROJECT_OPERATING_MODEL.md) | transitional project docs | Internal operating model for the post-reframe repo: documentation gate, artifact hierarchy, decision rules, and success conditions. Target owner: `project/`. |
 | [`research/`](research/) | active research | Paper frame, draft, execution plan, and documentation-alignment audit for the runtime-contract / GovernedAgentBench direction. |
-| [`benchmarks/`](benchmarks/) | active benchmark | GovernedAgentBench scaffold: schemas, tasks, manifests, scorer, baselines, and reports. |
-| [`docs/`](docs/) | active docs | Current public/project documentation that is not root-control material. `docs/hai/` is the HAI reference-runtime documentation. |
-| [`src/`](src/health_agent_infra/) | active runtime | The `health_agent_infra` Python package: CLI, core orchestration, per-domain logic, packaged skills, packaged eval framework, the committed Garmin CSV fixture. This is the shipped wheel. |
-| [`reporting/`](reporting/) | proof + plans + frozen prototypes | HAI release proof, audit trail, historical planning, legacy docs archive, and frozen prototypes. See [`reporting/README.md`](reporting/README.md) for the four-subdir map. |
-| [`verification/`](verification/) | active tests + active evals + legacy scripts | The repo verification surface: pytest suite, eval docs/scenarios, harnesses, drift checks, and legacy verification scripts. See [`verification/README.md`](verification/README.md) for the layout, including the symlinks into local generated data. |
+| [`benchmarks/`](benchmarks/) | transitional benchmark root | GovernedAgentBench scaffold: schemas, tasks, manifests, scorer, baselines, and reports. Target owner: `benchmark/`. |
+| [`docs/`](docs/) | transitional docs root | Current docs that are not root-control material. `docs/hai/` is target-owned by `hai/`. |
+| [`src/`](src/health_agent_infra/) | transitional runtime root | The `health_agent_infra` Python package: CLI, core orchestration, per-domain logic, packaged skills, packaged eval framework, the committed Garmin CSV fixture. Target owner: `hai/`. |
+| [`reporting/`](reporting/) | transitional HAI provenance root | HAI release proof, audit trail, historical planning, legacy docs archive, and frozen prototypes. Target owner: `hai/reporting/`. |
+| [`verification/`](verification/) | transitional verification root | HAI tests/evals, benchmark tests, project doc-alignment tests, harnesses, drift checks, and legacy verification scripts. Target owners: `hai/verification/`, `benchmark/verification/`, and `project/tests/`. |
 | [`README.md`](README.md) | active docs | Research-facing repo overview, artifact map, current priority, and read-next links. |
-| [`CHANGELOG.md`](CHANGELOG.md) | active docs | Public release history. |
+| [`CHANGELOG.md`](CHANGELOG.md) | root metadata | Public release history. |
 | [`AGENTS.md`](AGENTS.md) | active docs | Agent-facing operating contract for Codex, Claude Code, and similar coding agents. |
 | [`CLAUDE.md`](CLAUDE.md) | active docs | Claude Code shim that imports `AGENTS.md` and adds Claude-specific notes. |
-| [`ARCHITECTURE.md`](ARCHITECTURE.md) | active docs | One-page architecture and links to deep docs. |
-| [`AUDIT.md`](AUDIT.md) | active docs | Release-by-release audit-cycle index. |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | transitional HAI docs | One-page HAI architecture summary and links to deep docs. Target owner: `hai/docs/`. |
+| [`AUDIT.md`](AUDIT.md) | transitional HAI reporting | Release-by-release audit-cycle index. Target owner: `hai/reporting/`. |
 | [`HYPOTHESES.md`](HYPOTHESES.md) | active docs | Current research hypotheses for runtime contracts, model scale, fine-tuning, benchmark generality, and non-clinical boundaries. |
 | [`ROADMAP.md`](ROADMAP.md) | active docs | Now / Next / Later roadmap. |
 | [`SECURITY.md`](SECURITY.md) | active docs | Vulnerability reporting and scope of trust. |
@@ -73,12 +94,15 @@ checked-in repo shape.
 
 ## Active vs historical at a glance
 
-- **Active research frame**: `PROJECT_FRAME.md`,
+- **Active project frame** (target owner `project/`): `PROJECT_FRAME.md`,
   `PROJECT_DECISIONS.md`, `PROJECT_OPERATING_MODEL.md`, `HYPOTHESES.md`,
-  `research/runtime_contracts_paper/`, and
+  `ROADMAP.md`, and `REPO_MAP.md`.
+- **Active research lane**: `research/runtime_contracts_paper/`.
+- **Active benchmark lane** (target owner `benchmark/`):
   `benchmarks/governed_agent_bench/`.
-- **Active runtime**: `src/health_agent_infra/`.
-- **Active docs**: `README.md`, `CHANGELOG.md`, `AGENTS.md`, `CLAUDE.md`,
+- **Active HAI lane** (target owner `hai/`): `src/health_agent_infra/`,
+  `docs/hai/`, HAI-specific `verification/`, and `reporting/`.
+- **Active root/tooling docs**: `README.md`, `CHANGELOG.md`, `AGENTS.md`, `CLAUDE.md`,
   `ARCHITECTURE.md`, `AUDIT.md`, `PROJECT_OPERATING_MODEL.md`,
   `HYPOTHESES.md`, `ROADMAP.md`, `SECURITY.md`, `CITATION.cff`,
   `CONTRIBUTING.md`, `REPO_MAP.md`,
@@ -101,8 +125,11 @@ checked-in repo shape.
   schedule. Use the strategic + tactical plans above.
 - **Active proof**:
   `reporting/artifacts/flagship_loop_proof/2026-04-18-multi-domain-evals/`.
-- **Active tests + evals**: `verification/tests/`, `verification/evals/`,
-  `verification/dogfood/` (the persona harness, NEW v0.1.10) — the
+- **Transitional tests + evals**: `verification/tests/`, `verification/evals/`,
+  `verification/dogfood/` (the persona harness, NEW v0.1.10). These are
+  not a permanent top-level project artifact; they should migrate by
+  owner (`hai/verification/`, `benchmark/verification/`,
+  `project/tests/`). Today, the
   packaged eval runner lives at `src/health_agent_infra/evals/`;
   `verification/evals/` retains dev-reference docs and the skill-harness
   pilot; `verification/dogfood/` drives synthetic personas through the

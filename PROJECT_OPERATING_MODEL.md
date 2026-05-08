@@ -98,25 +98,42 @@ threshold for reliable bounded operation.
 
 ## Documentation Architecture
 
-The repo should have a clear separation of concerns:
+The target repo architecture is owner-based, not
+support-function-based. Verification and reporting should live under the
+artifact they support; they are not project-level artifacts by
+themselves.
+
+Target conceptual shape:
 
 | Layer | Purpose |
 |---|---|
-| `README.md` | Public research-facing repo overview. |
-| `PROJECT_FRAME.md` | Short canonical frame and priority order. |
-| `PROJECT_DECISIONS.md` | Post-reframe decision log and locked project choices. |
-| `PROJECT_OPERATING_MODEL.md` | Internal operating model and current work gate. |
-| `HYPOTHESES.md` | Current research hypotheses, not old HAI product bets. |
-| `ROADMAP.md` | Research-first roadmap. |
-| `research/runtime_contracts_paper/` | Paper, evaluation strategy, implementation plan, and documentation audit. |
-| `benchmarks/governed_agent_bench/` | Benchmark artifact. |
-| `docs/hai/` | Current HAI reference-runtime documentation. |
-| `reporting/plans/` | HAI release history, support-lane backlog, and pre-reframe strategy provenance. |
-| `reporting/docs/` | Legacy documentation archive and launch drafts only. |
+| root | Tooling, entrypoints, and repository metadata only: `README.md`, `AGENTS.md`, `CLAUDE.md`, `pyproject.toml`, `uv.lock`, `CHANGELOG.md`, citation/license/security/contribution files, and CI metadata. |
+| `project/` | Project memory: frame, decisions, operating model, roadmap, hypotheses, repo map, and project-level doc-alignment tests. |
+| `hai/` | HAI reference runtime: implementation, HAI docs, HAI verification/evals, release proof, support-lane backlog, and historical HAI provenance. |
+| `benchmark/` | GovernedAgentBench: benchmark specs, schemas, tasks, manifests, scorer, baselines, reports, and benchmark-specific verification. |
+| `research/` | Paper lane: paper frame, draft, prior art, claim ladder, experiment design, and release-package planning. |
+
+Current physical layout is transitional:
+
+| Current path | Target owner |
+|---|---|
+| `PROJECT_FRAME.md`, `PROJECT_DECISIONS.md`, `PROJECT_OPERATING_MODEL.md`, `HYPOTHESES.md`, `ROADMAP.md`, `REPO_MAP.md` | `project/` |
+| `src/health_agent_infra/` | `hai/src/health_agent_infra/` |
+| `docs/hai/` | `hai/docs/` |
+| `ARCHITECTURE.md` | `hai/docs/` |
+| HAI-specific `verification/tests/`, `verification/evals/`, `verification/dogfood/` | `hai/verification/` |
+| `reporting/`, `AUDIT.md` | `hai/reporting/` |
+| `benchmarks/governed_agent_bench/` | `benchmark/governed_agent_bench/` |
+| Benchmark-specific verification tests | `benchmark/verification/` |
+| Project doc-alignment tests | `project/tests/` |
 
 Historical docs should not be rewritten to pretend they always had the
 new frame. Instead, their headers and indexes should say what they are:
 useful HAI provenance, not current project-wide strategy.
+
+Do not move these paths casually. The target shape should be implemented
+through a bounded migration packet that updates packaging, pytest
+discovery, CI, imports, generated-doc paths, and links together.
 
 ## Decision Rules
 
@@ -170,3 +187,6 @@ contains:
 
 These live under `research/runtime_contracts_paper/` and
 `benchmarks/governed_agent_bench/`.
+
+The documentation-alignment gate remains open until cold-start docs make
+both the target owner model and the current transitional paths explicit.

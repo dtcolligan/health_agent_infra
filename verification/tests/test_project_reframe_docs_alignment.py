@@ -22,7 +22,7 @@ def _read(rel_path: str) -> str:
 def test_project_decision_log_contains_locked_reframe_decisions() -> None:
     body = _read("PROJECT_DECISIONS.md")
 
-    for i in range(1, 12):
+    for i in range(1, 13):
         assert f"D-PROJ-{i:03d}" in body
 
     required_terms = (
@@ -36,6 +36,7 @@ def test_project_decision_log_contains_locked_reframe_decisions() -> None:
         "does not require all six HAI domains",
         "Documentation alignment",
         "reporting/` is proof/history",
+        "target repo shape is owner-based",
     )
     for term in required_terms:
         assert term in body
@@ -70,9 +71,16 @@ def test_active_docs_explain_current_vs_historical_roots() -> None:
     legacy_docs_readme = _read("reporting/docs/README.md")
     hai_docs_readme = _read("docs/hai/README.md")
 
-    for root in ("research/", "benchmarks/", "docs/hai/", "reporting/"):
+    for root in ("project/", "hai/", "benchmark/", "research/"):
         assert root in repo_map
         assert root in operating_model
+
+    for transitional_root in ("src/", "verification/", "reporting/"):
+        assert transitional_root in repo_map
+        assert "transitional" in repo_map
+
+    assert "Tooling, entrypoints, and repository metadata only" in operating_model
+    assert "target owner" in repo_map
 
     assert "Current documentation for the HAI reference runtime" in hai_docs_readme
     assert "legacy docs location" in reporting_readme

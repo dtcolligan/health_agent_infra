@@ -23,6 +23,7 @@ HAI operator docs under `docs/hai/`.
 | D-PROJ-009 | The minimum benchmark path does not require all six HAI domains. | Prioritize task families that test the contract honestly; domain breadth is support evidence. |
 | D-PROJ-010 | Documentation alignment is the current work gate. | If a cold agent would recover the old objective, fix docs before new implementation. |
 | D-PROJ-011 | Current docs and historical provenance must stay separated. | Active docs live at root, `research/`, `benchmarks/`, and `docs/hai/`; `reporting/` is proof/history. |
+| D-PROJ-012 | The target repo shape is owner-based, not support-function-based. | `project/`, `hai/`, `benchmark/`, and `research/` are the conceptual top-level lanes; root tooling files remain only because tools discover them there. |
 
 ## Open Project Decisions
 
@@ -225,3 +226,41 @@ recovers the old objective, future work will optimize the wrong target.
   frame.
 - Fix indexes and active control docs when old plans might be mistaken
   for current priority.
+
+## D-PROJ-012: Target Repository Ownership Model
+
+**Decision.** The target repo shape is owner-based:
+
+- `project/` — project memory, decisions, roadmap, operating model, and
+  repo-shape documentation.
+- `hai/` — HAI reference runtime lane: runtime implementation, HAI docs,
+  HAI verification, and HAI reporting/provenance.
+- `benchmark/` — GovernedAgentBench lane: benchmark specs, schemas,
+  tasks, scorer, baselines, reports, and benchmark verification.
+- `research/` — paper lane: paper frame, draft, prior art, claims,
+  experiment design, and release package planning.
+
+**Rationale.** Support functions such as verification and reporting are
+not first-class project artifacts. They should be owned by the artifact
+they verify or report on. The highest-level repo shape should teach the
+new objective: project frame, HAI reference runtime, benchmark
+measurement instrument, and research paper.
+
+**Current transition.** The physical tree has not yet been migrated.
+Today:
+
+- `src/health_agent_infra/`, `docs/hai/`, HAI-specific
+  `verification/`, and `reporting/` are conceptually owned by `hai/`.
+- `benchmarks/governed_agent_bench/` and benchmark-specific tests are
+  conceptually owned by `benchmark/`.
+- root project docs are conceptually owned by `project/`.
+- `pyproject.toml`, `uv.lock`, `AGENTS.md`, and `CLAUDE.md` remain at
+  root because external tools discover them there.
+
+**Implications.**
+
+- Do not treat root `verification/` or root `reporting/` as permanent
+  project-level artifacts.
+- New planning docs should state their owner lane.
+- A future file-migration packet should move files by owner, with
+  packaging, pytest, CI, and link updates scoped explicitly.

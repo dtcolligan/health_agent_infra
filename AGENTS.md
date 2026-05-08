@@ -49,11 +49,17 @@ Authoritative orientation:
   choices that should survive cold starts
 - `PROJECT_OPERATING_MODEL.md` - internal operating model, documentation
   gate, artifact hierarchy, and decision rules
+- Target owner model: root is tooling/entrypoint only; `project/`,
+  `hai/`, `benchmark/`, and `research/` are the conceptual lanes.
+  Current `src/`, `docs/hai/`, `verification/`, `reporting/`, and
+  `benchmarks/` paths are transitional until a bounded migration packet
+  moves them by owner.
 - `HYPOTHESES.md` - current research hypotheses
 - `research/runtime_contracts_paper/PAPER_FRAME.md` - locked paper frame
 - `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md` - current
   project-wide evaluation strategy
-- `benchmarks/governed_agent_bench/README.md` - benchmark scope and MVP
+- `benchmarks/governed_agent_bench/README.md` - benchmark scope and
+  measurement-readiness milestone
 - `README.md` - research-facing repo overview
 - `docs/hai/hai_reference_runtime.md` - HAI install, operator
   workflow, domains, and CLI surface

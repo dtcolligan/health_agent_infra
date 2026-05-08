@@ -116,20 +116,37 @@ The health reference runtime is explicitly non-clinical:
 This is part of the evaluated runtime contract, not a disclaimer placed
 after the fact.
 
-## Repository Map
+## Repository Shape
+
+The intended repo architecture is owner-based:
+
+| Owner lane | Purpose |
+|---|---|
+| `project/` | Project memory: frame, decisions, operating model, roadmap, hypotheses, repo map, and project-level alignment tests. |
+| `hai/` | HAI reference-runtime lane: implementation, HAI docs, HAI verification/evals, and HAI release proof/provenance. |
+| `benchmark/` | GovernedAgentBench lane: benchmark specs, schemas, tasks, scorer, baselines, reports, and benchmark verification. |
+| `research/` | Paper lane: paper frame, draft, prior art, claim ladder, experiment design, and release planning. |
+
+Root is for tooling, entrypoints, and repository metadata only:
+`README.md`, `AGENTS.md`, `CLAUDE.md`, `pyproject.toml`, `uv.lock`,
+`CHANGELOG.md`, citation/license/security/contribution files, and CI
+metadata. `AGENTS.md`, `CLAUDE.md`, `pyproject.toml`, and `uv.lock` stay
+at root because external tools discover them there.
+
+The current physical tree is transitional. The map below shows the
+current paths and their target owners.
 
 | Path | Purpose |
 |---|---|
-| [`PROJECT_FRAME.md`](PROJECT_FRAME.md) | Canonical project framing and priority order for future agents. |
-| [`PROJECT_DECISIONS.md`](PROJECT_DECISIONS.md) | Post-reframe decision log: what changed, what is locked, and what should not be reopened casually. |
-| [`PROJECT_OPERATING_MODEL.md`](PROJECT_OPERATING_MODEL.md) | Internal operating model, documentation gate, artifact hierarchy, and decision rules. |
-| [`HYPOTHESES.md`](HYPOTHESES.md) | Current research hypotheses. |
-| [`research/runtime_contracts_paper/`](research/runtime_contracts_paper/) | Paper frame, draft, implementation plan, and documentation audit. |
-| [`benchmarks/governed_agent_bench/`](benchmarks/governed_agent_bench/) | GovernedAgentBench schemas, tasks, manifests, scorer, baselines, and reports. |
-| [`src/health_agent_infra/`](src/health_agent_infra/) | HAI reference-runtime source package. |
-| [`docs/hai/`](docs/hai/) | HAI runtime/operator documentation. |
-| [`reporting/plans/`](reporting/plans/) | HAI release history, audit trail, and pre-reframe strategy docs. |
-| [`verification/`](verification/) | Pytest suite, runtime eval fixtures, drift checks, and harnesses. |
+| [`PROJECT_FRAME.md`](PROJECT_FRAME.md), [`PROJECT_DECISIONS.md`](PROJECT_DECISIONS.md), [`PROJECT_OPERATING_MODEL.md`](PROJECT_OPERATING_MODEL.md), [`HYPOTHESES.md`](HYPOTHESES.md), [`ROADMAP.md`](ROADMAP.md), [`REPO_MAP.md`](REPO_MAP.md) | Transitional project-control docs; target owner `project/`. |
+| [`research/runtime_contracts_paper/`](research/runtime_contracts_paper/) | Paper frame, draft, implementation plan, and documentation audit; target owner `research/`. |
+| [`benchmarks/governed_agent_bench/`](benchmarks/governed_agent_bench/) | GovernedAgentBench schemas, tasks, manifests, scorer, baselines, and reports; target owner `benchmark/`. |
+| [`src/health_agent_infra/`](src/health_agent_infra/) | HAI reference-runtime source package; target owner `hai/`. |
+| [`docs/hai/`](docs/hai/) | HAI runtime/operator documentation; target owner `hai/`. |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | HAI one-page architecture summary; target owner `hai/docs/`. |
+| [`reporting/`](reporting/) | HAI release history, audit trail, pre-reframe strategy docs, and proof artifacts; target owner `hai/`. |
+| [`AUDIT.md`](AUDIT.md) | HAI release-audit index; target owner `hai/reporting/`. |
+| [`verification/`](verification/) | Transitional verification root. HAI tests/evals belong under `hai/verification/`; benchmark tests belong under `benchmark/verification/`; project alignment tests belong under `project/tests/`. |
 
 ## Current Priority
 

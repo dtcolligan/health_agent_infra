@@ -33,6 +33,21 @@ and documentation architecture.
 | GovernedAgentBench | Benchmark artifact for contract-governed agent operation. | `benchmarks/governed_agent_bench/`, `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`, `research/runtime_contracts_paper/IMPLEMENTATION_PLAN.md` |
 | Paper | Research-engineering systems/evals paper. | `research/runtime_contracts_paper/`, `HYPOTHESES.md` |
 
+## Target Repo Shape
+
+The target top-level ownership model is:
+
+- `project/` — project memory and repo governance.
+- `hai/` — HAI reference runtime, HAI docs, HAI verification, and HAI
+  reporting/provenance.
+- `benchmark/` — GovernedAgentBench and its verification.
+- `research/` — paper and experiment-planning artifacts.
+
+The current physical layout has not yet been migrated. `src/`,
+`docs/hai/`, `verification/`, `reporting/`, and `benchmarks/` should be
+read as transitional paths whose target owners are documented in
+`PROJECT_OPERATING_MODEL.md` and `REPO_MAP.md`.
+
 ## Priority Order
 
 Until the workshop / preprint push is complete, default priority is:
