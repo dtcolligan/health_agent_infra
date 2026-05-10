@@ -18,6 +18,7 @@ from health_agent_infra.core.hermetic import (
 from health_agent_infra.core.refusal import (
     HAI_INVOCATION_CONTEXT_ENV,
     INVOCATION_CONTEXT_AGENT,
+    INVOCATION_CONTEXT_RULE_BASELINE,
     INVOCATION_CONTEXT_USER,
 )
 from health_agent_infra.core.runtime_mode import (
@@ -55,6 +56,30 @@ def test_agent_context_refuses_agent_safe_false_before_handler(
     assert envelope["mechanism"] == "agent_safe"
     assert envelope["output_path"] == "hai intent commit"
     assert envelope["details"]["agent_safe"] is False
+
+
+def test_rule_baseline_context_is_agent_classified(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv(
+        HAI_INVOCATION_CONTEXT_ENV,
+        INVOCATION_CONTEXT_RULE_BASELINE,
+    )
+
+    rc, stdout, stderr = _run_cli([
+        "intent",
+        "commit",
+        "--intent-id",
+        "intent_fixture_1",
+    ])
+
+    assert rc == exit_codes.USER_INPUT
+    assert stdout == ""
+    envelope = json.loads(stderr.strip())
+    assert envelope["refusal_kind"] == "agent_safe_violation"
+    assert envelope["details"]["invocation_context"] == (
+        INVOCATION_CONTEXT_RULE_BASELINE
+    )
 
 
 def test_user_context_still_reaches_w57_gate(

@@ -3201,7 +3201,8 @@ def _agent_safe_gate(args: argparse.Namespace) -> Optional[int]:
         return exit_codes.USER_INPUT
     except InvocationContextError as exc:
         print(
-            f"hai: {exc}. Set HAI_INVOCATION_CONTEXT to 'user' or 'agent'.",
+            f"hai: {exc}. Set HAI_INVOCATION_CONTEXT to 'user', "
+            "'agent', or 'rule_baseline'.",
             file=sys.stderr,
         )
         return exit_codes.USER_INPUT

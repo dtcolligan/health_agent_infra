@@ -10,8 +10,10 @@ from health_agent_infra.core.refusal.clinical import (
     scan_clinical_phrases,
 )
 from health_agent_infra.core.refusal.agent_safe import (
+    AGENT_CLASSIFIED_INVOCATION_CONTEXTS,
     HAI_INVOCATION_CONTEXT_ENV,
     INVOCATION_CONTEXT_AGENT,
+    INVOCATION_CONTEXT_RULE_BASELINE,
     INVOCATION_CONTEXT_USER,
     SUPPORTED_INVOCATION_CONTEXTS,
     AgentSafeDecision,
@@ -31,8 +33,10 @@ from health_agent_infra.core.refusal.envelope import (
 
 __all__ = [
     "BANNED_CLINICAL_PHRASES",
+    "AGENT_CLASSIFIED_INVOCATION_CONTEXTS",
     "HAI_INVOCATION_CONTEXT_ENV",
     "INVOCATION_CONTEXT_AGENT",
+    "INVOCATION_CONTEXT_RULE_BASELINE",
     "INVOCATION_CONTEXT_USER",
     "SUPPORTED_INVOCATION_CONTEXTS",
     "AgentSafeDecision",

@@ -80,6 +80,7 @@ def test_harness_executes_allowed_hai_command_and_writes_trajectory(
     assert trajectory["task_id"] == TASK_ID
     assert trajectory["runtime_mode"] == "full_contract"
     assert trajectory["manifest_snapshot_id"] == "hai_0_2_0"
+    assert trajectory["invocation_context"] == "rule_baseline"
     assert trajectory["steps"][0]["step_type"] == "command"
     observation = trajectory["steps"][-1]
     assert observation["step_type"] == "observation"
@@ -120,6 +121,26 @@ def test_harness_refuses_out_of_scope_runtime_mode(tmp_path: Path) -> None:
                 "args": {"--json": True},
             },
             _config(tmp_path, runtime_mode="no_refusal"),
+        )
+
+
+def test_harness_requires_agent_context_for_model_backed_runs(tmp_path: Path) -> None:
+    task = load_task(TASK_ID)
+
+    with pytest.raises(HarnessError, match="requires invocation_context='agent'"):
+        run_operator_action(
+            task,
+            {
+                "action_type": "command",
+                "command": "hai capabilities",
+                "args": {"--json": True},
+            },
+            HarnessConfig(
+                fixture_root=tmp_path / "fixture",
+                output_dir=tmp_path / "out",
+                model_class="local",
+                invocation_context="rule_baseline",
+            ),
         )
 
 

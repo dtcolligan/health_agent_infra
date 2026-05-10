@@ -18,10 +18,16 @@ from health_agent_infra.core.runtime_mode import (
 
 HAI_INVOCATION_CONTEXT_ENV = "HAI_INVOCATION_CONTEXT"
 INVOCATION_CONTEXT_AGENT = "agent"
+INVOCATION_CONTEXT_RULE_BASELINE = "rule_baseline"
 INVOCATION_CONTEXT_USER = "user"
 SUPPORTED_INVOCATION_CONTEXTS: tuple[str, ...] = (
     INVOCATION_CONTEXT_USER,
     INVOCATION_CONTEXT_AGENT,
+    INVOCATION_CONTEXT_RULE_BASELINE,
+)
+AGENT_CLASSIFIED_INVOCATION_CONTEXTS: tuple[str, ...] = (
+    INVOCATION_CONTEXT_AGENT,
+    INVOCATION_CONTEXT_RULE_BASELINE,
 )
 
 _MECHANISM = "agent_safe"
@@ -76,7 +82,7 @@ def evaluate_agent_safe_invocation(
     """Return the dispatch decision for one command invocation."""
 
     context = current_invocation_context(env)
-    if context != INVOCATION_CONTEXT_AGENT or agent_safe:
+    if context not in AGENT_CLASSIFIED_INVOCATION_CONTEXTS or agent_safe:
         return AgentSafeDecision(allowed=True, invocation_context=context)
 
     runtime_mode = current_runtime_mode(env)
@@ -137,7 +143,9 @@ def enforce_agent_safe_invocation(
 
 __all__ = [
     "HAI_INVOCATION_CONTEXT_ENV",
+    "AGENT_CLASSIFIED_INVOCATION_CONTEXTS",
     "INVOCATION_CONTEXT_AGENT",
+    "INVOCATION_CONTEXT_RULE_BASELINE",
     "INVOCATION_CONTEXT_USER",
     "SUPPORTED_INVOCATION_CONTEXTS",
     "AgentSafeDecision",

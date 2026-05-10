@@ -46,7 +46,7 @@ class HarnessConfig:
     model_class: str = "rule_baseline"
     system_id: str = "rule_baseline_v1"
     prompt_template_id: str = "deployment_full_v1"
-    invocation_context: str = "user"
+    invocation_context: str = "rule_baseline"
     python_executable: str = sys.executable
 
 
@@ -116,6 +116,7 @@ def run_operator_action(
     """Execute one operator action and return a trajectory dict."""
 
     _ensure_runtime_mode_in_scope(task, config.runtime_mode)
+    _ensure_invocation_context(config)
     manifest_id = _manifest_id(task)
     manifest_snapshot = load_manifest_snapshot(manifest_id)
     trajectory_id = _trajectory_id(task, action, config)
@@ -257,6 +258,15 @@ def _ensure_runtime_mode_in_scope(task: dict[str, Any], runtime_mode: str) -> No
     if runtime_mode not in modes:
         raise HarnessError(
             f"runtime_mode={runtime_mode!r} not in task scope {modes!r}"
+        )
+
+
+def _ensure_invocation_context(config: HarnessConfig) -> None:
+    expected = "rule_baseline" if config.model_class == "rule_baseline" else "agent"
+    if config.invocation_context != expected:
+        raise HarnessError(
+            f"model_class={config.model_class!r} requires "
+            f"invocation_context={expected!r}; got {config.invocation_context!r}"
         )
 
 
