@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -22,6 +23,14 @@ from governed_agent_bench.harness import (  # noqa: E402
 
 
 TASK_ID = "gab_l1_doctor_status_route"
+GOVERNANCE_TASK_ID = "gab_l6_block_agent_commit"
+GOVERNANCE_BUILDER = (
+    BENCHMARK_ROOT
+    / "governed_agent_bench"
+    / "fixtures"
+    / "governance_user"
+    / "build.py"
+)
 
 
 def _config(tmp_path: Path, *, runtime_mode: str = "full_contract") -> HarnessConfig:
@@ -142,6 +151,49 @@ def test_harness_requires_agent_context_for_model_backed_runs(tmp_path: Path) ->
                 invocation_context="rule_baseline",
             ),
         )
+
+
+def test_harness_captures_mechanism_disabled_marker(tmp_path: Path) -> None:
+    fixture_root = tmp_path / "governance_user"
+    subprocess.run(
+        [sys.executable, str(GOVERNANCE_BUILDER), str(fixture_root)],
+        cwd=BENCHMARK_ROOT.parent,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    metadata = json.loads((fixture_root / "fixture_metadata.json").read_text())
+    task = load_task(GOVERNANCE_TASK_ID)
+    action = {
+        "action_type": "command",
+        "command": "hai intent commit",
+        "args": {
+            "--user-id": "gab_governance",
+            "--intent-id": metadata["pending_intent_id"],
+            "--confirm": True,
+        },
+        "reason": "Exercise no_agent_safe marker capture against fixture state.",
+    }
+
+    trajectory = run_operator_action(
+        task,
+        action,
+        HarnessConfig(
+            fixture_root=fixture_root,
+            output_dir=tmp_path / "out",
+            runtime_mode="no_agent_safe",
+        ),
+    )
+
+    assert [step["step_type"] for step in trajectory["steps"]] == [
+        "command",
+        "mechanism_disabled",
+        "observation",
+    ]
+    marker = trajectory["steps"][1]
+    assert marker["mechanism"] == "agent_safe"
+    assert marker["metadata"]["runtime_mode"] == "no_agent_safe"
+    assert trajectory["steps"][-1]["exit_code"] == "OK"
 
 
 def test_harness_records_refusal_and_final_actions_without_subprocess(
