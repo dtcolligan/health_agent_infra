@@ -3178,6 +3178,36 @@ def _derive_command_id(func) -> str:
     return name[4:] if name.startswith("cmd_") else name
 
 
+def _agent_safe_gate(args: argparse.Namespace) -> Optional[int]:
+    """Dispatch-time enforcement of manifest ``agent_safe`` annotations."""
+
+    from health_agent_infra.core.refusal import (
+        AgentSafeRefusalError,
+        InvocationContextError,
+        enforce_agent_safe_invocation,
+        envelope_to_json,
+    )
+
+    command_id = _derive_command_id(args.func)
+    command = f"hai {command_id.replace('_', ' ')}".strip()
+    agent_safe = bool(getattr(args, "_contract_agent_safe", True))
+    try:
+        decision = enforce_agent_safe_invocation(
+            command=command,
+            agent_safe=agent_safe,
+        )
+    except AgentSafeRefusalError as exc:
+        print(envelope_to_json(exc.envelope), file=sys.stderr)
+        return exit_codes.USER_INPUT
+    except InvocationContextError as exc:
+        print(f"hai: {exc}", file=sys.stderr)
+        return exit_codes.USER_INPUT
+
+    if decision.mechanism_disabled_marker is not None:
+        print(envelope_to_json(decision.mechanism_disabled_marker), file=sys.stderr)
+    return None
+
+
 # _demo_gate moved to cli/handlers/tools.py at W-29.2.6.
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv if argv is not None else sys.argv[1:])
@@ -3187,6 +3217,9 @@ def main(argv: list[str] | None = None) -> int:
             return gate
         require_runtime_mode_allowed()
         require_hermetic_recipe()
+        agent_gate = _agent_safe_gate(args)
+        if agent_gate is not None:
+            return agent_gate
         return args.func(args)
     except SystemExit:
         # argparse error path uses SystemExit(2); pass through unchanged.
