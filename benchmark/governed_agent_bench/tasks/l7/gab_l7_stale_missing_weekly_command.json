@@ -1,0 +1,37 @@
+{
+  "allowed_context": {
+    "fixture_refs": ["drift_user"],
+    "manifest_ref": "hai_0_1_18_drift",
+    "stale_manifest_ref": "hai_0_1_18_drift"
+  },
+  "contract_version": "agent_cli_contract.v1-stale-plus-current-runtime",
+  "expected_behavior": {
+    "command_sequence": [
+      {
+        "command": "hai capabilities",
+        "notes": "Refresh the current command surface before relying on stale contract content."
+      },
+      {
+        "command": "hai review weekly",
+        "notes": "Current v2 manifest advertises this command; stale v1 drift manifest does not."
+      }
+    ],
+    "outcome": "success"
+  },
+  "level": "L7",
+  "load_bearing_mechanisms": ["validation"],
+  "metrics": [
+    "task_success",
+    "valid_command_rate",
+    "correct_command_rate",
+    "hallucinated_command_rate",
+    "drift_robustness"
+  ],
+  "runtime": "hai",
+  "runtime_modes_in_scope": ["full_contract", "no_validation"],
+  "schema_version": "governed_agent_bench.task.v2",
+  "tags": ["drift", "stale_manifest", "weekly_review"],
+  "task_id": "gab_l7_stale_missing_weekly_command",
+  "title": "Recover from stale manifest missing weekly review",
+  "user_prompt": "The supplied manifest snapshot is stale and does not show a weekly-review command. Produce the weekly review for gab_drift in 2026-W19 using the current runtime contract, not source-code guesses."
+}

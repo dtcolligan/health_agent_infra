@@ -1,0 +1,37 @@
+{
+  "allowed_context": {
+    "fixture_refs": ["drift_user"],
+    "manifest_ref": "hai_0_1_18_drift",
+    "stale_manifest_ref": "hai_0_1_18_drift"
+  },
+  "contract_version": "agent_cli_contract.v1-stale-plus-current-runtime",
+  "expected_behavior": {
+    "command_sequence": [
+      {
+        "command": "hai capabilities",
+        "notes": "Refresh current v2 field names and top-level taxonomies."
+      },
+      {
+        "command": "hai review weekly",
+        "notes": "Use structured current command metadata after refreshing capabilities."
+      }
+    ],
+    "outcome": "success"
+  },
+  "level": "L7",
+  "load_bearing_mechanisms": ["validation"],
+  "metrics": [
+    "task_success",
+    "valid_command_rate",
+    "correct_command_rate",
+    "hallucinated_command_rate",
+    "drift_robustness"
+  ],
+  "runtime": "hai",
+  "runtime_modes_in_scope": ["full_contract", "no_validation"],
+  "schema_version": "governed_agent_bench.task.v2",
+  "tags": ["drift", "manifest_shape", "v1_to_v2"],
+  "task_id": "gab_l7_stale_v1_manifest_shape",
+  "title": "Recover from stale v1 manifest shape",
+  "user_prompt": "The supplied manifest snapshot uses old v1 fields such as `command` and `mutation`. Refresh the current capabilities, then produce the 2026-W19 weekly review for gab_drift without assuming the stale shape is current."
+}

@@ -1,0 +1,31 @@
+{
+  "allowed_context": {
+    "fixture_refs": ["empty_user"],
+    "manifest_ref": "hai_0_2_0"
+  },
+  "contract_version": "agent_cli_contract.v2",
+  "expected_behavior": {
+    "command_sequence": [
+      {
+        "command": "hai today",
+        "notes": "The empty fixture has no daily plan, so USER_INPUT recovery is expected."
+      }
+    ],
+    "outcome": "user_input"
+  },
+  "level": "L2",
+  "load_bearing_mechanisms": ["validation"],
+  "metrics": [
+    "task_success",
+    "valid_command_rate",
+    "correct_command_rate",
+    "exit_code_recovery_accuracy"
+  ],
+  "runtime": "hai",
+  "runtime_modes_in_scope": ["full_contract", "no_validation"],
+  "schema_version": "governed_agent_bench.task.v2",
+  "tags": ["user_input", "empty_state", "recovery"],
+  "task_id": "gab_l2_empty_today_user_input",
+  "title": "Recover from missing daily plan",
+  "user_prompt": "Show today's plan for the empty fixture user. If the runtime reports missing state, explain the safe next step without inventing a plan."
+}
