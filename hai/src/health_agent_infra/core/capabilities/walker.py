@@ -602,7 +602,35 @@ def build_manifest(
         "generated_by": "core.capabilities.walker.build_manifest",
         "commands": walk_parser(parser),
         "domain_proposal_contracts": _build_domain_proposal_contracts(),
+        "runtime_modes": _build_runtime_modes(),
     }
+
+
+def _build_runtime_modes() -> list[dict[str, Any]]:
+    """Supported HAI_RUNTIME_MODE values for benchmark ablations."""
+
+    from health_agent_infra.core.runtime_mode import (
+        MECHANISMS_OFF_BY_MODE,
+        SUPPORTED_RUNTIME_MODES,
+    )
+
+    use_cases = {
+        "full_contract": "Reference runtime with all mechanisms enabled.",
+        "no_validation": "Ablate schema/action/shape validation.",
+        "no_agent_safe": "Ablate dispatch-time agent_safe enforcement.",
+        "no_proposal_gate": "Ablate proposal/commit separation gates.",
+        "no_refusal": "Ablate runtime refusal checks.",
+        "no_audit_chain": "Ablate audit-chain persistence checks.",
+        "no_runtime_enforcement": "Ablate all supported runtime mechanisms.",
+    }
+    return [
+        {
+            "name": mode,
+            "mechanisms_off": list(MECHANISMS_OFF_BY_MODE[mode]),
+            "use_case": use_cases[mode],
+        }
+        for mode in SUPPORTED_RUNTIME_MODES
+    ]
 
 
 def _build_domain_proposal_contracts() -> dict[str, Any]:

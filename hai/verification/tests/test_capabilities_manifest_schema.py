@@ -27,8 +27,6 @@ import json
 from contextlib import redirect_stdout
 from typing import Any
 
-import pytest
-
 from health_agent_infra.cli import main as cli_main
 
 
@@ -46,6 +44,7 @@ _TOP_LEVEL_REQUIRED: dict[str, type] = {
     "generated_by": str,
     "commands": list,
     "domain_proposal_contracts": dict,
+    "runtime_modes": list,
 }
 
 
