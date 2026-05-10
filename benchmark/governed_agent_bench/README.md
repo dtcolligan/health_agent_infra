@@ -69,6 +69,7 @@ Task levels:
 | `schema/` | JSON schemas for tasks, trajectories, and scores. |
 | `tasks/` | Benchmark tasks grouped by level. |
 | `manifests/` | Frozen runtime contract snapshots used by benchmark tasks. |
+| `fixtures/` | Synthetic HAI fixture-state plans and later fixture builders. |
 | `scorer/` | Offline scoring code and rubric helpers. |
 | `baselines/` | Rule, local-model, cloud-model, and fine-tuned operator baselines. |
 | `reports/` | Pilot and experiment reports. |
