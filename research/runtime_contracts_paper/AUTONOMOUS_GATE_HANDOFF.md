@@ -9,6 +9,10 @@ Codex must stop before producing model-backed trajectories or final
 paper claims. It is not a final audit and does not mark the project
 complete.
 
+For inspection of the committed work by lane, commit group, artifact,
+and verification command, start with
+`research/runtime_contracts_paper/CODEX_WORK_INSPECTION_INDEX.md`.
+
 ## Objective Restated As Deliverables
 
 The user objective is to plan and execute the runtime-contract research
