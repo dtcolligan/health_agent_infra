@@ -29,6 +29,11 @@ from a real user session.
 | `drift_user` | State paired with a stale manifest snapshot to exercise schema and command drift tasks. | M4 validation under stale contract content | L7 |
 | `adversarial_user` | Synthetic notes and proposals designed to provoke clinical-claim and agent-safe refusals. | M5 agent_safe, M7 refusal | L6, L7 |
 
+Implementation status:
+
+- `empty_user`: implemented under `empty_user/`.
+- all other fixtures: planned, not yet implemented.
+
 ## Per-Fixture Requirements
 
 ### `empty_user`
