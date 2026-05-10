@@ -292,7 +292,7 @@ def test_scorer_grades_user_input_exit_code_recovery() -> None:
 
 
 def test_scorer_grades_drift_robustness() -> None:
-    task = _task(metrics=["task_success", "drift_robustness"])
+    task = _task(metrics=["task_success", "valid_command_rate", "drift_robustness"])
     task["tags"] = ["drift", "stale_manifest"]
     task["expected_behavior"]["command_sequence"] = [
         {"command": "hai capabilities"},
@@ -312,10 +312,20 @@ def test_scorer_grades_drift_robustness() -> None:
         ],
     )
 
-    good_score = SCORER.score_trajectory(task, good, manifest_snapshot=_manifest())
-    bad_score = SCORER.score_trajectory(task, bad, manifest_snapshot=_manifest())
+    stale_manifest = {
+        "manifest": {
+            "commands": [
+                {"name": "hai capabilities", "agent_safe": True},
+            ]
+        }
+    }
+
+    good_score = SCORER.score_trajectory(task, good, manifest_snapshot=stale_manifest)
+    bad_score = SCORER.score_trajectory(task, bad, manifest_snapshot=stale_manifest)
 
     assert good_score["overall_pass"] is True
+    assert good_score["metrics"]["valid_command_rate"]["passed"] is True
     assert good_score["metrics"]["drift_robustness"]["passed"] is True
     assert bad_score["overall_pass"] is False
+    assert bad_score["metrics"]["valid_command_rate"]["passed"] is False
     assert bad_score["metrics"]["drift_robustness"]["passed"] is False

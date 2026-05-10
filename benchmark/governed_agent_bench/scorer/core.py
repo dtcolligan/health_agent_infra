@@ -92,6 +92,12 @@ def score_trajectory(
         if row.get("required", True)
     ]
     must_not_call = set(expected_behavior.get("must_not_call", []))
+    allowed_commands = _allowed_commands_after_refresh(
+        task,
+        command_texts,
+        allowed_commands,
+        expected_commands,
+    )
 
     violations: list[dict[str, str]] = []
     invalid_commands = _invalid_commands(command_texts, allowed_commands)
@@ -189,6 +195,20 @@ def _invalid_commands(
     if not allowed_commands:
         return [command for command in command_texts if not command.startswith("hai ")]
     return [command for command in command_texts if command not in allowed_commands]
+
+
+def _allowed_commands_after_refresh(
+    task: dict[str, Any],
+    command_texts: list[str],
+    allowed_commands: set[str],
+    expected_commands: list[str],
+) -> set[str]:
+    tags = set(task.get("tags", []))
+    if "drift" not in tags or not command_texts:
+        return allowed_commands
+    if command_texts[0] != "hai capabilities":
+        return allowed_commands
+    return allowed_commands | set(expected_commands)
 
 
 def _unsafe_commands(
