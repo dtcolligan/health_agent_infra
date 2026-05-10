@@ -19,11 +19,10 @@ The project-wide frame and decision log live at
 
 ## Current Scope
 
-This directory is the benchmark skeleton. The next milestone is
-measurement-readiness: create a benchmark that can evaluate governed
-agent operation and prove it can score known-good and known-bad
-trajectories, so it can serve as the measurement instrument for
-baselines, models, and ablations.
+This directory is the benchmark implementation space. The current
+milestone is measurement-readiness: keep the offline scorer, harness,
+synthetic fixtures, rule baseline, and report-generation path coherent
+before Dom approves any model-backed run.
 
 The implementation schedule is tracked in
 [`../../research/runtime_contracts_paper/IMPLEMENTATION_PLAN.md`](../../research/runtime_contracts_paper/IMPLEMENTATION_PLAN.md).
@@ -43,10 +42,12 @@ substrate in place:
 | Frozen manifests | 2 committed snapshots: current `manifests/hai_0_2_0.json` (`agent_cli_contract.v2`) and stale drift snapshot `manifests/hai_0_1_18_drift.json`. |
 | Fixtures | Fixture plan plus six committed synthetic builders: `empty_user`, `ready_user_minimal`, `read_surface_user`, `governance_user`, `drift_user`, and `adversarial_user`. |
 | Pilot tasks | 10 committed tasks: 2 each across L1, L2, L5, L6, and L7. |
-| Recorded trajectories | 0 committed trajectories. |
-| Scorer | MVP deterministic offline scorer implemented under `scorer/core.py`, with schema/determinism tests. |
-| Baselines | README only; no rule, local-model, cloud-model, or fine-tuned baselines yet. |
-| Reports | README only; no pilot report yet. |
+| Recorded trajectories | 10 committed hand-authored seed trajectories: one passing and one failing trajectory for each of five representative tasks. |
+| Scorer | MVP deterministic offline scorer implemented under `scorer/core.py`, with schema/determinism and known-good/known-bad tests. |
+| Harness | Model-agnostic harness implemented under `harness/`; supports structured operator actions, prompt rendering, runtime modes, hermetic subprocess execution, observation capture, and `mechanism_disabled` capture. |
+| Baselines | Deterministic no-model `rule_baseline_v1` plus offline rule-baseline ablation runner. No local, cloud, or fine-tuned model baseline has been run. |
+| Results | Evidence-table, SVG-figure, and error-taxonomy generators under `results/`; offline reproducibility command writes all derived artifacts. |
+| Docs | Operator view, scaffold view, benchmark card, and offline reproducibility guide committed. |
 
 This state is not a model-result claim. It records that offline
 measurement scaffolding now exists; hand-authored trajectories, harness
@@ -72,11 +73,19 @@ Task levels:
 | `tasks/` | Benchmark tasks grouped by level. |
 | `manifests/` | Frozen runtime contract snapshots used by benchmark tasks. |
 | `fixtures/` | Synthetic HAI fixture-state plans and later fixture builders. |
+| `prompts/` | Held-constant deployment-realistic prompt template(s). |
+| `trajectories/` | Hand-authored seed trajectories for scorer validation. |
+| `harness/` | Model-agnostic action execution and trajectory capture. |
 | `scorer/` | Offline scoring code and rubric helpers. |
 | `baselines/` | Rule, local-model, cloud-model, and fine-tuned operator baselines. |
+| `results/` | Evidence-table, figure, and error-taxonomy generation utilities. |
 | `reports/` | Pilot and experiment reports. |
+| `BENCHMARK_CARD.md` | Intended use, non-use, provenance, model-condition status, and limitations. |
 | `BENCHMARK_SPEC.md` | Benchmark object, task levels, trajectory/score anatomy, and benchmark-card requirements. |
 | `OPERATOR_HARNESS_SPEC.md` | Model-agnostic harness contract for non-Claude model evaluation. |
+| `OPERATORS_VIEW.md` | What an operator sees through the harness. |
+| `SCAFFOLD_VIEW.md` | What an experimenter sees when varying runtime modes. |
+| `REPRODUCIBILITY.md` | Offline reproducibility command and artifacts. |
 | `SCORING_SPEC.md` | Deterministic scoring metrics, violation taxonomy, pass logic, and thresholds. |
 | `TASK_AUTHORING_GUIDE.md` | How to author L1-L7 tasks safely and scoreably. |
 
@@ -90,3 +99,14 @@ Task levels:
   private health rows.
 - Known-good and known-bad trajectories produce expected pass/fail
   outcomes.
+- Every ablatable runtime mechanism M4..M8 is load-bearing in at least
+  one MVP task.
+- The no-model rule baseline can regenerate trajectories, scores,
+  evidence tables, figures, and an error taxonomy offline.
+
+## Current Gate
+
+`WP-MODEL-ROSTER-001` is the active Dom judgement gate. No
+`model_roster.md` is committed, and no model-backed trajectory should be
+produced until Dom approves a roster path or explicitly chooses a
+rule-baseline-only workshop path.
