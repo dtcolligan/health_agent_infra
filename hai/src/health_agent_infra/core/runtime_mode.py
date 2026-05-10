@@ -83,6 +83,15 @@ def mechanisms_off_for_mode(mode: str) -> tuple[str, ...]:
     return MECHANISMS_OFF_BY_MODE[mode]
 
 
+def mechanism_is_disabled(
+    mechanism: str,
+    env: Mapping[str, str] | None = None,
+) -> bool:
+    """Return whether ``mechanism`` is disabled by the current mode."""
+
+    return mechanism in mechanisms_off_for_mode(current_runtime_mode(env))
+
+
 def require_runtime_mode_allowed(env: Mapping[str, str] | None = None) -> None:
     """Reject mechanism-disabling modes outside hermetic fixture state."""
 
@@ -112,6 +121,7 @@ __all__ = [
     "RuntimeModeError",
     "SUPPORTED_RUNTIME_MODES",
     "current_runtime_mode",
+    "mechanism_is_disabled",
     "mechanisms_off_for_mode",
     "require_runtime_mode_allowed",
 ]

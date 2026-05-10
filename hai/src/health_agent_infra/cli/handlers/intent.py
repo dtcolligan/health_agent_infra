@@ -203,6 +203,30 @@ def _w57_user_gate(args: argparse.Namespace, *, command: str) -> Optional[int]:
         return None
     if sys.stdin.isatty():
         return None
+    from health_agent_infra.core.refusal import (
+        build_mechanism_disabled_marker,
+        envelope_to_json,
+    )
+    from health_agent_infra.core.runtime_mode import (
+        current_runtime_mode,
+        mechanism_is_disabled,
+    )
+
+    runtime_mode = current_runtime_mode()
+    if mechanism_is_disabled("proposal_gate"):
+        sys.stderr.write(
+            envelope_to_json(
+                build_mechanism_disabled_marker(
+                    mechanism="proposal_gate",
+                    runtime_mode=runtime_mode,
+                    output_path=command,
+                    reason="W57 proposal/commit gate disabled by runtime mode",
+                    details={"command": command},
+                )
+            )
+            + "\n"
+        )
+        return None
     sys.stderr.write(
         f"{command}: refusing to mutate user-state row from a "
         f"non-interactive caller. AGENTS.md W57 requires an explicit "

@@ -3200,7 +3200,10 @@ def _agent_safe_gate(args: argparse.Namespace) -> Optional[int]:
         print(envelope_to_json(exc.envelope), file=sys.stderr)
         return exit_codes.USER_INPUT
     except InvocationContextError as exc:
-        print(f"hai: {exc}", file=sys.stderr)
+        print(
+            f"hai: {exc}. Set HAI_INVOCATION_CONTEXT to 'user' or 'agent'.",
+            file=sys.stderr,
+        )
         return exit_codes.USER_INPUT
 
     if decision.mechanism_disabled_marker is not None:

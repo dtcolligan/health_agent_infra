@@ -28,6 +28,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 
+from health_agent_infra.core.runtime_mode import mechanism_is_disabled
 from health_agent_infra.core.schemas import DOMAIN_PROPOSAL_FIELDS
 
 
@@ -264,11 +265,12 @@ def validate_proposal_dict(data: Any, *, expected_domain: Optional[str] = None) 
     # seam. v0.1.9 B3 routes both validators through one shared sweep
     # (``check_banned_tokens_in_surfaces``) so a future surface added in
     # one place is automatically covered in the other.
-    check_banned_tokens_in_surfaces(
-        data,
-        include_follow_up=False,  # proposals carry no follow_up by contract
-        error_cls=ProposalValidationError,
-    )
+    if not mechanism_is_disabled("refusal"):
+        check_banned_tokens_in_surfaces(
+            data,
+            include_follow_up=False,  # proposals carry no follow_up by contract
+            error_cls=ProposalValidationError,
+        )
 
     # v0.1.14 W-PROV-1 — optional source-row locators. Additive,
     # backwards-compatible: proposals without `evidence_locators`

@@ -24,6 +24,7 @@ import re
 from datetime import datetime, timedelta
 from typing import Any
 
+from health_agent_infra.core.runtime_mode import mechanism_is_disabled
 from health_agent_infra.core.schemas import RECOMMENDATION_SCHEMA_VERSION
 
 
@@ -247,11 +248,12 @@ def validate_recommendation_dict(data: Any) -> None:
     # R2 — banned diagnosis-shaped tokens. Sweeps every agent-/skill-authored
     # text surface via the shared helper so proposal + recommendation
     # surfaces stay in lockstep coverage.
-    check_banned_tokens_in_surfaces(
-        data,
-        include_follow_up=True,
-        error_cls=RecommendationValidationError,
-    )
+    if not mechanism_is_disabled("refusal"):
+        check_banned_tokens_in_surfaces(
+            data,
+            include_follow_up=True,
+            error_cls=RecommendationValidationError,
+        )
 
     follow_up = data.get("follow_up")
     if not isinstance(follow_up, dict):

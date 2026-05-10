@@ -57,7 +57,7 @@ def load_capabilities() -> dict[str, dict]:
         capture_output=True, text=True, check=True,
     )
     data = json.loads(proc.stdout)
-    return {c["command"]: c for c in data["commands"]}
+    return {(c.get("name") or c["command"]): c for c in data["commands"]}
 
 
 def known_command_chains(capabilities: dict[str, dict]) -> list[str]:

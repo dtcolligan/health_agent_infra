@@ -88,6 +88,14 @@ def cmd_propose(args: argparse.Namespace) -> int:
         perform_proposal_writeback,
         validate_proposal_dict,
     )
+    from health_agent_infra.core.refusal import (
+        build_mechanism_disabled_marker,
+        envelope_to_json,
+    )
+    from health_agent_infra.core.runtime_mode import (
+        current_runtime_mode,
+        mechanism_is_disabled,
+    )
 
     data, err = _load_json_arg(
         args.proposal_json,
@@ -96,17 +104,57 @@ def cmd_propose(args: argparse.Namespace) -> int:
     )
     if err is not None:
         return err
+    runtime_mode = current_runtime_mode()
+    validation_disabled = mechanism_is_disabled("validation")
     try:
         validate_proposal_dict(data, expected_domain=args.domain)
     except ProposalValidationError as exc:
+        if exc.invariant == "no_banned_tokens" and not mechanism_is_disabled("refusal"):
+            print(
+                f"propose rejected: invariant={exc.invariant}: {exc}",
+                file=sys.stderr,
+            )
+            return exit_codes.USER_INPUT
+        if not validation_disabled:
+            print(
+                f"propose rejected: invariant={exc.invariant}: {exc}",
+                file=sys.stderr,
+            )
+            return exit_codes.USER_INPUT
         print(
-            f"propose rejected: invariant={exc.invariant}: {exc}",
+            envelope_to_json(
+                build_mechanism_disabled_marker(
+                    mechanism="validation",
+                    runtime_mode=runtime_mode,
+                    output_path="hai propose",
+                    reason="proposal validation disabled by runtime mode",
+                    details={
+                        "invariant": exc.invariant,
+                        "message": str(exc),
+                    },
+                )
+            ),
             file=sys.stderr,
         )
-        return exit_codes.USER_INPUT
     except (ValueError, KeyError) as exc:
-        print(f"propose rejected: {exc}", file=sys.stderr)
-        return exit_codes.USER_INPUT
+        if not validation_disabled:
+            print(f"propose rejected: {exc}", file=sys.stderr)
+            return exit_codes.USER_INPUT
+        print(
+            envelope_to_json(
+                build_mechanism_disabled_marker(
+                    mechanism="validation",
+                    runtime_mode=runtime_mode,
+                    output_path="hai propose",
+                    reason="proposal validation disabled by runtime mode",
+                    details={
+                        "error_type": type(exc).__name__,
+                        "message": str(exc),
+                    },
+                )
+            ),
+            file=sys.stderr,
+        )
 
     # Pre-flight the --replace contract against the DB before any
     # append to JSONL. A rejected revise must not leave a JSONL line
@@ -442,6 +490,12 @@ def cmd_synthesize(args: argparse.Namespace) -> int:
         return exit_codes.INTERNAL
     finally:
         conn.close()
+
+    if result.mechanism_disabled_markers:
+        from health_agent_infra.core.refusal import envelope_to_json
+
+        for marker in result.mechanism_disabled_markers:
+            print(envelope_to_json(marker), file=sys.stderr)
 
     _emit_json(result.to_dict())
     return exit_codes.OK

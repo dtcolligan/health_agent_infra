@@ -44,13 +44,19 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from typing import Any, Optional
 
 from health_agent_infra.core.config import load_thresholds
+from health_agent_infra.core.refusal import build_mechanism_disabled_marker
+from health_agent_infra.core.runtime_mode import (
+    current_runtime_mode,
+    mechanism_is_disabled,
+)
 from health_agent_infra.core.validate import (
     RecommendationValidationError,
+    check_banned_tokens_in_surfaces,
     validate_recommendation_dict,
 )
 from health_agent_infra.core.schemas import (
@@ -165,9 +171,10 @@ class SynthesisResult:
     phase_a_firings: list[XRuleFiring]
     phase_b_firings: list[XRuleFiring]
     superseded_prior: Optional[str] = None
+    mechanism_disabled_markers: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload = {
             "daily_plan_id": self.daily_plan_id,
             "recommendation_ids": list(self.recommendation_ids),
             "proposal_ids": list(self.proposal_ids),
@@ -175,6 +182,11 @@ class SynthesisResult:
             "phase_b_firings": [f.to_dict() for f in self.phase_b_firings],
             "superseded_prior": self.superseded_prior,
         }
+        if self.mechanism_disabled_markers:
+            payload["mechanism_disabled_markers"] = list(
+                self.mechanism_disabled_markers
+            )
+        return payload
 
 
 # ---------------------------------------------------------------------------
@@ -1072,15 +1084,78 @@ def run_synthesis(
     #   - skill overlay uncertainty (same path)
     #   - action_detail (proposal + Phase B mutations)
     #   - follow_up.review_question (curated template OR skill overlay)
+    runtime_mode = current_runtime_mode()
+    validation_disabled = mechanism_is_disabled("validation")
+    refusal_disabled = mechanism_is_disabled("refusal")
+    mechanism_disabled_markers: list[dict[str, Any]] = []
+    validation_marker_emitted = False
+    refusal_marker_emitted = False
     for rec in final_recommendations:
         try:
             validate_recommendation_dict(rec)
         except RecommendationValidationError as exc:
-            raise SynthesisError(
-                f"recommendation {rec.get('recommendation_id')!r} for domain "
-                f"{rec.get('domain')!r} failed safety validation "
-                f"(invariant={exc.invariant}): {exc}"
-            ) from exc
+            if exc.invariant == "no_banned_tokens" and not refusal_disabled:
+                raise SynthesisError(
+                    f"recommendation {rec.get('recommendation_id')!r} "
+                    f"for domain {rec.get('domain')!r} failed safety "
+                    f"validation (invariant={exc.invariant}): {exc}"
+                ) from exc
+            if not validation_disabled:
+                raise SynthesisError(
+                    f"recommendation {rec.get('recommendation_id')!r} "
+                    f"for domain {rec.get('domain')!r} failed safety "
+                    f"validation (invariant={exc.invariant}): {exc}"
+                ) from exc
+            if not validation_marker_emitted:
+                mechanism_disabled_markers.append(
+                    build_mechanism_disabled_marker(
+                        mechanism="validation",
+                        runtime_mode=runtime_mode,
+                        output_path="hai synthesize",
+                        reason=(
+                            "recommendation validation disabled by runtime mode"
+                        ),
+                        details={
+                            "invariant": exc.invariant,
+                            "message": str(exc),
+                        },
+                    )
+                )
+                validation_marker_emitted = True
+        if validation_disabled and not refusal_disabled:
+            try:
+                check_banned_tokens_in_surfaces(
+                    rec,
+                    include_follow_up=True,
+                    error_cls=RecommendationValidationError,
+                )
+            except RecommendationValidationError as exc:
+                raise SynthesisError(
+                    f"recommendation {rec.get('recommendation_id')!r} "
+                    f"for domain {rec.get('domain')!r} failed safety "
+                    f"validation (invariant={exc.invariant}): {exc}"
+                ) from exc
+        if refusal_disabled and not refusal_marker_emitted:
+            try:
+                check_banned_tokens_in_surfaces(
+                    rec,
+                    include_follow_up=True,
+                    error_cls=RecommendationValidationError,
+                )
+            except RecommendationValidationError as exc:
+                mechanism_disabled_markers.append(
+                    build_mechanism_disabled_marker(
+                        mechanism="refusal",
+                        runtime_mode=runtime_mode,
+                        output_path="hai synthesize",
+                        reason="clinical-boundary refusal disabled by runtime mode",
+                        details={
+                            "invariant": exc.invariant,
+                            "message": str(exc),
+                        },
+                    )
+                )
+                refusal_marker_emitted = True
 
     proposal_ids = [p["proposal_id"] for p in proposals]
     recommendation_ids = [r["recommendation_id"] for r in final_recommendations]
@@ -1234,45 +1309,64 @@ def run_synthesis(
         # so a card-write failure rolls back the daily_plan +
         # recommendation_log + planned_recommendation rows together.
         # Acceptance #2 + #3 (PLAN §2.B).
-        firing_ids_by_domain = _collect_x_rule_firing_ids_by_domain(
-            conn, daily_plan_id=daily_plan_id,
-        )
-        proposal_id_by_domain = {
-            p["domain"]: p["proposal_id"] for p in proposals
-        }
-        planned_id_by_domain = {
-            r["domain"]: r["planned_id"] for r in planned_rows
-        }
-        for recommendation in final_recommendations:
-            domain = recommendation.get("domain", "recovery")
-            accepted, raw = _split_locators_by_lane(
-                recommendation.get("evidence_locators") or []
+        if mechanism_is_disabled("audit_chain"):
+            mechanism_disabled_markers.append(
+                build_mechanism_disabled_marker(
+                    mechanism="audit_chain",
+                    runtime_mode=runtime_mode,
+                    output_path="hai synthesize",
+                    reason=(
+                        "recommendation evidence-card emission disabled "
+                        "by runtime mode"
+                    ),
+                    details={
+                        "recommendation_ids": [
+                            r["recommendation_id"]
+                            for r in final_recommendations
+                        ],
+                    },
+                )
             )
-            proposal_id = proposal_id_by_domain.get(domain)
-            planned_id = planned_id_by_domain.get(domain)
-            payload = build_evidence_card_payload(
-                recommendation,
-                accepted_state_rows=accepted,
-                raw_source_refs=raw,
-                proposal_log_ids=[proposal_id] if proposal_id else [],
-                planned_ids=[planned_id] if planned_id else [],
-                recommendation_log_ids=[recommendation["recommendation_id"]],
-                x_rule_firing_ids=firing_ids_by_domain.get(domain, []),
+        else:
+            firing_ids_by_domain = _collect_x_rule_firing_ids_by_domain(
+                conn, daily_plan_id=daily_plan_id,
             )
-            project_evidence_card(
-                conn,
-                card_id=f"card_{recommendation['recommendation_id']}",
-                daily_plan_id=daily_plan_id,
-                recommendation_id=recommendation["recommendation_id"],
-                planned_id=planned_id_by_domain.get(domain),
-                proposal_id=proposal_id_by_domain.get(domain),
-                user_id=recommendation["user_id"],
-                for_date=recommendation["for_date"],
-                domain=domain,
-                payload=payload,
-                agent_version=agent_version,
-                commit_after=False,
-            )
+            proposal_id_by_domain = {
+                p["domain"]: p["proposal_id"] for p in proposals
+            }
+            planned_id_by_domain = {
+                r["domain"]: r["planned_id"] for r in planned_rows
+            }
+            for recommendation in final_recommendations:
+                domain = recommendation.get("domain", "recovery")
+                accepted, raw = _split_locators_by_lane(
+                    recommendation.get("evidence_locators") or []
+                )
+                proposal_id = proposal_id_by_domain.get(domain)
+                planned_id = planned_id_by_domain.get(domain)
+                payload = build_evidence_card_payload(
+                    recommendation,
+                    accepted_state_rows=accepted,
+                    raw_source_refs=raw,
+                    proposal_log_ids=[proposal_id] if proposal_id else [],
+                    planned_ids=[planned_id] if planned_id else [],
+                    recommendation_log_ids=[recommendation["recommendation_id"]],
+                    x_rule_firing_ids=firing_ids_by_domain.get(domain, []),
+                )
+                project_evidence_card(
+                    conn,
+                    card_id=f"card_{recommendation['recommendation_id']}",
+                    daily_plan_id=daily_plan_id,
+                    recommendation_id=recommendation["recommendation_id"],
+                    planned_id=planned_id_by_domain.get(domain),
+                    proposal_id=proposal_id_by_domain.get(domain),
+                    user_id=recommendation["user_id"],
+                    for_date=recommendation["for_date"],
+                    domain=domain,
+                    payload=payload,
+                    agent_version=agent_version,
+                    commit_after=False,
+                )
 
         conn.commit()
     except Exception:
@@ -1286,6 +1380,7 @@ def run_synthesis(
         phase_a_firings=phase_a_firings,
         phase_b_firings=phase_b_firings,
         superseded_prior=superseded_prior,
+        mechanism_disabled_markers=mechanism_disabled_markers,
     )
 
 
