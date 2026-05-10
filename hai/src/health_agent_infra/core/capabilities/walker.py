@@ -11,6 +11,7 @@ The manifest is a dict:
           "command": "hai pull",
           "description": "...",
           "mutation": "writes-sync-log",
+          "mutation_class": "writes-sync-log",
           "idempotent": "yes",
           "json_output": "default",
           "exit_codes": ["OK", "USER_INPUT", "TRANSIENT"],
@@ -50,6 +51,18 @@ MUTATION_CLASSES: frozenset[str] = frozenset({
     "writes-credentials", # OS keyring writes (hai auth garmin)
     "interactive",        # requires live human input (hai init)
 })
+
+MUTATION_CLASS_DESCRIPTIONS: dict[str, str] = {
+    "read-only": "Does not persist HAI runtime state.",
+    "writes-sync-log": "Writes pull/sync provenance without committing a plan.",
+    "writes-audit-log": "Writes audit-log events outside primary state rows.",
+    "writes-state": "Writes primary local HAI state.",
+    "writes-memory": "Writes user-memory rows in local HAI state.",
+    "writes-skills-dir": "Copies packaged skill files to the configured skills directory.",
+    "writes-config": "Writes local HAI configuration files.",
+    "writes-credentials": "Writes or removes credentials through the configured credential store.",
+    "interactive": "Requires live human input and is not model-operated.",
+}
 
 IDEMPOTENCY: frozenset[str] = frozenset({
     "yes",                  # same inputs → same state after every call
@@ -362,10 +375,12 @@ def _row_for_leaf(
         or _help_text_from_parent(parser)
         or ""
     )
+    mutation = defaults.get("_contract_mutation")
     row: dict[str, Any] = {
         "command": command,
         "description": description.strip() if isinstance(description, str) else "",
-        "mutation": defaults.get("_contract_mutation"),
+        "mutation": mutation,
+        "mutation_class": mutation,
         "idempotent": defaults.get("_contract_idempotent"),
         "json_output": defaults.get("_contract_json_output"),
         "exit_codes": list(defaults.get("_contract_exit_codes") or ()),
@@ -600,11 +615,24 @@ def build_manifest(
         "schema_version": SCHEMA_VERSION,
         "hai_version": hai_version or _PACKAGE_VERSION,
         "generated_by": "core.capabilities.walker.build_manifest",
+        "mutation_classes": _build_mutation_classes(),
         "commands": walk_parser(parser),
         "domain_proposal_contracts": _build_domain_proposal_contracts(),
         "refusals": _build_refusals(),
         "runtime_modes": _build_runtime_modes(),
     }
+
+
+def _build_mutation_classes() -> list[dict[str, str]]:
+    """Mutation-class vocabulary used by per-command annotations."""
+
+    return [
+        {
+            "name": name,
+            "description": MUTATION_CLASS_DESCRIPTIONS[name],
+        }
+        for name in sorted(MUTATION_CLASSES)
+    ]
 
 
 def _build_refusals() -> list[dict[str, str]]:

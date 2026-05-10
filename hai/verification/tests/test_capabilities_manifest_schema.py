@@ -42,6 +42,7 @@ _TOP_LEVEL_REQUIRED: dict[str, type] = {
     "hai_version": str,
     "schema_version": str,
     "generated_by": str,
+    "mutation_classes": list,
     "commands": list,
     "domain_proposal_contracts": dict,
     "refusals": list,
@@ -54,6 +55,7 @@ _COMMAND_REQUIRED: dict[str, Any] = {
     "description": str,
     "flags": list,
     "mutation": str,
+    "mutation_class": str,
     "agent_safe": bool,
     "idempotent": str,
     "json_output": str,         # vocabulary: "default" | "json_only" | "off"

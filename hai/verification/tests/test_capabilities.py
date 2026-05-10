@@ -112,8 +112,8 @@ def test_manifest_rows_have_stable_keys():
     # emitted when an annotation supplied them — walked over via a
     # subset check rather than strict equality.
     required_keys = {
-        "command", "description", "mutation", "idempotent",
-        "json_output", "exit_codes", "agent_safe", "flags",
+        "command", "description", "mutation", "mutation_class",
+        "idempotent", "json_output", "exit_codes", "agent_safe", "flags",
     }
     optional_keys = {"output_schema", "preconditions"}
     allowed_keys = required_keys | optional_keys
@@ -136,6 +136,15 @@ def test_every_row_value_is_in_the_allowed_enum():
         cmd = row["command"]
         assert row["mutation"] in MUTATION_CLASSES, (
             f"{cmd}: mutation={row['mutation']!r} not in allowed set"
+        )
+        assert row["mutation_class"] in MUTATION_CLASSES, (
+            f"{cmd}: mutation_class={row['mutation_class']!r} "
+            f"not in allowed set"
+        )
+        assert row["mutation_class"] == row["mutation"], (
+            f"{cmd}: mutation_class should alias mutation until the "
+            "agent_cli_contract.v2 vocabulary-alignment packet removes "
+            "the legacy mutation field"
         )
         assert row["idempotent"] in IDEMPOTENCY, (
             f"{cmd}: idempotent={row['idempotent']!r} not in allowed set"
