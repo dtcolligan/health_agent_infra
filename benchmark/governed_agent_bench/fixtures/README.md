@@ -33,6 +33,7 @@ Implementation status:
 
 - `empty_user`: implemented under `empty_user/`.
 - `ready_user_minimal`: implemented under `ready_user_minimal/`.
+- `read_surface_user`: implemented under `read_surface_user/`.
 - all other fixtures: planned, not yet implemented.
 
 ## Per-Fixture Requirements
