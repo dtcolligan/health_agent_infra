@@ -6,6 +6,7 @@ The manifest is a dict:
       "schema_version": "agent_cli_contract.v1",
       "hai_version": "<package version>",
       "generated_by": "core.capabilities.walker.build_manifest",
+      "exit_codes": {"OK": "...", "USER_INPUT": "..."},
       "commands": [
         {
           "command": "hai pull",
@@ -105,7 +106,36 @@ MIGRATED_EXIT_CODES: frozenset[str] = frozenset({
     "OK", "USER_INPUT", "TRANSIENT", "NOT_FOUND", "INTERNAL",
 })
 
-ALLOWED_EXIT_CODES: frozenset[str] = MIGRATED_EXIT_CODES | {"LEGACY_0_2"}
+EXIT_CODE_DESCRIPTIONS: dict[str, str] = {
+    "OK": "Command completed successfully.",
+    "USER_INPUT": (
+        "The invocation, supplied data, credentials, or caller-controlled "
+        "state precondition needs user action."
+    ),
+    "TRANSIENT": (
+        "External dependency or temporary runtime condition may succeed "
+        "after retry/backoff."
+    ),
+    "NOT_FOUND": "Well-formed target identifier was not present in local state.",
+    "INTERNAL": (
+        "Runtime invariant failed; indicates a bug rather than a caller error."
+    ),
+    "LEGACY_0_2": (
+        "Legacy handler still reports only the historical success/failure "
+        "shape; retained for manifest honesty until fully migrated."
+    ),
+}
+
+EXIT_CODE_ORDER: tuple[str, ...] = (
+    "OK",
+    "USER_INPUT",
+    "TRANSIENT",
+    "NOT_FOUND",
+    "INTERNAL",
+    "LEGACY_0_2",
+)
+
+ALLOWED_EXIT_CODES: frozenset[str] = frozenset(EXIT_CODE_DESCRIPTIONS)
 
 
 # The argparse-defaults keys we own. Prefix with underscore so they
@@ -616,6 +646,7 @@ def build_manifest(
         "hai_version": hai_version or _PACKAGE_VERSION,
         "generated_by": "core.capabilities.walker.build_manifest",
         "mutation_classes": _build_mutation_classes(),
+        "exit_codes": _build_exit_codes(),
         "commands": walk_parser(parser),
         "domain_proposal_contracts": _build_domain_proposal_contracts(),
         "refusals": _build_refusals(),
@@ -633,6 +664,12 @@ def _build_mutation_classes() -> list[dict[str, str]]:
         }
         for name in sorted(MUTATION_CLASSES)
     ]
+
+
+def _build_exit_codes() -> dict[str, str]:
+    """Exit-code vocabulary used by per-command annotations."""
+
+    return {name: EXIT_CODE_DESCRIPTIONS[name] for name in EXIT_CODE_ORDER}
 
 
 def _build_refusals() -> list[dict[str, str]]:

@@ -43,6 +43,7 @@ _TOP_LEVEL_REQUIRED: dict[str, type] = {
     "schema_version": str,
     "generated_by": str,
     "mutation_classes": list,
+    "exit_codes": dict,
     "commands": list,
     "domain_proposal_contracts": dict,
     "refusals": list,
