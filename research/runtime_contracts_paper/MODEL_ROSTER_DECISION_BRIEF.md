@@ -45,6 +45,9 @@ After this approval, Codex may author and commit
 Only then may Codex implement adapters or execute runs within the
 approved scope.
 
+The machine-readable roster fields are governed by
+`benchmark/governed_agent_bench/schema/model_roster.schema.json`.
+
 ### Path B: Rule-Baseline-Only Workshop Package
 
 Choose this path if the workshop submission should make a narrower T0
@@ -74,7 +77,7 @@ immutable entry per condition with these fields:
 | `condition_id` | Stable per-model/run condition identifier. |
 | `model_family` | Family name, such as Llama, Qwen, Mistral, Claude, GPT, or other approved family. |
 | `model_id` | Exact model identifier or local artifact name. |
-| `model_class` | `local_lm`, `cloud_lm`, `fine_tuned_local_lm`, or another predeclared class. |
+| `model_class` | `local`, `cloud`, or `fine_tuned_local`. |
 | `provider` | Local runtime or approved provider name. |
 | `provider_snapshot_date` | Date used to freeze provider or model-card metadata. |
 | `model_card_snapshot` | URL, file path, or documented absence. |

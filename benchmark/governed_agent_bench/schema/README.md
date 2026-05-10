@@ -1,5 +1,11 @@
 # Benchmark Schemas
 
+`model_roster.schema.json` defines the machine-readable fields required
+inside the predeclared `benchmark/governed_agent_bench/model_roster.md`
+gate artifact. It does not choose models and does not authorize model
+runs. A roster becomes valid only after Dom explicitly approves the
+model, compute, provider, cost, and data-boundary fields it records.
+
 `operator_action.schema.json` defines the structured JSON object a model
 emits for one harness turn. It is narrower than a trajectory step:
 the harness validates the action, executes or records it, then appends

@@ -1,0 +1,386 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/governed-agent-bench/model_roster.schema.json",
+  "title": "GovernedAgentBench Model Roster",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "roster_id",
+    "roster_file",
+    "hash_algorithm",
+    "hash_scope",
+    "status",
+    "approved_by",
+    "approved_at",
+    "decision_path",
+    "scope",
+    "conditions",
+    "immutability_rule"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "governed_agent_bench.model_roster.v1"
+    },
+    "roster_id": {
+      "type": "string",
+      "pattern": "^roster_v[0-9]+$"
+    },
+    "roster_file": {
+      "const": "benchmark/governed_agent_bench/model_roster.md"
+    },
+    "hash_algorithm": {
+      "const": "sha256"
+    },
+    "hash_scope": {
+      "const": "entire_model_roster_md_file_bytes"
+    },
+    "status": {
+      "const": "predeclared"
+    },
+    "approved_by": {
+      "const": "Dom"
+    },
+    "approved_at": {
+      "type": "string",
+      "pattern": "^20[0-9]{2}-[0-9]{2}-[0-9]{2}$"
+    },
+    "decision_path": {
+      "const": "predeclared_model_roster"
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "data_boundary",
+        "private_data_allowed",
+        "cloud_or_paid_api_allowed",
+        "local_download_allowed",
+        "notes"
+      ],
+      "properties": {
+        "data_boundary": {
+          "const": "synthetic_governed_agent_bench_fixtures_only"
+        },
+        "private_data_allowed": {
+          "const": false
+        },
+        "cloud_or_paid_api_allowed": {
+          "type": "boolean"
+        },
+        "local_download_allowed": {
+          "type": "boolean"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "conditions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/condition"
+      }
+    },
+    "immutability_rule": {
+      "const": "Entries are immutable after the first model-backed trajectory; additions require a new roster_id."
+    }
+  },
+  "$defs": {
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "approval_id",
+        "approved_by",
+        "approved_at",
+        "approved_scope"
+      ],
+      "properties": {
+        "approval_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "approved_by": {
+          "const": "Dom"
+        },
+        "approved_at": {
+          "type": "string",
+          "pattern": "^20[0-9]{2}-[0-9]{2}-[0-9]{2}$"
+        },
+        "approved_scope": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "condition_id",
+        "system_id",
+        "model_class",
+        "model_family",
+        "model_id",
+        "provider",
+        "provider_snapshot_date",
+        "model_card_snapshot",
+        "parameter_count",
+        "quantization",
+        "weights_source",
+        "compute_boundary",
+        "cost_boundary",
+        "data_boundary",
+        "decoding_settings",
+        "prompt_id",
+        "manifest_id",
+        "runtime_modes",
+        "failure_reporting"
+      ],
+      "properties": {
+        "condition_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_]*$"
+        },
+        "system_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model_class": {
+          "type": "string",
+          "enum": [
+            "local",
+            "cloud",
+            "fine_tuned_local"
+          ]
+        },
+        "model_family": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "provider_snapshot_date": {
+          "type": "string",
+          "pattern": "^20[0-9]{2}-[0-9]{2}-[0-9]{2}$"
+        },
+        "model_card_snapshot": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parameter_count": {
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "quantization": {
+          "type": "string",
+          "minLength": 1
+        },
+        "weights_source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "compute_boundary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "hardware",
+            "runtime",
+            "max_wall_time_minutes",
+            "network_access"
+          ],
+          "properties": {
+            "hardware": {
+              "type": "string",
+              "minLength": 1
+            },
+            "runtime": {
+              "type": "string",
+              "minLength": 1
+            },
+            "max_wall_time_minutes": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "network_access": {
+              "type": "boolean"
+            }
+          }
+        },
+        "cost_boundary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "budget_type",
+            "max_cost_usd",
+            "billing_boundary"
+          ],
+          "properties": {
+            "budget_type": {
+              "type": "string",
+              "enum": [
+                "local_only_no_paid_api",
+                "approved_cloud_budget"
+              ]
+            },
+            "max_cost_usd": {
+              "type": "number",
+              "minimum": 0
+            },
+            "billing_boundary": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "data_boundary": {
+          "const": "synthetic_governed_agent_bench_fixtures_only"
+        },
+        "decoding_settings": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "temperature",
+            "top_p",
+            "max_tokens",
+            "seed"
+          ],
+          "properties": {
+            "temperature": {
+              "type": "number",
+              "minimum": 0
+            },
+            "top_p": {
+              "oneOf": [
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                {
+                  "const": "not_applicable"
+                }
+              ]
+            },
+            "max_tokens": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "seed": {
+              "oneOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "const": "provider_does_not_support_seed"
+                }
+              ]
+            }
+          }
+        },
+        "prompt_id": {
+          "const": "deployment_full_v1"
+        },
+        "manifest_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "runtime_modes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "full_contract",
+              "no_validation",
+              "no_agent_safe",
+              "no_proposal_gate",
+              "no_refusal",
+              "no_audit_chain",
+              "no_runtime_enforcement"
+            ]
+          }
+        },
+        "failure_reporting": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "timeout",
+            "refusal",
+            "invalid_json",
+            "adapter_failure"
+          ],
+          "properties": {
+            "timeout": {
+              "const": "reportable_outcome"
+            },
+            "refusal": {
+              "const": "reportable_outcome"
+            },
+            "invalid_json": {
+              "const": "reportable_outcome"
+            },
+            "adapter_failure": {
+              "const": "reportable_outcome"
+            }
+          }
+        },
+        "local_compute_approval": {
+          "$ref": "#/$defs/approval"
+        },
+        "cloud_approval": {
+          "$ref": "#/$defs/approval"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "model_class": {
+                "enum": [
+                  "local",
+                  "fine_tuned_local"
+                ]
+              }
+            },
+            "required": [
+              "model_class"
+            ]
+          },
+          "then": {
+            "required": [
+              "local_compute_approval"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "model_class": {
+                "const": "cloud"
+              }
+            },
+            "required": [
+              "model_class"
+            ]
+          },
+          "then": {
+            "required": [
+              "cloud_approval"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
