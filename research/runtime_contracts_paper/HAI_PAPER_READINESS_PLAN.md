@@ -56,7 +56,7 @@ Required envelope fields:
   "generated_by": "hai capabilities --json",
   "source_commit": "<git commit hash>",
   "hai_version": "0.2.0",
-  "contract_schema_version": "agent_cli_contract.v1",
+  "contract_schema_version": "agent_cli_contract.v2",
   "manifest": {}
 }
 ```

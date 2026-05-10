@@ -35,19 +35,20 @@ The operational benchmark specs are:
 
 ## Current State
 
-As of 2026-05-08, this directory is intentionally a scaffold:
+As of 2026-05-10, this directory has its first frozen HAI manifest:
 
 | Surface | Current state |
 |---|---|
-| Frozen manifests | 0 frozen manifests / 0 committed snapshots. First planned snapshot: `manifests/hai_0_2_0.json`. |
+| Frozen manifests | 1 committed snapshot: `manifests/hai_0_2_0.json` (`agent_cli_contract.v2`). |
 | Pilot tasks | 0 committed tasks. MVP target: at least 10 across L1, L2, L5, L6, and L7. |
 | Recorded trajectories | 0 committed trajectories. |
 | Scorer | README and schemas only; offline scoring code not yet implemented. |
 | Baselines | README only; no rule, local-model, cloud-model, or fine-tuned baselines yet. |
 | Reports | README only; no pilot report yet. |
 
-This empty state is not a validity claim. It records that Planning Gate 1
-currently precedes benchmark task authoring.
+This early state is not a validity claim. It records that the frozen
+manifest now exists, while benchmark task authoring still follows the
+planning gate.
 
 Task levels:
 
