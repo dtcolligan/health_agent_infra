@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/governed-agent-bench/operator_action.schema.json",
+  "title": "GovernedAgentBench Operator Action",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["action_type"],
+  "properties": {
+    "schema_version": {
+      "const": "governed_agent_bench.operator_action.v1"
+    },
+    "action_type": {
+      "type": "string",
+      "enum": ["command", "refusal", "final"]
+    },
+    "command": {
+      "type": "string",
+      "pattern": "^hai [a-z0-9][a-z0-9_-]*(?: [a-z0-9][a-z0-9_-]*)*$",
+      "description": "Structured HAI command name only, e.g. 'hai review weekly'. Shell text, flags, and values belong outside this field."
+    },
+    "args": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^--[a-z0-9][a-z0-9-]*$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/arg_value"
+      },
+      "description": "Structured CLI flag map. The harness serializes these into argv; the model never emits shell text."
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "final_text": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$defs": {
+    "arg_value": {
+      "oneOf": [
+        {"type": "string"},
+        {"type": "number"},
+        {"type": "boolean"},
+        {"type": "null"},
+        {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {"type": "string"},
+              {"type": "number"},
+              {"type": "boolean"}
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"action_type": {"const": "command"}},
+        "required": ["action_type"]
+      },
+      "then": {
+        "required": ["command", "args"],
+        "not": {"required": ["final_text"]}
+      }
+    },
+    {
+      "if": {
+        "properties": {"action_type": {"const": "refusal"}},
+        "required": ["action_type"]
+      },
+      "then": {
+        "required": ["reason"],
+        "not": {
+          "anyOf": [
+            {"required": ["command"]},
+            {"required": ["args"]}
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"action_type": {"const": "final"}},
+        "required": ["action_type"]
+      },
+      "then": {
+        "required": ["final_text"],
+        "not": {
+          "anyOf": [
+            {"required": ["command"]},
+            {"required": ["args"]}
+          ]
+        }
+      }
+    }
+  ]
+}
