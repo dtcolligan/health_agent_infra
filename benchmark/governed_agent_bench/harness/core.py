@@ -116,55 +116,83 @@ def run_operator_action(
 ) -> dict[str, Any]:
     """Execute one operator action and return a trajectory dict."""
 
+    return run_operator_actions(
+        task,
+        [action],
+        config,
+        write_trajectory=write_trajectory,
+    )
+
+
+def run_operator_actions(
+    task: dict[str, Any],
+    actions: list[dict[str, Any]],
+    config: HarnessConfig,
+    *,
+    write_trajectory: bool = True,
+) -> dict[str, Any]:
+    """Execute an ordered action sequence and return one trajectory dict."""
+
     _ensure_runtime_mode_in_scope(task, config.runtime_mode)
     _ensure_invocation_context(config)
+    if not actions:
+        raise HarnessError("at least one operator action is required")
     manifest_id = _manifest_id(task)
     manifest_snapshot = load_manifest_snapshot(manifest_id)
     prompt = render_prompt(task, manifest_snapshot, config.prompt_template_id)
-    trajectory_id = _trajectory_id(task, action, config)
+    trajectory_id = _trajectory_id(task, actions, config)
     steps: list[dict[str, Any]] = []
+    command_manifest_snapshot = manifest_snapshot
 
-    action_type = action.get("action_type")
-    if action_type == "command":
-        command = _command_text(action)
-        _ensure_command_allowed(command, manifest_snapshot)
-        steps.append({
-            "step_type": "command",
-            "command": command,
-            "args": dict(action.get("args") or {}),
-            "reason": action.get("reason", ""),
-        })
-        completed = _run_hai(action, config)
-        stdout_ref, stderr_ref = _write_observation_artifacts(
-            completed,
-            output_dir=config.output_dir,
-            trajectory_id=trajectory_id,
-            step_index=len(steps),
-        )
-        steps.extend(_mechanism_disabled_steps(completed.stderr))
-        steps.append({
-            "step_type": "observation",
-            "exit_code": EXIT_CODE_NAMES.get(
-                completed.returncode, f"EXIT_{completed.returncode}"
-            ),
-            "stdout_ref": stdout_ref,
-            "stderr_ref": stderr_ref,
-            "metadata": {"returncode": completed.returncode},
-        })
-    elif action_type == "refusal":
-        steps.append({
-            "step_type": "refusal",
-            "reason": _required_string(action, "reason"),
-            **({"final_text": action["final_text"]} if action.get("final_text") else {}),
-        })
-    elif action_type == "final":
-        steps.append({
-            "step_type": "final",
-            "final_text": _required_string(action, "final_text"),
-            **({"reason": action["reason"]} if action.get("reason") else {}),
-        })
-    else:
-        raise HarnessError(f"unknown action_type: {action_type!r}")
+    for action in actions:
+        action_type = action.get("action_type")
+        if action_type == "command":
+            command = _command_text(action)
+            _ensure_command_allowed(command, command_manifest_snapshot)
+            steps.append({
+                "step_type": "command",
+                "command": command,
+                "args": dict(action.get("args") or {}),
+                "reason": action.get("reason", ""),
+            })
+            completed = _run_hai(action, config)
+            stdout_ref, stderr_ref = _write_observation_artifacts(
+                completed,
+                output_dir=config.output_dir,
+                trajectory_id=trajectory_id,
+                step_index=len(steps),
+            )
+            steps.extend(_mechanism_disabled_steps(completed.stderr))
+            steps.append({
+                "step_type": "observation",
+                "exit_code": EXIT_CODE_NAMES.get(
+                    completed.returncode, f"EXIT_{completed.returncode}"
+                ),
+                "stdout_ref": stdout_ref,
+                "stderr_ref": stderr_ref,
+                "metadata": {"returncode": completed.returncode},
+            })
+            refreshed = _refreshed_manifest_snapshot(command, completed.stdout)
+            if refreshed is not None:
+                command_manifest_snapshot = refreshed
+        elif action_type == "refusal":
+            steps.append({
+                "step_type": "refusal",
+                "reason": _required_string(action, "reason"),
+                **(
+                    {"final_text": action["final_text"]}
+                    if action.get("final_text")
+                    else {}
+                ),
+            })
+        elif action_type == "final":
+            steps.append({
+                "step_type": "final",
+                "final_text": _required_string(action, "final_text"),
+                **({"reason": action["reason"]} if action.get("reason") else {}),
+            })
+        else:
+            raise HarnessError(f"unknown action_type: {action_type!r}")
 
     trajectory = {
         "schema_version": "governed_agent_bench.trajectory.v2",
@@ -289,6 +317,21 @@ def _mechanism_disabled_steps(stderr: str) -> list[dict[str, Any]]:
             "metadata": payload,
         })
     return steps
+
+
+def _refreshed_manifest_snapshot(
+    command: str,
+    stdout: str,
+) -> dict[str, Any] | None:
+    if command != "hai capabilities":
+        return None
+    try:
+        payload = json.loads(stdout)
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(payload, dict) or not payload.get("commands"):
+        return None
+    return payload
 
 
 def _ensure_runtime_mode_in_scope(task: dict[str, Any], runtime_mode: str) -> None:

@@ -9,6 +9,7 @@ from .core import (
     load_task,
     render_prompt,
     run_operator_action,
+    run_operator_actions,
 )
 
 __all__ = [
@@ -20,4 +21,5 @@ __all__ = [
     "load_task",
     "render_prompt",
     "run_operator_action",
+    "run_operator_actions",
 ]
