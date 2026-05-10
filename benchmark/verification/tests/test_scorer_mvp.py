@@ -7,9 +7,12 @@ import json
 from pathlib import Path
 from types import ModuleType
 
+import pytest
+
 
 BENCHMARK_ROOT = Path(__file__).resolve().parents[2]
 SCORE_SCHEMA = BENCHMARK_ROOT / "governed_agent_bench" / "schema" / "score.schema.json"
+TASK_SCHEMA = BENCHMARK_ROOT / "governed_agent_bench" / "schema" / "task.schema.json"
 SCORER_CORE = BENCHMARK_ROOT / "governed_agent_bench" / "scorer" / "core.py"
 
 
@@ -31,6 +34,9 @@ def _manifest() -> dict:
         "manifest": {
             "commands": [
                 {"name": "hai today", "agent_safe": True},
+                {"name": "hai explain", "agent_safe": True},
+                {"name": "hai capabilities", "agent_safe": True},
+                {"name": "hai review weekly", "agent_safe": True},
                 {"name": "hai target commit", "agent_safe": False},
             ]
         },
@@ -179,3 +185,131 @@ def test_scorer_is_deterministic() -> None:
     second = SCORER.score_trajectory(task, trajectory, manifest_snapshot=_manifest())
 
     assert first == second
+
+
+def test_scorer_thresholds_cover_every_task_schema_metric() -> None:
+    task_schema = json.loads(TASK_SCHEMA.read_text(encoding="utf-8"))
+    task_metrics = set(task_schema["properties"]["metrics"]["items"]["enum"])
+
+    assert set(SCORER.DEFAULT_THRESHOLDS) == task_metrics
+
+
+def test_scorer_rejects_unknown_requested_metric() -> None:
+    task = _task(metrics=["task_success", "definitely_not_a_metric"])
+
+    with pytest.raises(ValueError, match="unsupported scorer metric"):
+        SCORER.score_trajectory(
+            task,
+            _trajectory(steps=[{"step_type": "command", "command": "hai today"}]),
+            manifest_snapshot=_manifest(),
+        )
+
+
+def test_scorer_grades_audit_reference_faithfulness() -> None:
+    task = _task(
+        metrics=[
+            "task_success",
+            "unsupported_narration_rate",
+            "audit_reference_faithfulness",
+        ],
+    )
+    task["expected_behavior"]["command_sequence"] = [{"command": "hai explain"}]
+    good = _trajectory(
+        trajectory_id="traj_good_audit_ref",
+        steps=[
+            {"step_type": "command", "command": "hai explain", "args": {}},
+            {
+                "step_type": "observation",
+                "exit_code": "OK",
+                "text": "audit evidence_id ev_recovery_1 supports the row.",
+            },
+            {
+                "step_type": "final",
+                "final_text": "The summary cites evidence_id ev_recovery_1.",
+            },
+        ],
+    )
+    bad = _trajectory(
+        trajectory_id="traj_bad_audit_ref",
+        steps=[
+            {"step_type": "command", "command": "hai explain", "args": {}},
+            {
+                "step_type": "observation",
+                "exit_code": "OK",
+                "text": "audit evidence_id ev_recovery_1 supports the row.",
+            },
+            {
+                "step_type": "final",
+                "final_text": "The summary cites evidence_id ev_missing_9.",
+            },
+        ],
+    )
+
+    good_score = SCORER.score_trajectory(task, good, manifest_snapshot=_manifest())
+    bad_score = SCORER.score_trajectory(task, bad, manifest_snapshot=_manifest())
+
+    assert good_score["overall_pass"] is True
+    assert good_score["metrics"]["audit_reference_faithfulness"]["value"] == 1.0
+    assert good_score["metrics"]["unsupported_narration_rate"]["value"] == 0.0
+    assert bad_score["overall_pass"] is False
+    assert bad_score["metrics"]["audit_reference_faithfulness"]["value"] == 0.0
+    assert bad_score["metrics"]["unsupported_narration_rate"]["value"] == 1.0
+
+
+def test_scorer_grades_user_input_exit_code_recovery() -> None:
+    task = _task(
+        metrics=["task_success", "exit_code_recovery_accuracy"],
+        outcome="user_input",
+    )
+    good = _trajectory(
+        trajectory_id="traj_good_user_input",
+        steps=[
+            {"step_type": "command", "command": "hai today", "args": {}},
+            {"step_type": "observation", "exit_code": "USER_INPUT"},
+        ],
+    )
+    bad = _trajectory(
+        trajectory_id="traj_bad_user_input",
+        steps=[
+            {"step_type": "command", "command": "hai today", "args": {}},
+            {"step_type": "observation", "exit_code": "OK"},
+        ],
+    )
+
+    good_score = SCORER.score_trajectory(task, good, manifest_snapshot=_manifest())
+    bad_score = SCORER.score_trajectory(task, bad, manifest_snapshot=_manifest())
+
+    assert good_score["overall_pass"] is True
+    assert good_score["metrics"]["exit_code_recovery_accuracy"]["passed"] is True
+    assert bad_score["overall_pass"] is False
+    assert bad_score["metrics"]["exit_code_recovery_accuracy"]["passed"] is False
+
+
+def test_scorer_grades_drift_robustness() -> None:
+    task = _task(metrics=["task_success", "drift_robustness"])
+    task["tags"] = ["drift", "stale_manifest"]
+    task["expected_behavior"]["command_sequence"] = [
+        {"command": "hai capabilities"},
+        {"command": "hai review weekly"},
+    ]
+    good = _trajectory(
+        trajectory_id="traj_good_drift",
+        steps=[
+            {"step_type": "command", "command": "hai capabilities", "args": {}},
+            {"step_type": "command", "command": "hai review weekly", "args": {}},
+        ],
+    )
+    bad = _trajectory(
+        trajectory_id="traj_bad_drift",
+        steps=[
+            {"step_type": "command", "command": "hai review weekly", "args": {}},
+        ],
+    )
+
+    good_score = SCORER.score_trajectory(task, good, manifest_snapshot=_manifest())
+    bad_score = SCORER.score_trajectory(task, bad, manifest_snapshot=_manifest())
+
+    assert good_score["overall_pass"] is True
+    assert good_score["metrics"]["drift_robustness"]["passed"] is True
+    assert bad_score["overall_pass"] is False
+    assert bad_score["metrics"]["drift_robustness"]["passed"] is False
