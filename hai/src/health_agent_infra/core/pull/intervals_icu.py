@@ -53,6 +53,7 @@ from typing import Any, Iterable, Optional, Protocol
 
 from health_agent_infra import __version__ as _PACKAGE_VERSION
 from health_agent_infra.core.pull.auth import IntervalsIcuCredentials
+from health_agent_infra.core.hermetic import refuse_network_access
 
 
 DEFAULT_BASE_URL = "https://intervals.icu"
@@ -324,6 +325,7 @@ class HttpIntervalsIcuClient:
         query: dict[str, str],
         endpoint_label: str,
     ) -> list[dict]:
+        refuse_network_access(f"intervals.icu {endpoint_label} fetch")
         qs = urllib.parse.urlencode(query)
         url = f"{self.base_url}{path}?{qs}"
         req = urllib.request.Request(

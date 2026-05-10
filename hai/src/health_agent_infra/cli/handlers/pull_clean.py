@@ -133,6 +133,10 @@ def cmd_pull(args: argparse.Namespace) -> int:
     if refused is not None:
         return refused
 
+    if source != "csv":
+        from health_agent_infra.core.hermetic import refuse_network_access
+        refuse_network_access(f"hai pull --source {source}")
+
     # Mode still tracks csv vs live for sync_run_log — both live sources
     # share the "live" label so existing freshness checks don't need to
     # grow a new enum value.
@@ -1031,5 +1035,4 @@ def _project_clean_into_state(
         "error": None,
         "error_type": None,
     }
-
 

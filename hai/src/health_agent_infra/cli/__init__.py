@@ -51,6 +51,10 @@ from health_agent_infra.core.pull.auth import (
     CredentialStore,
     KeyringUnavailableError,
 )
+from health_agent_infra.core.hermetic import (
+    HermeticModeError,
+    require_hermetic_recipe,
+)
 from health_agent_infra.core.pull.garmin import (
     GarminRecoveryReadinessAdapter,
     default_manual_readiness,
@@ -3177,6 +3181,7 @@ def main(argv: list[str] | None = None) -> int:
         gate = _demo_gate(args)
         if gate is not None:
             return gate
+        require_hermetic_recipe()
         return args.func(args)
     except SystemExit:
         # argparse error path uses SystemExit(2); pass through unchanged.
@@ -3184,6 +3189,9 @@ def main(argv: list[str] | None = None) -> int:
     except KeyboardInterrupt:
         # Ctrl-C — exit cleanly without a traceback.
         print("\nhai: interrupted by user", file=sys.stderr)
+        return exit_codes.USER_INPUT
+    except HermeticModeError as exc:
+        print(f"hai: {exc}", file=sys.stderr)
         return exit_codes.USER_INPUT
     except Exception as exc:
         # Top-level safety net (added in v0.1.6 per Codex r2 / internal

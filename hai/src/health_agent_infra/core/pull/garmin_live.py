@@ -42,6 +42,7 @@ from datetime import date, timedelta
 from typing import Any, Iterable, Optional, Protocol
 
 from health_agent_infra.core.pull.auth import GarminCredentials
+from health_agent_infra.core.hermetic import refuse_network_access
 
 
 # Canonical raw-daily-row columns (mirror of the CSV export header).
@@ -481,6 +482,8 @@ def build_default_client(
     ``retry_config`` — rate-limited logins are the most annoying
     failure mode in dev.
     """
+
+    refuse_network_access("garmin_live login")
 
     try:
         from garminconnect import Garmin  # type: ignore

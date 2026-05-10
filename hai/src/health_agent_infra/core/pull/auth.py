@@ -33,6 +33,8 @@ import os
 from dataclasses import dataclass, field
 from typing import Mapping, Optional, Protocol
 
+from health_agent_infra.core.hermetic import refuse_keyring_access
+
 
 GARMIN_SERVICE = "hai_garmin"
 GARMIN_EMAIL_SERVICE = "hai_garmin_email"
@@ -162,6 +164,7 @@ class CredentialStore:
             raise ValueError("email must be a non-empty string")
         if not password:
             raise ValueError("password must be a non-empty string")
+        refuse_keyring_access("store_garmin", env=self.env)
         self.backend.set_password(GARMIN_EMAIL_SERVICE, GARMIN_EMAIL_KEY, email)
         self.backend.set_password(GARMIN_SERVICE, email, password)
 
@@ -173,6 +176,7 @@ class CredentialStore:
         ``HAI_GARMIN_PASSWORD`` must be set).
         """
 
+        refuse_keyring_access("load_garmin", env=self.env)
         email = self.backend.get_password(GARMIN_EMAIL_SERVICE, GARMIN_EMAIL_KEY)
         password = None
         if email:
@@ -189,6 +193,7 @@ class CredentialStore:
     def clear_garmin(self) -> None:
         """Remove keyring entries if present. Env vars are never touched."""
 
+        refuse_keyring_access("clear_garmin", env=self.env)
         email = self.backend.get_password(GARMIN_EMAIL_SERVICE, GARMIN_EMAIL_KEY)
         if email:
             try:
@@ -205,6 +210,7 @@ class CredentialStore:
     def garmin_status(self) -> dict:
         """Non-secretive presence report. Never includes secret material."""
 
+        refuse_keyring_access("garmin_status", env=self.env)
         keyring_email = self.backend.get_password(GARMIN_EMAIL_SERVICE, GARMIN_EMAIL_KEY)
         keyring_email_present = bool(keyring_email)
         keyring_password_present = False
@@ -246,6 +252,7 @@ class CredentialStore:
             raise ValueError("athlete_id must be a non-empty string")
         if not api_key:
             raise ValueError("api_key must be a non-empty string")
+        refuse_keyring_access("store_intervals_icu", env=self.env)
         self.backend.set_password(
             INTERVALS_ATHLETE_SERVICE, INTERVALS_ATHLETE_KEY, athlete_id
         )
@@ -259,6 +266,7 @@ class CredentialStore:
         ``HAI_INTERVALS_API_KEY`` must be set).
         """
 
+        refuse_keyring_access("load_intervals_icu", env=self.env)
         athlete_id = self.backend.get_password(
             INTERVALS_ATHLETE_SERVICE, INTERVALS_ATHLETE_KEY
         )
@@ -279,6 +287,7 @@ class CredentialStore:
     def clear_intervals_icu(self) -> None:
         """Remove keyring entries if present. Env vars are never touched."""
 
+        refuse_keyring_access("clear_intervals_icu", env=self.env)
         athlete_id = self.backend.get_password(
             INTERVALS_ATHLETE_SERVICE, INTERVALS_ATHLETE_KEY
         )
@@ -297,6 +306,7 @@ class CredentialStore:
     def intervals_icu_status(self) -> dict:
         """Non-secretive presence report. Never includes secret material."""
 
+        refuse_keyring_access("intervals_icu_status", env=self.env)
         keyring_athlete = self.backend.get_password(
             INTERVALS_ATHLETE_SERVICE, INTERVALS_ATHLETE_KEY
         )
