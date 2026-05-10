@@ -17,3 +17,7 @@ It writes:
 
 `figures.py` consumes `evidence_table.json` and writes deterministic SVG
 summary figures plus `figures_manifest.json`.
+
+`error_taxonomy.py` consumes `evidence_table.json` and writes violation
+counts by task level, runtime mode, model class, task mechanism, and
+runtime mechanism.

@@ -28,6 +28,7 @@ CSV_COLUMNS = [
     "metric_count",
     "violation_count",
     "violation_kinds",
+    "violations_json",
     "metrics_json",
 ]
 
@@ -101,6 +102,11 @@ def _row_from_score(run_dir: Path, score_path: Path) -> dict[str, Any]:
         "metric_count": len(score["metrics"]),
         "violation_count": len(violations),
         "violation_kinds": ",".join(violation_kinds),
+        "violations_json": json.dumps(
+            violations,
+            sort_keys=True,
+            separators=(",", ":"),
+        ),
         "metrics_json": json.dumps(
             score["metrics"],
             sort_keys=True,
