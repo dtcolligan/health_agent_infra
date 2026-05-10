@@ -149,12 +149,41 @@ baseline until the relevant tests pass.
 | Operator action schema (`WP-GAB-001`) | `benchmark/governed_agent_bench/schema/operator_action.schema.json`; commit `102e5ce feat(benchmark): add operator action schema` | Committed |
 | MVP deterministic scorer (`WP-GAB-002`) | `benchmark/governed_agent_bench/scorer/core.py`; commit `513b78c feat(benchmark): add scorer mvp` | Committed |
 | First MVP task seed set (`WP-GAB-003`) | 10 task JSON files across L1, L2, L5, L6, L7; commit `76d2600 feat(benchmark): add first task seed set` | Committed |
-| Runtime-first docs/schema/prompt edits | dirty files in `project/`, `research/runtime_contracts_paper/`, `benchmark/governed_agent_bench/`, plus untracked `prompts/deployment_full_v1.md` and audit docs | Disk-present, user-owned dirty worktree |
+| Authoritative execution plan (`AUTO-PLAN-001`) | `research/runtime_contracts_paper/AUTONOMOUS_PROJECT_EXECUTION_PLAN.md`; commit `2f0d95f docs(research): add autonomous execution plan` | Committed |
+| Remaining runtime off-paths (`WP-RT-MODE-002R`) | runtime modes for validation, proposal gate, audit chain, refusal isolation; commit `b81c29e feat(hai): complete runtime mode off paths` | Committed |
+| Benchmark current-state alignment (`WP-DOCS-STATE-001`) | `benchmark/governed_agent_bench/README.md`; commit `9e93dd2 docs(benchmark): align current benchmark state` | Committed |
+| Human-readable contract regeneration (`WP-DOCS-CONTRACT-001`) | `uv run hai capabilities --markdown > hai/docs/agent_cli_contract.md` was byte-identical; no diff to commit | Verified no-op |
+| Harness MVP (`WP-HARNESS-001`) | `benchmark/governed_agent_bench/harness/`; commit `58ed8c7 feat(benchmark): add operator harness mvp` | Committed |
+| Harness runtime mode/context export (`WP-HARNESS-MODE-001`) | harness + `rule_baseline` invocation context; commit `906750e feat(benchmark): bind harness invocation context` | Committed |
+| Harness marker capture (`WP-HARNESS-MODE-002`) | `mechanism_disabled` capture test; commit `01309f5 test(benchmark): capture mechanism disabled markers` | Committed |
+| Single prompt path (`WP-HARNESS-PROMPT-001`) | `prompts/deployment_full_v1.md` and prompt hashes; commit `caad0b8 feat(benchmark): add deployment prompt rendering` | Committed |
+| Hand-authored trajectories (`WP-GAB-004`) | 10 static pass/fail trajectories; commit `28a1d7c test(benchmark): add hand authored trajectories` | Committed |
+| Known-good/known-bad validation (`WP-GAB-005`) | scorer regression over hand-authored trajectories; commit `a9fdac9 test(benchmark): validate hand authored scoring` | Committed |
+| Task load-bearing proof (`WP-GAB-006`) | mechanism coverage test for M4..M8; commit `a86ae9b test(benchmark): prove task mechanism coverage` | Committed |
+| Rule baseline (`WP-BASE-001`) | `rule_baseline_v1` and multi-action harness path; commit `75af33f feat(benchmark): add rule baseline` | Committed |
+| Rule-baseline ablation dry run (`WP-ABL-001`) | offline rule ablation report runner; commit `3235d3e report(benchmark): add rule baseline ablation dry run` | Committed |
+| Evidence table generator (`WP-RESULTS-001`) | `benchmark/governed_agent_bench/results/evidence_tables.py`; commit `28e217f feat(research): generate evidence tables` | Committed |
+| Reproducible figures (`WP-RESULTS-002`) | deterministic SVG figure writer; commit `590b098 feat(research): add reproducible result figures` | Committed |
+| Error taxonomy (`WP-RESULTS-003`) | violation aggregation by level/mode/model/mechanism; commit `d0c14b8 report(research): add error taxonomy` | Committed |
+| Offline reproducibility package (`WP-REPRO-001`) | `REPRODUCIBILITY.md` and `reproduce_offline.py`; commit `e6f21cd docs(research): add reproducibility package` | Committed |
+| Prior-art matrix (`WP-PRIOR-001`) | `prior_art_matrix.md`; commit `3cdd69b docs(research): add prior art matrix` | Committed |
+| Related-work draft (`WP-PAPER-001`) | `RELATED_WORK_DRAFT.md`; commit `9d53167 docs(research): draft related work` | Committed |
+| Methods/system draft (`WP-PAPER-002`) | `METHODS_SYSTEM_DRAFT.md`; commit `8aff352 docs(research): draft methods and benchmark sections` | Committed |
+| Operator view (`WP-DOCS-OPS-001`) | `benchmark/governed_agent_bench/OPERATORS_VIEW.md`; commit `0c9b4e4 docs(benchmark): add operator view` | Committed |
+| Scaffold view (`WP-DOCS-SCAFFOLD-001`) | `benchmark/governed_agent_bench/SCAFFOLD_VIEW.md`; commit `11ee252 docs(benchmark): add scaffold view` | Committed |
+| Benchmark card (`WP-DOCS-CARD-001`) | `benchmark/governed_agent_bench/BENCHMARK_CARD.md`; commit `b3e2eae docs(benchmark): add benchmark card` | Committed |
+| Remaining runtime-first docs/schema/audit edits | dirty files in `project/`, `research/runtime_contracts_paper/`, `benchmark/governed_agent_bench/`, plus untracked audit docs | Disk-present, user-owned dirty worktree |
 
-Important correction: the committed task set exists, but
-`benchmark/governed_agent_bench/README.md` in the dirty worktree still
-reports "0 committed tasks" and "README and schemas only" for the
-scorer. Treat that as a docs-alignment issue, not as benchmark truth.
+Current verification checkpoint: after the result/reproducibility
+packets, `uv run pytest benchmark/verification/tests -q` reported
+`96 passed in 406.49s`. After the operator/scaffold/card docs, the
+targeted benchmark docs/repro subset reported `25 passed in 4.67s`.
+
+Current gate: `WP-MODEL-ROSTER-001` is active. No
+`benchmark/governed_agent_bench/model_roster.md` exists in the committed
+tree as of commit `b3e2eae`, and no model-backed trajectories should be
+produced until Dom chooses either a predeclared model roster or a
+rule-baseline-only workshop path.
 
 ## Packet Queue
 
@@ -253,22 +282,22 @@ state in the packet notes.
 
 ## Next Executable Packets
 
-The next 10 executable packets, in recommended order, are:
+The next executable packets depend on Dom's gate decision:
 
-1. `AUTO-PLAN-001` - commit this file after targeted docs/schema checks.
-2. `WP-RT-MODE-002R` - complete the remaining runtime-mode off-paths.
-3. `WP-RT-MODE-003R` - add/finish the isolation regression matrix.
-4. `WP-DOCS-STATE-001` - align stale benchmark current-state docs with
-   the committed task/scorer/fixture reality.
-5. `WP-DOCS-CONTRACT-001` - regenerate the human-readable agent CLI
-   contract from the v2 manifest.
-6. `WP-HARNESS-001` - build the harness MVP.
-7. `WP-HARNESS-MODE-001` - export runtime mode and invocation context.
-8. `WP-HARNESS-MODE-002` - capture `mechanism_disabled` markers.
-9. `WP-HARNESS-PROMPT-001` - wire the single deployment-realistic
-   prompt path and prompt hashes.
-10. `WP-GAB-004` - add hand-authored trajectories for the seed tasks.
-
-The first Dom judgement gate is `WP-MODEL-ROSTER-001`, before any
-model-backed experiment. The first hard stop gate is `WP-MODEL-002`,
-before any cloud or paid API call.
+1. **Dom decision required:** choose either a predeclared model roster
+   (`WP-MODEL-ROSTER-001`) or an explicit rule-baseline-only workshop
+   path.
+2. If Dom chooses a model-roster path: author
+   `benchmark/governed_agent_bench/model_roster.md` before any
+   model-backed trajectory. Local model adapters/runs (`WP-MODEL-001`)
+   then require Dom's model/compute judgement. Cloud model work
+   (`WP-MODEL-002`) remains a hard stop requiring explicit provider,
+   budget, and data-boundary approval.
+3. If Dom chooses a rule-baseline-only path: revise the claim ladder
+   under `WP-CLAIM-001` to a T0-only workshop submission before writing
+   results/discussion.
+4. After the chosen evidence path is fixed: draft results/discussion
+   (`WP-PAPER-003`) from generated tables/figures/taxonomy only.
+5. Final audit (`WP-AUDIT-001`) and workshop finalization
+   (`WP-SUBMIT-001`) require Dom judgement and should not be marked
+   complete by Codex alone.
