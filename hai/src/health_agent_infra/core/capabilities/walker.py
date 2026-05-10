@@ -602,8 +602,31 @@ def build_manifest(
         "generated_by": "core.capabilities.walker.build_manifest",
         "commands": walk_parser(parser),
         "domain_proposal_contracts": _build_domain_proposal_contracts(),
+        "refusals": _build_refusals(),
         "runtime_modes": _build_runtime_modes(),
     }
+
+
+def _build_refusals() -> list[dict[str, str]]:
+    """Runtime refusal-envelope kinds currently emitted by HAI."""
+
+    return [
+        {
+            "kind": "clinical_claim",
+            "mechanism": "refusal",
+            "trigger": (
+                "diagnosis/treatment/prescribing/autonomous medical decision "
+                "content in command output"
+            ),
+            "envelope_shape_ref": "schemas/refusal_envelope.v1.json",
+        },
+        {
+            "kind": "agent_safe_violation",
+            "mechanism": "agent_safe",
+            "trigger": "agent-classified caller invoking an agent_safe=false command",
+            "envelope_shape_ref": "schemas/refusal_envelope.v1.json",
+        },
+    ]
 
 
 def _build_runtime_modes() -> list[dict[str, Any]]:

@@ -44,6 +44,7 @@ _TOP_LEVEL_REQUIRED: dict[str, type] = {
     "generated_by": str,
     "commands": list,
     "domain_proposal_contracts": dict,
+    "refusals": list,
     "runtime_modes": list,
 }
 
