@@ -1,7 +1,8 @@
 # Codex Work Inspection Index
 
 **Status:** inspection guide for Codex autonomous work through commit
-`c76db96 docs(research): refresh autonomous gate handoff`, 2026-05-10.
+`6ce5f58 docs(research): add codex work inspection index`, with a
+Claude Code audit-prompt pointer added 2026-05-10.
 
 This file is a navigation aid. It does not replace
 `AUTONOMOUS_PROJECT_EXECUTION_PLAN.md`, does not create a new project
@@ -17,13 +18,16 @@ Read these in order:
      acceptance evidence, commit boundaries, and stop gates.
 2. `research/runtime_contracts_paper/AUTONOMOUS_GATE_HANDOFF.md`
    - the current completion audit and the reason execution is blocked.
-3. `research/runtime_contracts_paper/MODEL_ROSTER_DECISION_BRIEF.md`
+3. `research/runtime_contracts_paper/CLAUDE_CODE_COMPREHENSIVE_AUDIT_PROMPT.md`
+   - the adversarial review prompt for Claude Code to audit all Codex
+     work before Dom reads it.
+4. `research/runtime_contracts_paper/MODEL_ROSTER_DECISION_BRIEF.md`
    - the Dom decision needed before model-backed experiments or final
      claims.
-4. `benchmark/governed_agent_bench/BENCHMARK_CARD.md`
+5. `benchmark/governed_agent_bench/BENCHMARK_CARD.md`
    - the benchmark-facing summary of intended use, non-use, data
      provenance, tested condition, limitations, and reproducibility.
-5. `benchmark/governed_agent_bench/REPRODUCIBILITY.md`
+6. `benchmark/governed_agent_bench/REPRODUCIBILITY.md`
    - the offline rerun path for synthetic fixtures, rule baseline,
      scores, evidence tables, figures, and error taxonomy.
 
@@ -62,11 +66,11 @@ Current facts:
 
 ## Committed Work To Inspect
 
-The clean autonomous execution packet range starts at the plan commit
-and currently ends at this inspection index's parent commit:
+The core clean autonomous execution packet range starts at the plan
+commit and runs through the inspection-index commit:
 
 ```bash
-git log --oneline --reverse 2f0d95f^..c76db96
+git log --oneline --reverse 2f0d95f^..6ce5f58
 ```
 
 Packet groups:
@@ -104,6 +108,7 @@ git show --stat c76db96
 |---|---|
 | What is the end-to-end plan? | `research/runtime_contracts_paper/AUTONOMOUS_PROJECT_EXECUTION_PLAN.md` |
 | What is done, blocked, and why? | `research/runtime_contracts_paper/AUTONOMOUS_GATE_HANDOFF.md` |
+| What should Claude Code use to audit Codex's work? | `research/runtime_contracts_paper/CLAUDE_CODE_COMPREHENSIVE_AUDIT_PROMPT.md` |
 | What decision does Dom need to make? | `research/runtime_contracts_paper/MODEL_ROSTER_DECISION_BRIEF.md` |
 | What would a future model roster have to contain? | `benchmark/governed_agent_bench/schema/model_roster.schema.json` |
 | What is the benchmark? | `benchmark/governed_agent_bench/BENCHMARK_CARD.md` |
