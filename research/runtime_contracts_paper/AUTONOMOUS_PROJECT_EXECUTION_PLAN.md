@@ -17,6 +17,12 @@ the session verified:
 - `pwd` -> `/Users/domcolligan/health_agent_infra`
 - `git log -1 --oneline` -> `76d2600 feat(benchmark): add first task seed set`
 
+**Latest continuation verification.** The gate-scaffolding continuation
+on 2026-05-10 verified:
+
+- `pwd` -> `/Users/domcolligan/health_agent_infra`
+- `git log -1 --oneline` -> `7b692f5 test(benchmark): define model roster gate schema`
+
 The worktree was already dirty before this file was authored. Existing
 modified/untracked files are treated as user-owned. Autonomous commits
 must stage only the packet files they intentionally changed.
@@ -172,16 +178,24 @@ baseline until the relevant tests pass.
 | Operator view (`WP-DOCS-OPS-001`) | `benchmark/governed_agent_bench/OPERATORS_VIEW.md`; commit `0c9b4e4 docs(benchmark): add operator view` | Committed |
 | Scaffold view (`WP-DOCS-SCAFFOLD-001`) | `benchmark/governed_agent_bench/SCAFFOLD_VIEW.md`; commit `11ee252 docs(benchmark): add scaffold view` | Committed |
 | Benchmark card (`WP-DOCS-CARD-001`) | `benchmark/governed_agent_bench/BENCHMARK_CARD.md`; commit `b3e2eae docs(benchmark): add benchmark card` | Committed |
+| Autonomous packet ledger refresh (`WP-DOCS-LEDGER-001`) | this file; commit `4044188 docs(research): update autonomous packet ledger` | Committed |
+| Measurement-readiness refresh (`WP-DOCS-READINESS-001`) | `benchmark/governed_agent_bench/README.md`; commit `2bedf67 docs(benchmark): refresh measurement readiness state` | Committed |
+| Autonomous gate handoff (`WP-GATE-HANDOFF-001`) | `research/runtime_contracts_paper/AUTONOMOUS_GATE_HANDOFF.md`; commit `dcb726c docs(research): add autonomous gate handoff` | Committed |
+| Model roster decision brief (`WP-MODEL-GATE-001`) | `research/runtime_contracts_paper/MODEL_ROSTER_DECISION_BRIEF.md`; commit `66164ae docs(research): add model roster decision brief` | Committed |
+| Model roster gate schema (`WP-MODEL-ROSTER-SCHEMA-001`) | `benchmark/governed_agent_bench/schema/model_roster.schema.json` and `benchmark/verification/tests/test_model_roster_schema.py`; commit `7b692f5 test(benchmark): define model roster gate schema` | Committed |
 | Remaining runtime-first docs/schema/audit edits | dirty files in `project/`, `research/runtime_contracts_paper/`, `benchmark/governed_agent_bench/`, plus untracked audit docs | Disk-present, user-owned dirty worktree |
 
 Current verification checkpoint: after the result/reproducibility
 packets, `uv run pytest benchmark/verification/tests -q` reported
 `96 passed in 406.49s`. After the operator/scaffold/card docs, the
 targeted benchmark docs/repro subset reported `25 passed in 4.67s`.
+For the roster-schema packet, `uv run pytest
+benchmark/verification/tests/test_model_roster_schema.py -q` reported
+`7 passed in 0.11s`, and the schema JSON parsed successfully.
 
 Current gate: `WP-MODEL-ROSTER-001` is active. No
 `benchmark/governed_agent_bench/model_roster.md` exists in the committed
-tree as of commit `b3e2eae`, and no model-backed trajectories should be
+tree as of commit `7b692f5`, and no model-backed trajectories should be
 produced until Dom chooses either a predeclared model roster or a
 rule-baseline-only workshop path.
 
@@ -210,6 +224,8 @@ Legend:
 | `WP-GAB-006` task load-bearing proof | 4 | runtime off-paths; harness; task set | Codex | For each M4..M8, at least one task has different primary metric under full vs mechanism-off mode | `test(benchmark): prove task mechanism coverage` |
 | `WP-BASE-001` rule baseline | 5 | harness, scorer, tasks | Codex | Rule baseline emits v2 trajectories through same interface and report separates routing-only tasks from judgement tasks | `feat(benchmark): add rule baseline` |
 | `WP-ABL-001` scaffold ablation dry run | 5 | rule baseline; runtime off-paths; known-good validation | Codex | Offline ablation report for rule baseline across applicable modes; no model API | `report(benchmark): add rule baseline ablation dry run` |
+| `WP-MODEL-GATE-001` decision brief | 5 | active `WP-MODEL-ROSTER-001` gate | Codex | Brief states model-roster vs rule-only decision paths without creating a roster or authorizing any model run | `docs(research): add model roster decision brief` |
+| `WP-MODEL-ROSTER-SCHEMA-001` roster gate schema | 5 | decision brief | Codex | Roster schema and focused tests define required fields, Dom approval, synthetic data boundary, hash binding, and model-class approval conditionals; no `model_roster.md` exists | `test(benchmark): define model roster gate schema` |
 | `WP-MODEL-ROSTER-001` model roster | 5 | harness/scorer stable; before any model trajectory | Dom judgement required | `model_roster.md` predeclares roster and hashes; no model run exists before roster commit | `docs(benchmark): predeclare model roster` |
 | `WP-MODEL-001` local model adapter | 5 | model roster; local runtime available | Dom judgement for model choice/compute; Codex implementation | Optional adapter; no private data; trajectories record model identity | `feat(benchmark): add local model adapter` |
 | `WP-MODEL-002` cloud model adapter | 5 | model roster; explicit Dom approval | Stop | Requires explicit provider, budget, and data-boundary approval before any API call | `feat(benchmark): add cloud model adapter` |
@@ -282,7 +298,9 @@ state in the packet notes.
 
 ## Next Executable Packets
 
-The next executable packets depend on Dom's gate decision:
+Autonomous pre-gate scaffolding is complete: the decision brief and
+roster schema are committed, and the real `model_roster.md` artifact is
+still absent. The next executable packets depend on Dom's gate decision:
 
 1. **Dom decision required:** choose either a predeclared model roster
    (`WP-MODEL-ROSTER-001`) or an explicit rule-baseline-only workshop
