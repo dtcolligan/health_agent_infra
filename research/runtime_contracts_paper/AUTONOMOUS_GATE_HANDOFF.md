@@ -1,8 +1,8 @@
 # Autonomous Gate Handoff
 
 **Status:** Current gate audit for the autonomous project goal,
-2026-05-10. Refreshed through commit
-`76b7408 docs(research): refresh model gate ledger`.
+2026-05-10. Refreshed after the pushed Claude-audit response head
+`f58af94 docs(research): update audit response index`.
 
 This file records where the autonomous execution has reached and why
 Codex must stop before producing model-backed trajectories or final
@@ -44,20 +44,20 @@ and ending with a workshop-ready paper. The required deliverables are:
 
 | Requirement | Evidence | Status |
 |---|---|---|
-| Read project contract first; verify active checkout before work | Every packet session began from `/Users/domcolligan/health_agent_infra`; latest continuation verification at commit `76b7408` showed the active path and dirty user-owned worktree. | Done |
+| Read project contract first; verify active checkout before work | Every packet session began from `/Users/domcolligan/health_agent_infra`; latest continuation verification at commit `f58af94` showed the active path and dirty user-owned worktree. | Done |
 | Do not start coding immediately; create authoritative plan | `research/runtime_contracts_paper/AUTONOMOUS_PROJECT_EXECUTION_PLAN.md`, commit `2f0d95f`; ledger refreshed in commits `4044188` and `76b7408`. | Done |
 | Plan includes definition of done, phase order, packet queue, tests/evidence, Codex vs Dom ownership, stop gates, commit boundaries, completed work, next packets | Sections present in `AUTONOMOUS_PROJECT_EXECUTION_PLAN.md`; refreshed gate notes identify `WP-MODEL-ROSTER-001` as active. | Done |
-| Run targeted checks after plan | Initial targeted docs/schema checks passed before `2f0d95f`; later full benchmark verification reached `96 passed in 406.49s`. | Done |
-| Commit each packet separately | Recent commit ledger includes separate commits from `2f0d95f` through `76b7408`; no staged changes as of this handoff refresh. | Done |
+| Run targeted checks after plan | Initial targeted docs/schema checks passed before `2f0d95f`; later full benchmark verification reached `96 passed in 406.49s`; after Claude-audit fixes the full benchmark suite reported `109 passed in 417.89s`. | Done |
+| Commit each packet separately | Recent commit ledger includes separate commits from `2f0d95f` through `f58af94`; no staged changes as of this handoff refresh. | Done |
 | Treat dirty worktree as user-owned | Dirty files remain unstaged and unmodified unless packet-owned; current dirty list remains user-owned. | Done |
 | HAI runtime off-paths and isolation | `b81c29e feat(hai): complete runtime mode off paths`; runtime-mode isolation tests exercised in HAI suite during that packet. | Done |
 | Governed operator surface | Manifest v2 work pre-existed; `caad0b8` added deployment prompt rendering; `906750e` bound `rule_baseline` invocation context; `01309f5` verified marker capture. | Done for benchmark floor |
 | Model-agnostic harness | `benchmark/governed_agent_bench/harness/`, commit `58ed8c7`; multi-action support in `75af33f`. | Done for no-model and future model adapters |
 | Synthetic fixtures | Six fixture builders are committed; current count verified as 6. | Done |
-| Frozen and stale manifests | `hai_0_2_0.json` and `hai_0_1_18_drift.json` committed. | Done |
+| Frozen and stale manifests | `hai_0_2_0.json` and renamed stale snapshot `agent_cli_contract_v1_drift.json` committed; manifest README explains embedded `hai_version` `0.1.17` provenance. | Done |
 | MVP task set | 10 tasks committed across L1, L2, L5, L6, L7; current count verified as 10. | Done |
-| Hand-authored trajectories | 10 hand-authored trajectory JSON files committed; current count verified as 10. | Done |
-| Deterministic scorer and known-good/known-bad validation | `513b78c` scorer MVP, `a9fdac9` validation over seed trajectories. | Done |
+| Hand-authored trajectories | 14 hand-authored trajectory JSON files committed; current count verified as 14, including L5 audit-reference and L7 stale-manifest pass/fail exhibits. | Done |
+| Deterministic scorer and known-good/known-bad validation | `513b78c` scorer MVP, `a9fdac9` validation over seed trajectories; Claude-audit response `9552b36` implemented all 13 task-schema metrics and unknown-metric rejection. | Done |
 | Mechanism load-bearing proof | `a86ae9b test(benchmark): prove task mechanism coverage`. | Done |
 | Rule baseline first | `75af33f feat(benchmark): add rule baseline`. | Done |
 | Runtime-mode ablation dry run | `3235d3e report(benchmark): add rule baseline ablation dry run`. | Done |
@@ -71,11 +71,12 @@ and ending with a workshop-ready paper. The required deliverables are:
 | Methods/system draft | `METHODS_SYSTEM_DRAFT.md`, commit `8aff352`. | Drafted |
 | Operator/scaffold/benchmark card docs | `OPERATORS_VIEW.md` (`0c9b4e4`), `SCAFFOLD_VIEW.md` (`11ee252`), `BENCHMARK_CARD.md` (`b3e2eae`). | Done, final review still Dom |
 | Benchmark README current state | `2bedf67 docs(benchmark): refresh measurement readiness state`. | Done |
-| Autonomous gate handoff | `research/runtime_contracts_paper/AUTONOMOUS_GATE_HANDOFF.md`, commit `dcb726c`; this refresh updates it through `76b7408`. | Done |
+| Autonomous gate handoff | `research/runtime_contracts_paper/AUTONOMOUS_GATE_HANDOFF.md`, commit `dcb726c`; this refresh incorporates the pushed Claude-audit response through `f58af94`. | Done |
 | Model-roster decision brief | `research/runtime_contracts_paper/MODEL_ROSTER_DECISION_BRIEF.md`, commit `66164ae`; states model-roster vs rule-only paths without choosing models or authorizing runs. | Done |
 | Model-roster gate schema | `benchmark/governed_agent_bench/schema/model_roster.schema.json` and `benchmark/verification/tests/test_model_roster_schema.py`, commit `7b692f5`; focused test reported `7 passed in 0.11s`. | Done |
 | Model-gate ledger refresh | `research/runtime_contracts_paper/AUTONOMOUS_PROJECT_EXECUTION_PLAN.md`, commit `76b7408`; records the decision brief/schema and keeps the next packet blocked on Dom. | Done |
-| Full benchmark verification | `uv run pytest benchmark/verification/tests -q` reported `96 passed in 406.49s` after result/repro packets. Targeted docs/repro subset later reported `25 passed in 4.67s`. | Verified |
+| Claude audit response | Commits `9552b36`, `e390f3c`, `2373c93`, `2455967`, `0a98ffa`, `420511e`, and `f58af94` close scorer coverage, shared clinical phrases, `hai explain` refusal, L5/L7 exhibits, stale-manifest provenance, evidence-limit disclosures, adversarial-fixture reseeding, and inspection-index refresh. | Done |
+| Full benchmark verification | `uv run pytest benchmark/verification/tests -q` reported `109 passed in 417.89s` after Claude-audit response packets. | Verified |
 | Model roster | `benchmark/governed_agent_bench/model_roster.md` does not exist. | Blocked on Dom |
 | Local/cloud model baselines | No model-backed trajectories, no local model adapter, no cloud adapter. | Blocked on Dom |
 | Claim ladder update | `WP-CLAIM-001` requires Dom judgement after evidence-path choice. | Blocked on Dom |
