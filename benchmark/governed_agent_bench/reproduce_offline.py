@@ -1,0 +1,127 @@
+"""Offline reproducibility runner for GovernedAgentBench.
+
+This command intentionally runs only synthetic-fixture, no-model artifacts.
+It does not call local or cloud model APIs.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+from typing import Any
+
+BENCHMARK_ROOT = Path(__file__).resolve().parents[1]
+if str(BENCHMARK_ROOT) not in sys.path:
+    sys.path.insert(0, str(BENCHMARK_ROOT))
+
+from governed_agent_bench.baselines import run_rule_baseline_ablation
+from governed_agent_bench.results import (
+    write_error_taxonomy,
+    write_evidence_tables,
+    write_result_figures,
+)
+
+
+REPRO_SCHEMA_VERSION = "governed_agent_bench.offline_repro.v1"
+
+
+def run_offline_repro(
+    *,
+    output_dir: Path,
+    fixture_workspace: Path | None = None,
+    task_ids: list[str] | None = None,
+    python_executable: str = sys.executable,
+) -> dict[str, Any]:
+    """Run the offline rule-baseline reproducibility pipeline."""
+
+    output_dir = output_dir.resolve()
+    fixture_workspace = (
+        fixture_workspace.resolve()
+        if fixture_workspace is not None
+        else output_dir / "fixtures"
+    )
+    run_dir = output_dir / "rule_baseline_ablation"
+    table_dir = output_dir / "evidence_tables"
+    figure_dir = output_dir / "figures"
+    taxonomy_dir = output_dir / "error_taxonomy"
+
+    ablation_report = run_rule_baseline_ablation(
+        output_dir=run_dir,
+        fixture_workspace=fixture_workspace,
+        task_ids=task_ids,
+        python_executable=python_executable,
+    )
+    evidence_output = write_evidence_tables(
+        run_dir=run_dir,
+        output_dir=table_dir,
+    )
+    figures = write_result_figures(
+        evidence_table_path=table_dir / "evidence_table.json",
+        output_dir=figure_dir,
+    )
+    taxonomy = write_error_taxonomy(
+        evidence_table_path=table_dir / "evidence_table.json",
+        output_dir=taxonomy_dir,
+    )
+    manifest = {
+        "schema_version": REPRO_SCHEMA_VERSION,
+        "model_calls": False,
+        "uses_private_data": False,
+        "fixture_workspace": fixture_workspace.as_posix(),
+        "output_dir": output_dir.as_posix(),
+        "task_ids": task_ids or "default_mvp_task_set",
+        "artifacts": {
+            "rule_baseline_ablation_summary": (
+                run_dir / "rule_baseline_ablation_summary.json"
+            ).as_posix(),
+            "evidence_table_json": evidence_output["json_path"],
+            "evidence_table_csv": evidence_output["csv_path"],
+            "figures_manifest": (figure_dir / "figures_manifest.json").as_posix(),
+            "error_taxonomy": taxonomy["json_path"],
+        },
+        "row_count": evidence_output["row_count"],
+        "figure_count": figures["figure_count"],
+        "violation_count": taxonomy["violation_count"],
+        "runtime_modes": sorted(ablation_report["modes"]),
+    }
+    output_dir.mkdir(parents=True, exist_ok=True)
+    (output_dir / "offline_repro_manifest.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return manifest
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--output-dir",
+        required=True,
+        type=Path,
+        help="Directory for regenerated trajectories, scores, tables, and figures.",
+    )
+    parser.add_argument(
+        "--fixture-workspace",
+        type=Path,
+        help="Optional fixture build directory. Defaults to <output-dir>/fixtures.",
+    )
+    parser.add_argument(
+        "--task-id",
+        action="append",
+        dest="task_ids",
+        help="Optional task id. Repeat to run a subset; omit for all MVP tasks.",
+    )
+    args = parser.parse_args(argv)
+    manifest = run_offline_repro(
+        output_dir=args.output_dir,
+        fixture_workspace=args.fixture_workspace,
+        task_ids=args.task_ids,
+    )
+    print(json.dumps(manifest, indent=2, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
