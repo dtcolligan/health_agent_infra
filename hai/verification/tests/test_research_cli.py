@@ -88,15 +88,15 @@ def test_research_commands_appear_in_capabilities_manifest():
     )
     assert result.returncode == 0
     manifest = json.loads(result.stdout)
-    cmd_names = {c["command"] for c in manifest["commands"]}
+    cmd_names = {c["name"] for c in manifest["commands"]}
     assert "hai research topics" in cmd_names
     assert "hai research search" in cmd_names
 
     # Both must be agent-safe + read-only.
-    by_name = {c["command"]: c for c in manifest["commands"]}
+    by_name = {c["name"]: c for c in manifest["commands"]}
     for name in ("hai research topics", "hai research search"):
         assert by_name[name]["agent_safe"] is True
-        assert by_name[name]["mutation"] == "read-only"
+        assert by_name[name]["mutation_class"] == "read-only"
 
 
 def test_expert_explainer_skill_no_longer_grants_python3_c():

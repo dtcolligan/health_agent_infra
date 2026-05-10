@@ -202,9 +202,9 @@ def test_capabilities_manifest_registers_eval_review_subcommands():
     assert rc == exit_codes.OK
     manifest = json.loads(out)
     review_cmds = {
-        c["command"]: c
+        c["name"]: c
         for c in manifest["commands"]
-        if c["command"].startswith("hai eval review ")
+        if c["name"].startswith("hai eval review ")
     }
     assert set(review_cmds) == {
         "hai eval review list",
@@ -214,11 +214,11 @@ def test_capabilities_manifest_registers_eval_review_subcommands():
         "hai eval review export",
     }
     # Mutating subcommands declare writes-state; read-only ones don't.
-    assert review_cmds["hai eval review tag"]["mutation"] == "writes-state"
-    assert review_cmds["hai eval review dismiss"]["mutation"] == "writes-state"
-    assert review_cmds["hai eval review list"]["mutation"] == "read-only"
-    assert review_cmds["hai eval review show"]["mutation"] == "read-only"
-    assert review_cmds["hai eval review export"]["mutation"] == "read-only"
+    assert review_cmds["hai eval review tag"]["mutation_class"] == "writes-state"
+    assert review_cmds["hai eval review dismiss"]["mutation_class"] == "writes-state"
+    assert review_cmds["hai eval review list"]["mutation_class"] == "read-only"
+    assert review_cmds["hai eval review show"]["mutation_class"] == "read-only"
+    assert review_cmds["hai eval review export"]["mutation_class"] == "read-only"
 
 
 # ---------------------------------------------------------------------------

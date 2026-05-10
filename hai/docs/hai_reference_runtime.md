@@ -120,10 +120,10 @@ Trimmed example:
 
 ```json
 {
-  "command": "hai auth intervals-icu",
+  "name": "hai auth intervals-icu",
   "description": "Store Intervals.icu credentials in the OS keyring.",
   "agent_safe": false,
-  "mutation": "writes-credentials",
+  "mutation_class": "writes-credentials",
   "idempotent": "yes",
   "exit_codes": ["OK", "USER_INPUT"],
   "flags": [

@@ -147,11 +147,11 @@ def test_capabilities_manifest_matches_snapshot_modulo_volatile_fields():
         # Diagnostic prose for v0.1.14 W-29 / future-cycle authors: name
         # the divergence axes so the failure points at the right place
         # instead of dumping 140KB of JSON.
-        added = set(c["command"] for c in current_n["commands"]) - set(
-            c["command"] for c in snapshot_n["commands"]
+        added = set(c["name"] for c in current_n["commands"]) - set(
+            c["name"] for c in snapshot_n["commands"]
         )
-        removed = set(c["command"] for c in snapshot_n["commands"]) - set(
-            c["command"] for c in current_n["commands"]
+        removed = set(c["name"] for c in snapshot_n["commands"]) - set(
+            c["name"] for c in current_n["commands"]
         )
         msg = ["capabilities manifest drift vs snapshot:"]
         if added:

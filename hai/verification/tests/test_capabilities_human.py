@@ -78,8 +78,8 @@ def test_every_command_appears_in_human_render():
     manifest = build_manifest(build_parser())
     rendered = render_human(manifest)
     for row in manifest["commands"]:
-        assert f"`{row['command']}`" in rendered, (
-            f"command {row['command']!r} missing from human render"
+        assert f"`{row['name']}`" in rendered, (
+            f"command {row['name']!r} missing from human render"
         )
 
 
@@ -91,7 +91,7 @@ def test_every_top_level_prefix_is_explicitly_mapped():
     decision, not a default."""
 
     manifest = build_manifest(build_parser())
-    prefixes = {_top_level_prefix(row["command"]) for row in manifest["commands"]}
+    prefixes = {_top_level_prefix(row["name"]) for row in manifest["commands"]}
     prefixes.discard("")
     unmapped = prefixes - _CATEGORY_MAP.keys()
     assert not unmapped, (
@@ -242,4 +242,4 @@ def test_cli_capabilities_default_still_emits_json():
     )
     assert result.returncode == 0
     payload = json.loads(result.stdout)
-    assert payload["schema_version"] == "agent_cli_contract.v1"
+    assert payload["schema_version"] == "agent_cli_contract.v2"

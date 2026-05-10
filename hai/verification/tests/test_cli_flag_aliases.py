@@ -68,7 +68,7 @@ def test_capabilities_manifest_lists_as_of_on_pull():
     from health_agent_infra.core.capabilities import build_manifest
     manifest = build_manifest(build_parser())
     pull_cmd = next(
-        c for c in manifest["commands"] if c["command"] == "hai pull"
+        c for c in manifest["commands"] if c["name"] == "hai pull"
     )
     pull_flags = {f["name"]: f for f in pull_cmd["flags"]}
     # The argparse alias surface stores the second name in `aliases`.
@@ -83,7 +83,7 @@ def test_capabilities_manifest_lists_as_of_on_explain():
     from health_agent_infra.core.capabilities import build_manifest
     manifest = build_manifest(build_parser())
     explain_cmd = next(
-        c for c in manifest["commands"] if c["command"] == "hai explain"
+        c for c in manifest["commands"] if c["name"] == "hai explain"
     )
     flags_by_name = {f["name"]: f for f in explain_cmd["flags"]}
     # Either name is exposed; the alias array carries the other.

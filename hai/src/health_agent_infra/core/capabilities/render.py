@@ -107,8 +107,8 @@ def _row_to_markdown(row: dict[str, Any]) -> str:
     # Collapse newlines in description so the table row stays on one line.
     description = " ".join(description.split())
     return (
-        f"| ``{row['command']}`` "
-        f"| ``{row['mutation']}`` "
+        f"| ``{row['name']}`` "
+        f"| ``{row['mutation_class']}`` "
         f"| ``{row['idempotent']}`` "
         f"| ``{row['json_output']}`` "
         f"| {agent} "
@@ -224,7 +224,7 @@ def render_human(manifest: dict[str, Any]) -> str:
     # not a silent omission.
     buckets: dict[str, list[dict[str, Any]]] = {c: [] for c in _CATEGORY_ORDER}
     for row in manifest["commands"]:
-        top = _top_level_prefix(row["command"])
+        top = _top_level_prefix(row["name"])
         category = _CATEGORY_MAP.get(top, "Advanced & tools")
         buckets[category].append(row)
 
@@ -243,7 +243,7 @@ def render_human(manifest: dict[str, Any]) -> str:
         lines.append("")
         lines.append(f"_{_CATEGORY_BLURB[category]}_")
         lines.append("")
-        for row in sorted(rows, key=lambda r: r["command"]):
+        for row in sorted(rows, key=lambda r: r["name"]):
             lines.append(_row_to_human(row))
         lines.append("")
     return "\n".join(lines)
@@ -281,4 +281,4 @@ def _row_to_human(row: dict[str, Any]) -> str:
             suffix += ", …"
         flag_suffix = f"  \n  Flags: {suffix}"
 
-    return f"- **`{row['command']}`** — {summary}{flag_suffix}"
+    return f"- **`{row['name']}`** — {summary}{flag_suffix}"

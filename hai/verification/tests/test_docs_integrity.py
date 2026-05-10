@@ -51,7 +51,7 @@ def _current_hai_commands() -> set[str]:
     from health_agent_infra.core.capabilities import build_manifest
 
     manifest = build_manifest(build_parser())
-    return {entry["command"] for entry in manifest["commands"]}
+    return {entry["name"] for entry in manifest["commands"]}
 
 
 _HAI_CMD_PATTERN = re.compile(

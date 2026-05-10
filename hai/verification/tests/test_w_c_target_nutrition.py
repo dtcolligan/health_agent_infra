@@ -629,13 +629,13 @@ def test_capabilities_manifest_includes_hai_target_nutrition(capsys):
     payload = json.loads(capsys.readouterr().out)
 
     cmd = next(
-        (c for c in payload["commands"] if c["command"] == "hai target nutrition"),
+        (c for c in payload["commands"] if c["name"] == "hai target nutrition"),
         None,
     )
     assert cmd is not None, (
         "hai target nutrition must appear in capabilities manifest"
     )
-    assert cmd["mutation"] == "writes-state"
+    assert cmd["mutation_class"] == "writes-state"
     assert cmd["agent_safe"] is True
     assert cmd["idempotent"] == "yes"
     # Capabilities convention: json_output exposes the annotation

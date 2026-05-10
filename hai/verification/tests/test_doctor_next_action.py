@@ -363,7 +363,7 @@ def test_next_action_agent_safe_matches_live_manifest(tmp_path):
         pass
     manifest = json.loads(out_buf.getvalue())
 
-    manifest_by_command = {c["command"]: c for c in manifest["commands"]}
+    manifest_by_command = {c["name"]: c for c in manifest["commands"]}
 
     drift: list[str] = []
     for command, descriptor in _NEXT_ACTION_REGISTRY.items():

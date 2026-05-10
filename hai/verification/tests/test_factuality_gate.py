@@ -1052,7 +1052,7 @@ def test_review_weekly_capabilities_manifest_lists_bypass_flag():
     manifest = build_manifest(parser)
     weekly = next(
         c for c in manifest["commands"]
-        if c["command"] == "hai review weekly"
+        if c["name"] == "hai review weekly"
     )
     bypass_flag = next(
         f for f in weekly["flags"]

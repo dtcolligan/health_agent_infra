@@ -16,10 +16,6 @@ different test, but in practice the walker can't invent flags.
 
 from __future__ import annotations
 
-from typing import Iterable
-
-import pytest
-
 from health_agent_infra.cli import build_parser
 from health_agent_infra.core.capabilities import build_manifest
 from health_agent_infra.core.capabilities.walker import (
@@ -74,7 +70,7 @@ def test_every_flag_argparse_knows_about_appears_in_manifest():
     must equal the set argparse would accept."""
 
     manifest = build_manifest(build_parser())
-    manifest_by_cmd = {row["command"]: row for row in manifest["commands"]}
+    manifest_by_cmd = {row["name"]: row for row in manifest["commands"]}
 
     for command, leaf in _walk_leaf_parsers():
         assert command in manifest_by_cmd, (
@@ -125,11 +121,11 @@ def test_flag_entry_shape_is_stable():
             missing = required_keys - actual
             unknown = actual - allowed_keys
             assert not missing, (
-                f"{row['command']}: flag {flag.get('name')!r} missing "
+                f"{row['name']}: flag {flag.get('name')!r} missing "
                 f"required keys {sorted(missing)}"
             )
             assert not unknown, (
-                f"{row['command']}: flag {flag.get('name')!r} has unknown "
+                f"{row['name']}: flag {flag.get('name')!r} has unknown "
                 f"keys {sorted(unknown)}; allowed: {sorted(allowed_keys)}"
             )
 
@@ -151,7 +147,7 @@ def test_positional_flags_when_present_are_marked_positional_and_required():
             if not flag["positional"]:
                 continue
             assert not flag["name"].startswith("-"), (
-                f"{row['command']}: positional flag name "
+                f"{row['name']}: positional flag name "
                 f"{flag['name']!r} starts with '-' — looks like "
                 f"a classification bug in the walker."
             )
@@ -159,7 +155,7 @@ def test_positional_flags_when_present_are_marked_positional_and_required():
             # where required is legitimately False.
             if flag["nargs"] != "?":
                 assert flag["required"] is True, (
-                    f"{row['command']}: positional flag "
+                    f"{row['name']}: positional flag "
                     f"{flag['name']!r} has nargs={flag['nargs']!r} "
                     f"but required={flag['required']}"
                 )
@@ -173,7 +169,7 @@ def test_all_current_cli_flags_are_optional():
 
     manifest = build_manifest(build_parser())
     positionals = [
-        (row["command"], flag["name"])
+        (row["name"], flag["name"])
         for row in manifest["commands"]
         for flag in row["flags"]
         if flag["positional"]
@@ -198,7 +194,7 @@ def test_store_true_and_store_false_flags_report_bool_type():
             if flag["action"] in ("store_true", "store_false"):
                 saw_bool = True
                 assert flag["type"] == "bool", (
-                    f"{row['command']}: {flag['name']} is "
+                    f"{row['name']}: {flag['name']} is "
                     f"{flag['action']} but type={flag['type']!r}"
                 )
     assert saw_bool, "CLI has no store_true / store_false flags — test vacuous."

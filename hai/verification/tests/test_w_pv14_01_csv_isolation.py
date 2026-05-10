@@ -560,7 +560,7 @@ def test_capabilities_manifest_tags_pull_source_choices_with_source_type(
     payload = json.loads(capsys.readouterr().out)
 
     pull_cmd = next(
-        c for c in payload["commands"] if c["command"] == "hai pull"
+        c for c in payload["commands"] if c["name"] == "hai pull"
     )
     source_flag = next(
         f for f in pull_cmd["flags"] if f.get("name") == "--source"

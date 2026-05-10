@@ -935,7 +935,7 @@ def test_cli_review_weekly_command_in_capabilities_manifest():
     )
     manifest = json.loads(result.stdout)
     weekly = [c for c in manifest.get("commands", [])
-              if c.get("command") == "hai review weekly"]
+              if c.get("name") == "hai review weekly"]
     assert len(weekly) == 1, (
         f"expected exactly one 'hai review weekly' entry; "
         f"got {len(weekly)}"
@@ -946,7 +946,7 @@ def test_cli_review_weekly_command_in_capabilities_manifest():
     # append-only design (no destructive overwrites). v0.2.0 W58D
     # step 7 adds --bypass-factuality-gate (developer-only override)
     # + INTERNAL exit code (gate-blocked render).
-    assert entry["mutation"] == "writes-state"
+    assert entry["mutation_class"] == "writes-state"
     assert entry["agent_safe"] is True
     assert "OK" in entry["exit_codes"]
     assert "USER_INPUT" in entry["exit_codes"]
@@ -1326,5 +1326,4 @@ def test_multi_canonical_disposition_absent_when_no_collision(
         assert payload["coverage"]["multi_canonical_dates"] == []
     finally:
         conn.close()
-
 

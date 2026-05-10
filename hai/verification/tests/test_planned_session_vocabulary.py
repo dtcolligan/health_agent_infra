@@ -61,11 +61,11 @@ def test_planned_session_types_in_capabilities_manifest():
         capture_output=True, text=True, check=True,
     )
     manifest = json.loads(result.stdout)
-    by_name = {c["command"]: c for c in manifest["commands"]}
+    by_name = {c["name"]: c for c in manifest["commands"]}
     assert "hai planned-session-types" in by_name
     cmd = by_name["hai planned-session-types"]
     assert cmd["agent_safe"] is True
-    assert cmd["mutation"] == "read-only"
+    assert cmd["mutation_class"] == "read-only"
 
 
 def test_classifier_substrings_match_actual_domain_logic():

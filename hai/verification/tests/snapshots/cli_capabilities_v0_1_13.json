@@ -2,7 +2,6 @@
   "commands": [
     {
       "agent_safe": false,
-      "command": "hai auth garmin",
       "description": "Store Garmin credentials in the OS keyring. Interactive by default; operator-only (requires a live password).",
       "exit_codes": [
         "OK",
@@ -48,11 +47,11 @@
       ],
       "idempotent": "yes",
       "json_output": "default",
-      "mutation": "writes-credentials"
+      "mutation_class": "writes-credentials",
+      "name": "hai auth garmin"
     },
     {
       "agent_safe": false,
-      "command": "hai auth intervals-icu",
       "description": "Store Intervals.icu credentials in the OS keyring. Interactive by default; operator-only (requires a live API key).",
       "exit_codes": [
         "OK",
@@ -98,11 +97,11 @@
       ],
       "idempotent": "yes",
       "json_output": "default",
-      "mutation": "writes-credentials"
+      "mutation_class": "writes-credentials",
+      "name": "hai auth intervals-icu"
     },
     {
       "agent_safe": false,
-      "command": "hai auth remove",
       "description": "Remove stored credentials from the OS keyring. Idempotent \u2014 removing absent credentials is a no-op. Env-var-supplied credentials are never touched.",
       "exit_codes": [
         "OK"
@@ -127,11 +126,11 @@
       ],
       "idempotent": "yes",
       "json_output": "default",
-      "mutation": "writes-credentials"
+      "mutation_class": "writes-credentials",
+      "name": "hai auth remove"
     },
     {
       "agent_safe": true,
-      "command": "hai auth status",
       "description": "Report whether Garmin and Intervals.icu credentials are configured. Presence only \u2014 never emits the secret itself.",
       "exit_codes": [
         "OK"
@@ -139,11 +138,11 @@
       "flags": [],
       "idempotent": "n/a",
       "json_output": "default",
-      "mutation": "read-only"
+      "mutation_class": "read-only",
+      "name": "hai auth status"
     },
     {
       "agent_safe": true,
-      "command": "hai backup",
       "description": "Versioned tarball of state.db + JSONL audit logs + manifest. Read-only on local state. See hai/docs/backup_and_recovery.md for the recovery contract.",
       "exit_codes": [
         "OK",
@@ -189,11 +188,11 @@
       ],
       "idempotent": "yes",
       "json_output": "default",
-      "mutation": "read-only"
+      "mutation_class": "read-only",
+      "name": "hai backup"
     },
     {
       "agent_safe": true,
-      "command": "hai capabilities",
       "description": "Emit the agent-CLI-contract manifest describing every subcommand's mutation class, idempotency, JSON output, and exit codes. The authoritative surface the routing skill consumes.",
       "exit_codes": [
         "OK"
@@ -238,11 +237,11 @@
       ],
       "idempotent": "n/a",
       "json_output": "opt-out",
-      "mutation": "read-only"
+      "mutation_class": "read-only",
+      "name": "hai capabilities"
     },
     {
       "agent_safe": true,
-      "command": "hai clean",
       "description": "Normalize pulled evidence into CleanedEvidence + RawSummary JSON and project accepted state rows. Best-effort projection when --db-path is absent.",
       "exit_codes": [
         "OK",
@@ -276,11 +275,11 @@
       ],
       "idempotent": "yes",
       "json_output": "default",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai clean"
     },
     {
       "agent_safe": true,
-      "command": "hai config diff",
       "description": "Diff user thresholds.toml against DEFAULT_THRESHOLDS, leaf by leaf.",
       "exit_codes": [
         "OK",
@@ -302,11 +301,11 @@
       ],
       "idempotent": "n/a",
       "json_output": "default",
-      "mutation": "read-only"
+      "mutation_class": "read-only",
+      "name": "hai config diff"
     },
     {
       "agent_safe": true,
-      "command": "hai config init",
       "description": "Scaffold a default thresholds.toml at the user-config path.",
       "exit_codes": [
         "OK",
@@ -340,11 +339,11 @@
       ],
       "idempotent": "yes",
       "json_output": "default",
-      "mutation": "writes-config"
+      "mutation_class": "writes-config",
+      "name": "hai config init"
     },
     {
       "agent_safe": true,
-      "command": "hai config show",
       "description": "Print the effective merged threshold configuration (defaults + overrides).",
       "exit_codes": [
         "OK",
@@ -366,11 +365,11 @@
       ],
       "idempotent": "n/a",
       "json_output": "default",
-      "mutation": "read-only"
+      "mutation_class": "read-only",
+      "name": "hai config show"
     },
     {
       "agent_safe": true,
-      "command": "hai config validate",
       "description": "Validate user thresholds.toml against DEFAULT_THRESHOLDS shape.",
       "exit_codes": [
         "OK",
@@ -404,11 +403,11 @@
       ],
       "idempotent": "n/a",
       "json_output": "default",
-      "mutation": "read-only"
+      "mutation_class": "read-only",
+      "name": "hai config validate"
     },
     {
       "agent_safe": true,
-      "command": "hai daily",
       "description": "Morning orchestrator: deterministic stages run end-to-end (pull \u2192 clean \u2192 snapshot \u2192 gaps \u2192 proposal_gate). The agent then invokes the 6 per-domain readiness skills, posts DomainProposal rows via `hai propose --domain <d>`, and re-runs `hai daily` to advance the gate to `complete` and trigger synthesis. `--domains <csv>` narrows the expected set for partial-day planning.",
       "exit_codes": [
         "OK",
@@ -633,7 +632,8 @@
       ],
       "idempotent": "yes-with-supersede",
       "json_output": "default",
-      "mutation": "writes-state",
+      "mutation_class": "writes-state",
+      "name": "hai daily",
       "output_schema": {
         "OK": {
           "json_keys": [
@@ -662,7 +662,6 @@
     },
     {
       "agent_safe": true,
-      "command": "hai demo cleanup",
       "description": "Remove an orphan / corrupt demo marker so the CLI can return to normal mode. Allowed even when the marker is invalid (the fail-closed escape hatch).",
       "exit_codes": [
         "OK"
@@ -670,11 +669,11 @@
       "flags": [],
       "idempotent": "yes",
       "json_output": "default",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai demo cleanup"
     },
     {
       "agent_safe": true,
-      "command": "hai demo end",
       "description": "Close the active demo session. Removes the marker so subsequent CLI invocations route to real persistence. v0.1.11 W-Va leaves the scratch root in place; W-Vb adds archive-on-end behaviour.",
       "exit_codes": [
         "OK"
@@ -682,11 +681,11 @@
       "flags": [],
       "idempotent": "yes",
       "json_output": "default",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai demo end"
     },
     {
       "agent_safe": true,
-      "command": "hai demo start",
       "description": "Open a new demo session. Creates a scratch root at /tmp/hai_demo_<id>/ with state.db, health_agent_root/, and config/thresholds.toml. Writes a marker file at the demo-session location ($XDG_CACHE_HOME/hai/ or ~/.cache/hai/). Refuses with USER_INPUT if a session is already active.",
       "exit_codes": [
         "OK",
@@ -720,11 +719,11 @@
       ],
       "idempotent": "no",
       "json_output": "default",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai demo start"
     },
     {
       "agent_safe": true,
-      "command": "hai doctor",
       "description": "Report runtime health: DB present, migrations up to date, per-source freshness, today's accepted counts.",
       "exit_codes": [
         "OK",
@@ -818,11 +817,11 @@
       ],
       "idempotent": "n/a",
       "json_output": "opt-in",
-      "mutation": "read-only"
+      "mutation_class": "read-only",
+      "name": "hai doctor"
     },
     {
       "agent_safe": true,
-      "command": "hai eval review dismiss",
       "description": "Mark a scenario as dismissed in the per-user triage state.",
       "exit_codes": [
         "OK",
@@ -856,11 +855,11 @@
       ],
       "idempotent": "no",
       "json_output": "default",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai eval review dismiss"
     },
     {
       "agent_safe": true,
-      "command": "hai eval review export",
       "description": "Export the per-scenario triage state to a JSON or CSV file.",
       "exit_codes": [
         "OK",
@@ -897,11 +896,11 @@
       ],
       "idempotent": "yes",
       "json_output": "default",
-      "mutation": "read-only"
+      "mutation_class": "read-only",
+      "name": "hai eval review export"
     },
     {
       "agent_safe": true,
-      "command": "hai eval review list",
       "description": "List eval corpus with per-scenario triage overlay. Read-only.",
       "exit_codes": [
         "OK"
@@ -950,11 +949,11 @@
       ],
       "idempotent": "yes",
       "json_output": "default",
-      "mutation": "read-only"
+      "mutation_class": "read-only",
+      "name": "hai eval review list"
     },
     {
       "agent_safe": true,
-      "command": "hai eval review show",
       "description": "Show one scenario's full fixture + triage state.",
       "exit_codes": [
         "OK",
@@ -976,11 +975,11 @@
       ],
       "idempotent": "yes",
       "json_output": "default",
-      "mutation": "read-only"
+      "mutation_class": "read-only",
+      "name": "hai eval review show"
     },
     {
       "agent_safe": true,
-      "command": "hai eval review tag",
       "description": "Tag a scenario with a triage label. Per-user state; not the fixture tree itself (which is packaged read-only substrate).",
       "exit_codes": [
         "OK",
@@ -1026,11 +1025,11 @@
       ],
       "idempotent": "no",
       "json_output": "default",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai eval review tag"
     },
     {
       "agent_safe": true,
-      "command": "hai eval run",
       "description": "Execute frozen deterministic eval scenarios for a domain (--domain) or the synthesis layer (--synthesis). Read-only \u2014 scores scenarios, never writes state. USER_INPUT when a scenario fails its rubric; INTERNAL if the runner itself crashes.",
       "exit_codes": [
         "OK",
@@ -1107,11 +1106,11 @@
       ],
       "idempotent": "n/a",
       "json_output": "opt-in",
-      "mutation": "read-only"
+      "mutation_class": "read-only",
+      "name": "hai eval run"
     },
     {
       "agent_safe": true,
-      "command": "hai exercise search",
       "description": "Rank top exercise-taxonomy matches for a free-text query.",
       "exit_codes": [
         "OK",
@@ -1157,11 +1156,11 @@
       ],
       "idempotent": "n/a",
       "json_output": "default",
-      "mutation": "read-only"
+      "mutation_class": "read-only",
+      "name": "hai exercise search"
     },
     {
       "agent_safe": true,
-      "command": "hai explain",
       "description": "Reconstruct the full audit chain (planned / adapted / firings / performed) for a committed plan. Strictly read-only \u2014 never recomputes runtime state.",
       "exit_codes": [
         "OK",
@@ -1262,11 +1261,11 @@
       ],
       "idempotent": "n/a",
       "json_output": "opt-out",
-      "mutation": "read-only"
+      "mutation_class": "read-only",
+      "name": "hai explain"
     },
     {
       "agent_safe": true,
-      "command": "hai export",
       "description": "Single JSONL stream of every audit log under base_dir, with each line carrying a `_log` envelope tag. Read-only consolidation; not net-new functionality.",
       "exit_codes": [
         "OK"
@@ -1299,11 +1298,11 @@
       ],
       "idempotent": "yes",
       "json_output": "default",
-      "mutation": "read-only"
+      "mutation_class": "read-only",
+      "name": "hai export"
     },
     {
       "agent_safe": false,
-      "command": "hai init",
       "description": "First-run wizard: state init, config scaffolding, auth setup.",
       "exit_codes": [
         "OK",
@@ -1445,11 +1444,11 @@
       ],
       "idempotent": "no",
       "json_output": "none",
-      "mutation": "interactive"
+      "mutation_class": "interactive",
+      "name": "hai init"
     },
     {
       "agent_safe": true,
-      "command": "hai intake exercise",
       "description": "Upsert an exercise taxonomy entry.",
       "exit_codes": [
         "OK",
@@ -1565,11 +1564,11 @@
       ],
       "idempotent": "yes",
       "json_output": "default",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai intake exercise"
     },
     {
       "agent_safe": true,
-      "command": "hai intake gaps",
       "description": "Return the list of user-closeable intake gaps in the snapshot. Read-only; no side effects.",
       "exit_codes": [
         "OK",
@@ -1651,11 +1650,11 @@
       ],
       "idempotent": "yes",
       "json_output": "default",
-      "mutation": "read-only"
+      "mutation_class": "read-only",
+      "name": "hai intake gaps"
     },
     {
       "agent_safe": true,
-      "command": "hai intake gym",
       "description": "Record a gym session (sets + exercises) as typed human-input.",
       "exit_codes": [
         "OK",
@@ -1836,11 +1835,11 @@
       ],
       "idempotent": "no",
       "json_output": "default",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai intake gym"
     },
     {
       "agent_safe": true,
-      "command": "hai intake note",
       "description": "Attach a free-text context note to a day.",
       "exit_codes": [
         "OK",
@@ -1949,11 +1948,11 @@
       ],
       "idempotent": "no",
       "json_output": "default",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai intake note"
     },
     {
       "agent_safe": true,
-      "command": "hai intake nutrition",
       "description": "Record a macros-only nutrition intake entry.",
       "exit_codes": [
         "OK",
@@ -2110,11 +2109,11 @@
       ],
       "idempotent": "no",
       "json_output": "default",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai intake nutrition"
     },
     {
       "agent_safe": true,
-      "command": "hai intake readiness",
       "description": "Record a manual readiness self-report entry.",
       "exit_codes": [
         "OK",
@@ -2243,11 +2242,11 @@
       ],
       "idempotent": "no",
       "json_output": "default",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai intake readiness"
     },
     {
       "agent_safe": true,
-      "command": "hai intake stress",
       "description": "Record a manual stress observation (used when Garmin stress is absent).",
       "exit_codes": [
         "OK",
@@ -2350,11 +2349,11 @@
       ],
       "idempotent": "no",
       "json_output": "default",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai intake stress"
     },
     {
       "agent_safe": false,
-      "command": "hai intake weight",
       "description": "W-B (v0.1.17 \u00a72.H): record a body-composition measurement. Append-only (multiple measurements per day are valid). Source enum is fixed to 'user_authored'; agent-proposal path is post-v0.2.x scope.",
       "exit_codes": [
         "OK",
@@ -2472,11 +2471,11 @@
       ],
       "idempotent": "no",
       "json_output": "default",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai intake weight"
     },
     {
       "agent_safe": false,
-      "command": "hai intent archive",
       "description": "Archive a W49 intent row (status='archived'). Marked NOT agent-safe: archiving an active or proposed row IS user-state deactivation per AGENTS.md W57. Agents that proposed the row must NOT auto-archive it; only an explicit user invocation may run this command.",
       "exit_codes": [
         "OK",
@@ -2534,11 +2533,11 @@
       ],
       "idempotent": "yes-with-supersede",
       "json_output": "default",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai intent archive"
     },
     {
       "agent_safe": false,
-      "command": "hai intent commit",
       "description": "Promote a proposed intent row to active. Marked NOT agent-safe: agents that proposed the row must NOT auto-promote it; only an explicit user invocation may run this command.",
       "exit_codes": [
         "OK",
@@ -2596,11 +2595,11 @@
       ],
       "idempotent": "yes-with-supersede",
       "json_output": "default",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai intent commit"
     },
     {
       "agent_safe": true,
-      "command": "hai intent list",
       "description": "List intent rows from the W49 ledger; default-active.",
       "exit_codes": [
         "OK",
@@ -2682,11 +2681,11 @@
       ],
       "idempotent": "n/a",
       "json_output": "default",
-      "mutation": "read-only"
+      "mutation_class": "read-only",
+      "name": "hai intent list"
     },
     {
       "agent_safe": true,
-      "command": "hai intent sleep set-window",
       "description": "Insert a sleep-window intent into the W49 intent ledger.",
       "exit_codes": [
         "OK",
@@ -2879,11 +2878,11 @@
       ],
       "idempotent": "no",
       "json_output": "default",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai intent sleep set-window"
     },
     {
       "agent_safe": true,
-      "command": "hai intent training add-session",
       "description": "Insert a user-authored training-session intent into the W49 intent ledger.",
       "exit_codes": [
         "OK",
@@ -3079,11 +3078,11 @@
       ],
       "idempotent": "no",
       "json_output": "default",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai intent training add-session"
     },
     {
       "agent_safe": true,
-      "command": "hai intent training list",
       "description": "List training intent rows from the W49 ledger.",
       "exit_codes": [
         "OK",
@@ -3153,11 +3152,11 @@
       ],
       "idempotent": "n/a",
       "json_output": "default",
-      "mutation": "read-only"
+      "mutation_class": "read-only",
+      "name": "hai intent training list"
     },
     {
       "agent_safe": true,
-      "command": "hai memory archive",
       "description": "Mark a user_memory entry archived (soft delete). The row itself stays for audit; read surfaces filter it out.",
       "exit_codes": [
         "OK",
@@ -3191,11 +3190,11 @@
       ],
       "idempotent": "yes",
       "json_output": "default",
-      "mutation": "writes-memory"
+      "mutation_class": "writes-memory",
+      "name": "hai memory archive"
     },
     {
       "agent_safe": true,
-      "command": "hai memory list",
       "description": "List user_memory entries active at a given date, grouped by category.",
       "exit_codes": [
         "OK",
@@ -3258,11 +3257,11 @@
       ],
       "idempotent": "n/a",
       "json_output": "default",
-      "mutation": "read-only"
+      "mutation_class": "read-only",
+      "name": "hai memory list"
     },
     {
       "agent_safe": true,
-      "command": "hai memory set",
       "description": "Append a user_memory entry (goal / preference / constraint / context). Append-only \u2014 replace by archiving the old row and setting a new one.",
       "exit_codes": [
         "OK",
@@ -3388,11 +3387,11 @@
       ],
       "idempotent": "no",
       "json_output": "default",
-      "mutation": "writes-memory"
+      "mutation_class": "writes-memory",
+      "name": "hai memory set"
     },
     {
       "agent_safe": true,
-      "command": "hai planned-session-types",
       "description": "Emit the canonical planned_session_type vocabulary (token + classifier_substring + description per entry). Source registry: core/intake/planned_session_vocabulary.py.",
       "exit_codes": [
         "OK"
@@ -3400,11 +3399,11 @@
       "flags": [],
       "idempotent": "yes",
       "json_output": "default",
-      "mutation": "read-only"
+      "mutation_class": "read-only",
+      "name": "hai planned-session-types"
     },
     {
       "agent_safe": true,
-      "command": "hai propose",
       "description": "Validate a DomainProposal and append it to proposal_log. One of the three determinism boundaries the runtime enforces.",
       "exit_codes": [
         "OK",
@@ -3481,7 +3480,8 @@
       ],
       "idempotent": "yes-with-replace",
       "json_output": "default",
-      "mutation": "writes-state",
+      "mutation_class": "writes-state",
+      "name": "hai propose",
       "output_schema": {
         "OK": {
           "json_keys": [
@@ -3503,7 +3503,6 @@
     },
     {
       "agent_safe": true,
-      "command": "hai pull",
       "description": "Acquire evidence for a date and emit cleaned evidence JSON. Source resolution (v0.1.6): explicit `--source` > legacy `--live` (= garmin_live) > intervals.icu when credentials are configured > csv fixture fallback. Garmin live is best-effort (rate-limited); intervals.icu is the supported live source. Writes a sync_run_log row; does not touch the main state tables.",
       "exit_codes": [
         "OK",
@@ -3647,11 +3646,11 @@
       ],
       "idempotent": "yes",
       "json_output": "default",
-      "mutation": "writes-sync-log"
+      "mutation_class": "writes-sync-log",
+      "name": "hai pull"
     },
     {
       "agent_safe": true,
-      "command": "hai research search",
       "description": "Retrieve sources for one allowlisted research topic. Mirrors core.research.retrieve but exposes only the topic-token interface \u2014 the privacy-violation booleans are not configurable. Read-only; no network.",
       "exit_codes": [
         "OK"
@@ -3672,11 +3671,11 @@
       ],
       "idempotent": "yes",
       "json_output": "default",
-      "mutation": "read-only"
+      "mutation_class": "read-only",
+      "name": "hai research search"
     },
     {
       "agent_safe": true,
-      "command": "hai research topics",
       "description": "List the allowlisted topics the bounded retrieval surface recognises. Read-only.",
       "exit_codes": [
         "OK"
@@ -3684,11 +3683,11 @@
       "flags": [],
       "idempotent": "yes",
       "json_output": "default",
-      "mutation": "read-only"
+      "mutation_class": "read-only",
+      "name": "hai research topics"
     },
     {
       "agent_safe": false,
-      "command": "hai restore",
       "description": "Restore state.db + JSONL audit logs from a `hai backup` tarball. Refuses if the bundle's schema_version does not match the installed wheel's head. Overwrites the destination \u2014 back up first if it has data.",
       "exit_codes": [
         "OK",
@@ -3734,11 +3733,11 @@
       ],
       "idempotent": "no",
       "json_output": "default",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai restore"
     },
     {
       "agent_safe": true,
-      "command": "hai review record",
       "description": "Record a review_outcome against a review_event. Carries the migration-010 enrichment columns (completed, intensity_delta, pre/post_energy, disagreed_firing_ids).",
       "exit_codes": [
         "OK",
@@ -3877,7 +3876,8 @@
       ],
       "idempotent": "no",
       "json_output": "default",
-      "mutation": "writes-state",
+      "mutation_class": "writes-state",
+      "name": "hai review record",
       "output_schema": {
         "OK": {
           "json_keys": [
@@ -3901,7 +3901,6 @@
     },
     {
       "agent_safe": true,
-      "command": "hai review schedule",
       "description": "Persist a pending review_event for a recommendation (used to schedule the next-day review question).",
       "exit_codes": [
         "OK",
@@ -3947,11 +3946,11 @@
       ],
       "idempotent": "no",
       "json_output": "default",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai review schedule"
     },
     {
       "agent_safe": true,
-      "command": "hai review summary",
       "description": "Summarize review_outcome counts (followed / not-followed, per-domain tallies).",
       "exit_codes": [
         "OK",
@@ -3997,11 +3996,11 @@
       ],
       "idempotent": "n/a",
       "json_output": "default",
-      "mutation": "read-only"
+      "mutation_class": "read-only",
+      "name": "hai review summary"
     },
     {
       "agent_safe": true,
-      "command": "hai review weekly",
       "description": "Render the weekly review surface \u2014 markdown or JSON \u2014 from the canonical (non-superseded) plan evidence for the requested ISO week. Emits an abstain branch when fewer than the threshold of days have canonical plans. On the non-abstain path also persists weekly_claim_card rows (one per quantitative + comparative atomic claim) for downstream W58D factuality validation; cards are append-only so re-running with corrected data adds rows and the canonical-latest view returns the newest set.",
       "exit_codes": [
         "OK",
@@ -4108,11 +4107,11 @@
       ],
       "idempotent": "no",
       "json_output": "opt-in",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai review weekly"
     },
     {
       "agent_safe": true,
-      "command": "hai setup-skills",
       "description": "Copy the packaged skills/ tree to ~/.claude/skills/ so Claude Code discovers them.",
       "exit_codes": [
         "OK"
@@ -4145,11 +4144,11 @@
       ],
       "idempotent": "yes",
       "json_output": "default",
-      "mutation": "writes-skills-dir"
+      "mutation_class": "writes-skills-dir",
+      "name": "hai setup-skills"
     },
     {
       "agent_safe": true,
-      "command": "hai state init",
       "description": "Create the local SQLite state DB and apply all pending migrations. Idempotent \u2014 safe to call repeatedly.",
       "exit_codes": [
         "OK"
@@ -4170,11 +4169,11 @@
       ],
       "idempotent": "yes",
       "json_output": "default",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai state init"
     },
     {
       "agent_safe": true,
-      "command": "hai state migrate",
       "description": "Apply any pending schema migrations to an already-initialized state DB.",
       "exit_codes": [
         "OK",
@@ -4196,11 +4195,11 @@
       ],
       "idempotent": "yes",
       "json_output": "default",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai state migrate"
     },
     {
       "agent_safe": true,
-      "command": "hai state read",
       "description": "Read a per-domain accepted-state row for a given date.",
       "exit_codes": [
         "OK",
@@ -4270,11 +4269,11 @@
       ],
       "idempotent": "n/a",
       "json_output": "default",
-      "mutation": "read-only"
+      "mutation_class": "read-only",
+      "name": "hai state read"
     },
     {
       "agent_safe": true,
-      "command": "hai state reproject",
       "description": "Rebuild the accepted_*_state_daily tables from the raw evidence JSONL. Deterministic modulo projection timestamps \u2014 content/keys/links replay identically across runs, but projected_at / corrected_at columns reflect the wall-clock of the rebuild. Safe to re-run.",
       "exit_codes": [
         "OK",
@@ -4332,11 +4331,11 @@
       ],
       "idempotent": "yes",
       "json_output": "default",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai state reproject"
     },
     {
       "agent_safe": true,
-      "command": "hai state snapshot",
       "description": "Emit the cross-domain state snapshot the synthesis / skills layer consumes for a (for_date, user_id) pair.",
       "exit_codes": [
         "OK",
@@ -4406,11 +4405,11 @@
       ],
       "idempotent": "n/a",
       "json_output": "default",
-      "mutation": "read-only"
+      "mutation_class": "read-only",
+      "name": "hai state snapshot"
     },
     {
       "agent_safe": true,
-      "command": "hai stats",
       "description": "Summarise sync_run_log (last pull per source) + runtime_event_log (recent commands, daily streak) from the user's local DB. With --outcomes, emits the code-owned review-outcome summary (W48) instead. No telemetry leaves the device.",
       "exit_codes": [
         "OK",
@@ -4547,11 +4546,11 @@
       ],
       "idempotent": "n/a",
       "json_output": "opt-in",
-      "mutation": "read-only"
+      "mutation_class": "read-only",
+      "name": "hai stats"
     },
     {
       "agent_safe": false,
-      "command": "hai sync purge",
       "description": "F-PV14-02 (v0.1.17): surgically delete contaminated rows from sync_run_log. Refuses if selectors resolve to >5 rows. Writes a runtime_event_log audit row tagged `sync purge` on commit. agent_safe=False \u2014 operator-side surgical tool.",
       "exit_codes": [
         "OK",
@@ -4633,11 +4632,11 @@
       ],
       "idempotent": "no",
       "json_output": "default",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai sync purge"
     },
     {
       "agent_safe": true,
-      "command": "hai synthesize",
       "description": "Run synthesis end-to-end inside one atomic SQLite transaction: daily_plan + x_rule_firings + planned_recommendation + recommendation_log. --supersede versions the plan instead of replacing it.",
       "exit_codes": [
         "OK",
@@ -4744,7 +4743,8 @@
       ],
       "idempotent": "yes-with-supersede",
       "json_output": "default",
-      "mutation": "writes-state",
+      "mutation_class": "writes-state",
+      "name": "hai synthesize",
       "output_schema": {
         "OK": {
           "json_keys": [
@@ -4767,7 +4767,6 @@
     },
     {
       "agent_safe": false,
-      "command": "hai target archive",
       "description": "Archive a W50 target row (status='archived'). Marked NOT agent-safe: archiving an active or proposed row IS user-state deactivation per AGENTS.md W57. Agents that proposed the row must NOT auto-archive it; only an explicit user invocation may run this command.",
       "exit_codes": [
         "OK",
@@ -4825,11 +4824,11 @@
       ],
       "idempotent": "yes-with-supersede",
       "json_output": "default",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai target archive"
     },
     {
       "agent_safe": false,
-      "command": "hai target commit",
       "description": "Promote a proposed target row to active. Marked NOT agent-safe: agents that proposed the row must NOT auto-promote it; only an explicit user invocation may run this command.",
       "exit_codes": [
         "OK",
@@ -4887,11 +4886,11 @@
       ],
       "idempotent": "yes-with-supersede",
       "json_output": "default",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai target commit"
     },
     {
       "agent_safe": true,
-      "command": "hai target list",
       "description": "List target rows from the W50 ledger; default-active.",
       "exit_codes": [
         "OK",
@@ -4985,11 +4984,11 @@
       ],
       "idempotent": "n/a",
       "json_output": "default",
-      "mutation": "read-only"
+      "mutation_class": "read-only",
+      "name": "hai target list"
     },
     {
       "agent_safe": true,
-      "command": "hai target nutrition",
       "description": "Write 4 atomic nutrition macro target rows (calories_kcal + protein_g + carbs_g + fat_g) in a single BEGIN IMMEDIATE / COMMIT. Source/status pairing per W57: agent-actor \u2192 agent_proposed/proposed; otherwise user_authored/active. Natural-key idempotency: identical re-invocation is a no-op. Agent-safe because both paths respect W57; the agent-path rows still require per-row `hai target commit` before they go active.",
       "exit_codes": [
         "OK",
@@ -5119,11 +5118,11 @@
       ],
       "idempotent": "yes",
       "json_output": "default",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai target nutrition"
     },
     {
       "agent_safe": true,
-      "command": "hai target set",
       "description": "Insert a wellness target into the W50 target ledger. Wellness support, not a medical prescription.",
       "exit_codes": [
         "OK",
@@ -5338,11 +5337,11 @@
       ],
       "idempotent": "no",
       "json_output": "default",
-      "mutation": "writes-state"
+      "mutation_class": "writes-state",
+      "name": "hai target set"
     },
     {
       "agent_safe": true,
-      "command": "hai today",
       "description": "Render today's canonical plan in plain language \u2014 the non-agent-mediated user surface. Read-only.",
       "exit_codes": [
         "OK",
@@ -5435,7 +5434,8 @@
       ],
       "idempotent": "n/a",
       "json_output": "opt-in",
-      "mutation": "read-only",
+      "mutation_class": "read-only",
+      "name": "hai today",
       "output_schema": {
         "OK": {
           "enum_surface": {
@@ -5599,7 +5599,120 @@
       "schema_version": "stress_proposal.v1"
     }
   },
+  "exit_codes": {
+    "INTERNAL": "Runtime invariant failed; indicates a bug rather than a caller error.",
+    "LEGACY_0_2": "Legacy handler still reports only the historical success/failure shape; retained for manifest honesty until fully migrated.",
+    "NOT_FOUND": "Well-formed target identifier was not present in local state.",
+    "OK": "Command completed successfully.",
+    "TRANSIENT": "External dependency or temporary runtime condition may succeed after retry/backoff.",
+    "USER_INPUT": "The invocation, supplied data, credentials, or caller-controlled state precondition needs user action."
+  },
   "generated_by": "core.capabilities.walker.build_manifest",
   "hai_version": "0.2.0",
-  "schema_version": "agent_cli_contract.v1"
+  "mutation_classes": [
+    {
+      "description": "Requires live human input and is not model-operated.",
+      "name": "interactive"
+    },
+    {
+      "description": "Does not persist HAI runtime state.",
+      "name": "read-only"
+    },
+    {
+      "description": "Writes audit-log events outside primary state rows.",
+      "name": "writes-audit-log"
+    },
+    {
+      "description": "Writes local HAI configuration files.",
+      "name": "writes-config"
+    },
+    {
+      "description": "Writes or removes credentials through the configured credential store.",
+      "name": "writes-credentials"
+    },
+    {
+      "description": "Writes user-memory rows in local HAI state.",
+      "name": "writes-memory"
+    },
+    {
+      "description": "Copies packaged skill files to the configured skills directory.",
+      "name": "writes-skills-dir"
+    },
+    {
+      "description": "Writes primary local HAI state.",
+      "name": "writes-state"
+    },
+    {
+      "description": "Writes pull/sync provenance without committing a plan.",
+      "name": "writes-sync-log"
+    }
+  ],
+  "refusals": [
+    {
+      "envelope_shape_ref": "schemas/refusal_envelope.v1.json",
+      "kind": "clinical_claim",
+      "mechanism": "refusal",
+      "trigger": "diagnosis/treatment/prescribing/autonomous medical decision content in command output"
+    },
+    {
+      "envelope_shape_ref": "schemas/refusal_envelope.v1.json",
+      "kind": "agent_safe_violation",
+      "mechanism": "agent_safe",
+      "trigger": "agent-classified caller invoking an agent_safe=false command"
+    }
+  ],
+  "runtime_modes": [
+    {
+      "mechanisms_off": [],
+      "name": "full_contract",
+      "use_case": "Reference runtime with all mechanisms enabled."
+    },
+    {
+      "mechanisms_off": [
+        "validation"
+      ],
+      "name": "no_validation",
+      "use_case": "Ablate schema/action/shape validation."
+    },
+    {
+      "mechanisms_off": [
+        "agent_safe"
+      ],
+      "name": "no_agent_safe",
+      "use_case": "Ablate dispatch-time agent_safe enforcement."
+    },
+    {
+      "mechanisms_off": [
+        "proposal_gate"
+      ],
+      "name": "no_proposal_gate",
+      "use_case": "Ablate proposal/commit separation gates."
+    },
+    {
+      "mechanisms_off": [
+        "refusal"
+      ],
+      "name": "no_refusal",
+      "use_case": "Ablate runtime refusal checks."
+    },
+    {
+      "mechanisms_off": [
+        "audit_chain"
+      ],
+      "name": "no_audit_chain",
+      "use_case": "Ablate audit-chain persistence checks."
+    },
+    {
+      "mechanisms_off": [
+        "validation",
+        "agent_safe",
+        "proposal_gate",
+        "refusal",
+        "audit_chain"
+      ],
+      "name": "no_runtime_enforcement",
+      "use_case": "Ablate all supported runtime mechanisms."
+    }
+  ],
+  "schema_version": "agent_cli_contract.v2"
 }

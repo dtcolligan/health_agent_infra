@@ -52,10 +52,9 @@ _TOP_LEVEL_REQUIRED: dict[str, type] = {
 
 
 _COMMAND_REQUIRED: dict[str, Any] = {
-    "command": str,
+    "name": str,
     "description": str,
     "flags": list,
-    "mutation": str,
     "mutation_class": str,
     "agent_safe": bool,
     "idempotent": str,
@@ -152,7 +151,7 @@ def test_every_command_has_required_keys():
     manifest = _load_manifest()
     all_errors: list[str] = []
     for cmd in manifest["commands"]:
-        label = f"commands[{cmd.get('command', '<no-command-key>')}]"
+        label = f"commands[{cmd.get('name', '<no-name-key>')}]"
         all_errors.extend(_check_keys(cmd, _COMMAND_REQUIRED, label))
     assert not all_errors, (
         f"Per-command schema breach in {len(all_errors)} cases:\n"
@@ -167,7 +166,7 @@ def test_every_flag_has_required_keys():
     manifest = _load_manifest()
     all_errors: list[str] = []
     for cmd in manifest["commands"]:
-        cmd_label = cmd.get("command", "<no-command-key>")
+        cmd_label = cmd.get("name", "<no-name-key>")
         for flag in cmd["flags"]:
             label = f"{cmd_label} flag[{flag.get('name', '<no-name-key>')}]"
             all_errors.extend(_check_keys(flag, _FLAG_REQUIRED, label))
@@ -186,7 +185,7 @@ def test_optional_flag_keys_are_well_typed_when_present():
     manifest = _load_manifest()
     all_errors: list[str] = []
     for cmd in manifest["commands"]:
-        cmd_label = cmd.get("command", "<no-command-key>")
+        cmd_label = cmd.get("name", "<no-name-key>")
         for flag in cmd["flags"]:
             for key, expected_type in _FLAG_OPTIONAL.items():
                 if key not in flag:
@@ -243,7 +242,7 @@ def test_optional_command_keys_are_well_typed_when_present():
     manifest = _load_manifest()
     all_errors: list[str] = []
     for cmd in manifest["commands"]:
-        cmd_label = cmd.get("command", "<no-command-key>")
+        cmd_label = cmd.get("name", "<no-name-key>")
         for key, expected_type in _COMMAND_OPTIONAL.items():
             if key not in cmd:
                 continue

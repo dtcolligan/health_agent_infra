@@ -43,7 +43,7 @@ hai capabilities
 ```
 
 This emits JSON with one row per leaf command, each carrying:
-`command`, `mutation`, `idempotent`, `json_output`, `exit_codes`,
+`name`, `mutation_class`, `idempotent`, `json_output`, `exit_codes`,
 `agent_safe`, `description`, `flags[]`, and — for commands that
 opt in — `output_schema` and `preconditions`. The manifest is
 generated from the argparse tree at runtime, so it always matches
@@ -245,8 +245,8 @@ activate or deactivate user state.
 
 ## Mutation confirmation
 
-Consulting the manifest, you know each command's `mutation` class.
-Before running any command whose `mutation` is **anything other than
+Consulting the manifest, you know each command's `mutation_class`.
+Before running any command whose `mutation_class` is **anything other than
 `read-only`**, show the user the exact command line you're about to
 run and wait for confirmation. One line is enough:
 
@@ -259,7 +259,7 @@ exception is a pipeline the user just explicitly invoked ("yes, sync
 my Garmin and plan my day") — confirm the pipeline as a whole
 rather than each step.
 
-Never run a command whose `mutation` is `interactive` (e.g.
+Never run a command whose `mutation_class` is `interactive` (e.g.
 `hai init`, `hai auth garmin`). Refuse and tell the user to run it
 themselves — you cannot supply live passwords or prompt responses.
 
@@ -324,7 +324,7 @@ list`) and show the user the current state instead of guessing.
 - Every mutation command is previewed to the user before it runs.
 - You never mutate state directly — you only orchestrate `hai`
   subcommands.
-- You never run an `agent_safe=false` or `mutation=interactive`
+- You never run an `agent_safe=false` or `mutation_class=interactive`
   command; refuse and defer to the operator.
 - You never fabricate command flags or exit codes; everything you
   say about a command must be reproducible from the manifest.

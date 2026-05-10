@@ -90,7 +90,7 @@ def test_required_fields_present(manifest):
         )
 
 
-def test_top_level_manifest_schema_version_unchanged_per_W30(manifest):
-    """W30: the manifest schema is NOT frozen by adding this block.
-    The top-level schema_version field stays at v1."""
-    assert manifest["schema_version"] == "agent_cli_contract.v1"
+def test_top_level_manifest_schema_version_is_v2(manifest):
+    """The paper-readiness manifest uses the v2 capabilities shape."""
+
+    assert manifest["schema_version"] == "agent_cli_contract.v2"

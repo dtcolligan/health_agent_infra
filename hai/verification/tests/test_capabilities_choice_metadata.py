@@ -146,7 +146,7 @@ def test_pull_source_carries_garmin_live_unreliable_signal(command: str):
 
     parser = build_parser()
     rows = walk_parser(parser)
-    [row] = [r for r in rows if r["command"] == command]
+    [row] = [r for r in rows if r["name"] == command]
 
     flags_by_name = {f["name"]: f for f in row["flags"]}
     source = flags_by_name["--source"]

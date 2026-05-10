@@ -23,11 +23,18 @@ def test_every_command_mutation_class_is_enumerated() -> None:
     allowed = {entry["name"] for entry in manifest["mutation_classes"]}
 
     for command in manifest["commands"]:
-        assert command["mutation_class"] in allowed, command["command"]
+        assert command["mutation_class"] in allowed, command["name"]
 
 
-def test_mutation_class_aliases_legacy_mutation_until_v2_alignment() -> None:
+def test_manifest_rows_do_not_emit_legacy_mutation_key() -> None:
     manifest = build_manifest(build_parser())
 
     for command in manifest["commands"]:
-        assert command["mutation_class"] == command["mutation"], command["command"]
+        assert "mutation" not in command, command["name"]
+
+
+def test_manifest_rows_do_not_emit_legacy_command_key() -> None:
+    manifest = build_manifest(build_parser())
+
+    for command in manifest["commands"]:
+        assert "command" not in command, command["name"]

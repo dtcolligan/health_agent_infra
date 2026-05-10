@@ -79,7 +79,7 @@ def test_manifest_includes_expected_commands():
     these are the commands agents will invoke most and their absence
     would signal a broken walker, not a legitimate contract state."""
 
-    commands = {row["command"] for row in walk_parser(build_parser())}
+    commands = {row["name"] for row in walk_parser(build_parser())}
     for expected in (
         "hai pull",
         "hai synthesize",
@@ -103,7 +103,7 @@ def test_manifest_includes_expected_commands():
 def test_manifest_schema_version_is_stable():
     manifest = build_manifest(build_parser())
     assert manifest["schema_version"] == SCHEMA_VERSION
-    assert manifest["schema_version"] == "agent_cli_contract.v1"
+    assert manifest["schema_version"] == "agent_cli_contract.v2"
 
 
 def test_manifest_rows_have_stable_keys():
@@ -112,8 +112,8 @@ def test_manifest_rows_have_stable_keys():
     # emitted when an annotation supplied them — walked over via a
     # subset check rather than strict equality.
     required_keys = {
-        "command", "description", "mutation", "mutation_class",
-        "idempotent", "json_output", "exit_codes", "agent_safe", "flags",
+        "name", "description", "mutation_class", "idempotent",
+        "json_output", "exit_codes", "agent_safe", "flags",
     }
     optional_keys = {"output_schema", "preconditions"}
     allowed_keys = required_keys | optional_keys
@@ -122,29 +122,21 @@ def test_manifest_rows_have_stable_keys():
         missing = required_keys - row_keys
         extra = row_keys - allowed_keys
         assert not missing, (
-            f"row for {row.get('command')!r} is missing required keys "
+            f"row for {row.get('name')!r} is missing required keys "
             f"{sorted(missing)}"
         )
         assert not extra, (
-            f"row for {row.get('command')!r} has unexpected keys "
+            f"row for {row.get('name')!r} has unexpected keys "
             f"{sorted(extra)}; allowed: {sorted(allowed_keys)}"
         )
 
 
 def test_every_row_value_is_in_the_allowed_enum():
     for row in walk_parser(build_parser()):
-        cmd = row["command"]
-        assert row["mutation"] in MUTATION_CLASSES, (
-            f"{cmd}: mutation={row['mutation']!r} not in allowed set"
-        )
+        cmd = row["name"]
         assert row["mutation_class"] in MUTATION_CLASSES, (
             f"{cmd}: mutation_class={row['mutation_class']!r} "
             f"not in allowed set"
-        )
-        assert row["mutation_class"] == row["mutation"], (
-            f"{cmd}: mutation_class should alias mutation until the "
-            "agent_cli_contract.v2 vocabulary-alignment packet removes "
-            "the legacy mutation field"
         )
         assert row["idempotent"] in IDEMPOTENCY, (
             f"{cmd}: idempotent={row['idempotent']!r} not in allowed set"
@@ -275,10 +267,10 @@ def test_hai_capabilities_emits_parseable_json():
     assert payload["schema_version"] == SCHEMA_VERSION
     assert len(payload["commands"]) >= 20
     # Shape check on one row.
-    commands_by_name = {row["command"]: row for row in payload["commands"]}
+    commands_by_name = {row["name"]: row for row in payload["commands"]}
     assert "hai explain" in commands_by_name
     explain = commands_by_name["hai explain"]
-    assert explain["mutation"] == "read-only"
+    assert explain["mutation_class"] == "read-only"
     assert "NOT_FOUND" in explain["exit_codes"]
 
 

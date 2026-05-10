@@ -334,11 +334,11 @@ def test_capabilities_manifest_registers_intake_weight_correctly():
     assert rc == exit_codes.OK
     manifest = json.loads(out)
     weight = next(
-        (c for c in manifest["commands"] if c["command"] == "hai intake weight"),
+        (c for c in manifest["commands"] if c["name"] == "hai intake weight"),
         None,
     )
     assert weight is not None, "hai intake weight missing from manifest"
-    assert weight["mutation"] == "writes-state", weight
+    assert weight["mutation_class"] == "writes-state", weight
     assert weight["agent_safe"] is False, weight
     assert weight["idempotent"] == "no", weight
 

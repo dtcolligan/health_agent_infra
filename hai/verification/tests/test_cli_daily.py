@@ -590,7 +590,7 @@ def test_daily_re_propose_all_capabilities_surfaced(monkeypatch, tmp_path):
     )
     manifest = json.loads(result.stdout)
     daily = next(
-        (r for r in manifest["commands"] if r["command"] == "hai daily"),
+        (r for r in manifest["commands"] if r["name"] == "hai daily"),
         None,
     )
     assert daily is not None, "hai daily missing from capabilities manifest"

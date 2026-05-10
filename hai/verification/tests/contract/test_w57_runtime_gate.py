@@ -168,7 +168,7 @@ def test_w57_handlers_are_not_agent_safe_in_manifest():
     """
 
     manifest = build_manifest(build_parser())
-    by_command = {row["command"]: row for row in manifest["commands"]}
+    by_command = {row["name"]: row for row in manifest["commands"]}
 
     leaks: list[tuple[str, bool]] = []
     for cmd in W57_HANDLERS:
@@ -189,7 +189,7 @@ def test_w57_handlers_carry_confirm_flag():
     has no escape valve and tests cannot exercise these handlers."""
 
     manifest = build_manifest(build_parser())
-    by_command = {row["command"]: row for row in manifest["commands"]}
+    by_command = {row["name"]: row for row in manifest["commands"]}
 
     missing: list[str] = []
     for cmd in W57_HANDLERS:

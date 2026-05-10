@@ -3,15 +3,14 @@
 The manifest is a dict:
 
     {
-      "schema_version": "agent_cli_contract.v1",
+      "schema_version": "agent_cli_contract.v2",
       "hai_version": "<package version>",
       "generated_by": "core.capabilities.walker.build_manifest",
       "exit_codes": {"OK": "...", "USER_INPUT": "..."},
       "commands": [
         {
-          "command": "hai pull",
+          "name": "hai pull",
           "description": "...",
-          "mutation": "writes-sync-log",
           "mutation_class": "writes-sync-log",
           "idempotent": "yes",
           "json_output": "default",
@@ -153,7 +152,7 @@ CONTRACT_KEYS: tuple[str, ...] = (
 )
 
 
-SCHEMA_VERSION = "agent_cli_contract.v1"
+SCHEMA_VERSION = "agent_cli_contract.v2"
 
 
 class ContractAnnotationError(ValueError):
@@ -349,13 +348,13 @@ def walk_parser(
     ``hai auth`` itself is an internal node and does not appear in the
     manifest.
 
-    Rows are sorted by ``command`` lexicographically so the manifest is
+    Rows are sorted by ``name`` lexicographically so the manifest is
     deterministic across runs.
     """
 
     rows: list[dict[str, Any]] = []
     _walk(parser, path=[prog], rows=rows)
-    rows.sort(key=lambda r: r["command"])
+    rows.sort(key=lambda r: r["name"])
     return rows
 
 
@@ -398,7 +397,7 @@ def _row_for_leaf(
     path: list[str],
     defaults: dict[str, Any],
 ) -> dict[str, Any]:
-    command = " ".join(path)
+    name = " ".join(path)
     description = (
         defaults.get("_contract_description")
         or parser.description
@@ -407,9 +406,8 @@ def _row_for_leaf(
     )
     mutation = defaults.get("_contract_mutation")
     row: dict[str, Any] = {
-        "command": command,
+        "name": name,
         "description": description.strip() if isinstance(description, str) else "",
-        "mutation": mutation,
         "mutation_class": mutation,
         "idempotent": defaults.get("_contract_idempotent"),
         "json_output": defaults.get("_contract_json_output"),
@@ -779,11 +777,11 @@ def unannotated_commands(
     unannotated: list[str] = []
     for row in walk_parser(parser):
         if (
-            row["mutation"] is None
+            row["mutation_class"] is None
             or row["idempotent"] is None
             or row["json_output"] is None
             or row["agent_safe"] is None
             or not row["exit_codes"]
         ):
-            unannotated.append(row["command"])
+            unannotated.append(row["name"])
     return unannotated

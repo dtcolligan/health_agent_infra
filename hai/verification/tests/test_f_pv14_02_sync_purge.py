@@ -199,11 +199,11 @@ def test_capabilities_manifest_registers_sync_purge_with_correct_annotations():
     assert rc == exit_codes.OK
     manifest = json.loads(out)
     purge = next(
-        (c for c in manifest["commands"] if c["command"] == "hai sync purge"),
+        (c for c in manifest["commands"] if c["name"] == "hai sync purge"),
         None,
     )
     assert purge is not None, "hai sync purge missing from capabilities manifest"
-    assert purge["mutation"] == "writes-state", purge
+    assert purge["mutation_class"] == "writes-state", purge
     assert purge["agent_safe"] is False, purge
     assert purge["idempotent"] == "no", purge
     assert purge["json_output"] in ("default", "json_only"), purge

@@ -42,7 +42,7 @@ def test_hai_today_capabilities_row_exposes_strength_status_enum() -> None:
     values must match the classifier's authoritative tuple."""
 
     manifest = _capabilities_manifest()
-    rows = [r for r in manifest["commands"] if r["command"] == "hai today"]
+    rows = [r for r in manifest["commands"] if r["name"] == "hai today"]
     assert len(rows) == 1, (
         f"expected exactly one 'hai today' capabilities row, got "
         f"{len(rows)}"

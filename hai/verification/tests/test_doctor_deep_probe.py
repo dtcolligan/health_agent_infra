@@ -229,7 +229,7 @@ def test_capabilities_lists_deep_flag_on_doctor():
 
     manifest = build_manifest(build_parser())
     doctor = next(
-        c for c in manifest["commands"] if c["command"] == "hai doctor"
+        c for c in manifest["commands"] if c["name"] == "hai doctor"
     )
     flag_names = {f["name"] for f in doctor["flags"]}
     assert "--deep" in flag_names

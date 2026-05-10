@@ -11,6 +11,15 @@ Per-release detail lives under `hai/reporting/plans/<version>/`.
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- `hai capabilities --json` now emits the paper-readiness
+  `agent_cli_contract.v2` manifest shape: command rows use `name`
+  and `mutation_class`, with top-level `mutation_classes`,
+  `exit_codes`, `refusals`, and `runtime_modes` taxonomies.
+
 ## [0.2.0] — 2026-05-07
 
 ### Behaviour change
