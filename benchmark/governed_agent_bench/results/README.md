@@ -14,3 +14,6 @@ It writes:
 
 - `evidence_table.json`
 - `evidence_table.csv`
+
+`figures.py` consumes `evidence_table.json` and writes deterministic SVG
+summary figures plus `figures_manifest.json`.
