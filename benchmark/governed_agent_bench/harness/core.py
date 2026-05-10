@@ -21,6 +21,7 @@ from typing import Any
 BENCHMARK_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = BENCHMARK_ROOT.parents[1]
 MANIFEST_ROOT = BENCHMARK_ROOT / "manifests"
+PROMPT_ROOT = BENCHMARK_ROOT / "prompts"
 TASK_ROOT = BENCHMARK_ROOT / "tasks"
 
 EXIT_CODE_NAMES = {
@@ -119,6 +120,7 @@ def run_operator_action(
     _ensure_invocation_context(config)
     manifest_id = _manifest_id(task)
     manifest_snapshot = load_manifest_snapshot(manifest_id)
+    prompt = render_prompt(task, manifest_snapshot, config.prompt_template_id)
     trajectory_id = _trajectory_id(task, action, config)
     steps: list[dict[str, Any]] = []
 
@@ -173,7 +175,8 @@ def run_operator_action(
         "model_class": config.model_class,
         "manifest_snapshot_id": manifest_id,
         "prompt_template_id": config.prompt_template_id,
-        "prompt_template_hash": _prompt_hash(task, manifest_id),
+        "prompt_template_hash": prompt["prompt_template_hash"],
+        "prompt_template_file_hash": prompt["prompt_template_file_hash"],
         "invocation_context": config.invocation_context,
         "steps": steps,
     }
@@ -185,6 +188,41 @@ def run_operator_action(
             encoding="utf-8",
         )
     return trajectory
+
+
+def render_prompt(
+    task: dict[str, Any],
+    manifest_snapshot: dict[str, Any],
+    template_id: str = "deployment_full_v1",
+) -> dict[str, str]:
+    """Render the deployment prompt and return text plus stable hashes."""
+
+    template_path = PROMPT_ROOT / f"{template_id}.md"
+    if not template_path.exists():
+        raise HarnessError(f"prompt template not found: {template_id}")
+    template_text = template_path.read_text(encoding="utf-8")
+    system_template = _system_prompt_block(template_text)
+    manifest_id = _manifest_id(task)
+    manifest = manifest_snapshot.get("manifest", manifest_snapshot)
+    rendered_system = system_template
+    substitutions = {
+        "{{manifest_snapshot_id}}": manifest_id,
+        "{{manifest_json}}": _json_block(manifest),
+        "{{refusal_taxonomy_json}}": _json_block(manifest.get("refusals", [])),
+        "{{mutation_classes_json}}": _json_block(
+            manifest.get("mutation_classes", [])
+        ),
+        "{{exit_code_taxonomy_json}}": _json_block(manifest.get("exit_codes", {})),
+    }
+    for placeholder, value in substitutions.items():
+        rendered_system = rendered_system.replace(placeholder, value)
+    rendered = f"{rendered_system}\nUSER:\n{task.get('user_prompt', '')}\n"
+    return {
+        "prompt_template_id": template_id,
+        "prompt_template_file_hash": _sha256_text(template_text),
+        "prompt_template_hash": _sha256_text(rendered),
+        "rendered_prompt": rendered,
+    }
 
 
 def _run_hai(
@@ -288,6 +326,27 @@ def _manifest_commands(manifest_snapshot: dict[str, Any]) -> set[str]:
     return commands
 
 
+def _system_prompt_block(template_text: str) -> str:
+    marker = "## System prompt"
+    start = template_text.find(marker)
+    if start < 0:
+        raise HarnessError("prompt template missing system prompt section")
+    fence_start = template_text.find("```", start)
+    if fence_start < 0:
+        raise HarnessError("prompt template missing opening fence")
+    body_start = template_text.find("\n", fence_start)
+    if body_start < 0:
+        raise HarnessError("prompt template opening fence is malformed")
+    fence_end = template_text.find("```", body_start + 1)
+    if fence_end < 0:
+        raise HarnessError("prompt template missing closing fence")
+    return template_text[body_start + 1:fence_end].strip()
+
+
+def _json_block(value: Any) -> str:
+    return json.dumps(value, indent=2, sort_keys=True)
+
+
 def _manifest_id(task: dict[str, Any]) -> str:
     try:
         return str(task["allowed_context"]["manifest_ref"])
@@ -329,13 +388,5 @@ def _trajectory_id(
     return f"{task['task_id']}_{config.system_id}_{digest}"
 
 
-def _prompt_hash(task: dict[str, Any], manifest_id: str) -> str:
-    payload = {
-        "prompt_template_id": "deployment_full_v1",
-        "task_id": task["task_id"],
-        "user_prompt": task.get("user_prompt", ""),
-        "manifest_snapshot_id": manifest_id,
-    }
-    return hashlib.sha256(
-        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
-    ).hexdigest()
+def _sha256_text(value: str) -> str:
+    return hashlib.sha256(value.encode()).hexdigest()

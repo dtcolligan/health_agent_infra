@@ -7,6 +7,7 @@ from .core import (
     load_json,
     load_manifest_snapshot,
     load_task,
+    render_prompt,
     run_operator_action,
 )
 
@@ -17,5 +18,6 @@ __all__ = [
     "load_json",
     "load_manifest_snapshot",
     "load_task",
+    "render_prompt",
     "run_operator_action",
 ]

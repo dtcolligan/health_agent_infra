@@ -18,6 +18,7 @@ from governed_agent_bench.harness import (  # noqa: E402
     HarnessError,
     action_to_argv,
     load_task,
+    render_prompt,
     run_operator_action,
 )
 
@@ -90,6 +91,8 @@ def test_harness_executes_allowed_hai_command_and_writes_trajectory(
     assert trajectory["runtime_mode"] == "full_contract"
     assert trajectory["manifest_snapshot_id"] == "hai_0_2_0"
     assert trajectory["invocation_context"] == "rule_baseline"
+    assert len(trajectory["prompt_template_hash"]) == 64
+    assert len(trajectory["prompt_template_file_hash"]) == 64
     assert trajectory["steps"][0]["step_type"] == "command"
     observation = trajectory["steps"][-1]
     assert observation["step_type"] == "observation"
@@ -101,6 +104,31 @@ def test_harness_executes_allowed_hai_command_and_writes_trajectory(
     assert json.loads(stdout_ref.read_text(encoding="utf-8"))["schema_version"] == (
         "agent_cli_contract.v2"
     )
+
+
+def test_harness_renders_single_deployment_prompt_path() -> None:
+    task = load_task(TASK_ID)
+    manifest = json.loads(
+        (
+            BENCHMARK_ROOT
+            / "governed_agent_bench"
+            / "manifests"
+            / "hai_0_2_0.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    rendered = render_prompt(task, manifest)
+
+    assert rendered["prompt_template_id"] == "deployment_full_v1"
+    assert len(rendered["prompt_template_file_hash"]) == 64
+    assert len(rendered["prompt_template_hash"]) == 64
+    assert "CAPABILITIES MANIFEST (snapshot id: hai_0_2_0)" in (
+        rendered["rendered_prompt"]
+    )
+    assert "{{manifest_json}}" not in rendered["rendered_prompt"]
+    assert task["user_prompt"] in rendered["rendered_prompt"]
+    assert "without_manifest" not in rendered["rendered_prompt"]
+    assert "prompt_only" not in rendered["rendered_prompt"]
 
 
 def test_harness_blocks_commands_absent_from_manifest(tmp_path: Path) -> None:
