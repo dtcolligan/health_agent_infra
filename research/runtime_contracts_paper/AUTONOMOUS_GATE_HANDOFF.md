@@ -1,7 +1,8 @@
 # Autonomous Gate Handoff
 
 **Status:** Current gate audit for the autonomous project goal,
-2026-05-10.
+2026-05-10. Refreshed through commit
+`76b7408 docs(research): refresh model gate ledger`.
 
 This file records where the autonomous execution has reached and why
 Codex must stop before producing model-backed trajectories or final
@@ -39,11 +40,11 @@ and ending with a workshop-ready paper. The required deliverables are:
 
 | Requirement | Evidence | Status |
 |---|---|---|
-| Read project contract first; verify active checkout before work | Every packet session began from `/Users/domcolligan/health_agent_infra`; latest verification at commit `2bedf67` showed the active path and dirty user-owned worktree. | Done |
-| Do not start coding immediately; create authoritative plan | `research/runtime_contracts_paper/AUTONOMOUS_PROJECT_EXECUTION_PLAN.md`, commit `2f0d95f`; ledger refreshed in commit `4044188`. | Done |
+| Read project contract first; verify active checkout before work | Every packet session began from `/Users/domcolligan/health_agent_infra`; latest continuation verification at commit `76b7408` showed the active path and dirty user-owned worktree. | Done |
+| Do not start coding immediately; create authoritative plan | `research/runtime_contracts_paper/AUTONOMOUS_PROJECT_EXECUTION_PLAN.md`, commit `2f0d95f`; ledger refreshed in commits `4044188` and `76b7408`. | Done |
 | Plan includes definition of done, phase order, packet queue, tests/evidence, Codex vs Dom ownership, stop gates, commit boundaries, completed work, next packets | Sections present in `AUTONOMOUS_PROJECT_EXECUTION_PLAN.md`; refreshed gate notes identify `WP-MODEL-ROSTER-001` as active. | Done |
 | Run targeted checks after plan | Initial targeted docs/schema checks passed before `2f0d95f`; later full benchmark verification reached `96 passed in 406.49s`. | Done |
-| Commit each packet separately | Recent commit ledger includes separate commits from `2f0d95f` through `2bedf67`; no staged changes as of this handoff. | Done |
+| Commit each packet separately | Recent commit ledger includes separate commits from `2f0d95f` through `76b7408`; no staged changes as of this handoff refresh. | Done |
 | Treat dirty worktree as user-owned | Dirty files remain unstaged and unmodified unless packet-owned; current dirty list remains user-owned. | Done |
 | HAI runtime off-paths and isolation | `b81c29e feat(hai): complete runtime mode off paths`; runtime-mode isolation tests exercised in HAI suite during that packet. | Done |
 | Governed operator surface | Manifest v2 work pre-existed; `caad0b8` added deployment prompt rendering; `906750e` bound `rule_baseline` invocation context; `01309f5` verified marker capture. | Done for benchmark floor |
@@ -66,6 +67,10 @@ and ending with a workshop-ready paper. The required deliverables are:
 | Methods/system draft | `METHODS_SYSTEM_DRAFT.md`, commit `8aff352`. | Drafted |
 | Operator/scaffold/benchmark card docs | `OPERATORS_VIEW.md` (`0c9b4e4`), `SCAFFOLD_VIEW.md` (`11ee252`), `BENCHMARK_CARD.md` (`b3e2eae`). | Done, final review still Dom |
 | Benchmark README current state | `2bedf67 docs(benchmark): refresh measurement readiness state`. | Done |
+| Autonomous gate handoff | `research/runtime_contracts_paper/AUTONOMOUS_GATE_HANDOFF.md`, commit `dcb726c`; this refresh updates it through `76b7408`. | Done |
+| Model-roster decision brief | `research/runtime_contracts_paper/MODEL_ROSTER_DECISION_BRIEF.md`, commit `66164ae`; states model-roster vs rule-only paths without choosing models or authorizing runs. | Done |
+| Model-roster gate schema | `benchmark/governed_agent_bench/schema/model_roster.schema.json` and `benchmark/verification/tests/test_model_roster_schema.py`, commit `7b692f5`; focused test reported `7 passed in 0.11s`. | Done |
+| Model-gate ledger refresh | `research/runtime_contracts_paper/AUTONOMOUS_PROJECT_EXECUTION_PLAN.md`, commit `76b7408`; records the decision brief/schema and keeps the next packet blocked on Dom. | Done |
 | Full benchmark verification | `uv run pytest benchmark/verification/tests -q` reported `96 passed in 406.49s` after result/repro packets. Targeted docs/repro subset later reported `25 passed in 4.67s`. | Verified |
 | Model roster | `benchmark/governed_agent_bench/model_roster.md` does not exist. | Blocked on Dom |
 | Local/cloud model baselines | No model-backed trajectories, no local model adapter, no cloud adapter. | Blocked on Dom |
@@ -80,6 +85,10 @@ The active gate is `WP-MODEL-ROSTER-001`.
 Observed evidence:
 
 - `benchmark/governed_agent_bench/model_roster.md` does not exist.
+- `research/runtime_contracts_paper/MODEL_ROSTER_DECISION_BRIEF.md`
+  exists and is explicitly not a roster or run authorization.
+- `benchmark/governed_agent_bench/schema/model_roster.schema.json`
+  exists to govern a future roster format after Dom judgement.
 - The execution plan states no model-backed experiment should run before
   Dom chooses a roster or a rule-baseline-only workshop path.
 - No local, cloud, paid, or model API calls have been run.
