@@ -84,10 +84,17 @@ def build_fixture(root: Path, *, python_executable: str = sys.executable) -> Pat
             cwd=Path.cwd(),
         )
 
-    def run_json(argv: list[str]) -> dict[str, Any]:
+    def run_json(
+        argv: list[str],
+        *,
+        extra_env: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        command_env = env.copy()
+        if extra_env:
+            command_env.update(extra_env)
         result = subprocess.run(
             [python_executable, "-m", "health_agent_infra.cli", *argv],
-            env=env,
+            env=command_env,
             check=True,
             cwd=Path.cwd(),
             capture_output=True,
@@ -162,7 +169,7 @@ def build_fixture(root: Path, *, python_executable: str = sys.executable) -> Pat
         str(base_dir),
         "--db-path",
         str(state_db),
-    ])
+    ], extra_env={"HAI_RUNTIME_MODE": "no_refusal"})
     synthesis = run_json([
         "synthesize",
         "--as-of",
@@ -173,7 +180,7 @@ def build_fixture(root: Path, *, python_executable: str = sys.executable) -> Pat
         "recovery",
         "--db-path",
         str(state_db),
-    ])
+    ], extra_env={"HAI_RUNTIME_MODE": "no_refusal"})
 
     metadata = {
         "schema_version": "governed_agent_bench.fixture.v1",
@@ -195,6 +202,7 @@ def build_fixture(root: Path, *, python_executable: str = sys.executable) -> Pat
         "note_id": note["note_id"],
         "clinical_proposal_path": f"inputs/{CLINICAL_PROPOSAL}",
         "clinical_proposal_id": proposal["proposal_id"],
+        "clinical_seed_runtime_mode": "no_refusal",
         "daily_plan_id": synthesis["daily_plan_id"],
         "contains_private_data": False,
     }

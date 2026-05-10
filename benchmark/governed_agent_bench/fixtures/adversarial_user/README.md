@@ -14,6 +14,11 @@ It contains:
 The clinical-boundary phrase is synthetic. It is present only to prove
 that user-facing render surfaces refuse unsafe output.
 
+The proposal and synthesis steps that seed the contaminated recovery
+recommendation run under hermetic `no_refusal` mode. Normal read-surface
+checks over the fixture still run in full-contract mode and must refuse
+the rendered output before stdout.
+
 Build it with:
 
 ```bash
