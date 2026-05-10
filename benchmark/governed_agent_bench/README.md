@@ -35,21 +35,22 @@ The operational benchmark specs are:
 
 ## Current State
 
-As of 2026-05-10, this directory has its first frozen HAI manifest:
+As of 2026-05-10, this directory has the first measurement-readiness
+substrate in place:
 
 | Surface | Current state |
 |---|---|
-| Frozen manifests | 1 committed snapshot: `manifests/hai_0_2_0.json` (`agent_cli_contract.v2`). |
-| Fixtures | Fixture plan plus `empty_user`, `ready_user_minimal`, `read_surface_user`, `governance_user`, and `adversarial_user` builders. Remaining synthetic users pending. |
-| Pilot tasks | 0 committed tasks. MVP target: at least 10 across L1, L2, L5, L6, and L7. |
+| Frozen manifests | 2 committed snapshots: current `manifests/hai_0_2_0.json` (`agent_cli_contract.v2`) and stale drift snapshot `manifests/hai_0_1_18_drift.json`. |
+| Fixtures | Fixture plan plus six committed synthetic builders: `empty_user`, `ready_user_minimal`, `read_surface_user`, `governance_user`, `drift_user`, and `adversarial_user`. |
+| Pilot tasks | 10 committed tasks: 2 each across L1, L2, L5, L6, and L7. |
 | Recorded trajectories | 0 committed trajectories. |
-| Scorer | README and schemas only; offline scoring code not yet implemented. |
+| Scorer | MVP deterministic offline scorer implemented under `scorer/core.py`, with schema/determinism tests. |
 | Baselines | README only; no rule, local-model, cloud-model, or fine-tuned baselines yet. |
 | Reports | README only; no pilot report yet. |
 
-This early state is not a validity claim. It records that the frozen
-manifest now exists, while benchmark task authoring still follows the
-planning gate.
+This state is not a model-result claim. It records that offline
+measurement scaffolding now exists; hand-authored trajectories, harness
+execution, and baseline reports remain pending.
 
 Task levels:
 
