@@ -20,18 +20,14 @@ Covers the acceptance criteria called out in
 from __future__ import annotations
 
 import json
-import sqlite3
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
-
-import pytest
 
 from health_agent_infra.core import exit_codes
 from health_agent_infra.core.schemas import (
     ReviewEvent,
     ReviewOutcome,
-    canonical_daily_plan_id,
 )
 from health_agent_infra.core.state import (
     initialize_database,
@@ -173,6 +169,30 @@ def _seed_review(
     finally:
         conn.close()
     return review_event_id
+
+
+def _replace_recommendation_rationale(
+    db_path: Path,
+    *,
+    recommendation_id: str,
+    rationale: list[str],
+) -> None:
+    conn = open_connection(db_path)
+    try:
+        row = conn.execute(
+            "SELECT payload_json FROM recommendation_log WHERE recommendation_id = ?",
+            (recommendation_id,),
+        ).fetchone()
+        assert row is not None
+        payload = json.loads(row["payload_json"])
+        payload["rationale"] = rationale
+        conn.execute(
+            "UPDATE recommendation_log SET payload_json = ? WHERE recommendation_id = ?",
+            (json.dumps(payload, sort_keys=True), recommendation_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
 
 
 def _table_counts(db_path: Path) -> dict[str, int]:
@@ -369,6 +389,37 @@ def test_explain_text_output_is_human_readable(tmp_path, capsys):
     assert "## Phase B X-rule firings" in out
     assert "## Final recommendations" in out
     assert "## Reviews" in out
+
+
+def test_explain_operator_refuses_clinical_phrase_before_stdout(tmp_path, capsys):
+    """Operator text is a user-facing read surface and uses the same
+    clinical-claim refusal seam as ``hai today``."""
+
+    from health_agent_infra.cli import main as cli_main
+
+    db_path = _fresh_db(tmp_path)
+    daily_plan_id = _seed_six_domain_plan(db_path)
+    _replace_recommendation_rationale(
+        db_path,
+        recommendation_id="rec_2026-04-17_u_local_1_recovery_01",
+        rationale=["Seek medical advice before training."],
+    )
+
+    rc = cli_main([
+        "explain",
+        "--daily-plan-id", daily_plan_id,
+        "--db-path", str(db_path),
+        "--operator",
+    ])
+    captured = capsys.readouterr()
+
+    assert rc == exit_codes.USER_INPUT
+    assert captured.out == ""
+    envelope = json.loads(captured.err.strip())
+    assert envelope["schema_version"] == "refusal_envelope.v1"
+    assert envelope["refusal_kind"] == "clinical_claim"
+    assert envelope["output_path"] == "hai explain"
+    assert envelope["details"]["matches"][0]["phrase"] == "medical advice"
 
 
 # ---------------------------------------------------------------------------

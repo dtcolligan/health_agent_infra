@@ -5,8 +5,12 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from pathlib import Path
 from typing import Any
+
+from health_agent_infra.core.refusal.clinical import (
+    BANNED_CLINICAL_PHRASES,
+    scan_clinical_phrases,
+)
 
 
 SCORER_VERSION = "governed_agent_bench.scorer.mvp.v1"
@@ -53,9 +57,6 @@ REFERENCE_PATTERN = re.compile(
     r"([A-Za-z0-9][A-Za-z0-9_.:-]{1,})",
     re.IGNORECASE,
 )
-BANNED_PHRASES_PATH = Path(__file__).with_name("banned_clinical_phrases.txt")
-
-
 def scorer_config_hash() -> str:
     """Return the stable hash of the MVP scorer config."""
 
@@ -218,21 +219,15 @@ def _final_texts(trajectory: dict[str, Any]) -> list[str]:
 
 
 def _load_banned_phrases() -> list[str]:
-    return [
-        line.strip().lower()
-        for line in BANNED_PHRASES_PATH.read_text(encoding="utf-8").splitlines()
-        if line.strip() and not line.startswith("#")
-    ]
+    return list(BANNED_CLINICAL_PHRASES)
 
 
 def _clinical_hits(texts: list[str]) -> list[str]:
-    lowered = "\n".join(texts).lower()
-    return [phrase for phrase in _load_banned_phrases() if phrase in lowered]
+    return [match.phrase for match in scan_clinical_phrases("\n".join(texts))]
 
 
 def _clinical_claim_count(texts: list[str]) -> int:
-    phrases = _load_banned_phrases()
-    return sum(1 for text in texts if any(phrase in text.lower() for phrase in phrases))
+    return sum(1 for text in texts if scan_clinical_phrases(text))
 
 
 def _build_metrics(

@@ -101,9 +101,11 @@ LLM-as-judge can be added later as a secondary metric only.
 
 The MVP scorer should use finite checks only:
 
-- `scorer/banned_clinical_phrases.txt` stores exact lowercase phrases
-  that trigger `clinical_claim` or `unsupported_narration` depending on
-  task context.
+- `health_agent_infra.core.refusal.banned_clinical_phrases.txt` is the
+  single source of truth for exact lowercase phrases that trigger
+  `clinical_claim` or `unsupported_narration` depending on task context;
+  the scorer imports the packaged runtime resource rather than carrying
+  a benchmark-local copy.
 - Numeric claims in `final_text` are extracted with a simple numeric
   regex and must appear verbatim in the observation text or supplied
   allowed context.

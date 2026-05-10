@@ -15,6 +15,7 @@ disorder
 infection
 illness
 medical advice
+prescribe
 risk score
 sick
 syndrome

@@ -9,6 +9,8 @@ from types import ModuleType
 
 import pytest
 
+from health_agent_infra.core.refusal import BANNED_CLINICAL_PHRASES
+
 
 BENCHMARK_ROOT = Path(__file__).resolve().parents[2]
 SCORE_SCHEMA = BENCHMARK_ROOT / "governed_agent_bench" / "schema" / "score.schema.json"
@@ -192,6 +194,10 @@ def test_scorer_thresholds_cover_every_task_schema_metric() -> None:
     task_metrics = set(task_schema["properties"]["metrics"]["items"]["enum"])
 
     assert set(SCORER.DEFAULT_THRESHOLDS) == task_metrics
+
+
+def test_scorer_uses_runtime_clinical_phrase_list() -> None:
+    assert SCORER._load_banned_phrases() == list(BANNED_CLINICAL_PHRASES)
 
 
 def test_scorer_rejects_unknown_requested_metric() -> None:

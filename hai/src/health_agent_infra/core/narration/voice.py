@@ -69,9 +69,9 @@ def lint_narration(text: str) -> list[LintFinding]:
 
     Runs two passes:
 
-    1. **Medical language.** Case-insensitive substring match against
-       ``BANNED_TOKENS``. Whole-word matches only (so ``"condition"``
-       fires but ``"conditional"`` does not).
+    1. **Medical language.** Case-insensitive phrase match against
+       ``BANNED_CLINICAL_PHRASES``. Whole-word matches only (so
+       ``"condition"`` fires but ``"conditional"`` does not).
     2. **Rule ID leaks.** Regex match against the slug family. The
        patterns are whole-word-boundaried too so a domain name like
        ``"running"`` never triggers.

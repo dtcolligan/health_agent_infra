@@ -36,6 +36,7 @@ from health_agent_infra.core.state import initialize_database
 def test_clinical_phrase_resource_covers_existing_boundary_terms() -> None:
     assert "diagnosis" in BANNED_CLINICAL_PHRASES
     assert "medical advice" in BANNED_CLINICAL_PHRASES
+    assert "prescribe" in BANNED_CLINICAL_PHRASES
     assert "treatment" in BANNED_CLINICAL_PHRASES
 
 

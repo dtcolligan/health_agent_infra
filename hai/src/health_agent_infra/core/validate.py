@@ -20,10 +20,13 @@ and runs from the canonical synthesis path.
 
 from __future__ import annotations
 
-import re
 from datetime import datetime, timedelta
 from typing import Any
 
+from health_agent_infra.core.refusal.clinical import (
+    BANNED_CLINICAL_PHRASES,
+    scan_clinical_phrases,
+)
 from health_agent_infra.core.runtime_mode import mechanism_is_disabled
 from health_agent_infra.core.schemas import RECOMMENDATION_SCHEMA_VERSION
 
@@ -103,32 +106,12 @@ SCHEMA_VERSION_BY_DOMAIN: dict[str, str] = {
 
 ALLOWED_CONFIDENCE: frozenset[str] = frozenset({"low", "moderate", "high"})
 
-# R2 — diagnosis-shaped tokens. Matching is **whole-word, case-insensitive**
-# via _BANNED_TOKEN_PATTERNS below. A raw substring check (pre-Codex-r2)
-# rejected legitimate language like `conditional_readiness` (contains
-# "condition") — the fix is word-boundary regex.
-BANNED_TOKENS: frozenset[str] = frozenset({
-    "diagnosis",
-    "diagnose",
-    "diagnosed",
-    "syndrome",
-    "disease",
-    "disorder",
-    "condition",
-    "infection",
-    "illness",
-    "sick",
-})
-
-# Pre-compiled whole-word patterns for each banned token. Compiled once
-# at module load; the pattern list is small and the compile cost is tiny
-# relative to the per-call regex.search overhead that would result from
-# compiling on every validation call. Same shape as
-# ``core/narration/voice.py::_banned_token_patterns``.
-_BANNED_TOKEN_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = tuple(
-    (re.compile(rf"\b{re.escape(token)}\b", re.IGNORECASE), token)
-    for token in sorted(BANNED_TOKENS)
-)
+# R2 — diagnosis-shaped / clinical phrases. The code-owned resource in
+# ``core.refusal`` is the single source of truth for user-facing output,
+# recommendation validation, proposal validation, narration lint, and the
+# benchmark scorer. ``BANNED_TOKENS`` remains as a compatibility alias for
+# older eval harness code that imports this symbol directly.
+BANNED_TOKENS: frozenset[str] = frozenset(BANNED_CLINICAL_PHRASES)
 
 FOLLOW_UP_WINDOW = timedelta(hours=24)
 
@@ -422,20 +405,20 @@ def check_banned_tokens_in_surfaces(
     """
 
     haystack = " ".join(iter_text_surfaces(data, include_follow_up=include_follow_up))
-    for pattern, token in _BANNED_TOKEN_PATTERNS:
-        if pattern.search(haystack):
-            surface_label = (
-                "rationale, action_detail, uncertainty, "
-                "follow_up.review_question, or policy_decisions[].note"
-                if include_follow_up
-                else "rationale, action_detail, uncertainty, or "
-                     "policy_decisions[].note"
-            )
-            raise error_cls(
-                "no_banned_tokens",
-                f"banned diagnosis-shaped token {token!r} found in "
-                f"{surface_label}",
-            )
+    matches = scan_clinical_phrases(haystack)
+    if matches:
+        surface_label = (
+            "rationale, action_detail, uncertainty, "
+            "follow_up.review_question, or policy_decisions[].note"
+            if include_follow_up
+            else "rationale, action_detail, uncertainty, or "
+                 "policy_decisions[].note"
+        )
+        raise error_cls(
+            "no_banned_tokens",
+            f"banned diagnosis-shaped phrase {matches[0].phrase!r} found in "
+            f"{surface_label}",
+        )
 
 
 def check_rationale_shape(data: dict, *, error_cls: type) -> None:

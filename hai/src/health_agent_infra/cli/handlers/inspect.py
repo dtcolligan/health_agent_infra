@@ -24,23 +24,15 @@ from typing import Any, Optional
 from health_agent_infra.core import exit_codes
 from health_agent_infra.core.capabilities import build_manifest
 from health_agent_infra.core.capabilities.render import render_human, render_markdown
-from health_agent_infra.core.config import (
-    ConfigError,
-    load_thresholds,
-    user_config_path,
-)
-from health_agent_infra.core.paths import resolve_base_dir
+from health_agent_infra.core.config import user_config_path
 
 # `_emit_json` defined in cli/__init__.py before line 1583. `build_parser`
 # is defined LATER — lazy-imported inside cmd_capabilities below.
 from health_agent_infra.cli import (  # noqa: E402
-    DEFAULT_CLAUDE_SKILLS_DIR,
     _PACKAGE_VERSION,
     _coerce_date,
-    _coerce_dt,
     _credential_store_for,
     _emit_json,
-    _intervals_icu_configured,
     _skills_source,
 )
 # `_DAILY_SUPPORTED_DOMAINS` lives in cli/handlers/tools.py; importing
@@ -152,8 +144,23 @@ def cmd_explain(args: argparse.Namespace) -> int:
     operator_output = args.operator or args.text
 
     if operator_output:
-        for bundle in bundles:
-            sys.stdout.write(render_bundle_text(bundle))
+        output = "".join(render_bundle_text(bundle) for bundle in bundles)
+        from health_agent_infra.core.refusal import (
+            ClinicalRefusalError,
+            enforce_clinical_output,
+            envelope_to_json,
+        )
+        try:
+            decision = enforce_clinical_output(output, output_path="hai explain")
+        except ClinicalRefusalError as exc:
+            print(envelope_to_json(exc.envelope), file=sys.stderr)
+            return exit_codes.USER_INPUT
+        if decision.mechanism_disabled_marker is not None:
+            print(
+                envelope_to_json(decision.mechanism_disabled_marker),
+                file=sys.stderr,
+            )
+        sys.stdout.write(output)
     else:
         if args.plan_version == "all" and not args.daily_plan_id:
             _emit_json([bundle_to_dict(b) for b in bundles])
