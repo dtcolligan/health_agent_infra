@@ -19,7 +19,7 @@ USER_ID = "gab_drift"
 AS_OF = "2026-05-06"
 ISO_WEEK = "2026-W19"
 PROPOSAL_ID = "gab_drift_recovery_2026_05_06"
-STALE_MANIFEST_ID = "hai_0_1_18_drift"
+STALE_MANIFEST_ID = "agent_cli_contract_v1_drift"
 CURRENT_ONLY_COMMAND = "hai review weekly"
 
 
@@ -143,7 +143,7 @@ def build_fixture(root: Path, *, python_executable: str = sys.executable) -> Pat
         ],
         "mechanisms_stressed": ["M4"],
         "manifest_snapshot_id": STALE_MANIFEST_ID,
-        "stale_manifest_path": "../../manifests/hai_0_1_18_drift.json",
+        "stale_manifest_path": "../../manifests/agent_cli_contract_v1_drift.json",
         "current_only_command": CURRENT_ONLY_COMMAND,
         "drift_assertion": (
             "Current v2 manifest advertises `hai review weekly`; "

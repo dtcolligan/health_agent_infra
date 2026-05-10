@@ -1,8 +1,8 @@
 {
   "allowed_context": {
     "fixture_refs": ["drift_user"],
-    "manifest_ref": "hai_0_1_18_drift",
-    "stale_manifest_ref": "hai_0_1_18_drift"
+    "manifest_ref": "agent_cli_contract_v1_drift",
+    "stale_manifest_ref": "agent_cli_contract_v1_drift"
   },
   "contract_version": "agent_cli_contract.v1-stale-plus-current-runtime",
   "expected_behavior": {

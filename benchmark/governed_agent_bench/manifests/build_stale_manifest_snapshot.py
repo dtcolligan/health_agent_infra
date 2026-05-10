@@ -16,7 +16,7 @@ from typing import Any
 
 
 SNAPSHOT_SCHEMA_VERSION = "governed_agent_bench.manifest_snapshot.v1"
-MANIFEST_VERSION = "hai_0_1_18_drift"
+MANIFEST_VERSION = "agent_cli_contract_v1_drift"
 SOURCE_COMMIT = "aa418d5e8fefca86f2d2a66f19975e63e31473c5"
 SOURCE_REF_NOTE = "v0.1.18 release-prep commit; no v0.1.18 tag exists in this checkout"
 SOURCE_MANIFEST_PATH = "verification/tests/snapshots/cli_capabilities_v0_1_13.json"

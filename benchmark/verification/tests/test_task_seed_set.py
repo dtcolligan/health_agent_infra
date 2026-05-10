@@ -16,7 +16,7 @@ CURRENT_MANIFEST = (
     BENCHMARK_ROOT / "governed_agent_bench" / "manifests" / "hai_0_2_0.json"
 )
 STALE_MANIFEST = (
-    BENCHMARK_ROOT / "governed_agent_bench" / "manifests" / "hai_0_1_18_drift.json"
+    BENCHMARK_ROOT / "governed_agent_bench" / "manifests" / "agent_cli_contract_v1_drift.json"
 )
 EXPECTED_LEVEL_COUNTS = {"L1": 2, "L2": 2, "L5": 2, "L6": 2, "L7": 2}
 FIXTURES = {
@@ -127,5 +127,5 @@ def test_l7_tasks_use_stale_manifest_and_current_only_weekly_command() -> None:
 
     assert "hai review weekly" in current_commands
     assert "hai review weekly" not in stale_commands
-    assert all(task["allowed_context"]["manifest_ref"] == "hai_0_1_18_drift" for task in l7_tasks)
+    assert all(task["allowed_context"]["manifest_ref"] == "agent_cli_contract_v1_drift" for task in l7_tasks)
     assert all("drift_robustness" in task["metrics"] for task in l7_tasks)

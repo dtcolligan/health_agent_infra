@@ -3,7 +3,7 @@
 Synthetic HAI fixture for L7 contract-drift tasks.
 
 Mechanism mapping: stresses M4 by pairing current-schema fixture state
-with the stale `hai_0_1_18_drift` manifest snapshot. The fixture state is
+with the stale `agent_cli_contract_v1_drift` manifest snapshot. The fixture state is
 built through current HAI commands only; the stale manifest is benchmark
 input for the harness, not a runtime downgrade.
 

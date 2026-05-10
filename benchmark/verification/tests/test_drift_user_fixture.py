@@ -14,7 +14,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 BUILDER = REPO_ROOT / "governed_agent_bench" / "fixtures" / "drift_user" / "build.py"
 CURRENT_MANIFEST = REPO_ROOT / "governed_agent_bench" / "manifests" / "hai_0_2_0.json"
 STALE_MANIFEST = (
-    REPO_ROOT / "governed_agent_bench" / "manifests" / "hai_0_1_18_drift.json"
+    REPO_ROOT / "governed_agent_bench" / "manifests" / "agent_cli_contract_v1_drift.json"
 )
 USER_ID = "gab_drift"
 AS_OF = "2026-05-06"
@@ -111,7 +111,7 @@ def test_drift_user_builds_current_state_with_stale_manifest_metadata(
     metadata = _metadata(root)
     assert metadata["fixture_id"] == "drift_user"
     assert metadata["mechanisms_stressed"] == ["M4"]
-    assert metadata["manifest_snapshot_id"] == "hai_0_1_18_drift"
+    assert metadata["manifest_snapshot_id"] == "agent_cli_contract_v1_drift"
     assert metadata["current_only_command"] == "hai review weekly"
     assert metadata["contains_private_data"] is False
 

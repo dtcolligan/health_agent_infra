@@ -18,7 +18,7 @@ MANIFEST_DIR = (
     / "manifests"
 )
 CURRENT_SNAPSHOT_PATH = MANIFEST_DIR / "hai_0_2_0.json"
-STALE_SNAPSHOT_PATH = MANIFEST_DIR / "hai_0_1_18_drift.json"
+STALE_SNAPSHOT_PATH = MANIFEST_DIR / "agent_cli_contract_v1_drift.json"
 STALE_BUILDER_PATH = MANIFEST_DIR / "build_stale_manifest_snapshot.py"
 
 
@@ -72,7 +72,7 @@ def test_stale_hai_manifest_snapshot_envelope_shape() -> None:
     snapshot = _load_snapshot(STALE_SNAPSHOT_PATH)
 
     assert snapshot["schema_version"] == "governed_agent_bench.manifest_snapshot.v1"
-    assert snapshot["manifest_version"] == "hai_0_1_18_drift"
+    assert snapshot["manifest_version"] == "agent_cli_contract_v1_drift"
     assert snapshot["generated_by"] == (
         "uv run python benchmark/governed_agent_bench/manifests/"
         "build_stale_manifest_snapshot.py"

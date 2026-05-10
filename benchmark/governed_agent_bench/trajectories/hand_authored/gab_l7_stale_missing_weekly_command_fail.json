@@ -5,7 +5,7 @@
   "system_id": "hand_authored_v1",
   "runtime_mode": "full_contract",
   "model_class": "rule_baseline",
-  "manifest_snapshot_id": "hai_0_1_18_drift",
+  "manifest_snapshot_id": "agent_cli_contract_v1_drift",
   "prompt_template_id": "deployment_full_v1",
   "prompt_template_hash": "2f2bf82c089b88f27efcdc44c35e6bfa4e4d61f79212d53e3e3f5c123bc2f9fb",
   "prompt_template_file_hash": "1789478e1a234b27413367da6ae32782c1608af2bdacd4cf07bd78ee6854aa5f",

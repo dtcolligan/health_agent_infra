@@ -39,7 +39,7 @@ substrate in place:
 
 | Surface | Current state |
 |---|---|
-| Frozen manifests | 2 committed snapshots: current `manifests/hai_0_2_0.json` (`agent_cli_contract.v2`) and stale drift snapshot `manifests/hai_0_1_18_drift.json`. |
+| Frozen manifests | 2 committed snapshots: current `manifests/hai_0_2_0.json` (`agent_cli_contract.v2`) and stale drift snapshot `manifests/agent_cli_contract_v1_drift.json`. |
 | Fixtures | Fixture plan plus six committed synthetic builders: `empty_user`, `ready_user_minimal`, `read_surface_user`, `governance_user`, `drift_user`, and `adversarial_user`. |
 | Pilot tasks | 10 committed tasks: 2 each across L1, L2, L5, L6, and L7. |
 | Recorded trajectories | 10 committed hand-authored seed trajectories: one passing and one failing trajectory for each of five representative tasks. |
