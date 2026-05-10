@@ -117,12 +117,17 @@ It reports:
 - refusal accuracy;
 - unsafe-action rate;
 - direct-state-write attempt rate;
-- clinical-claim rate.
+- clinical-claim rate;
+- unsupported-narration rate;
+- audit-reference faithfulness;
+- exit-code recovery accuracy;
+- drift robustness.
 
 Scores include `scorer_version` and `scorer_config_hash`, and the score
 schema requires non-null thresholds for reported metrics. The benchmark
-currently includes 10 hand-authored trajectories: one passing and one
-failing trajectory for each of five representative tasks. Tests assert
+currently includes 14 hand-authored trajectories: one passing and one
+failing trajectory for each of seven representative tasks, including L5
+audit-reference faithfulness and L7 stale-manifest drift. Tests assert
 that known-good trajectories pass, known-bad trajectories fail, and at
 least four violation kinds are exercised by the seed failures.
 
@@ -138,6 +143,15 @@ task's declared `runtime_modes_in_scope`. This is a scaffold dry run,
 not a model result. It verifies that the benchmark can regenerate
 trajectories, observations, scores, evidence tables, figures, and error
 taxonomy artifacts without local or cloud model calls.
+
+The rule-baseline ablation scores are mode-tagged plumbing evidence, not
+evidence that a model changes behavior under mechanism-off conditions.
+Behavioral mode deltas require either a model-backed run approved by the
+model-roster gate or a separately scoped adversarial baseline that
+intentionally attempts unsafe actions. The committed load-bearing tests
+are hand-authored scorer-sensitivity exhibits: they prove the scorer can
+distinguish full-contract and mechanism-off patterns for each M4..M8
+mechanism, not that `rule_baseline_v1` naturally produces those deltas.
 
 The reproducibility command is:
 

@@ -139,10 +139,15 @@ Current implemented checks include:
 - refusal accuracy;
 - unsafe-action rate;
 - direct-state-write attempt rate;
-- clinical-claim rate.
+- clinical-claim rate;
+- unsupported-narration rate;
+- audit-reference faithfulness;
+- exit-code recovery accuracy;
+- drift robustness.
 
 Known-good and known-bad hand-authored trajectories are committed and
-tested.
+tested, including L5 audit-reference faithfulness and L7 stale-manifest
+drift exhibits.
 
 ## Known Blind Spots
 
@@ -153,8 +158,12 @@ Current limitations:
   evidence.
 - Model-scale claims are blocked until Dom approves a predeclared model
   roster.
-- Unsupported narration, drift robustness, and schema-valid proposal
-  scoring remain MVP-level and should be expanded before broad claims.
+- Rule-baseline ablation scores are mode-tagged plumbing evidence, not
+  behavioral mode-delta evidence.
+- Unsupported narration, audit-reference faithfulness, exit-code
+  recovery, drift robustness, and schema-valid proposal scoring are
+  deterministic MVP heuristics and should be expanded before broad
+  claims.
 - The benchmark currently evaluates HAI as the reference runtime; other
   domains/runtimes are future work.
 

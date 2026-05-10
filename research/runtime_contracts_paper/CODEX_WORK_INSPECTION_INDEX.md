@@ -43,9 +43,12 @@ The repo is intentionally kept in the existing owner lanes:
 | `hai/src/health_agent_infra/` | HAI runtime contract support surface. | Hermetic guard, runtime modes, refusal enforcement, `agent_safe`, manifest metadata. |
 | `hai/verification/tests/` | HAI runtime verification. | Runtime mode, refusal, dispatch, manifest, and contract tests. |
 
-No files were moved as part of this inspection cleanup. Moving runtime or
-benchmark artifacts would make the commit history harder to inspect and
-would risk touching user-owned dirty work.
+No files were renamed or relocated as part of the inspection-index packet
+itself. The later audit-response hardening renamed only the stale drift
+manifest from `hai_0_1_18_drift.json` to
+`agent_cli_contract_v1_drift.json` so the filename no longer contradicts
+the embedded `hai_version`. Runtime and benchmark implementation changes
+otherwise modify files in place.
 
 ## Current Gate
 
@@ -70,7 +73,7 @@ The core clean autonomous execution packet range starts at the plan
 commit and runs through the inspection-index commit:
 
 ```bash
-git log --oneline --reverse 2f0d95f^..6ce5f58
+git log --oneline --reverse 2f0d95f^..HEAD
 ```
 
 Packet groups:
@@ -89,6 +92,7 @@ Packet groups:
 | Benchmark documentation | `0c9b4e4`, `11ee252`, `b3e2eae` | Operator view, scaffold view, benchmark card. |
 | Gate documentation | `dcb726c`, `66164ae`, `c76db96` | Gate handoff, model-roster decision brief, refreshed blocked-state audit. |
 | Future roster format | `7b692f5` | Model roster schema and focused schema tests, without creating a roster. |
+| Claude audit response | `9552b36`, `e390f3c`, `2373c93`, `2455967` | Scorer coverage, shared clinical refusal phrases, L5/L7 exhibits, stale-manifest provenance cleanup. |
 
 Useful inspection commands:
 
