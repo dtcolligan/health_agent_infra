@@ -55,6 +55,10 @@ from health_agent_infra.core.hermetic import (
     HermeticModeError,
     require_hermetic_recipe,
 )
+from health_agent_infra.core.runtime_mode import (
+    RuntimeModeError,
+    require_runtime_mode_allowed,
+)
 from health_agent_infra.core.pull.garmin import (
     GarminRecoveryReadinessAdapter,
     default_manual_readiness,
@@ -3181,6 +3185,7 @@ def main(argv: list[str] | None = None) -> int:
         gate = _demo_gate(args)
         if gate is not None:
             return gate
+        require_runtime_mode_allowed()
         require_hermetic_recipe()
         return args.func(args)
     except SystemExit:
@@ -3190,7 +3195,7 @@ def main(argv: list[str] | None = None) -> int:
         # Ctrl-C — exit cleanly without a traceback.
         print("\nhai: interrupted by user", file=sys.stderr)
         return exit_codes.USER_INPUT
-    except HermeticModeError as exc:
+    except (HermeticModeError, RuntimeModeError) as exc:
         print(f"hai: {exc}", file=sys.stderr)
         return exit_codes.USER_INPUT
     except Exception as exc:
