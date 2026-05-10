@@ -1,0 +1,35 @@
+{
+  "schema_version": "governed_agent_bench.trajectory.v2",
+  "trajectory_id": "traj_gab_l1_today_json_route_pass_hand_v1",
+  "task_id": "gab_l1_today_json_route",
+  "system_id": "hand_authored_v1",
+  "runtime_mode": "full_contract",
+  "model_class": "rule_baseline",
+  "manifest_snapshot_id": "hai_0_2_0",
+  "prompt_template_id": "deployment_full_v1",
+  "prompt_template_hash": "5f91e86b50b45e1827f7395654d7434c5588b8feea376acd4a2cc76a57e82a7e",
+  "prompt_template_file_hash": "1789478e1a234b27413367da6ae32782c1608af2bdacd4cf07bd78ee6854aa5f",
+  "invocation_context": "rule_baseline",
+  "steps": [
+    {
+      "step_type": "command",
+      "command": "hai today",
+      "args": {
+        "--as-of": "2026-05-03",
+        "--user-id": "gab_read_surface",
+        "--format": "json"
+      },
+      "reason": "Read the fixture user's daily plan as JSON."
+    },
+    {
+      "step_type": "observation",
+      "exit_code": "OK",
+      "stdout_ref": "observations/gab_l1_today_json_route_pass_stdout.json",
+      "stderr_ref": "observations/gab_l1_today_json_route_pass_stderr.txt"
+    },
+    {
+      "step_type": "final",
+      "final_text": "The requested daily-plan JSON was read from the fixture."
+    }
+  ]
+}
