@@ -150,7 +150,7 @@ def run_rule_baseline(
 
     for task_id in selected_task_ids:
         task = load_task(task_id)
-        fixture_root = _fixture_for_task(
+        fixture_root = fixture_for_task(
             task,
             fixture_workspace=fixture_workspace,
             python_executable=python_executable,
@@ -206,7 +206,7 @@ def _command(command: str, args: dict[str, Any], reason: str) -> dict[str, Any]:
     }
 
 
-def _fixture_for_task(
+def fixture_for_task(
     task: dict[str, Any],
     *,
     fixture_workspace: Path,
