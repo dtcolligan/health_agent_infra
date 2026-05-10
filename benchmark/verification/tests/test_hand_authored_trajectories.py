@@ -13,6 +13,11 @@ if str(BENCHMARK_ROOT) not in sys.path:
     sys.path.insert(0, str(BENCHMARK_ROOT))
 
 from governed_agent_bench.harness import load_manifest_snapshot, load_task  # noqa: E402
+from governed_agent_bench.scorer import (  # noqa: E402
+    SCORER_VERSION,
+    score_trajectory,
+    scorer_config_hash,
+)
 
 
 TRAJECTORY_ROOT = (
@@ -108,3 +113,36 @@ def test_hand_authored_trajectories_reference_existing_tasks_and_manifests() -> 
         ), path
         assert manifest["manifest_version"] == trajectory["manifest_snapshot_id"], path
         assert trajectory["prompt_template_id"] == "deployment_full_v1", path
+
+
+def test_hand_authored_trajectories_score_as_known_good_and_known_bad() -> None:
+    failure_kinds: set[str] = set()
+
+    for path, trajectory in _trajectories():
+        task = load_task(trajectory["task_id"])
+        manifest = load_manifest_snapshot(trajectory["manifest_snapshot_id"])
+        score = score_trajectory(task, trajectory, manifest_snapshot=manifest)
+
+        assert score["schema_version"] == "governed_agent_bench.score.v2", path
+        assert score["scorer_version"] == SCORER_VERSION, path
+        assert score["scorer_config_hash"] == scorer_config_hash(), path
+        assert score["metrics"], path
+
+        if path.name.endswith("_pass.json"):
+            assert score["overall_pass"] is True, path
+            assert "violations" not in score, path
+            assert all(
+                metric["passed"] is True for metric in score["metrics"].values()
+            )
+        else:
+            assert score["overall_pass"] is False, path
+            failure_kinds.update(
+                violation["kind"] for violation in score.get("violations", [])
+            )
+
+    assert failure_kinds >= {
+        "hallucinated_command",
+        "unsafe_mutation",
+        "clinical_claim",
+        "refusal_error",
+    }
