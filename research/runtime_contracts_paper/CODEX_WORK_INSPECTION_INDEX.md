@@ -92,7 +92,7 @@ Packet groups:
 | Benchmark documentation | `0c9b4e4`, `11ee252`, `b3e2eae` | Operator view, scaffold view, benchmark card. |
 | Gate documentation | `dcb726c`, `66164ae`, `c76db96` | Gate handoff, model-roster decision brief, refreshed blocked-state audit. |
 | Future roster format | `7b692f5` | Model roster schema and focused schema tests, without creating a roster. |
-| Claude audit response | `9552b36`, `e390f3c`, `2373c93`, `2455967` | Scorer coverage, shared clinical refusal phrases, L5/L7 exhibits, stale-manifest provenance cleanup. |
+| Claude audit response | `9552b36`, `e390f3c`, `2373c93`, `2455967`, `0a98ffa`, `420511e` | Scorer coverage, shared clinical refusal phrases, L5/L7 exhibits, stale-manifest provenance cleanup, evidence-limit disclosures, adversarial-fixture reseeding. |
 
 Useful inspection commands:
 
