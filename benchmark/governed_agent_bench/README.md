@@ -40,7 +40,7 @@ As of 2026-05-10, this directory has its first frozen HAI manifest:
 | Surface | Current state |
 |---|---|
 | Frozen manifests | 1 committed snapshot: `manifests/hai_0_2_0.json` (`agent_cli_contract.v2`). |
-| Fixtures | Fixture plan plus `empty_user` builder. Remaining synthetic users not yet implemented. |
+| Fixtures | Fixture plan plus `empty_user` and `ready_user_minimal` builders. Remaining synthetic users pending. |
 | Pilot tasks | 0 committed tasks. MVP target: at least 10 across L1, L2, L5, L6, and L7. |
 | Recorded trajectories | 0 committed trajectories. |
 | Scorer | README and schemas only; offline scoring code not yet implemented. |

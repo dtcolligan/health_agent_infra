@@ -32,6 +32,7 @@ from a real user session.
 Implementation status:
 
 - `empty_user`: implemented under `empty_user/`.
+- `ready_user_minimal`: implemented under `ready_user_minimal/`.
 - all other fixtures: planned, not yet implemented.
 
 ## Per-Fixture Requirements
