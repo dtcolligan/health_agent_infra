@@ -255,29 +255,6 @@ def cmd_today(args: argparse.Namespace) -> int:
         streak_days=streak_days,
     )
 
-    # W-LINT (v0.1.13): runtime regulated-claim check at the CLI
-    # rendering boundary. Strict regime regardless of source-skill
-    # provenance (F-PLAN-09 constraint 4) — even an allowlisted skill
-    # whose SKILL.md passes static lint cannot surface a regulated
-    # term in rendered prose. JSON format is exempt because it is the
-    # agent-facing structured surface, not user-facing text.
-    if fmt != "json":
-        from health_agent_infra.core.lint import (
-            RegulatedClaimError,
-            runtime_check,
-        )
-        try:
-            runtime_check(output)
-        except RegulatedClaimError as exc:
-            print(
-                f"hai today: regulated-claim lint blocked the rendered "
-                f"output (this is a code bug; the rationale prose passed "
-                f"validation but contains a banned phrase). Details:\n"
-                f"{exc}",
-                file=sys.stderr,
-            )
-            return exit_codes.USER_INPUT
-
     # W-FCC (v0.1.12 / F-C-05): when --verbose is set, prepend a
     # "classified state" footer surfacing internal classifier outputs.
     # v0.1.12 surfaces only strength_status enum values; future cycles
@@ -310,6 +287,26 @@ def cmd_today(args: argparse.Namespace) -> int:
                 "",
             ]
             output = "\n".join(header_lines) + output
+
+    # WP-REFUSE-001: code-owned clinical-claim refusal at the final
+    # user-facing output boundary. JSON format is exempt because it is
+    # the agent-facing structured surface, not user-facing text.
+    if fmt != "json":
+        from health_agent_infra.core.refusal import (
+            ClinicalRefusalError,
+            enforce_clinical_output,
+            envelope_to_json,
+        )
+        try:
+            decision = enforce_clinical_output(output, output_path="hai today")
+        except ClinicalRefusalError as exc:
+            print(envelope_to_json(exc.envelope), file=sys.stderr)
+            return exit_codes.USER_INPUT
+        if decision.mechanism_disabled_marker is not None:
+            print(
+                envelope_to_json(decision.mechanism_disabled_marker),
+                file=sys.stderr,
+            )
 
     sys.stdout.write(output)
     return exit_codes.OK

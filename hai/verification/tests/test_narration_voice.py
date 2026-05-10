@@ -4,9 +4,9 @@ The voice module in ``core/narration/voice.py`` is the shared gate
 between the ``reporting`` skill and ``hai today``. It asserts
 *absence* of two anti-patterns:
 
-1. Medical / diagnostic language (shares the banned-token set with
-   ``core.validate.BANNED_TOKENS`` so payload-layer and prose-layer
-   checks never drift).
+1. Medical / diagnostic language (shares the code-owned phrase list
+   with ``core.refusal`` so prose checks and final-output refusal
+   never drift).
 2. Rule ID leaks (``R1``, ``R3a``, ``X9``, ``require_min_coverage``)
    — those belong in ``hai explain --operator``, not in prose.
 

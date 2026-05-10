@@ -112,6 +112,7 @@ def test_package_version_is_non_empty_and_well_formed():
     [
         "core/state/migrations/001_initial.sql",
         "core/state/migrations/006_nutrition_macros_only.sql",
+        "core/refusal/banned_clinical_phrases.txt",
         "skills/daily-plan-synthesis/SKILL.md",
         "skills/recovery-readiness/SKILL.md",
         "skills/nutrition-alignment/SKILL.md",
@@ -168,7 +169,7 @@ def test_pyproject_package_data_globs_cover_all_non_python_files():
     assert not missing, (
         "Non-Python files committed under hai/src/health_agent_infra/ but "
         "not matched by any [tool.setuptools.package-data] glob — these "
-        f"will be silently dropped from the wheel:\n  " + "\n  ".join(missing)
+        "will be silently dropped from the wheel:\n  " + "\n  ".join(missing)
     )
 
 

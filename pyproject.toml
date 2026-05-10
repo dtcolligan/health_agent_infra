@@ -57,6 +57,7 @@ where = ["hai/src"]
   "data/**/*.csv",
   "data/**/*.md",
   "core/state/migrations/*.sql",
+  "core/refusal/*.txt",
   "domains/strength/*.csv",
   "evals/scenarios/**/*.json",
   "evals/rubrics/*.md",

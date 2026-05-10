@@ -3,10 +3,9 @@
 D3 §Voice — the `reporting` skill and `hai today` both produce
 end-user prose. This module is the shared gate that catches drift:
 
-- Medical / diagnostic language (same banned-token list
-  ``core.validate.BANNED_TOKENS`` already enforces at the payload
-  layer — applied here at the prose layer, so a phrasing choice
-  can't leak a banned label past the boundary).
+- Medical / diagnostic language (the code-owned clinical phrase list
+  in ``core.refusal`` is applied here at the prose layer, so a
+  phrasing choice can't leak a banned label past the boundary).
 - Rule ID leaks — ``R1``, ``R3a``, ``X9``, and the
   ``require_min_coverage``-style rule slugs belong in debug output
   (``hai explain --operator``), not in end-user prose.
@@ -32,7 +31,7 @@ import re
 from dataclasses import dataclass
 from typing import Iterable
 
-from health_agent_infra.core.validate import BANNED_TOKENS
+from health_agent_infra.core.refusal import BANNED_CLINICAL_PHRASES
 
 
 # ``\bR\d+[a-z]?\b`` matches R1, R2, R3a, R12b. ``\bX\d+[a-z]?\b``
@@ -88,11 +87,13 @@ def lint_narration(text: str) -> list[LintFinding]:
 
 
 def _find_medical_language(text: str) -> Iterable[LintFinding]:
-    # Case-insensitive whole-word scan. Compiled on the fly because
-    # BANNED_TOKENS is small and this is hot only during tests /
-    # dev-loop lints; skipping the cache keeps the module pure.
-    for token in sorted(BANNED_TOKENS):
-        pattern = re.compile(rf"\b{re.escape(token)}\b", re.IGNORECASE)
+    # Case-insensitive whole-word scan. Compiled on the fly because the
+    # phrase list is small and this is hot only during tests / dev-loop
+    # lints; skipping the cache keeps the module pure.
+    for token in BANNED_CLINICAL_PHRASES:
+        parts = [re.escape(part) for part in token.split()]
+        body = r"\s+".join(parts)
+        pattern = re.compile(rf"(?<!\w){body}(?!\w)", re.IGNORECASE)
         for match in pattern.finditer(text):
             yield LintFinding(
                 category="medical_language",

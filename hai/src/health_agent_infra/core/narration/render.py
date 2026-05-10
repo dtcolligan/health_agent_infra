@@ -10,10 +10,9 @@ Voice (copied from D3 and enforced here by convention — the linter
 module is a follow-on acceptance item):
 
 - Plain, direct, first-person.
-- No medical language (see ``BANNED_MEDICAL_TOKENS`` in the validate
-  module — the renderer never synthesises new language, it only
-  surfaces rationale the skill authored, which is already
-  banned-token-checked at propose time).
+- No medical language (the final CLI output path is scanned by
+  ``core.refusal``; the renderer itself does not synthesize new
+  clinical language).
 - No rule IDs in prose (R1, X3b, require_min_coverage).
 - No raw numbers beyond what the rationale explicitly names.
 - Always end each section with the follow-up question.

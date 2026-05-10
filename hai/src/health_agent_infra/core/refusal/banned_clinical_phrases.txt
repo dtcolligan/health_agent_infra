@@ -1,0 +1,22 @@
+# Code-owned clinical/refusal phrase list.
+#
+# This file is intentionally stricter than the older recommendation-validator
+# R2 token set: it guards final user-facing text, not internal action enums.
+abnormal hrv
+biomarker
+clinical-grade
+condition
+cure
+diagnose
+diagnosed
+diagnosis
+disease
+disorder
+infection
+illness
+medical advice
+risk score
+sick
+syndrome
+therapy
+treatment
