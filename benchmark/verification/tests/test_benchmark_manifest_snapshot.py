@@ -8,6 +8,7 @@ import os
 import re
 import subprocess
 import sys
+from copy import deepcopy
 from pathlib import Path
 from types import ModuleType
 
@@ -68,6 +69,16 @@ def _live_manifest_via_cli() -> dict:
     return json.loads(result.stdout)
 
 
+def _normalise_manifest(manifest: dict) -> dict:
+    normalized = deepcopy(manifest)
+    for command in normalized.get("commands", []):
+        for flag in command.get("flags", []):
+            default = flag.get("default")
+            if isinstance(default, str) and default.endswith("/.claude/skills"):
+                flag["default"] = "<default-claude-skills-dir>"
+    return normalized
+
+
 def test_hai_manifest_snapshot_envelope_shape() -> None:
     snapshot = _load_snapshot(CURRENT_SNAPSHOT_PATH)
 
@@ -86,7 +97,9 @@ def test_hai_manifest_snapshot_envelope_shape() -> None:
 def test_hai_manifest_snapshot_matches_live_manifest() -> None:
     snapshot = _load_snapshot(CURRENT_SNAPSHOT_PATH)
 
-    assert snapshot["manifest"] == _live_manifest_via_cli()
+    assert _normalise_manifest(snapshot["manifest"]) == _normalise_manifest(
+        _live_manifest_via_cli()
+    )
 
 
 def test_hai_manifest_snapshot_generated_at_is_the_only_volatile_field() -> None:
