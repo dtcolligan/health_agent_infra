@@ -209,15 +209,19 @@ revert to Trajectory A.
 
 **Deliverable:** A complete pilot specification readable by Codex (or
 the user) to execute in July 2026 without further design work. Include
-estimated total token spend in USD.
+estimated total token spend in USD, using current API pricing as of
+May 2026 for Claude 3.5 Haiku, Claude Sonnet 4, and Qwen2.5-7B-Instruct
+on Together AI (or an equivalent open-weight inference provider). If
+pricing for a named model is unavailable, name the substitute and its
+price source.
 
 ### Q4 — Anthropic adversarial reviewer simulation (closes O-FRAME-004)
 
 The most likely reviewers for an Anthropic-targeted AI Control paper
-are aligned with: Mrinank Sharma (until Feb 2026), Ethan Perez, Buck
-Shlegeris (Redwood, not Anthropic but adversarial-control adjacent),
-Ryan Greenblatt (Redwood), and the Alignment Science team
-generally.
+are aligned with: Mrinank Sharma (verify current affiliation first —
+do not assume Anthropic), Ethan Perez, Buck Shlegeris (Redwood, not
+Anthropic but adversarial-control adjacent), Ryan Greenblatt
+(Redwood), and the Alignment Science team generally.
 
 **Task:**
 
