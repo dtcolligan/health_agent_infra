@@ -4,15 +4,14 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import re
 import subprocess
+import sys
 from pathlib import Path
 from types import ModuleType
 
 import pytest
-
-from health_agent_infra.cli import build_parser
-from health_agent_infra.core.capabilities import build_manifest
 
 
 MANIFEST_DIR = (
@@ -23,6 +22,13 @@ MANIFEST_DIR = (
 CURRENT_SNAPSHOT_PATH = MANIFEST_DIR / "hai_0_2_0.json"
 STALE_SNAPSHOT_PATH = MANIFEST_DIR / "agent_cli_contract_v1_drift.json"
 STALE_BUILDER_PATH = MANIFEST_DIR / "build_stale_manifest_snapshot.py"
+HAI_ENV_KEYS = (
+    "HAI_RUNTIME_MODE",
+    "HAI_HERMETIC",
+    "HAI_STATE_DB",
+    "HAI_BASE_DIR",
+    "HAI_INVOCATION_CONTEXT",
+)
 
 
 def _load_snapshot(path: Path) -> dict:
@@ -39,6 +45,27 @@ def _load_stale_builder() -> ModuleType:
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def _live_manifest_via_cli() -> dict:
+    env = os.environ.copy()
+    for key in HAI_ENV_KEYS:
+        env.pop(key, None)
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "health_agent_infra.cli",
+            "capabilities",
+            "--json",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    assert result.returncode == 0, result.stderr
+    return json.loads(result.stdout)
 
 
 def test_hai_manifest_snapshot_envelope_shape() -> None:
@@ -59,7 +86,7 @@ def test_hai_manifest_snapshot_envelope_shape() -> None:
 def test_hai_manifest_snapshot_matches_live_manifest() -> None:
     snapshot = _load_snapshot(CURRENT_SNAPSHOT_PATH)
 
-    assert snapshot["manifest"] == build_manifest(build_parser())
+    assert snapshot["manifest"] == _live_manifest_via_cli()
 
 
 def test_hai_manifest_snapshot_generated_at_is_the_only_volatile_field() -> None:
