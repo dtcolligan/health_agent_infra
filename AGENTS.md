@@ -5,27 +5,37 @@ first; it is the project-specific operating contract.
 
 ## What This Project Is
 
-This repository is organized around runtime-contract research:
-can enforceable local software contracts make smaller local models
-viable operators for bounded workflows over sensitive user-owned data?
+This repository is organized around the merged paper
+*Deterministic Software Contracts as Trusted Monitors in AI Control
+Protocols*. The project studies whether a deterministic software
+contract can operationalize a safety spec as the trusted monitor in an
+AI control protocol for bounded agent operation.
 
-It has three active artifacts:
+It has four active artifacts:
 
+- **Paper** - the NeurIPS 2027 main-conference target, merging the
+  runtime-contract architecture, GovernedAgentBench, and the Engels
+  Backdoor Code extension into one conservative, measurement-first
+  systems/evals submission.
 - **Runtime contract** - the architecture/intervention: capabilities
   manifest, typed commands, mutation classes, `agent_safe`, schemas,
-  proposal/commit separation, deterministic gates, policy, and audit.
+  proposal/commit separation, deterministic gates, policy, and audit
+  evidence emission.
+- **GovernedAgentBench** - the benchmark artifact for contract-governed
+  agent operation, with runtime-mode intervention and mechanism-
+  isolable ablation under a held-constant prompt.
 - **HAI** - the personal-wellness reference runtime, packaged as
   `health-agent-infra` and exposed through the local `hai` CLI.
-- **GovernedAgentBench** - the benchmark artifact for contract-governed
-  agent operation.
 
-HAI is still active software. A user talks to the host agent in
-natural language; the agent operates the local `hai` CLI, reads governed
-snapshots, uses packaged skills to compose bounded proposals, and relies on
-the Python runtime to validate, reconcile, and commit decisions to local
-SQLite state. Under the new project frame, HAI is the reference runtime
-and personal wellness is the demonstrator domain, not the whole research
-claim.
+HAI remains the working reference runtime, but it is frozen as a
+product. A user talks to the host agent in natural language; the agent
+operates the local `hai` CLI, reads governed snapshots, uses packaged
+skills to compose bounded proposals, and relies on the Python runtime to
+validate, reconcile, and commit decisions to local SQLite state. Under
+the merged-paper frame, HAI is the reference runtime and personal
+wellness is the demonstrator domain, not the whole research claim.
+Runtime changes should serve the paper, benchmark, HAI paper-readiness,
+or reproducible baselines.
 
 The unit of shipping is a Python wheel (`health-agent-infra`) plus markdown
 skills consumed by the agent at runtime. The maintainer's daily development
@@ -44,6 +54,11 @@ codex_plan_audit_response F-PLAN-12.)
 
 Authoritative orientation:
 
+- `research/runtime_contracts_paper/framing_v2/CONVERGED.md` - top
+  source of truth for locked paper framing, D-FRAME-001..027, title,
+  venue, threat model, mechanism inventory, and scope boundaries
+- `research/runtime_contracts_paper/framing_v2/ORCHESTRATOR_STATE.md` -
+  full framing-v2 decisions table and orchestration state
 - `project/FRAME.md` - canonical research framing and priority order
 - `project/DECISIONS.md` - post-reframe decision log for project-level
   choices that should survive cold starts
@@ -53,6 +68,8 @@ Authoritative orientation:
   `benchmark/`, and `research/` are the physical owner lanes.
 - `project/HYPOTHESES.md` - current research hypotheses
 - `research/runtime_contracts_paper/PAPER_FRAME.md` - locked paper frame
+- `research/runtime_contracts_paper/PAPER_OUTLINE_MERGED.md` - canonical
+  merged-paper outline
 - `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md` - current
   project-wide evaluation strategy
 - `benchmark/governed_agent_bench/README.md` - benchmark scope and
@@ -157,6 +174,21 @@ micronutrient features without a new scoped plan.
    x3a/x3b. Use `core.config.coerce_int / coerce_float / coerce_bool` for
    any new threshold-consumer site (D12).
 
+## Paper Mechanism Inventory
+
+The merged paper's mechanism inventory is locked by D-FRAME-017. Use
+these names and boundaries when discussing architecture, ablations, or
+benchmark runtime modes:
+
+| Mechanism | Locked meaning |
+|---|---|
+| M4 | Validation |
+| M5 | `agent_safe` dispatch refusal |
+| M6 | W57 proposal/commit gate |
+| M7 | Refusal, scoped to clinical-boundary surfaces; JSON output mechanics are exempt |
+| M8 | Audit evidence emission |
+| M9-TX | Transaction integrity, held constant and non-ablatable |
+
 ## Settled Decisions - Do Not Reopen Casually
 
 These were decided across audit cycles. If you think one needs revisiting,
@@ -200,8 +232,12 @@ write a cycle proposal in `hai/reporting/plans/`; do not act unilaterally.
   refreshed boundary note at
   `hai/reporting/plans/v0_1_17/w29_boundary_refresh.md`). W-30 regression-
   test scaffold landed at v0.1.17; capabilities-manifest schema freeze
-  itself remains scheduled for v0.2.3 per the unchanged provenance
-  chain above.)
+  was previously scheduled for v0.2.3, **retired 2026-05-09 by
+  D-PROJ-016 + D-PROJ-017**: HAI is frozen as a product (no more
+  v0.2.x cycles), and the manifest schema bumps to
+  `agent_cli_contract.v2` for paper-readiness work per
+  `research/runtime_contracts_paper/HAI_PAPER_READINESS_EXECUTION.md`
+  Phase 3.)
 - **Garmin Connect is not the default live source.** Login is rate-limited
   and unreliable. Default to intervals.icu when configured. As of
   v0.1.14.1 (W-GARMIN-MANIFEST-SIGNAL), this is also a *structured*
@@ -330,10 +366,67 @@ write a cycle proposal in `hai/reporting/plans/`; do not act unilaterally.
   project-wide hypotheses, evaluation strategy, roadmap, and HAI
   planning provenance must all agree on the new objective. Canonical
   gate: `project/OPERATING_MODEL.md`.
+- **(D19, 2026-05-11) Framing v2 is the top paper source of truth.**
+  Phase 1 closed with D-FRAME-001..027 locked in
+  `research/runtime_contracts_paper/framing_v2/CONVERGED.md`, with
+  full provenance in `framing_v2/ORCHESTRATOR_STATE.md`. Project-level
+  imports live in `project/DECISIONS.md` D-PROJ-018..023. Do not reopen
+  any D-FRAME decision without a new framing-v2-class cycle or explicit
+  maintainer decision.
+- **(D20, 2026-05-11) Title, venue, and merged trajectory are locked.**
+  The paper title is *Deterministic Software Contracts as Trusted
+  Monitors in AI Control Protocols*; the target venue is NeurIPS 2027
+  main conference with a May 2027 deadline; Paper 1 and the Engels
+  extension merge into one submission. Provenance: D-FRAME-008,
+  D-FRAME-009, D-FRAME-016, and D-PROJ-018.
+- **(D21, 2026-05-11) Headline framing and closed reframes are locked.**
+  The headline frame is a deterministic software contract that
+  operationalizes a safety spec as the trusted monitor in an AI control
+  protocol for bounded agent operation. The lineage anchor is AI
+  control protocols + safety specs + LLM-monitor baselines; the
+  benchmark is contract-as-intervention with measured model-scale
+  substitution; personal wellness is an instantiation. The
+  capability-elicitation reframe and no-red-team threat model are
+  closed. Provenance: D-FRAME-001..007 and D-FRAME-012..015.
+- **(D22, 2026-05-11) Mechanism inventory is M4-M8 plus held-constant
+  M9-TX.** Use M4 validation, M5 `agent_safe` dispatch refusal, M6 W57
+  proposal/commit gate, M7 clinical-boundary refusal with JSON output
+  exempt, M8 audit evidence emission, and M9-TX transaction integrity
+  held constant. Provenance: D-FRAME-017 and D-PROJ-017.
+- **(D23, 2026-05-11) Engels pilot is the merge-decision gate.**
+  The July 2026 Engels pilot protocol is the decision gate for the
+  merged trajectory. If the six-clause commit rule fails, revert to
+  separate trajectories rather than weakening the paper frame.
+  Provenance: D-FRAME-011, D-FRAME-018, and D-PROJ-019.
+- **(D24, 2026-05-11) The adversarial layer is constitutive.**
+  The threat model is capability failure plus targeted adversarial
+  testing, including adaptive-vs-DRG-0 trajectories and precommitted
+  paper-killer rebuttals. Do not describe a no-red-team version as the
+  current design. Provenance: D-FRAME-019, D-FRAME-022, and
+  D-PROJ-021.
+- **(D25, 2026-05-11) Model roster, thresholds, and cost ceiling are
+  locked.** Paper-claim runs use the D-FRAME-020 model roster,
+  D-FRAME-021 AND-pass threshold package, and D-FRAME-023 USD 1,500
+  hard ceiling for model API calls.
+- **(D26, 2026-05-11) Prior-art contrasts are bounded.** Hierarchical
+  Summarization gets only the bounded §7.6 contrast, under 2-week and
+  USD 200 caps, and ST-WebAgentBench differentiation is the
+  runtime-mode intervention with mechanism-isolable ablation under a
+  held-constant prompt. Provenance: D-FRAME-005, D-FRAME-006,
+  D-FRAME-024, and D-FRAME-026.
+- **(D27, 2026-05-11) Scope and future-work boundaries are locked.**
+  No second coding-agent reference runtime before this paper; the
+  coding-agent slice is Appendix E sketch only and cannot be cited as
+  evidence in abstract, contributions, or results. Paper 2 redirects to
+  S1 fine-tuning of bounded operators as future work, with no
+  fine-tuned performance claim in paper 1. Provenance: D-FRAME-010,
+  D-FRAME-025, and D-FRAME-027.
 
 ## Release Cycle Expectation
 
-Substantive releases run structured Codex audit/response rounds under
+This HAI release-cycle pattern is historical/dormant while HAI is frozen
+as a product per D-PROJ-016. If Dom explicitly reopens a HAI runtime
+release, substantive releases run structured Codex audit/response rounds under
 `hai/reporting/plans/v0_1_X/`. v0.1.8 stabilized the four-round pattern;
 v0.1.10 added the pre-PLAN bug-hunt phase (D11); v0.1.11 added the
 pre-cycle plan-audit phase (D14):
@@ -364,11 +457,13 @@ convention.
 
 ## Research Lane Cycle Expectation
 
-The release-cycle ceremony above is for HAI runtime releases under
-`hai/reporting/plans/`. Research-lane work uses a lighter artifact shape
-unless Dom explicitly scopes a full release cycle:
+The release-cycle ceremony above is for dormant HAI runtime releases
+under `hai/reporting/plans/`. Research-lane work is now governed by the
+framing-v2 pattern unless Dom explicitly scopes a full release cycle:
 
-1. Read `project/FRAME.md`, `project/DECISIONS.md`,
+1. Read `research/runtime_contracts_paper/framing_v2/CONVERGED.md`,
+   `research/runtime_contracts_paper/framing_v2/ORCHESTRATOR_STATE.md`,
+   `project/FRAME.md`, `project/DECISIONS.md`,
    `project/OPERATING_MODEL.md`,
    `research/runtime_contracts_paper/PROJECT_EXECUTION_PLAN.md`,
    `research/runtime_contracts_paper/PAPER_FRAME.md`,
@@ -384,6 +479,8 @@ unless Dom explicitly scopes a full release cycle:
 4. Prefer deterministic benchmark/scorer artifacts before model runs.
 5. Treat HAI runtime changes as support work only when they stabilize the
    contract, unblock the benchmark, or make baselines reproducible.
+6. Do not treat HAI v1 polish or product work as active unless it is
+   paper-critical under D-PROJ-016.
 
 ### Ship-time freshness checklist (v0.1.12 W-AC / reconciliation A8)
 
@@ -499,6 +596,32 @@ response introduced second-order issues — re-read your own diff.
 A "1-shot" estimate on a substantive PLAN is wrong; round 2
 always finds something round 1 introduced.
 
+### Framing-v2 orchestration pattern
+
+Validated in the 2026-05-11 merged-paper framing cycle. This is the
+active research-lane pattern while the paper and benchmark are the
+project priority:
+
+- **Two phases.** Phase 1 converges research framing decisions; Phase 2
+  aligns documentation to the locked frame.
+- **Worker-auditor-orchestrator triad.** Codex workers produce research
+  or doc-alignment artifacts; an audit agent verifies research rounds;
+  the orchestrator synthesizes decisions and updates durable state.
+- **Phase 1 rounds.** Use `framing_v2/round_N/` with `PROMPT.md`,
+  `RESPONSE.md`, `AUDIT_PROMPT.md`, `AUDIT_RESPONSE.md`, and
+  `SYNTHESIS.md`. The escape valve allows closure after three
+  consecutive `SHIP_WITH_NOTES` rounds with zero paper-section-level
+  findings.
+- **Phase 2 batches.** Use
+  `framing_v2/phase_2_doc_alignment/batches/batch_N_<name>/` with a
+  worker `PROMPT.md` and `EDITS_SUMMARY.md`. Audit cadence is end-of-
+  phase only, not per batch.
+- **Directory signposts.** `CONVERGED.md` is the locked summary;
+  `ORCHESTRATOR_STATE.md` is the durable decisions table and state;
+  `PHASE_PLAN.md` defines phases and acceptance; `ORCHESTRATOR_PROTOCOL.md`
+  defines the operating manual; `round_*/` preserves Phase 1 provenance;
+  `phase_2_doc_alignment/` preserves Phase 2 batch work and final audit.
+
 ### Cycle-prompt templates
 
 Future cycles should not author Codex audit prompts from scratch.
@@ -540,6 +663,15 @@ CI runs `hai/verification/tests/`. The suite includes docs and skill/CLI drift c
 ## Do Not Do
 
 - Do not bypass the `hai` CLI for mutations.
+- Do not reopen D-FRAME-001..027, the merged-paper title, the
+  NeurIPS 2027 main-conference target, or the merged trajectory without
+  a new framing-v2-class cycle or explicit maintainer decision.
+- Do not revive the capability-elicitation reframe or the no-red-team
+  threat model as current claims; A2 and B1 are closed by
+  D-FRAME-014/015.
+- Do not reopen the HAI product freeze for non-paper-critical work.
+  HAI is frozen as a product per D-PROJ-016; support changes must serve
+  the paper, benchmark, HAI paper-readiness, or reproducible baselines.
 - Do not compute bands, scores, R-rules, or X-rule firings inside a skill.
 - Do not make clinical claims.
 - Do not generate training or diet plans.
@@ -549,21 +681,15 @@ CI runs `hai/verification/tests/`. The suite includes docs and skill/CLI drift c
 - Do not open a PR or push autonomously.
 - Do not add a wearable source until the per-domain evidence contract is
   broadened.
-- Do not freeze the capabilities manifest schema before its scheduled
-  cycle (v0.2.3). (Origin: v0.1.12 CP1 + CP2; v0.2.x destination updated
-  by post-v0.1.13 CP-W30-SPLIT; v0.1.14 → v0.1.15 cli.py-split
-  destination updated 2026-05-02 mid-day post-v0.1.14.1 ship;
-  v0.1.15 → v0.1.17 destination redestinated 2026-05-02 evening per
-  the v0.1.15 scope-restructure self-audit to keep the foreign-user-
-  ready package cycle free of cli.py merge friction with W-A/W-C/W-D
-  CLI extensions — see `hai/reporting/plans/v0_1_15/PLAN.md` §1.4 and
-  `hai/reporting/plans/v0_1_17/README.md`; v0.1.17 promoted to next-active
-  cycle 2026-05-04 after v0.1.16 cancelled, foreign-user empirical
-  work renumbered to v0.1.19 with new v0.1.18 onboarding cycle before
-  it — destination unchanged at v0.1.17. **W-29 cli.py-split clause
-  retired at v0.1.17 ship — the split landed cleanly with byte-stable
-  manifest; this entry is provenance only. Capabilities-manifest
-  schema-freeze clause retained until v0.2.3.**)
+- ~~Do not freeze the capabilities manifest schema before its
+  scheduled cycle (v0.2.3).~~ **Retired 2026-05-09** by D-PROJ-016
+  (HAI frozen as a product; no v0.2.3 cycle) and D-PROJ-017
+  (manifest schema bumps to `agent_cli_contract.v2` for paper-
+  readiness, executed via `research/runtime_contracts_paper/HAI_PAPER_READINESS_EXECUTION.md`
+  Phase 3 + `WP-MAN-001..006`). Provenance chain (v0.1.12 CP1+CP2 →
+  post-v0.1.13 CP-W30-SPLIT → v0.1.14/15/17 redestinations) preserved
+  here as historical record. The W-29 cli.py-split clause shipped at
+  v0.1.17; this entry is provenance only.
 - Do not add micronutrient or food-taxonomy features.
 - Do not treat HAI v1 polish as the default next priority when a
   paper-critical benchmark, contract, or experiment task is available.
@@ -594,8 +720,9 @@ CI runs `hai/verification/tests/`. The suite includes docs and skill/CLI drift c
 
 ## When In Doubt
 
-Read `project/FRAME.md`, `project/DECISIONS.md`,
-`project/OPERATING_MODEL.md`,
+Read `research/runtime_contracts_paper/framing_v2/CONVERGED.md`,
+`research/runtime_contracts_paper/framing_v2/ORCHESTRATOR_STATE.md`,
+`project/FRAME.md`, `project/DECISIONS.md`, `project/OPERATING_MODEL.md`,
 `research/runtime_contracts_paper/PAPER_FRAME.md`,
 `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`,
 `project/HYPOTHESES.md`, `README.md`, `project/REPO_MAP.md`, `project/ROADMAP.md`,

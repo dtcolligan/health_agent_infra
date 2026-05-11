@@ -15,7 +15,7 @@ Top five closest comparison points:
 1. **AgentSpec** is closest on runtime enforcement: it also frames safe
    agents through explicit constraints enforced at runtime. The delta is
    that this project evaluates an integrated local runtime contract over
-   sensitive user-owned state, with proposal/commit separation, audit
+   user-owned state under a governed contract, with proposal/commit separation, audit
    chain, stale manifests, and mechanism-off ablations.
 2. **tau-bench** is closest on policy-obedient tool agents with mutable
    state. The delta is that tau-bench evaluates domain-rule adherence and
@@ -40,7 +40,7 @@ Contribution sentence to defend:
 > Prior tool-use, web-agent, health-agent, and structured-output work
 > evaluates whether models can call tools or complete domain tasks. This
 > paper evaluates whether an enforceable local runtime contract changes
-> the safety-constrained operation of agents over sensitive user-owned
+> the safety-constrained bounded operation of agents over user-owned
 > state.
 
 ## Matrix

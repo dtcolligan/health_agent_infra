@@ -1,18 +1,21 @@
 # Work Packets
 
-**Status:** Agent-executable backlog, 2026-05-09.
+**Status:** Agent-executable backlog, revised for merged-paper scope on
+2026-05-11.
 
 Future coding agents should be assigned one packet at a time. Do not ask
 an agent to "build GovernedAgentBench" or "finish the paper." Use these
 bounded packets with explicit file scopes and acceptance criteria.
 
-**Reframe note (2026-05-09).** The headline experiment is now
-runtime-first: the prompt is held constant at deployment-realistic full
-information, and the runtime is the primary axis of variation. See
-`HAI_PAPER_READINESS_EXECUTION.md` for the controlling plan and
-`../../project/DECISIONS.md` D-PROJ-013..015 for the durable decision
-record. Some pre-reframe packets below are marked **[RESCOPED]** with
-the change recorded inline; their packet IDs are preserved.
+**Merged-paper note (2026-05-11).** The active paper is
+**Deterministic Software Contracts as Trusted Monitors in AI Control
+Protocols**, targeted at NeurIPS 2027 main. The HAI/GAB runtime-first
+work remains necessary, but it is now a support lane inside the merged
+paper with the Engels Backdoor Code extension, 50-trajectory adversarial
+layer, and bounded Hierarchical Summarization contrast. The source of
+truth is `framing_v2/CONVERGED.md` plus the batch-1 paper-planning
+files. Some pre-merge packets below are marked **[RESCOPED]** or
+**[SUPERSEDED]** inline; IDs are preserved for provenance.
 
 ## Packet Template
 
@@ -1662,6 +1665,297 @@ Output: `../../hai/docs/agent_cli_contract.md` regenerated.
 
 Dependencies: `WP-MAN-006`.
 
+## Merged-Paper Packets (Added 2026-05-11)
+
+The packets below were added after Phase 1 framing v2 converged. They
+bind the HAI/GAB runtime work to the merged paper path: NeurIPS 2027,
+Engels pilot gate, targeted adversarial layer, and bounded HS contrast.
+
+### WP-DOCALIGN-002 — Phase 2 Batch 2 Benchmark Spec Alignment
+
+Goal: Align benchmark spec files with D-FRAME-016..027 after batch 1
+paper-planning edits land.
+
+Inputs:
+
+- `research/runtime_contracts_paper/framing_v2/CONVERGED.md`
+- Batch 2 prompt from `framing_v2/phase_2_doc_alignment/`
+- Batch 1 diff and `EDITS_SUMMARY.md`
+
+Outputs:
+
+- Updated benchmark spec files only.
+- Batch 2 summary report.
+
+Allowed files:
+
+- `benchmark/governed_agent_bench/` files named by the batch 2 prompt.
+
+Forbidden files:
+
+- Paper-planning files already handled by batch 1 unless the
+  orchestrator explicitly reopens them.
+- HAI runtime source.
+
+Dependencies: batch 1 orchestrator review.
+
+Acceptance criteria:
+
+- Benchmark specs agree on title, threat model, model roster,
+  thresholds, attack policy, manifest reference, and Section 7.1-7.6
+  scope.
+- L2 setup/recovery family is explicitly represented where the batch
+  prompt requires it.
+
+### WP-DOCALIGN-003 — Phase 2 Batch 3 Project Cold-Start Alignment
+
+Goal: Align project-level cold-start docs with the merged paper frame.
+
+Inputs: `framing_v2/CONVERGED.md`, batch 3 prompt, batch 1/2 summaries.
+
+Outputs: updated project cold-start docs and batch 3 summary.
+
+Allowed files: only the project/README files named by batch 3.
+
+Dependencies: batch 2 complete.
+
+Acceptance criteria:
+
+- Cold-start docs state the current objective as paper + benchmark +
+  reference runtime, not HAI product polish.
+- NeurIPS 2027, Engels pilot, and governed benchmark priorities match
+  `CONVERGED.md`.
+
+### WP-DOCALIGN-004 — Phase 2 Batch 4 HAI Runtime Docs Alignment
+
+Goal: Lightly align HAI runtime docs without reopening HAI product work.
+
+Inputs: `framing_v2/CONVERGED.md`, batch 4 prompt, batch 1-3 summaries.
+
+Outputs: updated HAI runtime docs and batch 4 summary.
+
+Allowed files: only HAI docs named by batch 4.
+
+Dependencies: batch 3 complete.
+
+Acceptance criteria:
+
+- HAI docs identify HAI as reference runtime and personal wellness as
+  instantiation.
+- No runtime doc implies v0.2.x product cycles are active.
+- No doc makes clinical or consumer-health-product claims.
+
+### WP-DOCALIGN-005 — Phase 2 Batch 5 Operating Contracts Alignment
+
+Goal: Align AGENTS/CLAUDE/README operating contracts to the merged
+research frame.
+
+Inputs: `framing_v2/CONVERGED.md`, batch 5 prompt.
+
+Outputs: updated operating contracts and batch 5 summary.
+
+Allowed files: only the operating-contract files named by batch 5.
+
+Dependencies: batch 4 complete.
+
+Acceptance criteria:
+
+- Agents are instructed to prefer paper-critical benchmark/contract work
+  over HAI v1 polish.
+- Do-not-do lists preserve Strava, MCP autoload, clinical, and hidden
+  learning-loop prohibitions.
+
+### WP-DOCALIGN-006 — Phase 2 Batch 6 Historical Provenance Marking
+
+Goal: Mark historical planning docs as superseded without erasing
+provenance.
+
+Inputs: `framing_v2/CONVERGED.md`, batch 6 prompt.
+
+Outputs: supersession headers and batch 6 summary.
+
+Allowed files: only historical provenance files named by batch 6.
+
+Dependencies: batch 5 complete.
+
+Acceptance criteria:
+
+- Historical docs remain readable but cannot be mistaken for current
+  project strategy.
+- A2/B1 and workshop-first paths are explicitly historical unless the
+  Engels pilot gate reverts to Trajectory A.
+
+### WP-DOCALIGN-AUDIT-001 — Runtime-First Reframe Audit Findings Closure
+
+Goal: Close F-CDX-RFR-R1-01..11 against the locked merged framing.
+
+Inputs:
+
+- `codex_runtime_first_reframe_audit_response.md`
+- `framing_v2/CONVERGED.md`
+- Batch 1-6 summaries
+
+Outputs:
+
+- Closure table mapping each F-CDX-RFR-R1-01..11 finding to the file
+  and section that resolves it, or to an explicit post-Phase-2 carry.
+
+Allowed files:
+
+- The audit-closure artifact path named by the orchestrator.
+- Minimal doc edits explicitly named by the closure prompt.
+
+Dependencies: Phase 2 batches 1-6 complete.
+
+Acceptance criteria:
+
+- Every finding has evidence from an edited file.
+- No closure relies only on intent, a planned future packet, or a
+  passing test that does not cover the finding.
+
+### WP-DOCALIGN-FINAL-001 — Phase 2 Final Repo-Wide Audit
+
+Goal: Run the end-of-phase consistency audit after all doc-alignment
+batches and audit-findings closure complete.
+
+Inputs:
+
+- `framing_v2/CONVERGED.md`
+- All Phase 2 batch summaries
+- Audit-closure table from `WP-DOCALIGN-AUDIT-001`
+
+Outputs:
+
+- Final Phase 2 audit report with findings, severity, and required
+  follow-up.
+
+Allowed files:
+
+- Audit prompt/response artifacts under
+  `framing_v2/phase_2_doc_alignment/` or the path named by the
+  orchestrator.
+
+Dependencies: `WP-DOCALIGN-AUDIT-001`.
+
+Acceptance criteria:
+
+- Audit checks title, target venue, threat model, mechanism inventory,
+  model roster, thresholds, attack policy, cost ceiling, HS scope,
+  Engels pilot gate, and no stale A2/B1 current-framing references.
+
+### WP-DRG-001 — DRG-0 Implementation For Engels Pilot
+
+Goal: Implement the deterministic Runtime Guard used in the July 2026
+Backdoor Code pilot.
+
+Inputs:
+
+- `framing_v2/round_3/RESPONSE.md` Q3 DRG-0 module design
+- `CONVERGED.md` D-FRAME-018 and D-FRAME-019
+
+Outputs:
+
+- DRG-0 modules: syntax/import gate, AST delta analyzer, suspicious
+  trigger detector, minimal-change anomaly detector, deterministic
+  differential fuzzing probe, verdict rule.
+- Frozen JSON config with SHA256 hash.
+- Unit tests and smoke-sample calibration harness.
+
+Allowed files:
+
+- Engels pilot / DRG implementation paths named by the orchestrator.
+- Benchmark verification tests for DRG-0.
+
+Forbidden files:
+
+- HAI product runtime source unless explicitly scoped as a support
+  dependency.
+- Primary 60-sample thresholds tuned after seeing primary results.
+
+Dependencies: APPS sandbox/harness decision, before `WP-ENGELS-001`
+primary pilot run.
+
+Acceptance criteria:
+
+- DRG-0 never sees Houdini trigger inputs or hidden-test oracle outputs.
+- Thresholds are tuned only on 10 smoke samples and frozen before the
+  60 primary samples.
+- Verdict JSON records hard gates, suspicion score, signals, fuzz
+  status, config hash, and sample id.
+
+### WP-ENGELS-001 — Engels Pilot Manifest And Execution
+
+Goal: Run the July 2026 pilot that decides whether the merged paper path
+commits.
+
+Inputs:
+
+- `framing_v2/round_3/RESPONSE.md` Q3
+- `CONVERGED.md` D-FRAME-018
+- DRG-0 output from `WP-DRG-001`
+
+Outputs:
+
+- `engels_pilot_manifest.jsonl`: 60 APPS competition samples selected
+  by sha256 seed plus 10 smoke samples separate.
+- Prompt hashes, reference-solution hashes, hidden-test hashes, pricing
+  snapshot date, and eligibility reasons.
+- Pilot result report applying the six-clause commit rule and six-clause
+  revert rule.
+
+Allowed files:
+
+- Engels pilot artifact directory named by the orchestrator.
+- No HAI state files.
+
+Dependencies: `WP-DRG-001`, APPS materialization, pre-pilot verification
+of the "five Houdini attempts per sample" claim against arXiv:2504.18530
+Section 4.
+
+Acceptance criteria:
+
+- Houdinis are Qwen2.5-7B-Instruct-Turbo, Claude 3.5 Haiku, and Claude
+  Sonnet 4 unless model availability forces a documented successor hash.
+- Guards are DRG-0 and Claude 3.5 Haiku LLM Guard.
+- Cost note uses May 2026 pricing snapshots and records the about USD
+  18.60 pilot estimate.
+- The decision gate explicitly commits merged scope, reverts to
+  Trajectory A, or labels a borderline second-pilot condition.
+
+### WP-HS-001 — Bounded Hierarchical Summarization Contrast
+
+Goal: Implement the bounded Section 7.6 L6 governance/refusal contrast.
+
+Inputs:
+
+- `CONVERGED.md` D-FRAME-024
+- `framing_v2/round_5/RESPONSE.md` Q1a/Q1b
+- L6 GovernedAgentBench tasks and HAI v0.2.0 manifest snapshot
+
+Outputs:
+
+- `hs_monitor_v1`, prompt hashes, verdict schema, and run report.
+- Detection rate, false-positive rate, uncertain rate, and
+  citation-validity rate.
+- Methodology note that does not describe an optional classifier as an
+  Anthropic HS feature.
+
+Allowed files:
+
+- HS contrast implementation/artifact paths named by the orchestrator.
+- Benchmark scorer/tests needed for the bounded contrast.
+
+Dependencies: L6 task readiness, manifest snapshot, scorer config.
+
+Acceptance criteria:
+
+- Scope is L6 governance/refusal only, optional L5 if early.
+- Two-week Dom-time and USD 200 API caps are enforced.
+- If the cap is missed, the packet emits a demotion note for Section 2.3
+  prose instead of expanding scope.
+- Constitutional Classifiers (arXiv:2501.18837) is cited as the
+  Pareto-reporting precedent.
+
 ## Future Packets — Expand Before Assignment
 
 The packets below are strategic placeholders. They must be expanded to
@@ -1698,25 +1992,29 @@ Outputs:
   - **Roster ID:** `roster_v1` (subsequent revisions bump to
     `roster_v2`, `roster_v3`, etc; never edit `roster_v1` in place
     after first model run).
-  - **Local entries:** for each, `model_family`, `parameter_count`,
-    `quantization`, `provider_snapshot` (commit hash for
-    open-weights or model-card snapshot date), `decoding_settings`
-    (temperature, top_p, max_tokens, seed). Minimum three sizes
-    (e.g. ~1B, ~7B, ~13B) for Tier 4 curve-shift evidence.
-  - **Cloud entries:** for each, provider, model id, dated
-    `provider_snapshot`, decoding settings, snapshot rotation
-    policy.
-  - **(Future-A appendix only)** fine-tuned-local entry: base
-    model, fine-tuning recipe ref, checkpoint hash.
-  - **Tier 4 metric definition:** the exact metric the curve-shift
-    claim uses. **Locked at round 2:** "smallest predeclared local
-    model (by `parameter_count`) whose Tier-3-eligible trajectories
-    pass every primary-metric threshold under `full_contract`,
-    versus the same metric under `no_runtime_enforcement`. Curve
-    shift is reported as the parameter-count gap between the two
-    smallest passing models in each runtime mode." If no model in
-    the roster passes under `no_runtime_enforcement`, the gap is
-    reported as ">= largest_roster_param_count".
+  - **Houdini entries (D-FRAME-020):**
+    `Qwen/Qwen2.5-3B-Instruct`, `Qwen/Qwen2.5-7B-Instruct-Turbo`,
+    `accounts/fireworks/models/qwen2p5-32b-instruct`,
+    `accounts/fireworks/models/qwen2p5-72b-instruct`,
+    `claude-3-5-haiku-20241022` (retired 2026-02-19; pilot
+    trajectories only), and `claude-sonnet-4-20250514` (retires
+    2026-06-15; rerun under `claude-sonnet-4-6` if Section 7.5
+    slips).
+  - **Guard entries (D-FRAME-020):** DRG-0,
+    `claude-3-5-haiku-20241022` (same retirement caveat), and
+    `gpt-4o-mini-2024-07-18`.
+  - **Successor policy:** new Haiku cells use
+    `claude-haiku-4-5-20251001` under a new roster hash; provider
+    substitutions never silently mix into an old claim cell.
+  - **(Paper-2 future only)** `fine_tuned_local` entry: base model,
+    fine-tuning recipe ref, checkpoint hash. No paper-1 performance
+    claims.
+  - **Tier 3 metric definition:** the smallest predeclared model
+    whose Tier-3-eligible trajectories pass every primary-metric
+    threshold under `full_contract`, versus the same pass/fail
+    threshold under `no_runtime_enforcement`. If no model passes under
+    `no_runtime_enforcement`, report the floor as censored rather than
+    inventing a passing point.
 - The file's sha256 (`model_roster_hash`) is recorded in
   `RESEARCH_EVAL_STRATEGY.md` and pinned in
   `HAI_PAPER_READINESS_EXECUTION.md` Phase 5/6.
@@ -1812,9 +2110,15 @@ Acceptance criteria:
 
 Non-goals: product integration.
 
-## WP-ABL-001 — First Scaffold Ablations
+## WP-ABL-001 — First Scaffold Ablations **[SUPERSEDED 2026-05-11]**
 
 Goal: Run a small ablation set once baseline harness is stable.
+
+**Supersession.** This placeholder used stale conditions
+(`no_manifest`, `stale_manifest`) and "workshop floor" language. It is
+superseded by the merged Section 7.1-7.4 mechanism-ablation matrix in
+`BASELINES_AND_ABLATIONS_PLAN.md` and by the runtime-mode packets
+`WP-RT-MODE-001..003`. Do not assign this packet as written.
 
 Dependencies:
 
@@ -1822,13 +2126,14 @@ Dependencies:
 - scorer;
 - task set.
 
-Acceptance criteria:
+Historical acceptance criteria:
 
 - At least `full_contract`, `no_manifest`, `stale_manifest`, and
   `no_agent_safe` conditions are represented.
 - Results report violation taxonomy counts.
 
-Non-goals: full ablation suite before workshop floor.
+Non-goals: full ablation suite before workshop floor. Historical only;
+current scope is the merged-paper mechanism matrix.
 
 ## WP-PAPER-001 — Related Work Draft
 

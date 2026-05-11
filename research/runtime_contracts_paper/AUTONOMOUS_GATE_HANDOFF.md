@@ -1,5 +1,16 @@
 # Autonomous Gate Handoff
 
+> **Superseded as current planning:** This file was authored 2026-05-10
+> against a workshop-floor target. The active framing as of 2026-05-11
+> is `research/runtime_contracts_paper/framing_v2/CONVERGED.md` —
+> "Deterministic Software Contracts as Trusted Monitors in AI Control
+> Protocols" (NeurIPS 2027 main conference). The workshop path is the
+> Trajectory A fallback only per D-FRAME-009 / D-FRAME-011. Body is
+> preserved as **historical provenance only**. For current planning,
+> read `framing_v2/CONVERGED.md` and `PROJECT_EXECUTION_PLAN.md`.
+
+---
+
 **Status:** Current gate audit for the autonomous project goal,
 2026-05-10. Refreshed after the pushed Claude-audit response head
 `f58af94 docs(research): update audit response index`.

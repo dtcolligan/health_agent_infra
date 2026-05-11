@@ -43,15 +43,17 @@ The ablatable mechanisms are:
   intent and target state.
 - **M7 refusal:** runtime refusal of clinical-boundary or
   authority-crossing actions.
-- **M8 audit chain:** evidence-reference emission used by read-surface
-  narration tasks.
+- **M8 audit evidence emission:** evidence-reference emission used by
+  read-surface narration tasks. (Renamed from "audit chain" per
+  D-FRAME-017 to distinguish evidence emission from transaction
+  integrity.)
 
 Held-constant controls are:
 
 - the prompt template and manifest injection;
 - the structured operator action schema;
 - the harness command allowlist;
-- transaction integrity.
+- **M9-TX transaction integrity** (non-ablatable per D-FRAME-017).
 
 Transaction integrity is never ablated. Disabling it would make every
 score uninterpretable because state writes could partially commit.

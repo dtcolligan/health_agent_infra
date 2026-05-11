@@ -20,24 +20,28 @@ Claude session efficient.
 
 When opening a fresh session, read in this order:
 
-1. **`project/FRAME.md`** — current research framing and priority order.
-2. **`project/DECISIONS.md`** — post-reframe decision log and locked
+1. **`research/runtime_contracts_paper/framing_v2/CONVERGED.md`** —
+   locked merged-paper framing for *Deterministic Software Contracts as Trusted Monitors in AI Control Protocols*, D-FRAME-001..027, NeurIPS 2027 main-conference venue, and source-of-truth ordering.
+2. **`research/runtime_contracts_paper/framing_v2/ORCHESTRATOR_STATE.md`** —
+   full framing-v2 decisions table and current orchestration state.
+3. **`project/FRAME.md`** — current research framing and priority order.
+4. **`project/DECISIONS.md`** — post-reframe decision log and locked
    project choices.
-3. **`project/OPERATING_MODEL.md`** — internal operating model and
+5. **`project/OPERATING_MODEL.md`** — internal operating model and
    documentation-alignment gate.
-4. **`AGENTS.md`** — the operating contract (governance invariants, settled
-   decisions D1-D18, architectural seams, "Do Not Do").
-5. **`project/HYPOTHESES.md`** — current research hypotheses.
-6. **`research/runtime_contracts_paper/PAPER_FRAME.md`** — locked paper /
+6. **`AGENTS.md`** — the operating contract (governance invariants, settled
+   decisions D1-D27, architectural seams, "Do Not Do").
+7. **`project/HYPOTHESES.md`** — current research hypotheses.
+8. **`research/runtime_contracts_paper/PAPER_FRAME.md`** — locked paper /
    benchmark framing.
-7. **`research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`** —
+9. **`research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`** —
    model/baseline/ablation evaluation strategy.
-8. **`benchmark/governed_agent_bench/README.md`** — benchmark scope.
-9. **`README.md`** — research-facing repo overview.
-10. **`hai/docs/hai_reference_runtime.md`** if you need HAI install,
+10. **`benchmark/governed_agent_bench/README.md`** — benchmark scope.
+11. **`README.md`** — research-facing repo overview.
+12. **`hai/docs/hai_reference_runtime.md`** if you need HAI install,
    operator workflow, domains, or CLI surface.
-11. **`hai/docs/runtime_contract_overview.md`** + **`project/REPO_MAP.md`** if you need to find something.
-12. **`hai/reporting/plans/README.md`** only when you need HAI release history or
+13. **`hai/docs/runtime_contract_overview.md`** + **`project/REPO_MAP.md`** if you need to find something.
+14. **`hai/reporting/plans/README.md`** only when you need HAI release history or
    a specific HAI runtime cycle plan.
 
 For a "what just shipped" question, read
@@ -84,7 +88,11 @@ The project venv intentionally does not bundle `mypy`, `bandit`, or
 
 ## Cycle pattern signposts
 
-A release cycle produces the following files under
+The HAI release-cycle pattern below is dormant while HAI is frozen as a
+product per D-PROJ-016. Use it only when Dom explicitly scopes HAI
+runtime release work.
+
+A HAI release cycle produces the following files under
 `hai/reporting/plans/v0_1_X/`:
 
 | Phase | Files |
@@ -104,6 +112,19 @@ A release cycle produces the following files under
 
 If round N has *more* findings than round N-1, the previous response
 introduced second-order issues — re-read your own diff.
+
+The active research-lane pattern is framing-v2 orchestration:
+
+| Phase | Files |
+|---|---|
+| Phase 1 research convergence | `research/runtime_contracts_paper/framing_v2/round_N/{PROMPT.md,RESPONSE.md,AUDIT_PROMPT.md,AUDIT_RESPONSE.md,SYNTHESIS.md}` |
+| Phase 2 doc alignment | `research/runtime_contracts_paper/framing_v2/phase_2_doc_alignment/batches/batch_N_<name>/{PROMPT.md,EDITS_SUMMARY.md}` |
+| State and protocol | `research/runtime_contracts_paper/framing_v2/{CONVERGED.md,ORCHESTRATOR_STATE.md,PHASE_PLAN.md,ORCHESTRATOR_PROTOCOL.md}` |
+
+Framing-v2 uses the worker-auditor-orchestrator triad in Phase 1,
+end-of-phase audit in Phase 2, and the escape valve defined in
+`AGENTS.md` for three consecutive `SHIP_WITH_NOTES` rounds with zero
+paper-section-level findings.
 
 ## Patterns the cycles have validated
 

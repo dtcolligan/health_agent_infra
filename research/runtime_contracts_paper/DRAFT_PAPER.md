@@ -1,3 +1,27 @@
+# Superseded Draft - Historical Provenance
+
+**Superseded on:** 2026-05-11.
+
+**Superseded by:** `PAPER_OUTLINE_MERGED.md`, under the locked Phase 1
+framing summarized in `framing_v2/CONVERGED.md`.
+
+**Current paper title:** *Deterministic Software Contracts as Trusted
+Monitors in AI Control Protocols*.
+
+This draft predates the merged NeurIPS 2027 paper frame. It remains on
+disk as historical provenance for the earlier runtime-first/workshop
+shape. Do not use its title, section order, workshop target, "sensitive
+user-owned data" framing, or claim ladder as current planning truth.
+The current source of truth is `framing_v2/CONVERGED.md` plus the batch
+1 planning files updated on 2026-05-11.
+
+No surviving section-level prose was migrated in this batch because
+`PAPER_OUTLINE_MERGED.md` already carries the canonical merged outline
+and Appendix E / ST-WebAgentBench prose is sourced from
+`framing_v2/round_5/RESPONSE.md`.
+
+---
+
 # Runtime Contracts for Local Agents Over Sensitive User-Owned Data
 
 **Subtitle:** A Personal-Wellness Reference Runtime, GovernedAgentBench,
@@ -6,8 +30,22 @@ and Model-Scale Study
 Subtitle is provisional; final wording must match the achieved claim
 tier.
 
-**Status:** Draft skeleton, reframed 2026-05-07. See `PAPER_FRAME.md`
-for the locked framing note.
+**Status:** Draft skeleton, reframed 2026-05-07; round-2 reframe
+note added 2026-05-09. See `PAPER_FRAME.md` for the locked framing
+note.
+
+**Round-2 reframe note (2026-05-09).** Sections 4 (contributions), 5
+(experimental setup), and 6 (results table) below previously
+encoded a prompt-axis comparison ("prompt-only", "manifest only",
+"manifest plus schemas", "manifest plus runtime validation"). Per
+D-PROJ-013/014/015 + D-PROJ-017 (round-2 closeout
+F-CDX-RFR-R2-02), the canonical experimental design varies
+`runtime_mode` while holding the deployment-realistic prompt
+constant. Where this skeleton's tables and prose contradict
+`PAPER_FRAME.md`, `CLAIM_LADDER.md`, `RESEARCH_EVAL_STRATEGY.md`,
+or `HAI_PAPER_READINESS_EXECUTION.md`, those sources win. The
+round-2-corrected sections appear inline below; the prior wording
+is preserved as commented-out HTML for provenance only.
 
 ## Abstract
 
@@ -89,12 +127,19 @@ user-owned data?
    can operate a governed runtime through its public contract, rather
    than relying on implicit prompt adherence or private implementation
    knowledge.
-4. **A model-scale study:** comparison of local models, cloud models,
-   rule baselines, manifest-grounded systems, and fine-tuned adapters
-   under fixed safety thresholds.
-5. **Scaffold ablations:** experiments isolating the effect of
-   manifest fields, schemas, mutation classes, safety flags, exit
-   codes, proposal gates, and audit evidence.
+4. **A runtime ablation and model-scale study:** comparison across
+   `runtime_mode` × `model_class`, with the deployment-realistic
+   prompt held constant (per D-PROJ-014). Local and cloud
+   `model_class` values come from a predeclared roster
+   (`model_roster.md`); fine-tuned-local is appendix-tier
+   (Future-A) and not part of the workshop floor.
+5. **Per-mechanism scaffold ablations:** off-paths along the
+   single canonical `runtime_mode` axis (M4..M8), isolating the
+   effect of validation, `agent_safe` enforcement, the
+   proposal/commit gate, refusal-in-code, and the audit-chain
+   evidence reference. Held-constant harness controls (M1 command
+   envelope, M2 structured action schema, M3 harness allowlist) and
+   transaction integrity (M9-TX) are not ablated.
 6. **Error taxonomy:** hallucinated commands, invalid proposals,
    unsafe mutation attempts, unsupported narration, clinical-boundary
    violations, drift failures, and refusal errors.
@@ -283,50 +328,56 @@ GovernedAgent-80:
 
 ## 5. Experimental Setup
 
-### 5.1 Models
+### 5.1 Models (round-2: predeclared roster)
 
-Local:
+`model_class` values appear in trajectories per
+`trajectory.schema.json` v2:
 
-- 1B-1.5B proof model
-- 3B main model
-- 7B stretch model
+- `rule_baseline` — deterministic routing where applicable.
+- `local` — three predeclared local models (e.g., ~1B, ~3B/7B,
+  ~13B) drawn from `benchmark/governed_agent_bench/model_roster.md`
+  (per `WP-MODEL-ROSTER-001`). Each entry pins
+  `model_family`, `parameter_count`, `quantization`,
+  `provider_snapshot`, and `decoding_settings`.
+- `cloud` — at least one cloud reference model with a dated
+  `provider_snapshot`.
+- `fine_tuned_local` — Future-A appendix tier per
+  `CLAIM_LADDER.md`, not part of the workshop floor.
 
-Cloud:
+Predeclared-roster discipline: the roster file is committed before
+any model run; `model_roster_hash` is recorded in any score
+contributing to a Tier 3 or Tier 4 claim (per `score.schema.json`
+v2 conditional invariant).
 
-- prompt-only cloud
-- cloud plus HAI manifest
-- cloud plus HAI manifest plus runtime validation
+### 5.2 Conditions (round-2: `runtime_mode` enum)
 
-Baselines:
+The seven canonical `runtime_mode` values, all run against the
+same deployment-realistic prompt
+(`prompts/deployment_full_v1.md`):
 
-- rule-based router
-- rule-based refusal classifier
-- simple manifest lookup baseline
+| `runtime_mode` | Mechanisms off | Purpose |
+|---|---|---|
+| `full_contract` | none (M4..M8 + M9-TX on) | Architectural baseline. |
+| `no_validation` | M4 | Ablate runtime validation. |
+| `no_agent_safe` | M5 | Ablate CLI-dispatch agent_safe enforcer. |
+| `no_proposal_gate` | M6 | Ablate proposal/commit separation. |
+| `no_refusal` | M7 | Ablate runtime refusal contract. |
+| `no_audit_chain` | M8 | Ablate audit-chain evidence reference. |
+| `no_runtime_enforcement` | M4..M8 (transactions on) | All ablatable mechanisms off. |
 
-### 5.2 Conditions
+There is no "no contract" / "static docs" / "manifest only" /
+"manifest plus schemas" prompt-axis comparison: the prompt is held
+constant per D-PROJ-014, and the v2 manifest envelope (with
+`refusals`, `mutation_classes`, `exit_codes` taxonomies) is in the
+prompt in every condition.
 
-| Condition | Description |
-|---|---|
-| No contract | Model prompted with general task only |
-| Static docs | Model receives human docs |
-| Manifest only | Model receives live `hai capabilities --json` |
-| Manifest plus schemas | Adds schema/output constraints |
-| Full HAI contract | Full runtime contract and validation |
-| Fine-tuned | Local model trained on contract-operation trajectories |
-| Fine-tuned plus manifest | Behavioral adapter plus live contract |
+### 5.3 Scaffold Ablations (round-2: per-mechanism `runtime_mode` axis)
 
-### 5.3 Scaffold Ablations
-
-Remove one component at a time:
-
-- no `agent_safe`
-- no mutation classes
-- no exit-code semantics
-- no output schemas
-- no proposal gate
-- no audit/evidence references
-- no manifest
-- stale manifest
+Off-paths follow the seven-mode `runtime_mode` enum above. There
+are no separate "no manifest" or "stale manifest" conditions in the
+ablation matrix. L7 drift tasks vary stale-manifest content as
+*task content* (the manifest snapshot for that task is generated
+from a prior tag per `WP-DRIFT-001`), not as a runtime mode.
 
 ### 5.4 Training Data
 
@@ -338,15 +389,16 @@ No private health rows are used for training.
 
 ### 6.1 Main Result: Model Scale vs GovernedAgentBench Score
 
-| System | Params | GovernedAgentBench score | Safety pass? | Cost | Local? |
+| `model_class` × `runtime_mode` | Params | GovernedAgentBench score | Safety pass? | Cost | Local? |
 |---|---:|---:|---:|---:|---:|
-| Rule baseline | 0 | TBD | TBD | low | yes |
-| Local prompt-only | 3B | TBD | TBD | low | yes |
-| Local plus manifest | 3B | TBD | TBD | low | yes |
-| Fine-tuned local | 3B | TBD | TBD | low | yes |
-| Fine-tuned plus manifest | 3B | TBD | TBD | low | yes |
-| Cloud prompt-only | unknown | TBD | TBD | high | no |
-| Cloud plus manifest | unknown | TBD | TBD | high | no |
+| `rule_baseline` × `full_contract` | 0 | TBD | TBD | low | yes |
+| `local` × `full_contract` (small) | TBD | TBD | TBD | low | yes |
+| `local` × `no_runtime_enforcement` (small) | TBD | TBD | TBD | low | yes |
+| `local` × `full_contract` (mid) | TBD | TBD | TBD | low | yes |
+| `local` × `no_runtime_enforcement` (mid) | TBD | TBD | TBD | low | yes |
+| `cloud` × `full_contract` | TBD | TBD | TBD | high | no |
+| `cloud` × `no_runtime_enforcement` | TBD | TBD | TBD | high | no |
+| `fine_tuned_local` × `full_contract` (Future-A) | TBD | TBD | TBD | low | yes |
 
 ### 6.2 Does the Runtime Contract Reduce Required Model Scale?
 

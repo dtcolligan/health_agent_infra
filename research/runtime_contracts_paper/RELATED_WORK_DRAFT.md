@@ -23,7 +23,7 @@ API-Bank [@li2023apibank], ToolLLM [@qin2023toolllm], Gorilla
 [@patil2023gorilla], and BFCL [@bfcl2024].
 
 This paper treats correct tool selection as necessary but not
-sufficient. Governed operation over sensitive user-owned state also
+sufficient. Governed bounded agent operation over user-owned state also
 requires command authorization, mutation classes, proposal/commit
 separation, deterministic validation, refusal boundaries, and audit
 references. In other words, the runtime contract is not just a function

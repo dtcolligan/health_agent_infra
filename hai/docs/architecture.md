@@ -5,6 +5,10 @@ shell-capable personal-health agent. The user speaks to the agent; the
 agent operates `hai`; `hai` defines the allowed tasks, validates the
 agent's outputs, owns the local write path, and records the audit trail.
 
+Paper-framing note: this file describes HAI runtime architecture; for the
+active paper title, venue, and mechanism inventory, see
+[`../../research/runtime_contracts_paper/framing_v2/CONVERGED.md`](../../research/runtime_contracts_paper/framing_v2/CONVERGED.md).
+
 That framing matters. The architecture is not "a Python app that happens
 to have an agent front end." It is infrastructure around an agentic AI
 system so the agent can work on personal health data without becoming the
@@ -241,7 +245,7 @@ the wrapper is allowed to mutate.
 | Agent | Converse, choose workflows, ask clarifying questions, invoke declared `hai` commands, draft bounded proposals through skills. | Direct database/JSONL edits, hidden memory, invented action enums, silent target activation, clinical authority. |
 | Skills | Rationale, uncertainty framing, clarification, bounded proposal composition from supplied snapshot/policy fields. | Arithmetic bands, policy firings, action mutation, persistence. |
 | `hai` CLI/runtime | Validation, state mutation, projection, classification, R-rules, X-rules, synthesis, explainability, review, backup/restore/export. | Free-form coaching prose or user-goal ownership. |
-| Evals | Current deterministic tests and scenario fixtures; future personal-guidance / skill harness scoring. | Replacing the runtime write path or letting an LLM self-certify. |
+| Evals | Current deterministic tests and scenario fixtures; paper/benchmark trajectory scoring and skill-harness scoring where explicitly scoped. | Replacing the runtime write path or letting an LLM self-certify. |
 
 **Runtime/code owns:**
 - Deterministic arithmetic (band classification, scoring, signal

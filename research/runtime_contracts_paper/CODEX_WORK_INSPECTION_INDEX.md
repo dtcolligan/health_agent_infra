@@ -1,5 +1,18 @@
 # Codex Work Inspection Index
 
+> **Superseded as current planning:** This file was authored 2026-05-10
+> as an inspection guide for autonomous Codex execution targeting a
+> workshop-floor paper. The active framing as of 2026-05-11 is
+> `research/runtime_contracts_paper/framing_v2/CONVERGED.md` —
+> "Deterministic Software Contracts as Trusted Monitors in AI Control
+> Protocols" (NeurIPS 2027 main conference). Body is preserved as
+> **historical provenance only**. For the active Phase 2
+> documentation-alignment trail and audit verdicts, see
+> `framing_v2/phase_2_doc_alignment/batches/` and
+> `framing_v2/phase_2_doc_alignment/FINAL_AUDIT_RESPONSE.md`.
+
+---
+
 **Status:** inspection guide for Codex autonomous work through commit
 `6ce5f58 docs(research): add codex work inspection index`, with a
 Claude Code audit-prompt pointer added 2026-05-10.

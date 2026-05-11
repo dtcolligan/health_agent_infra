@@ -15,7 +15,7 @@ The obvious reviewer objection is:
 
 The paper must answer that directly. The contribution is not any single
 component. The contribution must be positioned as the integrated runtime
-contract, the sensitive user-owned data setting, the benchmark, and the
+contract, the bounded agent operation setting, the benchmark, and the
 model-scale / ablation measurement.
 
 ## Prior-Art Buckets
@@ -73,7 +73,7 @@ Positioning question:
 
 ### Local / On-Device / Private Agents
 
-Purpose: connect to local models and sensitive user-owned data.
+Purpose: connect to local models and user-owned state under a governed runtime contract.
 
 Representative areas to cover:
 

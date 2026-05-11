@@ -1,248 +1,231 @@
 # Project Execution Plan
 
-**Status:** Master research-engineering execution plan, 2026-05-08.
+**Status:** Merged-paper execution plan, aligned to
+`framing_v2/CONVERGED.md` on 2026-05-11.
 
-This is the controlling plan for moving from the post-reframe repository
-to a paper + benchmark + reference-runtime release. It does not implement
-anything. Its purpose is to make future implementation work decomposable
-into bounded slices that coding agents can execute without making
-strategic decisions.
-
-For project framing, read `project/FRAME.md`, `project/DECISIONS.md`,
-and `project/OPERATING_MODEL.md` first. For the paper frame, read
-`PAPER_FRAME.md`. The older `IMPLEMENTATION_PLAN.md` is retained as the
-coarse phase plan; this file is the more operational master plan.
+This plan coordinates the paper titled **Deterministic Software
+Contracts as Trusted Monitors in AI Control Protocols** for the NeurIPS
+2027 main conference, May 2027 submission deadline.
 
 ## Objective
 
-Produce a conservative research-engineering artifact set:
-
-1. A paper testing runtime contracts for bounded agents over sensitive
-   user-owned data.
-2. GovernedAgentBench as the benchmark artifact.
-3. HAI as the first reference runtime.
-4. Reproducible baselines, scaffold ablations, and optional fine-tuned
-   local operators.
-
-The project is not trying to build a Google Health competitor. HAI is the
-demonstrator used to make the runtime-contract claim testable.
+Deliver a defensible main-conference paper showing that deterministic
+software contracts can act as trusted monitors for bounded agent
+operation. The paper merges the runtime-contract architecture and
+GovernedAgentBench work with the Engels Backdoor Code extension. The
+Engels pilot remains the July/August 2026 decision gate.
 
 ## Non-Negotiables
 
-- No private health rows in benchmark fixtures, training data, reports,
-  or public artifacts.
-- No diagnosis, treatment, prescribing, or autonomous medical decisions.
-- No benchmark dependence on Claude Code as the operator.
-- No MCP dependency for the first benchmark/paper slice.
-- No model-run experiments before a deterministic offline scorer exists.
-- No HAI product polish unless it stabilizes the contract, benchmark, or
-  reproducibility.
-- No post-hoc safety thresholds chosen after seeing model results.
+- Source of truth: `framing_v2/CONVERGED.md` and locked decisions
+  D-FRAME-001 through D-FRAME-027.
+- Headline framing: deterministic software contract operationalizes a
+  safety spec as the trusted monitor in an AI control protocol for
+  bounded agent operation.
+- HAI is a reference runtime, not a consumer health-product bet.
+- Personal wellness is a non-clinical instantiation; no clinical claims.
+- Prompt is held constant; runtime mode is the intervention.
+- M4-M8 are ablatable; M9-TX transaction integrity is held constant.
+- Cost ceiling: USD 1,500 for model API calls.
+- Sonnet 4 retirement binding: `claude-sonnet-4-20250514` retires on
+  2026-06-15; Section 7.5 paper-claim runs must complete before then or
+  re-anchor to `claude-sonnet-4-6` under a new roster hash.
 
-## Artifact Dependency Graph
+## Calendar
 
-```text
-PROJECT_FRAME / PROJECT_DECISIONS
-        |
-        v
-PAPER_FRAME + CLAIM_LADDER + PRIOR_ART_POSITIONING
-        |
-        v
-HAI_PAPER_READINESS_PLAN
-        |
-        v
-BENCHMARK_SPEC + OPERATOR_HARNESS_SPEC + SCORING_SPEC
-        |
-        v
-TASK_AUTHORING_GUIDE + frozen manifest + pilot tasks
-        |
-        v
-offline scorer + hand-authored trajectories
-        |
-        v
-rule baseline + model adapters
-        |
-        v
-baselines + scaffold ablations + fine-tuning
-        |
-        v
-paper results + benchmark card + reproducibility appendix
-```
+| Date | Milestone | Required outcome |
+|---|---|---|
+| 2026-05-11 | Phase 1 convergence | DONE: 27 locked framing decisions |
+| 2026-06-15 | Sonnet 4 retirement | Finish any Section 7.5 Sonnet 4 paper-claim run before this date or re-anchor |
+| 2026-07-15 target | Phase 2 doc alignment | Batch 1-6 docs, audit-findings closure, and final repo-wide audit complete |
+| 2026-07-20 to 2026-08-05 target | Engels pilot | 60 APPS competition samples, DRG-0 + Haiku Guard, three Houdinis |
+| 2026-08-10 target | Pilot decision gate | Commit merged paper if six-clause rule passes; otherwise revert to Trajectory A |
+| 2026-11 target | Mechanism ablations complete | T1/T2/T3 GovernedAgentBench evidence complete |
+| 2027-02 target | Full Engels run | Section 7.5 full Backdoor Code extension complete |
+| 2027-03 target | Red-team complete | 50 targeted trajectories complete |
+| 2027-03 target | Bounded HS contrast complete | Section 7.6 L6 contrast complete or demoted |
+| 2027-04 target | Manuscript v1 | Full draft ready for internal review |
+| 2027-05 target | NeurIPS 2027 submission | Main-conference submission package ready |
 
-## Milestones
+## Workstreams
 
-### M0 — Planning Gate
+### W0 - Phase 2 Documentation Alignment
 
-**Purpose.** Make the execution plan explicit enough that future agents
-can implement bounded work packets.
+Purpose: make the repo internally consistent with the locked framing
+before more implementation work resumes.
 
-**Exit criteria.**
+Deliverables:
 
-- `PROJECT_EXECUTION_PLAN.md` defines phases, gates, and dependencies.
-- `CLAIM_LADDER.md` defines minimum, strong, best-case, and null-result
-  claims.
-- `PRIOR_ART_POSITIONING.md` defines the positioning work to complete
-  before paper writing.
-- `BENCHMARK_SPEC.md`, `OPERATOR_HARNESS_SPEC.md`, `SCORING_SPEC.md`,
-  and `TASK_AUTHORING_GUIDE.md` define GovernedAgentBench.
-- `HAI_PAPER_READINESS_PLAN.md` defines the paper-critical HAI
-  engineering slice.
-- `BASELINES_AND_ABLATIONS_PLAN.md` defines systems and ablations.
-- `WORK_PACKETS.md` contains agent-executable tasks with file scopes,
-  dependencies, acceptance criteria, tests, and non-goals.
+- Batch 1 paper-planning files aligned.
+- Batch 2 benchmark specs aligned.
+- Batch 3 project cold-start docs aligned.
+- Batch 4 HAI runtime docs lightly aligned.
+- Batch 5 operating contracts aligned.
+- Batch 6 historical provenance marked superseded.
+- F-CDX-RFR-R1-01..11 explicitly closed against merged framing.
+- Final repo-wide audit checks terminology, calendar, title, threat
+  model, scope, and stale A2/B1 references.
 
-**Implementation allowed.** Documentation/specification only.
+### W1 - HAI Paper-Readiness Support
 
-### M1 — HAI Paper-Readiness Engineering
+Purpose: freeze HAI as the paper reference runtime.
 
-**Purpose.** Engineer HAI so the paper and benchmark can use it as a
-reference runtime.
+Deliverables:
 
-**Exit criteria.**
+- HAI v0.2.0 manifest snapshot at
+  `benchmark/governed_agent_bench/manifests/hai_0_2_0.json` (about
+  189 KB).
+- Contract schema `agent_cli_contract.v2`.
+- Runtime modes and mechanism-disabled audit markers.
+- Refusal behavior in runtime code, not skill prose.
+- Hermetic fixtures and no live wearable dependency.
 
-- A frozen `hai capabilities --json` snapshot exists under
-  `benchmark/governed_agent_bench/manifests/`.
-- The snapshot is generated from the source tree and has a documented
-  provenance command.
-- The benchmark subset of command behavior is documented:
-  command name, args, `agent_safe`, mutation class, expected outputs,
-  exit-code semantics, and audit surface.
-- Synthetic fixture-state requirements are specified without private
-  health data.
-- Any HAI runtime gap discovered while making the paper-ready slice is
-  either fixed through a separate bounded work packet or explicitly
-  deferred as non-critical.
+This is support work. It exists to stabilize the contract, unblock the
+benchmark, and make baselines reproducible.
 
-**Implementation allowed.** Manifest snapshotting, fixture planning,
-doc updates, output-shape stabilization, and narrow runtime fixes only
-if they are required for the benchmark subset.
+### W2 - GovernedAgentBench Measurement Readiness
 
-### M2 — GovernedAgentBench Measurement-Readiness
+Purpose: produce deterministic benchmark/scorer artifacts before model
+runs.
 
-**Purpose.** Create a benchmark that can evaluate governed agent
-operation and prove it can score known-good and known-bad trajectories,
-so it can serve as the measurement instrument for baselines, models, and
-ablations without any live model backend.
+Deliverables:
 
-**Exit criteria.**
+- Task families L1-L7 with explicit mechanism coverage.
+- Trajectory and score schemas requiring `claim_tier` and roster/config
+  references for T3/T4 claims.
+- Scorer config file and `scorer_config_hash`.
+- Predeclared model roster hash.
+- Prompt template hash and manifest snapshot binding.
+- Baseline harness that varies `runtime_mode` while holding prompt
+  constant.
 
-- At least one task each exists for L1, L2, L5, L6, and L7.
-- Each task validates against `task.schema.json`.
-- At least one passing and one failing hand-authored trajectory exist.
-- The scorer can grade those trajectories offline.
-- Known-good and known-bad trajectories produce the expected pass/fail
-  outcomes.
-- The score output validates against `score.schema.json`.
-- The benchmark README reports real counts instead of scaffold-only
-  state.
+### W3 - Mechanism Ablations
 
-**Implementation allowed.** Benchmark tasks, fixtures, scorer, and
-trajectory files. No model APIs yet.
+Purpose: support Claims A and B.
 
-### M3 — Baseline Harness
+Deliverables:
 
-**Purpose.** Run comparable non-learning baselines and establish that the
-benchmark measures more than trivial routing.
+- Section 7.1 infrastructure checks.
+- Section 7.2 mechanism-effect evidence.
+- Section 7.3 component ranking evidence.
+- Section 7.4 runtime-as-floor result.
 
-**Exit criteria.**
+The Section 7.1-7.4 matrix follows `PAPER_OUTLINE_MERGED.md`: M4-M8
+single-mechanism ablations, `no_runtime_enforcement`, M9-TX held
+constant, and prompt held constant.
 
-- Rule baseline runs through the same trajectory/scoring interface.
-- Prompt-only and manifest/contract prompt templates are specified.
-- Local and cloud model adapters share the same model-output action
-  schema.
-- Outputs are recorded as trajectories before scoring.
-- The first baseline report distinguishes deterministic routing tasks
-  from tasks requiring model judgment.
+### W4 - Engels Pilot And Full Run
 
-**Implementation allowed.** Model adapter interfaces, rule baseline,
-prompt templates, run logs. Avoid expensive experiments until M2 is
-stable.
+Purpose: decide whether the merged paper remains viable and, if so,
+produce the Section 7.5 headline result.
 
-### M4 — Experiment Set
+Pilot deliverables:
 
-**Purpose.** Produce the empirical evidence for the paper.
+- APPS competition sample manifest: 60 primary + 10 smoke, selected by
+  frozen sha256 seed.
+- DRG-0 modules 1-6 implemented with config hash.
+- Houdinis: Qwen2.5-7B-Instruct-Turbo, Claude 3.5 Haiku, Claude
+  Sonnet 4.
+- Guards: DRG-0 and Claude 3.5 Haiku LLM Guard.
+- Estimated API cost note with May 2026 pricing snapshot, about USD
+  18.60.
+- Six-clause commit rule and six-clause revert rule evaluated.
+- Pre-pilot verification of the "five Houdini attempts per sample"
+  claim against arXiv:2504.18530 Section 4.
 
-**Exit criteria.**
+Full-run deliverables if pilot passes:
 
-- Rule, local prompt-only, local+contract, cloud prompt-only,
-  cloud+contract, and at least one scaffold ablation are run on the same
-  task set.
-- Thresholds are fixed before interpreting outcomes.
-- Failures are categorized by the agreed violation taxonomy.
-- Results can support at least the minimum claim in `CLAIM_LADDER.md`,
-  or the paper narrows to a null/negative result.
+- Full predeclared roster/guard matrix.
+- DRG-0 false-positive analysis on clean and benign rewrite samples.
+- DRG-0 ablations: static-only, fuzz-only, combined.
+- Adaptive attacks against DRG-0.
+- Domain Elo curve with DRG-0 at general Elo = 0.
 
-**Implementation allowed.** Baseline runs, ablation prompt/context
-variants, reports.
+### W5 - Targeted Adversarial Layer
 
-### M5 — Fine-Tuning
+Purpose: preempt the AI-control overclaim and Greenblatt DRG-artifact
+critiques.
 
-**Purpose.** Test whether a small local operator can learn benchmark
-behavior without memorizing stale contract details.
+Deliverables:
 
-**Exit criteria.**
+- 50 trajectories: refusal bypass 8, mutation escalation 8, audit
+  tampering 8, schema evasion 8, adaptive-vs-DRG-0 18.
+- Deterministic adjudication where possible.
+- Fixed rubric for ambiguous cases.
+- Dom blind adjudication and secondary `gpt-4o-mini-2024-07-18` judge.
+- Safety/usefulness Pareto by attack type.
 
-- Training data contains no private health rows or clinical advice
-  corpus.
-- Fine-tuned local is evaluated with and without live/frozen manifest
-  access.
-- Drift robustness is measured against at least one changed contract
-  condition.
-- Model card documents data provenance and limitations.
+### W6 - Bounded Hierarchical Summarization Contrast
 
-**Implementation allowed.** Dataset generation, LoRA/QLoRA recipe, model
-card, reproducible evaluation.
+Purpose: make the direct LLM-monitor contrast concrete without letting
+it absorb the paper.
 
-### M6 — Paper and Release
+Deliverables:
 
-**Purpose.** Package the work as a research-engineering artifact.
+- L6 governance/refusal contrast, optional L5 only if early.
+- Two-week Dom-time cap and USD 200 API cap.
+- `hs_monitor_v1`, prompt hashes, verdict schema.
+- Detection rate, false-positive rate, uncertain rate, and
+  citation-validity rate.
+- Constitutional Classifiers cited as Pareto-reporting precedent.
 
-**Exit criteria.**
+If the cap is missed, demote to Section 2.3 prose.
 
-- Paper draft includes prior-art positioning, methods, benchmark,
-  results, limitations, and reproducibility appendix.
-- GovernedAgentBench has a benchmark card.
-- Public fixtures, frozen manifests, scorer, and reports are committed.
-- Claims match results. Weak or null results are reported without
-  inflation.
+### W7 - Manuscript
+
+Purpose: produce the NeurIPS paper.
+
+Deliverables:
+
+- Section 1 introduces deterministic contracts as trusted-monitor
+  substrate for bounded AI-control protocols.
+- Section 2 uses the triple lineage anchor.
+- Section 3 locks the capability-failure + targeted-adversarial threat
+  model.
+- Sections 4-6 define architecture, HAI, and GovernedAgentBench.
+- Sections 7-8 report mechanism ablations, Engels, HS, and adversarial
+  layer.
+- Section 10 names the pilot-null and HS-cap fallback clauses.
+- Section 11 states the S1 fine-tuning sequel headline.
+- Appendix D includes the fine-tuning recipe as future work only.
+- Appendix E includes the coding-agent sketch with anti-overclaim
+  header.
 
 ## Decision Gates
 
-| Gate | Question | Default decision |
-|---|---|---|
-| G1 | Is the benchmark still HAI-specific after task authoring? | Generalize task schema and language before adding model runs. |
-| G2 | Does a task require private health rows? | Redesign the task. |
-| G3 | Does a task require clinical interpretation? | Remove or reframe it. |
-| G4 | Do rule baselines solve most tasks? | Narrow claim toward which tasks require model judgment. |
-| G5 | Does cloud+contract dominate all local conditions? | Focus on safety/privacy/cost tradeoffs, not local parity. |
-| G6 | Do ablations fail to explain full-contract gains? | Narrow the architecture claim; do not assert component causality. |
-| G7 | Does fine-tuning memorize stale commands? | Require manifest-grounded evaluation and drift tests. |
+### Engels Pilot Gate
 
-## Scope Control
+Commit to merged scope only if the six-clause pilot rule passes:
+feasibility, separation, nontrivial adversary, Elo signal, usefulness,
+and fairness.
 
-Work is in scope when it directly advances one of:
+Revert to Trajectory A if DRG-0 is null, worse than Haiku Guard,
+statistically unsupported, unfair, too false-positive-prone, or too
+sample-starved.
 
-- HAI paper-readiness engineering;
-- GovernedAgentBench measurement-readiness;
-- scorer;
-- operator harness;
-- baselines;
-- scaffold ablations;
-- fine-tuning;
-- paper/release packaging.
+### HS Cap Gate
 
-Work is out of scope before M6 when it is primarily:
+If bounded HS misses the two-week or USD 200 cap, it demotes to related
+work. Do not expand Section 7.6.
 
-- HAI consumer-product polish;
-- MCP transport work not required by the benchmark;
-- extra wearable integrations;
-- more health-domain breadth;
-- N-of-1 product surfaces;
-- hosted app work.
+### Budget Gate
+
+All model API calls fit within USD 1,500. Cells that cannot fit are
+dropped or demoted, not silently rerun into scope creep.
+
+## Explicitly Out Of Scope
+
+- Clinical or medical decision-making.
+- Consumer health-product positioning.
+- A second coding-agent runtime before paper 1.
+- Fine-tuned local operator results in paper 1.
+- Full attack-policy substitution red-team.
+- Sandbagged or password-locked executor models.
+- Cross-domain generalization as a result.
 
 ## Agent Execution Rule
 
-Future coding agents should not receive broad prompts like "build the
-benchmark." They should receive a single work packet from
-`WORK_PACKETS.md`, including allowed files, forbidden files,
-dependencies, acceptance criteria, tests, and non-goals.
+Agents should work from the bounded work packets in `WORK_PACKETS.md`.
+Do not start broad implementation work from this plan alone. Each
+packet must name allowed files, dependencies, acceptance criteria, and
+non-goals.

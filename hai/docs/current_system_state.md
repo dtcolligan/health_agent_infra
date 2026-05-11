@@ -21,12 +21,13 @@ artifacts:
 - **GovernedAgentBench** — benchmark scaffold for measuring
   contract-governed agent operation.
 
-Current priority is paper + GovernedAgentBench + paper-critical HAI
-contract work. HAI v1 polish is subordinate unless it supports those
-artifacts. Canonical sources:
+Current priority is the merged NeurIPS 2027 paper, GovernedAgentBench,
+and paper-critical HAI contract work. HAI v1 polish is subordinate
+unless it supports those artifacts. Canonical sources:
 [`../../project/FRAME.md`](../../project/FRAME.md),
 [`../../project/DECISIONS.md`](../../project/DECISIONS.md),
 [`../../project/OPERATING_MODEL.md`](../../project/OPERATING_MODEL.md),
+[`../../research/runtime_contracts_paper/framing_v2/CONVERGED.md`](../../research/runtime_contracts_paper/framing_v2/CONVERGED.md),
 [`../../research/runtime_contracts_paper/PAPER_FRAME.md`](../../research/runtime_contracts_paper/PAPER_FRAME.md),
 [`../../research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`](../../research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md),
 and
@@ -36,7 +37,7 @@ and
 
 | Surface | Current value | Source of truth |
 |---|---|---|
-| Paper frame | Working title, abstract, contribution list, empirical result tiers, and non-clinical boundary are locked as framing. | `research/runtime_contracts_paper/PAPER_FRAME.md` |
+| Paper frame | Locked title (*Deterministic Software Contracts as Trusted Monitors in AI Control Protocols*), NeurIPS 2027 main-conference target, contribution list, empirical result tiers, and non-clinical boundary are locked as framing. | `research/runtime_contracts_paper/framing_v2/CONVERGED.md`, `research/runtime_contracts_paper/PAPER_FRAME.md` |
 | Paper draft | Live skeleton exists; empirical sections remain placeholders until benchmark tasks, baselines, fine-tuning, and ablations run. | `research/runtime_contracts_paper/DRAFT_PAPER.md` |
 | Evaluation strategy | Local, cloud, fine-tuned, rule, and scaffold-ablation conditions are in scope; deterministic safety metrics are primary. | `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md` |
 | GovernedAgentBench | Scaffold only: 0 frozen manifests, 0 pilot tasks, 0 recorded trajectories, no scorer implementation, no baselines, no reports. | `benchmark/governed_agent_bench/README.md` |
@@ -185,9 +186,10 @@ non-maintainer use) deferred to v0.4 review.
 | Cycle | Role |
 |---|---|
 | ~~v0.1.19~~ | **CANCELLED 2026-05-06** per CP-2U-GATE-SPLIT (`hai/reporting/plans/post_v0_1_18/CP-2U-GATE-SPLIT.md`) + AGENTS.md D16. Foreign-user empirical scope re-tiered to opportunistic-not-blocking; W-2U-INSTALL closed (verbal-only) by post-v0.1.18 father session; W-2U-WEARABLE + W-2U-DOGFOOD deferred to v0.4 review. |
-| GovernedAgentBench measurement-readiness | **Research priority.** Create a benchmark that can evaluate governed agent operation and prove it can score known-good and known-bad trajectories. |
+| Phase 2 doc alignment | **Current research-support cycle.** Align docs to the locked framing in `framing_v2/CONVERGED.md` for the merged NeurIPS 2027 paper; no HAI runtime state changes. |
+| GovernedAgentBench measurement-readiness | **Research priority.** Create a benchmark for the merged paper that can evaluate governed agent operation and prove it can score known-good and known-bad trajectories. |
 | HAI paper-readiness engineering | **Research priority.** Make HAI usable by the paper and benchmark through public contracts, synthetic fixtures, stable read surfaces, and reproducible baselines. |
-| v0.2.1 HAI insight ledger | Valuable HAI backlog item, but subordinate unless selected as paper-critical or benchmark-critical. |
+| ~~v0.2.1 HAI insight ledger~~ | **Superseded by D-PROJ-016.** HAI is frozen as a product; revive only if selected through a paper- or benchmark-critical runtime-fix packet. |
 
 ## How to update this file
 

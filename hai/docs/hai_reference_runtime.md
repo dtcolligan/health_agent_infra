@@ -4,6 +4,10 @@ HAI is the personal-wellness reference runtime for the runtime-contract
 research project. It is packaged as `health-agent-infra` and exposed
 through the local `hai` CLI.
 
+Paper-framing note: this file describes the HAI reference runtime; for the
+active paper framing, see
+[`../../research/runtime_contracts_paper/framing_v2/CONVERGED.md`](../../research/runtime_contracts_paper/framing_v2/CONVERGED.md).
+
 For the repo-wide research frame, start with
 [`../../project/FRAME.md`](../../project/FRAME.md),
 [`../../project/DECISIONS.md`](../../project/DECISIONS.md), and
@@ -18,7 +22,8 @@ language; the agent invokes `hai`; the runtime validates, gates, mutates,
 and records.
 
 Personal wellness is the reference domain. The broader research claim is
-contract-governed operation over sensitive user-owned structured data.
+deterministic software contracts as trusted monitors in AI control
+protocols for bounded agent operation.
 
 **Local-only by construction.** No telemetry, no hosted backend, no cloud
 sync. State lives on your machine in SQLite plus JSONL audit logs;
@@ -343,4 +348,4 @@ The authoritative command surface is generated at
 | User trying the package | [`current_system_state.md`](current_system_state.md), [`privacy.md`](privacy.md), [`non_goals.md`](non_goals.md), [`backup_and_recovery.md`](backup_and_recovery.md) |
 | Host-agent integrator | [`host_agent_contract.md`](host_agent_contract.md), [`agent_integration.md`](agent_integration.md), [`agent_cli_contract.md`](agent_cli_contract.md), [`../../hai/docs/runtime_contract_overview.md`](../../hai/docs/runtime_contract_overview.md) |
 | Runtime contributor | [`../../CONTRIBUTING.md`](../../CONTRIBUTING.md), [`architecture.md`](architecture.md), [`domains/README.md`](domains/README.md), [`x_rules.md`](x_rules.md) |
-| Research / benchmark reviewer | [`../../project/FRAME.md`](../../project/FRAME.md), [`../../research/runtime_contracts_paper/PAPER_FRAME.md`](../../research/runtime_contracts_paper/PAPER_FRAME.md), [`../../benchmark/governed_agent_bench/README.md`](../../benchmark/governed_agent_bench/README.md) |
+| Research / benchmark reviewer | [`../../research/runtime_contracts_paper/framing_v2/CONVERGED.md`](../../research/runtime_contracts_paper/framing_v2/CONVERGED.md), [`../../project/FRAME.md`](../../project/FRAME.md), [`../../research/runtime_contracts_paper/PAPER_FRAME.md`](../../research/runtime_contracts_paper/PAPER_FRAME.md), [`../../benchmark/governed_agent_bench/README.md`](../../benchmark/governed_agent_bench/README.md) |

@@ -1,5 +1,17 @@
 # Strategic Plan v2 — Health Agent Infra
 
+> **Superseded as current planning (2026-05-11).** This file describes a
+> pre-reframe project shape. The active framing is
+> `framing_v2/CONVERGED.md` — "Deterministic Software Contracts as
+> Trusted Monitors in AI Control Protocols" (D-FRAME-016; NeurIPS 2027
+> main conference). Decisions in this file may be inconsistent with the
+> merged-paper framing; treat the body as **historical provenance only**,
+> not as current planning truth. For current project decisions, read
+> `framing_v2/CONVERGED.md`, `framing_v2/ORCHESTRATOR_STATE.md`, and
+> `project/DECISIONS.md`.
+
+---
+
 > **Status.** Authored 2026-05-06 by Claude (delegated by maintainer)
 > in extended planning session. Fresh authorship; supersedes
 > `reporting/plans/strategic_plan_v1.md` (2026-04-27).

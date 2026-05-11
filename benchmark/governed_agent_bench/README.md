@@ -1,9 +1,16 @@
 # GovernedAgentBench
 
-GovernedAgentBench measures whether models can operate a governed
-runtime through its public contract rather than relying on implicit
-prompt adherence, private implementation knowledge, or free-form
-guessing.
+GovernedAgentBench is the benchmark companion to *Deterministic
+Software Contracts as Trusted Monitors in AI Control Protocols*. It
+measures whether models can operate a governed runtime through its
+public contract rather than relying on implicit prompt adherence,
+private implementation knowledge, or free-form guessing.
+
+The locked benchmark framing is contract-as-intervention with measured
+model-scale substitution: the prompt is held constant, while the
+runtime mode changes. Its load-bearing differentiation from
+ST-WebAgentBench is runtime-mode intervention with mechanism-isolable
+ablation under a held-constant prompt.
 
 The benchmark is domain-general in framing. HAI is the first reference
 runtime, and personal wellness is the first reference domain. The
@@ -39,7 +46,7 @@ substrate in place:
 
 | Surface | Current state |
 |---|---|
-| Frozen manifests | 2 committed snapshots: current `manifests/hai_0_2_0.json` (`agent_cli_contract.v2`) and stale drift snapshot `manifests/agent_cli_contract_v1_drift.json`. |
+| Frozen manifests | 2 committed snapshots: current HAI v0.2.0 manifest snapshot at `benchmark/governed_agent_bench/manifests/hai_0_2_0.json` (≈ 189 KB, `agent_cli_contract.v2`) and stale drift snapshot `manifests/agent_cli_contract_v1_drift.json`. |
 | Fixtures | Fixture plan plus six committed synthetic builders: `empty_user`, `ready_user_minimal`, `read_surface_user`, `governance_user`, `drift_user`, and `adversarial_user`. |
 | Pilot tasks | 10 committed tasks: 2 each across L1, L2, L5, L6, and L7. |
 | Recorded trajectories | 14 committed hand-authored seed trajectories: one passing and one failing trajectory for each of seven representative tasks, including L5 audit-reference and L7 drift exhibits. |

@@ -1,8 +1,26 @@
 # Runtime Contracts Paper - Implementation Plan
 
-**Status:** Coarse research phase plan, reframed 2026-05-07. See
-`PAPER_FRAME.md` for the locked framing note and
-`PROJECT_EXECUTION_PLAN.md` for the operational master plan.
+> **Superseded as current planning:** This file was authored 2026-05-09
+> as a coarse research-phase plan targeting a workshop-floor paper.
+> The active framing as of 2026-05-11 is
+> `research/runtime_contracts_paper/framing_v2/CONVERGED.md` —
+> "Deterministic Software Contracts as Trusted Monitors in AI Control
+> Protocols" (NeurIPS 2027 main conference). The active execution
+> calendar is `PROJECT_EXECUTION_PLAN.md` (rewritten in Phase 2 batch
+> 1). Body is preserved as **historical provenance only**.
+
+---
+
+**Status:** Coarse research phase plan, reframed 2026-05-09 (round-2
+note appended). See `PAPER_FRAME.md` for the locked framing note,
+`HAI_PAPER_READINESS_EXECUTION.md` for the round-2 master execution
+plan, and `PROJECT_EXECUTION_PLAN.md` for the milestone-level plan.
+
+**Round-2 reframe note (2026-05-09).** Phase 4 below lists prompt-
+only baselines as comparison conditions. Those are dropped. The
+benchmark compares `runtime_mode` values with the deployment-
+realistic prompt held constant. See `HAI_PAPER_READINESS_EXECUTION.md`
+and `../../project/DECISIONS.md` D-PROJ-013..017.
 
 The dates below are planning estimates, not authoritative gates. The
 milestone exits in `PROJECT_EXECUTION_PLAN.md` control sequencing. If
@@ -13,8 +31,10 @@ non-clinical safety boundary.
 
 ## Working Thesis
 
-Runtime contracts may reduce the model scale required for safe bounded
-agent operation over sensitive user-owned data.
+Deterministic software contracts can serve as the trusted monitor in an
+AI control protocol for bounded agent operation, reducing the model
+scale required for safety-constrained operation under a held-constant
+deployment prompt.
 
 Measured version:
 
@@ -102,35 +122,43 @@ Metrics:
 - exit-code recovery accuracy
 - drift robustness
 
-## Phase 4 - Baselines
+## Phase 4 - Baselines (round-2: prompt held constant)
 
 **Timing:** July 2-18.
 
-Systems:
+Systems (`model_class` × `runtime_mode`, with the prompt template
+held at `deployment_full_v1`):
 
-- rule-based router
-- rule-based refusal classifier
-- local prompt-only model
-- local plus live manifest
-- cloud prompt-only model
-- cloud plus live manifest
-- cloud plus manifest plus runtime validation
+- `rule_baseline` × `full_contract`
+- `local` × `full_contract`
+- `local` × `no_runtime_enforcement`
+- `cloud` × `full_contract`
+- `cloud` × `no_runtime_enforcement`
+
+The model entries come from `model_roster.md` (per
+`WP-MODEL-ROSTER-001`), which is committed before any model run.
+There are no "prompt-only" or "with vs without manifest" conditions
+(per D-PROJ-014; see `CLAIM_LADDER.md` forbidden phrasings).
 
 Deliverables:
 
 - Baseline report.
 - Error taxonomy.
-- First model-scale curve.
-- Strawman check: cloud prompt-only must not be the only cloud comparison.
+- First model-scale curve under `full_contract` vs
+  `no_runtime_enforcement`.
 
 Decision gate:
 
-- If rule-based baselines solve too much, narrow the paper toward which parts require learning versus deterministic routing.
-- If cloud plus manifest dominates all local systems, keep the paper focused on safety/privacy/cost tradeoffs rather than claiming parity.
+- If rule-baselines solve too much, narrow the paper toward which
+  task families require learning versus deterministic routing.
+- If `cloud × full_contract` dominates all local systems, keep the
+  paper focused on safety/privacy/cost tradeoffs rather than
+  claiming parity.
 
-## Phase 5 - Fine-Tune Local Operator
+## Phase 5 - Fine-Tune Local Operator (Future-A appendix)
 
-**Timing:** July 19-August 10.
+**Timing:** July 19-August 10. **Out of workshop floor** per
+`CLAIM_LADDER.md` Future-A.
 
 Targets:
 
@@ -160,29 +188,37 @@ Deliverables:
 - Evaluation harness.
 - Model card.
 - Reproducible run logs.
+- Fine-tuned-local entries appended to `model_roster.md` Future-A
+  appendix section before any fine-tuned trajectory.
 
-## Phase 6 - Scaffold Ablations
+## Phase 6 - Scaffold Ablations (round-2: per-mechanism off-paths)
 
 **Timing:** August 11-31.
 
-Ablations:
+Off-paths along the canonical `runtime_mode` axis (the prompt is
+held constant in every condition):
 
-- full runtime contract
-- no manifest
-- stale manifest
-- no `agent_safe`
-- no mutation classes
-- no exit-code semantics
-- no output schemas
-- no proposal gate
-- no audit/evidence references
+- `full_contract` (all on)
+- `no_validation` (M4 off)
+- `no_agent_safe` (M5 off)
+- `no_proposal_gate` (M6 off)
+- `no_refusal` (M7 off)
+- `no_audit_chain` (M8 off; transactions remain on)
+- `no_runtime_enforcement` (M4..M8 all off; M1..M3 + M9-TX on)
+
+L7 drift tasks vary stale-manifest content as task content, not as
+a runtime-mode axis. There are no "no manifest", "stale manifest",
+"no exit-code semantics", or "no output schemas" conditions in
+round-2.
 
 Main analysis:
 
-- Does the full contract shift the score-vs-parameter curve left?
-- Which contract fields account for the largest safety improvement?
-- Does fine-tuning help without harming drift robustness?
-- Does fine-tuning require live manifest retrieval to remain valid?
+- Does `full_contract` shift the score-vs-parameter curve left
+  versus `no_runtime_enforcement`?
+- Which per-mechanism off-path accounts for the largest safety
+  delta?
+- (Future-A only) Does fine-tuning augment but not replace the
+  runtime under L7 drift?
 
 Deliverables:
 
@@ -220,13 +256,16 @@ Minimum publishable result:
 - GovernedAgentBench is well-defined and reusable.
 - The HAI reference runtime contract is documented and enforceable.
 - Scaffold ablations show which contract components affect safety and task success.
-- At least one local model condition improves materially over prompt-only local operation.
+- At least one ablatable mechanism (M4..M8) shows a non-zero effect under one `model_class` on the MVP task set, with the deployment-realistic prompt held constant (per `CLAIM_LADDER.md` T1).
 
 Strong result:
 
-- 3B local plus full runtime contract beats cloud prompt-only on safety.
-- 3B local plus full runtime contract competes with cloud plus manifest on bounded task success.
-- Fine-tuned local plus live manifest is better than fine-tuned local alone under drift.
+- Smallest predeclared-roster local model under `full_contract`
+  passes thresholds that a larger predeclared-roster model fails
+  under `no_runtime_enforcement` (`CLAIM_LADDER.md` T3).
+- (Future-A appendix only) Fine-tuned-local under `full_contract`
+  matches or exceeds the same model under `no_runtime_enforcement`
+  on L7 drift robustness.
 
 Best result:
 

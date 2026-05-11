@@ -98,8 +98,12 @@ def test_research_frame_content_is_pinned_on_primary_surfaces() -> None:
     bench_readme = _read("benchmark/governed_agent_bench/README.md")
     bench_readme_flat = " ".join(bench_readme.split())
 
-    assert "runtime contracts" in readme_head
-    assert "research" in readme_head
+    assert "runtime contract" in readme_head  # singular or plural
+    assert (
+        "research" in readme_head
+        or "neurips" in readme_head
+        or "main-conference" in readme_head
+    )
     assert "Research lane" in roadmap
     assert "Planning Gate 1" in roadmap
     assert "GovernedAgentBench measurement-readiness" in roadmap
@@ -107,10 +111,18 @@ def test_research_frame_content_is_pinned_on_primary_surfaces() -> None:
     for i in range(1, 7):
         assert f"## H{i}." in hypotheses
 
+    # Post-framing-v2 (2026-05-11): PAPER_FRAME.md carries the merged title
+    # locked under D-FRAME-016. The pre-merge title remains only in
+    # closed-marker context inside DECISIONS.md and DRAFT_PAPER.md.
+    # Whitespace-normalize because markdown wraps the title across lines.
+    paper_frame_flat = " ".join(paper_frame.split())
     assert (
-        "Runtime Contracts for Local Agents Over Sensitive User-Owned Data"
-        in paper_frame
-    )
+        "Deterministic Software Contracts as Trusted Monitors in AI Control Protocols"
+        in paper_frame_flat
+    ), "PAPER_FRAME.md must carry the locked D-FRAME-016 title"
+    assert (
+        "framing_v2/CONVERGED.md" in paper_frame
+    ), "PAPER_FRAME.md must point to the framing-v2 source-of-truth"
     assert "project/FRAME.md" in bench_readme
     assert "project/DECISIONS.md" in bench_readme
     assert "RESEARCH_EVAL_STRATEGY.md" in bench_readme
@@ -183,7 +195,17 @@ def test_hai_paper_readiness_is_the_active_runtime_planning_label() -> None:
         assert "RUNTIME_CONTRACT_FREEZE_PLAN" not in body, rel_path
         assert "contract freeze" not in body.lower(), rel_path
 
-    assert "HAI paper-readiness" in _read("project/FRAME.md")
-    assert "HAI Paper-Readiness Engineering" in _read(
+    # Post-framing-v2 (2026-05-11): the active runtime planning label is the
+    # merged-paper trajectory (D-FRAME-009 + D-FRAME-016), not the pre-merge
+    # "HAI Paper-Readiness Engineering" label. HAI is the reference runtime
+    # per D-FRAME-013 (instantiation, not framing); the paper-execution doc
+    # is the active planning surface.
+    project_exec = _read(
         "research/runtime_contracts_paper/PROJECT_EXECUTION_PLAN.md"
+    )
+    assert "merged-paper" in project_exec.lower(), (
+        "PROJECT_EXECUTION_PLAN.md must carry the merged-paper label"
+    )
+    assert "framing_v2/CONVERGED.md" in project_exec, (
+        "PROJECT_EXECUTION_PLAN.md must point to the framing-v2 source-of-truth"
     )

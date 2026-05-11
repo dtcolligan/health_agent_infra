@@ -1,5 +1,19 @@
 # Autonomous Project Execution Plan
 
+> **Superseded as current planning:** This file was authored 2026-05-10
+> as the autonomous-execution plan targeting a workshop-floor paper.
+> The active framing as of 2026-05-11 is
+> `research/runtime_contracts_paper/framing_v2/CONVERGED.md` —
+> "Deterministic Software Contracts as Trusted Monitors in AI Control
+> Protocols" (NeurIPS 2027 main conference, May 2027 deadline). The
+> workshop-floor target survives only as the Trajectory A fallback path
+> per D-FRAME-009 / D-FRAME-011 if the July 2026 Engels pilot fails.
+> Body is preserved as **historical provenance only**, not current
+> planning truth. For current planning, read `framing_v2/CONVERGED.md`,
+> `framing_v2/ORCHESTRATOR_STATE.md`, and `PROJECT_EXECUTION_PLAN.md`.
+
+---
+
 **Status:** authoritative end-to-end execution plan for autonomous Codex
 execution, created 2026-05-10.
 

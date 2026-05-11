@@ -1,9 +1,11 @@
 # Architecture
 
 One-page architecture for the HAI reference runtime. The repo-wide research
-frame is in [`project/FRAME.md`](project/FRAME.md) and
-[`project/OPERATING_MODEL.md`](project/OPERATING_MODEL.md); this file
-explains the runtime contract HAI contributes to that frame.
+frame is in [`../../project/FRAME.md`](../../project/FRAME.md) and
+[`../../project/OPERATING_MODEL.md`](../../project/OPERATING_MODEL.md).
+For the active paper title, venue, and mechanism inventory, see
+[`../../research/runtime_contracts_paper/framing_v2/CONVERGED.md`](../../research/runtime_contracts_paper/framing_v2/CONVERGED.md);
+this file explains the runtime contract HAI contributes to that frame.
 
 Health Agent Infra is the local plugin/runtime wrapper around a
 shell-capable personal-health agent. The agent remains the conversational

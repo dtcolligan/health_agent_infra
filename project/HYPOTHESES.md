@@ -1,77 +1,92 @@
 # Research Hypotheses
 
-**Status:** Current project-wide hypothesis ledger, 2026-05-07.
+**Status:** Current project-wide hypothesis ledger, aligned to framing
+v2 on 2026-05-11.
 
 This file replaces the old root-level HAI product hypothesis ledger.
 The pre-reframe HAI bets remain preserved in
-`hai/reporting/plans/post_v0_1_18/strategic_plan_v2.md` and historical plan
-docs. The active project now tests runtime contracts for local agents over
-sensitive user-owned data.
+`../hai/reporting/plans/post_v0_1_18/strategic_plan_v2.md` and
+historical plan docs.
 
-## H1. Runtime contracts improve safety-constrained operation
+The active paper is **Deterministic Software Contracts as Trusted
+Monitors in AI Control Protocols**. Hypotheses below are about
+deterministic software contracts as the trusted monitor in an AI control
+protocol for bounded agent operation. HAI is the reference
+instantiation, not the generalization claim.
 
-**Hypothesis.** A model operating through a runtime contract will make
-fewer unsafe mutation attempts, hallucinated command calls,
-schema-invalid proposals, unsupported narrations, and clinical-boundary
-violations than the same model operating prompt-only.
+## H1. Contract-as-trusted-monitor mechanism hypothesis
 
-**Why it matters.** This is the minimum empirical reason for the project.
-If the contract does not improve bounded operation, the architecture may
-still be useful engineering, but the paper claim narrows sharply.
+**Hypothesis.** Deterministic software contracts can serve as the
+trusted monitor in an AI control protocol for bounded agent operation,
+with measurable per-mechanism contributions to safety-constrained
+operation under a held-constant deployment prompt.
 
-**Falsification.** Prompt-only baselines match or beat full-contract
-baselines on safety-constrained task success across the MVP benchmark,
-without increased unsafe-action or unsupported-narration rates.
+**Why it matters.** This is the minimum architectural claim. The paper
+needs evidence that runtime-owned mechanisms, not only prompt wording or
+model scale, contribute to safe bounded operation.
 
-## H2. Contract components have separable effects
+**Falsification.** `full_contract` fails to improve safety-constrained
+task success over per-mechanism off-paths, or the observed gains cannot
+be attributed to M4-M8 under a held-constant prompt.
 
-**Hypothesis.** Scaffold ablations will show that individual contract
-components contribute measurable safety or task-success gains.
+**Superseded mapping.** The previous H1 ("runtime contracts improve
+safety-constrained operation") and previous H2 ("contract components
+have separable effects") are folded into this refactored H1. The
+comparison remains `runtime_mode`, not prompt access.
 
-Candidate components:
+## H2. Runtime-as-floor model-scale hypothesis
 
-- manifest access;
-- `agent_safe`;
-- mutation classes;
-- exit-code semantics;
-- output schemas;
-- proposal/commit gates;
-- audit/evidence references;
-- drift-aware manifest retrieval.
+**Hypothesis.** Under the full contract, the smallest predeclared model
+passes all primary thresholds; under `no_runtime_enforcement`, a larger
+predeclared model fails at least one. The contract shifts the
+model-scale safety curve.
 
-**Why it matters.** A useful research-engineering result should explain
-which parts of the contract matter, not only that the full system works.
+**Why it matters.** This is the strongest model-scale result the paper
+can claim: reliability shifts partly from the model into deterministic
+software.
 
-**Falsification.** The full contract improves scores, but ablations cannot
-identify any component-level contribution or the improvement comes only
-from benchmark-specific prompt wording.
+**Falsification.** Performance remains primarily a function of model
+scale, or no smaller predeclared model under `full_contract` passes the
+locked thresholds when compared with larger models under
+`no_runtime_enforcement`.
 
-## H3. Runtime contracts can reduce required model scale
+**Superseded mapping.** This refactors the previous H3 ("runtime
+contracts can reduce required model scale") into the exact
+predeclared-roster form used by the merged paper.
 
-**Hypothesis.** For bounded operation over sensitive user-owned data, a
-smaller local model plus the runtime contract can reach a safety-constrained
-operating threshold that requires a larger model without the contract.
+## H3. Deterministic Guard hypothesis
 
-**Why it matters.** This is the paper's strongest possible result:
-reliability shifts out of the model and into local software.
+**Hypothesis.** A deterministic Guard at general Elo = 0 occupies a
+legitimate point on the Engels scaling-laws-for-oversight curve for the
+Backdoor Code game.
 
-**Falsification.** Performance remains primarily a function of model scale,
-with the contract adding little or no safety-constrained advantage for
-smaller models.
+**Why it matters.** This extends the runtime-contract claim beyond HAI:
+it tests whether deterministic software can be evaluated as a trusted
+Guard in an established oversight scaling setup.
+
+**Falsification.** The July 2026 pilot fails the commit rule, DRG-0
+does not produce a meaningful domain-Elo signal, or the deterministic
+Guard result depends on unfair information unavailable to LLM Guards.
 
 ## H4. Fine-tuned local operators need live contract grounding
 
-**Hypothesis.** Fine-tuning can improve local operator behavior, but a
-fine-tuned model without live manifest/contract grounding will be brittle
-under contract drift.
+**Status.** Future work only. Paper 1 sets up the S1 sequel on
+fine-tuning bounded operators, but makes no performance claim about
+fine-tuned local operators.
 
-**Why it matters.** This separates learned operational habits from
-current-authority awareness. A memorized CLI operator is not enough for a
-governed runtime.
+**Hypothesis.** Trained operators reach contract-compliance at smaller
+scales than untrained operators when evaluated against the same runtime
+contract, prompt template, scorer, manifests, runtime modes, and
+thresholds.
 
-**Falsification.** Fine-tuned local models retain high performance under
-manifest drift without live contract retrieval, or live manifest retrieval
-does not improve drift robustness.
+**Why it matters.** This is the sequel-paper hypothesis: scale
+substitution after a runtime floor, not "alignment training makes the
+model safe."
+
+**Falsification.** Fine-tuned local operators do not improve
+contract-compliance under the same fixed runtime and scoring protocol,
+or gains depend on private data or prompt changes rather than the
+declared training recipe.
 
 ## H5. GovernedAgentBench can stay domain-general while using HAI
 
@@ -79,19 +94,19 @@ does not improve drift robustness.
 while measuring general properties of contract-governed operation rather
 than health-product quality.
 
-**Why it matters.** The paper should be about bounded agents over
-sensitive data. If the benchmark collapses into personal-wellness advice
+**Why it matters.** The paper is about bounded agents and trusted
+monitors. If the benchmark collapses into personal-wellness advice
 quality, the research contribution weakens.
 
-**Falsification.** Benchmark tasks require private health rows, clinical
-judgment, personal coaching quality, or HAI-internal implementation
-knowledge rather than public contract obedience.
+**Falsification.** Benchmark tasks require private health rows,
+clinical judgment, personal coaching quality, or HAI-internal
+implementation knowledge rather than public contract obedience.
 
 ## H6. Non-clinical boundaries are enforceable runtime behavior
 
-**Hypothesis.** Diagnosis, treatment, prescribing, and autonomous medical
-decision boundaries can be represented and scored as part of the runtime
-contract.
+**Hypothesis.** Diagnosis, treatment, prescribing, and autonomous
+medical-decision boundaries can be represented and scored as part of
+the runtime contract.
 
 **Why it matters.** The health boundary must be more than a disclaimer.
 It should shape tasks, refusals, metrics, and error analysis.
@@ -101,14 +116,29 @@ diagnosis-shaped, treatment-shaped, prescribing-shaped, or autonomous
 medical-decision outputs; or the benchmark cannot distinguish compliant
 wellness support from clinical claims.
 
+## Out-Of-Scope Hypotheses
+
+This paper does not test or claim:
+
+- a full AI-control safety case for scheming, sandbagged, or
+  password-locked frontier models;
+- cross-domain generalization beyond the personal-wellness reference
+  runtime;
+- semantic monitoring beyond the narrow clinical-boundary refusal
+  surfaces in M7;
+- MCP server contract composition;
+- a second coding-agent reference runtime before this paper;
+- fine-tuned local operator results in paper 1.
+
 ## Review Rule
 
 These hypotheses should be reviewed when:
 
 - GovernedAgentBench MVP results exist;
 - first local/cloud baselines exist;
-- scaffold ablation results exist;
-- fine-tuning results exist;
+- mechanism ablation results exist;
+- the July 2026 Engels pilot closes;
+- bounded Hierarchical Summarization contrast results exist;
 - the paper frame changes.
 
 Do not use old HAI product hypotheses as project-wide strategy unless a

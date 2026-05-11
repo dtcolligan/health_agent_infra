@@ -1,5 +1,17 @@
 # Methods And System Draft
 
+> **Superseded as current planning:** This file was authored 2026-05-10
+> as a workshop-floor methods/system draft. The active framing as of
+> 2026-05-11 is `research/runtime_contracts_paper/framing_v2/CONVERGED.md`
+> — "Deterministic Software Contracts as Trusted Monitors in AI
+> Control Protocols" (NeurIPS 2027 main conference). The Methods/System
+> §4-§5 surfaces are now driven by `PAPER_OUTLINE_MERGED.md` §4 (Runtime
+> Contract Architecture) + §5 (HAI Reference Instantiation) +
+> `framing_v2/CONVERGED.md` D-FRAME-017 mechanism inventory. Body is
+> preserved as **historical provenance only**.
+
+---
+
 **Status:** Draft section for `WP-PAPER-002`, 2026-05-10.
 
 This draft describes committed implementation artifacts as of commit

@@ -42,7 +42,8 @@
         "no_refusal",
         "no_audit_chain",
         "no_runtime_enforcement"
-      ]
+      ],
+      "description": "Runtime-mode intervention. The no_audit_chain enum value is retained for artifact compatibility and means M8 audit evidence emission disabled while transaction integrity remains preserved."
     },
     "model_class": {
       "type": "string",
@@ -116,9 +117,14 @@
       "enum": ["agent", "user", "rule_baseline"],
       "description": "Caller classification used by the CLI-dispatch agent_safe enforcer (M5). Benchmark subprocesses driven by a model are 'agent'; rule-baseline subprocesses are 'rule_baseline'; the maintainer's daily-driver loop is 'user'. Added per F-CDX-RFR-R2-03."
     },
+    "claim_tier": {
+      "type": "string",
+      "enum": ["T0", "T1", "T2", "T3", "T4"],
+      "description": "Which CLAIM_LADDER tier this trajectory is intended to support. T3 and T4 require a predeclared model roster, so model_roster_hash becomes required when claim_tier is T3 or T4."
+    },
     "model_roster_hash": {
       "type": "string",
-      "description": "sha256 of benchmark/governed_agent_bench/model_roster.md at the time this trajectory was produced. Required for any trajectory that contributes to a Tier 3 or Tier 4 claim. Added per F-CDX-RFR-R2-06."
+      "description": "sha256 of committed benchmark/governed_agent_bench/model_roster.md at the time this artifact was produced. Required when claim_tier is T3 or T4."
     },
     "scorer_config_hash": {
       "type": "string",
@@ -194,6 +200,13 @@
       "if": {"properties": {"model_class": {"const": "rule_baseline"}}, "required": ["model_class"]},
       "then": {"not": {"required": ["model_identity"]}},
       "else": {"required": ["model_identity"]}
+    },
+    {
+      "if": {
+        "properties": {"claim_tier": {"enum": ["T3", "T4"]}},
+        "required": ["claim_tier"]
+      },
+      "then": {"required": ["model_roster_hash"]}
     }
   ]
 }

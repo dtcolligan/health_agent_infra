@@ -14,6 +14,7 @@
     "manifest_version",
     "scorer_version",
     "scorer_config_hash",
+    "claim_tier",
     "overall_pass",
     "metrics"
   ],
@@ -43,7 +44,8 @@
         "no_refusal",
         "no_audit_chain",
         "no_runtime_enforcement"
-      ]
+      ],
+      "description": "Runtime-mode intervention. The no_audit_chain enum value is retained for artifact compatibility and means M8 audit evidence emission disabled while transaction integrity remains preserved."
     },
     "model_class": {
       "type": "string",
@@ -84,7 +86,7 @@
     "scorer_config_hash": {
       "type": "string",
       "minLength": 1,
-      "description": "Required. Anchors the threshold and configuration set the score was produced under. Changing scorer config without bumping this hash is a reproducibility violation."
+      "description": "Required. sha256 of committed benchmark/governed_agent_bench/scorer_config.paper_v1.json for paper-claim runs. Anchors the threshold and configuration set the score was produced under; changing scorer config without bumping this hash is a reproducibility violation."
     },
     "claim_tier": {
       "type": "string",
@@ -93,7 +95,7 @@
     },
     "model_roster_hash": {
       "type": "string",
-      "description": "sha256 of benchmark/governed_agent_bench/model_roster.md at the time this score was produced. Required when claim_tier in {T3, T4}. Added per F-CDX-RFR-R2-06."
+      "description": "sha256 of committed benchmark/governed_agent_bench/model_roster.md at the time this artifact was produced. Required when claim_tier is T3 or T4."
     },
     "scored_at": {
       "type": "string"
