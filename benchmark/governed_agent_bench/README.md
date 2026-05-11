@@ -42,7 +42,7 @@ substrate in place:
 | Frozen manifests | 2 committed snapshots: current `manifests/hai_0_2_0.json` (`agent_cli_contract.v2`) and stale drift snapshot `manifests/agent_cli_contract_v1_drift.json`. |
 | Fixtures | Fixture plan plus six committed synthetic builders: `empty_user`, `ready_user_minimal`, `read_surface_user`, `governance_user`, `drift_user`, and `adversarial_user`. |
 | Pilot tasks | 10 committed tasks: 2 each across L1, L2, L5, L6, and L7. |
-| Recorded trajectories | 10 committed hand-authored seed trajectories: one passing and one failing trajectory for each of five representative tasks. |
+| Recorded trajectories | 14 committed hand-authored seed trajectories: one passing and one failing trajectory for each of seven representative tasks, including L5 audit-reference and L7 drift exhibits. |
 | Scorer | MVP deterministic offline scorer implemented under `scorer/core.py`, with schema/determinism and known-good/known-bad tests. |
 | Harness | Model-agnostic harness implemented under `harness/`; supports structured operator actions, prompt rendering, runtime modes, hermetic subprocess execution, observation capture, and `mechanism_disabled` capture. |
 | Baselines | Deterministic no-model `rule_baseline_v1` plus offline rule-baseline ablation runner. No local, cloud, or fine-tuned model baseline has been run. |
@@ -50,8 +50,8 @@ substrate in place:
 | Docs | Operator view, scaffold view, benchmark card, and offline reproducibility guide committed. |
 
 This state is not a model-result claim. It records that offline
-measurement scaffolding now exists; hand-authored trajectories, harness
-execution, and baseline reports remain pending.
+measurement scaffolding now exists, with known-good and known-bad
+trajectories for deterministic scorer validation.
 
 Task levels:
 

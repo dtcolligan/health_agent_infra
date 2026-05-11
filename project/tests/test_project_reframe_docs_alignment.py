@@ -116,8 +116,8 @@ def test_research_frame_content_is_pinned_on_primary_surfaces() -> None:
     assert "RESEARCH_EVAL_STRATEGY.md" in bench_readme
     assert "measurement-readiness" in bench_readme
     assert "known-good and known-bad trajectories" in bench_readme_flat
-    assert "0 committed tasks" in bench_readme
-    assert "0 frozen manifests" in bench_readme
+    assert "10 committed tasks" in bench_readme
+    assert "2 committed snapshots" in bench_readme
 
 
 def test_hai_forward_plan_docs_are_marked_as_support_lane() -> None:
