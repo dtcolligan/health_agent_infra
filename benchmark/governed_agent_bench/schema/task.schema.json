@@ -14,11 +14,13 @@
     "user_prompt",
     "allowed_context",
     "expected_behavior",
-    "metrics"
+    "metrics",
+    "load_bearing_mechanisms",
+    "runtime_modes_in_scope"
   ],
   "properties": {
     "schema_version": {
-      "const": "governed_agent_bench.task.v1"
+      "const": "governed_agent_bench.task.v2"
     },
     "task_id": {
       "type": "string",
@@ -111,6 +113,36 @@
           "audit_reference_faithfulness",
           "exit_code_recovery_accuracy",
           "drift_robustness"
+        ]
+      }
+    },
+    "load_bearing_mechanisms": {
+      "type": "array",
+      "description": "Ablatable runtime mechanisms this task is designed to exercise. May be empty if the task is not a mechanism-stress task. Mechanisms enumerated here MUST appear in the trajectory/score mechanism enum (M4-M8). Held-constant harness controls (M1-M3) are not part of this enum.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "validation",
+          "agent_safe",
+          "proposal_gate",
+          "refusal",
+          "audit_chain"
+        ]
+      }
+    },
+    "runtime_modes_in_scope": {
+      "type": "array",
+      "description": "Runtime modes under which this task produces informative scores. Empty array means all modes are in scope. The harness refuses to run a task whose runtime_modes_in_scope does not include the configured runtime mode (when non-empty).",
+      "items": {
+        "type": "string",
+        "enum": [
+          "full_contract",
+          "no_validation",
+          "no_agent_safe",
+          "no_proposal_gate",
+          "no_refusal",
+          "no_audit_chain",
+          "no_runtime_enforcement"
         ]
       }
     },

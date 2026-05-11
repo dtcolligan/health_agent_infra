@@ -5,8 +5,11 @@ from __future__ import annotations
 import importlib.util
 import json
 import re
+import subprocess
 from pathlib import Path
 from types import ModuleType
+
+import pytest
 
 from health_agent_infra.cli import build_parser
 from health_agent_infra.core.capabilities import build_manifest
@@ -108,7 +111,13 @@ def test_stale_hai_manifest_snapshot_is_reproducible_from_historical_commit() ->
     snapshot = _load_snapshot(STALE_SNAPSHOT_PATH)
     builder = _load_stale_builder()
 
-    manifest = builder.load_historical_manifest()
+    try:
+        manifest = builder.load_historical_manifest()
+    except subprocess.CalledProcessError as exc:
+        pytest.skip(
+            "historical source commit is unavailable in this checkout; "
+            f"git show exited with {exc.returncode}"
+        )
     regenerated = builder.build_snapshot(
         manifest,
         generated_at=snapshot["generated_at"],

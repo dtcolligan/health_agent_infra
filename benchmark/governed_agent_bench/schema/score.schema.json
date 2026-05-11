@@ -9,15 +9,17 @@
     "task_id",
     "trajectory_id",
     "system_id",
-    "condition",
+    "runtime_mode",
+    "model_class",
     "manifest_version",
     "scorer_version",
+    "scorer_config_hash",
     "overall_pass",
     "metrics"
   ],
   "properties": {
     "schema_version": {
-      "const": "governed_agent_bench.score.v1"
+      "const": "governed_agent_bench.score.v2"
     },
     "task_id": {
       "type": "string",
@@ -31,17 +33,45 @@
       "type": "string",
       "minLength": 1
     },
-    "condition": {
+    "runtime_mode": {
+      "type": "string",
+      "enum": [
+        "full_contract",
+        "no_validation",
+        "no_agent_safe",
+        "no_proposal_gate",
+        "no_refusal",
+        "no_audit_chain",
+        "no_runtime_enforcement"
+      ]
+    },
+    "model_class": {
       "type": "string",
       "enum": [
         "rule_baseline",
-        "local_prompt_only",
-        "local_manifest",
-        "cloud_prompt_only",
-        "cloud_manifest",
-        "fine_tuned_local",
-        "fine_tuned_local_manifest"
+        "local",
+        "cloud",
+        "fine_tuned_local"
       ]
+    },
+    "model_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model_family",
+        "parameter_count",
+        "quantization",
+        "provider_snapshot",
+        "decoding_settings"
+      ],
+      "properties": {
+        "model_family": {"type": "string", "minLength": 1},
+        "model_id": {"type": "string"},
+        "parameter_count": {"type": ["string", "number"]},
+        "quantization": {"type": "string"},
+        "provider_snapshot": {"type": "string"},
+        "decoding_settings": {"type": "object", "additionalProperties": true}
+      }
     },
     "manifest_version": {
       "type": "string",
@@ -52,7 +82,18 @@
       "minLength": 1
     },
     "scorer_config_hash": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1,
+      "description": "Required. Anchors the threshold and configuration set the score was produced under. Changing scorer config without bumping this hash is a reproducibility violation."
+    },
+    "claim_tier": {
+      "type": "string",
+      "enum": ["T0", "T1", "T2", "T3", "T4"],
+      "description": "Which CLAIM_LADDER tier this score is intended to support. Added per F-CDX-RFR-R2-06: T3 and T4 require a predeclared model roster, so model_roster_hash becomes required when claim_tier is T3 or T4."
+    },
+    "model_roster_hash": {
+      "type": "string",
+      "description": "sha256 of benchmark/governed_agent_bench/model_roster.md at the time this score was produced. Required when claim_tier in {T3, T4}. Added per F-CDX-RFR-R2-06."
     },
     "scored_at": {
       "type": "string"
@@ -65,7 +106,7 @@
       "additionalProperties": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["value", "passed"],
+        "required": ["value", "passed", "threshold"],
         "properties": {
           "value": {
             "type": ["number", "boolean"]
@@ -74,7 +115,8 @@
             "type": "boolean"
           },
           "threshold": {
-            "type": ["number", "boolean", "null"]
+            "type": ["number", "boolean"],
+            "description": "Required and non-null. Threshold must be committed to scorer config; the threshold value here mirrors that config and must match scorer_config_hash."
           },
           "notes": {
             "type": "string"
@@ -101,14 +143,45 @@
               "schema_invalid",
               "bad_exit_code_recovery",
               "drift_failure",
-              "refusal_error"
+              "refusal_error",
+              "mechanism_disabled_unexpected"
             ]
           },
           "detail": {
             "type": "string"
+          },
+          "mechanism": {
+            "type": "string",
+            "enum": [
+              "validation",
+              "agent_safe",
+              "proposal_gate",
+              "refusal",
+              "audit_chain"
+            ]
           }
-        }
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"kind": {"const": "mechanism_disabled_unexpected"}}, "required": ["kind"]},
+            "then": {"required": ["kind", "detail", "mechanism"]}
+          }
+        ]
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"model_class": {"const": "rule_baseline"}}, "required": ["model_class"]},
+      "then": {"not": {"required": ["model_identity"]}},
+      "else": {"required": ["model_identity"]}
+    },
+    {
+      "if": {
+        "properties": {"claim_tier": {"enum": ["T3", "T4"]}},
+        "required": ["claim_tier"]
+      },
+      "then": {"required": ["model_roster_hash"]}
+    }
+  ]
 }

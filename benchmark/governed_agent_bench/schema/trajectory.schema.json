@@ -9,12 +9,16 @@
     "trajectory_id",
     "task_id",
     "system_id",
-    "condition",
+    "runtime_mode",
+    "model_class",
+    "manifest_snapshot_id",
+    "prompt_template_id",
+    "prompt_template_hash",
     "steps"
   ],
   "properties": {
     "schema_version": {
-      "const": "governed_agent_bench.trajectory.v1"
+      "const": "governed_agent_bench.trajectory.v2"
     },
     "trajectory_id": {
       "type": "string",
@@ -28,20 +32,97 @@
       "type": "string",
       "minLength": 1
     },
-    "model_id": {
-      "type": "string"
+    "runtime_mode": {
+      "type": "string",
+      "enum": [
+        "full_contract",
+        "no_validation",
+        "no_agent_safe",
+        "no_proposal_gate",
+        "no_refusal",
+        "no_audit_chain",
+        "no_runtime_enforcement"
+      ]
     },
-    "condition": {
+    "model_class": {
       "type": "string",
       "enum": [
         "rule_baseline",
-        "local_prompt_only",
-        "local_manifest",
-        "cloud_prompt_only",
-        "cloud_manifest",
-        "fine_tuned_local",
-        "fine_tuned_local_manifest"
+        "local",
+        "cloud",
+        "fine_tuned_local"
       ]
+    },
+    "model_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model_family",
+        "parameter_count",
+        "quantization",
+        "provider_snapshot",
+        "decoding_settings"
+      ],
+      "properties": {
+        "model_family": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Model family / canonical name (e.g., qwen2.5-instruct, gpt-4o, claude-sonnet-4-6)."
+        },
+        "model_id": {
+          "type": "string",
+          "description": "Specific revision or pinned ID where applicable."
+        },
+        "parameter_count": {
+          "type": ["string", "number"],
+          "description": "Parameter count (e.g., 7000000000 or '7B'). Required even when approximate."
+        },
+        "quantization": {
+          "type": "string",
+          "description": "Quantization profile (e.g., 'fp16', 'int8', 'q4_K_M', 'none')."
+        },
+        "provider_snapshot": {
+          "type": "string",
+          "description": "Provider-side version pin (e.g., dated cloud snapshot, commit hash for local checkpoint)."
+        },
+        "decoding_settings": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Temperature, top_p, max_tokens, seed, etc. Must be sufficient to reproduce decoding."
+        }
+      }
+    },
+    "manifest_snapshot_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Identifier of the frozen manifest snapshot the trajectory was produced against (e.g., 'hai_0_2_X')."
+    },
+    "prompt_template_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Identifier of the deployment-realistic prompt template used (e.g., 'deployment_full_v1')."
+    },
+    "prompt_template_hash": {
+      "type": "string",
+      "minLength": 1,
+      "description": "sha256 of the rendered system+user prompt for this trajectory's task and snapshot. Varies per task/snapshot combination."
+    },
+    "prompt_template_file_hash": {
+      "type": "string",
+      "description": "sha256 of the prompt template file's bytes (pre-substitution). Stable across all trajectories produced under the same template version. Added per F-CDX-RFR-R2-05."
+    },
+    "invocation_context": {
+      "type": "string",
+      "enum": ["agent", "user", "rule_baseline"],
+      "description": "Caller classification used by the CLI-dispatch agent_safe enforcer (M5). Benchmark subprocesses driven by a model are 'agent'; rule-baseline subprocesses are 'rule_baseline'; the maintainer's daily-driver loop is 'user'. Added per F-CDX-RFR-R2-03."
+    },
+    "model_roster_hash": {
+      "type": "string",
+      "description": "sha256 of benchmark/governed_agent_bench/model_roster.md at the time this trajectory was produced. Required for any trajectory that contributes to a Tier 3 or Tier 4 claim. Added per F-CDX-RFR-R2-06."
+    },
+    "scorer_config_hash": {
+      "type": "string",
+      "description": "Anchor for the scorer config that grades this trajectory; recorded redundantly with score.scorer_config_hash."
     },
     "steps": {
       "type": "array",
@@ -53,7 +134,7 @@
         "properties": {
           "step_type": {
             "type": "string",
-            "enum": ["message", "command", "observation", "refusal", "final"]
+            "enum": ["message", "command", "observation", "refusal", "final", "mechanism_disabled"]
           },
           "text": {
             "type": "string"
@@ -80,12 +161,39 @@
           "stderr_ref": {
             "type": "string"
           },
+          "mechanism": {
+            "type": "string",
+            "enum": [
+              "validation",
+              "agent_safe",
+              "proposal_gate",
+              "refusal",
+              "audit_chain"
+            ]
+          },
           "metadata": {
             "type": "object",
             "additionalProperties": true
           }
-        }
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"step_type": {"const": "mechanism_disabled"}}, "required": ["step_type"]},
+            "then": {"required": ["step_type", "mechanism"]}
+          },
+          {
+            "if": {"properties": {"step_type": {"const": "command"}}, "required": ["step_type"]},
+            "then": {"required": ["step_type", "command"]}
+          }
+        ]
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"model_class": {"const": "rule_baseline"}}, "required": ["model_class"]},
+      "then": {"not": {"required": ["model_identity"]}},
+      "else": {"required": ["model_identity"]}
+    }
+  ]
 }
