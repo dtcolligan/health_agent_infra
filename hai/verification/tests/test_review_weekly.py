@@ -25,6 +25,7 @@ from __future__ import annotations
 import json
 import re
 import sqlite3
+import sys
 from datetime import date
 from pathlib import Path
 
@@ -64,6 +65,10 @@ from health_agent_infra.core.state import (
 
 
 USER = "u_w52_test"
+
+
+def _hai_cmd(*args: str) -> list[str]:
+    return [sys.executable, "-m", "health_agent_infra.cli", *args]
 
 
 # ---------------------------------------------------------------------------
@@ -930,7 +935,7 @@ def test_cli_review_weekly_command_in_capabilities_manifest():
 
     import subprocess
     result = subprocess.run(
-        ["uv", "run", "hai", "capabilities", "--json"],
+        _hai_cmd("capabilities", "--json"),
         capture_output=True, text=True, check=True,
     )
     manifest = json.loads(result.stdout)
@@ -965,11 +970,11 @@ def test_cli_review_weekly_rejects_bad_week_format(tmp_path: Path):
 
     import subprocess
     result = subprocess.run(
-        [
-            "uv", "run", "hai", "review", "weekly",
+        _hai_cmd(
+            "review", "weekly",
             "--week", "notvalid",
             "--db-path", str(tmp_path / "no_db.db"),
-        ],
+        ),
         capture_output=True, text=True,
     )
     assert result.returncode == 1  # USER_INPUT
@@ -985,12 +990,12 @@ def test_cli_review_weekly_rejects_include_history_without_json(
 
     import subprocess
     result = subprocess.run(
-        [
-            "uv", "run", "hai", "review", "weekly",
+        _hai_cmd(
+            "review", "weekly",
             "--week", "2026-W18",
             "--markdown", "--include-history",
             "--db-path", str(tmp_path / "no_db.db"),
-        ],
+        ),
         capture_output=True, text=True,
     )
     assert result.returncode == 1
@@ -1326,4 +1331,3 @@ def test_multi_canonical_disposition_absent_when_no_collision(
         assert payload["coverage"]["multi_canonical_dates"] == []
     finally:
         conn.close()
-

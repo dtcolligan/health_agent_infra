@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import sys
 from pathlib import Path
 
 import pytest
@@ -26,11 +27,14 @@ from health_agent_infra.core.config import (
 from health_agent_infra.core.eval import (
     BlockReason,
     ClaimGateInput,
-    FactualityGateOutcome,
     GateOutcome,
     gate_claim,
     run_factuality_gate,
 )
+
+
+def _hai_cmd(*args: str) -> list[str]:
+    return [sys.executable, "-m", "health_agent_infra.cli", *args]
 
 
 # ---------------------------------------------------------------------------
@@ -1012,11 +1016,11 @@ def test_review_weekly_bypass_flag_logs_warn_via_subprocess(tmp_path):
     no_db = tmp_path / "no_db.db"
     # Without bypass — abstain branch fires; no WARN.
     result = subprocess.run(
-        [
-            "uv", "run", "hai", "review", "weekly",
+        _hai_cmd(
+            "review", "weekly",
             "--week", "2026-W18",
             "--db-path", str(no_db),
-        ],
+        ),
         capture_output=True, text=True,
     )
     assert result.returncode == 0
@@ -1028,12 +1032,12 @@ def test_review_weekly_bypass_flag_logs_warn_via_subprocess(tmp_path):
     # Since we can't easily seed a non-abstain week here, we verify
     # the flag is at least accepted by the parser without errors.
     result_bypass = subprocess.run(
-        [
-            "uv", "run", "hai", "review", "weekly",
+        _hai_cmd(
+            "review", "weekly",
             "--week", "2026-W18",
             "--db-path", str(no_db),
             "--bypass-factuality-gate",
-        ],
+        ),
         capture_output=True, text=True,
     )
     assert result_bypass.returncode == 0
@@ -1091,7 +1095,7 @@ def test_scenario_set_all_fan_out_runs_factuality_via_subprocess():
     import subprocess
 
     result = subprocess.run(
-        ["uv", "run", "hai", "eval", "run", "--scenario-set", "all"],
+        _hai_cmd("eval", "run", "--scenario-set", "all"),
         capture_output=True, text=True,
     )
     assert result.returncode == 0
@@ -1110,10 +1114,10 @@ def test_scenario_set_judge_adversarial_stays_shape_only():
     import subprocess
 
     result = subprocess.run(
-        [
-            "uv", "run", "hai", "eval", "run",
+        _hai_cmd(
+            "eval", "run",
             "--scenario-set", "judge_adversarial",
-        ],
+        ),
         capture_output=True, text=True,
     )
     assert result.returncode == 0
@@ -1133,7 +1137,7 @@ def test_scenario_set_all_excludes_judge_adversarial():
     import subprocess
 
     result = subprocess.run(
-        ["uv", "run", "hai", "eval", "run", "--scenario-set", "all"],
+        _hai_cmd("eval", "run", "--scenario-set", "all"),
         capture_output=True, text=True,
     )
     assert "judge-adversarial corpus" not in result.stdout
@@ -1146,8 +1150,6 @@ def test_every_factuality_fixture_produces_its_expected_outcome():
     that prevents fixture rot — a fixture whose payload no longer
     triggers the expected lane is a corpus bug.
     """
-
-    import json as _json
 
     c = _seeded_db()
     try:
