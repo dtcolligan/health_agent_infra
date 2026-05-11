@@ -5,7 +5,7 @@ v2 on 2026-05-11.
 
 This file replaces the old root-level HAI product hypothesis ledger.
 The pre-reframe HAI bets remain preserved in
-`../hai/reporting/plans/post_v0_1_18/strategic_plan_v2.md` and
+`../hai/reporting/plans/superseded/strategic_plan_v2.md` and
 historical plan docs.
 
 The active paper is **Deterministic Software Contracts as Trusted

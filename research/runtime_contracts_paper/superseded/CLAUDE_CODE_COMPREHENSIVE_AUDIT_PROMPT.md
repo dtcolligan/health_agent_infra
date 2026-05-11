@@ -1,5 +1,13 @@
 # Claude Code Comprehensive Audit Prompt
 
+> **Superseded as current planning:** Pre-merge one-off audit prompt
+> artifact. The current audit cadence is the framing-v2 orchestration
+> pattern documented in `AGENTS.md` "Patterns the cycles have
+> validated" and exercised under `../framing_v2/round_*/AUDIT_PROMPT.md`.
+> Body preserved as **historical provenance only**.
+
+---
+
 Use this prompt in Claude Code to audit Codex's runtime-contract paper
 work before Dom reviews it.
 

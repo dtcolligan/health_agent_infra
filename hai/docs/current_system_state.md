@@ -38,7 +38,7 @@ and
 | Surface | Current value | Source of truth |
 |---|---|---|
 | Paper frame | Locked title (*Deterministic Software Contracts as Trusted Monitors in AI Control Protocols*), NeurIPS 2027 main-conference target, contribution list, empirical result tiers, and non-clinical boundary are locked as framing. | `research/runtime_contracts_paper/framing_v2/CONVERGED.md`, `research/runtime_contracts_paper/PAPER_FRAME.md` |
-| Paper draft | Live skeleton exists; empirical sections remain placeholders until benchmark tasks, baselines, fine-tuning, and ablations run. | `research/runtime_contracts_paper/DRAFT_PAPER.md` |
+| Paper draft | Live skeleton exists; empirical sections remain placeholders until benchmark tasks, baselines, fine-tuning, and ablations run. | `research/runtime_contracts_paper/superseded/DRAFT_PAPER.md` |
 | Evaluation strategy | Local, cloud, fine-tuned, rule, and scaffold-ablation conditions are in scope; deterministic safety metrics are primary. | `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md` |
 | GovernedAgentBench | Scaffold only: 0 frozen manifests, 0 pilot tasks, 0 recorded trajectories, no scorer implementation, no baselines, no reports. | `benchmark/governed_agent_bench/README.md` |
 | Experiments | Not run yet. Next step is GovernedAgentBench measurement-readiness before model backends. | `project/ROADMAP.md`, `research/runtime_contracts_paper/IMPLEMENTATION_PLAN.md` |

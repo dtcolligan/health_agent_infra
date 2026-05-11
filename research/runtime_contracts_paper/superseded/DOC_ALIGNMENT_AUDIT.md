@@ -1,5 +1,14 @@
 # Documentation Alignment Audit
 
+> **Superseded as current planning:** Pre-merge doc-alignment audit.
+> The Phase 2 doc-alignment work in
+> `../framing_v2/phase_2_doc_alignment/` supersedes this audit; see
+> `../framing_v2/phase_2_doc_alignment/FINAL_AUDIT_RESPONSE.md` for
+> the current cross-repo consistency record. Body preserved as
+> **historical provenance only**.
+
+---
+
 **Status:** Internal audit, updated 2026-05-08.
 
 ## Problem

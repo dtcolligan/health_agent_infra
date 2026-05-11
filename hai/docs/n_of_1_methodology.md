@@ -13,7 +13,7 @@ forward plans that resume only when they support, or no longer compete
 with, the paper / benchmark push.
 
 **Forward-looking.** This doc is a positioning artifact for Wave 4
-(v0.5–v0.6 per `hai/reporting/plans/post_v0_1_18/strategic_plan_v2.md`
+(v0.5–v0.6 per `hai/reporting/plans/superseded/strategic_plan_v2.md`
 §7). v0.2.0 ships none of the surface this doc describes; the HAI
 support-lane goal is to preserve a methodologically-honest contract
 for the substrate + estimator before any future HAI PLAN-audit
@@ -406,7 +406,7 @@ revise them.
 
 ## 9. Cross-references
 
-- **`hai/reporting/plans/post_v0_1_18/strategic_plan_v2.md`** §7
+- **`hai/reporting/plans/superseded/strategic_plan_v2.md`** §7
   Wave 4 — substrate-then-estimator chain framing.
 - **`AGENTS.md`** "Do Not Do" — the autonomous-threshold-mutation
   prohibition (post-v0.1.13 strategic research §18) is the

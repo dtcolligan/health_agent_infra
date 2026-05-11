@@ -5,7 +5,7 @@
 **Source.** Refreshes the comparable-OSS survey from
 `hai/reporting/plans/historical/multi_release_roadmap.md` (2026-04-25)
 with 2026-Q2 evidence. The five competitor categories below match
-`hai/reporting/plans/post_v0_1_18/strategic_plan_v2.md` §2.1; the five
+`hai/reporting/plans/superseded/strategic_plan_v2.md` §2.1; the five
 defensibly-unique HAI elements at the end match §2.2.
 
 **Date-checked.** All cited URLs verified accessible during the
@@ -424,7 +424,7 @@ substantive-cycle Phase 0 D11 bug-hunt pattern.
 
 ## 9. Cross-references
 
-- **`hai/reporting/plans/post_v0_1_18/strategic_plan_v2.md`** §2.1
+- **`hai/reporting/plans/superseded/strategic_plan_v2.md`** §2.1
   (category claim) + §2.2 (defensibly differentiated).
 - **`hai/reporting/plans/historical/multi_release_roadmap.md`**
   (2026-04-25) — the source survey this doc refreshes.

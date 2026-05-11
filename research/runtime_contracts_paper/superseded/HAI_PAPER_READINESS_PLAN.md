@@ -1,5 +1,14 @@
 # HAI Paper-Readiness Plan
 
+> **Superseded as current planning:** Pre-merge HAI paper-readiness
+> plan. The active execution plan is `../PROJECT_EXECUTION_PLAN.md`
+> (rewritten in Phase 2 batch 1, aligned to
+> `../framing_v2/CONVERGED.md`). HAI runtime defects route through
+> `WP-RUNTIME-FIX-NNN` packets per D-PROJ-016 freeze. Body preserved
+> as **historical provenance only**.
+
+---
+
 **Status:** Paper-critical HAI engineering plan, 2026-05-08.
 
 This file defines the minimum HAI engineering work needed for the paper

@@ -179,9 +179,9 @@ git diff --stat
 
 # Suggested commit groupings (or one bulk commit; your call):
 git add research/runtime_contracts_paper/AUTONOMOUS_*.md \
-        research/runtime_contracts_paper/CODEX_WORK_INSPECTION_INDEX.md \
-        research/runtime_contracts_paper/METHODS_SYSTEM_DRAFT.md \
-        research/runtime_contracts_paper/IMPLEMENTATION_PLAN.md
+        research/runtime_contracts_paper/superseded/CODEX_WORK_INSPECTION_INDEX.md \
+        research/runtime_contracts_paper/superseded/METHODS_SYSTEM_DRAFT.md \
+        research/runtime_contracts_paper/superseded/IMPLEMENTATION_PLAN.md
 git commit -m "docs(research): mark pre-merge planning files as superseded"
 
 git add research/runtime_contracts_paper/PRIOR_ART_POSITIONING.md \

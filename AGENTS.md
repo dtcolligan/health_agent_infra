@@ -84,15 +84,15 @@ Authoritative orientation:
 - `hai/docs/architecture.md` - full pipeline and code-vs-skill boundary
 - `hai/docs/non_goals.md` - scope discipline
 - `hai/reporting/plans/README.md` - reading-order index for the planning tree
-- `hai/reporting/plans/post_v0_1_18/strategic_plan_v2.md` - HAI reference-runtime
+- `hai/reporting/plans/superseded/strategic_plan_v2.md` - HAI reference-runtime
   strategy before the research reframe; useful context, not the current
   project-wide priority order
 - `hai/reporting/plans/tactical_plan_v0_1_x.md` - HAI reference-runtime backlog
-- `hai/reporting/plans/eval_strategy/v1.md` - pre-reframe HAI runtime
+- `hai/reporting/plans/superseded/eval_strategy_v1.md` - pre-reframe HAI runtime
   correctness strategy; not project-wide research evaluation
-- `hai/reporting/plans/success_framework_v1.md` - pre-reframe HAI value
+- `hai/reporting/plans/superseded/success_framework_v1.md` - pre-reframe HAI value
   framework; not project-wide research success criteria
-- `hai/reporting/plans/risks_and_open_questions.md` - pre-reframe HAI risk
+- `hai/reporting/plans/superseded/risks_and_open_questions.md` - pre-reframe HAI risk
   register; useful provenance/support-lane input
 - `hai/verification/dogfood/README.md` - persona harness operating guide
 - `hai/reporting/AUDIT.md` - release-by-release audit index
@@ -468,7 +468,7 @@ framing-v2 pattern unless Dom explicitly scopes a full release cycle:
    `research/runtime_contracts_paper/PROJECT_EXECUTION_PLAN.md`,
    `research/runtime_contracts_paper/PAPER_FRAME.md`,
    `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`,
-   `research/runtime_contracts_paper/HAI_PAPER_READINESS_PLAN.md`, and
+   `research/runtime_contracts_paper/superseded/HAI_PAPER_READINESS_PLAN.md`, and
    `benchmark/governed_agent_bench/README.md`.
 2. Name the research unit before writing code: paper section, HAI
    paper-readiness task, benchmark task family, scorer, manifest
@@ -509,9 +509,9 @@ Drift in any of these is the trust hazard a second user hits first:
   shipped cycle as shipped (not "in flight").
 - [ ] `hai/reporting/plans/tactical_plan_v0_1_x.md` next-cycle row reflects
   the just-authored next-cycle PLAN, not the pre-revision shape.
-- [ ] `hai/reporting/plans/success_framework_v1.md`,
-  `hai/reporting/plans/eval_strategy/v1.md`, and
-  `hai/reporting/plans/risks_and_open_questions.md` are still clearly marked
+- [ ] `hai/reporting/plans/superseded/success_framework_v1.md`,
+  `hai/reporting/plans/superseded/eval_strategy_v1.md`, and
+  `hai/reporting/plans/superseded/risks_and_open_questions.md` are still clearly marked
   as HAI pre-reframe/support-lane docs, not current project-wide
   strategy.
 

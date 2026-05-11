@@ -1,5 +1,13 @@
 # Model Roster Decision Brief
 
+> **Superseded as current planning:** Pre-merge roster decision brief.
+> The locked roster is D-FRAME-020 in `../framing_v2/CONVERGED.md`,
+> materialized as `../../benchmark/governed_agent_bench/model_roster.md`
+> (draft status; maintainer to freeze before paper-claim runs). Body
+> preserved as **historical provenance only**.
+
+---
+
 **Status:** Dom judgement brief for `WP-MODEL-ROSTER-001`,
 2026-05-10.
 

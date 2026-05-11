@@ -1,5 +1,13 @@
 # Mechanism Inventory
 
+> **Superseded as current planning:** Pre-merge mechanism brief. The
+> current mechanism inventory is D-FRAME-017 in
+> `../framing_v2/CONVERGED.md` (M4-M8 ablatable + M9-TX held constant;
+> M7 narrowed to clinical-boundary; M8 renamed "audit evidence
+> emission"). Body preserved as **historical provenance only**.
+
+---
+
 **Status:** Phase 1 audit deliverable, WP-INV-001 completed against
 source on 2026-05-10.
 

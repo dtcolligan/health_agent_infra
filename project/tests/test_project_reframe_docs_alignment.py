@@ -133,11 +133,14 @@ def test_research_frame_content_is_pinned_on_primary_surfaces() -> None:
 
 
 def test_hai_forward_plan_docs_are_marked_as_support_lane() -> None:
+    # Post-2026-05-11: strategic_plan_v2.md moved to
+    # hai/reporting/plans/superseded/ (no longer "support-lane", now
+    # explicit historical provenance). Remaining 3 hai/docs/ files are
+    # the active support-lane references.
     support_lane_docs = (
         "hai/docs/n_of_1_methodology.md",
         "hai/docs/mcp_threat_model.md",
         "hai/docs/personal_health_agent_positioning.md",
-        "hai/reporting/plans/post_v0_1_18/strategic_plan_v2.md",
     )
 
     for rel_path in support_lane_docs:
@@ -171,6 +174,10 @@ def test_active_control_docs_do_not_reintroduce_product_first_sentinels() -> Non
 
 
 def test_hai_paper_readiness_is_the_active_runtime_planning_label() -> None:
+    # Post-2026-05-11: HAI_PAPER_READINESS_PLAN.md moved to
+    # research/runtime_contracts_paper/superseded/ as pre-merge planning.
+    # The active runtime planning surface is the merged-paper trajectory
+    # in PROJECT_EXECUTION_PLAN.md + HAI_PAPER_READINESS_EXECUTION.md.
     active_planning_docs = (
         "README.md",
         "project/FRAME.md",
@@ -179,16 +186,12 @@ def test_hai_paper_readiness_is_the_active_runtime_planning_label() -> None:
         "project/ROADMAP.md",
         "AGENTS.md",
         "research/README.md",
-        "research/runtime_contracts_paper/HAI_PAPER_READINESS_PLAN.md",
         "research/runtime_contracts_paper/PROJECT_EXECUTION_PLAN.md",
+        "research/runtime_contracts_paper/HAI_PAPER_READINESS_EXECUTION.md",
         "research/runtime_contracts_paper/WORK_PACKETS.md",
         "hai/docs/hai_reference_runtime.md",
         "hai/docs/current_system_state.md",
     )
-
-    assert (
-        REPO_ROOT / "research/runtime_contracts_paper/HAI_PAPER_READINESS_PLAN.md"
-    ).exists()
 
     for rel_path in active_planning_docs:
         body = _read(rel_path)
