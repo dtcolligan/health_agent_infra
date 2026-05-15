@@ -1,207 +1,33 @@
 @AGENTS.md
 
-This file is the Claude-Code-specific operational layer on top of the
-universal contract in `AGENTS.md`. Everything in `AGENTS.md` applies;
-this file adds the patterns, commands, and signposts that make a fresh
-Claude session efficient.
+# Claude Code session-start
 
-## Claude Code Specifics
+Read in order: `PAPER.md` → `AGENTS.md`. The `@AGENTS.md` import above
+keeps the operating contract visible on every session.
 
-- This is the maintainer's daily-driver loop. Skills under
-  `hai/src/health_agent_infra/skills/` are also user-installed at
-  `~/.claude/skills/` via `hai setup-skills`. Edit the packaged copy,
-  not the installed copy.
-- Path-scoped rules live in `.claude/rules/` when present.
-- For mutating CLI calls during a session, prefer plan mode first.
-- The `intent-router` skill is the authoritative natural-language-to-`hai`
-  mapper; invoke it rather than composing mutation commands from intuition.
-
-## Session-start orientation
-
-When opening a fresh session, read in this order:
-
-1. **`research/runtime_contracts_paper/framing_v2/CONVERGED.md`** —
-   locked merged-paper framing for *Deterministic Software Contracts as Trusted Monitors in AI Control Protocols*, D-FRAME-001..027, NeurIPS 2027 main-conference venue, and source-of-truth ordering.
-2. **`research/runtime_contracts_paper/framing_v2/ORCHESTRATOR_STATE.md`** —
-   full framing-v2 decisions table and current orchestration state.
-3. **`project/FRAME.md`** — current research framing and priority order.
-4. **`project/DECISIONS.md`** — post-reframe decision log and locked
-   project choices.
-5. **`project/OPERATING_MODEL.md`** — internal operating model and
-   documentation-alignment gate.
-6. **`AGENTS.md`** — the operating contract (governance invariants, settled
-   decisions D1-D27, architectural seams, "Do Not Do").
-7. **`project/HYPOTHESES.md`** — current research hypotheses.
-8. **`research/runtime_contracts_paper/PAPER_FRAME.md`** — locked paper /
-   benchmark framing.
-9. **`research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`** —
-   model/baseline/ablation evaluation strategy.
-10. **`benchmark/governed_agent_bench/README.md`** — benchmark scope.
-11. **`README.md`** — research-facing repo overview.
-12. **`hai/docs/hai_reference_runtime.md`** if you need HAI install,
-   operator workflow, domains, or CLI surface.
-13. **`hai/docs/runtime_contract_overview.md`** + **`project/REPO_MAP.md`** if you need to find something.
-14. **`hai/reporting/plans/README.md`** only when you need HAI release history or
-   a specific HAI runtime cycle plan.
-
-For a "what just shipped" question, read
-`hai/reporting/plans/v0_1_X/RELEASE_PROOF.md` for the most recent X.
+`PAPER.md` is the single source of truth for active scope, calendar,
+decisions, mechanism inventory, hypotheses, model roster, threat
+model, and engineering plan. Update it in place when those change;
+do not create new planning files (D-13 in `PAPER.md` is binding).
 
 ## Common commands
 
 ```bash
-# Test suite (full)
 uv run pytest hai/verification/tests -q
-
-# Targeted test file
-uv run pytest hai/verification/tests/test_<area>.py -q
-
-# Type-check (uses uvx because the project venv lacks mypy)
 uvx mypy hai/src/health_agent_infra
-
-# Security scan
-uvx bandit -ll -r hai/src/health_agent_infra
-
-# Build wheel + sdist (uses uvx because the project venv lacks build)
-uvx --from build python -m build --wheel --sdist
-
-# CLI surface checks
 uv run hai capabilities --json
-uv run hai capabilities --markdown > hai/docs/agent_cli_contract.md
 uv run hai doctor
-
-# Persona matrix (13 personas, ~5 min; P13 is matrix-only — added
-# v0.1.14 W-EXPLAIN-UX as a low-domain-knowledge maintainer-substitute
-# reader for `hai explain` confusion review)
-uv run python hai/verification/dogfood/runner.py /tmp/persona_run
-
-# Warning gates (broader gate restored at v0.1.13 W-N-broader; clean
-# through v0.1.14.1 ship-time)
-uv run pytest hai/verification/tests \
-    -W error::pytest.PytestUnraisableExceptionWarning -q   # narrow (v0.1.11+)
-uv run pytest hai/verification/tests -W error::Warning -q      # broader (v0.1.13+)
 ```
-
-The project venv intentionally does not bundle `mypy`, `bandit`, or
-`build`. Use `uvx` for one-shot tool invocations to avoid mutating
-`uv.lock`.
-
-## Cycle pattern signposts
-
-The HAI release-cycle pattern below is dormant while HAI is frozen as a
-product per D-PROJ-016. Use it only when Dom explicitly scopes HAI
-runtime release work.
-
-A HAI release cycle produces the following files under
-`hai/reporting/plans/v0_1_X/`:
-
-| Phase | Files |
-|---|---|
-| Scope | `PLAN.md`, `CARRY_OVER.md` (when present) |
-| D14 plan-audit | `codex_plan_audit_prompt.md` → `codex_plan_audit_response*.md` (rounds 1-N) + `_response_response.md` companions |
-| Phase 0 (D11) | `audit_findings.md` |
-| Governance | `cycle_proposals/CP{1..N}.md` |
-| Implementation review | `codex_implementation_review_prompt.md` → `_response*.md` (rounds 1-N) + `_response_response.md` companions |
-| Ship | `RELEASE_PROOF.md`, `REPORT.md` |
-
-**Empirical settling shapes (twice-validated):**
-
-- **D14 plan-audit:** 4 rounds, 10 → 5 → 3 → 0 findings. Budget 2-4 rounds
-  for substantive PLANs, single round for hardening/doc-only.
-- **Implementation review:** 3 rounds, 5 → 2 → 1-nit. Budget 2-3 rounds.
-
-If round N has *more* findings than round N-1, the previous response
-introduced second-order issues — re-read your own diff.
-
-The active research-lane pattern is framing-v2 orchestration:
-
-| Phase | Files |
-|---|---|
-| Phase 1 research convergence | `research/runtime_contracts_paper/framing_v2/round_N/{PROMPT.md,RESPONSE.md,AUDIT_PROMPT.md,AUDIT_RESPONSE.md,SYNTHESIS.md}` |
-| Phase 2 doc alignment | `research/runtime_contracts_paper/framing_v2/phase_2_doc_alignment/batches/batch_N_<name>/{PROMPT.md,EDITS_SUMMARY.md}` |
-| State and protocol | `research/runtime_contracts_paper/framing_v2/{CONVERGED.md,ORCHESTRATOR_STATE.md,PHASE_PLAN.md,ORCHESTRATOR_PROTOCOL.md}` |
-
-Framing-v2 uses the worker-auditor-orchestrator triad in Phase 1,
-end-of-phase audit in Phase 2, and the escape valve defined in
-`AGENTS.md` for three consecutive `SHIP_WITH_NOTES` rounds with zero
-paper-section-level findings.
-
-## Patterns the cycles have validated
-
-The universal-AI-agent patterns (provenance discipline, summary-
-surface sweep on partial closure, honest partial-closure naming,
-audit-chain empirical settling shape) live in **AGENTS.md**
-"Patterns the cycles have validated" since they apply to Codex
-too. Read those when authoring or revising any artifact in a
-cycle directory. CLAUDE.md does not duplicate them.
-
-## Local state vs git state
-
-- **State inspection surfaces:** `hai today`, `hai explain`, `hai doctor`,
-  `hai stats`. Use these, not raw `sqlite3 state.db`.
-- **Mutations:** `hai propose` / `hai synthesize` / `hai review record` /
-  `hai intake {readiness,nutrition,stress,gym,note}` / `hai intent commit` /
-  `hai target commit`. The agent never writes to `state.db` directly.
-- **Settings / personal data:** never assume body composition, training
-  history, or daily macro targets. Ask, pull from existing state, or
-  refuse the personalised claim. (See user-memory file
-  `feedback_never_assume_personal_data.md` if available.)
 
 ## Plan-mode triggers
 
-Use plan mode (or at minimum surface the plan in chat first) when:
+- Editing `AGENTS.md` governance invariants or do-not-do list.
+- Editing `PAPER.md` active decisions or mechanism inventory.
+- Any `hai/src/health_agent_infra/cli/` change beyond a single
+  help-text edit.
 
-- Authoring a `PLAN.md` for a new cycle.
-- Drafting a Codex audit prompt.
-- Editing `AGENTS.md` "Settled Decisions" or "Do Not Do" — these are
-  load-bearing, not editorial.
-- Applying a CP delta to AGENTS.md / strategic plan / tactical plan
-  during cycle work.
-- Any `cli.py` change beyond a single help-text edit (cli.py is at
-  ~10k lines and a misplaced parser-arg can break the capabilities
-  manifest contract).
-- A test surface that exceeds 1-2 new test files (the suite has
-  documented assumptions about test isolation; large additions need
-  a sanity check).
+## Provenance
 
-For doc-only edits, smaller code fixes (mypy class, single-domain
-policy.py update), and CLI help-text tweaks: just execute.
-
-## Release toolchain quick reference
-
-Per the user-memory `reference_release_toolchain.md`:
-
-```bash
-# Build (project venv lacks `build`)
-uvx --from build python -m build --wheel --sdist
-
-# Smoke-test wheel locally before PyPI
-uv run pip install --force-reinstall \
-    dist/health_agent_infra-<v>-py3-none-any.whl
-uv run hai capabilities --json | \
-    uv run python -c "import json,sys; print(json.load(sys.stdin)['hai_version'])"
-
-# Upload to PyPI (~/.pypirc holds the token)
-uvx twine upload \
-    dist/health_agent_infra-<v>-py3-none-any.whl \
-    dist/health_agent_infra-<v>.tar.gz
-
-# Verify install — bypass CDN cache (~2 min lag is normal)
-pipx install --force \
-    --pip-args="--no-cache-dir --index-url https://pypi.org/simple/" \
-    'health-agent-infra==<v>'
-```
-
-The harness blocks direct `git push` to `main`. Have the maintainer
-push (`! git push origin main`) or open a PR via `gh pr create`.
-
-## What lives in AGENTS.md vs CLAUDE.md
-
-| AGENTS.md (universal) | CLAUDE.md (this file) |
-|---|---|
-| Project description, research reframe, code-vs-skill boundary, CLI boundaries, six domains, governance invariants, settled decisions, architectural seams, "Do Not Do" | Session-start orientation, common commands, cycle-pattern signposts, audit empirical settling shapes, partial-closure naming convention, plan-mode triggers, release toolchain |
-
-If a contract decision applies to all AI agents (Codex, Claude, etc.),
-it goes in AGENTS.md. If it's a Claude-Code session-efficiency
-pattern, it goes here. The `@AGENTS.md` import at the top of this file
-keeps both surfaces visible to Claude on session start.
+If you need to understand how a decision was reached or how HAI got
+to v0.2.0, read `ARCHIVE/decisions_log.md` and `ARCHIVE/framing_v2/`.
+These are not in the cold-start path.

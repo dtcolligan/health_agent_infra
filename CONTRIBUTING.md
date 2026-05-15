@@ -1,133 +1,83 @@
 # Contributing
 
-## Mental model
+## Read First
 
-This repo is a runtime-contract research project with HAI as the first
-reference runtime and GovernedAgentBench as the benchmark artifact.
-Read [`project/FRAME.md`](project/FRAME.md) before assuming HAI product
-polish is the next priority. Read
-[`project/DECISIONS.md`](project/DECISIONS.md) before reopening a
-post-reframe project choice. Read
-[`project/OPERATING_MODEL.md`](project/OPERATING_MODEL.md) before changing
-project direction, benchmark scope, or paper-facing claims.
+- [`PAPER.md`](PAPER.md) — what we're shipping, scope, active decisions
+- [`AGENTS.md`](AGENTS.md) — operating contract, code-vs-skill boundary,
+  CLI boundaries, governance invariants, do-not-do list
 
-Most HAI contributions land in one of two implementation surfaces:
+This repo exists to ship one artifact: an arXiv preprint by 2026-09-30
+with GovernedAgentBench v1.0 released alongside. HAI is frozen as a
+product. Do not propose HAI v0.2.1+ work, new domains, new wearable
+sources, or user-product breadth.
 
-- **Python runtime** under `hai/src/health_agent_infra/` — deterministic
-  data acquisition, projection, classification, policy, synthesis,
-  validation, review, and persistence.
-- **Markdown skills** under `hai/src/health_agent_infra/skills/` — the
-  agent's judgment layer: rationale, uncertainty surfacing, and
-  clarification during narration.
+## Where Contributions Land
 
-Research and benchmark contributions land under:
+| Surface | Path |
+|---|---|
+| Runtime contract code (frozen except for `WP-RUNTIME-FIX-NNN`) | `hai/src/health_agent_infra/` |
+| Markdown skills | `hai/src/health_agent_infra/skills/` |
+| Benchmark code | `benchmark/governed_agent_bench/` |
+| Benchmark tests | `benchmark/verification/tests/` |
+| HAI tests | `hai/verification/tests/` |
+| Paper draft | `paper/DRAFT.md` (LaTeX when writing-stage) |
 
-- **GovernedAgentBench** under `benchmark/governed_agent_bench/` —
-  task schemas, frozen manifests, trajectories, scorer logic, baselines,
-  and reports.
-- **Paper artifacts** under `research/runtime_contracts_paper/` —
-  framing, experiment plans, and reproducibility docs.
+Invariant: **skills never mutate actions; code never improvises
+coaching prose.** Skills consume `classified_state` and `policy_result`
+as source of truth and do not recompute bands, scores, R-rules, or
+X-rules.
 
-The rebuild's central rule is simple:
+## Adding Runtime Code
 
-- If it is deterministic, testable, and should never vary by model
-  mood, it belongs in Python.
-- If it is judgment about phrasing, ambiguity handling, or how to
-  explain an already-constrained action, it belongs in a skill.
-
-## How to add runtime code
-
-1. Decide which package owns it:
-   - `core/` for cross-domain mechanics (`state`, `pull`, `clean`,
-     `synthesis`, `writeback`, `review`, `config`)
-   - `domains/<domain>/` for domain-specific deterministic logic
-     (`schemas.py`, `classify.py`, `policy.py`, optional
-     `signals.py`/`intake.py`)
-2. Add typed functions/classes. No hidden state, no silent global
-   mutation.
-3. Wire a CLI surface in `hai/src/health_agent_infra/cli.py` only if the
-   agent or operator genuinely needs it.
+1. Decide owner: `core/` for cross-domain, `domains/<d>/` for
+   domain-specific deterministic logic.
+2. Add typed functions/classes; no hidden state.
+3. Wire a CLI surface in `hai/src/health_agent_infra/cli/` only if
+   genuinely needed.
 4. Add deterministic tests under `hai/verification/tests/`.
-5. If the change crosses a schema boundary, update the producing and
-   consuming paths in the same commit.
+5. Cross-schema changes update producing and consuming paths in the
+   same commit.
 
-Never:
-- Import from `skills/` inside Python runtime code.
-- Put free-form rationale prose generation in Python when the action is
-  already fixed.
-- Break the local-state invariant: the SQLite state DB is the source of
-  truth, not chat memory.
+Never import from `skills/` inside Python runtime code.
 
-## How to add or edit a skill
+## Adding a Skill
 
-1. Edit the existing packaged skill under
-   `hai/src/health_agent_infra/skills/<skill-name>/SKILL.md`, or create a
-   new skill directory there if the new surface is real.
+1. Edit `hai/src/health_agent_infra/skills/<skill-name>/SKILL.md` or
+   create a new skill directory.
 2. Keep frontmatter valid (`name`, `description`, `allowed-tools`,
    `disable-model-invocation`).
-3. Keep the skill bounded: it should consume `classified_state` and
-   `policy_result` as source of truth, not redo arithmetic or rules.
-4. Scope `allowed-tools` tightly.
-5. Add or update the matching skill-boundary tests so deterministic
-   logic cannot drift back into markdown.
+3. Scope `allowed-tools` tightly.
+4. Add or update skill-boundary tests so deterministic logic cannot
+   drift back into markdown.
 
-Never:
-- Re-implement classification, thresholds, or X-rule/R-rule logic in a
-  skill.
-- Tell the agent to mutate runtime-owned fields (`action`,
-  `daily_plan_id`, etc.) from markdown.
-- Use diagnosis-shaped language in recommendations or rationales.
+Never re-implement classification, thresholds, or R/X-rule logic in a
+skill. Never tell the agent to mutate runtime-owned fields from
+markdown.
 
-## Before opening a PR
+## Before Opening a PR
 
 1. `uv run pytest hai/verification/tests -q`
-2. If you touched packaging or versioning: `uv run python -m build --wheel --sdist`
-3. If you touched docs: make sure `README.md`, `CHANGELOG.md`,
-   `project/FRAME.md`, `project/OPERATING_MODEL.md`, `project/HYPOTHESES.md`,
-   `project/DECISIONS.md`, `project/ROADMAP.md`, `hai/reporting/AUDIT.md`,
-   `research/runtime_contracts_paper/PAPER_FRAME.md`,
-   `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`, and the
-   active HAI docs under `hai/docs/` still agree.
-4. If you touched a skill: verify the corresponding skill-boundary
-   tests still pass.
-5. If you touched a migration/projector/schema: verify the relevant
-   state tests and reproject tests.
+2. `uv run pytest benchmark/verification/tests -q`
+3. If packaging changed: `uvx --from build python -m build --wheel --sdist`
+4. If docs changed: confirm `README.md`, `PAPER.md`, `AGENTS.md`,
+   `CLAUDE.md`, and the lane READMEs still agree.
+5. If a skill changed: skill-boundary tests still pass.
+6. If a migration/projector/schema changed: state tests and reproject
+   tests pass.
 
-## Good first changes
+## Not In Scope
 
-- Strengthen a contract test in `hai/verification/tests/` for malformed proposal
-  or recommendation JSON.
-- Add eval scenarios or rubric coverage under `hai/verification/evals/`.
-- Add GovernedAgentBench pilot tasks, recorded trajectories, or scorer
-  checks under `benchmark/governed_agent_bench/`.
-- Improve a domain classifier/policy test at a boundary condition.
-- Fix active docs that drift from shipped runtime behavior.
-
-## Not in scope
-
-- Web/mobile UI, dashboard, or frontend work.
+- Web/mobile UI, dashboard, frontend.
 - Hosted multi-user features.
-- Meal-level nutrition / food taxonomy in v1.
-- A learning loop / ML calibration of confidence.
-- New wearable sources unless the product scope changes intentionally.
-- Consumer-product polish that does not support the paper, benchmark, or
+- Meal-level nutrition / food taxonomy.
+- Learning loop / ML calibration of confidence.
+- New wearable sources.
+- Consumer-product polish not supporting the preprint, benchmark, or
   reference-runtime contract.
+- New cold-start planning files. Decisions update in place in
+  `PAPER.md`; provenance goes to `ARCHIVE/`.
 
-## If you're not sure
+## If You're Not Sure
 
-Start with these:
-
-- `project/FRAME.md`
-- `project/DECISIONS.md`
-- `project/OPERATING_MODEL.md`
-- `project/HYPOTHESES.md`
-- `README.md`
-- `project/REPO_MAP.md` — one-page orientation of every top-level entry
-- `project/ROADMAP.md`
-- `research/runtime_contracts_paper/PAPER_FRAME.md`
-- `research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`
-- `benchmark/governed_agent_bench/README.md`
-- `hai/reporting/AUDIT.md`
-- `hai/docs/architecture.md`
-- `hai/docs/non_goals.md`
-- `hai/docs/tour.md`
+Start with [`PAPER.md`](PAPER.md) and [`AGENTS.md`](AGENTS.md). If
+still unclear, ask Dom rather than guessing.

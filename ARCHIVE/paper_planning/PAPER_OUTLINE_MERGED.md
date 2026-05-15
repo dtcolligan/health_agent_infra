@@ -1,5 +1,15 @@
 # Paper 1 (Merged) — Outline
 
+> **Notice (2026-05-15):** This file is preserved as the historical
+> merged-paper outline targeting NeurIPS 2027 main conference. The
+> current preprint outline (§1-9, 8-12 pages) is in
+> [`framing_v2/PREPRINT_RESCOPE.md`](framing_v2/PREPRINT_RESCOPE.md)
+> under "Paper outline (preprint)". Sections specific to the merged
+> trajectory — §7.5 Engels Backdoor Code extension, §7.6 Hierarchical
+> Summarization head-to-head, the 50-trajectory adversarial layer —
+> are deferred to future work under D-PROJ-024 / D-PREPRINT-002.
+> Resolve any conflict in favour of `PREPRINT_RESCOPE.md`.
+
 **Status:** Proposal, 2026-05-11. Reflects the merge decision from the
 2026-05-11 framing discussion: paper 1 absorbs the Engels et al.
 Backdoor Code extension previously scoped to paper 2. Pending pilot

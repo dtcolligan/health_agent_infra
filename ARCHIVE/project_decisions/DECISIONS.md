@@ -1,7 +1,10 @@
 # Project Decisions
 
-**Status:** Canonical post-reframe decision log, aligned to framing v2
-on 2026-05-11.
+**Status:** Canonical post-reframe decision log, aligned to the
+preprint rescope on 2026-05-15. The framing-v2 imports D-PROJ-018
+through D-PROJ-023 are partially superseded by D-PROJ-024 for
+preprint scope; their original main-conference-scope statements are
+preserved as historical record.
 
 This file records project-level decisions made during the runtime-contract
 reframe. It is the place to recover decisions that otherwise lived only in
@@ -36,12 +39,16 @@ HAI operator docs under `hai/docs/`.
 | D-PROJ-021 | The targeted adversarial layer is constitutive. | The threat model is capability failure plus targeted adversarial testing, with paper-killer preempts built into the design. |
 | D-PROJ-022 | Paper 2 redirects to S1 fine-tuning of bounded operators. | Fine-tuning is future work for ICML 2028 or NeurIPS 2028; paper 1 sets up the recipe but makes no fine-tuned performance claim. |
 | D-PROJ-023 | Phase 2 documentation alignment is the current cycle. | `framing_v2/CONVERGED.md` is the top source of truth; Phase 2 propagates it across paper, benchmark, project, HAI, operating, and historical docs before final repo-wide audit. |
+| D-PROJ-024 | Preprint rescope locked 2026-05-15. | arXiv preprint deliverable by 2026-09-30 replaces the NeurIPS 2027 main-conference target. Engels deferred to a future paper; Sonnet 4 → claude-sonnet-4-6; empirical scope = Option B floor (M4-M8 ablations × 1 model × ~25-30 tasks) with Option C stretch optional; cost ceiling USD 1,500 → USD 300; adversarial layer 50 → 16 trajectories; bounded HS contrast dropped. Imports `framing_v2/PREPRINT_RESCOPE.md` D-PREPRINT-001 through D-PREPRINT-009. Supersedes D-PROJ-018 / D-PROJ-019 / D-PROJ-020 / D-PROJ-022 / D-PROJ-023 in part for preprint scope; the original main-conference statements are preserved as historical record. |
 
 ## Open Project Decisions
 
-No open project decisions block Phase 2 documentation alignment.
-Venue, title, trajectory, model roster, threat model, cost ceiling, and
-paper-2 disposition are locked by D-PROJ-018 through D-PROJ-023.
+No open project decisions block the preprint rescope or downstream
+documentation alignment. Three small open preprint-scope decisions
+(`O-PREPRINT-001` final Option-B model class, `O-PREPRINT-002`
+Appendix E sketch keep/drop, `O-PREPRINT-003` arXiv sponsor source)
+remain resolvable at or before their mid-June / mid-August windows;
+see `framing_v2/PREPRINT_RESCOPE.md` for current state.
 
 ## D-PROJ-001: Research Repo, Not HAI Product Repo
 
@@ -424,6 +431,11 @@ measurement instrument, and research paper.
 
 ## D-PROJ-018: Merged Paper Trajectory Locked
 
+**Current caveat.** Partially superseded by D-PROJ-024 (2026-05-15).
+The title transfers unchanged to the preprint scope; the NeurIPS 2027
+main-conference target and merge with Engels are deferred. The
+Engels extension becomes a future paper.
+
 **Decision.** Paper 1 and the Engels Backdoor Code extension are merged
 into a single NeurIPS 2027 main-conference submission titled:
 
@@ -448,6 +460,11 @@ scaling-laws-for-oversight extension.
   merged trajectory.
 
 ## D-PROJ-019: Engels Pilot As Merge-Decision Gate
+
+**Current caveat.** Superseded by D-PROJ-024 (2026-05-15). With Engels
+deferred to a future paper, the July 2026 pilot is no longer a merge
+gate for this paper; it carries forward (in whatever form is chosen)
+as a de-risk step for the future Engels paper.
 
 **Decision.** The July 2026 Engels pilot is the decision gate for
 keeping the merged-paper trajectory.
@@ -476,6 +493,13 @@ D-FRAME-011 and D-FRAME-018.
 
 ## D-PROJ-020: Predeclared Model Roster And Cost Ceiling
 
+**Current caveat.** Superseded by D-PROJ-024 (2026-05-15) for the
+preprint. Preprint roster narrows to one Option-B model (default
+`Qwen/Qwen2.5-7B-Instruct-Turbo`) plus optional Option-C cells
+including `claude-sonnet-4-6` re-anchor; cost ceiling drops to
+USD 300. The full D-FRAME-020 roster carries forward to the future
+Engels paper or a sequel main-conference attempt.
+
 **Decision.** Paper-claim runs use the locked D-FRAME-020 model roster
 and a hard USD 1,500 ceiling across model API calls.
 
@@ -500,6 +524,13 @@ D-FRAME-020 and D-FRAME-023.
   re-scoped rather than silently expanding spend.
 
 ## D-PROJ-021: Adversarial Layer Is Constitutive
+
+**Current caveat.** Partially superseded by D-PROJ-024 (2026-05-15)
+for the preprint. The threat-model class (capability failure plus
+targeted adversarial layer) and the no-red-team-option closure both
+transfer. The 50-trajectory breakdown shrinks to 16 trajectories
+(4 each against M4 / M5+M6 / M7 / M8); the 18 adaptive-vs-DRG-0
+trajectories carry forward to the future Engels paper.
 
 **Decision.** The paper's threat model is capability failure plus a
 targeted adversarial layer. The no-red-team option considered in
@@ -528,6 +559,11 @@ D-FRAME-015, D-FRAME-022, and D-FRAME-019.
 
 ## D-PROJ-022: Paper 2 Redirects To S1 Fine-Tuning
 
+**Current caveat.** Carries forward under D-PROJ-024 (2026-05-15)
+alongside the newly-deferred Engels extension. Both Engels and S1
+fine-tuning are future-work threads; paper 1 (the preprint) makes
+no performance claim about either.
+
 **Decision.** Paper 2 becomes the S1 fine-tuning sequel:
 
 > Trained operators reach contract-compliance at smaller scales than
@@ -548,6 +584,13 @@ D-FRAME-010 and D-FRAME-027.
 
 ## D-PROJ-023: Phase 2 Documentation Alignment Cycle
 
+**Current caveat.** Superseded by D-PROJ-024 (2026-05-15).
+`framing_v2/PREPRINT_RESCOPE.md` is now the top-level paper-framing
+source of truth; `framing_v2/CONVERGED.md` remains preserved as
+historical NeurIPS-2027-main provenance with a banner pointing to the
+rescope file. Phase 2 doc-alignment work closed 2026-05-11; downstream
+propagation of D-PROJ-024 to active docs is a follow-on pass.
+
 **Decision.** Phase 2 documentation alignment is the current
 cross-repo cycle. `framing_v2/CONVERGED.md` is the top-level paper
 framing source of truth until a later maintainer decision supersedes it.
@@ -565,3 +608,77 @@ framing source of truth until a later maintainer decision supersedes it.
   a current claim.
 - Phase 2 uses batch edits with one end-of-phase audit, not a separate
   audit after every batch.
+
+## D-PROJ-024: Preprint Rescope Locked
+
+**Decision.** The repo's current paper deliverable is an arXiv preprint
+by 2026-09-30, 8-12 pages in NeurIPS or ICML LaTeX format, not the
+NeurIPS 2027 main-conference submission previously locked by
+D-PROJ-018. The preprint inherits the merged-paper title, mechanism
+inventory, lineage anchor, threat-model class, and closed reframes;
+it does not inherit the merge with Engels, the full predeclared model
+roster, the USD 1,500 cost ceiling, the 50-trajectory adversarial
+layer, or the bounded Hierarchical Summarization empirical contrast.
+
+**Provenance.** `framing_v2/PREPRINT_RESCOPE.md` 2026-05-15. The file
+locks nine preprint-scope decisions (D-PREPRINT-001 through
+D-PREPRINT-009) and supersedes specific D-FRAME and D-PROJ decisions
+for preprint scope only; `framing_v2/CONVERGED.md` is preserved as the
+historical NeurIPS-2027-main framing record with a banner pointing to
+the rescope file.
+
+**Rationale.** Three drivers: Y2 Imperial coursework + summer-2026
+paid roles squeezing single-maintainer bandwidth, a sub-specialty
+pivot toward mechanistic interpretability for Y2 application work,
+and the maintainer's pre-committed floor outcome (preprint +
+benchmark released + reproducible baselines) called out in the
+career-strategy CLAUDE.md before May 2026. Executing the floor with
+discipline rather than retreating from a ceiling.
+
+**Locked deltas (summary).**
+
+- **Deliverable.** arXiv preprint by 2026-09-30 (D-PREPRINT-001).
+  Supersedes D-PROJ-018's NeurIPS 2027 main-conference target.
+- **Engels deferral.** Engels Backdoor Code extension unmerged and
+  deferred to a future paper (D-PREPRINT-002). Drops §7.5, DRG-0,
+  the Houdini/Guard scaling-laws-for-oversight curve placement, the
+  18 adaptive-vs-DRG-0 trajectories, hypothesis H3, the merge-decision
+  gate (D-PROJ-019), the six-clause commit/revert rules from
+  D-FRAME-018, and the Greenblatt DRG-artifacts paper-killer preempt
+  (D-FRAME-019 clause 2).
+- **Roster re-anchor.** Sonnet 4 cells re-anchor to
+  `claude-sonnet-4-6` immediately (D-PREPRINT-003); the 2026-06-15
+  Sonnet 4 retirement binding dissolves.
+- **Empirical scope.** Option B floor (M4-M8 ablations × one model
+  class × ~25-30 GovernedAgentBench tasks); Option C stretch (small
+  model-scale cross-product) optional if July substrate holds
+  (D-PREPRINT-004). Tests H1 as headline; H2 reported as preliminary
+  evidence if Option C runs.
+- **Cost ceiling.** USD 1,500 → USD 300 (D-PREPRINT-005).
+- **Adversarial layer.** 50 trajectories → 16 (4 each against M4 /
+  M5+M6 / M7 / M8) (D-PREPRINT-006).
+- **HS contrast.** Bounded empirical contrast dropped; Hierarchical
+  Summarization remains in §2 related-work prose only
+  (D-PREPRINT-007).
+- **Title / framing / mechanism inventory.** Unchanged
+  (D-PREPRINT-008).
+- **Future-work expansion.** Engels extension, full model-scale
+  cross-product, S1 fine-tuning, bounded HS contrast, full adaptive
+  red-team all join the future-work section (D-PREPRINT-009).
+
+**Implications.**
+
+- `framing_v2/PREPRINT_RESCOPE.md` is the active source of truth for
+  paper scope. `framing_v2/CONVERGED.md` is preserved as historical
+  record; any conflict resolves in favour of the rescope file.
+- Downstream doc-alignment work (~13 files) propagates the rescope to
+  active docs; not blocking the next substantive step (benchmark
+  measurement-readiness).
+- The framing-overclaim paper-killer preempt (D-FRAME-019 clause 1) is
+  more load-bearing in the preprint than it was in the merged paper,
+  because Engels no longer provides the empirical bridge to the AI
+  control vocabulary. Defend the framing claim in §1 / §2 prose plus
+  the arXiv:2510.09462 citation.
+- External framing stays unchanged: AI control paper under the AI
+  safety umbrella. Do not soften the external framing because scope
+  shrank.

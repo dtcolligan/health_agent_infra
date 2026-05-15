@@ -1,19 +1,14 @@
-# Benchmarks
+# Benchmark Lane
 
-Benchmarks in this repo measure contract-governed agent operation. The
-first benchmark is GovernedAgentBench, which uses HAI as the reference
-runtime while keeping the benchmark schema separate from HAI internals.
+GovernedAgentBench is the benchmark companion to the preprint at
+[`/PAPER.md`](../PAPER.md). It lives at
+[`governed_agent_bench/`](governed_agent_bench/) (the inner namespace is
+the Python package and JSON schema-version name; see
+`governed_agent_bench.trajectory.v2` etc.).
 
-This is the owner lane for benchmark work. GovernedAgentBench lives under
-`governed_agent_bench/`, and benchmark-specific tests live under
-`verification/`.
+Benchmark-specific tests live under
+[`verification/`](verification/).
 
-Read [`../project/FRAME.md`](../project/FRAME.md),
-[`../project/DECISIONS.md`](../project/DECISIONS.md),
-[`../project/OPERATING_MODEL.md`](../project/OPERATING_MODEL.md),
-[`../research/runtime_contracts_paper/PAPER_FRAME.md`](../research/runtime_contracts_paper/PAPER_FRAME.md),
-and
-[`../research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md`](../research/runtime_contracts_paper/RESEARCH_EVAL_STRATEGY.md)
-for the research frame before adding benchmark tasks.
-
-See `governed_agent_bench/`.
+Read [`/PAPER.md`](../PAPER.md) for scope and decisions. Start at
+[`governed_agent_bench/README.md`](governed_agent_bench/README.md) for
+the benchmark itself.

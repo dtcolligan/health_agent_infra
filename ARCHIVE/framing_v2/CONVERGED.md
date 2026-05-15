@@ -1,5 +1,15 @@
 # Phase 1 Convergence Report
 
+> **Notice (2026-05-15):** This file is preserved as the historical
+> NeurIPS 2027 main-conference framing record. For current paper scope,
+> calendar, roster, cost ceiling, and empirical contribution, see
+> [`PREPRINT_RESCOPE.md`](PREPRINT_RESCOPE.md). The headline frame,
+> title, mechanism inventory (M4-M8 + M9-TX), lineage anchor, and
+> closed reframes transfer unchanged; the Engels extension, full model
+> roster, USD 1,500 ceiling, 50-trajectory adversarial layer, and
+> NeurIPS 2027 main-conference deadline do not. Resolve any conflict in
+> favour of `PREPRINT_RESCOPE.md`.
+
 **Status:** Phase 1 closed.
 **Closed:** 2026-05-11
 **Total rounds:** 3 (R3, R4, R5; rounds 1-2 predated this orchestration

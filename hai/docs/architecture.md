@@ -5,9 +5,10 @@ shell-capable personal-health agent. The user speaks to the agent; the
 agent operates `hai`; `hai` defines the allowed tasks, validates the
 agent's outputs, owns the local write path, and records the audit trail.
 
-Paper-framing note: this file describes HAI runtime architecture; for the
-active paper title, venue, and mechanism inventory, see
-[`../../research/runtime_contracts_paper/framing_v2/CONVERGED.md`](../../research/runtime_contracts_paper/framing_v2/CONVERGED.md).
+Paper-framing note: this file describes HAI runtime architecture; for
+active paper title, mechanism inventory, and scope, see
+[`/PAPER.md`](../../PAPER.md). Historical framing-v2 record is at
+[`/ARCHIVE/framing_v2/CONVERGED.md`](../../ARCHIVE/framing_v2/CONVERGED.md).
 
 That framing matters. The architecture is not "a Python app that happens
 to have an agent front end." It is infrastructure around an agentic AI
@@ -348,7 +349,7 @@ into a bounded CLI workflow without changing the governance model:
 - **Authoritative intent-router skill.** Maps NL intent to CLI
   workflow sequences by reading the capabilities manifest as its
   source of truth. Teaches the agent `hai` the way Claude already
-  knows `gh`. See [``agent_operable_runtime_plan.md``](../../hai/reporting/plans/historical/agent_operable_runtime_plan.md)
+  knows `gh`. See [``agent_operable_runtime_plan.md``](../../ARCHIVE/hai_release_history/plans/historical/agent_operable_runtime_plan.md)
   for the full cycle context.
 
 ## Command contract and mutation substrates
@@ -476,15 +477,17 @@ hai/src/health_agent_infra/
         expert-explainer/SKILL.md
         review-protocol/SKILL.md
         safety/SKILL.md
-        hai/reporting/SKILL.md
-hai/reporting/
-    docs/                           # this doc + friends
-    artifacts/flagship_loop_proof/  # eval runner captures
-    plans/                          # roadmap + release/audit plans
-    experiments/                    # Phase 0.5 / 2.5 throwaway prototypes
-verification/
+        writeback-protocol/SKILL.md
+        reporting/SKILL.md
+hai/docs/                           # this doc + friends (architecture, privacy, etc.)
+hai/verification/
     tests/                          # unit + contract + integration tests
     evals/                          # dev-reference eval docs + harness notes
+
+# HAI release history (v0.1.X cycles, audit chains, work packets,
+# release proof, artifacts) is preserved under
+# /ARCHIVE/hai_release_history/ as historical provenance. Not part of
+# the active tree per D-13 in /PAPER.md (single page of truth).
 hai/src/health_agent_infra/evals/       # packaged deterministic eval runner
     scenarios/{domain,synthesis}/
     rubrics/
@@ -520,7 +523,7 @@ hai state init | migrate | read | snapshot | reproject
 hai state snapshot --evidence-json <p> --as-of <d> --user-id <u>
 # Emits classified_state + policy_result for every domain in one call.
 # (The legacy recovery-only `hai classify` / `hai policy` debug CLIs
-# were removed in v0.1.4 — see `hai/reporting/plans/v0_1_4/adr_classify_policy_cli.md`.)
+# were removed in v0.1.4 — see `ARCHIVE/hai_release_history/plans/v0_1_4/adr_classify_policy_cli.md`.)
 # For multi-scenario sweeps use the eval runner: `hai eval run --domain <d>`.
 
 hai propose  --domain <d> --proposal-json <p> --base-dir <root>

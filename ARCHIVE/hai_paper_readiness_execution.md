@@ -1,5 +1,21 @@
 # HAI Paper-Readiness Execution Plan
 
+> **Notice (2026-05-15):** This file's overall phase plan, work-packet
+> structure, and engineering deliverables remain valid. The *scope* the
+> work targets has narrowed: per D-PROJ-024 / D-PREPRINT-001 through
+> D-PREPRINT-009 in [`framing_v2/PREPRINT_RESCOPE.md`](framing_v2/PREPRINT_RESCOPE.md),
+> the active deliverable is an arXiv preprint by 2026-09-30, not a
+> NeurIPS 2027 main-conference submission. Concretely: Phase 5-6 model
+> baselines run on one Option-B model class with ~25-30 tasks (not the
+> full D-FRAME-020 roster); Engels-extension work (Phase 6a's 18
+> adaptive-vs-DRG-0 trajectories, and any DRG-0 implementation) is
+> deferred to a future paper; the bounded HS contrast is dropped from
+> preprint scope; cost ceiling is USD 300, not USD 1,500. The Phase
+> 1-5 mechanism-isolation, refusal-in-code, manifest-completeness,
+> hermeticity, and harness work is unchanged. Where this file's
+> "merged-paper" framing conflicts with `PREPRINT_RESCOPE.md`, resolve
+> in favour of the rescope file.
+
 **Status:** HAI support-lane execution plan, revised for the merged
 NeurIPS 2027 paper frame on 2026-05-11.
 

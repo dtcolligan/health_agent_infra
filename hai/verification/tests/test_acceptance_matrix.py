@@ -225,58 +225,9 @@ def test_path_4_host_agent_propose_synthesize_pipeline_is_exercised():
 # ---------------------------------------------------------------------------
 
 
-def test_acceptance_matrix_lives_in_tactical_plan():
-    """A1 rename + C7 matrix: the authoritative document is
-    tactical_plan_v0_1_x.md §4.2. This test asserts the doc-side
-    contract is in place. Drift would make this test fail."""
-
-    plan = _REPO_ROOT / "hai" / "reporting" / "plans" / "tactical_plan_v0_1_x.md"
-    text = plan.read_text()
-    assert "trusted-first-value matrix" in text.lower()
-    assert "5 paths" in text or "five-path" in text
-    # Each path's name must appear so the doc-side and code-side
-    # vocabularies align.
-    for needle in (
-        "Blank demo",
-        "Persona demo",
-        "intervals.icu",
-        "Host-agent",
-        "Failure path",
-    ):
-        assert needle in text, (
-            f"trusted-first-value matrix missing path label {needle!r}"
-        )
-
-
-def test_a1_rename_old_first_recommendation_phrase_is_gone(tmp_path: Path):
-    """A1 rename: "first recommendation in 5 min" / "first
-    recommendation in five min" is the old ambiguous gate language.
-    It should no longer appear in v0.1.13+ planning surfaces.
-
-    Historical references in v0_1_X archived plans are excluded —
-    those are immutable provenance. Live planning surfaces only."""
-
-    surfaces = [
-        _REPO_ROOT / "hai" / "reporting" / "plans" / "tactical_plan_v0_1_x.md",
-        _REPO_ROOT / "hai" / "reporting" / "plans" / "strategic_plan_v1.md",
-        _REPO_ROOT / "project/ROADMAP.md",
-        _REPO_ROOT / "README.md",
-    ]
-    offending: list[str] = []
-    banned = (
-        "first-recommendation in 5 min",
-        "first recommendation in 5 min",
-        "first recommendation in five min",
-    )
-    for surface in surfaces:
-        if not surface.exists():
-            continue
-        text = surface.read_text().lower()
-        for phrase in banned:
-            if phrase in text:
-                offending.append(f"{surface.name} contains {phrase!r}")
-    assert not offending, (
-        "A1 rename incomplete — pre-W-A1C7 'first recommendation' "
-        "phrasing still appears in live planning surfaces:\n"
-        + "\n".join(offending)
-    )
+# test_acceptance_matrix_lives_in_tactical_plan and
+# test_a1_rename_old_first_recommendation_phrase_is_gone were HAI release-
+# cycle doc-discipline tests bound to tactical_plan_v0_1_x.md and
+# project/ROADMAP.md. Both files were archived during the 2026-05-15 repo
+# consolidation when HAI was frozen as a product. The runtime path-coverage
+# tests above (`test_path_1` through `test_path_5`) remain in scope.

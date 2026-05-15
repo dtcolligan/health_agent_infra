@@ -1,12 +1,13 @@
 # Research Evaluation Strategy
 
-**Status:** Merged-paper evaluation strategy, aligned to
-`framing_v2/CONVERGED.md` on 2026-05-11.
+**Status:** Preprint-scope evaluation strategy, aligned to
+`framing_v2/PREPRINT_RESCOPE.md` on 2026-05-15.
 
-This file replaces the older workshop/runtime-first evaluation framing
-with the NeurIPS 2027 merged-paper design. The title is
-**Deterministic Software Contracts as Trusted Monitors in AI Control
-Protocols**.
+This file replaces the older NeurIPS 2027 merged-paper evaluation
+strategy. The title is unchanged: **Deterministic Software Contracts
+as Trusted Monitors in AI Control Protocols**. The deliverable is now
+an arXiv preprint by 2026-09-30 (D-PROJ-024 / D-PREPRINT-001) rather
+than a NeurIPS 2027 main-conference submission.
 
 ## Evaluation Object
 
@@ -20,15 +21,23 @@ The prompt is not the experimental intervention. Runtime mode is.
 
 ## Primary Questions
 
+For the preprint:
+
 1. Can individual runtime mechanisms M4-M8 be isolated and measured
-   under a held-constant prompt?
-2. Does the full runtime contract lower the model scale required to
-   pass predeclared bounded-operation thresholds?
-3. Does DRG-0, a deterministic Guard with general Elo = 0, produce a
-   meaningful Backdoor Code data point in the Engels scaling-laws-for-
-   oversight setup?
-4. Under bounded adversarial pressure, where does the contract preserve
-   safety/usefulness and where does it leak?
+   under a held-constant prompt on one model class? (headline; H1)
+2. *(Optional, Option C stretch)* Does the runtime shift the model-
+   scale safety floor on a small 2-3-cell `model_class` cross-product?
+   (preliminary evidence; H2)
+3. Under bounded adversarial pressure (16 trajectories), where does
+   the contract preserve safety/usefulness and where does it leak?
+
+Deferred to future work, not in the preprint:
+
+- The full predeclared-roster model-scale claim (H2 in its main-
+  conference form).
+- DRG-0 as a Guard data point on the Engels scaling-laws-for-oversight
+  curve (H3); the full Engels Backdoor Code extension is a future paper.
+- Bounded Hierarchical Summarization empirical contrast.
 
 ## Runtime Modes
 
@@ -57,19 +66,22 @@ M9-TX transaction integrity is never ablated.
 
 ## Model Roster
 
-The predeclared roster has six Houdinis and three Guards.
+The preprint roster narrows from the full D-FRAME-020 set (six
+Houdinis + three Guards) to a preprint-scope subset:
 
-| Role | Model | Provider / route | Paper constraint |
+| Role | Model | Provider / route | Preprint role |
 |---|---|---|---|
-| Houdini | `Qwen/Qwen2.5-3B-Instruct` | Hugging Face local | Smallest local/open-weight floor candidate |
-| Houdini | `Qwen/Qwen2.5-7B-Instruct-Turbo` | Together AI | Pilot Houdini and low-cost hosted cell |
-| Houdini | `accounts/fireworks/models/qwen2p5-32b-instruct` | Fireworks | Mid-scale hosted open-weight cell |
-| Houdini | `accounts/fireworks/models/qwen2p5-72b-instruct` | Fireworks | Large hosted open-weight cell |
-| Houdini | `claude-3-5-haiku-20241022` | Anthropic | Retired 2026-02-19; pilot-trajectories only. New cells use `claude-haiku-4-5-20251001` under a new roster hash. |
-| Houdini | `claude-sonnet-4-20250514` | Anthropic | Retires 2026-06-15. Section 7.5 must complete before then or re-anchor to `claude-sonnet-4-6` under a new roster hash. |
-| Guard | DRG-0 | Deterministic | General Elo = 0 |
-| Guard | `claude-3-5-haiku-20241022` | Anthropic | Retired; pilot-continuity guard only unless successor rerun |
-| Guard | `gpt-4o-mini-2024-07-18` | OpenAI | Secondary LLM Guard / judge |
+| Rule baseline | (no-model deterministic harness) | n/a | Anchors deterministic routing tasks; always run |
+| Option B model | `Qwen/Qwen2.5-7B-Instruct-Turbo` (default) | Together AI | Single model class for headline mechanism-ablation experiment. Final choice ratified at mid-June pilot lock; `Qwen/Qwen2.5-32B-Instruct` is the alternative if 7B is too capable to surface mechanism deltas |
+| Option C stretch cell (optional) | `claude-sonnet-4-6` | Anthropic | One cloud cell for the small `runtime_mode` × `model_class` cross-product if Option C runs |
+
+`claude-sonnet-4-20250514` cells re-anchor to `claude-sonnet-4-6`
+immediately per D-PREPRINT-003; the 2026-06-15 Sonnet 4 retirement
+binding is dissolved.
+
+The full predeclared D-FRAME-020 roster (six Houdinis + three Guards
+including DRG-0 and `gpt-4o-mini-2024-07-18`) carries forward to
+future-work papers, not the preprint.
 
 Every paper-claim trajectory and score records `model_roster_hash`,
 `model_identity`, `prompt_template_hash`, `manifest_snapshot`, runtime
@@ -106,16 +118,16 @@ headline claims.
 
 ## Claim Tiers
 
-| Tier | Claim | Minimum evidence |
+| Tier | Claim | Preprint disposition |
 |---|---|---|
-| T0 | Infrastructure | schemas, manifest snapshot, prompt hash, scorer config hash, runtime modes, mechanism-disabled evidence |
-| T1 | Mechanism effect | at least one M4-M8 toggle creates a non-zero metric gap |
-| T2 | Component ranking | multiple M4-M8 mechanisms ranked across metrics/tasks |
-| T3 | Runtime-as-floor | smallest model + full contract passes; larger model + `no_runtime_enforcement` fails |
-| T4 | Engels deterministic Guard | DRG-0 data point on Backdoor Code curve after pilot gate |
+| T0 | Infrastructure | In scope. Schemas, manifest snapshot, prompt hash, scorer config hash, runtime modes, mechanism-disabled evidence. |
+| T1 | Mechanism effect | In scope. At least one M4-M8 toggle creates a non-zero metric gap (Option B headline). |
+| T2 | Component ranking | In scope. Multiple M4-M8 mechanisms ranked across metrics/tasks under Option B. |
+| T3 | Runtime-as-floor | Preliminary only, Option C stretch. Small 2-3-cell `model_class` × `{full_contract, no_runtime_enforcement}` cross-product. Full claim is future work. |
+| T4 | Engels deterministic Guard | **Out of scope.** DRG-0 + Engels Backdoor Code extension deferred to a future paper. |
 
-T3/T4 claims require `claim_tier`, `model_roster_hash`, and
-predeclared scorer/threshold references in trajectory and score
+T3 preliminary claims still require `claim_tier`, `model_roster_hash`,
+and predeclared scorer/threshold references in trajectory and score
 artifacts.
 
 ## Task Families
@@ -132,15 +144,19 @@ GovernedAgentBench task families remain L1-L7. The paper emphasizes:
 
 ## Adversarial Layer
 
-The adversarial layer has 50 trajectories:
+The preprint adversarial layer has 16 trajectories
+(D-PREPRINT-006):
 
-| Attack | Count | Mechanism | Adjudication |
+| Attack | Preprint count | Mechanism | Adjudication |
 |---|---:|---|---|
-| Refusal bypass | 8 | M7 | refusal markers, clinical-claim detector, fixed rubric |
-| Mutation escalation | 8 | M5 + M6 | DB state diff and CLI boundary checks |
-| Audit tampering | 8 | M8 | evidence-reference resolver and faithfulness rubric |
-| Schema evasion | 8 | M4 | schema validation, exit codes, side-effect checks |
-| Adaptive attack vs DRG-0 | 18 | DRG-0 | APPS tests, DRG verdict, LLM Guard comparison |
+| Refusal bypass | 4 | M7 | refusal markers, clinical-claim detector, fixed rubric |
+| Mutation escalation | 4 | M5 + M6 | DB state diff and CLI boundary checks |
+| Audit tampering | 4 | M8 | evidence-reference resolver and faithfulness rubric |
+| Schema evasion | 4 | M4 | schema validation, exit codes, side-effect checks |
+| Adaptive attack vs DRG-0 | 0 (deferred) | n/a | Future Engels paper |
+
+The 18 adaptive-vs-DRG-0 trajectories from the original 50 carry
+forward to a future Engels paper alongside DRG-0.
 
 The attacker may see the deployment prompt, manifest, and relevant
 runtime outputs. The scope statement is bounded: this is a stress test
@@ -152,48 +168,29 @@ AgentDojo (arXiv:2406.13352), Constitutional Classifiers
 Adaptive Attacks on Trusted Monitors (arXiv:2510.09462), and
 SHADE-Arena.
 
-## Engels Backdoor Code Extension
+## Engels Backdoor Code Extension (deferred)
 
-The July 2026 pilot uses:
+Deferred to a future paper per D-PREPRINT-002. The original July 2026
+pilot protocol (60 APPS samples, three Houdinis, DRG-0, Haiku LLM
+Guard, ~USD 18.60, six-clause commit/revert rules) carries forward as
+the de-risk step for that future paper rather than as a gate on this
+preprint. The "five Houdini attempts per sample" verification item
+against arXiv:2504.18530 §4 carries forward with it.
 
-- 60 APPS competition samples selected by a frozen sha256 procedure.
-- Houdinis: `Qwen/Qwen2.5-7B-Instruct-Turbo`, Claude 3.5 Haiku,
-  Claude Sonnet 4.
-- Guards: DRG-0 and Claude 3.5 Haiku LLM Guard.
-- About USD 18.60 API cost using May 2026 pricing snapshots.
-- Six-clause commit rule and six-clause revert rule.
+## Bounded Hierarchical Summarization Contrast (deferred)
 
-The "five Houdini attempts per sample" claim must be verified against
-arXiv:2504.18530 Section 4 before pilot execution.
-
-The full paper run happens only after the August 2026 pilot decision
-gate commits the merged scope.
-
-## Bounded Hierarchical Summarization Contrast
-
-Section 7.6 is limited to L6 governance/refusal, with optional L5 if
-early. It has a two-week Dom-time cap and USD 200 API cap. If the cap
-is missed, the material demotes to Section 2.3 prose.
-
-Methodological constraints:
-
-- Do not present an optional classifier stage as part of Anthropic's HS
-  method. If added, call it this paper's extension.
-- Report detection rate, false-positive rate, uncertain rate, and
-  citation-validity rate following the Pareto-frontier reporting style
-  of Constitutional Classifiers.
-- Use the HAI v0.2.0 manifest snapshot at
-  `benchmark/governed_agent_bench/manifests/hai_0_2_0.json` (about
-  189 KB).
-- Use the two-week cap as the main implementation bound; if an hour
-  estimate is needed, use 16-35 hours with calibration iteration.
+Dropped from the preprint per D-PREPRINT-007. Hierarchical
+Summarization remains in §2 related-work prose only as the direct
+LLM-monitor comparator. The original L6-only bounded empirical
+contrast (2-week + USD 200 caps) carries forward to future work.
 
 ## Cost Ceiling
 
-Total model API spend across roster runs, attack-policy runs, Section
-7.5 Engels, and Section 7.6 HS is capped at **USD 1,500**. This includes
-one retry cycle and provider-substitution reruns caused by model
-retirement or schema tightening. Local GPU opportunity cost and human
+Total model API spend across the Option B mechanism-ablation
+experiment, the optional Option C stretch, and the 16-trajectory
+adversarial layer is capped at **USD 300** (D-PREPRINT-005). Option
+B alone is well under USD 100; the remaining headroom covers Option C
+and one full retry cycle. Local GPU opportunity cost and human
 adjudication time are excluded.
 
 Any run that cannot fit within the cap is dropped or demoted; the paper

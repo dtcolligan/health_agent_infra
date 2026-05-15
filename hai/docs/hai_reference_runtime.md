@@ -4,14 +4,11 @@ HAI is the personal-wellness reference runtime for the runtime-contract
 research project. It is packaged as `health-agent-infra` and exposed
 through the local `hai` CLI.
 
-Paper-framing note: this file describes the HAI reference runtime; for the
-active paper framing, see
-[`../../research/runtime_contracts_paper/framing_v2/CONVERGED.md`](../../research/runtime_contracts_paper/framing_v2/CONVERGED.md).
-
-For the repo-wide research frame, start with
-[`../../project/FRAME.md`](../../project/FRAME.md),
-[`../../project/DECISIONS.md`](../../project/DECISIONS.md), and
-[`../../project/OPERATING_MODEL.md`](../../project/OPERATING_MODEL.md).
+Paper-framing note: this file describes the HAI reference runtime;
+for active paper scope, calendar, and decisions, see
+[`/PAPER.md`](../../PAPER.md). For the AI-tool operating contract, see
+[`/AGENTS.md`](../../AGENTS.md). Historical framing-v2 record is at
+[`/ARCHIVE/framing_v2/CONVERGED.md`](../../ARCHIVE/framing_v2/CONVERGED.md).
 This document is the HAI-specific reference-runtime operator manual.
 
 ## What HAI Is
@@ -32,7 +29,7 @@ agent provider may still receive whatever context you give that provider.
 That is the only path data leaves the machine, and it is not something
 `hai` controls.
 
-![A user conversation flows into a shell-capable agent. The agent invokes the hai governed tool surface, which validates, gates, and audits every write before persisting to local SQLite state, JSONL audit logs, and the OS keyring/config. A direct write attempt from the agent to local state is shown crossed out at the boundary. A read-only return path through hai today, explain, review, and backup feeds back to the agent.](../../hai/assets/product_boundary.png)
+![A user conversation flows into a shell-capable agent. The agent invokes the hai governed tool surface, which validates, gates, and audits every write before persisting to local SQLite state, JSONL audit logs, and the OS keyring/config. A direct write attempt from the agent to local state is shown crossed out at the boundary. A read-only return path through hai today, explain, review, and backup feeds back to the agent.](../../ARCHIVE/hai_assets/product_boundary.png)
 
 The agent proposes, explains, and asks for missing context. The wrapper
 validates, gates, mutates, and records. Every persisted byte goes through
@@ -56,7 +53,7 @@ calls: typed state, projection, classification, policy, validation, and
 atomic commit. The model keeps conversation, clarification, uncertainty
 surfacing, and prose rationale over a bounded action set.
 
-![Two side-by-side panels. Left panel titled Agent does everything shows a single operator figure surrounded by an overlapping cluster of seven labeled circles: chat, memory, interpret, plan, validate, audit, DB; subtitle: non-deterministic, no audit trail. Right panel titled Agent + governed runtime shows the same operator figure connected through a labeled hai governed tool surface gateway to a tidy column of five separate boxes: typed state, deterministic classifiers, policy rules, atomic commits, audit log; subtitle: deterministic, reconstructable.](../../hai/assets/why_this_exists.png)
+![Two side-by-side panels. Left panel titled Agent does everything shows a single operator figure surrounded by an overlapping cluster of seven labeled circles: chat, memory, interpret, plan, validate, audit, DB; subtitle: non-deterministic, no audit trail. Right panel titled Agent + governed runtime shows the same operator figure connected through a labeled hai governed tool surface gateway to a tidy column of five separate boxes: typed state, deterministic classifiers, policy rules, atomic commits, audit log; subtitle: deterministic, reconstructable.](../../ARCHIVE/hai_assets/why_this_exists.png)
 
 The contract is one line:
 
@@ -345,7 +342,7 @@ The authoritative command surface is generated at
 
 | Reader | Best next docs |
 |---|---|
-| User trying the package | [`current_system_state.md`](current_system_state.md), [`privacy.md`](privacy.md), [`non_goals.md`](non_goals.md), [`backup_and_recovery.md`](backup_and_recovery.md) |
-| Host-agent integrator | [`host_agent_contract.md`](host_agent_contract.md), [`agent_integration.md`](agent_integration.md), [`agent_cli_contract.md`](agent_cli_contract.md), [`../../hai/docs/runtime_contract_overview.md`](../../hai/docs/runtime_contract_overview.md) |
-| Runtime contributor | [`../../CONTRIBUTING.md`](../../CONTRIBUTING.md), [`architecture.md`](architecture.md), [`domains/README.md`](domains/README.md), [`x_rules.md`](x_rules.md) |
-| Research / benchmark reviewer | [`../../research/runtime_contracts_paper/framing_v2/CONVERGED.md`](../../research/runtime_contracts_paper/framing_v2/CONVERGED.md), [`../../project/FRAME.md`](../../project/FRAME.md), [`../../research/runtime_contracts_paper/PAPER_FRAME.md`](../../research/runtime_contracts_paper/PAPER_FRAME.md), [`../../benchmark/governed_agent_bench/README.md`](../../benchmark/governed_agent_bench/README.md) |
+| User trying the package | [`privacy.md`](privacy.md), [`/ARCHIVE/hai_docs/non_goals.md`](../../ARCHIVE/hai_docs/non_goals.md), [`/ARCHIVE/hai_docs/backup_and_recovery.md`](../../ARCHIVE/hai_docs/backup_and_recovery.md) |
+| Host-agent integrator | [`agent_cli_contract.md`](agent_cli_contract.md), [`/ARCHIVE/hai_docs/host_agent_contract.md`](../../ARCHIVE/hai_docs/host_agent_contract.md), [`/ARCHIVE/hai_docs/agent_integration.md`](../../ARCHIVE/hai_docs/agent_integration.md) |
+| Runtime contributor | [`/CONTRIBUTING.md`](../../CONTRIBUTING.md), [`architecture.md`](architecture.md), [`domains/README.md`](domains/README.md), [`x_rules.md`](x_rules.md) |
+| Research / benchmark reviewer | [`/PAPER.md`](../../PAPER.md), [`/AGENTS.md`](../../AGENTS.md), [`../../benchmark/governed_agent_bench/README.md`](../../benchmark/governed_agent_bench/README.md), [`/ARCHIVE/framing_v2/CONVERGED.md`](../../ARCHIVE/framing_v2/CONVERGED.md) |

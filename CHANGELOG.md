@@ -7,7 +7,10 @@ the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 with the v0.x caveat that breaking changes can land in minor releases
 until v1.0.
 
-Per-release detail lives under `hai/reporting/plans/<version>/`.
+Per-release detail lives under `ARCHIVE/hai_release_history/plans/<version>/`
+(moved from `hai/reporting/plans/` in the 2026-05-15 repo consolidation;
+all `hai/reporting/plans/<v>/` references in entries below resolve at
+that archive path).
 
 ---
 
