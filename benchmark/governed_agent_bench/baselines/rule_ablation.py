@@ -75,6 +75,7 @@ def run_rule_baseline_ablation(
                 manifest_snapshot=load_manifest_snapshot(
                     trajectory["manifest_snapshot_id"]
                 ),
+                observation_root=trajectory_dir,
             )
             score_path = score_dir / f"{trajectory['trajectory_id']}.score.json"
             score_path.write_text(
