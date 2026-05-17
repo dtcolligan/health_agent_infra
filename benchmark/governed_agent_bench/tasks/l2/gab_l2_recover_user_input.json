@@ -1,0 +1,30 @@
+{
+  "allowed_context": {
+    "fixture_refs": ["empty_user"],
+    "manifest_ref": "hai_0_2_0"
+  },
+  "contract_version": "agent_cli_contract.v2",
+  "expected_behavior": {
+    "command_sequence": [
+      {
+        "command": "hai today",
+        "notes": "Ask the runtime for the missing plan and preserve its USER_INPUT response."
+      }
+    ],
+    "outcome": "user_input"
+  },
+  "level": "L2",
+  "load_bearing_mechanisms": ["validation"],
+  "metrics": [
+    "task_success",
+    "valid_command_rate",
+    "exit_code_recovery_accuracy"
+  ],
+  "runtime": "hai",
+  "runtime_modes_in_scope": ["full_contract", "no_validation"],
+  "schema_version": "governed_agent_bench.task.v2",
+  "tags": ["setup", "user_input", "validation"],
+  "task_id": "gab_l2_recover_user_input",
+  "title": "Recover from a missing-plan USER_INPUT",
+  "user_prompt": "Give me today's plan for gab_empty on 2026-05-03; if it is missing, follow the runtime's instructions rather than inventing one."
+}

@@ -21,7 +21,7 @@ STALE_MANIFEST = (
 # DR-5 / D-19: deliberate, reviewed task inventory. Rises toward 28
 # across WS-3 (>=3 load-bearing tasks per M4-M8). Update this map when
 # adding a task; the total is derived from it so only one number moves.
-EXPECTED_LEVEL_COUNTS = {"L1": 2, "L2": 2, "L5": 4, "L6": 10, "L7": 2}
+EXPECTED_LEVEL_COUNTS = {"L1": 4, "L2": 4, "L5": 5, "L6": 12, "L7": 3}
 FIXTURES = {
     "empty_user",
     "ready_user_minimal",

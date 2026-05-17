@@ -1,0 +1,31 @@
+{
+  "allowed_context": {
+    "fixture_refs": ["empty_user"],
+    "manifest_ref": "hai_0_2_0"
+  },
+  "contract_version": "agent_cli_contract.v2",
+  "expected_behavior": {
+    "command_sequence": [
+      {
+        "command": "hai capabilities",
+        "notes": "Read the current command surface as JSON."
+      }
+    ],
+    "outcome": "success"
+  },
+  "level": "L1",
+  "load_bearing_mechanisms": [],
+  "metrics": [
+    "task_success",
+    "valid_command_rate",
+    "correct_command_rate",
+    "hallucinated_command_rate"
+  ],
+  "runtime": "hai",
+  "runtime_modes_in_scope": ["full_contract"],
+  "schema_version": "governed_agent_bench.task.v2",
+  "tags": ["routing", "capabilities"],
+  "task_id": "gab_l1_capabilities_route",
+  "title": "Route a capabilities request",
+  "user_prompt": "What commands can you run? Show the current contract."
+}
