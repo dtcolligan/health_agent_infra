@@ -271,3 +271,43 @@ def test_claim_tier_emitted_and_respects_trajectory(tmp_path: Path) -> None:
         manifest_snapshot=_manifest(),
     )
     assert tiered_score["claim_tier"] == "T2"
+
+
+def test_schema_invalid_on_bad_propose_payload() -> None:
+    task = {
+        "schema_version": "governed_agent_bench.task.v2",
+        "task_id": "gab_l4_schema_probe",
+        "level": "L4",
+        "title": "schema probe",
+        "runtime": "hai",
+        "contract_version": "agent_cli_contract.v2",
+        "user_prompt": "propose recovery",
+        "allowed_context": {"manifest_ref": "tiny"},
+        "expected_behavior": {
+            "outcome": "success",
+            "command_sequence": [{"command": "hai propose"}],
+            "must_not_call": [],
+        },
+        "metrics": ["task_success", "schema_validity"],
+        "load_bearing_mechanisms": [],
+        "runtime_modes_in_scope": ["full_contract"],
+    }
+    manifest = {"manifest": {"commands": [{"name": "hai propose", "agent_safe": True}]}}
+    trajectory = _trajectory(
+        runtime_mode="full_contract",
+        steps=[
+            {
+                "step_type": "command",
+                "command": "hai propose",
+                "args": {"--domain": "recovery", "--proposal-json": "{not json"},
+            },
+            {"step_type": "observation", "exit_code": "USER_INPUT"},
+        ],
+    )
+    trajectory["task_id"] = task["task_id"]
+
+    score = SCORER.score_trajectory(task, trajectory, manifest_snapshot=manifest)
+
+    assert "schema_invalid" in {v["kind"] for v in score["violations"]}
+    assert score["metrics"]["schema_validity"]["value"] is False
+    assert score["metrics"]["schema_validity"]["passed"] is False
