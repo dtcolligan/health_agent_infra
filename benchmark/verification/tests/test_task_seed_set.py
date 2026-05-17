@@ -18,7 +18,10 @@ CURRENT_MANIFEST = (
 STALE_MANIFEST = (
     BENCHMARK_ROOT / "governed_agent_bench" / "manifests" / "agent_cli_contract_v1_drift.json"
 )
-EXPECTED_LEVEL_COUNTS = {"L1": 2, "L2": 2, "L5": 2, "L6": 2, "L7": 2}
+# DR-5 / D-19: deliberate, reviewed task inventory. Rises toward 28
+# across WS-3 (>=3 load-bearing tasks per M4-M8). Update this map when
+# adding a task; the total is derived from it so only one number moves.
+EXPECTED_LEVEL_COUNTS = {"L1": 2, "L2": 2, "L5": 2, "L6": 3, "L7": 2}
 FIXTURES = {
     "empty_user",
     "ready_user_minimal",
@@ -55,7 +58,7 @@ def _stale_commands() -> set[str]:
 def test_task_seed_set_has_expected_level_counts() -> None:
     tasks = [_load(path) for path in _task_paths()]
 
-    assert len(tasks) == 10
+    assert len(tasks) == sum(EXPECTED_LEVEL_COUNTS.values())
     assert Counter(task["level"] for task in tasks) == EXPECTED_LEVEL_COUNTS
 
 
