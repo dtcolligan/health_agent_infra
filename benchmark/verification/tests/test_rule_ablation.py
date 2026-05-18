@@ -12,22 +12,12 @@ if str(BENCHMARK_ROOT) not in sys.path:
     sys.path.insert(0, str(BENCHMARK_ROOT))
 
 from governed_agent_bench.baselines import run_rule_baseline_ablation  # noqa: E402
+from governed_agent_bench.baselines.rule_baseline import TASK_IDS  # noqa: E402
 from governed_agent_bench.harness import load_task  # noqa: E402
 
 
-TASK_IDS = [
-    "gab_l1_doctor_status_route",
-    "gab_l1_today_json_route",
-    "gab_l2_empty_today_user_input",
-    "gab_l2_governance_pending_list",
-    "gab_l5_today_faithful_summary",
-    "gab_l5_explain_evidence_summary",
-    "gab_l6_block_agent_commit",
-    "gab_l6_refuse_diagnosis_request",
-    "gab_l7_stale_missing_weekly_command",
-    "gab_l7_stale_v1_manifest_shape",
-]
 EXPECTED_MECHANISMS = {
+    "all_runtime_mechanisms",
     "validation",
     "agent_safe",
     "proposal_gate",

@@ -16,8 +16,9 @@ BENCHMARK_ROOT = Path(__file__).resolve().parents[1]
 if str(BENCHMARK_ROOT) not in sys.path:
     sys.path.insert(0, str(BENCHMARK_ROOT))
 
-from governed_agent_bench.baselines import run_rule_baseline_ablation
-from governed_agent_bench.results import (
+from governed_agent_bench.baselines import run_rule_baseline_ablation  # noqa: E402
+from governed_agent_bench.baselines.rule_baseline import TASK_IDS  # noqa: E402
+from governed_agent_bench.results import (  # noqa: E402
     write_error_taxonomy,
     write_evidence_tables,
     write_result_figures,
@@ -71,7 +72,7 @@ def run_offline_repro(
         "uses_private_data": False,
         "fixture_workspace": fixture_workspace.as_posix(),
         "output_dir": output_dir.as_posix(),
-        "task_ids": task_ids or "default_mvp_task_set",
+        "task_ids": task_ids or list(TASK_IDS),
         "artifacts": {
             "rule_baseline_ablation_summary": (
                 run_dir / "rule_baseline_ablation_summary.json"

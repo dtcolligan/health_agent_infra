@@ -23,6 +23,9 @@ The command writes:
 - `error_taxonomy/error_taxonomy.json`;
 - `offline_repro_manifest.json`.
 
+Without `--task-id`, the command runs the full committed 28-task
+preprint inventory across each task's declared runtime modes.
+
 For a small smoke run, repeat `--task-id`:
 
 ```bash

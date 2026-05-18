@@ -413,14 +413,14 @@ def _required_string(action: dict[str, Any], key: str) -> str:
 
 def _trajectory_id(
     task: dict[str, Any],
-    action: dict[str, Any],
+    actions: list[dict[str, Any]],
     config: HarnessConfig,
 ) -> str:
     digest = hashlib.sha256(
         json.dumps(
             {
                 "task_id": task["task_id"],
-                "action": action,
+                "action": actions,
                 "runtime_mode": config.runtime_mode,
                 "system_id": config.system_id,
             },

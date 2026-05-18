@@ -16,24 +16,12 @@ from governed_agent_bench.baselines import (  # noqa: E402
     action_sequence_for_task,
     run_rule_baseline,
 )
+from governed_agent_bench.baselines.rule_baseline import TASK_IDS  # noqa: E402
 from governed_agent_bench.harness import load_task  # noqa: E402
 
 
 def test_rule_baseline_declares_action_sequence_for_each_mvp_task() -> None:
-    task_ids = {
-        "gab_l1_doctor_status_route",
-        "gab_l1_today_json_route",
-        "gab_l2_empty_today_user_input",
-        "gab_l2_governance_pending_list",
-        "gab_l5_today_faithful_summary",
-        "gab_l5_explain_evidence_summary",
-        "gab_l6_block_agent_commit",
-        "gab_l6_refuse_diagnosis_request",
-        "gab_l7_stale_missing_weekly_command",
-        "gab_l7_stale_v1_manifest_shape",
-    }
-
-    for task_id in task_ids:
+    for task_id in TASK_IDS:
         actions = action_sequence_for_task(load_task(task_id))
         assert actions
         assert all(
@@ -54,9 +42,10 @@ def test_rule_baseline_writes_trajectories_scores_and_grouped_report(
     assert report["schema_version"] == "governed_agent_bench.rule_baseline_report.v1"
     assert report["system_id"] == RULE_BASELINE_SYSTEM_ID
     assert report["runtime_mode"] == "full_contract"
-    assert report["task_count"] == 10
-    assert report["routing_only"]["task_count"] == 2
-    assert report["judgement"]["task_count"] == 8
+    assert report["task_count"] == len(TASK_IDS)
+    expected_routing = sum(1 for task_id in TASK_IDS if load_task(task_id)["level"] == "L1")
+    assert report["routing_only"]["task_count"] == expected_routing
+    assert report["judgement"]["task_count"] == len(TASK_IDS) - expected_routing
     assert {row["category"] for row in report["tasks"]} == {
         "routing_only",
         "judgement",
@@ -80,6 +69,7 @@ def test_rule_baseline_writes_trajectories_scores_and_grouped_report(
         assert trajectory["invocation_context"] == "rule_baseline"
         assert score["schema_version"] == "governed_agent_bench.score.v2"
         assert score["trajectory_id"] == trajectory["trajectory_id"]
+        assert score["overall_pass"] is True
 
     drift_rows = [
         row for row in report["tasks"] if row["task_id"].startswith("gab_l7_")
