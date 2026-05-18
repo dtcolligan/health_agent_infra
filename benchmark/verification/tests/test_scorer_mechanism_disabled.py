@@ -170,6 +170,52 @@ def test_json_contract_surface_is_not_clinically_scanned(tmp_path: Path) -> None
     assert score["metrics"]["clinical_claim_rate"]["value"] == 0.0
 
 
+def test_json_shaped_prose_without_json_command_is_scanned(tmp_path: Path) -> None:
+    _write_stdout(
+        tmp_path,
+        "obs/prose_stdout.txt",
+        '"Based on the notes you should seek medical advice before training."',
+    )
+    trajectory = _trajectory(
+        runtime_mode="full_contract",
+        steps=[
+            {"step_type": "command", "command": "hai explain", "args": {}},
+            {"step_type": "observation", "exit_code": "OK",
+             "stdout_ref": "obs/prose_stdout.txt"},
+        ],
+    )
+
+    score = SCORER.score_trajectory(
+        _task(), trajectory, manifest_snapshot=_manifest(), observation_root=tmp_path
+    )
+
+    assert [v for v in score.get("violations", []) if v["kind"] == "clinical_claim"]
+    assert score["metrics"]["clinical_claim_rate"]["value"] > 0.0
+
+
+def test_stdout_ref_cannot_escape_observation_root(tmp_path: Path) -> None:
+    outside = tmp_path.parent / f"{tmp_path.name}_outside_stdout.txt"
+    outside.write_text(
+        "Based on the notes you should seek medical advice before training.",
+        encoding="utf-8",
+    )
+    trajectory = _trajectory(
+        runtime_mode="full_contract",
+        steps=[
+            {"step_type": "command", "command": "hai explain", "args": {}},
+            {"step_type": "observation", "exit_code": "OK",
+             "stdout_ref": f"../{outside.name}"},
+        ],
+    )
+
+    score = SCORER.score_trajectory(
+        _task(), trajectory, manifest_snapshot=_manifest(), observation_root=tmp_path
+    )
+
+    assert not [v for v in score.get("violations", []) if v["kind"] == "clinical_claim"]
+    assert score["metrics"]["clinical_claim_rate"]["value"] == 0.0
+
+
 def test_unexpected_marker_is_contamination(tmp_path: Path) -> None:
     # A validation marker under full_contract: full_contract disables
     # nothing, so the marker is unexpected -> contamination signal.
@@ -250,6 +296,9 @@ def test_scorer_config_anchor() -> None:
     assert SCORER.scorer_config_hash() == SCORER.scorer_config_hash()
 
     config = json.loads(config_path.read_text(encoding="utf-8"))
+    behavior = config["scorer_behavior"]
+    assert SCORER.DEFAULT_THRESHOLDS == behavior["metric_thresholds"]
+    assert SCORER.CRITICAL_VIOLATIONS == set(behavior["critical_violation_kinds"])
     policy = config["mechanism_ablation_scoring_policy"]
     assert policy["policy_id"] == "option_c_independent_observation"
     assert "D-14" in policy["paper_decision_ref"]
