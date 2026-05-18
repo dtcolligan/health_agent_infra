@@ -57,4 +57,14 @@ Post-remediation targeted runs:
 - `MYPYPATH=benchmark:hai/src uvx mypy --explicit-package-bases benchmark/governed_agent_bench` -> clean.
 - `uvx ruff check ...` over changed benchmark files/tests -> clean.
 
-Final full-suite verification is recorded in the push report after the remediation commits.
+Final full-suite verification after remediation:
+
+- `uv run pytest hai/verification/tests -q` -> `2999 passed, 4 skipped`.
+- `PYTHONPATH=benchmark uv run pytest -q benchmark/verification/tests` -> `124 passed`.
+- `uvx mypy hai/src/health_agent_infra` -> clean.
+- `MYPYPATH=benchmark:hai/src uvx mypy --explicit-package-bases benchmark/governed_agent_bench` -> clean.
+- `uvx bandit -ll -r hai/src/health_agent_infra benchmark/governed_agent_bench` -> no medium/high findings under the `-ll` gate.
+- `PYTHONPATH=benchmark uv run python benchmark/governed_agent_bench/reproduce_offline.py --output-dir /tmp/audit_repro` -> `row_count: 67`, `violation_count: 0`, `model_calls: false`, 28 task ids, 7 runtime modes.
+- `PYTHONPATH=benchmark uv run python benchmark/governed_agent_bench/results/isolation_matrix.py --output-dir /tmp/audit_iso` -> `row_count: 25`, `all_isolated: true`, `model_calls: false`.
+- `PYTHONPATH=benchmark uv run python benchmark/governed_agent_bench/results/live_isolation.py --output-dir /tmp/audit_live` -> `live_count: 1`, `all_live_isolated: true`, `static_only: [agent_safe, audit_chain, proposal_gate, validation]`.
+- `uv run hai doctor` -> completed with `overall: [WARN] warn`; warnings were local source/readiness/intake state, not benchmark or package failures.
