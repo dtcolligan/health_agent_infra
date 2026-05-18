@@ -1,9 +1,9 @@
-"""Deterministic, offline isolation-matrix generator (D-17).
+"""Deterministic, offline static isolation-matrix generator (D-17).
 
-Evaluates every per-mechanism and composite oracle pair against the
-D-17 mode-aware isolation criterion and emits isolation_matrix.json.
-No model calls; mirrors the reproduce_offline artifact discipline so an
-external researcher can regenerate the isolation evidence offline.
+Evaluates every per-mechanism and composite hand-authored oracle pair
+against the D-17 mode-aware scorer criterion and emits
+isolation_matrix.json. No model calls. This is static scorer/coverage
+evidence, not standalone live mechanism-causality evidence.
 """
 
 from __future__ import annotations
@@ -45,9 +45,16 @@ def build_isolation_matrix() -> dict[str, Any]:
 
     return {
         "schema_version": SCHEMA_VERSION,
+        "evidence_tier": "static_oracle_pairs",
+        "scope_note": (
+            "Hand-authored full/off oracle pairs check scorer sensitivity, "
+            "declared coverage, and contamination handling. Live mechanism "
+            "causality is reported separately by live_isolation.py."
+        ),
         "model_calls": False,
         "row_count": len(rows),
         "all_isolated": all(row["isolated"] for row in rows),
+        "all_static_oracle_pairs_isolated": all(row["isolated"] for row in rows),
         "per_label": dict(sorted(per_label.items())),
         "rows": rows,
     }

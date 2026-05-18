@@ -1,9 +1,9 @@
 """Mechanism-load-bearing coverage + D-17 isolation checks.
 
-Oracle pairs and the isolation verdict live in
+    Static oracle pairs and the isolation verdict live in
 ``governed_agent_bench.oracles`` (single source, also consumed by the
 isolation-matrix generator). This module asserts coverage and that
-every oracle pair satisfies the D-17 (mode-aware) isolation criterion.
+    every oracle pair satisfies the D-17 (mode-aware) static canary criterion.
 """
 
 from __future__ import annotations

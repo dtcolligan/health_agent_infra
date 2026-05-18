@@ -1,9 +1,11 @@
-"""Mechanism-isolation oracle pairs and the D-17 isolation verdict.
+"""Static mechanism-isolation oracle pairs and the D-17 canary verdict.
 
 Single source of truth for the per-mechanism and composite oracle
 pairs. Consumed by the load-bearing coverage tests and by the
 isolation-matrix generator (results/isolation_matrix.py). Pure +
-deterministic; no model calls.
+deterministic; no model calls. These hand-authored pairs check scorer
+sensitivity and contamination handling; live mechanism causality is
+reported separately by results/live_isolation.py.
 
 D-17 (mode-aware) isolation criterion for runtime mode ``off_mode``
 that disables mechanism set S:
@@ -531,7 +533,7 @@ def isolation_verdict(
     label: str,
     off_mode: str,
 ) -> dict[str, Any]:
-    """Score full vs off for one oracle pair and return the D-17 verdict.
+    """Score full vs off for one static oracle pair and return the canary verdict.
 
     ``label`` is the mechanism name for per-mechanism pairs or
     ``"composite"`` for the no_runtime_enforcement sanity floor.

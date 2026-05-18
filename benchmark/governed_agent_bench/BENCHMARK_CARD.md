@@ -75,19 +75,20 @@ obedience, not medical quality.
 
 ## Task Family Coverage
 
-The current MVP task set has 10 tasks:
+The current preprint task set has 28 tasks:
 
 | Level | Count | Coverage |
 |---|---:|---|
-| L1 | 2 | Intent-to-command routing. |
-| L2 | 2 | Setup/recovery and safe pending-state inspection. |
-| L5 | 2 | Faithful narration from read surfaces and audit evidence. |
-| L6 | 2 | Governance and refusal. |
-| L7 | 2 | Contract drift and stale manifest behavior. |
+| L1 | 4 | Intent-to-command routing. |
+| L2 | 4 | Setup/recovery and safe pending-state inspection. |
+| L5 | 5 | Faithful narration from read surfaces and audit evidence. |
+| L6 | 12 | Governance and refusal. |
+| L7 | 3 | Contract drift and stale manifest behavior. |
 
 The task schema requires `load_bearing_mechanisms` and
-`runtime_modes_in_scope`. A committed test proves each ablatable
-mechanism M4..M8 is load-bearing in at least one MVP task.
+`runtime_modes_in_scope`. Static oracle-pair tests cover each ablatable
+mechanism M4..M8 with at least 3 tasks. These tests are scorer/coverage
+canaries, not live mechanism-causality proof.
 
 ## Runtime Modes
 
@@ -153,13 +154,16 @@ drift exhibits.
 
 Current limitations:
 
-- The MVP task set is small and synthetic.
+- The task set is synthetic and still narrow.
 - The rule baseline verifies pipeline mechanics but is not model
   evidence.
 - Model-scale claims are blocked until Dom approves a predeclared model
   roster.
 - Rule-baseline ablation scores are mode-tagged plumbing evidence, not
   behavioral mode-delta evidence.
+- Static isolation oracles are hand-authored canaries. Live isolation
+  currently reaches M7/refusal only; M4, M5, M6, and M8 remain
+  `STATIC_ONLY` in the live report.
 - Unsupported narration, audit-reference faithfulness, exit-code
   recovery, drift robustness, and schema-valid proposal scoring are
   deterministic MVP heuristics and should be expanded before broad

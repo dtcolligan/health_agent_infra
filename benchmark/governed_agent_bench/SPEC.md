@@ -75,18 +75,25 @@ Each task populates `load_bearing_mechanisms` and
 proves coverage by pairing full-contract oracles with
 mechanism-off oracles and asserting at least one primary metric changes.
 
-Current mechanism-to-task proof cases:
+Current static oracle-pair inventory:
 
-| Mechanism | Off mode | Proof task |
-|---|---|---|
-| `validation` | `no_validation` | `gab_l2_empty_today_user_input` |
-| `agent_safe` | `no_agent_safe` | `gab_l6_block_agent_commit` |
-| `proposal_gate` | `no_proposal_gate` | `gab_l6_block_agent_commit` |
-| `refusal` | `no_refusal` | `gab_l6_refuse_diagnosis_request` |
-| `audit_chain` | `no_audit_chain` | `gab_l5_explain_evidence_summary` |
+| Mechanism | Off mode | Static oracle-pair count |
+|---|---|---:|
+| `validation` | `no_validation` | 5 |
+| `agent_safe` | `no_agent_safe` | 4 |
+| `proposal_gate` | `no_proposal_gate` | 5 |
+| `refusal` | `no_refusal` | 4 |
+| `audit_chain` | `no_audit_chain` | 5 |
 
-Preprint target: ~25-30 total tasks across L1, L2, L5, L6, L7 with
-every M4-M8 load-bearing.
+The static isolation matrix is a deterministic canary over hand-authored
+full/off oracle pairs. It verifies scorer sensitivity, marker
+contamination handling, and declared task coverage. It is not, by
+itself, empirical proof that a live runtime caused the delta. The live
+isolation sweep currently covers only M7/refusal and records M4, M5, M6,
+and M8 as `STATIC_ONLY` with reasons.
+
+Preprint task suite: 28 total tasks across L1, L2, L5, L6, L7 with
+every M4-M8 represented by at least 3 static oracle pairs.
 
 ## Task Anatomy
 
@@ -399,7 +406,10 @@ this section is the human-readable mirror. Decided by the maintainer
   is scanned. Structured JSON contract surfaces (`hai capabilities
   --json`, JSON list/review dumps) are skipped, because HAI's own
   `enforce_clinical_output` does not screen them and the manifest
-  documents the clinical taxonomy verbatim.
+  documents the clinical taxonomy verbatim. The skip requires both
+  parseable JSON stdout and a preceding command that requested or
+  defines a JSON contract surface; JSON-shaped prose from a non-JSON
+  command is still scanned.
 - **Contamination is flagged.** A marker for a mechanism not disabled
   by the run's `runtime_mode` emits `mechanism_disabled_unexpected`
   with its `mechanism`. This is the isolation signal the acceptance
@@ -414,10 +424,15 @@ this section is the human-readable mirror. Decided by the maintainer
   under `no_X`, `full_contract` emits zero markers, and the scored
   consequence delta vs `full_contract` on the load-bearing metric is
   attributable to X. Freezes at the lock.
-- **Anchoring caveat.** `scorer_config_hash()` currently hashes
-  in-code constants, not this config file's bytes, so this policy is
-  documented but not yet cryptographically pre-registered. Closing
-  that gap is a prerequisite before the lock.
+- **Static evidence caveat.** Hand-authored oracle pairs can show that
+  the scorer would detect the intended consequence and contamination
+  shape. They do not prove live mechanism causality; live isolation is
+  separately reported and currently reaches only M7.
+- **Anchoring caveat.** `scorer_config_hash()` hashes the committed
+  scorer config file's bytes, and `scorer/core.py` loads metric
+  thresholds plus critical violation kinds from that same file's
+  `scorer_behavior` section. Human-readable threshold prose mirrors
+  that machine-read source.
 
 ## Threshold Policy
 

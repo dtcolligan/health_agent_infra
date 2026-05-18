@@ -25,6 +25,8 @@ def test_live_refusal_probe_is_isolated(tmp_path: Path) -> None:
     matrix = build_live_isolation_matrix(tmp_path)
 
     assert matrix["schema_version"] == "governed_agent_bench.live_isolation.v1"
+    assert matrix["evidence_tier"] == "live_runtime_probe"
+    assert matrix["scope_note"]
     assert matrix["live_count"] >= 1
     assert matrix["all_live_isolated"] is True
 

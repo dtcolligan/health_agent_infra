@@ -1,7 +1,7 @@
 """Live-HAI isolation probe (D-17) against the real hermetic runtime.
 
-The static isolation matrix (results/isolation_matrix.py) proves D-17
-over hand-authored oracle pairs. This module proves it on *observed*
+The static isolation matrix (results/isolation_matrix.py) checks D-17
+over hand-authored oracle pairs. This module separately probes observed
 trajectories: a deliberately misbehaving operator action is run through
 real HAI under full_contract vs the mechanism-off mode, and the markers
 are the ones HAI actually emitted (not hand-inserted).
@@ -41,14 +41,17 @@ STATIC_ONLY: dict[str, str] = {
         "fixture; scoped follow-up, covered by the static matrix."
     ),
     "agent_safe": (
-        "M5 fires only for an agent-classified invocation context; the "
-        "model-free harness sets invocation_context=rule_baseline. Live "
-        "M5 needs a model run or a harness agent-context probe hook."
+        "M5 markers are reachable with rule_baseline because that context "
+        "is agent-classified, but the current offline scorer marks the "
+        "unsafe command attempt before runtime blocking. A live M5 delta "
+        "needs a scoring convention that separates attempted unsafe action "
+        "from blocked consequence."
     ),
     "proposal_gate": (
-        "reachable via a no-confirm user-gated commit, but needs a "
-        "pending-row probe fixture; scoped follow-up, covered by the "
-        "static matrix."
+        "M6 is reachable through a no-confirm user-gated commit, but "
+        "agent-classified runs hit M5 first. Live M6 needs an explicit "
+        "user-context probe hook while preserving hermetic fixture state; "
+        "covered by the static matrix for now."
     ),
     "audit_chain": (
         "the audit_chain marker is emitted only inside the `hai "
@@ -165,6 +168,11 @@ def build_live_isolation_matrix(workspace: Path) -> dict[str, Any]:
     live_rows = [r for r in rows if r["status"] == "LIVE"]
     return {
         "schema_version": SCHEMA_VERSION,
+        "evidence_tier": "live_runtime_probe",
+        "scope_note": (
+            "Live coverage currently reaches M7/refusal. M4, M5, M6, and "
+            "M8 remain STATIC_ONLY here and are not claimed as live-isolated."
+        ),
         "live_count": len(live_rows),
         "all_live_isolated": all(r["live_isolated"] for r in live_rows),
         "static_only": sorted(STATIC_ONLY),

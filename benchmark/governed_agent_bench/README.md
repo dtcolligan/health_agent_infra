@@ -29,8 +29,8 @@ treatment, prescribing, or autonomous medical decisions.
 |---|---|
 | Frozen manifests | 2 snapshots: `manifests/hai_0_2_0.json` (≈ 189 KB, `agent_cli_contract.v2`) + `manifests/agent_cli_contract_v1_drift.json` for L7 |
 | Fixtures | 6 synthetic builders: `empty_user`, `ready_user_minimal`, `read_surface_user`, `governance_user`, `drift_user`, `adversarial_user` |
-| Pilot tasks | 10 tasks, 2 each across L1, L2, L5, L6, L7; preprint target ~25-30 with every M4-M8 load-bearing |
-| Trajectories | 14 hand-authored seed trajectories (one passing + one failing per representative task) |
+| Pilot tasks | 28 tasks across L1, L2, L5, L6, L7; every M4-M8 has at least 3 static oracle-pair tasks |
+| Trajectories | 14 hand-authored seed trajectories plus 25 static isolation oracle pairs; live isolation currently covers M7 only |
 | Scorer | MVP deterministic offline scorer at `scorer/core.py` with schema/determinism tests |
 | Harness | Model-agnostic harness at `harness/` with structured operator actions, runtime-mode toggling, hermetic subprocess execution, `mechanism_disabled` capture |
 | Baselines | Deterministic `rule_baseline_v1` + offline rule-baseline ablation runner. No model-backed baseline yet. |
@@ -61,17 +61,17 @@ treatment, prescribing, or autonomous medical decisions.
 
 - Frozen HAI manifest snapshot exists under `manifests/`.
 - Task / trajectory / score schemas validate hand-authored fixtures.
-- ≥10 pilot tasks cover L1, L2, L5, L6, L7.
+- 28 pilot tasks cover L1, L2, L5, L6, L7.
 - Scorer grades recorded trajectories without network access or private
   health rows.
 - Known-good and known-bad trajectories produce expected outcomes.
-- Every M4-M8 mechanism is load-bearing in at least one MVP task.
+- Every M4-M8 mechanism has at least 3 static oracle-pair tasks.
 - No-model rule baseline regenerates trajectories, scores, evidence
   tables, figures, and error taxonomy offline.
 
-Preprint Option-B exit adds: ~25-30 total tasks, all five M4-M8
-mechanisms covered, and the scorer + harness verified end-to-end on
-hermetic fixtures.
+Preprint Option-B exit adds model-backed trajectories under the locked
+roster and honest reporting of live-isolation limits. The static matrix
+is scorer/coverage evidence, not standalone live causality evidence.
 
 ## Current Gate
 
