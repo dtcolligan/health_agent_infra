@@ -1,7 +1,10 @@
 # Claude Final Audit: GovernedAgentBench substrate at d9db733
 
-Verdict: **PASS** — substrate sound; P3s remediated; the lone P2 is a
-maintainer provenance decision (not a mechanical fix).
+Verdict: **PASS** — substrate sound; P3s remediated; the lone P2 (F-01)
+was first reverted to a maintainer decision, then — on explicit
+maintainer authorization — properly FIXED via a builder-threaded
+deterministic redaction that preserves byte-exact historical
+reproducibility (see *F-01 Resolution*).
 
 > **Remediation addendum.** No P0/P1 were found. At the maintainer's
 > instruction remediation was attempted for the one P2 and four P3
@@ -84,17 +87,19 @@ the sanitized-default representation is a content choice.
 
 | id | severity | file:line | evidence | why it matters | required fix | status |
 |---|---|---|---|---|---|---|
-| F-01 | P2 | `manifests/hai_0_2_0.json:766,1345,4129`; `manifests/agent_cli_contract_v1_drift.json` (3×) | Each manifest embeds `"default": "/Users/domcolligan/.claude/skills"` 3×. `harness/core.py:236` substitutes `{{manifest_json}}` into the deployment prompt, so every benchmark trajectory's prompt — and the public v1.0 manifest — carries the maintainer OS username. Not health data; not in any task/fixture/trajectory/generated artifact (grep-confirmed); no model exploitation path (operator emits only allowlisted `hai` actions). | The project's privacy posture and `BENCHMARK_CARD.md` ("no names") are public-facing; a leaked username in a flagship released artifact is the kind of thing a reviewer flags. It does not affect scoring, isolation, determinism, or any H1/H-claim. | **Not a mechanical fix.** A hand-edit to `~/.claude/skills` (`1b02ad5`) broke `test_benchmark_manifest_snapshot.py::test_stale_hai_manifest_snapshot_is_reproducible_from_historical_commit`, which asserts `agent_cli_contract_v1_drift.json` is byte-exactly reproducible from a historical git object via `build_stale_manifest_snapshot.py`. The project already treats `/.claude/skills` defaults as non-semantic (`_normalise_manifest` collapses them for the live-match test). Proper remediation: thread a deterministic redaction through `build_stale_manifest_snapshot.build_snapshot` (and the current-snapshot generator) so reproducibility holds *after* redaction, then re-pin both snapshots and re-decide the current-snapshot live-mirror posture — a provenance scope decision (D-16). Hand-edit reverted in `30f8e1c`. | DEFERRED — maintainer provenance decision; reverted `30f8e1c`; non-blocking for roster |
+| F-01 | P2 | `manifests/hai_0_2_0.json:766,1345,4129`; `manifests/agent_cli_contract_v1_drift.json` (3×) | Each manifest embeds `"default": "/Users/domcolligan/.claude/skills"` 3×. `harness/core.py:236` substitutes `{{manifest_json}}` into the deployment prompt, so every benchmark trajectory's prompt — and the public v1.0 manifest — carries the maintainer OS username. Not health data; not in any task/fixture/trajectory/generated artifact (grep-confirmed); no model exploitation path (operator emits only allowlisted `hai` actions). | The project's privacy posture and `BENCHMARK_CARD.md` ("no names") are public-facing; a leaked username in a flagship released artifact is the kind of thing a reviewer flags. It does not affect scoring, isolation, determinism, or any H1/H-claim. | **Not a mechanical fix.** A hand-edit to `~/.claude/skills` (`1b02ad5`) broke `test_benchmark_manifest_snapshot.py::test_stale_hai_manifest_snapshot_is_reproducible_from_historical_commit`, which asserts `agent_cli_contract_v1_drift.json` is byte-exactly reproducible from a historical git object via `build_stale_manifest_snapshot.py`. The project already treats `/.claude/skills` defaults as non-semantic (`_normalise_manifest` collapses them for the live-match test). Proper remediation: thread a deterministic redaction through `build_stale_manifest_snapshot.build_snapshot` (and the current-snapshot generator) so reproducibility holds *after* redaction, then re-pin both snapshots and re-decide the current-snapshot live-mirror posture — a provenance scope decision (D-16). Hand-edit reverted in `30f8e1c`. **Follow-up (maintainer-authorized): properly FIXED** by threading a deterministic, idempotent `redact_user_paths` through `build_stale_manifest_snapshot.build_snapshot` and regenerating both snapshots; the reproducibility test rebuilds from the frozen git object through the *same* redaction, so byte-exact historical reproducibility holds *after* redaction rather than being weakened. | FIXED (maintainer-authorized follow-up) — `ce7c8b8` stale-builder redaction + regen, `6f29a18` current snapshot, `0a60e56` leakage/idempotency guards; reproducibility invariant preserved; see *F-01 Resolution* |
 | F-02 | P3 | `results/live_isolation.py:449-452` | `build_live_isolation_matrix` `shutil.rmtree`s `<output-dir>/_work/fixtures` and `<output-dir>/_work/runs` before regeneration. Confined to a `_work` subdir of the user-supplied `--output-dir`; cannot reach the output dir itself or arbitrary paths (verified: even `--output-dir=/` → `rmtree /_work/fixtures`, non-existent, `ignore_errors=True`). | Not destructive of arbitrary user files. Sole sharp edge: a user pointing `--output-dir` at a dir that already holds a meaningful `_work/fixtures` would lose it. | Optional hardening: assert the workspace path component is benchmark-owned (e.g. contains a sentinel) before `rmtree`, or generate into a `mkdtemp`. | FIXED — `c51eaba` (`_reset_workspace` refuses fs-root/home/<3-part paths) |
 | F-03 | P3 | `tasks/l*/  *.json` (`load_bearing_mechanisms` vs `runtime_modes_in_scope`) | Declared `load_bearing_mechanisms` is 5/5/5/5/5 across M4–M8; realized static oracle pairs / `runtime_modes_in_scope` are validation 5, agent_safe 4, proposal_gate 5, refusal 4, audit_chain 5. | Cosmetic declared-vs-realized mismatch. D-19 (≥3 oracle pairs/mechanism) is satisfied and the realized 5/4/5/4/5 matches the `SPEC.md` oracle-pair table exactly, so no claim is affected. | None required; note the superset relationship in spec. | FIXED — `2d55bef` (SPEC §Mechanism-Load-Bearing Coverage Rule states declaration may exceed realized; table counts are D-19-binding) |
 | F-04 | P3 | `reproduce_offline.py:73-83` | `offline_repro_manifest.json` embeds absolute `output_dir`, `fixture_workspace`, and artifact paths. Two runs differ only in those path fields; all scoring content (row_count 53, task_ids, violation_count, runtime_modes) is identical. | Scoring is content-deterministic; only the path echo prevents byte-identical cross-machine repro of the manifest itself. | Record artifact/fixture paths relative to `output_dir`. | FIXED — `eea62ff` (manifests now byte-identical across output dirs except the single `output_dir` provenance field) |
 | F-05 | P3 (informational) | `reports/CODEX_AUDIT.md:67` | Prior audit reports `reproduce_offline.py → row_count: 67`. No file in the offline-repro path (`tasks/`, `baselines/`, `reproduce_offline.py`, `results/evidence_tables.py`) changed between `c580d36` (the CODEX_AUDIT commit) and HEAD (`git diff --stat` empty). Deterministic re-derivation = **53** = Σ `len(runtime_modes_in_scope)` over the 28 tasks (28 + 5+5+5+4+4 + 2). Two independent runs both produced 53, content-identical. | The *current* substrate is deterministic and provably correct at 53; the prior report line is stale relative to the code it audited. `CODEX_AUDIT.md` is immutable prior-audit history (and the brief instructs distrust of it), so this is a reconciliation note, not a current defect. | None. Not editing `CODEX_AUDIT.md` (immutable prior-audit record). | RESOLVED-AS-EXPLAINED |
 
 No P0. No P1. The maintainer asked for the findings to be fixed:
-F-02/F-03/F-04 (P3) are remediated; F-01 (P2) is reverted to a
-maintainer provenance decision (a hand-edit broke a byte-exact
-historical-reproducibility invariant — see the addendum and F-01 row);
-F-05 needs no change.
+F-02/F-03/F-04 (P3) are remediated; F-01 (P2) was first reverted (a
+hand-edit broke a byte-exact historical-reproducibility invariant — see
+the addendum and F-01 row), then, on explicit maintainer authorization,
+properly FIXED by threading a deterministic redaction through the stale
+builder so reproducibility holds *after* redaction (see *F-01
+Resolution*); F-05 needs no change.
 
 ## Assessments
 
@@ -278,11 +283,54 @@ Re-run on the final post-revert tree (HEAD `30f8e1c` + report):
 | `test_offline_repro.py` (targeted, post F-04) | `2 passed` |
 | F-04-adjacent suite (rule_ablation/rule_baseline/evidence_tables/error_taxonomy) | exit 0 |
 
+## F-01 Resolution (maintainer-authorized follow-up)
+
+The maintainer subsequently authorized the proper fix. Implementation:
+
+- `redact_user_paths` added to `build_stale_manifest_snapshot.py`: a
+  deterministic, idempotent walk that rewrites any `/Users/<x>` or
+  `/home/<x>` prefix to the fixed point `/Users/redacted`. Applied
+  inside `build_snapshot`, so the stale snapshot rebuilt from the
+  frozen historical git object passes through the *same* redaction.
+  The byte-exact historical-reproducibility test
+  (`test_stale_hai_manifest_snapshot_is_reproducible_from_historical_commit`)
+  therefore stays green *by construction* — the invariant was
+  preserved, not weakened, which is exactly what the round-1 revert
+  protected.
+- The same helper redacted the current snapshot `hai_0_2_0.json`
+  (canonical formatting preserved; 3-line diff). The live-match test
+  stays green because `_normalise_manifest` already collapses any
+  `/.claude/skills` default on both sides.
+- Two durable guards added: a leakage assertion that fails CI if
+  either committed snapshot ever carries a real user-home path again,
+  and an idempotency assertion on `redact_user_paths`.
+
+Commits: `ce7c8b8` (stale builder + regen), `6f29a18` (current
+snapshot), `0a60e56` (guards). Each leaves the suite green in
+isolation. Change set is exactly four files under `benchmark/`,
+provably disjoint from `hai/src` and `hai/verification`, so the
+prior-round HAI suite (`2999 passed`) and bandit-clean results are
+unaffected and not re-derived.
+
+Post-fix verification (final tree):
+
+| Command | Result |
+|---|---|
+| `uv run pytest benchmark/verification/tests -q` | `128 passed` (126 baseline + 2 new guards) |
+| `uv run pytest benchmark/verification/tests/test_benchmark_manifest_snapshot.py -q` | `8 passed` (incl. reproducibility + live-match) |
+| `uvx mypy hai/src/health_agent_infra` | `Success: no issues found in 164 source files` |
+| `MYPYPATH=benchmark:hai/src uvx mypy --explicit-package-bases benchmark/governed_agent_bench` | `Success: no issues found in 22 source files` |
+| `uvx bandit -ll -r benchmark/governed_agent_bench` | `No issues identified` |
+| `reproduce_offline.py` ×2 | `row_count: 53`, `violation_count: 0`, identical modulo `output_dir`, artifacts relative |
+| `isolation_matrix.py` | `row_count: 25`, `all_isolated: true` |
+| `live_isolation.py` ×2 | `live_count: 5`, `all_live_isolated: true`, `static_only: []`, byte-identical |
+
 ## Push Disposition
 
-No P0, no P1; P3s (F-02/F-03/F-04) fixed; F-01 (P2) reverted to a
-documented maintainer provenance decision; F-05 needs none; required
+No P0, no P1; P3s (F-02/F-03/F-04) fixed; F-01 (P2) first reverted
+(`30f8e1c`) then properly FIXED under maintainer authorization
+(`ce7c8b8`/`6f29a18`/`0a60e56`); F-05 needs none; required
 verification green on the final tree; this report committed. Per the
-push protocol the gate is met. `main` was in sync with `origin/main`
-before this work; the report commits plus the F-02/F-03/F-04 fix
-commits and the F-01 revert (`30f8e1c`) are pushed together.
+push protocol the gate is met. The history deliberately preserves the
+hand-edit → revert → proper-fix chain as honest audit provenance
+rather than a rewritten clean line.
