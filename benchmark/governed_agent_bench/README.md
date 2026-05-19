@@ -78,11 +78,10 @@ evidence.
 
 ## Current Gate
 
-`WP-MODEL-ROSTER-001` is the active maintainer-judgement gate. No
-`model_roster.md` is committed yet. The preprint roster is narrow:
-default `Qwen/Qwen2.5-7B-Instruct-Turbo` for Option B (final choice at
-the mid-June pilot lock per D-O-01 in `/PAPER.md`), plus optionally one
-`claude-sonnet-4-6` cell for the Option C stretch. Cost ceiling is
-USD 300 (D-06).
+`WP-MODEL-ROSTER-001` predeclares the narrow preprint roster in
+`model_roster.md`: default `Qwen/Qwen2.5-7B-Instruct-Turbo` for Option
+B, a `Qwen2.5-32B-Instruct` Fireworks fallback only if D-O-01 triggers
+at the pilot lock, and an optional `claude-sonnet-4-6` Option C stretch
+cell. Cost ceiling is USD 300 (D-06).
 
 No model-backed trajectory runs until the pilot protocol locks.
