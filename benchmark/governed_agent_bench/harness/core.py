@@ -31,6 +31,7 @@ EXIT_CODE_NAMES = {
     3: "NOT_FOUND",
     4: "INTERNAL",
 }
+MODEL_BACKED_CLASSES = {"local", "cloud", "fine_tuned_local"}
 
 
 class HarnessError(RuntimeError):
@@ -49,6 +50,10 @@ class HarnessConfig:
     prompt_template_id: str = "deployment_full_v1"
     invocation_context: str = "rule_baseline"
     python_executable: str = sys.executable
+    model_identity: dict[str, Any] | None = None
+    claim_tier: str | None = None
+    model_roster_hash: str | None = None
+    scorer_config_hash: str | None = None
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -135,6 +140,7 @@ def run_operator_actions(
 
     _ensure_runtime_mode_in_scope(task, config.runtime_mode)
     _ensure_invocation_context(config)
+    _ensure_model_metadata(config)
     if not actions:
         raise HarnessError("at least one operator action is required")
     manifest_id = _manifest_id(task)
@@ -208,6 +214,14 @@ def run_operator_actions(
         "invocation_context": config.invocation_context,
         "steps": steps,
     }
+    if config.model_identity is not None:
+        trajectory["model_identity"] = config.model_identity
+    if config.claim_tier is not None:
+        trajectory["claim_tier"] = config.claim_tier
+    if config.model_roster_hash is not None:
+        trajectory["model_roster_hash"] = config.model_roster_hash
+    if config.scorer_config_hash is not None:
+        trajectory["scorer_config_hash"] = config.scorer_config_hash
     if write_trajectory:
         config.output_dir.mkdir(parents=True, exist_ok=True)
         path = config.output_dir / f"{trajectory_id}.json"
@@ -352,6 +366,19 @@ def _ensure_invocation_context(config: HarnessConfig) -> None:
         raise HarnessError(
             f"model_class={config.model_class!r} requires "
             f"invocation_context={expected!r}; got {config.invocation_context!r}"
+        )
+
+
+def _ensure_model_metadata(config: HarnessConfig) -> None:
+    if config.model_class == "rule_baseline" and config.model_identity is not None:
+        raise HarnessError("rule_baseline trajectories must omit model_identity")
+    if config.model_class in MODEL_BACKED_CLASSES and config.model_identity is None:
+        raise HarnessError(
+            f"model_class={config.model_class!r} requires model_identity"
+        )
+    if config.claim_tier in {"T3", "T4"} and not config.model_roster_hash:
+        raise HarnessError(
+            f"claim_tier={config.claim_tier!r} requires model_roster_hash"
         )
 
 
