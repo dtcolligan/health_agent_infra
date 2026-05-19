@@ -147,6 +147,39 @@ def test_stale_hai_manifest_snapshot_is_v1_shaped() -> None:
     assert "refusals" not in manifest
 
 
+def test_redact_user_paths_is_idempotent_and_strips_home() -> None:
+    builder = _load_stale_builder()
+    sample = {
+        "commands": [
+            {"flags": [{"default": "/Users/somebody/.claude/skills"}]},
+            {"flags": [{"default": "/home/other/.claude/skills"}]},
+        ],
+        "untouched": "agent_cli_contract.v1",
+    }
+
+    once = builder.redact_user_paths(sample)
+    twice = builder.redact_user_paths(once)
+
+    assert once == twice, "redaction must be idempotent"
+    assert once["untouched"] == "agent_cli_contract.v1"
+    defaults = [c["flags"][0]["default"] for c in once["commands"]]
+    assert defaults == [
+        "/Users/redacted/.claude/skills",
+        "/Users/redacted/.claude/skills",
+    ]
+    assert "somebody" not in json.dumps(once)
+    assert "other" not in json.dumps(once)
+
+
+def test_committed_snapshots_carry_no_user_home_path() -> None:
+    leak = re.compile(r"/(?:Users|home)/(?!redacted/)[^/\"]+/\.claude")
+    for path in (CURRENT_SNAPSHOT_PATH, STALE_SNAPSHOT_PATH):
+        text = path.read_text(encoding="utf-8")
+        assert "domcolligan" not in text, path
+        match = leak.search(text)
+        assert match is None, f"{path} leaks a user-home path: {match!r}"
+
+
 def test_stale_hai_manifest_snapshot_is_reproducible_from_historical_commit() -> None:
     snapshot = _load_snapshot(STALE_SNAPSHOT_PATH)
     builder = _load_stale_builder()
