@@ -39,8 +39,10 @@ def test_offline_repro_writes_complete_smoke_package(tmp_path: Path) -> None:
     assert manifest["row_count"] == 3
     assert set(manifest["runtime_modes"]) == {"full_contract", "no_validation"}
 
+    out_dir = tmp_path / "out"
     for path in manifest["artifacts"].values():
-        assert Path(path).exists(), path
+        assert not Path(path).is_absolute(), path
+        assert (out_dir / path).exists(), path
     recorded = json.loads(
         (tmp_path / "out" / "offline_repro_manifest.json").read_text(
             encoding="utf-8"

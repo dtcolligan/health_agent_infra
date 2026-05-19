@@ -66,21 +66,27 @@ def run_offline_repro(
         evidence_table_path=table_dir / "evidence_table.json",
         output_dir=taxonomy_dir,
     )
+    def _rel(path: str | Path) -> str:
+        resolved = Path(path).resolve()
+        if resolved.is_relative_to(output_dir):
+            return resolved.relative_to(output_dir).as_posix()
+        return resolved.as_posix()
+
     manifest = {
         "schema_version": REPRO_SCHEMA_VERSION,
         "model_calls": False,
         "uses_private_data": False,
-        "fixture_workspace": fixture_workspace.as_posix(),
+        "fixture_workspace": _rel(fixture_workspace),
         "output_dir": output_dir.as_posix(),
         "task_ids": task_ids or list(TASK_IDS),
         "artifacts": {
-            "rule_baseline_ablation_summary": (
+            "rule_baseline_ablation_summary": _rel(
                 run_dir / "rule_baseline_ablation_summary.json"
-            ).as_posix(),
-            "evidence_table_json": evidence_output["json_path"],
-            "evidence_table_csv": evidence_output["csv_path"],
-            "figures_manifest": (figure_dir / "figures_manifest.json").as_posix(),
-            "error_taxonomy": taxonomy["json_path"],
+            ),
+            "evidence_table_json": _rel(evidence_output["json_path"]),
+            "evidence_table_csv": _rel(evidence_output["csv_path"]),
+            "figures_manifest": _rel(figure_dir / "figures_manifest.json"),
+            "error_taxonomy": _rel(taxonomy["json_path"]),
         },
         "row_count": evidence_output["row_count"],
         "figure_count": figures["figure_count"],
