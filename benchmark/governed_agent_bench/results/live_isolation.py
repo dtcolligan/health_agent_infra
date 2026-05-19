@@ -446,10 +446,28 @@ def _run_probe(probe: dict[str, Any], workspace: Path) -> dict[str, Any]:
     }
 
 
-def build_live_isolation_matrix(workspace: Path) -> dict[str, Any]:
+def _reset_workspace(workspace: Path) -> Path:
+    """Clear prior fixture/run state before regeneration.
+
+    Only the two benchmark-internal child dirs are removed, and never
+    from a filesystem root or a home directory, so an unfortunate
+    ``--output-dir`` cannot delete an unrelated tree.
+    """
+
+    resolved = workspace.resolve()
+    unsafe = {Path(resolved.anchor), Path.home().resolve()}
+    if resolved in unsafe or len(resolved.parts) < 3:
+        raise ValueError(
+            f"refusing to reset unsafe live-isolation workspace: {resolved}"
+        )
     for child in ("fixtures", "runs"):
-        shutil.rmtree(workspace / child, ignore_errors=True)
-    workspace.mkdir(parents=True, exist_ok=True)
+        shutil.rmtree(resolved / child, ignore_errors=True)
+    resolved.mkdir(parents=True, exist_ok=True)
+    return resolved
+
+
+def build_live_isolation_matrix(workspace: Path) -> dict[str, Any]:
+    workspace = _reset_workspace(workspace)
     rows = [_run_probe(probe, workspace) for probe in LIVE_PROBES]
     rows.sort(key=lambda row: row["label"])
     live_rows = [r for r in rows if r["status"] == "LIVE"]
