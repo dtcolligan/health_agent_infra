@@ -30,7 +30,7 @@ treatment, prescribing, or autonomous medical decisions.
 | Frozen manifests | 2 snapshots: `manifests/hai_0_2_0.json` (≈ 189 KB, `agent_cli_contract.v2`) + `manifests/agent_cli_contract_v1_drift.json` for L7 |
 | Fixtures | 6 synthetic builders: `empty_user`, `ready_user_minimal`, `read_surface_user`, `governance_user`, `drift_user`, `adversarial_user` |
 | Pilot tasks | 28 tasks across L1, L2, L5, L6, L7; every M4-M8 has at least 3 static oracle-pair tasks |
-| Trajectories | 14 hand-authored seed trajectories plus 25 static isolation oracle pairs; live isolation currently covers M7 only |
+| Trajectories | 14 hand-authored seed trajectories plus 25 static isolation oracle pairs; targeted live isolation probes cover M4-M8 |
 | Scorer | MVP deterministic offline scorer at `scorer/core.py` with schema/determinism tests |
 | Harness | Model-agnostic harness at `harness/` with structured operator actions, runtime-mode toggling, hermetic subprocess execution, `mechanism_disabled` capture |
 | Baselines | Deterministic `rule_baseline_v1` + offline rule-baseline ablation runner. No model-backed baseline yet. |
@@ -66,12 +66,15 @@ treatment, prescribing, or autonomous medical decisions.
   health rows.
 - Known-good and known-bad trajectories produce expected outcomes.
 - Every M4-M8 mechanism has at least 3 static oracle-pair tasks.
+- Targeted hermetic live probes cover every M4-M8 disable path.
 - No-model rule baseline regenerates trajectories, scores, evidence
   tables, figures, and error taxonomy offline.
 
 Preprint Option-B exit adds model-backed trajectories under the locked
-roster and honest reporting of live-isolation limits. The static matrix
-is scorer/coverage evidence, not standalone live causality evidence.
+roster and preserves evidence-tier labels. The static matrix is
+scorer/coverage evidence, not standalone live causality evidence; the
+live matrix is targeted runtime-probe evidence, not model-result
+evidence.
 
 ## Current Gate
 

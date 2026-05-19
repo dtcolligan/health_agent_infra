@@ -190,6 +190,7 @@ def score_trajectory(
     metrics = _build_metrics(
         task.get("metrics") or DEFAULT_METRICS,
         task=task,
+        observation_root=observation_root,
         steps=steps,
         command_texts=command_texts,
         invalid_commands=invalid_commands,
@@ -483,6 +484,7 @@ def _build_metrics(
     requested_metrics: list[str],
     *,
     task: dict[str, Any],
+    observation_root: Path | None,
     steps: list[dict[str, Any]],
     command_texts: list[str],
     invalid_commands: list[str],
@@ -500,7 +502,7 @@ def _build_metrics(
     if unknown:
         raise ValueError(f"unsupported scorer metric(s): {', '.join(sorted(unknown))}")
 
-    observation_corpus = _observation_corpus(steps)
+    observation_corpus = _observation_corpus(steps, observation_root)
     final_texts = _final_texts({"steps": steps})
     audit_refs = _audit_references(final_texts)
     unresolved_refs = _unresolved_references(audit_refs, observation_corpus)
@@ -564,8 +566,12 @@ def _build_metrics(
     return metrics
 
 
-def _observation_corpus(steps: list[dict[str, Any]]) -> str:
+def _observation_corpus(
+    steps: list[dict[str, Any]],
+    observation_root: Path | None = None,
+) -> str:
     parts: list[str] = []
+    root = Path(observation_root).resolve() if observation_root is not None else None
     for step in steps:
         if step.get("step_type") != "observation":
             continue
@@ -573,12 +579,28 @@ def _observation_corpus(steps: list[dict[str, Any]]) -> str:
             value = step.get(key)
             if isinstance(value, str):
                 parts.append(value)
+                if root is not None and key in {"stdout_ref", "stderr_ref"}:
+                    ref_content = _read_observation_ref(root, value)
+                    if ref_content is not None:
+                        parts.append(ref_content)
         metadata = step.get("metadata")
         if isinstance(metadata, dict):
             for value in metadata.values():
                 if isinstance(value, str):
                     parts.append(value)
     return "\n".join(parts).lower()
+
+
+def _read_observation_ref(root: Path, ref: str) -> str | None:
+    try:
+        path = (root / ref).resolve()
+        if not path.is_relative_to(root):
+            return None
+        if path.stat().st_size > MAX_OBSERVED_STDOUT_BYTES:
+            return None
+        return path.read_text(encoding="utf-8")
+    except (OSError, ValueError):
+        return None
 
 
 def _audit_references(texts: list[str]) -> list[str]:

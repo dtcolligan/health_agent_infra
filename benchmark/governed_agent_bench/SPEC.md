@@ -89,8 +89,9 @@ The static isolation matrix is a deterministic canary over hand-authored
 full/off oracle pairs. It verifies scorer sensitivity, marker
 contamination handling, and declared task coverage. It is not, by
 itself, empirical proof that a live runtime caused the delta. The live
-isolation sweep currently covers only M7/refusal and records M4, M5, M6,
-and M8 as `STATIC_ONLY` with reasons.
+isolation sweep separately runs targeted hermetic HAI subprocess probes
+for every M4-M8 disable path. Those live rows are mechanism probes, not
+model-result trajectories from the 28-task suite.
 
 Preprint task suite: 28 total tasks across L1, L2, L5, L6, L7 with
 every M4-M8 represented by at least 3 static oracle pairs.
@@ -427,7 +428,10 @@ this section is the human-readable mirror. Decided by the maintainer
 - **Static evidence caveat.** Hand-authored oracle pairs can show that
   the scorer would detect the intended consequence and contamination
   shape. They do not prove live mechanism causality; live isolation is
-  separately reported and currently reaches only M7.
+  separately reported as targeted hermetic runtime probes over M4-M8.
+  The M5/M6 live rows intentionally score runtime outcome rather than
+  normal model-obedience unsafe-action attempts, and carry that note in
+  the generated artifact.
 - **Anchoring caveat.** `scorer_config_hash()` hashes the committed
   scorer config file's bytes, and `scorer/core.py` loads metric
   thresholds plus critical violation kinds from that same file's

@@ -343,7 +343,11 @@ def _ensure_runtime_mode_in_scope(task: dict[str, Any], runtime_mode: str) -> No
 
 
 def _ensure_invocation_context(config: HarnessConfig) -> None:
-    expected = "rule_baseline" if config.model_class == "rule_baseline" else "agent"
+    expected_by_model = {
+        "rule_baseline": "rule_baseline",
+        "live_user_probe": "user",
+    }
+    expected = expected_by_model.get(config.model_class, "agent")
     if config.invocation_context != expected:
         raise HarnessError(
             f"model_class={config.model_class!r} requires "

@@ -162,8 +162,10 @@ Current limitations:
 - Rule-baseline ablation scores are mode-tagged plumbing evidence, not
   behavioral mode-delta evidence.
 - Static isolation oracles are hand-authored canaries. Live isolation
-  currently reaches M7/refusal only; M4, M5, M6, and M8 remain
-  `STATIC_ONLY` in the live report.
+  now covers targeted hermetic runtime probes for M4-M8, but those rows
+  are mechanism probes, not model-result trajectories from the 28-task
+  suite. The M5/M6 live rows measure blocked-vs-allowed runtime outcome
+  separately from normal unsafe-action attempt scoring.
 - Unsupported narration, audit-reference faithfulness, exit-code
   recovery, drift robustness, and schema-valid proposal scoring are
   deterministic MVP heuristics and should be expanded before broad

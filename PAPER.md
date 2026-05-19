@@ -217,8 +217,8 @@ D1-D28) lives in `ARCHIVE/decisions_log.md`.
 | D-18 | (DR-4) The scorer implements the full SPEC violation taxonomy (all 11 kinds), including `schema_invalid`. Scorer behavior thresholds and critical violation kinds are loaded from `scorer_config.paper_v1.json`; the config hash records the audited config bytes. | 2026-05-18 |
 | D-19 | (DR-5) Task suite = 28 tasks across L1/L2/L5/L6/L7, at least 3 static oracle-pair load-bearing tasks per M4-M8, every task an oracle pair routing the mechanism effect onto a scored metric, at least 2 tasks declaring `no_runtime_enforcement` in scope. Design freezes at the lock. | 2026-05-17 |
 | D-20 | (DR-6) `no_runtime_enforcement` is a robustness sanity floor, not part of the per-mechanism H1 attribution. | 2026-05-17 |
-| D-21 | (DR-7/8/9) Adversarial 16-trajectory layer scaffolded now, scored as pilot-phase evidence, not lock-gating (DR-7). H1 holds iff `full_contract` passes the safety-constrained subset and each `no_X` shows an attributable degradation on X's load-bearing metric at the evidence tier being claimed; static-only rows do not support live-causality claims. D-O-01: switch `Qwen2.5-7B`→`32B` iff 7B's `full_contract` pass-rate saturates the safety-constrained subset so no `no_X` delta can surface (DR-9). | 2026-05-18 |
-| D-22 | Audit-bounded isolation claim: the current static matrix covers M4-M8 as deterministic oracle-pair canaries; the current live isolation sweep covers M7 only. M4/M5/M6/M8 remain `STATIC_ONLY` until separate live probes exist, and paper/result wording must preserve that distinction. | 2026-05-18 |
+| D-21 | (DR-7/8/9) Adversarial 16-trajectory layer scaffolded now, scored as pilot-phase evidence, not lock-gating (DR-7). H1 holds iff `full_contract` passes the safety-constrained subset and each `no_X` shows an attributable degradation on X's load-bearing metric at the evidence tier being claimed; static oracle rows and live runtime probes must not be merged into one causal claim. D-O-01: switch `Qwen2.5-7B`→`32B` iff 7B's `full_contract` pass-rate saturates the safety-constrained subset so no `no_X` delta can surface (DR-9). | 2026-05-18 |
+| D-22 | Audit-bounded isolation claim: the static matrix covers M4-M8 as deterministic oracle-pair canaries, and the live isolation sweep now covers targeted hermetic runtime probes for M4-M8. Live rows are mechanism probes, not model-result trajectories from the 28-task suite; M5/M6 live rows measure blocked-vs-allowed runtime outcome separately from normal unsafe-action attempt scoring. Paper/result wording must preserve those distinctions. | 2026-05-18 |
 
 ## Open Decisions
 
@@ -238,11 +238,11 @@ plan; the full breakdown is in `ARCHIVE/hai_paper_readiness_execution.md`.
 
 | Surface | Status | Gap to Option B readiness |
 |---|---|---|
-| HAI runtime mode switch | `HAI_RUNTIME_MODE` env + seven modes declared in `trajectory.schema.json` v2 | Static oracle-pair isolation covers M4-M8; live isolation currently covers M7 only. Add live M4/M5/M6/M8 probes before claiming live isolation for those mechanisms |
+| HAI runtime mode switch | `HAI_RUNTIME_MODE` env + seven modes declared in `trajectory.schema.json` v2 | Static oracle-pair isolation covers M4-M8; targeted live runtime probes now cover M4-M8. Keep evidence-tier labels separate in paper/results |
 | Refusal seam (M7) | `core/refusal/` module | Live M7 probe passes: clinical-boundary refusal fires under `full_contract` and leaks under `no_refusal` |
-| Dispatch enforcer (M5) | CLI-dispatch middleware reading `agent_safe` per command | Static oracle-pair coverage exists; live M5 needs a probe that separates attempted unsafe command blocking from committed consequence and M6 gating |
+| Dispatch enforcer (M5) | CLI-dispatch middleware reading `agent_safe` per command | Live M5 probe separates blocked runtime outcome from normal model-obedience unsafe-action scoring |
 | Manifest snapshot | HAI v0.2.0 snapshot at `benchmark/governed_agent_bench/manifests/hai_0_2_0.json` (~189 KB, `agent_cli_contract.v2`) | Done |
-| Hermeticity | `HAI_HERMETIC=1` umbrella + `HAI_STATE_DB` + `HAI_BASE_DIR` redirection | Verified for the current live M7 probe; broaden with any added live M4/M5/M6/M8 probes |
+| Hermeticity | `HAI_HERMETIC=1` umbrella + `HAI_STATE_DB` + `HAI_BASE_DIR` redirection | Verified by targeted live M4-M8 probes with fresh fixture state per mode |
 | Fixtures | 6 synthetic fixtures (`empty_user`, `ready_user_minimal`, `read_surface_user`, `governance_user`, `drift_user`, `adversarial_user`) | Done |
 | Harness | Model-agnostic harness under `benchmark/governed_agent_bench/harness/` with `mechanism_disabled` capture | Single deployment-realistic prompt path retained; keep static/live evidence labels in all generated reports |
 | Tasks | 28 tasks across L1, L2, L5, L6, L7 | Done for static D-19 coverage; not evidence of live causality by itself |

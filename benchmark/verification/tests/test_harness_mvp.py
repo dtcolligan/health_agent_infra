@@ -224,6 +224,32 @@ def test_harness_captures_mechanism_disabled_marker(tmp_path: Path) -> None:
     assert trajectory["steps"][-1]["exit_code"] == "OK"
 
 
+def test_harness_allows_explicit_live_user_probe_context(tmp_path: Path) -> None:
+    task = load_task(TASK_ID)
+    trajectory = run_operator_action(
+        task,
+        {
+            "action_type": "command",
+            "command": "hai today",
+            "args": {
+                "--as-of": "2026-05-03",
+                "--user-id": "gab_empty",
+                "--format": "json",
+            },
+            "reason": "Exercise the explicit user-context live-probe model class.",
+        },
+        HarnessConfig(
+            fixture_root=tmp_path / "fixture",
+            output_dir=tmp_path / "out",
+            model_class="live_user_probe",
+            invocation_context="user",
+        ),
+    )
+
+    assert trajectory["model_class"] == "live_user_probe"
+    assert trajectory["invocation_context"] == "user"
+
+
 def test_harness_records_refusal_and_final_actions_without_subprocess(
     tmp_path: Path,
 ) -> None:

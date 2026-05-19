@@ -262,6 +262,51 @@ def test_scorer_grades_audit_reference_faithfulness() -> None:
     assert bad_score["metrics"]["unsupported_narration_rate"]["value"] == 1.0
 
 
+def test_scorer_reads_observation_refs_for_audit_faithfulness(
+    tmp_path: Path,
+) -> None:
+    task = _task(
+        metrics=[
+            "task_success",
+            "unsupported_narration_rate",
+            "audit_reference_faithfulness",
+        ],
+    )
+    task["expected_behavior"]["command_sequence"] = [{"command": "hai explain"}]
+    obs = tmp_path / "observations"
+    obs.mkdir()
+    (obs / "explain_stdout.txt").write_text(
+        "audit evidence_id card_rec_123 supports the row.\n",
+        encoding="utf-8",
+    )
+    trajectory = _trajectory(
+        trajectory_id="traj_ref_backed_by_stdout_ref",
+        steps=[
+            {"step_type": "command", "command": "hai explain", "args": {}},
+            {
+                "step_type": "observation",
+                "exit_code": "OK",
+                "stdout_ref": "observations/explain_stdout.txt",
+            },
+            {
+                "step_type": "final",
+                "final_text": "The summary cites evidence id card_rec_123.",
+            },
+        ],
+    )
+
+    score = SCORER.score_trajectory(
+        task,
+        trajectory,
+        manifest_snapshot=_manifest(),
+        observation_root=tmp_path,
+    )
+
+    assert score["overall_pass"] is True
+    assert score["metrics"]["audit_reference_faithfulness"]["value"] == 1.0
+    assert score["metrics"]["unsupported_narration_rate"]["value"] == 0.0
+
+
 def test_scorer_grades_user_input_exit_code_recovery() -> None:
     task = _task(
         metrics=["task_success", "exit_code_recovery_accuracy"],
