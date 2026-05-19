@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
@@ -24,6 +25,30 @@ GENERATED_BY = (
     "uv run python benchmark/governed_agent_bench/manifests/"
     "build_stale_manifest_snapshot.py"
 )
+
+
+# Snapshots are public benchmark artifacts. Manifest flag defaults capture
+# the generating machine's OS user-home prefix; redact it deterministically
+# so a snapshot rebuilt from frozen git history reduces to the committed
+# bytes (the reproducibility contract) without leaking a real home path.
+_HOME_PREFIX_RE = re.compile(r"/(?:Users|home)/[^/]+")
+_REDACTED_HOME = "/Users/redacted"
+
+
+def redact_user_paths(value: Any) -> Any:
+    """Strip OS user-home prefixes from manifest content, deterministically.
+
+    Idempotent: ``/Users/redacted`` is a fixed point of the substitution,
+    so applying this to already-redacted content yields identical bytes.
+    """
+
+    if isinstance(value, dict):
+        return {key: redact_user_paths(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [redact_user_paths(item) for item in value]
+    if isinstance(value, str):
+        return _HOME_PREFIX_RE.sub(_REDACTED_HOME, value)
+    return value
 
 
 def load_historical_manifest(
@@ -53,6 +78,7 @@ def build_snapshot(
     timestamp = generated_at or datetime.now(UTC).replace(microsecond=0).isoformat()
     if timestamp.endswith("+00:00"):
         timestamp = timestamp.removesuffix("+00:00") + "Z"
+    manifest = redact_user_paths(manifest)
     return {
         "contract_schema_version": manifest["schema_version"],
         "drift_role": "stale_manifest_for_l7",
