@@ -75,6 +75,13 @@ Each task populates `load_bearing_mechanisms` and
 proves coverage by pairing full-contract oracles with
 mechanism-off oracles and asserting at least one primary metric changes.
 
+`load_bearing_mechanisms` is a per-task design declaration and may be a
+superset of the realized static oracle-pair coverage: a task can declare
+a mechanism load-bearing under `full_contract` without also putting that
+mechanism's off-mode in `runtime_modes_in_scope`. The realized
+oracle-pair counts in the table below are the D-19-binding figures, not
+the declared-mechanism tallies.
+
 Current static oracle-pair inventory:
 
 | Mechanism | Off mode | Static oracle-pair count |
