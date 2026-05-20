@@ -1,156 +1,220 @@
 # AGENTS.md
 
-Operating contract for AI coding agents in this repo. Active scope,
-calendar, hypotheses, mechanism inventory, and decisions live in
-`PAPER.md`. This file covers governance, boundaries, and code-vs-skill
-disciplines that bind every session regardless of who wrote it.
+Operating contract for AI coding agents in this repo. The active
+research scope, calendar, hypotheses, mechanism inventory, model roster,
+and decisions live in `PAPER.md`. Read `PAPER.md` first.
 
-## What This Repo Is For
+## North Star
 
-One artifact: an arXiv preprint of *Deterministic Software Contracts
-as Trusted Monitors in AI Control Protocols* by 2026-09-30, with
-GovernedAgentBench v1.0 released alongside. Read `PAPER.md` first.
+This repo exists to ship one artifact: the arXiv preprint
+*Deterministic Software Contracts as Trusted Monitors in AI Control
+Protocols* by 2026-09-30, with GovernedAgentBench v1.0 released beside
+it.
 
-Three active code surfaces:
+The project is not a HAI product roadmap. HAI is the pinned reference
+runtime used to instantiate and test the paper's runtime-contract
+mechanisms.
 
-- **Runtime contract** — the architecture/intervention. Lives in HAI.
-- **GovernedAgentBench** — the benchmark measuring contract-governed
-  agent operation under a held-constant prompt.
-- **HAI** — the personal-wellness reference runtime. Frozen as a
-  product per D-11 in `PAPER.md`. v0.2.0 PyPI is the pinned snapshot.
+## How We Work
 
-HAI runtime changes ship only via `WP-RUNTIME-FIX-NNN` packets in
-service of preprint or benchmark work.
+Multiple AI coding agents work this repo in parallel. You are not the
+only agent here. Treat this section as binding context for every turn.
 
-## Active Repo Path
+**Roles.** Dom drives. Agents are workers, not deciders. Dom authorizes
+every commit, push, scope change, and research measurement. Agents
+propose; Dom accepts or redirects.
 
-This contract applies at `/Users/domcolligan/health_agent_infra/`. A
-stale checkout exists at `~/Documents/health_agent_infra/` (months
-behind). Run `pwd` and `git log -1` at session start before reading or
-writing planning/source files.
+**Implementer / auditor pattern.** Most work moves through two agents:
+one implements a packet, then a different agent audits the work before
+any commit. The auditing agent re-derives facts rather than echoing the
+implementer's summary — re-read the changed files, re-run the
+verification the implementer claimed, check that the brief was
+followed, and flag any out-of-scope or surprising changes. The audit's
+job is to disagree where disagreement is warranted.
 
-## Code vs Skill
+**Trust but verify.** A handoff summary describes what the implementer
+*intended* to do, not necessarily what they did. Always confirm by
+reading the files and re-running tests yourself.
 
-Two surfaces, exactly one lands per contribution.
+**Shared-tree etiquette.**
 
-- **Python runtime** (`hai/src/health_agent_infra/`) — deterministic,
-  testable source of truth for data acquisition, projection,
-  classification, R-rules, X-rules, synthesis, validation, persistence,
-  and CLI behaviour.
-- **Markdown skills** (`hai/src/health_agent_infra/skills/`) — judgment
-  layer for rationale prose, uncertainty surfacing, clarification, and
-  free-text intake routing.
+- If the working tree contains uncommitted changes you did not make
+  this session, treat them as outside your scope. Stage only what you
+  authored and flag the rest to Dom before any commit.
+- If a file you need to change is also being edited by another agent,
+  pause and coordinate via Dom rather than stomping.
+- Do not extend scope silently. If you find work that needs doing
+  outside your brief, surface it; do not just do it.
 
-Invariant: skills never mutate actions; code never improvises coaching
-prose. By the time a skill runs, the runtime has already computed
-`classified_state` and `policy_result`. A skill that re-derives a band,
-score, R-rule, or X-rule firing is a bug.
+**Commits and pushes.** Agents never push autonomously and never commit
+without explicit user authorization. When authorized, drive the
+terminal — do not print commands for Dom to paste.
 
-## CLI Boundaries
+## Session Start
 
-Agents mutate state only through `hai`:
+1. Confirm you are in `/Users/domcolligan/health_agent_infra/`.
+   `~/Documents/health_agent_infra/` is stale.
+2. Run `git status --short --branch`. Identify whose work is in the
+   tree before editing — uncommitted changes may belong to another
+   agent's in-flight packet.
+3. Read `PAPER.md` before making scope or prioritization calls.
+4. Identify your role this turn: implementer, auditor, or coordinator.
+   Dom's prompt will tell you. If unclear, ask.
+5. Choose the work lane: paper, benchmark, HAI runtime fix, or archive.
 
-- `hai propose --domain <d> --proposal-json <p>`
-- `hai synthesize --as-of <d> --user-id <u>`
-- `hai review record --outcome-json <p>`
-- `hai intake {gym,nutrition,stress,note,readiness,weight}`
-- `hai intent commit --intent-id <id>` (user-gated, not agent-safe)
-- `hai target commit --target-id <id>` (user-gated, not agent-safe)
+## Active Lanes
 
-Never write directly to `state.db`. The CLI contract is
-`hai capabilities --json`; read it rather than guessing.
+Default engineering lane today: **GovernedAgentBench**.
 
-## Governance Invariants
+| Lane | Path | Default posture |
+|---|---|---|
+| Paper control plane | `PAPER.md`, `paper/` | Single source of truth. Update in place only when Dom explicitly changes scope, decisions, hypotheses, roster, calendar, or claims. |
+| GovernedAgentBench | `benchmark/governed_agent_bench/`, `benchmark/verification/` | Primary engineering lane. Tasks, schemas, harness, scorer, fixtures, trajectories, reports, and reproducibility live here. |
+| HAI reference runtime | `hai/` | Frozen v0.2.0 reference runtime. Modify only via a named `WP-RUNTIME-FIX-NNN`-style fix serving the preprint or benchmark. |
+| Historical provenance | `ARCHIVE/` | Read-only by default. Use for decision archaeology; do not treat as current guidance. |
 
-1. **W57.** Agent cannot deactivate user-authored state without
-   explicit user commit. Agent-proposed intent/target changes may be
-   proposed, but activation/deactivation requires the user-gated
-   commit path.
-2. **No autonomous plan generation.** Runtime produces daily
-   recommendations over user-authored intent. Not training plans or
-   diet plans.
-3. **No clinical claims.** No diagnosis-shaped language in
-   recommendations or rationales. The `safety` skill defines the
-   refusal boundary.
-4. **Local-first.** State stays in the user's local DB. Package has
-   no telemetry path. A hosted agent provider may receive context the
-   user gives that provider.
-5. **Three-state audit chain is load-bearing.** `proposal_log` →
-   `planned_recommendation` → `daily_plan` + `recommendation_log` →
-   `review_outcome` must reconcile through `hai explain`.
-6. **No bool-as-int silent coercion.** Threshold-consumer sites must
-   use `core.config.coerce_int / coerce_float / coerce_bool`. New
-   code that constructs threshold dicts and bypasses
-   `core.config.load_thresholds` is a code-review concern.
+## Research Invariants
 
-## Architectural Seams
+- The headline experiment varies the runtime, not the prompt.
+- Keep static oracle-pair evidence, live runtime probes, and
+  model-backed trajectories clearly separated.
+- Mechanism inventory: M4 validation, M5 `agent_safe`, M6 W57
+  proposal/commit gate, M7 refusal, M8 audit evidence emission, M9-TX
+  transaction integrity held constant.
+- `no_runtime_enforcement` is a robustness sanity floor, not
+  per-mechanism attribution evidence.
+- No model-backed trajectory runs until the pilot protocol and model
+  roster are explicitly locked by Dom.
+- No private health rows, live wearable exports, credentials, or
+  maintainer personal data in benchmark fixtures, prompts, trajectories,
+  reports, or reproducibility artifacts.
+- The health boundary is part of the evaluated contract: no diagnosis,
+  treatment, prescribing, or autonomous medical decisions.
 
-| Concern | Lives in |
-|---|---|
-| New domain | `hai/src/health_agent_infra/domains/<d>/` + sibling skill |
-| New pull source | `hai/src/health_agent_infra/core/pull/`; see `hai/docs/how_to_add_a_pull_adapter.md` |
-| Cross-domain logic | `hai/src/health_agent_infra/core/synthesis.py` and `synthesis_policy.py` |
-| New CLI command | `hai/src/health_agent_infra/cli/`; annotate capabilities metadata |
-| New audit field | Add to write path and to `hai explain` rendering |
-| New skill | `hai/src/health_agent_infra/skills/<name>/SKILL.md` |
-| New persona archetype | `hai/verification/dogfood/personas/p<N>_<slug>.py` + register in `ALL_PERSONAS` |
-| New threshold consumer | Always use `core.config.coerce_*` helpers |
+## Benchmark Discipline
 
-## Test and Tooling Commands
+- Treat trajectories as benchmark evidence. Model transcripts that are
+  not converted into trajectory JSON are not evidence.
+- The operator action contract is structured JSON, not arbitrary shell.
+- The scorer is deterministic and offline. Do not add model calls to
+  the scorer.
+- Offline reproducibility must not use network, private state, live
+  wearable sources, or paid APIs.
+- When changing tasks, trajectories, scorer config, or runtime modes,
+  update tests that prove the intended coverage and evidence tier.
+- Preserve manifest and fixture hermeticity: benchmark subprocesses
+  must use redirected HAI state/base paths.
+
+## HAI Runtime Discipline
+
+HAI is subordinate to the paper/benchmark. Runtime changes are allowed
+only when they support a preprint claim, benchmark mechanism, fixture,
+or reproducibility need.
+
+- Mutate HAI state only through `hai` CLI surfaces, never direct SQLite
+  writes.
+- Read the CLI contract with `uv run hai capabilities --json` rather
+  than guessing command shapes.
+- Python under `hai/src/health_agent_infra/` owns deterministic
+  behavior: validation, policy, R-rules, X-rules, synthesis,
+  persistence, and CLI behavior.
+- Markdown skills under `hai/src/health_agent_infra/skills/` own
+  rationale, uncertainty surfacing, clarification, and free-text
+  routing.
+- Skills never compute bands, scores, R-rule firings, or X-rule
+  mutations; runtime code never improvises coaching prose.
+- Do not import from `skills/` inside Python runtime code.
+- Threshold-consumer sites must use
+  `core.config.coerce_int / coerce_float / coerce_bool`; never silent
+  bool-as-int coercion.
+- W57: agents cannot deactivate user-authored state without explicit
+  user commit. Proposals are agent-safe; activation/deactivation is
+  not.
+
+## Audit Protocol
+
+The implementer produces a handoff packet; the auditor uses it as the
+entry point for verification, not as the source of truth. The audit
+re-derives the facts.
+
+**Implementer's handoff packet:**
+
+- Lane and goal
+- Current git state and what files changed
+- Tests and commands run, with outcomes
+- Evidence tier affected, if benchmark work
+- Known failures or skipped checks
+- Next concrete action
+- Anything the next agent should avoid touching
+
+**Auditor's checklist before recommending commit:**
+
+- Read every changed file end-to-end; do not trust the diff summary
+- Re-run the verification the implementer claimed
+- Check that the brief was followed and no scope crept silently
+- Confirm uncommitted files outside the implementer's reported scope
+  are flagged, not bundled into the commit
+- Surface any security-sensitive defaults the implementer chose
+  (env-only credentials, mocked transports, fixture-only data
+  boundaries)
+- Report findings to Dom in plain language; Dom decides the commit
+
+## Test Commands
+
+Use the narrowest relevant command first, then broaden before handoff.
 
 ```bash
+# Benchmark suite
+PYTHONPATH=benchmark uv run pytest -q benchmark/verification/tests
+PYTHONPATH=benchmark uv run pytest -q benchmark/verification/tests/test_<area>.py
+PYTHONPATH=benchmark uv run python benchmark/governed_agent_bench/reproduce_offline.py --output-dir /tmp/gab_offline_repro
+
+# HAI suite + CLI
 uv run pytest hai/verification/tests -q
 uv run pytest hai/verification/tests/test_<area>.py -q
-uvx mypy hai/src/health_agent_infra              # project venv lacks mypy
-uvx bandit -ll -r hai/src/health_agent_infra     # project venv lacks bandit
-uvx --from build python -m build --wheel --sdist
 uv run hai capabilities --json
 uv run hai doctor
+
+# Type and security checks (project venv lacks these; use uvx)
+uvx mypy hai/src/health_agent_infra
+MYPYPATH=benchmark:hai/src uvx mypy --explicit-package-bases benchmark/governed_agent_bench
+uvx bandit -ll -r hai/src/health_agent_infra benchmark/governed_agent_bench
 ```
 
-The project venv intentionally omits `mypy`, `bandit`, and `build`. Use
-`uvx` to avoid mutating `uv.lock`.
+The project venv intentionally omits `mypy`, `bandit`, and `build`.
+Use `uvx` for those rather than mutating `uv.lock`.
 
 ## Do Not Do
 
-- Do not bypass the `hai` CLI for mutations.
-- Do not reopen the active D-NN decisions in `PAPER.md` without an
-  explicit maintainer call. Historical D-PROJ / D-FRAME / D-PREPRINT
-  decision chains live in `ARCHIVE/decisions_log.md`.
-- Do not resurrect the NeurIPS 2027 main-conference target, the
-  Paper-1+Engels merge, the full predeclared D-FRAME-020 roster, the
-  USD 1,500 ceiling, the 50-trajectory adversarial layer, or the
-  bounded HS empirical contrast as current scope.
-- Do not compute bands, scores, R-rules, or X-rule firings inside a
-  skill.
-- Do not make clinical claims. No diagnosis, treatment, prescribing,
-  or autonomous medical decisions.
-- Do not generate training or diet plans.
-- Do not deactivate user-authored state without explicit user commit.
-- Do not import from `skills/` inside Python runtime code.
-- Do not add a write path that bypasses the three-state audit chain.
-- Do not open a PR or push autonomously.
-- Do not add a wearable source until the per-domain evidence contract
-  is broadened.
-- Do not add micronutrient or food-taxonomy features.
-- Do not treat raw SQLite reads as the normal inspection surface. Use
-  `hai today`, `hai explain`, and `hai doctor`.
-- Do not anchor a data path on Strava — directly or via an upstream
-  that proxies Strava data. Strava's Nov 2024 API agreement prohibits
-  AI/ML use; intervals.icu is the supported live source.
-- Do not ship a mechanism that auto-loads MCP servers from project
-  files. CVE-2025-59536 / CVE-2026-21852 demonstrate the
-  autoload + token-exfiltration chain. Manual install + local stdio
-  is the only allowed exposure path.
-- Do not allow automatic threshold mutation by an LLM agent without
-  an explicit user-commit step.
-- Do not create new planning files in the active tree. Decisions
-  update in place in `PAPER.md`; provenance archives go in `ARCHIVE/`.
-  D-13 in `PAPER.md` makes this binding.
-- Do not soften the external "AI control paper, AI safety umbrella"
-  framing because scope is preprint, not main conference.
+- Do not commit autonomously or push without explicit Dom authorization.
+- Do not stage or commit changes you did not make this session. Flag
+  unfamiliar working-tree files to Dom before any commit.
+- Do not extend scope silently. Surface the work; let Dom decide.
+- Do not trust another agent's verification summary without re-running
+  tests yourself.
+- Do not make HAI product-roadmap changes or v0.2.1+ polish.
+- Do not create new planning, phase, batch, or orchestration files in
+  the active tree. Decisions update in `PAPER.md`; provenance goes in
+  `ARCHIVE/`.
+- Do not reopen active D-NN decisions without an explicit Dom call.
+- Do not soften the external framing: this is an AI control paper under
+  the AI safety umbrella.
+- Do not merge static canary evidence with live runtime causality
+  claims.
+- Do not put private user data in public benchmark artifacts.
+- Do not bypass `agent_safe`, W57, refusal, validation, or audit paths
+  to make a task pass.
+- Do not add wearable sources, micronutrient/food-taxonomy features, or
+  clinical/medical decision claims.
+- Do not anchor data paths on Strava or an upstream that proxies Strava
+  data. Strava's Nov 2024 API agreement prohibits AI/ML use;
+  intervals.icu is the supported live source.
+- Do not auto-load MCP servers from project files. CVE-2025-59536 /
+  CVE-2026-21852 demonstrate the autoload + token-exfiltration chain.
+  Manual install + local stdio is the only allowed exposure path.
+- Do not open a PR, push, or publish autonomously.
 
 ## When In Doubt
 
-Read `PAPER.md` and this file. If still unclear, ask Dom rather than
-guessing.
+Read `PAPER.md`, then this file. If the scope is still unclear, ask
+Dom rather than guessing. Asking is preferred over inventing.
