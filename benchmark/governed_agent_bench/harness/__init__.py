@@ -17,11 +17,28 @@ from .model_actions import (
     parse_model_action,
     run_model_response_action,
 )
+from .together import (
+    REPORTABLE_OUTCOMES,
+    TOGETHER_API_KEY_ENV,
+    TogetherAdapterResult,
+    TogetherHTTPTransport,
+    build_together_chat_request,
+    estimate_together_cost,
+    run_together_model_action,
+    token_usage_from_together_response,
+    together_default_condition,
+)
 
 __all__ = [
     "HarnessConfig",
     "HarnessError",
+    "REPORTABLE_OUTCOMES",
+    "TOGETHER_API_KEY_ENV",
+    "TogetherAdapterResult",
+    "TogetherHTTPTransport",
     "action_to_argv",
+    "build_together_chat_request",
+    "estimate_together_cost",
     "harness_config_for_roster_condition",
     "load_json",
     "load_manifest_snapshot",
@@ -32,4 +49,7 @@ __all__ = [
     "run_model_response_action",
     "run_operator_action",
     "run_operator_actions",
+    "run_together_model_action",
+    "token_usage_from_together_response",
+    "together_default_condition",
 ]
