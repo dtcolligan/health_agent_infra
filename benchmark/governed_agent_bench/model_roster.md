@@ -1,69 +1,34 @@
-# Predeclared Model Roster - Paper v1
+# Predeclared Model Roster — Paper v1
 
-Status: predeclared candidate roster for `WP-MODEL-ROSTER-001`.
-Approved by Dom on 2026-05-19 for roster inclusion only. This file
-does not authorize model-backed trajectories before the mid-June
-pilot-protocol lock.
+**Status:** predeclared candidate roster for `WP-MODEL-ROSTER-001`.
+Approved by Dom on 2026-05-19 for roster inclusion only. No
+model-backed trajectories before the pilot-protocol lock.
 
-Paper: *Deterministic Software Contracts as Trusted Monitors in AI
-Control Protocols*.
+This file records the narrow preprint roster currently described in
+`/PAPER.md`. It is not frozen for paper-claim runs until Dom verifies the
+provider IDs/pricing against live vendor docs, records the roster hash,
+and locks the pilot protocol.
 
 ## Scope
 
-This roster replaces the superseded nine-entry Houdini/Guard roster.
-The current preprint scope is narrow:
+This roster replaces superseded broader model-roster drafts. Current
+scope is Option B mechanism ablation on one model class, with an
+optional small Option C stretch.
 
-- Option B headline: one model class over the 28-task suite with
-  `full_contract`, the five single-mechanism-off modes, and
-  `no_runtime_enforcement`.
-- Option B default: `Qwen/Qwen2.5-7B-Instruct-Turbo` on Together AI.
-- Option B fallback: `accounts/fireworks/models/qwen2p5-32b-instruct`
-  on Fireworks AI, only if D-O-01 triggers because the 7B condition
-  saturates the safety-constrained subset and cannot surface deltas.
-- Option C stretch: `claude-sonnet-4-6` on the Anthropic Claude API,
-  only if the substrate remains clean after Option B.
+## Roster
 
-No Engels extension, LLM-Guard, HS contrast, local fine-tuning, or full
-model-scale roster cell is authorized by this file.
+| Role | Model | Provider | Purpose |
+|---|---|---|---|
+| Rule baseline | deterministic harness | n/a | No model call; anchors routing, scorer, and reproducibility plumbing. |
+| Option B default | `Qwen/Qwen2.5-7B-Instruct-Turbo` | Together AI | Single model class for the mechanism-ablation headline. |
+| Option B fallback | `accounts/fireworks/models/qwen2p5-32b-instruct` | Fireworks | Use only if 7B saturates the safety-constrained subset and no `no_X` delta can surface. |
+| Option C stretch | `claude-sonnet-4-6` | Anthropic | Optional cloud cell for a small `runtime_mode` x `model_class` cross-product. |
 
-## Cost Ceiling
+## Budget
 
-Total model API spend remains capped at USD 300 across all model calls
-per `PAPER.md` D-06. The per-condition ceilings below are accounting
-reserves, not permission to spend all three reserves. Stop spending if
-the cumulative run log reaches USD 300 or if any provider price has
-changed materially since the provider snapshot date.
-
-## Provider Snapshot
-
-Provider facts were checked on 2026-05-19:
-
-- Together AI lists `Qwen/Qwen2.5-7B-Instruct-Turbo` as the endpoint,
-  with 7B parameters, FP8 serving, 32K context, and $0.30 / 1M input
-  plus $0.30 / 1M output tokens.
-- Fireworks lists `accounts/fireworks/models/qwen2p5-32b-instruct` as
-  ready, backed by Hugging Face `Qwen/Qwen2.5-32B-Instruct`, with
-  32.7B parameters. The model page marks serverless as not supported;
-  use requires on-demand deployment setup if D-O-01 selects this
-  fallback. Fireworks docs price non-headline dense models over 16B
-  parameters at $0.90 / 1M tokens for input and output unless a
-  model-specific price supersedes it.
-- Anthropic lists `claude-sonnet-4-6` as the Claude API ID, priced at
-  $3 / 1M input tokens and $15 / 1M output tokens, with 1M context and
-  64K max synchronous output.
-
-## Hash Discipline
-
-Every paper-claim trajectory and score at claim tier T3/T4 must record
-the SHA-256 of the complete bytes of this file:
-
-```bash
-sha256sum benchmark/governed_agent_bench/model_roster.md
-```
-
-Record that hash and the commit SHA in the model run log before any
-model-backed trajectory is generated. Entries are immutable after the
-first model-backed trajectory; additions require a new `roster_id`.
+Current paper budget: **USD 300** across all model API calls. Option B
+alone should be well below USD 100; the remaining headroom covers the
+optional Option C cell and one retry cycle.
 
 ## Machine-Readable Roster
 
@@ -161,7 +126,7 @@ first model-backed trajectory; additions require a new `roster_id`.
       "cost_boundary": {
         "budget_type": "approved_cloud_budget",
         "max_cost_usd": 100.0,
-        "billing_boundary": "Counts against the PAPER.md D-06 USD 300 aggregate model-call ceiling; deploy only if D-O-01 selects the 32B fallback."
+        "billing_boundary": "Counts against the PAPER.md D-06 USD 300 aggregate model-call ceiling; deploy only if D-O-01 selects this fallback."
       },
       "data_boundary": "synthetic_governed_agent_bench_fixtures_only",
       "decoding_settings": {
@@ -248,14 +213,11 @@ first model-backed trajectory; additions require a new `roster_id`.
 }
 ```
 
-## Pilot-Lock Checklist
+## Freeze Checklist
 
-- Recompute this file's SHA-256 after the roster commit.
-- Reconfirm provider availability and pricing before the first
-  model-backed trajectory.
-- Record the final D-O-01 choice: default 7B, or 32B fallback only if
-  the 7B condition saturates the safety-constrained subset.
-- Record the task-suite hash, prompt-template hash, scorer-config hash,
-  and manifest snapshot id in the run log.
-- Keep static canaries, live runtime probes, and model-backed results in
-  separate evidence tiers.
+- [ ] Verify every model ID resolves on the named provider.
+- [ ] Verify pricing against live vendor docs as of the run date.
+- [ ] Decide D-O-01: 7B default or 32B fallback.
+- [ ] Record the SHA-256 of this file and the commit SHA before any
+      paper-claim model run.
+- [ ] Ensure every paper-claim trajectory records the roster hash.
