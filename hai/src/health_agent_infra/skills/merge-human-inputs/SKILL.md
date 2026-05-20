@@ -57,7 +57,7 @@ The JSON response carries:
 When `gap_count` is 0, skip the rest of this protocol and return to
 the daily orchestration path.
 
-### Step 1b — choose framing from the W-A `present` block (v0.1.15)
+### Step 1b — choose framing from the `present` block
 
 Before composing the question, **read `present.{nutrition, gym, readiness, sleep}.logged` from the W-A extension**. These four signals choose between two framings:
 
@@ -67,7 +67,12 @@ Before composing the question, **read `present.{nutrition, gym, readiness, sleep
 
 If `is_partial_day=true` AND `target_status in ("absent", "unavailable")`, the runtime W-D arm-1 suppresses nutrition classification automatically (you'll see `nutrition_status="insufficient_data"` in the snapshot). Don't second-guess that — surface the suppression honestly: "Nutrition's open until end-of-day; I'm holding off on classifying partial-day intake against an unset target."
 
-**Do NOT branch on `present.weigh_in.logged` in v0.1.15.** The `hai intake weight` surface (W-B) is deferred to v0.1.17, so `present.weigh_in.logged` is always false today; conditioning on it would create a dead path that lights up unexpectedly when W-B ships. The runtime emits `weigh_in: {logged: false, reason: "intake_surface_not_yet_implemented"}` consistently — read it for awareness, do not branch on it. (Verbalizing a weigh-in prompt to the user without expecting a state row is fine.)
+**Do NOT branch on `present.weigh_in.logged`.** `hai intake weight`
+exists, but weight entry is user-gated (`agent_safe=false`) and the
+presence block may still report `weigh_in.logged=false` when no
+queryable body-composition row is available. You may ask the user for a
+weigh-in as part of a check-in, but do not treat the presence flag as a
+runtime gate for synthesis.
 
 ### Step 2 — compose ONE natural question
 
@@ -99,6 +104,7 @@ Priority-2 gaps (nutrition) belong at end-of-day, not morning. When the user say
 | `hai intake nutrition` | Daily nutrition aggregate | `--calories --protein-g --carbs-g --fat-g` | `--hydration-l --meals-count --as-of` |
 | `hai intake stress` | Subjective stress (1–5) | `--score {1,2,3,4,5}` | `--tags --as-of` |
 | `hai intake note` | Free-text context (catchall) | `--text` | `--tags --recorded-at --as-of` |
+| `hai intake weight` | Body-composition measurement; user-gated (`agent_safe=false`) | `--kg` | `--body-fat-pct --measured-at --as-of --notes` |
 
 All mutating intakes accept `--user-id`, `--ingest-actor` (`hai_cli_direct` or `claude_agent_v1` — use `claude_agent_v1` when you mediate), `--base-dir`, and `--db-path`.
 

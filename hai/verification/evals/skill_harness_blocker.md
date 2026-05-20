@@ -6,11 +6,9 @@ deferred gap; it now records what the pilot closed, what remains
 open, and what is intentionally out of scope.
 
 Phase 2.5 Track B Condition 3 ("skill-harness eval as a Phase 3 exit
-criterion") attached the original gap. See
-[`reporting/plans/historical/skill_harness_rfc.md`](../../reporting/plans/historical/skill_harness_rfc.md)
-for the pilot's design and
-[`reporting/plans/historical/post_v0_1_roadmap.md`](../../reporting/plans/historical/post_v0_1_roadmap.md)
-§5 Phase E for scope.
+criterion") attached the original gap. Historical pilot design and Phase E
+scope now live under `/ARCHIVE/hai_release_history/plans/historical/`;
+those files are provenance, not current planning surface.
 
 ## Original condition (verbatim)
 

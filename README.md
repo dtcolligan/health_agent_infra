@@ -6,7 +6,7 @@ GitHub tag. Single objective. After 2026-10-01 the maintainer pivots
 to mechanistic interpretability and the preprint is closed.
 
 [![PyPI](https://img.shields.io/pypi/v/health-agent-infra)](https://pypi.org/project/health-agent-infra/)
-[![Tests](https://img.shields.io/badge/tests-2943_passing-green)](hai/verification/tests/)
+[![Tests](https://img.shields.io/badge/tests-2999_passing-green)](hai/verification/tests/)
 [![Python](https://img.shields.io/badge/python-3.11+-blue)](pyproject.toml)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
@@ -16,9 +16,10 @@ to mechanistic interpretability and the preprint is closed.
   model, hypotheses, calendar, and active decisions all live in
   [`PAPER.md`](PAPER.md).
 - GovernedAgentBench has the measurement-ready substrate: schemas,
-  offline scorer, harness, six synthetic fixtures, ten pilot tasks,
-  fourteen hand-authored trajectories, rule baseline. No model-backed
-  runs yet.
+  offline scorer, harness, six synthetic fixtures, 28 pilot tasks,
+  fourteen hand-authored seed trajectories plus 25 static isolation
+  oracle pairs, targeted live isolation probes for M4-M8, and a rule
+  baseline. No model-backed runs yet.
 - HAI is frozen as a product at v0.2.0 PyPI. It is the pinned
   reference runtime; not a product roadmap.
 
@@ -42,8 +43,8 @@ pyproject.toml / uv.lock
 
 benchmark/governed_agent_bench/                  # benchmark code, schemas, scorer, harness, tasks
 hai/src/ + hai/docs/ + hai/verification/         # frozen reference runtime + operator docs + tests
-research/paper/                                  # paper draft (LaTeX)
-research/prior_art/                              # citation notes only
+paper/DRAFT.md                                   # paper draft scaffold
+paper/prior_art_notes.md                         # citation notes only
 
 ARCHIVE/                                         # frozen historical provenance, not in cold-start
   framing_v2/                                    # 27 D-FRAME decisions, 3 rounds, 6 batches

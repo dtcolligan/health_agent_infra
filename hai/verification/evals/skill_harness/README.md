@@ -11,9 +11,9 @@ Opt-in harness that exercises real readiness skill paths
   references, uncertainty tokens, and forbidden-token hygiene.
 
 See [`rubrics/recovery.md`](rubrics/recovery.md) and
-[`rubrics/running.md`](rubrics/running.md) for the rubrics and
-[`../../reporting/plans/historical/skill_harness_rfc.md`](../../../reporting/plans/historical/skill_harness_rfc.md)
-for design context.
+[`rubrics/running.md`](rubrics/running.md) for the rubrics. Historical
+design context lives in `/ARCHIVE/hai_release_history/plans/historical/`;
+it is provenance, not current planning surface.
 
 ## Not part of normal CI
 

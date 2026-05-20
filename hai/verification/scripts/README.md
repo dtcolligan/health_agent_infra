@@ -27,9 +27,8 @@ demo shim."
 - Do not extend it or wire it back up.
 - Do not treat it as the demo entry point for the current runtime.
 
-For the current runtime, see [`../../README.md`](../../README.md)
-("CLI surface" and "Read this repo in 5 minutes") and
-[`../../docs/hai/tour.md`](../../docs/hai/tour.md). The
-canonical end-to-end flow is the `hai daily` orchestrator and the
-`hai pull → hai propose → hai synthesize → hai review` chain — not
-this shim.
+For the frozen HAI reference runtime, see
+[`../../README.md`](../../README.md) and
+[`../../docs/hai_reference_runtime.md`](../../docs/hai_reference_runtime.md).
+The canonical operator flow is through `hai doctor`, `hai daily`,
+`hai today`, and `hai explain` — not this shim.

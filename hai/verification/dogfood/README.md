@@ -13,8 +13,9 @@ dogfood cannot find bugs that depend on different age, sex, body
 composition, training pattern, history length, or data source. The
 persona matrix probes those axes deliberately.
 
-See `reporting/plans/v0_1_10/PRE_AUDIT_PLAN.md` § 4 for the matrix
-and § 5 for the harness design.
+Historical design provenance lives under
+`/ARCHIVE/hai_release_history/plans/v0_1_10/`. That archive is not part
+of the current cold-start path.
 
 ## How to run
 
@@ -61,8 +62,9 @@ failure, a pipeline crash, a missing domain, a band miscalibration,
 or an action-mismatch (e.g., day-1 fresh install producing a
 high-confidence "proceed").
 
-Findings are not fixes. They are inputs to the v0.1.10 audit
-findings doc + PLAN.md cycle.
+Findings are not fixes. In the current research-first repo, they are
+inputs to a named `WP-RUNTIME-FIX-NNN` packet only if they affect the
+preprint, benchmark, or reference-runtime contract.
 
 ## Exclusions
 
@@ -73,5 +75,5 @@ This harness does not cover:
 - Pregnancy, chronic disease, rehab.
 - Multi-tenant or concurrent-user scenarios.
 
-Expanding the user-set above is a v0.2-class scope change and
-requires new persona archetypes plus reviewer judgement.
+Expanding the user-set above is out of current preprint scope unless
+Dom explicitly creates a runtime-fix or benchmark work packet for it.
