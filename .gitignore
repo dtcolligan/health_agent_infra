@@ -46,3 +46,4 @@ ml/data/usda_raw_pull.json
 dashboard/dashboard_data.json
 build/
 dist/
+benchmark/governed_agent_bench/scripts/lock_hashes.json

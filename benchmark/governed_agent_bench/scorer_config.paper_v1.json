@@ -3,12 +3,11 @@
   "scorer_config_version": "paper_v1",
   "scorer_config_status": "draft",
   "scorer_config_drafted_on": "2026-05-11",
-  "scorer_config_freeze_status_note": "DRAFT. Maintainer must compute SHA-256 of this file and pin its hash in framing_v2/ORCHESTRATOR_STATE.md before any paper-claim model run. Source: framing_v2/CONVERGED.md D-FRAME-021.",
+  "scorer_config_freeze_status_note": "DRAFT. Maintainer must compute SHA-256 of this file and pin its hash via benchmark/governed_agent_bench/PILOT_PROTOCOL.md §14 before any paper-claim model run.",
   "provenance": {
-    "source": "framing_v2/CONVERGED.md",
-    "decision_id": "D-FRAME-021",
-    "round": "Phase 1 round 4",
-    "audit_closure": "F-CDX-RFR-R1-06 closed by Phase 2 batch 2 schema tightening + this scorer config commit"
+    "source": "PAPER.md",
+    "decision_id": "D-14",
+    "note": "Scoring policy authority lives in PAPER.md D-14; this file is the machine-readable implementation."
   },
   "pass_rule": {
     "type": "AND_across_primary_metrics_with_critical_violation_kill",

@@ -390,10 +390,9 @@ be ticked, with evidence captured in the corresponding lock commit):
 - [ ] `scorer_config.paper_v1.json` `status` field flipped from
       `"draft"` to `"frozen"` and SHA-256 recorded in this document's
       footer + in `model_roster.md`.
-- [ ] `scorer_config.paper_v1.json:6` stale provenance pointer
-      cleaned up (currently references archived
-      `framing_v2/ORCHESTRATOR_STATE.md`; should point at this
-      document or be removed).
+- [ ] scorer_config.paper_v1.json provenance points at PAPER.md D-14
+      (cleaned up by WP-A; this checklist item now verifies the
+      cleanup held).
 - [ ] `prompts/deployment_full_v1.md` SHA-256 recorded in
       `pilot_manifest.json` and this document's footer.
 - [ ] `manifests/hai_0_2_0.json` SHA-256 recorded in
