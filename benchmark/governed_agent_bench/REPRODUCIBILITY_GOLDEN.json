@@ -1,0 +1,81 @@
+{
+  "schema_version": "governed_agent_bench.reproducibility_golden.v2",
+  "generated_at_utc": "2026-05-24T12:04:32Z",
+  "git_sha": "023288fa73624b9ebbdace987dd2f052befc264d",
+  "reproducer_command": "uv run python benchmark/governed_agent_bench/reproduce_offline.py --output-dir <OUTPUT>",
+  "expected_wall_time_seconds_observed": 76,
+  "baseline_hardware": "Darwin 23.4.0 arm64; Apple M2",
+  "hashed_files": [
+    {
+      "path": "evidence_tables/evidence_table.json",
+      "normalize_absolute_paths": true,
+      "sha256": "f0868e9ce05b882ba5d61e84ad19e726883ab7cb3a23ffb95fa7c6abfa056b96"
+    },
+    {
+      "path": "evidence_tables/evidence_table.csv",
+      "normalize_absolute_paths": false,
+      "sha256": "2ca150fea059242fabaa1446b93a5e5434497d103af9e5b840be3d6b4a1679fe"
+    },
+    {
+      "path": "error_taxonomy/error_taxonomy.json",
+      "normalize_absolute_paths": true,
+      "sha256": "a3fa099b7ef0994b66661d5bd9400a881cdd69fb3f8c2771d3288e610461f2b5"
+    },
+    {
+      "path": "figures/figures_manifest.json",
+      "normalize_absolute_paths": true,
+      "sha256": "2b0215ea9139ec8059237a4bb27276cdd31c0935713c06879a0b634af1cbc116"
+    },
+    {
+      "path": "isolation_matrix/isolation_matrix.json",
+      "normalize_absolute_paths": false,
+      "sha256": "223eafc24d1d87b77c810d4ad73a0e417d9885d04ff005cee154a08b1e29d28a"
+    },
+    {
+      "path": "adversarial_summary/adversarial_summary_aggregated.json",
+      "normalize_absolute_paths": false,
+      "sha256": "d4b5c0acb29e90308dbf1a369bfac723b77ceaeb995515e412977fe2ec7b3410"
+    },
+    {
+      "path": "adversarial_summary/adversarial_summary_aggregated.csv",
+      "normalize_absolute_paths": false,
+      "sha256": "03fc4905e0bfb5f0bc01423548ecfd6aa82ad547f041753fa9f35c5caa0f73b6"
+    },
+    {
+      "path": "adversarial_summary/adversarial_summary_per_trajectory.json",
+      "normalize_absolute_paths": false,
+      "sha256": "689f3fbf9ef582f43d5dced8faf9c5b5ea216cc0bca1dda451b3751f2ad72ac5"
+    },
+    {
+      "path": "adversarial_summary/adversarial_summary_per_trajectory.csv",
+      "normalize_absolute_paths": false,
+      "sha256": "e948c1c01cd1e8fa542a13fd4bf78459f6157c100828a8088cae81477125faf1"
+    }
+  ],
+  "excluded_from_hashing": [
+    {
+      "path_pattern": "fixtures/*/state.db",
+      "reason": "Native SQLite non-determinism (page allocation, free lists)"
+    },
+    {
+      "path_pattern": "fixtures/*/fixture_metadata.json",
+      "reason": "Contains submission_id and submitted_at"
+    },
+    {
+      "path_pattern": "fixtures/*/base/*.jsonl",
+      "reason": "Fixture builders embed timestamps and IDs"
+    },
+    {
+      "path_pattern": "rule_baseline_ablation/trajectories/**",
+      "reason": "Trajectory filenames embed random hashes; observation stdouts contain HAI runtime timestamps"
+    },
+    {
+      "path_pattern": "live_isolation/**",
+      "reason": "Live trajectory IDs and observation refs are run-specific; live tier is mechanism evidence per PAPER.md D-22"
+    },
+    {
+      "path_pattern": "offline_repro_manifest.json",
+      "reason": "Contains absolute output_dir; load-bearing contents captured in scoring artifacts"
+    }
+  ]
+}
