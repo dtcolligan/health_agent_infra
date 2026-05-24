@@ -3,8 +3,9 @@
 The offline reproducibility path rebuilds synthetic fixtures and runs
 the deterministic `rule_baseline` ablation, static oracle-pair
 isolation matrix, local hermetic HAI live-isolation probes, evidence
-tables, figures, and error taxonomy. It does not call local models,
-cloud models, paid APIs, live wearable sources, or private health data.
+tables, figures, error taxonomy, and targeted adversarial summary
+tables. It does not call local models, cloud models, paid APIs, live
+wearable sources, or private health data.
 
 Run:
 
@@ -24,9 +25,13 @@ The command writes:
 - `error_taxonomy/error_taxonomy.json`;
 - `isolation_matrix/isolation_matrix.json`;
 - `live_isolation/live_isolation_matrix.json`;
+- `adversarial_summary/adversarial_summary_aggregated.json`;
+- `adversarial_summary/adversarial_summary_aggregated.csv`;
+- `adversarial_summary/adversarial_summary_per_trajectory.json`;
+- `adversarial_summary/adversarial_summary_per_trajectory.csv`;
 - `offline_repro_manifest.json`, including top-level
-  `isolation_matrix` and `live_isolation` metadata plus path-only
-  artifact entries.
+  `isolation_matrix`, `live_isolation`, and `adversarial_summary`
+  metadata plus path-only artifact entries.
 
 Without `--task-id`, the command runs the full committed 28-task
 preprint inventory across each task's declared runtime modes.

@@ -23,6 +23,9 @@ from governed_agent_bench.results import (  # noqa: E402
     write_evidence_tables,
     write_result_figures,
 )
+from governed_agent_bench.results.adversarial_summary import (  # noqa: E402
+    build_adversarial_summary,
+)
 from governed_agent_bench.results.isolation_matrix import (  # noqa: E402
     build_isolation_matrix,
 )
@@ -56,6 +59,7 @@ def run_offline_repro(
     taxonomy_dir = output_dir / "error_taxonomy"
     isolation_dir = output_dir / "isolation_matrix"
     live_isolation_dir = output_dir / "live_isolation"
+    adversarial_summary_dir = output_dir / "adversarial_summary"
 
     ablation_report = run_rule_baseline_ablation(
         output_dir=run_dir,
@@ -96,6 +100,11 @@ def run_offline_repro(
             encoding="utf-8",
         )
 
+    adversarial_summary_dir.mkdir(parents=True, exist_ok=True)
+    adversarial_summary = build_adversarial_summary(
+        output_dir=adversarial_summary_dir
+    )
+
     def _rel(path: str | Path) -> str:
         resolved = Path(path).resolve()
         if resolved.is_relative_to(output_dir):
@@ -111,6 +120,18 @@ def run_offline_repro(
         "figures_manifest": _rel(figure_dir / "figures_manifest.json"),
         "error_taxonomy": _rel(taxonomy["json_path"]),
         "isolation_matrix": _rel(isolation_matrix_path),
+        "adversarial_summary_aggregated_json": _rel(
+            adversarial_summary_dir / "adversarial_summary_aggregated.json"
+        ),
+        "adversarial_summary_aggregated_csv": _rel(
+            adversarial_summary_dir / "adversarial_summary_aggregated.csv"
+        ),
+        "adversarial_summary_per_trajectory_json": _rel(
+            adversarial_summary_dir / "adversarial_summary_per_trajectory.json"
+        ),
+        "adversarial_summary_per_trajectory_csv": _rel(
+            adversarial_summary_dir / "adversarial_summary_per_trajectory.csv"
+        ),
     }
     if live_isolation_matrix is not None:
         artifacts["live_isolation_matrix"] = _rel(live_isolation_matrix_path)
@@ -147,6 +168,18 @@ def run_offline_repro(
             "all_isolated": isolation_matrix["all_isolated"],
         },
         "live_isolation": live_isolation_manifest,
+        "adversarial_summary": {
+            "schema_version": adversarial_summary["schema_version"],
+            "evidence_tier": adversarial_summary["evidence_tier"],
+            "aggregated_count": adversarial_summary["aggregated_count"],
+            "per_trajectory_count": adversarial_summary["per_trajectory_count"],
+            "all_expected_failures_observed": adversarial_summary[
+                "all_expected_failures_observed"
+            ],
+            "all_expected_violation_kinds_observed": adversarial_summary[
+                "all_expected_violation_kinds_observed"
+            ],
+        },
     }
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / "offline_repro_manifest.json").write_text(
@@ -162,6 +195,12 @@ def _exit_code_for_manifest(manifest: dict[str, Any]) -> int:
     live_isolation = manifest["live_isolation"]
     if not live_isolation.get("skipped") and (
         live_isolation["all_live_isolated"] is False
+    ):
+        return 1
+    adversarial_summary = manifest["adversarial_summary"]
+    if (
+        adversarial_summary["all_expected_failures_observed"] is False
+        or adversarial_summary["all_expected_violation_kinds_observed"] is False
     ):
         return 1
     return 0
