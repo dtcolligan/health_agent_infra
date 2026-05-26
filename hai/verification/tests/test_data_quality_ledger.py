@@ -16,7 +16,7 @@ Pins:
 from __future__ import annotations
 
 import json
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
 from health_agent_infra.cli import main as cli_main
@@ -33,7 +33,12 @@ from health_agent_infra.core.state import (
 
 
 USER = "u_test"
-AS_OF = date(2026, 4, 24)
+AS_OF = datetime.now(timezone.utc).date()
+
+
+def _now_local_for_as_of() -> datetime:
+    now_utc = datetime.now(timezone.utc)
+    return now_utc.replace(year=AS_OF.year, month=AS_OF.month, day=AS_OF.day)
 
 
 def _init_db(tmp_path: Path) -> Path:
@@ -84,7 +89,7 @@ def test_snapshot_attaches_data_quality_block_per_domain(tmp_path: Path):
     try:
         snap = build_snapshot(
             conn, as_of_date=AS_OF, user_id=USER,
-            now_local=datetime(2026, 4, 24, 23, 45),
+            now_local=_now_local_for_as_of(),
         )
     finally:
         conn.close()
@@ -105,7 +110,7 @@ def test_projector_writes_and_is_idempotent(tmp_path: Path):
     try:
         snap = build_snapshot(
             conn, as_of_date=AS_OF, user_id=USER,
-            now_local=datetime(2026, 4, 24, 23, 45),
+            now_local=_now_local_for_as_of(),
         )
         first = project_data_quality_for_date(conn, snapshot=snap)
         second = project_data_quality_for_date(conn, snapshot=snap)
@@ -165,7 +170,7 @@ def test_cli_data_quality_returns_rows_after_projection(tmp_path: Path, capsys):
     try:
         snap = build_snapshot(
             conn, as_of_date=AS_OF, user_id="u_local_1",
-            now_local=datetime(2026, 4, 24, 23, 45),
+            now_local=_now_local_for_as_of(),
         )
         project_data_quality_for_date(conn, snapshot=snap)
     finally:
