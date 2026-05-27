@@ -24,6 +24,7 @@ FIXED_FILES: tuple[str, ...] = (
     "benchmark/governed_agent_bench/model_roster.md",
     "benchmark/governed_agent_bench/prompts/deployment_full_v1.md",
     "benchmark/governed_agent_bench/manifests/hai_0_2_0.json",
+    "benchmark/governed_agent_bench/safety_constrained_subset.json",
 )
 
 TASK_FILES: tuple[str, ...] = (

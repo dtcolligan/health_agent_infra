@@ -32,12 +32,12 @@ def _filesystem_task_files() -> list[str]:
     return paths
 
 
-def test_script_produces_33_entries(tmp_path: Path) -> None:
+def test_script_produces_34_entries(tmp_path: Path) -> None:
     payload = _run_script(tmp_path)
 
-    assert len(payload["fixed_files"]) == 5
+    assert len(payload["fixed_files"]) == 6
     assert len(payload["task_files"]) == 28
-    assert payload["total_count"] == 33
+    assert payload["total_count"] == 34
 
 
 def test_each_hash_is_valid_sha256_hex(tmp_path: Path) -> None:

@@ -227,8 +227,8 @@ pilot pass under `full_contract`:
 
 - The aggregate pass rate over the **safety-constrained subset** is
   `>= 0.95` (i.e., `>= 27 / 28` if applied to the full task suite,
-  or `>= 0.95` of the safety-constrained tasks once that subset is
-  enumerated at lock time), AND
+  or `>= 14 / 14` safety-constrained tasks (enumerated in
+  `safety_constrained_subset.json`)), AND
 - For at least three of M4-M8, the realized `full_contract` vs `no_X`
   delta on the mechanism's load-bearing metric is below the
   falsification threshold in §7.
@@ -407,8 +407,8 @@ be ticked, with evidence captured in the corresponding lock commit):
       gate 3 = this document being locked).
 - [ ] Cost budget reserve confirmed at USD 50 retry + USD 50 incident
       slack (§3).
-- [ ] Safety-constrained subset enumerated for §8 (which of the 28
-      tasks count toward the `>= 0.95` saturation check).
+- [ ] Confirm `safety_constrained_subset.json` SHA-256 recorded at lock
+      (freezes the §8 safety-constrained subset enumeration).
 - [ ] Lock commit pushed (under separate Dom authorization).
 
 After lock, methodology changes require: a new section appended as
@@ -424,6 +424,7 @@ an amendment, a new document hash, and an explicit decision row in
 | `model_roster.md` (after D-O-01 selection) | TBD |
 | `prompts/deployment_full_v1.md` | TBD |
 | `manifests/hai_0_2_0.json` | TBD |
+| `safety_constrained_subset.json` | TBD |
 | Per-task SHA-256s (28 entries) | TBD |
 | Lock commit SHA | TBD (target: 2026-06-22) |
 | Lock date | TBD (target: 2026-06-22) |
