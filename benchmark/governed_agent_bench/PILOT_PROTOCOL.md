@@ -105,6 +105,17 @@ raise it. Retry-driven API calls count against the per-condition cap
 100 mid-run, the protocol's failure-mode triage tree (§11) controls
 disposition.
 
+**DR-9 gate-B prelude overhead (ratified).** Per §8, if gate A
+passes the pilot inserts a gate-B prelude of ~70 calls (5 no-X
+modes × 14 safety-constrained tasks × n=1). At 7B Together pricing
+this is approximately USD 0.05. The prelude is billed against the
+Option B 7B per-condition cap (USD 100), not a separate budget line.
+If gate A fails the prelude does not run and the overhead is zero.
+If the prelude completes and gate B passes, the subsequent 32B
+condition consumes its own USD 100 per-condition cap (including a
+32B `full_contract` replay per §10); the 7B per-condition cap is
+not topped up by the unused 7B no_X headroom.
+
 ## §4 Per-Task Interaction Shape
 
 Cited from `SPEC.md` §"Operator Action Schema" and §"Trajectory
@@ -237,27 +248,101 @@ the binary rule (the deterministic-contract thesis demands binary).
 ## §8 DR-9 7B → 32B Switch Threshold (Numerical)
 
 `/PAPER.md` D-21 (DR-9) and `model_roster.md`:24 specify the
-qualitative rule. This section pins the numerical trigger.
+qualitative rule. This section pins the numerical trigger and the
+two-stage gate evaluation that resolves the §10 outer-loop ordering
+constraint (per `/PAPER.md` D-24 decision 2).
 
-**Ratified:** switch from Qwen 7B to Qwen 32B iff, after one full
-pilot pass under `full_contract`, **both** of the following hold:
+**Ratified:** the DR-9 switch decision uses two sequential gates,
+gate A then gate B. The pilot fires the switch iff both gates pass.
 
-- The aggregate pass rate over the **safety-constrained subset** is
-  `>= 14 / 14` safety-constrained tasks (enumerated in
-  `safety_constrained_subset.json`; equivalent to `>= 0.95` against
-  the subset of 14), AND
-- For at least three of M4-M8, the realized `full_contract` vs `no_X`
-  delta on the mechanism's load-bearing metric is below the
-  falsification threshold in §7.
+### Gate A — subset saturation
 
-Both conditions together (AND composition) mean: 7B is too good to
-surface the deltas the paper needs, exactly the scenario DR-9
-anticipates. Either condition alone is not sufficient; the AND gate
-is conservative against the USD 100 32B switch cost (D-06).
+Evaluated immediately after the `full_contract` mode completes
+under §10 (i.e., after all 28 tasks × n=3 reps under
+`full_contract` are scored). Compute the aggregate pass count over
+the safety-constrained subset (`safety_constrained_subset.json`,
+14 tasks of 28) using the per-task median across the 3 reps per §9.
+
+Gate A passes iff the median-aggregated pass count is `>= 14 / 14`
+(equivalent to `>= 0.95` against the subset of 14; rounded up by the
+integer ceiling on task pass count per D-23).
+
+If gate A **fails**, DR-9 does not fire. The pilot proceeds with 7B
+per the §10 outer-loop ordering (`no_validation`, `no_agent_safe`,
+`no_proposal_gate`, `no_refusal`, `no_audit_chain`,
+`no_runtime_enforcement`). The gate-B prelude is not run; the
+per-condition budget headroom is preserved for the §10 main pilot.
+
+### Gate B — per-mechanism delta prelude
+
+Conditional on gate A passing. Before the §10 main pilot's
+`no_validation` mode begins, the pilot inserts a budget-bounded
+prelude: n=1 across each of the 5 no-X modes (`no_validation`,
+`no_agent_safe`, `no_proposal_gate`, `no_refusal`,
+`no_audit_chain`) on the 14 safety-constrained tasks. This is
+5 × 14 = 70 calls; at 7B Together pricing the cost is approximately
+USD 0.05 (acknowledged in §3). `no_runtime_enforcement` is not
+included in the prelude (DR-6 / D-20: sanity floor, not part of
+per-mechanism attribution).
+
+Gate B passes iff, for at least three of M4-M8, the realized
+`full_contract` vs `no_X` delta on the mechanism's load-bearing
+metric is below the §7 falsification threshold. The §7 binary-leg
+rules (exact-zero invariants on M4, M5, M6, M7) and 5pp-delta rules
+(M7 sensitivity leg, M8 both legs) apply unchanged on the
+prelude's n=1 evidence; the prelude does not compute medians.
+
+Gate-B coverage caveat (acknowledged): the safety-constrained
+subset is M5/M6/M7 load-bearing by construction (D-23); current
+task declarations do not make M4 or M8 load-bearing on these 14
+tasks, and score artifacts emit requested task metrics rather than
+every §7 metric by default. Prelude rows are diagnostic switch
+evidence only. A mechanism is credited toward the "at least three
+of M4-M8" gate-B tally only when the prelude evidence table
+contains that mechanism's §7 load-bearing metric(s) for the
+compared `full_contract` and `no_X` rows. The prelude must not be
+reported as §7 model-backed H1 falsification evidence; the main
+n=3 × 28 pilot remains the source for model-backed H1
+falsification.
+
+If gate B **fails**, DR-9 does not fire. The 70 prelude
+trajectories are preserved as diagnostic 7B evidence under
+`runs/pilot/<dated>/conditions/option_b_qwen25_7b_together_v1/`
+with `evidence_tier = "diagnostic_only"` per §11 / §12; the
+pilot proceeds with 7B per §10. The prelude does not back-fill the
+main pilot's first rep, because the prelude covers only 14 of 28
+tasks and is n=1; merging would violate the §9 median definition.
+
+If gate B **passes**, DR-9 fires. The pilot switches from
+`option_b_qwen25_7b_together` to
+`option_b_fallback_qwen25_32b_fireworks` for the remaining §10
+runtime modes; both systems coexist as parallel
+`conditions/<system_id>/` siblings per §12. The 7B `full_contract`
+evidence (28 tasks × n=3) and the 7B gate-B prelude (14 tasks × 5
+modes × n=1) are preserved as supplementary appendix data; the
+headline mechanism-ablation rows use 32B per §10 from the switch
+point onward. Whether the 32B condition replays `full_contract`
+before its no_X modes is pinned in §10.
+
+### Composition rationale
+
+Both gates together (AND composition) mean: 7B is too good to
+surface the per-mechanism deltas the paper needs, exactly the
+scenario DR-9 anticipates. Either gate alone is not sufficient;
+the AND structure is conservative against the USD 100 32B
+per-condition cost (D-06).
+
+The two-stage evaluation removes the structural defect in the
+prior single-trigger formulation: gate B's per-mechanism delta is
+not derivable at the end of `full_contract` under the §10 outer
+loop, because no `no_X` evidence exists at that point. The
+conditional prelude bridges the gap with a budget-bounded
+~USD 0.05 probe before the main pilot commits the bulk of the
+per-condition spend.
 
 Switch consumes the 32B per-condition budget (USD 100); the 7B
-trajectories are kept as supplementary appendix data, not as the
-headline.
+`full_contract` reps and the 7B gate-B prelude trajectories are
+kept as supplementary appendix data, not as the headline.
 
 ## §9 Replication Policy
 
@@ -281,7 +366,33 @@ inner-inner = rep. All 28 tasks run under `full_contract` (each task's
 3 reps consecutive: `rep_01` → `rep_02` → `rep_03`), then all 28 under
 `no_validation` with the same per-task-consecutive rep ordering, etc.
 
-Rationale:
+**Conditional DR-9 gate-B prelude insertion (ratified).** Between
+the completion of `full_contract` and the start of `no_validation`,
+the §8 gate-B prelude conditionally inserts iff gate A passed:
+n=1 across the 5 no-X modes (`no_validation`, `no_agent_safe`,
+`no_proposal_gate`, `no_refusal`, `no_audit_chain`) on the 14
+safety-constrained tasks (`safety_constrained_subset.json`).
+Within the prelude, ordering is outer = no-X mode in `sorted` order,
+inner = task in `sorted(task_ids)` order over the safety-constrained
+subset, inner-inner = single rep. Total prelude calls: 5 × 14 = 70.
+The prelude is a separate evidence stream from the §9 n=3
+main-pilot reps; per §8 it is not back-filled into the main pilot.
+If gate A failed (or §8 gate B fails after the prelude completes),
+the §10 main-pilot loop continues on 7B as originally ordered.
+
+**Post-switch ordering (ratified).** If §8 gate B passes and the
+pilot switches to 32B, the 32B condition replays `full_contract`
+(28 tasks × n=3) before its no_X modes begin. Rationale: D-17
+requires the `no_X` delta to be anchored against `full_contract`
+at the reported evidence tier. For 32B model-backed headline rows,
+that anchor must be a 32B `full_contract` run; mixing 7B
+`full_contract` with 32B `no_X` would confound model class with
+runtime mode. After the 32B `full_contract` replay, the 32B
+condition continues through the remaining 6 modes
+(`no_validation` … `no_runtime_enforcement`) per the original
+outer-loop ordering.
+
+Rationale (overall):
 
 - Cleaner per-mode cost burn accounting (one cumulative meter per
   mode, easy to halt on §3 cap breach).
