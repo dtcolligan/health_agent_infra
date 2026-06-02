@@ -71,6 +71,8 @@ Scope OUT (lock-day-only, intentionally absent):
 
 **Pre-lock criterion:** model-driven trajectory steps carry these four keys; missing-value semantics defined (None vs absent); existing Together-adapter tests updated to assert presence; A2's cost / wall-time meters consume from trajectory step metadata.
 
+**Status:** shipped 2026-06-02 (commit `ccc90dd`, WP-A4). Codex-audited: plan PASS_WITH_CHANGES (3 corrections folded) → implementation PASS. Option A (fields nested under step `metadata`, no schema change); `elapsed_ms`→`wall_time_ms` rename; provider-neutral `ModelTurnResult` threading seam; numeric-or-None runtime guard. Missing-value rule: rule_baseline + `run_model_response_action` (no provider call) omit the keys; model-loop action steps carry them present, value-or-None.
+
 ### A5. Retry / rate-limit middleware and outage detection
 
 **Source:** §5 ratified table.
