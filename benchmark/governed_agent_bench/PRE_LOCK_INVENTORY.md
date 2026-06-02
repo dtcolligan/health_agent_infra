@@ -198,6 +198,8 @@ Scope OUT (lock-day-only, intentionally absent):
 
 ### B4. PAPER.md and PILOT_PROTOCOL.md cross-reference staleness reconciliation
 
+**Status:** shipped 2026-06-02 (commit `8198ec0`, WP-B4). Codex-audited rounds 1–3; substantive PASS at round 2.
+
 **Source:** PAPER.md Engineering Plan row "Pilot protocol document | Not started." contradicts PILOT_PROTOCOL.md §1-§13 ratified 2026-05-27. PAPER.md is the cold-start single source of truth; a contradiction at the top of the cold-start chain is an audit-defensibility hazard.
 
 **Gap:** row content rot.
