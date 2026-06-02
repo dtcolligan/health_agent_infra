@@ -12,6 +12,7 @@ import hashlib
 import json
 import os
 import socket
+import time
 import urllib.error
 import urllib.request
 from dataclasses import asdict, dataclass
@@ -25,6 +26,7 @@ from governed_agent_bench.harness.core import (
     render_prompt,
 )
 from governed_agent_bench.harness.model_actions import (
+    ModelTurnResult,
     TurnRecord,
     _messages_from_rendered_prompt,
     run_agent_loop,
@@ -230,11 +232,12 @@ def run_together_model_action(
 
     provider = transport or TogetherHTTPTransport()
 
-    def model_turn(messages: list[dict[str, str]]) -> str:
+    def model_turn(messages: list[dict[str, str]]) -> ModelTurnResult:
         request_for_turn = {
             **request,
             "messages": [dict(message) for message in messages],
         }
+        start = time.perf_counter()
         try:
             raw_response = provider.complete(
                 request_for_turn,
@@ -249,6 +252,7 @@ def run_together_model_action(
                 str(exc),
                 None,
             ) from exc
+        wall_time_ms = int(round((time.perf_counter() - start) * 1000))
 
         raw_responses.append(raw_response)
         usage = token_usage_from_together_response(raw_response)
@@ -268,7 +272,15 @@ def run_together_model_action(
                 raw_response,
             ) from exc
         provider_output_texts.append(provider_output_text)
-        return provider_output_text
+        return ModelTurnResult(
+            text=provider_output_text,
+            prompt_tokens=usage["prompt_tokens"],
+            completion_tokens=usage["completion_tokens"],
+            cost_usd_estimate=estimate_together_cost(usage)[
+                "estimated_total_cost_usd"
+            ],
+            wall_time_ms=wall_time_ms,
+        )
 
     def after_turn(
         record: TurnRecord,

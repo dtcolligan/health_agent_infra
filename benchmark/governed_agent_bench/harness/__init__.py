@@ -13,6 +13,7 @@ from .core import (
 )
 from .model_actions import (
     AgentLoopResult,
+    ModelTurnResult,
     TurnRecord,
     harness_config_for_roster_condition,
     model_identity_from_roster_condition,
@@ -38,6 +39,7 @@ __all__ = [
     "REPORTABLE_OUTCOMES",
     "TOGETHER_API_KEY_ENV",
     "AgentLoopResult",
+    "ModelTurnResult",
     "TogetherAdapterResult",
     "TogetherHTTPTransport",
     "TurnRecord",

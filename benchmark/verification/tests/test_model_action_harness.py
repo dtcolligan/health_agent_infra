@@ -18,6 +18,7 @@ if str(BENCHMARK_ROOT) not in sys.path:
 from governed_agent_bench.harness import (  # noqa: E402
     HarnessConfig,
     HarnessError,
+    ModelTurnResult,
     harness_config_for_roster_condition,
     load_task,
     parse_model_action,
@@ -333,3 +334,176 @@ def test_agent_loop_after_turn_stop_signal_terminates(
     assert records_seen[0][1]["steps"] == result.trajectory["steps"]
     assert result.stop_reason == "after_turn_stop"
     assert result.turn_records[-1].stop_reason == "after_turn_stop"
+
+
+_METADATA_KEYS = (
+    "wall_time_ms",
+    "prompt_tokens",
+    "completion_tokens",
+    "cost_usd_estimate",
+)
+
+
+def _refusal_response(
+    reason: str = "Outside the governed surface.",
+    final_text: str = "I cannot do that.",
+) -> str:
+    return json.dumps({
+        "schema_version": "governed_agent_bench.operator_action.v1",
+        "action_type": "refusal",
+        "reason": reason,
+        "final_text": final_text,
+    })
+
+
+def _scripted_meta_turns(
+    turns: list[ModelTurnResult],
+    seen_messages: list[list[dict[str, str]]],
+) -> Any:
+    def model_turn(messages: list[dict[str, str]]) -> ModelTurnResult:
+        seen_messages.append(json.loads(json.dumps(messages)))
+        return turns.pop(0)
+
+    return model_turn
+
+
+def test_agent_loop_stamps_numeric_metadata_on_action_step(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    marker = json.dumps({
+        "step_type": "mechanism_disabled",
+        "mechanism": "validation",
+        "runtime_mode": "no_validation",
+    })
+    _patch_hai_completed(monkeypatch, stderr=f"{marker}\n")
+    task = load_task("gab_l1_capabilities_route")
+    seen_messages: list[list[dict[str, str]]] = []
+    turns = [
+        ModelTurnResult(
+            text=_command_response(),
+            prompt_tokens=1200,
+            completion_tokens=340,
+            cost_usd_estimate=0.00046,
+            wall_time_ms=128,
+        ),
+        ModelTurnResult(
+            text=_final_response(),
+            prompt_tokens=1500,
+            completion_tokens=12,
+            cost_usd_estimate=0.00045,
+            wall_time_ms=90,
+        ),
+    ]
+
+    result = run_agent_loop(
+        task,
+        _config(tmp_path),
+        _scripted_meta_turns(turns, seen_messages),
+    )
+
+    steps = result.trajectory["steps"]
+    assert [step["step_type"] for step in steps] == [
+        "command",
+        "mechanism_disabled",
+        "observation",
+        "final",
+    ]
+    # The model-call metadata lands on the command action step only.
+    assert steps[0]["metadata"] == {
+        "wall_time_ms": 128,
+        "prompt_tokens": 1200,
+        "completion_tokens": 340,
+        "cost_usd_estimate": 0.00046,
+    }
+    # Neither the mechanism marker nor the observation (a different clock)
+    # carries the per-turn cost/token keys -> one cost per turn.
+    for non_action in (steps[1], steps[2]):
+        for key in _METADATA_KEYS:
+            assert key not in non_action["metadata"]
+    # The final action step gets its own turn's metadata.
+    assert steps[3]["metadata"]["wall_time_ms"] == 90
+    assert steps[3]["metadata"]["cost_usd_estimate"] == 0.00045
+    # Turn records round-trip the same numbers (feeds the provider report).
+    assert result.turn_records[0].cost_usd_estimate == 0.00046
+    assert result.turn_records[0].wall_time_ms == 128
+    assert result.turn_records[1].prompt_tokens == 1500
+
+
+@pytest.mark.parametrize(
+    ("responses", "action_index", "action_type"),
+    [
+        ([_final_response()], 0, "final"),
+        ([_refusal_response()], 0, "refusal"),
+        (["not json", _final_response()], 0, "invalid_output"),
+    ],
+)
+def test_agent_loop_str_turn_stamps_present_none_metadata(
+    tmp_path: Path,
+    responses: list[str],
+    action_index: int,
+    action_type: str,
+) -> None:
+    task = load_task("gab_l1_capabilities_route")
+    seen_messages: list[list[dict[str, str]]] = []
+
+    result = run_agent_loop(
+        task,
+        _config(tmp_path),
+        _scripted_model_turn(list(responses), seen_messages),
+    )
+
+    step = result.trajectory["steps"][action_index]
+    assert step["step_type"] == action_type
+    # A bare-str turn is still the model path: keys present, value None.
+    for key in _METADATA_KEYS:
+        assert key in step["metadata"]
+        assert step["metadata"][key] is None
+
+
+def test_agent_loop_coerces_non_numeric_metadata_to_none(
+    tmp_path: Path,
+) -> None:
+    task = load_task("gab_l1_capabilities_route")
+    seen_messages: list[list[dict[str, str]]] = []
+    turns = [
+        ModelTurnResult(
+            text=_final_response(),
+            prompt_tokens=10,
+            completion_tokens=5,
+            cost_usd_estimate="not-a-number",  # type: ignore[arg-type]
+            wall_time_ms=True,  # type: ignore[arg-type]
+        ),
+    ]
+
+    result = run_agent_loop(
+        task,
+        _config(tmp_path),
+        _scripted_meta_turns(turns, seen_messages),
+    )
+
+    metadata = result.trajectory["steps"][0]["metadata"]
+    # Runtime guard drops non-numeric / bool values to None; no leak.
+    assert metadata["cost_usd_estimate"] is None
+    assert metadata["wall_time_ms"] is None
+    assert metadata["prompt_tokens"] == 10
+    assert metadata["completion_tokens"] == 5
+
+
+def test_run_model_response_action_omits_turn_metadata(
+    tmp_path: Path,
+) -> None:
+    task = load_task("gab_l1_capabilities_route")
+
+    trajectory = run_model_response_action(
+        task,
+        _command_response(),
+        _config(tmp_path),
+    )
+
+    # The single-response helper performs no provider call, so it is
+    # outside WP-A4 turn-metadata stamping: keys absent (like rule_baseline).
+    command_step = trajectory["steps"][0]
+    assert command_step["step_type"] == "command"
+    for key in _METADATA_KEYS:
+        assert key not in command_step.get("metadata", {})

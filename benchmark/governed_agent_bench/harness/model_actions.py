@@ -52,7 +52,26 @@ STOP_REASON_MAX_TURNS = "max_turns"
 STOP_REASON_SUBPROCESS_CRASH = "subprocess_crash"
 
 AfterTurnDecision = Literal["continue", "stop"] | None
-ModelTurn = Callable[[list[dict[str, str]]], str]
+
+
+@dataclass
+class ModelTurnResult:
+    """One model turn's emitted text plus provider-call metadata.
+
+    Provider adapters return this so ``run_agent_loop`` can stamp
+    per-turn cost / token / wall-time metadata onto the model's action
+    step without becoming provider-aware. A bare ``str`` return is still
+    accepted (treated as text with all metadata absent / ``None``).
+    """
+
+    text: str
+    prompt_tokens: int | None = None
+    completion_tokens: int | None = None
+    cost_usd_estimate: float | None = None
+    wall_time_ms: int | None = None
+
+
+ModelTurn = Callable[[list[dict[str, str]]], "str | ModelTurnResult"]
 AfterTurn = Callable[["TurnRecord", dict[str, Any]], AfterTurnDecision]
 
 
@@ -70,7 +89,7 @@ class TurnRecord:
     prompt_tokens: int | None = None
     completion_tokens: int | None = None
     cost_usd_estimate: float | None = None
-    elapsed_ms: int | None = None
+    wall_time_ms: int | None = None
 
 
 @dataclass
@@ -199,7 +218,13 @@ def run_agent_loop(
     stop_reason: str | None = None
 
     for turn_index in range(max_turns):
-        raw_output = model_turn(messages)
+        turn_output = model_turn(messages)
+        turn_meta = (
+            turn_output
+            if isinstance(turn_output, ModelTurnResult)
+            else ModelTurnResult(text=turn_output)
+        )
+        raw_output = turn_meta.text
         messages.append({"role": "assistant", "content": raw_output})
         first_step_index = len(steps)
         parsed_action: dict[str, Any] | None = None
@@ -237,6 +262,8 @@ def run_agent_loop(
             elif action_type == "final":
                 turn_stop_reason = STOP_REASON_FINAL
 
+        if len(steps) > first_step_index:
+            _stamp_action_step_metadata(steps[first_step_index], turn_meta)
         trajectory_so_far = trajectory_from_steps(task, config, state, steps)
         record = TurnRecord(
             turn_index=turn_index,
@@ -246,6 +273,10 @@ def run_agent_loop(
             invalid_output=invalid_output,
             executed_step_ids=list(range(first_step_index, len(steps))),
             stop_reason=turn_stop_reason,
+            prompt_tokens=turn_meta.prompt_tokens,
+            completion_tokens=turn_meta.completion_tokens,
+            cost_usd_estimate=turn_meta.cost_usd_estimate,
+            wall_time_ms=turn_meta.wall_time_ms,
         )
         turn_records.append(record)
 
@@ -331,6 +362,44 @@ def _messages_from_rendered_prompt(rendered_prompt: str) -> list[dict[str, str]]
 
 def _feedback_message(steps: list[dict[str, Any]]) -> str:
     return json.dumps({"steps": steps}, indent=2, sort_keys=True)
+
+
+def _coerce_metadata_value(value: Any) -> int | float | None:
+    """Force a per-turn metadata value to a numeric scalar or ``None``.
+
+    Runtime guard so only numbers (never paths, strings, or other
+    adapter-supplied content) can enter the trajectory. ``bool`` is
+    excluded because it is an ``int`` subclass but not a real metric.
+    """
+
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return value
+    return None
+
+
+def _stamp_action_step_metadata(
+    step: dict[str, Any],
+    turn_meta: ModelTurnResult,
+) -> None:
+    """Attach per-turn model-call metadata to a model action step.
+
+    The four fields describe the model turn, so they live on the action
+    step (``command`` / ``invalid_output`` / ``refusal`` / ``final``) and
+    never on the observation step, keeping exactly one ``cost_usd_estimate``
+    per turn for downstream per-mechanism cost rollups.
+    """
+
+    metadata = step.setdefault("metadata", {})
+    metadata["wall_time_ms"] = _coerce_metadata_value(turn_meta.wall_time_ms)
+    metadata["prompt_tokens"] = _coerce_metadata_value(turn_meta.prompt_tokens)
+    metadata["completion_tokens"] = _coerce_metadata_value(
+        turn_meta.completion_tokens
+    )
+    metadata["cost_usd_estimate"] = _coerce_metadata_value(
+        turn_meta.cost_usd_estimate
+    )
 
 
 def _has_crash_observation(steps: list[dict[str, Any]]) -> bool:

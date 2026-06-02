@@ -185,6 +185,28 @@ def test_together_adapter_records_raw_response_usage_cost_and_trajectory(
     }
     assert result.cost_estimate["estimated_total_cost_usd"] == 0.0009
 
+    # Per-turn model-call metadata is stamped on the command action step.
+    steps = result.trajectory["steps"]
+    assert [step["step_type"] for step in steps] == [
+        "command",
+        "observation",
+        "final",
+    ]
+    command_meta = steps[0]["metadata"]
+    assert command_meta["prompt_tokens"] == 1000
+    assert command_meta["completion_tokens"] == 500
+    assert command_meta["cost_usd_estimate"] == 0.00045
+    assert isinstance(command_meta["wall_time_ms"], int)
+    assert command_meta["wall_time_ms"] >= 0
+    # The observation (HAI subprocess) is a different clock: no cost keys.
+    for key in ("prompt_tokens", "completion_tokens", "cost_usd_estimate", "wall_time_ms"):
+        assert key not in steps[1]["metadata"]
+    # The final action step carries its own turn's metadata.
+    assert steps[2]["metadata"]["prompt_tokens"] == 1000
+    # Turn records round-trip the per-turn cost into the provider report.
+    assert result.turn_records[0].cost_usd_estimate == 0.00045
+    assert isinstance(result.turn_records[0].wall_time_ms, int)
+
     assert len(transport.calls) == len(result.turn_records)
     for call in transport.calls:
         assert call["api_key"] == "mock-api-key"
