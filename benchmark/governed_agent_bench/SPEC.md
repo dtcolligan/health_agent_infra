@@ -186,7 +186,7 @@ both. The prompt is held constant.
 | `rule_baseline` | No model call; deterministic rules emit actions; `model_identity` omitted |
 | `local` | Local LM emits actions; full `model_identity` recorded |
 | `cloud` | Cloud LM emits actions with provider-snapshot pin |
-| `fine_tuned_local` | Future work (D-13 in `/PAPER.md`); not used in the preprint |
+| `fine_tuned_local` | Future work (`/PAPER.md` §"Scope" Out list: "S1 fine-tuning of bounded operators"); not used in the preprint |
 
 Pre-reframe condition names (`local_prompt_only`, `cloud_prompt_only`,
 `local_manifest`, `cloud_manifest`) are retired.
