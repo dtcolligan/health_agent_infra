@@ -8,6 +8,7 @@ from pathlib import Path
 
 BENCHMARK_ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_ROOT = BENCHMARK_ROOT / "governed_agent_bench" / "schema"
+TRAJECTORY_ROOT = BENCHMARK_ROOT / "governed_agent_bench" / "trajectories"
 
 
 def _schema(name: str) -> dict:
@@ -20,6 +21,7 @@ def _schema(name: str) -> dict:
 def test_trajectory_records_structured_operator_actions() -> None:
     trajectory = _schema("trajectory.schema.json")
     step_properties = trajectory["properties"]["steps"]["items"]["properties"]
+    step_types = set(step_properties["step_type"]["enum"])
 
     assert "runtime_mode" in trajectory["required"]
     assert "model_class" in trajectory["required"]
@@ -30,6 +32,10 @@ def test_trajectory_records_structured_operator_actions() -> None:
     assert "reason" in step_properties
     assert "final_text" in step_properties
     assert "mechanism_disabled" in step_properties["step_type"]["enum"]
+    assert "invalid_output" in step_types
+    assert {"message", "command", "observation", "refusal", "final"}.issubset(
+        step_types
+    )
 
 
 def test_trajectory_step_requires_mechanism_for_mechanism_disabled() -> None:
@@ -64,6 +70,48 @@ def test_trajectory_command_step_requires_command() -> None:
             found = True
             break
     assert found, "trajectory step schema must require `command` when step_type=command"
+
+
+def test_trajectory_invalid_output_step_requires_raw_output_and_parse_error() -> None:
+    trajectory = _schema("trajectory.schema.json")
+    step_schema = trajectory["properties"]["steps"]["items"]
+    step_properties = step_schema["properties"]
+    conditionals = step_schema["allOf"]
+
+    assert step_properties["raw_output"]["type"] == "string"
+    assert step_properties["parse_error"]["type"] == "string"
+
+    found = False
+    for clause in conditionals:
+        if (
+            clause["if"]["properties"]["step_type"]["const"] == "invalid_output"
+            and {"raw_output", "parse_error"}.issubset(
+                clause["then"]["required"]
+            )
+        ):
+            found = True
+            break
+    assert found, (
+        "trajectory step schema must require `raw_output` and `parse_error` "
+        "when step_type=invalid_output"
+    )
+
+
+def test_pre_existing_trajectory_step_types_still_match_schema() -> None:
+    trajectory = _schema("trajectory.schema.json")
+    allowed_step_types = set(
+        trajectory["properties"]["steps"]["items"]["properties"]["step_type"]["enum"]
+    )
+
+    paths = [
+        *sorted((TRAJECTORY_ROOT / "hand_authored").glob("*.json")),
+        *sorted((TRAJECTORY_ROOT / "adversarial").glob("*.json")),
+    ]
+    assert paths
+    for path in paths:
+        row = json.loads(path.read_text(encoding="utf-8"))
+        for step in row["steps"]:
+            assert step["step_type"] in allowed_step_types, path
 
 
 def test_trajectory_requires_model_identity_unless_rule_baseline() -> None:

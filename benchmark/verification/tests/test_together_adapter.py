@@ -25,7 +25,6 @@ from governed_agent_bench.harness import (  # noqa: E402
 from governed_agent_bench.harness.together import (  # noqa: E402
     OUTCOME_ADAPTER_FAILURE,
     OUTCOME_EXECUTED,
-    OUTCOME_INVALID_JSON,
     OUTCOME_PROVIDER_REFUSAL,
     OUTCOME_TIMEOUT,
 )
@@ -39,9 +38,10 @@ class FakeTransport:
     def __init__(
         self,
         response: dict[str, Any] | None = None,
+        responses: list[dict[str, Any]] | None = None,
         exc: Exception | None = None,
     ) -> None:
-        self.response = response or {}
+        self.responses = list(responses if responses is not None else [response or {}])
         self.exc = exc
         self.calls: list[dict[str, Any]] = []
 
@@ -59,7 +59,9 @@ class FakeTransport:
         })
         if self.exc is not None:
             raise self.exc
-        return self.response
+        if not self.responses:
+            raise RuntimeError("fake transport response queue exhausted")
+        return self.responses.pop(0)
 
 
 def _condition() -> dict[str, Any]:
@@ -97,6 +99,40 @@ def _raw_together_response(content: str) -> dict[str, Any]:
     }
 
 
+def _command_response(command: str = "hai capabilities") -> dict[str, Any]:
+    return _raw_together_response(
+        json.dumps({
+            "schema_version": "governed_agent_bench.operator_action.v1",
+            "action_type": "command",
+            "command": command,
+            "args": {"--json": True} if command == "hai capabilities" else {},
+            "reason": "Inspect the command surface.",
+        })
+    )
+
+
+def _final_response(text: str = "Done.") -> dict[str, Any]:
+    return _raw_together_response(
+        json.dumps({
+            "schema_version": "governed_agent_bench.operator_action.v1",
+            "action_type": "final",
+            "final_text": text,
+            "reason": "No further action is needed.",
+        })
+    )
+
+
+def _refusal_response() -> dict[str, Any]:
+    return _raw_together_response(
+        json.dumps({
+            "schema_version": "governed_agent_bench.operator_action.v1",
+            "action_type": "refusal",
+            "reason": "The request is outside the governed surface.",
+            "final_text": "I cannot do that.",
+        })
+    )
+
+
 def test_build_together_request_uses_deployment_prompt() -> None:
     task = load_task("gab_l1_capabilities_route")
     condition = _condition()
@@ -121,16 +157,8 @@ def test_together_adapter_records_raw_response_usage_cost_and_trajectory(
     task = load_task("gab_l1_capabilities_route")
     condition = _condition()
     config = _config(tmp_path, condition)
-    raw_response = _raw_together_response(
-        json.dumps({
-            "schema_version": "governed_agent_bench.operator_action.v1",
-            "action_type": "command",
-            "command": "hai capabilities",
-            "args": {"--json": True},
-            "reason": "Inspect the command surface.",
-        })
-    )
-    transport = FakeTransport(raw_response)
+    raw_responses = [_command_response(), _final_response()]
+    transport = FakeTransport(responses=raw_responses)
 
     result = run_together_model_action(
         task,
@@ -143,30 +171,31 @@ def test_together_adapter_records_raw_response_usage_cost_and_trajectory(
 
     assert result.outcome == OUTCOME_EXECUTED
     assert result.reportable is False
-    assert result.parsed_action is not None
-    assert result.parsed_action["command"] == "hai capabilities"
+    assert len(result.turn_records) == 2
+    assert result.turn_records[0].parsed_action is not None
+    assert result.turn_records[0].parsed_action["command"] == "hai capabilities"
+    assert result.turn_records[1].stop_reason == "final"
     assert result.trajectory is not None
     assert result.trajectory["model_class"] == "cloud"
     assert result.trajectory["system_id"] == condition["system_id"]
     assert result.token_usage == {
-        "prompt_tokens": 1000,
-        "completion_tokens": 500,
-        "total_tokens": 1500,
+        "prompt_tokens": 2000,
+        "completion_tokens": 1000,
+        "total_tokens": 3000,
     }
-    assert result.cost_estimate["estimated_total_cost_usd"] == 0.00045
+    assert result.cost_estimate["estimated_total_cost_usd"] == 0.0009
 
-    assert transport.calls == [
-        {
-            "request": transport.calls[0]["request"],
-            "api_key": "mock-api-key",
-            "timeout_seconds": 12.5,
-        }
-    ]
-    assert "mock-api-key" not in json.dumps(transport.calls[0]["request"])
+    assert len(transport.calls) == len(result.turn_records)
+    for call in transport.calls:
+        assert call["api_key"] == "mock-api-key"
+        assert call["timeout_seconds"] == 12.5
+        assert "mock-api-key" not in json.dumps(call["request"])
 
     assert result.raw_provider_response_ref is not None
-    raw_path = config.output_dir / result.raw_provider_response_ref
-    assert json.loads(raw_path.read_text(encoding="utf-8")) == raw_response
+    assert len(result.raw_provider_response_refs) == 2
+    for raw_ref, raw_response in zip(result.raw_provider_response_refs, raw_responses):
+        raw_path = config.output_dir / raw_ref
+        assert json.loads(raw_path.read_text(encoding="utf-8")) == raw_response
 
     report_path = config.output_dir / result.provider_report_ref
     report_text = report_path.read_text(encoding="utf-8")
@@ -174,10 +203,125 @@ def test_together_adapter_records_raw_response_usage_cost_and_trajectory(
     assert "mock-api-key" not in report_text
     assert report["outcome"] == OUTCOME_EXECUTED
     assert report["raw_provider_response_ref"] == result.raw_provider_response_ref
-    assert report["parsed_action"] == result.parsed_action
+    assert report["raw_provider_response_refs"] == result.raw_provider_response_refs
+    assert report["turn_records"][0]["parsed_action"]["command"] == "hai capabilities"
     assert report["token_usage"] == result.token_usage
     assert report["cost_estimate"] == result.cost_estimate
     assert report["trajectory_id"] == result.trajectory["trajectory_id"]
+
+
+def test_together_adapter_preserves_ordered_cross_turn_steps(
+    tmp_path: Path,
+) -> None:
+    task = load_task("gab_l1_doctor_status_route")
+    condition = _condition()
+    config = _config(tmp_path, condition)
+    transport = FakeTransport(
+        responses=[
+            _command_response("hai capabilities"),
+            _command_response("hai doctor"),
+            _final_response("Runtime status checked."),
+        ]
+    )
+
+    result = run_together_model_action(
+        task,
+        condition,
+        config,
+        transport=transport,
+        env={TOGETHER_API_KEY_ENV: "mock-api-key"},
+    )
+
+    assert result.outcome == OUTCOME_EXECUTED
+    assert result.trajectory is not None
+    assert len(transport.calls) == 3
+    assert len(result.turn_records) == 3
+    assert [step["step_type"] for step in result.trajectory["steps"]] == [
+        "command",
+        "observation",
+        "command",
+        "observation",
+        "final",
+    ]
+    turn_2_messages = transport.calls[1]["request"]["messages"]
+    assert turn_2_messages[-1]["role"] == "user"
+    assert '"exit_code": "OK"' in turn_2_messages[-1]["content"]
+    assert '"stdout_ref":' in turn_2_messages[-1]["content"]
+    assert transport.calls[2]["request"]["messages"][-2]["role"] == "assistant"
+    assert result.turn_records[-1].stop_reason == "final"
+
+
+@pytest.mark.parametrize(
+    ("raw_response", "expected_step_type", "expected_stop_reason"),
+    [
+        (_final_response("Finished."), "final", "final"),
+        (_refusal_response(), "refusal", "refusal"),
+    ],
+)
+def test_together_adapter_terminates_on_final_or_refusal(
+    tmp_path: Path,
+    raw_response: dict[str, Any],
+    expected_step_type: str,
+    expected_stop_reason: str,
+) -> None:
+    task = load_task("gab_l1_capabilities_route")
+    condition = _condition()
+    config = _config(tmp_path, condition)
+    transport = FakeTransport(raw_response)
+
+    result = run_together_model_action(
+        task,
+        condition,
+        config,
+        transport=transport,
+        env={TOGETHER_API_KEY_ENV: "mock-api-key"},
+    )
+
+    assert result.outcome == OUTCOME_EXECUTED
+    assert result.trajectory is not None
+    assert len(transport.calls) == 1
+    assert [step["step_type"] for step in result.trajectory["steps"]] == [
+        expected_step_type
+    ]
+    assert result.turn_records[-1].stop_reason == expected_stop_reason
+
+
+def test_together_adapter_records_malformed_output_as_invalid_output(
+    tmp_path: Path,
+) -> None:
+    task = load_task("gab_l1_capabilities_route")
+    condition = _condition()
+    config = _config(tmp_path, condition)
+    transport = FakeTransport(
+        responses=[
+            _raw_together_response("not json"),
+            _final_response("Recovered after parse feedback."),
+        ]
+    )
+
+    result = run_together_model_action(
+        task,
+        condition,
+        config,
+        transport=transport,
+        env={TOGETHER_API_KEY_ENV: "mock-api-key"},
+    )
+
+    assert result.outcome == OUTCOME_EXECUTED
+    assert result.reportable is False
+    assert result.trajectory is not None
+    assert len(transport.calls) == 2
+    assert result.trajectory["steps"][0]["step_type"] == "invalid_output"
+    assert result.trajectory["steps"][0]["raw_output"] == "not json"
+    assert "model response is not a JSON object" in (
+        result.trajectory["steps"][0]["parse_error"]
+    )
+    assert result.turn_records[0].parsed_action is None
+    assert result.turn_records[0].invalid_output is not None
+    assert transport.calls[1]["request"]["messages"][-1]["role"] == "user"
+    assert "model response is not a JSON object" in (
+        transport.calls[1]["request"]["messages"][-1]["content"]
+    )
 
 
 def test_together_adapter_reads_api_key_from_environment_only(
@@ -209,13 +353,6 @@ def test_together_adapter_reads_api_key_from_environment_only(
             FakeTransport(exc=TimeoutError("mock timeout")),
             OUTCOME_TIMEOUT,
             False,
-        ),
-        (
-            FakeTransport(
-                _raw_together_response("not json")
-            ),
-            OUTCOME_INVALID_JSON,
-            True,
         ),
         (
             FakeTransport({

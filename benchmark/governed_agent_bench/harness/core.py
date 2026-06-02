@@ -56,6 +56,16 @@ class HarnessConfig:
     scorer_config_hash: str | None = None
 
 
+@dataclass
+class OperatorRunState:
+    """Mutable execution state shared across turns in one trajectory."""
+
+    manifest_id: str
+    prompt: dict[str, str]
+    trajectory_id: str
+    command_manifest_snapshot: dict[str, Any]
+
+
 def load_json(path: Path) -> dict[str, Any]:
     """Load one JSON object from disk."""
 
@@ -143,74 +153,123 @@ def run_operator_actions(
     _ensure_model_metadata(config)
     if not actions:
         raise HarnessError("at least one operator action is required")
+    state = prepare_operator_run(
+        task,
+        config,
+        trajectory_id=_trajectory_id(task, actions, config),
+    )
+    steps: list[dict[str, Any]] = []
+
+    for action in actions:
+        append_operator_action_steps(action, config, state, steps)
+
+    trajectory = trajectory_from_steps(task, config, state, steps)
+    if write_trajectory:
+        write_trajectory_artifact(trajectory, config)
+    return trajectory
+
+
+def prepare_operator_run(
+    task: dict[str, Any],
+    config: HarnessConfig,
+    *,
+    trajectory_id: str,
+) -> OperatorRunState:
+    """Prepare shared harness state for one trajectory execution."""
+
+    _ensure_runtime_mode_in_scope(task, config.runtime_mode)
+    _ensure_invocation_context(config)
+    _ensure_model_metadata(config)
     manifest_id = _manifest_id(task)
     manifest_snapshot = load_manifest_snapshot(manifest_id)
     prompt = render_prompt(task, manifest_snapshot, config.prompt_template_id)
-    trajectory_id = _trajectory_id(task, actions, config)
-    steps: list[dict[str, Any]] = []
-    command_manifest_snapshot = manifest_snapshot
+    return OperatorRunState(
+        manifest_id=manifest_id,
+        prompt=prompt,
+        trajectory_id=trajectory_id,
+        command_manifest_snapshot=manifest_snapshot,
+    )
 
-    for action in actions:
-        action_type = action.get("action_type")
-        if action_type == "command":
-            command = _command_text(action)
-            _ensure_command_allowed(command, command_manifest_snapshot)
-            steps.append({
-                "step_type": "command",
-                "command": command,
-                "args": dict(action.get("args") or {}),
-                "reason": action.get("reason", ""),
-            })
-            completed = _run_hai(action, config)
-            stdout_ref, stderr_ref = _write_observation_artifacts(
-                completed,
-                output_dir=config.output_dir,
-                trajectory_id=trajectory_id,
-                step_index=len(steps),
-            )
-            steps.extend(_mechanism_disabled_steps(completed.stderr))
-            steps.append({
-                "step_type": "observation",
-                "exit_code": EXIT_CODE_NAMES.get(
-                    completed.returncode, f"EXIT_{completed.returncode}"
-                ),
-                "stdout_ref": stdout_ref,
-                "stderr_ref": stderr_ref,
-                "metadata": {"returncode": completed.returncode},
-            })
-            refreshed = _refreshed_manifest_snapshot(command, completed.stdout)
-            if refreshed is not None:
-                command_manifest_snapshot = refreshed
-        elif action_type == "refusal":
-            steps.append({
-                "step_type": "refusal",
-                "reason": _required_string(action, "reason"),
-                **(
-                    {"final_text": action["final_text"]}
-                    if action.get("final_text")
-                    else {}
-                ),
-            })
-        elif action_type == "final":
-            steps.append({
-                "step_type": "final",
-                "final_text": _required_string(action, "final_text"),
-                **({"reason": action["reason"]} if action.get("reason") else {}),
-            })
-        else:
-            raise HarnessError(f"unknown action_type: {action_type!r}")
+
+def append_operator_action_steps(
+    action: dict[str, Any],
+    config: HarnessConfig,
+    state: OperatorRunState,
+    steps: list[dict[str, Any]],
+) -> list[int]:
+    """Append trajectory steps for one parsed operator action."""
+
+    first_index = len(steps)
+    action_type = action.get("action_type")
+    if action_type == "command":
+        command = _command_text(action)
+        _ensure_command_allowed(command, state.command_manifest_snapshot)
+        steps.append({
+            "step_type": "command",
+            "command": command,
+            "args": dict(action.get("args") or {}),
+            "reason": action.get("reason", ""),
+        })
+        completed = _run_hai(action, config)
+        stdout_ref, stderr_ref = _write_observation_artifacts(
+            completed,
+            output_dir=config.output_dir,
+            trajectory_id=state.trajectory_id,
+            step_index=len(steps),
+        )
+        steps.extend(_mechanism_disabled_steps(completed.stderr))
+        steps.append({
+            "step_type": "observation",
+            "exit_code": EXIT_CODE_NAMES.get(
+                completed.returncode, f"EXIT_{completed.returncode}"
+            ),
+            "stdout_ref": stdout_ref,
+            "stderr_ref": stderr_ref,
+            "metadata": {"returncode": completed.returncode},
+        })
+        refreshed = _refreshed_manifest_snapshot(command, completed.stdout)
+        if refreshed is not None:
+            state.command_manifest_snapshot = refreshed
+    elif action_type == "refusal":
+        steps.append({
+            "step_type": "refusal",
+            "reason": _required_string(action, "reason"),
+            **(
+                {"final_text": action["final_text"]}
+                if action.get("final_text")
+                else {}
+            ),
+        })
+    elif action_type == "final":
+        steps.append({
+            "step_type": "final",
+            "final_text": _required_string(action, "final_text"),
+            **({"reason": action["reason"]} if action.get("reason") else {}),
+        })
+    else:
+        raise HarnessError(f"unknown action_type: {action_type!r}")
+    return list(range(first_index, len(steps)))
+
+
+def trajectory_from_steps(
+    task: dict[str, Any],
+    config: HarnessConfig,
+    state: OperatorRunState,
+    steps: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Build a trajectory object from accumulated steps."""
 
     trajectory = {
         "schema_version": "governed_agent_bench.trajectory.v2",
-        "trajectory_id": trajectory_id,
+        "trajectory_id": state.trajectory_id,
         "task_id": task["task_id"],
         "system_id": config.system_id,
         "runtime_mode": config.runtime_mode,
         "model_class": config.model_class,
-        "manifest_snapshot_id": manifest_id,
+        "manifest_snapshot_id": state.manifest_id,
         "prompt_template_id": config.prompt_template_id,
-        "prompt_template_hash": prompt["prompt_template_hash"],
-        "prompt_template_file_hash": prompt["prompt_template_file_hash"],
+        "prompt_template_hash": state.prompt["prompt_template_hash"],
+        "prompt_template_file_hash": state.prompt["prompt_template_file_hash"],
         "invocation_context": config.invocation_context,
         "steps": steps,
     }
@@ -222,14 +281,21 @@ def run_operator_actions(
         trajectory["model_roster_hash"] = config.model_roster_hash
     if config.scorer_config_hash is not None:
         trajectory["scorer_config_hash"] = config.scorer_config_hash
-    if write_trajectory:
-        config.output_dir.mkdir(parents=True, exist_ok=True)
-        path = config.output_dir / f"{trajectory_id}.json"
-        path.write_text(
-            json.dumps(trajectory, indent=2, sort_keys=True) + "\n",
-            encoding="utf-8",
-        )
     return trajectory
+
+
+def write_trajectory_artifact(
+    trajectory: dict[str, Any],
+    config: HarnessConfig,
+) -> None:
+    """Write one trajectory JSON artifact under the configured output dir."""
+
+    config.output_dir.mkdir(parents=True, exist_ok=True)
+    path = config.output_dir / f"{trajectory['trajectory_id']}.json"
+    path.write_text(
+        json.dumps(trajectory, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
 
 
 def render_prompt(

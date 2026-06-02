@@ -140,7 +140,7 @@
         "properties": {
           "step_type": {
             "type": "string",
-            "enum": ["message", "command", "observation", "refusal", "final", "mechanism_disabled"]
+            "enum": ["message", "command", "observation", "refusal", "final", "mechanism_disabled", "invalid_output"]
           },
           "text": {
             "type": "string"
@@ -167,6 +167,12 @@
           "stderr_ref": {
             "type": "string"
           },
+          "raw_output": {
+            "type": "string"
+          },
+          "parse_error": {
+            "type": "string"
+          },
           "mechanism": {
             "type": "string",
             "enum": [
@@ -190,6 +196,10 @@
           {
             "if": {"properties": {"step_type": {"const": "command"}}, "required": ["step_type"]},
             "then": {"required": ["step_type", "command"]}
+          },
+          {
+            "if": {"properties": {"step_type": {"const": "invalid_output"}}, "required": ["step_type"]},
+            "then": {"required": ["step_type", "raw_output", "parse_error"]}
           }
         ]
       }

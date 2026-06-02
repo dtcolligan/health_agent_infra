@@ -1,9 +1,9 @@
 """Together AI adapter for GovernedAgentBench model-action runs.
 
 The adapter is deliberately thin: it renders the existing deployment
-prompt, sends it through an injectable transport, records provider-call
-metadata, parses the model output through ``parse_model_action``, and
-delegates execution to the deterministic harness.
+prompt, sends accumulated chat messages through an injectable transport,
+records provider-call metadata, and delegates loop execution to the
+provider-neutral model-action harness.
 """
 
 from __future__ import annotations
@@ -14,18 +14,21 @@ import os
 import socket
 import urllib.error
 import urllib.request
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Mapping, Protocol
+from typing import Any, Literal, Mapping, Protocol
 
 from governed_agent_bench.harness.core import (
     HarnessConfig,
     HarnessError,
     load_manifest_snapshot,
     render_prompt,
-    run_operator_action,
 )
-from governed_agent_bench.harness.model_actions import parse_model_action
+from governed_agent_bench.harness.model_actions import (
+    TurnRecord,
+    _messages_from_rendered_prompt,
+    run_agent_loop,
+)
 from governed_agent_bench.model_roster import roster_condition
 
 
@@ -119,6 +122,19 @@ class TogetherHTTPTransport:
         return raw
 
 
+class _TogetherTurnFailure(RuntimeError):
+    def __init__(
+        self,
+        outcome: str,
+        error: str,
+        raw_response: dict[str, Any] | None,
+    ) -> None:
+        super().__init__(error)
+        self.outcome = outcome
+        self.error = error
+        self.raw_response = raw_response
+
+
 @dataclass(frozen=True)
 class TogetherAdapterResult:
     """Outcome of one Together model-action adapter call."""
@@ -126,9 +142,11 @@ class TogetherAdapterResult:
     outcome: str
     reportable: bool
     raw_provider_response_ref: str | None
+    raw_provider_response_refs: list[str]
     provider_report_ref: str
     provider_output_text: str | None
-    parsed_action: dict[str, Any] | None
+    provider_output_texts: list[str]
+    turn_records: list[TurnRecord]
     token_usage: dict[str, int | None]
     cost_estimate: dict[str, Any]
     trajectory: dict[str, Any] | None
@@ -179,18 +197,21 @@ def run_together_model_action(
     timeout_seconds: float = 60.0,
     write_trajectory: bool = True,
 ) -> TogetherAdapterResult:
-    """Call Together once and run the emitted operator action if valid."""
+    """Run a Together-backed bounded model-action loop for one task."""
 
     _ensure_together_config(condition, config)
     request, prompt_metadata = build_together_chat_request(task, condition)
     call_id = _provider_call_id(task, condition, config, prompt_metadata)
     env_map = os.environ if env is None else env
-    usage = _empty_usage()
-    cost = estimate_together_cost(usage)
+    raw_responses: list[dict[str, Any]] = []
+    provider_output_texts: list[str] = []
+    token_usage_by_turn: list[dict[str, int | None]] = []
+    completed_turn_records: list[TurnRecord] = []
 
     try:
         api_key = _api_key_from_env(env_map)
     except HarnessError as exc:
+        usage = _aggregate_token_usage(token_usage_by_turn)
         return _record_adapter_result(
             outcome=OUTCOME_ADAPTER_FAILURE,
             call_id=call_id,
@@ -198,120 +219,103 @@ def run_together_model_action(
             condition=condition,
             task=task,
             prompt_metadata=prompt_metadata,
-            raw_response=None,
-            provider_output_text=None,
-            parsed_action=None,
+            raw_responses=raw_responses,
+            provider_output_texts=provider_output_texts,
+            turn_records=[],
             token_usage=usage,
-            cost_estimate=cost,
+            cost_estimate=estimate_together_cost(usage),
             trajectory=None,
             error=str(exc),
         )
 
     provider = transport or TogetherHTTPTransport()
-    try:
-        raw_response = provider.complete(
-            request,
-            api_key=api_key,
-            timeout_seconds=timeout_seconds,
-        )
-    except TimeoutError as exc:
-        return _record_adapter_result(
-            outcome=OUTCOME_TIMEOUT,
-            call_id=call_id,
-            config=config,
-            condition=condition,
-            task=task,
-            prompt_metadata=prompt_metadata,
-            raw_response=None,
-            provider_output_text=None,
-            parsed_action=None,
-            token_usage=usage,
-            cost_estimate=cost,
-            trajectory=None,
-            error=str(exc),
-        )
-    except Exception as exc:
-        return _record_adapter_result(
-            outcome=OUTCOME_ADAPTER_FAILURE,
-            call_id=call_id,
-            config=config,
-            condition=condition,
-            task=task,
-            prompt_metadata=prompt_metadata,
-            raw_response=None,
-            provider_output_text=None,
-            parsed_action=None,
-            token_usage=usage,
-            cost_estimate=cost,
-            trajectory=None,
-            error=str(exc),
-        )
 
-    usage = token_usage_from_together_response(raw_response)
-    cost = estimate_together_cost(usage)
-    if _is_provider_refusal(raw_response):
-        return _record_adapter_result(
-            outcome=OUTCOME_PROVIDER_REFUSAL,
-            call_id=call_id,
-            config=config,
-            condition=condition,
-            task=task,
-            prompt_metadata=prompt_metadata,
-            raw_response=raw_response,
-            provider_output_text=None,
-            parsed_action=None,
-            token_usage=usage,
-            cost_estimate=cost,
-            trajectory=None,
-            error="Together response indicates provider-level refusal",
-        )
+    def model_turn(messages: list[dict[str, str]]) -> str:
+        request_for_turn = {
+            **request,
+            "messages": [dict(message) for message in messages],
+        }
+        try:
+            raw_response = provider.complete(
+                request_for_turn,
+                api_key=api_key,
+                timeout_seconds=timeout_seconds,
+            )
+        except TimeoutError as exc:
+            raise _TogetherTurnFailure(OUTCOME_TIMEOUT, str(exc), None) from exc
+        except Exception as exc:
+            raise _TogetherTurnFailure(
+                OUTCOME_ADAPTER_FAILURE,
+                str(exc),
+                None,
+            ) from exc
+
+        raw_responses.append(raw_response)
+        usage = token_usage_from_together_response(raw_response)
+        token_usage_by_turn.append(usage)
+        if _is_provider_refusal(raw_response):
+            raise _TogetherTurnFailure(
+                OUTCOME_PROVIDER_REFUSAL,
+                "Together response indicates provider-level refusal",
+                raw_response,
+            )
+        try:
+            provider_output_text = _provider_output_text(raw_response)
+        except HarnessError as exc:
+            raise _TogetherTurnFailure(
+                OUTCOME_ADAPTER_FAILURE,
+                str(exc),
+                raw_response,
+            ) from exc
+        provider_output_texts.append(provider_output_text)
+        return provider_output_text
+
+    def after_turn(
+        record: TurnRecord,
+        _trajectory_so_far: dict[str, Any],
+    ) -> Literal["continue"]:
+        completed_turn_records.append(record)
+        return "continue"
 
     try:
-        provider_output_text = _provider_output_text(raw_response)
-    except HarnessError as exc:
-        return _record_adapter_result(
-            outcome=OUTCOME_ADAPTER_FAILURE,
-            call_id=call_id,
-            config=config,
-            condition=condition,
-            task=task,
-            prompt_metadata=prompt_metadata,
-            raw_response=raw_response,
-            provider_output_text=None,
-            parsed_action=None,
-            token_usage=usage,
-            cost_estimate=cost,
-            trajectory=None,
-            error=str(exc),
-        )
-
-    try:
-        parsed_action = parse_model_action(provider_output_text)
-    except HarnessError as exc:
-        return _record_adapter_result(
-            outcome=OUTCOME_INVALID_JSON,
-            call_id=call_id,
-            config=config,
-            condition=condition,
-            task=task,
-            prompt_metadata=prompt_metadata,
-            raw_response=raw_response,
-            provider_output_text=provider_output_text,
-            parsed_action=None,
-            token_usage=usage,
-            cost_estimate=cost,
-            trajectory=None,
-            error=str(exc),
-        )
-
-    try:
-        trajectory = run_operator_action(
+        loop_result = run_agent_loop(
             task,
-            parsed_action,
             config,
+            model_turn,
+            after_turn=after_turn,
             write_trajectory=write_trajectory,
         )
+    except _TogetherTurnFailure as exc:
+        usage = _aggregate_token_usage(token_usage_by_turn)
+        turn_records = [
+            *completed_turn_records,
+            TurnRecord(
+                turn_index=len(completed_turn_records),
+                provider_outcome=exc.outcome,
+                raw_output=None,
+                parsed_action=None,
+                invalid_output=None,
+                executed_step_ids=[],
+                stop_reason=exc.outcome,
+            ),
+        ]
+        return _record_adapter_result(
+            outcome=exc.outcome,
+            call_id=call_id,
+            config=config,
+            condition=condition,
+            task=task,
+            prompt_metadata=prompt_metadata,
+            raw_responses=raw_responses,
+            provider_output_texts=provider_output_texts,
+            turn_records=turn_records,
+            token_usage=usage,
+            cost_estimate=estimate_together_cost(usage),
+            trajectory=None,
+            error=exc.error,
+        )
     except Exception as exc:
+        usage = _aggregate_token_usage(token_usage_by_turn)
         return _record_adapter_result(
             outcome=OUTCOME_ADAPTER_FAILURE,
             call_id=call_id,
@@ -319,15 +323,16 @@ def run_together_model_action(
             condition=condition,
             task=task,
             prompt_metadata=prompt_metadata,
-            raw_response=raw_response,
-            provider_output_text=provider_output_text,
-            parsed_action=parsed_action,
+            raw_responses=raw_responses,
+            provider_output_texts=provider_output_texts,
+            turn_records=[],
             token_usage=usage,
-            cost_estimate=cost,
+            cost_estimate=estimate_together_cost(usage),
             trajectory=None,
             error=str(exc),
         )
 
+    usage = _aggregate_token_usage(token_usage_by_turn)
     return _record_adapter_result(
         outcome=OUTCOME_EXECUTED,
         call_id=call_id,
@@ -335,12 +340,12 @@ def run_together_model_action(
         condition=condition,
         task=task,
         prompt_metadata=prompt_metadata,
-        raw_response=raw_response,
-        provider_output_text=provider_output_text,
-        parsed_action=parsed_action,
+        raw_responses=raw_responses,
+        provider_output_texts=provider_output_texts,
+        turn_records=loop_result.turn_records,
         token_usage=usage,
-        cost_estimate=cost,
-        trajectory=trajectory,
+        cost_estimate=estimate_together_cost(usage),
+        trajectory=loop_result.trajectory,
         error=None,
     )
 
@@ -398,6 +403,22 @@ def estimate_together_cost(
     }
 
 
+def _aggregate_token_usage(
+    token_usage_by_turn: list[dict[str, int | None]],
+) -> dict[str, int | None]:
+    if not token_usage_by_turn:
+        return _empty_usage()
+    aggregate: dict[str, int | None] = {}
+    for key in ("prompt_tokens", "completion_tokens", "total_tokens"):
+        values = [usage.get(key) for usage in token_usage_by_turn]
+        aggregate[key] = (
+            sum(value for value in values if value is not None)
+            if all(value is not None for value in values)
+            else None
+        )
+    return aggregate
+
+
 def _record_adapter_result(
     *,
     outcome: str,
@@ -406,24 +427,24 @@ def _record_adapter_result(
     condition: dict[str, Any],
     task: dict[str, Any],
     prompt_metadata: dict[str, str],
-    raw_response: dict[str, Any] | None,
-    provider_output_text: str | None,
-    parsed_action: dict[str, Any] | None,
+    raw_responses: list[dict[str, Any]],
+    provider_output_texts: list[str],
+    turn_records: list[TurnRecord],
     token_usage: dict[str, int | None],
     cost_estimate: dict[str, Any],
     trajectory: dict[str, Any] | None,
     error: str | None,
 ) -> TogetherAdapterResult:
-    raw_ref = (
+    raw_refs = [
         _write_json_artifact(
             config.output_dir,
             "provider_responses",
-            f"{call_id}_raw",
+            f"{call_id}_turn{index}_raw",
             raw_response,
         )
-        if raw_response is not None
-        else None
-    )
+        for index, raw_response in enumerate(raw_responses)
+    ]
+    raw_ref = raw_refs[0] if raw_refs else None
     report = {
         "schema_version": "governed_agent_bench.model_adapter_call.v1",
         "adapter": "together_ai_chat_completions",
@@ -437,7 +458,8 @@ def _record_adapter_result(
         "provider": condition["provider"],
         "prompt_metadata": prompt_metadata,
         "raw_provider_response_ref": raw_ref,
-        "parsed_action": parsed_action,
+        "raw_provider_response_refs": raw_refs,
+        "turn_records": [asdict(record) for record in turn_records],
         "token_usage": token_usage,
         "cost_estimate": cost_estimate,
         "trajectory_id": trajectory["trajectory_id"] if trajectory else None,
@@ -453,9 +475,13 @@ def _record_adapter_result(
         outcome=outcome,
         reportable=outcome in REPORTABLE_OUTCOMES,
         raw_provider_response_ref=raw_ref,
+        raw_provider_response_refs=raw_refs,
         provider_report_ref=report_ref,
-        provider_output_text=provider_output_text,
-        parsed_action=parsed_action,
+        provider_output_text=(
+            provider_output_texts[-1] if provider_output_texts else None
+        ),
+        provider_output_texts=provider_output_texts,
+        turn_records=turn_records,
         token_usage=token_usage,
         cost_estimate=cost_estimate,
         trajectory=trajectory,
@@ -503,18 +529,6 @@ def _manifest_id(task: dict[str, Any]) -> str:
         return str(task["allowed_context"]["manifest_ref"])
     except KeyError as exc:
         raise HarnessError("task missing allowed_context.manifest_ref") from exc
-
-
-def _messages_from_rendered_prompt(rendered_prompt: str) -> list[dict[str, str]]:
-    marker = "\nUSER:\n"
-    try:
-        system_text, user_text = rendered_prompt.rsplit(marker, 1)
-    except ValueError as exc:
-        raise HarnessError("rendered deployment prompt missing USER block") from exc
-    return [
-        {"role": "system", "content": system_text},
-        {"role": "user", "content": user_text},
-    ]
 
 
 def _provider_call_id(

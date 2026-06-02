@@ -12,9 +12,12 @@ from .core import (
     run_operator_actions,
 )
 from .model_actions import (
+    AgentLoopResult,
+    TurnRecord,
     harness_config_for_roster_condition,
     model_identity_from_roster_condition,
     parse_model_action,
+    run_agent_loop,
     run_model_response_action,
 )
 from .together import (
@@ -34,8 +37,10 @@ __all__ = [
     "HarnessError",
     "REPORTABLE_OUTCOMES",
     "TOGETHER_API_KEY_ENV",
+    "AgentLoopResult",
     "TogetherAdapterResult",
     "TogetherHTTPTransport",
+    "TurnRecord",
     "action_to_argv",
     "build_together_chat_request",
     "estimate_together_cost",
@@ -46,6 +51,7 @@ __all__ = [
     "model_identity_from_roster_condition",
     "parse_model_action",
     "render_prompt",
+    "run_agent_loop",
     "run_model_response_action",
     "run_operator_action",
     "run_operator_actions",
