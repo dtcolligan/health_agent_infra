@@ -16,7 +16,7 @@ Scope OUT (lock-day-only, intentionally absent):
 
 1. **DR-9 stays active.** A6 (Fireworks adapter) + A10 (switch evaluator) are in scope.
 2. **§8 amendment authorized.** After `full_contract` completes, evaluate gate A; if it passes, run n=1 gate-B prelude across the 5 no-X modes on the 14 safety-constrained tasks (~70 calls, ~$0.05 at 7B Together pricing); evaluate gate B; switch iff both pass. Implemented by item A12.
-3. **Multi-turn history format: standard `assistant` + `tool` chat-completion messages.** Native to Together / Fireworks / Anthropic. Affects A1 + A6.
+3. **Multi-turn history format: standard chat-completion messages.** The model's emitted action is recorded as the `assistant` turn verbatim; each observation is returned as a `user` message. No provider-native `tool_calls` are synthesized (the operator contract is content-JSON; fabricating tool calls would misrepresent the evaluated transcript). Native to Together / Fireworks / Anthropic. Affects A1 + A6. Amended 2026-06-02 in WP-A1, reversing the original `assistant` + `tool` framing.
 4. **Fresh fixture per rep.** A2 hermeticity criterion locks fresh-per-rep policy.
 5. **Malformed-output trajectory representation: new `invalid_output` step_type.** Affects A1 + trajectory schema.
 6. **Cost / wall-time enforcement granularity: between turns.** Affects A2 + A4.
@@ -33,7 +33,7 @@ Scope OUT (lock-day-only, intentionally absent):
 
 **Pre-lock criterion:**
 - Loop exists; max_turns=7 enforced.
-- Multi-turn history sent to the model as standard chat-completions `assistant` + `tool` messages (Dom decision 3). Affects Together / Fireworks / Anthropic adapter wire format identically.
+- Multi-turn history sent to the model as standard chat-completion messages: the model's emitted action is the `assistant` turn verbatim, each observation is returned as a `user` message, no synthesized `tool_calls` (Dom decision 3, amended 2026-06-02). Affects Together / Fireworks / Anthropic adapter wire format identically.
 - Unit test: turn N+1 prompt contains the previous observation record verbatim, including `exit_code`, `stdout_ref`, and any `mechanism_disabled` markers.
 - Unit test: turn N+1 prompt contains the previous turn's `invalid_output` step when the model emitted malformed JSON on turn N.
 - Trajectory schema gets a new `invalid_output` step_type (Dom decision 5) carrying raw model output text and parse-error reason. Migration: existing trajectories have no `invalid_output` steps; backward-compat is free.
@@ -318,7 +318,7 @@ Dependencies-respecting order for one-item-per-session cadence. Items on the sam
 Provenance preserved for archival. None block implementation.
 
 1. **DR-9 operational status at lock.** CLOSED 2026-06-01: keep DR-9 active. A6 + A10 in scope.
-2. **Multi-turn prompt assembly format.** CLOSED 2026-06-01: standard `assistant` + `tool` chat-completion messages.
+2. **Multi-turn prompt assembly format.** CLOSED 2026-06-01; amended 2026-06-02 (WP-A1): standard chat-completion messages — model action as the `assistant` turn verbatim, observations returned as `user` messages, no synthesized provider-native `tool_calls`.
 3. **Fixture state between reps within a condition.** CLOSED 2026-06-01: fresh fixture per rep.
 4. **Cost-cap and wall-time enforcement granularity.** CLOSED 2026-06-01: between turns.
 5. **DR-9 switch timing under §10 ordering.** CLOSED 2026-06-01: amend §8 (work packet A12). After `full_contract`, if gate A passes, run n=1 gate-B prelude × 5 no-X × 14 safety tasks; switch iff both pass.
