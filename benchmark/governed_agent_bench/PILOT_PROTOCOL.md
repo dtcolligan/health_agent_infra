@@ -150,7 +150,7 @@ policy. This section fills it.
 
 **Ratified:**
 
-| Failure | Action | Max attempts | Backoff |
+| Failure | Action | Max retries | Backoff |
 |---|---|---|---|
 | Network timeout, HTTP 503, 504 | Retry same call | 3 per turn | Exponential, start 1s, cap 30s total |
 | HTTP 429 rate-limited | Retry same call after backoff | 3 per turn | Provider `Retry-After` if present, else exponential start 5s, cap 60s |
