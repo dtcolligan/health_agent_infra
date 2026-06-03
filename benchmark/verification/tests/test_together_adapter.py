@@ -198,6 +198,9 @@ def test_together_adapter_records_raw_response_usage_cost_and_trajectory(
     assert command_meta["cost_usd_estimate"] == 0.00045
     assert isinstance(command_meta["wall_time_ms"], int)
     assert command_meta["wall_time_ms"] >= 0
+    # WP-A5: a non-retried turn records zero retries through the A4 seam.
+    assert command_meta["retry_count"] == 0
+    assert result.turn_records[0].retry_count == 0
     # The observation (HAI subprocess) is a different clock: no cost keys.
     for key in ("prompt_tokens", "completion_tokens", "cost_usd_estimate", "wall_time_ms"):
         assert key not in steps[1]["metadata"]
@@ -369,13 +372,17 @@ def test_together_adapter_reads_api_key_from_environment_only(
 
 
 @pytest.mark.parametrize(
-    ("transport", "expected_outcome", "raw_expected"),
+    ("transport", "expected_outcome", "raw_expected", "expected_calls"),
     [
+        # A timeout is now retried to exhaustion (1 initial + 3 retries),
+        # but still surfaces the same OUTCOME_TIMEOUT after N attempts.
         (
             FakeTransport(exc=TimeoutError("mock timeout")),
             OUTCOME_TIMEOUT,
             False,
+            4,
         ),
+        # A provider refusal arrives on a successful HTTP call: no retry.
         (
             FakeTransport({
                 "choices": [
@@ -388,11 +395,14 @@ def test_together_adapter_reads_api_key_from_environment_only(
             }),
             OUTCOME_PROVIDER_REFUSAL,
             True,
+            1,
         ),
+        # A bare RuntimeError is non-retryable: it propagates on attempt 1.
         (
             FakeTransport(exc=RuntimeError("mock adapter failure")),
             OUTCOME_ADAPTER_FAILURE,
             False,
+            1,
         ),
     ],
 )
@@ -401,10 +411,12 @@ def test_together_adapter_reports_failure_outcomes(
     transport: FakeTransport,
     expected_outcome: str,
     raw_expected: bool,
+    expected_calls: int,
 ) -> None:
     task = load_task("gab_l1_capabilities_route")
     condition = _condition()
     config = _config(tmp_path, condition)
+    sleeps: list[float] = []
 
     result = run_together_model_action(
         task,
@@ -412,12 +424,14 @@ def test_together_adapter_reports_failure_outcomes(
         config,
         transport=transport,
         env={TOGETHER_API_KEY_ENV: "mock-api-key"},
+        sleeper=sleeps.append,
     )
 
     assert result.outcome == expected_outcome
     assert result.reportable is True
     assert result.trajectory is None
     assert (result.raw_provider_response_ref is not None) is raw_expected
+    assert len(transport.calls) == expected_calls
 
     report = json.loads(
         (config.output_dir / result.provider_report_ref).read_text(encoding="utf-8")

@@ -415,6 +415,7 @@ def test_agent_loop_stamps_numeric_metadata_on_action_step(
         "prompt_tokens": 1200,
         "completion_tokens": 340,
         "cost_usd_estimate": 0.00046,
+        "retry_count": 0,
     }
     # Neither the mechanism marker nor the observation (a different clock)
     # carries the per-turn cost/token keys -> one cost per turn.

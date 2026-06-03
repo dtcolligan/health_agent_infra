@@ -17,7 +17,7 @@ import urllib.error
 import urllib.request
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Literal, Mapping, Protocol
+from typing import Any, Callable, Literal, Mapping, Protocol
 
 from governed_agent_bench.harness.core import (
     HarnessConfig,
@@ -30,6 +30,13 @@ from governed_agent_bench.harness.model_actions import (
     TurnRecord,
     _messages_from_rendered_prompt,
     run_agent_loop,
+)
+from governed_agent_bench.harness.retry import (
+    OutageDetector,
+    RetryExhausted,
+    RetryPolicy,
+    TransportFailure,
+    execute_with_retry,
 )
 from governed_agent_bench.model_roster import roster_condition
 
@@ -112,11 +119,27 @@ class TogetherHTTPTransport:
             ) as response:
                 body = response.read().decode("utf-8")
         except socket.timeout as exc:
-            raise TimeoutError("Together request timed out") from exc
+            raise TransportFailure(
+                kind="timeout", message="Together request timed out"
+            ) from exc
+        except urllib.error.HTTPError as exc:
+            # HTTPError is a URLError subclass and must be caught first so
+            # the status code and Retry-After survive for the retry layer.
+            raise TransportFailure(
+                kind="http_status",
+                status_code=exc.code,
+                retry_after=exc.headers.get("Retry-After") if exc.headers else None,
+                message=f"Together HTTP {exc.code}",
+            ) from exc
         except urllib.error.URLError as exc:
             if isinstance(exc.reason, socket.timeout):
-                raise TimeoutError("Together request timed out") from exc
-            raise HarnessError(f"Together request failed: {exc}") from exc
+                raise TransportFailure(
+                    kind="timeout", message="Together request timed out"
+                ) from exc
+            raise TransportFailure(
+                kind="transport_error",
+                message=f"Together request failed: {exc}",
+            ) from exc
 
         raw = json.loads(body)
         if not isinstance(raw, dict):
@@ -130,11 +153,13 @@ class _TogetherTurnFailure(RuntimeError):
         outcome: str,
         error: str,
         raw_response: dict[str, Any] | None,
+        retry_count: int = 0,
     ) -> None:
         super().__init__(error)
         self.outcome = outcome
         self.error = error
         self.raw_response = raw_response
+        self.retry_count = retry_count
 
 
 @dataclass(frozen=True)
@@ -198,8 +223,18 @@ def run_together_model_action(
     env: Mapping[str, str] | None = None,
     timeout_seconds: float = 60.0,
     write_trajectory: bool = True,
+    retry_policy: RetryPolicy | None = None,
+    sleeper: Callable[[float], None] = time.sleep,
+    clock: Callable[[], float] = time.perf_counter,
+    outage_detector: OutageDetector | None = None,
 ) -> TogetherAdapterResult:
-    """Run a Together-backed bounded model-action loop for one task."""
+    """Run a Together-backed bounded model-action loop for one task.
+
+    ``sleeper`` / ``clock`` are injectable so retry backoff is testable
+    without real waits. ``outage_detector`` is condition-scoped and owned
+    by the caller (A2); this adapter only feeds per-attempt outcomes into
+    it. ``retry_policy`` defaults to the §5 policy.
+    """
 
     _ensure_together_config(condition, config)
     request, prompt_metadata = build_together_chat_request(task, condition)
@@ -231,19 +266,44 @@ def run_together_model_action(
         )
 
     provider = transport or TogetherHTTPTransport()
+    policy = retry_policy or RetryPolicy()
 
     def model_turn(messages: list[dict[str, str]]) -> ModelTurnResult:
         request_for_turn = {
             **request,
             "messages": [dict(message) for message in messages],
         }
-        start = time.perf_counter()
         try:
-            raw_response = provider.complete(
-                request_for_turn,
-                api_key=api_key,
-                timeout_seconds=timeout_seconds,
+            retry_outcome = execute_with_retry(
+                lambda: provider.complete(
+                    request_for_turn,
+                    api_key=api_key,
+                    timeout_seconds=timeout_seconds,
+                ),
+                policy=policy,
+                sleeper=sleeper,
+                clock=clock,
+                detector=outage_detector,
             )
+        except RetryExhausted as exc:
+            outcome = (
+                OUTCOME_TIMEOUT
+                if exc.last_failure.kind == "timeout"
+                else OUTCOME_ADAPTER_FAILURE
+            )
+            raise _TogetherTurnFailure(
+                outcome,
+                str(exc.last_failure) or "retry exhausted",
+                None,
+                retry_count=exc.retry_count,
+            ) from exc
+        except TransportFailure as exc:
+            outcome = (
+                OUTCOME_TIMEOUT if exc.kind == "timeout" else OUTCOME_ADAPTER_FAILURE
+            )
+            raise _TogetherTurnFailure(
+                outcome, str(exc), None, retry_count=exc.retry_count
+            ) from exc
         except TimeoutError as exc:
             raise _TogetherTurnFailure(OUTCOME_TIMEOUT, str(exc), None) from exc
         except Exception as exc:
@@ -252,8 +312,8 @@ def run_together_model_action(
                 str(exc),
                 None,
             ) from exc
-        wall_time_ms = int(round((time.perf_counter() - start) * 1000))
 
+        raw_response = retry_outcome.response
         raw_responses.append(raw_response)
         usage = token_usage_from_together_response(raw_response)
         token_usage_by_turn.append(usage)
@@ -262,6 +322,7 @@ def run_together_model_action(
                 OUTCOME_PROVIDER_REFUSAL,
                 "Together response indicates provider-level refusal",
                 raw_response,
+                retry_count=retry_outcome.retry_count,
             )
         try:
             provider_output_text = _provider_output_text(raw_response)
@@ -270,6 +331,7 @@ def run_together_model_action(
                 OUTCOME_ADAPTER_FAILURE,
                 str(exc),
                 raw_response,
+                retry_count=retry_outcome.retry_count,
             ) from exc
         provider_output_texts.append(provider_output_text)
         return ModelTurnResult(
@@ -279,7 +341,8 @@ def run_together_model_action(
             cost_usd_estimate=estimate_together_cost(usage)[
                 "estimated_total_cost_usd"
             ],
-            wall_time_ms=wall_time_ms,
+            wall_time_ms=retry_outcome.wall_time_ms,
+            retry_count=retry_outcome.retry_count,
         )
 
     def after_turn(
@@ -309,6 +372,7 @@ def run_together_model_action(
                 invalid_output=None,
                 executed_step_ids=[],
                 stop_reason=exc.outcome,
+                retry_count=exc.retry_count,
             ),
         ]
         return _record_adapter_result(

@@ -69,6 +69,7 @@ class ModelTurnResult:
     completion_tokens: int | None = None
     cost_usd_estimate: float | None = None
     wall_time_ms: int | None = None
+    retry_count: int = 0
 
 
 ModelTurn = Callable[[list[dict[str, str]]], "str | ModelTurnResult"]
@@ -90,6 +91,7 @@ class TurnRecord:
     completion_tokens: int | None = None
     cost_usd_estimate: float | None = None
     wall_time_ms: int | None = None
+    retry_count: int = 0
 
 
 @dataclass
@@ -277,6 +279,7 @@ def run_agent_loop(
             completion_tokens=turn_meta.completion_tokens,
             cost_usd_estimate=turn_meta.cost_usd_estimate,
             wall_time_ms=turn_meta.wall_time_ms,
+            retry_count=_coerce_retry_count(turn_meta.retry_count),
         )
         turn_records.append(record)
 
@@ -379,16 +382,33 @@ def _coerce_metadata_value(value: Any) -> int | float | None:
     return None
 
 
+def _coerce_retry_count(value: Any) -> int:
+    """Force ``retry_count`` to a non-bool, nonnegative int (default 0).
+
+    Unlike the A4 four (nullable, provider-reported), retry_count is a
+    harness-known count that is always present and definitionally 0 when
+    no retry loop ran. The guard keeps a malformed ``ModelTurnResult``
+    from injecting non-int / negative / bool junk into trajectory bytes.
+    """
+
+    if isinstance(value, bool):
+        return 0
+    if isinstance(value, int) and value >= 0:
+        return value
+    return 0
+
+
 def _stamp_action_step_metadata(
     step: dict[str, Any],
     turn_meta: ModelTurnResult,
 ) -> None:
     """Attach per-turn model-call metadata to a model action step.
 
-    The four fields describe the model turn, so they live on the action
+    The four A4 fields describe the model turn, so they live on the action
     step (``command`` / ``invalid_output`` / ``refusal`` / ``final``) and
     never on the observation step, keeping exactly one ``cost_usd_estimate``
-    per turn for downstream per-mechanism cost rollups.
+    per turn for downstream per-mechanism cost rollups. ``retry_count``
+    (WP-A5) joins them through the same seam but is always a concrete int.
     """
 
     metadata = step.setdefault("metadata", {})
@@ -400,6 +420,7 @@ def _stamp_action_step_metadata(
     metadata["cost_usd_estimate"] = _coerce_metadata_value(
         turn_meta.cost_usd_estimate
     )
+    metadata["retry_count"] = _coerce_retry_count(turn_meta.retry_count)
 
 
 def _has_crash_observation(steps: list[dict[str, Any]]) -> bool:
