@@ -21,6 +21,16 @@ from .model_actions import (
     run_agent_loop,
     run_model_response_action,
 )
+from .fireworks import (
+    FIREWORKS_API_KEY_ENV,
+    FireworksAdapterResult,
+    FireworksHTTPTransport,
+    build_fireworks_chat_request,
+    estimate_fireworks_cost,
+    fireworks_default_condition,
+    run_fireworks_model_action,
+    token_usage_from_fireworks_response,
+)
 from .together import (
     REPORTABLE_OUTCOMES,
     TOGETHER_API_KEY_ENV,
@@ -34,18 +44,24 @@ from .together import (
 )
 
 __all__ = [
+    "FIREWORKS_API_KEY_ENV",
     "HarnessConfig",
     "HarnessError",
     "REPORTABLE_OUTCOMES",
     "TOGETHER_API_KEY_ENV",
     "AgentLoopResult",
+    "FireworksAdapterResult",
+    "FireworksHTTPTransport",
     "ModelTurnResult",
     "TogetherAdapterResult",
     "TogetherHTTPTransport",
     "TurnRecord",
     "action_to_argv",
+    "build_fireworks_chat_request",
     "build_together_chat_request",
+    "estimate_fireworks_cost",
     "estimate_together_cost",
+    "fireworks_default_condition",
     "harness_config_for_roster_condition",
     "load_json",
     "load_manifest_snapshot",
@@ -54,10 +70,12 @@ __all__ = [
     "parse_model_action",
     "render_prompt",
     "run_agent_loop",
+    "run_fireworks_model_action",
     "run_model_response_action",
     "run_operator_action",
     "run_operator_actions",
     "run_together_model_action",
+    "token_usage_from_fireworks_response",
     "token_usage_from_together_response",
     "together_default_condition",
 ]
