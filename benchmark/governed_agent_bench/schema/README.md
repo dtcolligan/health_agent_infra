@@ -22,3 +22,16 @@ Mapping:
 
 The action schema does not allow arbitrary shell text. Commands are HAI
 command names, and arguments are a JSON object keyed by CLI flags.
+
+`pilot_manifest.schema.json` defines the top-level record one model-backed
+pilot run writes to `runs/pilot/<run>/pilot_manifest.json`. It is the spine
+of the `PILOT_PROTOCOL.md` §14 hash lock: the lock is defined by the SHA-256
+set the manifest carries. A `status` field gates two states. A `draft`
+manifest requires only the §12 runtime fields (run-start UTC, git SHA,
+replication n, conditions executed, D-O-01 selection, run outcome) and is used
+for pre-lock dry runs. A `locked` manifest additionally requires the full §14
+freeze block: `locked_hashes` (the 6 fixed-file and 28 per-task SHA-256 rows,
+sourced from `scripts/lock_hashes.json`), `lock_date`, `lock_commit_sha`, and a
+settled `d_o_01_selection`. The schema records hashes but does not compute
+them and does not execute the lock; `pilot_manifest.py` writes the manifest
+and the orchestrator populates it at run time.

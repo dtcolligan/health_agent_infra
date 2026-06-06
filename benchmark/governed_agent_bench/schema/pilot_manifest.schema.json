@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/governed-agent-bench/pilot_manifest.schema.json",
+  "title": "GovernedAgentBench Pilot Run Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "run_start_utc",
+    "git_sha",
+    "replication_n",
+    "conditions_executed",
+    "d_o_01_selection",
+    "run_outcome"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "governed_agent_bench.pilot_manifest.v1"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "locked"
+      ]
+    },
+    "run_start_utc": {
+      "type": "string",
+      "pattern": "^20[0-9]{2}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}(:[0-9]{2})?Z$"
+    },
+    "git_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "replication_n": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "conditions_executed": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "system_id",
+          "runtime_modes"
+        ],
+        "properties": {
+          "system_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "runtime_modes": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "enum": [
+                "full_contract",
+                "no_validation",
+                "no_agent_safe",
+                "no_proposal_gate",
+                "no_refusal",
+                "no_audit_chain",
+                "no_runtime_enforcement"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "d_o_01_selection": {
+      "type": "string",
+      "enum": [
+        "option_b_qwen25_7b_together",
+        "option_b_fallback_qwen25_32b_fireworks",
+        "pending"
+      ]
+    },
+    "run_outcome": {
+      "type": "string",
+      "enum": [
+        "completed",
+        "aborted",
+        "halted"
+      ]
+    },
+    "locked_hashes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fixed_files",
+        "task_files",
+        "total_count"
+      ],
+      "properties": {
+        "fixed_files": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "task_files": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "total_count": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "lock_date": {
+      "type": "string",
+      "pattern": "^20[0-9]{2}-[0-9]{2}-[0-9]{2}$"
+    },
+    "lock_commit_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "const": "locked"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "locked_hashes",
+          "lock_date",
+          "lock_commit_sha"
+        ],
+        "properties": {
+          "d_o_01_selection": {
+            "not": {
+              "const": "pending"
+            }
+          }
+        }
+      }
+    }
+  ]
+}
