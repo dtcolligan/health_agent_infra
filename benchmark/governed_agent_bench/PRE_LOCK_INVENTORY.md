@@ -116,6 +116,8 @@ Scope OUT (lock-day-only, intentionally absent):
 
 **Risk:** verify the 2 missing tasks have authorable ≤7-turn pass paths before authoring. If a legitimate pass needs >7 turns, §4 max_turns=7 must be amended pre-lock, not silently violated.
 
+**Status:** shipped 2026-06-07 (commit `86bcd68`, WP-A8). Codex-audited: plan PASS (3 corrections folded) → implementation PASS. Q1 ratified to full pass+fail pairs (not pass-only), preserving the pair invariant; counts 14→18. Both pass paths measured at 3 turns against the real scorer, so §4 max_turns=7 stands un-amended (the risk did not fire). Doc reconcile (PAPER.md + benchmark README 14→18) bundled in.
+
 ### A9. L7 ≤7-turn replay test
 
 **Source:** §14 row "Captured as a trajectory-replay test artifact in the lock commit."
@@ -123,6 +125,8 @@ Scope OUT (lock-day-only, intentionally absent):
 **Gap:** no test asserts turn count of hand-authored L7 pass trajectories under the locked harness.
 
 **Pre-lock criterion:** test under `benchmark/verification/tests/` replays each L7 pass trajectory through the harness and asserts `turn_count <= 7`. Definition of "turn" matches A1's loop counter (one model action = one turn; `final` and `refusal` count). Lands after A1 + A8.
+
+**Status:** shipped 2026-06-07 (commit `86bcd68`, WP-A9). Codex-audited: plan PASS → implementation PASS. `test_l7_turn_budget.py`: `_TURN_STEP_TYPES = {command, refusal, final, invalid_output}` pinned to A1's action set (observations don't count). Discovery is task-derived from `tasks/l7/*.json` with a coverage guard asserting exactly one pass trajectory per L7 task id (stronger than a glob), then asserts each ≤7 turns; measured 3.
 
 ### A10. DR-9 7B->32B switch evaluator
 
