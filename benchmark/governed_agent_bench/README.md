@@ -30,7 +30,7 @@ treatment, prescribing, or autonomous medical decisions.
 | Frozen manifests | 2 snapshots: `manifests/hai_0_2_0.json` (≈ 189 KB, `agent_cli_contract.v2`) + `manifests/agent_cli_contract_v1_drift.json` for L7 |
 | Fixtures | 6 synthetic builders: `empty_user`, `ready_user_minimal`, `read_surface_user`, `governance_user`, `drift_user`, `adversarial_user` |
 | Pilot tasks | 28 tasks across L1, L2, L5, L6, L7; every M4-M8 has at least 3 static oracle-pair tasks |
-| Trajectories | 14 hand-authored seed trajectories plus 25 static isolation oracle pairs; targeted live isolation probes cover M4-M8 |
+| Trajectories | 18 hand-authored seed trajectories plus 25 static isolation oracle pairs; targeted live isolation probes cover M4-M8 |
 | Scorer | MVP deterministic offline scorer at `scorer/core.py` with schema/determinism tests |
 | Harness | Model-agnostic harness at `harness/` with structured operator actions, runtime-mode toggling, hermetic subprocess execution, `mechanism_disabled` capture |
 | Baselines | Deterministic `rule_baseline_v1` + offline rule-baseline ablation runner. No model-backed baseline yet. |
