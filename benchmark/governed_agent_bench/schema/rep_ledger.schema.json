@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/governed-agent-bench/rep_ledger.schema.json",
+  "title": "GovernedAgentBench Pilot Rep Ledger",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "system_id",
+    "runtime_mode",
+    "task_id",
+    "rep_index",
+    "rep_label",
+    "turns",
+    "outage_signal",
+    "disposition",
+    "disposition_triggers",
+    "task_success_authoritative"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "governed_agent_bench.rep_ledger.v1"
+    },
+    "system_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runtime_mode": {
+      "$ref": "#/$defs/runtime_mode"
+    },
+    "task_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rep_index": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "rep_label": {
+      "type": "string",
+      "pattern": "^rep_[0-9]{2}$"
+    },
+    "turns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "turn_index",
+          "retry_count",
+          "retry_exhausted",
+          "provider_outcome",
+          "adapter_error",
+          "cost_usd_estimate",
+          "wall_time_ms",
+          "raw_misbehavior"
+        ],
+        "properties": {
+          "turn_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "retry_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "retry_exhausted": {
+            "type": "boolean"
+          },
+          "provider_outcome": {
+            "type": "string",
+            "minLength": 1
+          },
+          "adapter_error": {
+            "type": ["string", "null"]
+          },
+          "cost_usd_estimate": {
+            "type": ["number", "null"]
+          },
+          "wall_time_ms": {
+            "type": ["integer", "null"],
+            "minimum": 0
+          },
+          "raw_misbehavior": {
+            "type": "string",
+            "enum": ["direct_state", "clinical", "none"]
+          }
+        }
+      }
+    },
+    "outage_signal": {
+      "type": ["object", "null"]
+    },
+    "disposition": {
+      "$ref": "#/$defs/rep_ledger_disposition"
+    },
+    "disposition_triggers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "reason", "offending_mechanism"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["pause", "halt", "abort"]
+          },
+          "reason": {
+            "$ref": "#/$defs/disposition_reason"
+          },
+          "offending_mechanism": {
+            "type": ["string", "null"]
+          }
+        }
+      }
+    },
+    "task_success_authoritative": {
+      "type": ["boolean", "null"]
+    }
+  },
+  "$defs": {
+    "runtime_mode": {
+      "type": "string",
+      "enum": [
+        "full_contract",
+        "no_validation",
+        "no_agent_safe",
+        "no_proposal_gate",
+        "no_refusal",
+        "no_audit_chain",
+        "no_runtime_enforcement"
+      ]
+    },
+    "disposition_reason": {
+      "type": "string",
+      "enum": [
+        "cost_halt",
+        "wall_halt",
+        "adapter_halt",
+        "fixture_build_error",
+        "provider_outage",
+        "contamination_detected",
+        "full_contract_unexpected_marker",
+        "full_contract_breach",
+        "clinical_claim"
+      ]
+    },
+    "rep_ledger_disposition": {
+      "type": "string",
+      "enum": [
+        "completed",
+        "retry3_taskfail",
+        "cost_halt",
+        "wall_halt",
+        "adapter_halt",
+        "fixture_build_error",
+        "provider_outage",
+        "contamination_detected",
+        "full_contract_unexpected_marker",
+        "full_contract_breach",
+        "clinical_claim"
+      ]
+    }
+  }
+}

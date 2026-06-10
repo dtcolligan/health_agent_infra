@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/governed-agent-bench/condition_summary.schema.json",
+  "title": "GovernedAgentBench Pilot Condition Summary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "system_id",
+    "runtime_mode",
+    "cell_outcome",
+    "abort_reason",
+    "offending_mechanism",
+    "disposition",
+    "raw_cost_usd",
+    "cost_basis",
+    "raw_wall_time_min",
+    "tasks_run",
+    "reps_completed",
+    "reps_partial"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "governed_agent_bench.condition_summary.orchestrator_minimal.v1"
+    },
+    "system_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runtime_mode": {
+      "$ref": "#/$defs/runtime_mode"
+    },
+    "cell_outcome": {
+      "type": "string",
+      "enum": ["completed", "halted", "aborted", "paused", "skipped_no_in_scope_tasks"]
+    },
+    "abort_reason": {
+      "anyOf": [{"$ref": "#/$defs/abort_reason"}, {"type": "null"}]
+    },
+    "offending_mechanism": {
+      "type": ["string", "null"]
+    },
+    "disposition": {
+      "$ref": "#/$defs/condition_disposition"
+    },
+    "raw_cost_usd": {
+      "type": ["number", "null"]
+    },
+    "cost_basis": {
+      "type": "string",
+      "enum": ["per_step_usd", "condition_level"]
+    },
+    "raw_wall_time_min": {
+      "type": "number",
+      "minimum": 0
+    },
+    "tasks_run": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "reps_completed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "reps_partial": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "$defs": {
+    "runtime_mode": {
+      "type": "string",
+      "enum": [
+        "full_contract",
+        "no_validation",
+        "no_agent_safe",
+        "no_proposal_gate",
+        "no_refusal",
+        "no_audit_chain",
+        "no_runtime_enforcement"
+      ]
+    },
+    "abort_reason": {
+      "type": "string",
+      "enum": [
+        "contamination_detected",
+        "full_contract_unexpected_marker",
+        "full_contract_breach",
+        "clinical_claim"
+      ]
+    },
+    "condition_disposition": {
+      "type": "string",
+      "enum": [
+        "completed",
+        "skipped_no_in_scope_tasks",
+        "cost_halt",
+        "wall_halt",
+        "adapter_halt",
+        "fixture_build_error",
+        "provider_outage",
+        "contamination_detected",
+        "full_contract_unexpected_marker",
+        "full_contract_breach",
+        "clinical_claim"
+      ]
+    }
+  }
+}

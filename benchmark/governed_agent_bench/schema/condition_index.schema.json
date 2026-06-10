@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/governed-agent-bench/condition_index.schema.json",
+  "title": "GovernedAgentBench Pilot Condition Index",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "system_id", "modes_completed", "coverage"],
+  "properties": {
+    "schema_version": {
+      "const": "governed_agent_bench.condition_index.v1"
+    },
+    "system_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "modes_completed": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/runtime_mode"
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["per_task"],
+        "properties": {
+          "per_task": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["status", "task_outcome", "reps_completed", "partial_rep"],
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": ["in_scope_run", "out_of_scope_skip", "not_run_after_stop"]
+                },
+                "task_outcome": {
+                  "type": ["string", "null"],
+                  "enum": ["pass", "fail", null]
+                },
+                "reps_completed": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "partial_rep": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["rep_label", "stop_cause"],
+                      "properties": {
+                        "rep_label": {
+                          "type": "string",
+                          "pattern": "^rep_[0-9]{2}$"
+                        },
+                        "stop_cause": {
+                          "type": "string",
+                          "enum": [
+                            "cost_halt",
+                            "wall_halt",
+                            "adapter_halt",
+                            "retry3_taskfail"
+                          ]
+                        }
+                      }
+                    },
+                    {"type": "null"}
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "runtime_mode": {
+      "type": "string",
+      "enum": [
+        "full_contract",
+        "no_validation",
+        "no_agent_safe",
+        "no_proposal_gate",
+        "no_refusal",
+        "no_audit_chain",
+        "no_runtime_enforcement"
+      ]
+    }
+  }
+}
