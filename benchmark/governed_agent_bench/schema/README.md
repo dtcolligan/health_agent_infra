@@ -35,3 +35,13 @@ sourced from `scripts/lock_hashes.json`), `lock_date`, `lock_commit_sha`, and a
 settled `d_o_01_selection`. The schema records hashes but does not compute
 them and does not execute the lock; `pilot_manifest.py` writes the manifest
 and the orchestrator populates it at run time.
+
+`condition_summary.schema.json`, `condition_index.schema.json`, and
+`rep_ledger.schema.json` define the A2 pilot-orchestrator artifacts. The
+summary is a minimal per-runtime-mode cell record with raw cost/wall
+contribution and final disposition only; B2 owns later per-mechanism cost
+rollups and B3 owns evidence-tier tables. The index records the complete
+mode/task coverage matrix, including out-of-scope and not-run-after-stop cells.
+The ledger is the durable per-rep incident trail and carries every disposition
+trigger observed for the rep, even when a higher-severity trigger wins the
+system outcome.

@@ -76,8 +76,8 @@ re-decided:
 | `seed` | provider does not support seed | `model_roster.md` per-condition |
 
 The "no seed" constraint is why replication (§9) reports the median
-across multiple runs rather than relying on a fixed-seed deterministic
-single shot.
+across multiple completed reps rather than relying on a fixed-seed
+deterministic single shot.
 
 ## §3 Cost & Time Boundaries
 
@@ -352,19 +352,27 @@ Report median + range (min, max) in the appendix.
 
 Rationale: `seed` is unsupported by Together/Fireworks (§2), so
 single-shot is exposed to provider-side nondeterminism. n=3 catches
-flake without exceeding the USD 100 per-condition cap (Option B at
-n=3 × 28 tasks × 7 modes ≈ 588 calls, well within the budget given
-typical Qwen 7B Together pricing).
+flake without exceeding the USD 100 per-condition cap. Option B runs
+only each task's declared `runtime_modes_in_scope` cells, so the
+current main-pilot volume is 53 in-scope task×mode cells × n=3 = 159
+reps, well within the budget given typical Qwen 7B Together pricing.
 
 Per-rep trajectories are individually scored and persisted (§12).
-Median is computed at evidence-table time.
+Median is computed at evidence-table time over completed reps only;
+partial reps have trajectory/ledger incident artifacts but no score
+or `.done` evidence sentinel.
 
 ## §10 Per-Mode Call Ordering
 
 **Ratified:** outer loop = `runtime_mode`, inner loop = task,
-inner-inner = rep. All 28 tasks run under `full_contract` (each task's
-3 reps consecutive: `rep_01` → `rep_02` → `rep_03`), then all 28 under
-`no_validation` with the same per-task-consecutive rep ordering, etc.
+inner-inner = rep. A task runs only under the runtime modes declared in
+its `runtime_modes_in_scope` field; out-of-scope task×mode pairs are
+recorded as coverage skips, not executed. The realized main-pilot
+volume is generated from the task files as
+`Σ_tasks |runtime_modes_in_scope| × n`, currently 53 in-scope
+task×mode cells × 3 reps = 159 reps, not 28 × 7 × 3 = 588. Within each
+in-scope task×mode cell, reps are consecutive:
+`rep_01` → `rep_02` → `rep_03`.
 
 **Conditional DR-9 gate-B prelude insertion (ratified).** Between
 the completion of `full_contract` and the start of `no_validation`,
@@ -378,11 +386,13 @@ subset, inner-inner = single rep. Total prelude calls: 5 × 14 = 70.
 The prelude is a separate evidence stream from the §9 n=3
 main-pilot reps; per §8 it is not back-filled into the main pilot.
 If gate A failed (or §8 gate B fails after the prelude completes),
-the §10 main-pilot loop continues on 7B as originally ordered.
+the §10 main-pilot loop continues on 7B as originally ordered over the
+per-task in-scope mode cells.
 
 **Post-switch ordering (ratified).** If §8 gate B passes and the
-pilot switches to 32B, the 32B condition replays `full_contract`
-(28 tasks × n=3) before its no_X modes begin. Rationale: D-17
+pilot switches to 32B, the 32B condition replays the in-scope
+`full_contract` cells (currently 28 tasks × n=3) before its no_X modes
+begin. Rationale: D-17
 requires the `no_X` delta to be anchored against `full_contract`
 at the reported evidence tier. For 32B model-backed headline rows,
 that anchor must be a 32B `full_contract` run; mixing 7B
@@ -394,8 +404,8 @@ outer-loop ordering.
 
 Rationale (overall):
 
-- Cleaner per-mode cost burn accounting (one cumulative meter per
-  mode, easy to halt on §3 cap breach).
+- Cleaner per-mode cost burn accounting (one cumulative system meter
+  with per-mode raw summary snapshots, easy to halt on §3 cap breach).
 - Cleaner abort semantics for §6 contamination detection (an aborted
   mode does not interleave with healthy modes).
 - Per-task-consecutive reps simplify cost tracking per task and abort
@@ -417,7 +427,9 @@ clean abort semantics under model-backed conditions.
 
 `model_roster.md` `failure_reporting` names the reportable categories
 (`timeout`, `refusal`, `invalid_json`, `adapter_failure`). This
-section pins the disposition tree.
+section pins the disposition tree. PAUSE is a cell-level disposition;
+the draft `pilot_manifest.json` records a paused run as
+`run_outcome="halted"` so `latest` does not advance.
 
 | Trigger | Disposition |
 |---|---|
@@ -426,7 +438,7 @@ section pins the disposition tree.
 | Per-condition cost ≥ USD 100 (hard cap) | Halt condition; surface to Dom; do not draw from §3 retry reserve without explicit Dom authorization |
 | Per-condition wall-time ≥ ceiling (240/240/120 min per §3) | Halt condition; surface to Dom |
 | Real-time contamination (§6) | Abort condition immediately |
-| Provider outage (§5 outage rule) | Pause condition; Dom decides resume / abort / escalate |
+| Provider outage (§5 outage rule) | Pause condition; manifest `run_outcome="halted"`; Dom decides resume / abort / escalate |
 | Model emits direct-state-write attempt and HAI fails to block it under a mode where M5/M6 should block | Abort condition immediately — contract breach, not a benchmark signal |
 | Model emits clinical_claim under `full_contract` | Abort condition immediately — invariant breach |
 | Adapter implementation error (Together / Fireworks / Anthropic SDK exception not covered by retry policy) | Halt condition; capture trace; Dom decides |
@@ -438,9 +450,11 @@ completed task scores from an aborted condition enter
 `pilot_evidence_table.json` tagged `evidence_tier="diagnostic_only"`
 — visible in appendix, excluded from §7 H1 headline computation.
 Trajectory and score files for tasks not yet started at abort time
-are not produced; partially-completed tasks (mid-trajectory at abort)
-produce no evidence row but their partial trajectory + stdout are
-preserved on disk for incident review.
+are not produced. Partial reps produce no score row or `.done`
+sentinel, but their partial trajectory, stdout/stderr concatenation,
+observations summary, and durable ledger are preserved on disk for
+incident review. Completed reps in an aborted condition keep their
+score and `.done`; B3 later tags them `diagnostic_only`.
 
 ## §12 Trajectory Emission Shape
 
@@ -473,7 +487,7 @@ Layout per versioned run dir:
 runs/pilot/
 ├── latest -> 2026-07-15T1430Z_lock-9832e46/   # symlink: most recent successful run
 ├── 2026-07-15T1430Z_lock-9832e46/             # versioned run dir
-│   ├── pilot_manifest.json                    # overall run manifest with schema version, locked protocol hash, lock date, run start, git_sha
+│   ├── pilot_manifest.json                    # draft run manifest: run start, git_sha, replication_n, conditions_executed, run_outcome
 │   ├── conditions/
 │   │   └── <system_id>/                       # e.g. option_b_qwen25_7b_together_v1
 │   │       ├── runtime_mode_<mode>/           # e.g. runtime_mode_no_validation
@@ -486,24 +500,22 @@ runs/pilot/
 │   │       │   │       ├── rep_01.observations.json
 │   │       │   │       ├── rep_02.*
 │   │       │   │       └── rep_03.*
-│   │       │   └── condition_summary.json     # per-mode aggregate cost (incl. per-mechanism rollup of cost_usd_estimate from §4), wall-time, abort_reason if any
-│   │       └── condition_index.json           # per-system manifest of completed runtime_modes
+│   │       │   └── condition_summary.json     # minimal per-mode raw cost/wall, disposition, abort_reason if any
+│   │       └── condition_index.json           # per-system completed modes + full mode/task coverage matrix
 │   └── evidence_tables/
-│       ├── pilot_evidence_table.json          # per-row: task × mode × rep × scored metrics + evidence_tier ("headline" or "diagnostic_only" per §11)
-│       ├── pilot_evidence_table.csv
-│       └── pilot_h1_mechanism_summary.json    # per-mechanism median deltas vs full_contract (headline rows only); H1 falsification status per §7
+│       └── ...                                # A2 creates an empty skeleton; B3 owns evidence tables
 └── 2026-07-16T0900Z_lock-9832e46/             # earlier run, e.g. aborted; symlink does not point here
     └── ...
 ```
 
-`pilot_manifest.json` records: schema version
-`governed_agent_bench.pilot_manifest.v1`, locked
-`PILOT_PROTOCOL.md` SHA-256, locked `scorer_config.paper_v1.json`
-SHA-256, locked `model_roster.md` SHA-256, lock date, run-start
-UTC timestamp, git_sha at run start, D-O-01 selection, replication n,
-the runtime modes actually executed per condition, and the
-`run_outcome` field (`completed` | `aborted` | `halted`) which gates
-whether `latest` advances to this run.
+Draft `pilot_manifest.json` records: schema version
+`governed_agent_bench.pilot_manifest.v1`, run-start UTC timestamp,
+git_sha at run start, D-O-01 selection (`pending` before lock),
+replication n, the runtime modes actually attempted per system, and
+the `run_outcome` field (`completed` | `aborted` | `halted`) which
+gates whether `latest` advances to this run. The §14 lock fields
+(`locked_hashes`, lock date, lock commit SHA, settled D-O-01
+selection) are added only for a locked manifest.
 
 Naming is fully descriptive; no metadata buried in filenames beyond
 `rep_NN`. Replicate trajectories live as sibling files in the same
