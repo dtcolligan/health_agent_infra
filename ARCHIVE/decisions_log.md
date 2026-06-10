@@ -159,3 +159,25 @@ To understand a specific historical decision:
 The full Phase 1 + Phase 2 framing-v2 orchestration record (3 rounds +
 6 batches + final audit + closure) is preserved unchanged at
 [`framing_v2/`](framing_v2/).
+
+## D-26 Framing Pivot (2026-06-09)
+
+PAPER.md D-02 (title locked: *Deterministic Software Contracts as Trusted
+Monitors in AI Control Protocols*, 2026-05-11) and the standing
+external-framing invariant ("this is an AI control paper under the AI
+safety umbrella; do not soften") are **superseded by D-26**.
+
+D-26 reframes the preprint from AI-control to AI-engineering agent-harness
+governance. New title: *Measuring Deterministic Governance Mechanisms in
+Agent Harnesses*. Governance is retained as an engineering harness layer
+(ETCLOVG Governance/Verification); the AI-control / trusted-monitor /
+safety umbrella is dropped. The empirical core (M4-M8 ablation, scorer, 28
+tasks, evidence tiers, calendar, roster, H1-H6 substance) is unchanged —
+the pivot is framing/positioning only. Novelty is narrowed to a
+conjunction claim; all "first X" claims are forbidden.
+
+Full reasoning, the deep-research findings, and the independent Codex
+prior-art audit (which corrected several of our claims — NLAH is a real
+paper, Agent Behavioral Contracts is the closest prior, the field is more
+crowded than first found) are in
+[`reframe_harness_governance_audit_2026-06-09.md`](reframe_harness_governance_audit_2026-06-09.md).

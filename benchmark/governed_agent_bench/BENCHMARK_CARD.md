@@ -9,8 +9,9 @@ Dom final review is still required before submission.
 ## Intended Use
 
 GovernedAgentBench evaluates whether an operator can use a governed
-runtime through an explicit software contract. The first reference
-runtime is HAI, a local non-clinical personal-wellness runtime.
+runtime through an explicit software contract. The reference runtime is
+HAI, a local non-clinical personal-wellness runtime (the benchmark is
+designed to admit others).
 
 The benchmark is intended for:
 

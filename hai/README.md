@@ -1,9 +1,9 @@
 # HAI Reference Runtime
 
 HAI is the personal-wellness reference runtime for the preprint
-*Deterministic Software Contracts as Trusted Monitors in AI Control
-Protocols*. Frozen as a product at v0.2.0 PyPI; HAI v0.2.0 is the
-pinned snapshot the paper and benchmark cite against.
+*Measuring Deterministic Governance Mechanisms in Agent Harnesses*.
+Frozen as a product at v0.2.0 PyPI; HAI v0.2.0 is the pinned snapshot
+the paper and benchmark cite against.
 
 Project-wide scope: [`/PAPER.md`](../PAPER.md). Operating contract for
 AI tools: [`/AGENTS.md`](../AGENTS.md).

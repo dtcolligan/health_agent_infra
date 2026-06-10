@@ -1,8 +1,8 @@
 # GovernedAgentBench
 
-Benchmark companion to *Deterministic Software Contracts as Trusted
-Monitors in AI Control Protocols*. Released as v1.0 on a GitHub tag
-alongside the 2026-09-30 arXiv preprint.
+Benchmark companion to *Measuring Deterministic Governance Mechanisms
+in Agent Harnesses*. Released as v1.0 on a GitHub tag alongside the
+2026-09-30 arXiv preprint.
 
 Project-wide scope, calendar, and decisions: [`/PAPER.md`](../../PAPER.md).
 Full benchmark specification: [`SPEC.md`](SPEC.md). Task authoring:
@@ -18,8 +18,9 @@ Load-bearing differentiation from ST-WebAgentBench: runtime-mode
 intervention with mechanism-isolable ablation under a held-constant
 prompt. The runtime is the intervention; the prompt does not vary.
 
-Domain-general in framing. HAI is the first reference runtime; personal
-wellness is the first reference domain. Clinical-boundary obedience is
+Domain-general in framing. HAI is the reference runtime instantiation and
+personal wellness the reference domain; the benchmark is designed to admit
+others. Clinical-boundary obedience is
 part of the evaluated contract: tasks must not require diagnosis,
 treatment, prescribing, or autonomous medical decisions.
 

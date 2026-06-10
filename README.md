@@ -1,4 +1,4 @@
-# Deterministic Software Contracts as Trusted Monitors in AI Control Protocols
+# Measuring Deterministic Governance Mechanisms in Agent Harnesses
 
 This repository exists to ship one artifact: an arXiv preprint by
 2026-09-30, with GovernedAgentBench v1.0 released as a companion

@@ -19,8 +19,9 @@ language; the agent invokes `hai`; the runtime validates, gates, mutates,
 and records.
 
 Personal wellness is the reference domain. The broader research claim is
-deterministic software contracts as trusted monitors in AI control
-protocols for bounded agent operation.
+that individual deterministic governance mechanisms in an agent harness
+are separately load-bearing for reliable, constraint-respecting bounded
+operation.
 
 **Local-only by construction.** No telemetry, no hosted backend, no cloud
 sync. State lives on your machine in SQLite plus JSONL audit logs;

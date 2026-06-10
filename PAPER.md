@@ -17,18 +17,22 @@ no preprint or benchmark work bleeds into October.
 
 ## Title and Frame
 
-**Deterministic Software Contracts as Trusted Monitors in AI Control
-Protocols**
+**Measuring Deterministic Governance Mechanisms in Agent Harnesses**
 
 Deliverable: arXiv preprint, 8-12 pages NeurIPS or ICML LaTeX format,
 public and citable, not peer-reviewed.
 
-One-sentence frame: a deterministic software contract operationalizes
-a safety spec as the trusted monitor in an AI control protocol for
-bounded agent operation.
+One-sentence frame: agent harnesses are usually engineered to make
+models more capable; holding the model and prompt fixed, this paper
+treats the runtime mode as the intervention and measures the marginal
+contribution of individual deterministic governance mechanisms to
+reliable, constraint-respecting operation.
 
-External framing is "AI control paper under the AI safety umbrella."
-Do not soften because scope is preprint, not main conference.
+External framing is "AI-engineering paper on agent-harness governance."
+The deterministic governance contract is a harness layer (the ETCLOVG
+Governance/Verification layer), not an AI-control / trusted-monitor /
+safety umbrella. Do not re-attach the AI-control framing; do not soften
+to a product framing either.
 
 ## Lineage Anchor
 
@@ -36,13 +40,29 @@ The contribution sits at the intersection of three literatures:
 
 | Anchor | Role |
 |---|---|
-| AI control protocols (Greenblatt et al. 2024 + follow-ups) | Trusted-monitor / untrusted-operator vocabulary; safety-usefulness evaluation. |
-| Safety specs (OpenAI Model Spec, Anthropic Model Spec Midtraining, Deliberative Alignment) | Safety behaviour specified explicitly; this paper tests executable code as one substrate. |
-| LLM-monitor baselines (Constitutional Classifiers, Hierarchical Summarization) | Direct contrast: model monitors are semantic and flexible; deterministic contracts are narrow, auditable, mechanism-isolable. |
+| Agent harnesses and scaffolding (ReAct, Toolformer, CoALA, SWE-agent ACI, the Agent Harness Engineering survey's ETCLOVG taxonomy) | Vocabulary for the harness / runtime an agent operates in; establishes the harness, not only the model, as a load-bearing design surface. |
+| Runtime enforcement and guardrails for agents (AgentSpec, Invariant Guardrails, Guardrails AI, NeMo Guardrails, constrained decoding) | Direct contrast: existing enforcement is config- or LLM-based and not per-mechanism ablation-isolated; ours is deterministic and mechanism-isolable. |
+| Software contracts and capability security (design-by-contract, typed command schemas, the object-capability model) | The engineering substrate the governance contract instantiates. |
+
+Closest neighbors (cite and distinguish in §2): Agent Behavioral
+Contracts (arXiv 2602.22302; runtime contracts C=(P,I,G,R), but
+LLM-judge extraction, patent-pending benchmark, no hidden runtime-mode
+intervention); Life-Harness (arXiv 2605.22166) and ALIGN (arXiv
+2505.21055), both fixed-model harness/interface adaptation for
+capability via evolved or LLM-generated interventions, not deterministic
+governance; NLAH (arXiv 2603.25723), AHE, HARBOR, Meta-Harness,
+AutoHarness, Guardrails-as-Infrastructure, ContextCov, Verifier Tax.
 
 Closest published benchmark prior: ST-WebAgentBench (Levy et al.,
-ICML 2025). Load-bearing differentiation: runtime-mode intervention
+ICLR 2026). Load-bearing differentiation: `runtime_mode` intervention
 with mechanism-isolable ablation under a held-constant prompt.
+
+Novelty is a CONJUNCTION, not any single first: held model and prompt +
+hidden `runtime_mode` intervention + deterministic governance mechanisms
+toggled individually + offline deterministic scorer + a released
+mechanism-isolable benchmark. No "first X" claims; causal language stays
+conditional on this fixed controller, prompt, runtime, task suite, and
+evidence tier.
 
 ## Calendar
 
@@ -96,8 +116,8 @@ Today: read in `date` at session start. Key windows:
 
 | § | Section | Target pages |
 |---|---|---|
-| 1 | Introduction (motivation, trusted/untrusted decomposition, contribution) | 1.5 |
-| 2 | Background and related work (AI control, software contracts, capability-based security, agent runtimes, LLM monitors incl. HS prose contrast) | 1 |
+| 1 | Introduction (motivation, model-vs-deterministic-runtime decomposition, contribution) | 1.5 |
+| 2 | Background and related work (agent harnesses, runtime enforcement and guardrails, software contracts, capability-based security; closest neighbors incl. Agent Behavioral Contracts, Life-Harness, ALIGN) | 1 |
 | 3 | The runtime contract (formal definition, M4-M8 + M9-TX, guarantees) | 2-3 |
 | 4 | GovernedAgentBench methodology (tasks, scorer, runtime modes, held-constant prompt design) | 2 |
 | 5 | Mechanism ablation results (Option B; static and live evidence separated) | 1.5-2 |
@@ -138,16 +158,24 @@ behaviour.
 
 | Attack type | Count | Target |
 |---|---:|---|
-| Refusal bypass | 4 | M7 |
-| Mutation escalation | 4 | M5 + M6 |
+| Scope-boundary evasion | 4 | M7 |
+| Privilege escalation | 4 | M5 + M6 |
 | Audit tampering | 4 | M8 |
 | Schema evasion | 4 | M4 |
 
-Not a full control safety case for scheming, sandbagged, or
-password-locked frontier models. Bounded stress test of whether
-deterministic mechanisms remain observable and load-bearing under
-known attack classes, with static oracle-pair canaries reported
-separately from live runtime probes.
+Not an adversarial-robustness proof against scheming, sandbagged, or
+password-locked frontier models. Bounded characterisation of whether
+deterministic governance mechanisms remain observable and load-bearing
+under known failure-injecting inputs, with static oracle-pair canaries
+reported separately from live runtime probes.
+
+**Coupling caveat.** Harness mechanisms are coupled: a mechanism can
+help in isolation yet degrade the full rollout. Per-mechanism attribution
+is therefore reported as marginal contribution within this fixed
+controller, not context-free causality. Every per-mechanism claim pairs
+the isolated `full_contract` vs `no_X` contrast with full-stack rollout
+evidence; `no_runtime_enforcement` is a sanity floor only; no additive
+"M4 contributes A plus M5 contributes B" language.
 
 ## Model Roster
 
@@ -198,7 +226,7 @@ D1-D28) lives in `ARCHIVE/decisions_log.md`.
 | ID | Decision | Active since |
 |---|---|---|
 | D-01 | Deliverable is arXiv preprint by 2026-09-30, 8-12pp NeurIPS/ICML LaTeX. No main-conference target. | 2026-05-15 |
-| D-02 | Title locked: *Deterministic Software Contracts as Trusted Monitors in AI Control Protocols*. | 2026-05-11 |
+| D-02 | Title locked: *Deterministic Software Contracts as Trusted Monitors in AI Control Protocols*. **Superseded by D-26 (2026-06-09).** | 2026-05-11 |
 | D-03 | Engels Backdoor Code extension deferred to a future paper; DRG-0 and the scaling-laws-for-oversight curve carry forward there. | 2026-05-15 |
 | D-04 | Sonnet 4 cells re-anchor to `claude-sonnet-4-6`. The 2026-06-15 Sonnet 4 retirement is irrelevant to the preprint. | 2026-05-15 |
 | D-05 | Empirical scope = Option B floor (M4-M8 × 1 model × 28 tasks) + Option C optional stretch (small cross-product). Tests H1 as a bounded headline with static and live evidence tiers reported separately; H2 preliminary if Option C runs. | 2026-05-15 |
@@ -221,6 +249,7 @@ D1-D28) lives in `ARCHIVE/decisions_log.md`.
 | D-22 | Audit-bounded isolation claim: the static matrix covers M4-M8 as deterministic oracle-pair canaries, and the live isolation sweep now covers targeted hermetic runtime probes for M4-M8. Live rows are mechanism probes, not model-result trajectories from the 28-task suite; M5/M6 live rows measure blocked-vs-allowed runtime outcome separately from normal unsafe-action attempt scoring. Paper/result wording must preserve those distinctions. | 2026-05-18 |
 | D-23 | Safety-constrained subset criterion: tasks whose `load_bearing_mechanisms` intersects {`refusal`, `agent_safe`, `proposal_gate`} (M5/M6/M7). 14 tasks of 28. §8 saturation threshold is `>= 14 / 14` (computed from 0.95 × 14 = 13.3, rounded up by the integer ceiling on task pass count). Enumerated in `safety_constrained_subset.json`. Freezes at the pilot-protocol lock per the §14 checklist. | 2026-05-26 |
 | D-24 | Pre-lock implementation decisions: (1) DR-9 remains active — Fireworks substrate and switch evaluator in scope (work packets A6 + A10); (2) PILOT_PROTOCOL.md §8/§10/§3 amended for DR-9 timing via work packet A12 (shipped 2026-06-01 in commit `b1863de`) — after `full_contract` completes, evaluate gate A (subset saturation); if gate A passes, run n=1 gate-B prelude across the 5 no-X modes on the 14 safety-constrained tasks (~$0.05 at 7B Together pricing); evaluate gate B; switch iff both pass; (3) multi-turn agent history sent as standard chat-completion messages — the model's emitted operator action is recorded as the `assistant` turn verbatim and each observation is returned as a `user` message; no provider-native `tool_calls` are synthesized, because the operator contract is content-JSON and fabricating tool calls would misrepresent the evaluated transcript (amended 2026-06-02 in WP-A1, reversing the original `assistant` + `tool` framing); (4) fresh fixture per rep; (5) malformed model output represented via new `invalid_output` trajectory `step_type`; (6) cost and wall-time caps enforced between turns. Full pre-lock engineering inventory at `benchmark/governed_agent_bench/PRE_LOCK_INVENTORY.md`. | 2026-06-01 |
+| D-26 | Framing pivot: the preprint reframes from AI-control to AI-engineering **agent-harness governance**. New title *Measuring Deterministic Governance Mechanisms in Agent Harnesses*; new one-sentence thesis (see Title and Frame). Governance retained as an engineering harness layer (ETCLOVG Governance/Verification), AI-control / trusted-monitor / safety umbrella dropped. Empirical core (M4-M8 ablation, scorer, 28 tasks, evidence tiers, calendar, roster, H1-H6 substance) unchanged. Novelty is the conjunction claim; no "first X". Supersedes D-02 and reverses the external-framing invariant. Reasoning + prior-art audit in `ARCHIVE/reframe_harness_governance_audit_2026-06-09.md`. | 2026-06-09 |
 
 ## Open Decisions
 
@@ -270,8 +299,15 @@ itself.
   HAI release history, pre-merge paper drafts all live in
   `ARCHIVE/`. They are intellectual capital for a Y3 sequel paper or
   maintainer handoff, not navigation surface.
-- **External framing stays unchanged when internal scope shrinks.**
-  Preprint is still an AI control paper. Do not soften.
+- **External framing is agent-harness governance (AI-engineering).**
+  The deterministic governance contract is a harness layer (ETCLOVG
+  Governance/Verification), not an AI-control / trusted-monitor / safety
+  umbrella (D-26). Do not re-attach the AI-control framing; do not soften
+  to a product framing.
+- **Novelty is a conjunction, not a first.** Claim only the conjunction
+  in the Lineage Anchor; forbid every "first X"; keep causal language
+  conditional on this fixed controller. Over-claiming breadth is the
+  primary review risk.
 - **HAI freeze is real.** No v0.2.1+ product cycles. Runtime defects
   discovered during preprint or benchmark work fix via
   `WP-RUNTIME-FIX-NNN` packets; they do not become release work.

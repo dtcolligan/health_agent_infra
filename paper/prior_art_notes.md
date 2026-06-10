@@ -10,34 +10,63 @@ keeps only what the §2 draft needs.
 
 ## Lineage Triple
 
-The contribution sits at the intersection of three literatures:
+The contribution sits at the intersection of three literatures (reframed
+per D-26: AI-engineering agent-harness governance, not AI control).
 
-### AI Control Protocols
-
-| Citation | Role |
-|---|---|
-| Greenblatt et al. 2024 (AI Control: Improving Safety Despite Intentional Subversion) | Source of the trusted-monitor / untrusted-operator vocabulary and the safety-usefulness evaluation pattern. |
-| Ctrl-Z, Games for AI Control, ControlArena (`control-arena.aisi.org.uk`) | Follow-up infrastructure. The preprint cites ControlArena as the canonical evaluation framework but does not run on it. |
-| Adaptive Attacks on Trusted Monitors (arXiv:2510.09462, 2025) | The framing-overclaim preempt. Cited in §1 and §2; reinforces that "trusted-monitor substrate" framing is bounded, not a complete control safety case. |
-
-### Safety Specs
+### Agent Harnesses and Scaffolding
 
 | Citation | Role |
 |---|---|
-| OpenAI Model Spec | Explicit safety-behaviour specification; the preprint frames the runtime contract as one substrate. |
-| Anthropic Model Spec Midtraining (MSM) | Same role; explicit safety spec. |
-| Deliberative Alignment (arXiv:2412.16339) | Prompt-only spec use has latency cost and forces the model to infer the spec from labeled examples. The preprint tests executable code as an alternative substrate. |
+| ReAct, Toolformer, CoALA (arXiv:2309.02427) | Vocabulary for the agent's structured action space and the runtime it operates in. |
+| SWE-agent / ACI (arXiv:2405.15793, NeurIPS 2024) | Establishes the harness/interface, not only the model, as a load-bearing design surface via a held-model interface ablation (capability, not governance). |
+| Agent Harness Engineering survey (ETCLOVG taxonomy; under TMLR review) | Names "Governance" and "Verification" as first-class harness layers — the taxonomic home of HAI's contract. Source of the coupling-problem caveat. |
 
-### LLM-Monitor Baselines
+### Runtime Enforcement and Guardrails
 
 | Citation | Role |
 |---|---|
-| Constitutional Classifiers (arXiv:2501.18837) | Pareto-frontier reporting precedent for detection rate × false-positive rate. GovernedAgentBench reuses the metric shape; **not** a head-to-head. |
-| Hierarchical Summarization (Anthropic Feb 2025) | The direct LLM-monitor competitor by design. §2.3 prose contrast only in the preprint; bounded empirical contrast deferred to future work per D-08. |
+| AgentSpec (arXiv:2503.18666) | DSL of (trigger, predicate, enforcement) runtime rules. Rule-modular but no per-mechanism causal ablation. |
+| Invariant Guardrails; Guardrails AI | Rule/validator-composable runtime layers. Separable, not ablation-measured. |
+| NeMo Guardrails (arXiv:2310.10501) | Direct contrast: its safety/self-check rails are LLM-prompt-based and non-deterministic; ours are deterministic. |
+
+### Software Contracts and Capability Security
+
+| Citation | Role |
+|---|---|
+| Design-by-contract (Meyer/Eiffel); typed command schemas | The engineering substrate the governance contract instantiates. |
+| Object-capability model | Capability-based constraint on what the operator may invoke; maps onto `agent_safe` + the proposal/commit gate. |
+
+## Closest Neighbors (cite and distinguish in §2)
+
+| Citation | Closeness / delta |
+|---|---|
+| Agent Behavioral Contracts (arXiv:2602.22302) | **Closest prior.** Runtime contracts C=(P,I,G,R), contracted-vs-uncontracted ×7 models, AgentContract-Bench. Delta: LLM-judge extraction (not purely deterministic), patent-pending benchmark, no hidden `runtime_mode` intervention under a held prompt with an offline scorer. |
+| Life-Harness (arXiv:2605.22166) | Fixed-model harness adaptation with leave-one-layer-out ablation. Delta: evolved interventions, capability outcome, deterministic *environments* (not deterministic governance). |
+| ALIGN (arXiv:2505.21055) | Generated interface wrapper, agent/env held constant, component ablations. Delta: enriches observations (capability), not governance/constraint. |
+| NLAH (arXiv:2603.25723), AHE, HARBOR, Meta-Harness, AutoHarness | Fixed-model harness attribution / ablation. Kill any "first to ablate the harness" claim; all capability-oriented and LLM/evolved, not deterministic governance. |
+| Guardrails-as-Infrastructure (arXiv:2603.18059), ContextCov (arXiv:2603.00822), Verifier Tax (arXiv:2603.19328) | Deterministic-policy / runtime-mediation neighbors. Delta: model-agnostic trace replay or LLM-mediated, not held-prompt per-mechanism runtime-mode ablation. |
+
+**Novelty is the conjunction** (per D-26): held model and prompt + hidden
+`runtime_mode` intervention + deterministic governance mechanisms toggled
+individually + offline deterministic scorer + released mechanism-isolable
+benchmark. No "first X" claims; causal language conditional on this fixed
+controller.
+
+## Model-Based Governance (demoted contrast, not the home lineage)
+
+Retained as a §2 contrast showing deterministic governance differs from
+model-/prompt-based governance. Not the contribution's home.
+
+| Citation | Role |
+|---|---|
+| Greenblatt et al. 2024 (AI Control); ControlArena; Adaptive Attacks on Trusted Monitors (arXiv:2510.09462) | Control-framed contrast and trusted-monitor vocabulary. The preprint does NOT make a control safety case. |
+| OpenAI Model Spec, Anthropic MSM, Deliberative Alignment (arXiv:2412.16339) | Safety behaviour specified for the model; the preprint tests executable code as a deterministic substrate instead. |
+| Constitutional Classifiers (arXiv:2501.18837) | Pareto-frontier reporting precedent (metric shape reuse, NOT a head-to-head). |
+| Hierarchical Summarization (Anthropic Feb 2025) | LLM-monitor approach; §2 prose contrast only, empirical contrast deferred (D-08). |
 
 ## Closest Benchmark Prior
 
-**ST-WebAgentBench** (Levy et al., ICML 2025, arXiv:2410.06703).
+**ST-WebAgentBench** (Levy et al., ICLR 2026, arXiv:2410.06703).
 Load-bearing differentiation axis: GovernedAgentBench is runtime-mode
 intervention with mechanism-isolable ablation under a held-constant
 prompt. ST-WebAgentBench varies tasks but not runtime mechanism
@@ -82,13 +111,18 @@ should NOT appear as in-scope citations in the abstract, §1, or §5:
 
 When §2 drafting begins (late July):
 
-1. AI control protocols subsection (Greenblatt, ControlArena, Adaptive
-   Attacks).
-2. Safety specs subsection (OpenAI/Anthropic Model Specs, Deliberative
-   Alignment).
-3. LLM-monitor baselines subsection (Constitutional Classifiers, HS).
-4. Agent safety benchmarks subsection (ST-WAB load-bearing
-   differentiation, AgentDojo and others for context).
+1. Agent-harness and scaffolding subsection (ReAct/CoALA/SWE-agent ACI,
+   the Agent Harness Engineering survey + ETCLOVG; harness as a
+   load-bearing design surface).
+2. Runtime enforcement and software-contracts subsection (AgentSpec,
+   Invariant/Guardrails-AI, NeMo as the non-deterministic contrast;
+   design-by-contract and object-capability substrate).
+3. Closest-neighbors subsection (Agent Behavioral Contracts, Life-Harness,
+   ALIGN, NLAH; state the conjunction delta). Demoted model-based
+   governance contrast (Greenblatt, Model Specs, Constitutional
+   Classifiers, HS) folded in here, not as the home.
+4. Agent benchmarks subsection (ST-WAB load-bearing differentiation on
+   runtime-mode ablation, AgentDojo/tau-bench/OS-Harm for context).
 5. Future-work bridge sentence pointing at Engels + scaling-laws-for-
    oversight + S1 fine-tuning.
 

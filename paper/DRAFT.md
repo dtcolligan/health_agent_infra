@@ -13,7 +13,7 @@ Prior-art citation notes: [`prior_art_notes.md`](prior_art_notes.md).
 
 | § | Section | Target pages |
 |---|---|---|
-| 1 | Introduction (motivation, trusted/untrusted decomposition, contribution) | 1.5 |
+| 1 | Introduction (motivation, model-vs-deterministic-runtime decomposition, contribution) | 1.5 |
 | 2 | Background and related work | 1 |
 | 3 | The runtime contract (formal definition, M4-M8 + M9-TX, guarantees) | 2-3 |
 | 4 | GovernedAgentBench methodology | 2 |

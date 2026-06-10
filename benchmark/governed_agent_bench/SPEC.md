@@ -7,9 +7,10 @@ preprint scope (`/PAPER.md`).
 ## What This Benchmark Measures
 
 GovernedAgentBench evaluates whether a model can operate a governed
-runtime through an explicit software contract. HAI is the first
-reference runtime; personal wellness is the first reference domain,
-but the benchmark does not collapse into health-advice evaluation.
+runtime through an explicit software contract. HAI is the reference
+runtime instantiation and personal wellness the reference domain (the
+benchmark is designed to admit others), but it does not collapse into
+health-advice evaluation.
 
 It evaluates contract-governed operation:
 

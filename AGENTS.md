@@ -7,9 +7,8 @@ and decisions live in `PAPER.md`. Read `PAPER.md` first.
 ## North Star
 
 This repo exists to ship one artifact: the arXiv preprint
-*Deterministic Software Contracts as Trusted Monitors in AI Control
-Protocols* by 2026-09-30, with GovernedAgentBench v1.0 released beside
-it.
+*Measuring Deterministic Governance Mechanisms in Agent Harnesses* by
+2026-09-30, with GovernedAgentBench v1.0 released beside it.
 
 The project is not a HAI product roadmap. HAI is the pinned reference
 runtime used to instantiate and test the paper's runtime-contract
@@ -197,8 +196,10 @@ Use `uvx` for those rather than mutating `uv.lock`.
   the active tree. Decisions update in `PAPER.md`; provenance goes in
   `ARCHIVE/`.
 - Do not reopen active D-NN decisions without an explicit Dom call.
-- Do not soften the external framing: this is an AI control paper under
-  the AI safety umbrella.
+- Do not re-attach the AI-control / trusted-monitor / safety umbrella.
+  External framing is agent-harness governance (AI-engineering); the
+  deterministic governance contract is a harness layer (per D-26 in
+  `PAPER.md`). Do not soften to a product framing either.
 - Do not merge static canary evidence with live runtime causality
   claims.
 - Do not put private user data in public benchmark artifacts.
