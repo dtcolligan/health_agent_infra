@@ -109,7 +109,7 @@ def test_no_double_enforcement_typo() -> None:
             )
     assert not offenders, (
         "no_runtime_enforcement_enforcement reintroduced in active docs:\n"
-        + "\n".join(f"  {p}:{l}: {ln}" for p, l, ln in offenders)
+        + "\n".join(f"  {p}:{line_no}: {ln}" for p, line_no, ln in offenders)
     )
 
 
@@ -201,7 +201,7 @@ def test_no_bare_no_runtime_in_active_docs() -> None:
             )
     assert not offenders, (
         "Bare `no_runtime` (v1 token) reintroduced in active docs:\n"
-        + "\n".join(f"  {p}:{l}: {ln}" for p, l, ln in offenders)
+        + "\n".join(f"  {p}:{line_no}: {ln}" for p, line_no, ln in offenders)
     )
 
 
@@ -288,5 +288,5 @@ def test_no_prompt_axis_strings_in_active_docs(forbidden: str) -> None:
             )
     assert not offenders, (
         f"Prompt-axis forbidden string `{forbidden}` reintroduced in active docs:\n"
-        + "\n".join(f"  {p}:{l}: {ln}" for p, l, ln in offenders)
+        + "\n".join(f"  {p}:{line_no}: {ln}" for p, line_no, ln in offenders)
     )

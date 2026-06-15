@@ -40,6 +40,10 @@ Scope OUT (lock-day-only, intentionally absent):
 
 ### A2. Pilot orchestrator with full §11 triage and §12 layout
 
+**Status:** shipped 2026-06-10 (commit `be52fcc`, WP-A2), with
+protocol-artifact reconciliation pushed in `96ad77c`. A3 contamination
+abort behavior folded into the A2 orchestrator packet.
+
 **Source:** §10 outer-loop ordering; §12 `runs/pilot/<UTC_iso_minute>_lock-<short_sha>/` layout, latest-symlink semantics; §3 per-condition cost cap and wall-time ceiling; §11 disposition tree; SPEC.md hermetic recipe.
 
 **Gap:** no entry-point drives n=3 x 28 x 7. `runs/pilot/` does not exist. No writers for `pilot_manifest.json`, `condition_summary.json`, `condition_index.json`. No cumulative wall-time tracker. No latest-symlink handling. No hermeticity-across-turns assertion. No fixture-reset-between-reps.
@@ -56,6 +60,9 @@ Scope OUT (lock-day-only, intentionally absent):
 - **Fixture lifecycle between conditions:** every condition starts from a fresh fixture root; no leakage between `runtime_mode_<X>` directories. Tested.
 
 ### A3. Real-time contamination abort
+
+**Status:** shipped 2026-06-10 as part of WP-A2 (commit `be52fcc`);
+covered by the orchestrator's post-rep disposition tests.
 
 **Source:** §6 post-task hook reads score JSON; aborts condition on `mechanism_disabled_unexpected` or `full_contract` emitting any `mechanism_disabled` marker.
 
@@ -130,6 +137,12 @@ Scope OUT (lock-day-only, intentionally absent):
 
 ### A10. DR-9 7B->32B switch evaluator
 
+**Status:** remains future work. WP-A11/B3 exposes
+`dr9_ready_inputs` in `pilot_h1_mechanism_summary.json`, including
+gate-A safety-subset saturation and gate-B-style per-mechanism fields,
+but does not emit `dr9_switch_decision.json` or implement live
+switching.
+
 **Source:** PAPER.md D-21 (DR-9); PILOT_PROTOCOL.md §8 ratified numerical trigger; §8 amendment authorized via Dom decision 2.
 
 **Gap:** no code computes and records this decision.
@@ -142,6 +155,11 @@ Scope OUT (lock-day-only, intentionally absent):
 - Depends on A6 (Fireworks substrate), A11 (§7 verdict logic for gate B), A12 (§8 / §10 amendment defining when the evaluator fires).
 
 ### A11. §7 falsification verdict generator
+
+**Status:** shipped in the 2026-06-11 WP-A11/B3 working tree after
+audit fixes; pending Dom-authorized commit. Implemented by
+`results/pilot_evidence.py` and `test_pilot_evidence.py` over
+synthetic A2 run artifacts.
 
 **Source:** PILOT_PROTOCOL.md §7 ratified per-mechanism falsification rules; §12 names `pilot_h1_mechanism_summary.json` as a required pilot artifact.
 
@@ -195,6 +213,11 @@ Scope OUT (lock-day-only, intentionally absent):
 - Tests verify the reconciliation invariant on synthetic data and zero double-counting across multi-mechanism tasks.
 
 ### B3. pilot_evidence_table.{json,csv} generator
+
+**Status:** shipped in the 2026-06-11 WP-A11/B3 working tree after
+audit fixes; pending Dom-authorized commit. Emits
+`pilot_evidence_table.json`, `pilot_evidence_table.csv`, and
+`pilot_h1_mechanism_summary.json` from A2 run directories.
 
 **Source:** §12 ratified per-row `task × mode × rep × scored metrics + evidence_tier`; §11 ratified `diagnostic_only` tagging for aborted-condition tasks.
 

@@ -11,14 +11,28 @@ from .error_taxonomy import (
     build_error_taxonomy,
     write_error_taxonomy,
 )
+from .pilot_evidence import (
+    PILOT_EVIDENCE_TABLE_SCHEMA_VERSION,
+    PILOT_H1_SUMMARY_SCHEMA_VERSION,
+    build_pilot_evidence_rows,
+    build_pilot_evidence_table,
+    build_pilot_h1_mechanism_summary,
+    write_pilot_evidence_tables,
+)
 
 __all__ = [
     "EVIDENCE_TABLE_SCHEMA_VERSION",
     "ERROR_TAXONOMY_SCHEMA_VERSION",
     "FIGURE_SCHEMA_VERSION",
+    "PILOT_EVIDENCE_TABLE_SCHEMA_VERSION",
+    "PILOT_H1_SUMMARY_SCHEMA_VERSION",
     "build_error_taxonomy",
     "build_evidence_rows",
+    "build_pilot_evidence_rows",
+    "build_pilot_evidence_table",
+    "build_pilot_h1_mechanism_summary",
     "write_error_taxonomy",
     "write_result_figures",
     "write_evidence_tables",
+    "write_pilot_evidence_tables",
 ]

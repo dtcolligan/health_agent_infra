@@ -32,7 +32,6 @@ from governed_agent_bench.harness import (  # noqa: E402
 from governed_agent_bench.harness.retry import (  # noqa: E402
     OutageDetector,
     RetryExhausted,
-    RetryPolicy,
     TransportFailure,
     classify_retry,
     execute_with_retry,
