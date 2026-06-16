@@ -27,6 +27,9 @@ Scope OUT (lock-day-only, intentionally absent):
 
 ### A1. Multi-turn agent loop, observation-feedback contract, and invalid-output handling
 
+**Status:** shipped 2026-06-02 (commit `2310245`, WP-A1), with
+wire-format doc reconciliation in `7a63a1f`.
+
 **Source:** PILOT_PROTOCOL.md §4 multi-turn shape; §5 row "Malformed JSON action ... No retry. Record turn as `invalid_command` violation."
 
 **Gap:** `harness/core.py::run_operator_actions` executes a pre-supplied action list. `harness/together.py::run_together_model_action` calls the model once and runs one action. No loop. No representation for malformed model output.
@@ -82,6 +85,8 @@ covered by the orchestrator's post-rep disposition tests.
 
 ### A5. Retry / rate-limit middleware and outage detection
 
+**Status:** shipped 2026-06-03 (commit `31bfe4c`, WP-A5).
+
 **Source:** §5 ratified table.
 
 **Gap:** Together adapter catches TimeoutError and returns `OUTCOME_TIMEOUT` immediately. No retry loop. No 429 handling. No outage detector.
@@ -94,6 +99,8 @@ covered by the orchestrator's post-rep disposition tests.
 
 ### A6. Fireworks adapter (D-O-01 fallback substrate)
 
+**Status:** shipped 2026-06-03 (commit `379d358`, WP-A6).
+
 **Source:** `model_roster.md` condition `option_b_fallback_qwen25_32b_fireworks`; PAPER.md D-21 (DR-9); PILOT_PROTOCOL.md §8 numerical trigger. DR-9 active per Dom decision 1.
 
 **Gap:** only Together adapter exists.
@@ -101,6 +108,8 @@ covered by the orchestrator's post-rep disposition tests.
 **Pre-lock criterion:** Fireworks adapter mirrors `together.py` (transport Protocol, mocked-only tests, A5 retry integration, A4 step-metadata threading, standard chat-message multi-turn format per Dom decision 3). No live calls.
 
 ### A7. pilot_manifest.json schema and writer
+
+**Status:** shipped 2026-06-07 (commit `b61834b`, WP-A7).
 
 **Source:** §12 ratified schema `governed_agent_bench.pilot_manifest.v1`; §14 hash-recording rows.
 
@@ -137,11 +146,13 @@ covered by the orchestrator's post-rep disposition tests.
 
 ### A10. DR-9 7B->32B switch evaluator
 
-**Status:** remains future work. WP-A11/B3 exposes
-`dr9_ready_inputs` in `pilot_h1_mechanism_summary.json`, including
-gate-A safety-subset saturation and gate-B-style per-mechanism fields,
-but does not emit `dr9_switch_decision.json` or implement live
-switching.
+**Status:** implemented in the current Codex working tree (pending
+Claude audit + Dom commit). WP-A11/B3 exposes `dr9_ready_inputs` in
+`pilot_h1_mechanism_summary.json`; this packet adds
+`results/dr9_switch.py`, wires `write_pilot_evidence_tables()` to emit
+`dr9_switch_decision.json` adjacent to
+`pilot_h1_mechanism_summary.json`, and intentionally does not implement
+live model switching.
 
 **Source:** PAPER.md D-21 (DR-9); PILOT_PROTOCOL.md §8 ratified numerical trigger; §8 amendment authorized via Dom decision 2.
 
@@ -156,10 +167,9 @@ switching.
 
 ### A11. §7 falsification verdict generator
 
-**Status:** shipped in the 2026-06-11 WP-A11/B3 working tree after
-audit fixes; pending Dom-authorized commit. Implemented by
-`results/pilot_evidence.py` and `test_pilot_evidence.py` over
-synthetic A2 run artifacts.
+**Status:** shipped 2026-06-15 (commit `dbc6656`, WP-A11/B3).
+Implemented by `results/pilot_evidence.py` and
+`test_pilot_evidence.py` over synthetic A2 run artifacts.
 
 **Source:** PILOT_PROTOCOL.md §7 ratified per-mechanism falsification rules; §12 names `pilot_h1_mechanism_summary.json` as a required pilot artifact.
 
@@ -171,6 +181,8 @@ synthetic A2 run artifacts.
 - Tests: synthetic "all clean" evidence yields zero falsifications; synthetic "M7 leaks under full_contract" yields the right falsification flag.
 
 ### A12. PILOT_PROTOCOL.md §8 / §10 amendment for DR-9 timing
+
+**Status:** shipped 2026-06-01 (commit `b1863de`, WP-A12).
 
 **Source:** Dom decision 2 (2026-06-01). Resolves the structural defect where §8 says "evaluate switch after full_contract" but the switch criterion requires no-X deltas that §10 ordering makes unavailable at that point.
 
@@ -191,6 +203,11 @@ synthetic A2 run artifacts.
 
 ### B1. M7 detector negative-control corpus (size 84 stratified)
 
+**Status:** implemented in the current Codex working tree (pending
+Claude audit + Dom commit). Corpus:
+`refusal_negative_controls/m7_benign_negative_controls.jsonl`; test:
+`test_m7_negative_controls.py`.
+
 **Source:** PILOT_PROTOCOL.md §7 "M7 binary-leg sensitivity (acknowledged)" — single detector false-positive on benign output falsifies M7 attribution. Protocol names lock-day verification against a curated negative-control set.
 
 **Gap:** the set does not exist.
@@ -201,6 +218,11 @@ synthetic A2 run artifacts.
 - Test asserts the M7 detector (`hai/src/health_agent_infra/core/refusal/clinical.py` + `banned_clinical_phrases.txt`) emits zero clinical-claim signals over the corpus.
 
 ### B2. condition_summary.json schema + writer with even-split cost reconciliation
+
+**Status:** implemented in the current Codex working tree (pending
+Claude audit + Dom commit). `condition_summary.schema.json` now uses
+`governed_agent_bench.condition_summary.v1` and requires
+per-mechanism cost, diagnostic cost, and reconciliation fields.
 
 **Source:** §12 ratified "per-mode aggregate cost (incl. per-mechanism rollup of cost_usd_estimate from §4), wall-time, abort_reason if any."
 
@@ -214,8 +236,7 @@ synthetic A2 run artifacts.
 
 ### B3. pilot_evidence_table.{json,csv} generator
 
-**Status:** shipped in the 2026-06-11 WP-A11/B3 working tree after
-audit fixes; pending Dom-authorized commit. Emits
+**Status:** shipped 2026-06-15 (commit `dbc6656`, WP-A11/B3). Emits
 `pilot_evidence_table.json`, `pilot_evidence_table.csv`, and
 `pilot_h1_mechanism_summary.json` from A2 run directories.
 
@@ -244,6 +265,12 @@ audit fixes; pending Dom-authorized commit. Emits
 
 ### C1. Provider-IDs / pricing dry-run probe
 
+**Status:** implemented in the current Codex working tree (pending
+Claude audit + Dom commit). `provider_probe.py` emits JSON/Markdown,
+defaults to no live network, supports `--live` read-only metadata/docs
+checks, and guards against chat/completions/messages/generation
+endpoints.
+
 **Source:** §14 row "Provider IDs and pricing verified against live vendor docs as of the lock date."
 
 **Gap:** no script. Manual lookup under lock-day pressure.
@@ -251,6 +278,9 @@ audit fixes; pending Dom-authorized commit. Emits
 **Pre-lock criterion:** script probes Together / Fireworks / Anthropic `/v1/models` (read-only, no chat-completion); confirms each `condition.model_id` resolves; cross-checks public pricing against `together.py::TOGETHER_QWEN25_7B_PRICING` (and any analogous Fireworks / Anthropic constants once A6 lands). No model invocation. Markdown summary for the lock commit.
 
 ### C2. PILOT_PROTOCOL.md §13 phrasing reconciliation
+
+**Status:** implemented in the current Codex working tree (pending
+Claude audit + Dom commit).
 
 **Source:** §13 conditional "If §7 §reproduce_offline.py emits an aggregated adversarial summary artifact ..." is stale; the generator (`results/adversarial_summary.py`) exists and `reproduce_offline.py` records the artifact in the offline manifest.
 
@@ -260,6 +290,11 @@ audit fixes; pending Dom-authorized commit. Emits
 
 ### C3. SPEC.md ↔ PILOT_PROTOCOL.md ↔ scorer_config drift audit
 
+**Status:** implemented in the current Codex working tree (pending
+Claude audit + Dom commit). Reconciled active docs in place:
+`SPEC.md`, `PILOT_PROTOCOL.md`, `schema/README.md`, and
+`results/README.md`; no `PAPER.md` edit was needed.
+
 **Source:** SPEC.md predates the recent ratification rounds; PILOT_PROTOCOL.md §12 specifies new directory layout, schemas, manifest keys.
 
 **Gap:** SPEC.md may name file paths or schema versions that disagree with PILOT_PROTOCOL.md.
@@ -267,6 +302,12 @@ audit fixes; pending Dom-authorized commit. Emits
 **Pre-lock criterion:** divergence list produced; reconciliation lands as a doc-only packet (no code).
 
 ### C4. Lock-day checklist runner OR explicit hand-verification ratification
+
+**Status:** Option A implemented in the current Codex working tree
+(pending Claude audit + Dom commit). `lock_checklist.py` parses §14,
+runs mechanical checks where possible, leaves lock-day decisions /
+hash-recording rows as operator-confirmation pending, and emits JSON +
+Markdown to an output directory without mutating lock docs.
 
 **Source:** PILOT_PROTOCOL.md §14 "Lock checklist (each item must be ticked, with evidence captured in the corresponding lock commit)." `scripts/collect_lock_hashes.py` mechanically produces the §14 hash table; nothing chains the other rows into a single green / red checklist artifact.
 
@@ -276,7 +317,10 @@ audit fixes; pending Dom-authorized commit. Emits
 - **Option A (runner):** script walks the §14 checklist, executes the mechanical rows (hash collector, L7 replay, provider probe, schema regression tests, safety-subset enumeration), surfaces the non-mechanical rows (D-O-01 selection, status flip ratification, lock date, lock commit SHA) as operator prompts, emits a `lock_checklist_<timestamp>.json` artifact + markdown summary for the lock commit body.
 - **Option B (hand-verification):** Dom ratifies explicitly that §14 is hand-verified on lock day; no runner is built; this row drops.
 
-**Open call:** Dom decides Option A or B.
+**Lock-day note:** the runner does not settle Dom-only lock decisions
+(`D-O-01`, scorer-config freeze, lock hash recording, lock commit SHA,
+or push authorization); those remain operator confirmations in the
+generated checklist artifact.
 
 ---
 

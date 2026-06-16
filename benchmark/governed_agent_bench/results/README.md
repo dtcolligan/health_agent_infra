@@ -21,3 +21,19 @@ summary figures plus `figures_manifest.json`.
 `error_taxonomy.py` consumes `evidence_table.json` and writes violation
 counts by task level, runtime mode, model class, task mechanism, and
 runtime mechanism.
+
+`pilot_evidence.py` consumes an A2 pilot run directory under
+`runs/pilot/<run>/` and writes:
+
+- `pilot_evidence_table.json`
+- `pilot_evidence_table.csv`
+- `pilot_h1_mechanism_summary.json`
+- `dr9_switch_decision.json`
+
+`dr9_switch.py` can also be run directly against
+`pilot_h1_mechanism_summary.json` plus the optional pilot evidence table. It
+is an offline evaluator and never invokes a model provider.
+
+`adversarial_summary.py` writes generated adversarial summary JSON/CSV
+artifacts during `reproduce_offline.py`; those generated files are not §14
+lock-hash inputs.

@@ -500,7 +500,7 @@ runs/pilot/
 │   │       │   │       ├── rep_01.observations.json
 │   │       │   │       ├── rep_02.*
 │   │       │   │       └── rep_03.*
-│   │       │   └── condition_summary.json     # minimal per-mode raw cost/wall, disposition, abort_reason if any
+│   │       │   └── condition_summary.json     # per-mode raw cost/wall, per-mechanism cost rollup, disposition
 │   │       └── condition_index.json           # per-system completed modes + full mode/task coverage matrix
 │   └── evidence_tables/
 │       └── ...                                # A2 creates an empty skeleton; B3 owns evidence tables
@@ -532,11 +532,13 @@ as pilot-phase evidence in the verification suite
 are **not** rerun under model-backed conditions in this pilot; they
 remain rule-baseline trajectories.
 
-If §7 §"reproduce_offline.py" emits an aggregated adversarial summary
-artifact (open question in the engineering plan's Trajectories row),
-that artifact ships alongside the pilot evidence tables. The §7
-paper section cites both. This protocol does not block on that
-emission decision.
+`reproduce_offline.py` emits the aggregated adversarial summary artifacts
+through `results/adversarial_summary.py` and records them in the offline
+manifest. Those files are generated outputs that ship alongside the
+pilot evidence tables when the offline reproducer is run; they are not
+committed CSV lock inputs and are not part of the §14 hashed surface.
+The §7 paper section cites both the pilot evidence tables and the
+generated adversarial summaries.
 
 ## §14 Lock Procedure
 

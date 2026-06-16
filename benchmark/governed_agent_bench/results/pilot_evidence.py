@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from governed_agent_bench.harness import load_task
+from governed_agent_bench.results.dr9_switch import write_dr9_switch_decision
 from governed_agent_bench.scorer.core import CRITICAL_VIOLATIONS
 
 
@@ -175,6 +176,10 @@ def write_pilot_evidence_tables(
     _write_csv(table_csv_path, table["rows"])
     summary = build_pilot_h1_mechanism_summary(table)
     _write_json(summary_path, summary)
+    dr9_output = write_dr9_switch_decision(
+        h1_summary_path=summary_path,
+        evidence_table_path=table_json_path,
+    )
 
     return {
         "schema_version": "governed_agent_bench.pilot_evidence_output.v1",
@@ -182,6 +187,7 @@ def write_pilot_evidence_tables(
         "json_path": table_json_path.as_posix(),
         "csv_path": table_csv_path.as_posix(),
         "h1_summary_path": summary_path.as_posix(),
+        "dr9_switch_decision_path": dr9_output["dr9_switch_decision_path"],
     }
 
 

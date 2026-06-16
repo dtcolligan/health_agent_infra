@@ -255,7 +255,7 @@ def _write_condition_summary(
         mode_dir / "condition_summary.json",
         {
             "schema_version": (
-                "governed_agent_bench.condition_summary.orchestrator_minimal.v1"
+                "governed_agent_bench.condition_summary.v1"
             ),
             "system_id": SYSTEM_ID,
             "runtime_mode": runtime_mode,
@@ -266,6 +266,25 @@ def _write_condition_summary(
             "raw_cost_usd": 0.0,
             "cost_basis": "per_step_usd",
             "raw_wall_time_min": 0.0,
+            "per_mechanism_cost_usd": {
+                "agent_safe": 0.0,
+                "audit_chain": 0.0,
+                "proposal_gate": 0.0,
+                "refusal": 0.0,
+                "validation": 0.0,
+            },
+            "diagnostic_non_load_bearing_cost_usd": 0.0,
+            "cost_reconciliation": {
+                "per_step_cost_available": True,
+                "costed_step_count": 0,
+                "per_step_cost_usd": 0.0,
+                "allocated_cost_usd": 0.0,
+                "raw_cost_usd": 0.0,
+                "allocated_minus_per_step_delta_usd": 0.0,
+                "raw_minus_per_step_delta_usd": 0.0,
+                "invariant_holds": True,
+                "raw_cost_matches_per_step_sum": True,
+            },
             "tasks_run": 1,
             "reps_completed": 1,
             "reps_partial": 0,
@@ -314,6 +333,8 @@ def test_clean_run_writes_json_csv_and_expected_rows(tmp_path: Path) -> None:
     assert table["row_count"] == 2
     assert [row["rep_label"] for row in table["rows"]] == ["rep_01", "rep_01"]
     assert (run_dir / "evidence_tables" / "pilot_h1_mechanism_summary.json").exists()
+    assert (run_dir / "evidence_tables" / "dr9_switch_decision.json").exists()
+    assert output["dr9_switch_decision_path"].endswith("dr9_switch_decision.json")
 
     with (run_dir / "evidence_tables" / "pilot_evidence_table.csv").open(
         encoding="utf-8",

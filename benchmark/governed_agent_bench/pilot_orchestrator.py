@@ -62,6 +62,14 @@ from governed_agent_bench.harness import load_manifest_snapshot, load_task
 
 MODE_ORDER: tuple[str, ...] = tuple(SUPPORTED_RUNTIME_MODES)
 DEFAULT_RUNS_ROOT = BENCHMARK_ROOT / "runs" / "pilot"
+CONDITION_SUMMARY_SCHEMA_VERSION = "governed_agent_bench.condition_summary.v1"
+COST_ROLLUP_MECHANISMS = (
+    "validation",
+    "agent_safe",
+    "proposal_gate",
+    "refusal",
+    "audit_chain",
+)
 RepStopCause: TypeAlias = Literal[
     "final",
     "refusal",
@@ -988,17 +996,27 @@ def write_condition_summary(
             offending_mechanism = disp.offending_mechanism
         else:
             raise HarnessError(f"unsupported disposition for summary: {disp}")
+    cost_basis_value = cost_basis(system)
+    raw_cost_usd = coverage.mode_cost_delta(mode)
+    cost_rollup = _condition_cost_rollup(
+        run_dir=coverage.run_dir,
+        system_id=coverage.system_id,
+        mode=mode,
+        cost_basis_value=cost_basis_value,
+        raw_cost_usd=raw_cost_usd,
+    )
     payload = {
-        "schema_version": "governed_agent_bench.condition_summary.orchestrator_minimal.v1",
+        "schema_version": CONDITION_SUMMARY_SCHEMA_VERSION,
         "system_id": str(system["system_id"]),
         "runtime_mode": mode,
         "cell_outcome": cell_outcome,
         "abort_reason": abort_reason,
         "offending_mechanism": offending_mechanism,
         "disposition": disposition,
-        "raw_cost_usd": coverage.mode_cost_delta(mode),
-        "cost_basis": cost_basis(system),
+        "raw_cost_usd": raw_cost_usd,
+        "cost_basis": cost_basis_value,
         "raw_wall_time_min": coverage.mode_wall_delta(mode),
+        **cost_rollup,
         "tasks_run": tasks_run,
         "reps_completed": reps_completed,
         "reps_partial": reps_partial,
@@ -1020,6 +1038,112 @@ def _coverage_row_payload(row: CoverageRow) -> dict[str, Any]:
         "reps_completed": row.reps_completed,
         "partial_rep": row.partial_rep,
     }
+
+
+def _condition_cost_rollup(
+    *,
+    run_dir: Path,
+    system_id: str,
+    mode: str,
+    cost_basis_value: str,
+    raw_cost_usd: float | None,
+) -> dict[str, Any]:
+    if cost_basis_value != "per_step_usd":
+        return {
+            "per_mechanism_cost_usd": None,
+            "diagnostic_non_load_bearing_cost_usd": None,
+            "cost_reconciliation": {
+                "per_step_cost_available": False,
+                "costed_step_count": 0,
+                "per_step_cost_usd": None,
+                "allocated_cost_usd": None,
+                "raw_cost_usd": raw_cost_usd,
+                "allocated_minus_per_step_delta_usd": None,
+                "raw_minus_per_step_delta_usd": None,
+                "invariant_holds": None,
+                "raw_cost_matches_per_step_sum": None,
+            },
+        }
+
+    per_mechanism = {mechanism: 0.0 for mechanism in COST_ROLLUP_MECHANISMS}
+    diagnostic_cost = 0.0
+    per_step_cost = 0.0
+    costed_step_count = 0
+    mode_dir = _mode_dir(run_dir, system_id, mode)
+    for trajectory_path in sorted(mode_dir.glob("tasks/*/rep_*.trajectory.json")):
+        trajectory = _load_json_object(trajectory_path)
+        task_id = str(trajectory.get("task_id") or trajectory_path.parent.name)
+        task = load_task(task_id)
+        mechanisms = [str(value) for value in task.get("load_bearing_mechanisms", [])]
+        for step in trajectory.get("steps", []):
+            if not isinstance(step, dict):
+                continue
+            cost = _step_cost_usd(step)
+            if cost is None:
+                continue
+            per_step_cost += cost
+            costed_step_count += 1
+            if mechanisms:
+                share = cost / len(mechanisms)
+                for mechanism in mechanisms:
+                    per_mechanism.setdefault(mechanism, 0.0)
+                    per_mechanism[mechanism] += share
+            else:
+                diagnostic_cost += cost
+
+    rounded_per_mechanism = {
+        mechanism: _round_cost(value)
+        for mechanism, value in sorted(per_mechanism.items())
+    }
+    diagnostic_cost = _round_cost(diagnostic_cost)
+    per_step_cost = _round_cost(per_step_cost)
+    allocated_cost = _round_cost(
+        sum(rounded_per_mechanism.values()) + diagnostic_cost
+    )
+    allocated_delta = _round_cost(allocated_cost - per_step_cost)
+    raw_delta = (
+        None
+        if raw_cost_usd is None
+        else _round_cost(float(raw_cost_usd) - per_step_cost)
+    )
+    return {
+        "per_mechanism_cost_usd": rounded_per_mechanism,
+        "diagnostic_non_load_bearing_cost_usd": diagnostic_cost,
+        "cost_reconciliation": {
+            "per_step_cost_available": True,
+            "costed_step_count": costed_step_count,
+            "per_step_cost_usd": per_step_cost,
+            "allocated_cost_usd": allocated_cost,
+            "raw_cost_usd": raw_cost_usd,
+            "allocated_minus_per_step_delta_usd": allocated_delta,
+            "raw_minus_per_step_delta_usd": raw_delta,
+            "invariant_holds": abs(allocated_delta) <= 1e-9,
+            "raw_cost_matches_per_step_sum": (
+                None if raw_delta is None else abs(raw_delta) <= 1e-9
+            ),
+        },
+    }
+
+
+def _load_json_object(path: Path) -> dict[str, Any]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise HarnessError(f"JSON artifact must be an object: {path}")
+    return payload
+
+
+def _step_cost_usd(step: Mapping[str, Any]) -> float | None:
+    metadata = step.get("metadata")
+    if not isinstance(metadata, Mapping):
+        return None
+    value = metadata.get("cost_usd_estimate")
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        if value < 0:
+            raise HarnessError("trajectory cost_usd_estimate must be non-negative")
+        return float(value)
+    return None
 
 
 def _is_noop_disposition(disposition: Disposition | None) -> bool:
@@ -1175,6 +1299,10 @@ def _coerce_wall_ms(value: Any) -> int | None:
     if isinstance(value, float) and value >= 0:
         return int(value)
     return None
+
+
+def _round_cost(value: float) -> float:
+    return round(value, 12)
 
 
 def _error_turn_result(

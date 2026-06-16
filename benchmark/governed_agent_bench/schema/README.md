@@ -38,10 +38,13 @@ and the orchestrator populates it at run time.
 
 `condition_summary.schema.json`, `condition_index.schema.json`, and
 `rep_ledger.schema.json` define the A2 pilot-orchestrator artifacts. The
-summary is a minimal per-runtime-mode cell record with raw cost/wall
-contribution and final disposition only; B2 owns later per-mechanism cost
-rollups and B3 owns evidence-tier tables. The index records the complete
-mode/task coverage matrix, including out-of-scope and not-run-after-stop cells.
-The ledger is the durable per-rep incident trail and carries every disposition
+summary is a per-runtime-mode cell record with raw cost/wall contribution,
+final disposition, per-mechanism cost allocation, a diagnostic
+non-load-bearing cost bucket, and reconciliation fields proving that allocated
+per-step USD matches the summed trajectory step costs when per-step USD is
+available. Condition-level systems keep those allocation fields null rather
+than fabricating token-level cost. The index records the complete mode/task
+coverage matrix, including out-of-scope and not-run-after-stop cells. The
+ledger is the durable per-rep incident trail and carries every disposition
 trigger observed for the rep, even when a higher-severity trigger wins the
 system outcome.

@@ -15,13 +15,16 @@
     "raw_cost_usd",
     "cost_basis",
     "raw_wall_time_min",
+    "per_mechanism_cost_usd",
+    "diagnostic_non_load_bearing_cost_usd",
+    "cost_reconciliation",
     "tasks_run",
     "reps_completed",
     "reps_partial"
   ],
   "properties": {
     "schema_version": {
-      "const": "governed_agent_bench.condition_summary.orchestrator_minimal.v1"
+      "const": "governed_agent_bench.condition_summary.v1"
     },
     "system_id": {
       "type": "string",
@@ -53,6 +56,71 @@
     "raw_wall_time_min": {
       "type": "number",
       "minimum": 0
+    },
+    "per_mechanism_cost_usd": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "diagnostic_non_load_bearing_cost_usd": {
+      "type": ["number", "null"],
+      "minimum": 0
+    },
+    "cost_reconciliation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "per_step_cost_available",
+        "costed_step_count",
+        "per_step_cost_usd",
+        "allocated_cost_usd",
+        "raw_cost_usd",
+        "allocated_minus_per_step_delta_usd",
+        "raw_minus_per_step_delta_usd",
+        "invariant_holds",
+        "raw_cost_matches_per_step_sum"
+      ],
+      "properties": {
+        "per_step_cost_available": {
+          "type": "boolean"
+        },
+        "costed_step_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "per_step_cost_usd": {
+          "type": ["number", "null"],
+          "minimum": 0
+        },
+        "allocated_cost_usd": {
+          "type": ["number", "null"],
+          "minimum": 0
+        },
+        "raw_cost_usd": {
+          "type": ["number", "null"]
+        },
+        "allocated_minus_per_step_delta_usd": {
+          "type": ["number", "null"]
+        },
+        "raw_minus_per_step_delta_usd": {
+          "type": ["number", "null"]
+        },
+        "invariant_holds": {
+          "type": ["boolean", "null"]
+        },
+        "raw_cost_matches_per_step_sum": {
+          "type": ["boolean", "null"]
+        }
+      }
     },
     "tasks_run": {
       "type": "integer",

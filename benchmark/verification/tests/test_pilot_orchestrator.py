@@ -706,8 +706,107 @@ def test_condition_level_and_bool_cost_do_not_enter_usd_meter(
     )
     assert summary["cost_basis"] == "condition_level"
     assert summary["raw_cost_usd"] is None
+    assert summary["per_mechanism_cost_usd"] is None
+    assert summary["diagnostic_non_load_bearing_cost_usd"] is None
+    assert summary["cost_reconciliation"] == {
+        "per_step_cost_available": False,
+        "costed_step_count": 0,
+        "per_step_cost_usd": None,
+        "allocated_cost_usd": None,
+        "raw_cost_usd": None,
+        "allocated_minus_per_step_delta_usd": None,
+        "raw_minus_per_step_delta_usd": None,
+        "invariant_holds": None,
+        "raw_cost_matches_per_step_sum": None,
+    }
     ledger = _read_json(_task_dir(result) / "rep_01.ledger.json")
     assert ledger["turns"][0]["cost_usd_estimate"] is None
+
+
+def test_condition_summary_allocates_single_mechanism_cost(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    task_id = "gab_l2_recover_user_input"
+    result = _run(
+        tmp_path,
+        monkeypatch,
+        [[_final_response(cost=0.4)]],
+        config=_config(tmp_path, task_ids=(task_id,)),
+    )
+
+    summary = _read_json(
+        result.run_dir
+        / "conditions"
+        / "option_b_qwen25_7b_together_v1"
+        / "runtime_mode_full_contract"
+        / "condition_summary.json"
+    )
+    assert summary["raw_cost_usd"] == 0.4
+    assert summary["per_mechanism_cost_usd"]["validation"] == 0.4
+    assert summary["diagnostic_non_load_bearing_cost_usd"] == 0.0
+    assert summary["cost_reconciliation"]["costed_step_count"] == 1
+    assert summary["cost_reconciliation"]["per_step_cost_usd"] == 0.4
+    assert summary["cost_reconciliation"]["allocated_cost_usd"] == 0.4
+    assert summary["cost_reconciliation"]["invariant_holds"] is True
+    assert summary["cost_reconciliation"]["raw_cost_matches_per_step_sum"] is True
+
+
+def test_condition_summary_splits_multi_mechanism_cost_evenly(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    task_id = "gab_l6_block_agent_commit"
+    result = _run(
+        tmp_path,
+        monkeypatch,
+        [[_final_response(cost=0.6)]],
+        config=_config(tmp_path, task_ids=(task_id,)),
+    )
+
+    summary = _read_json(
+        result.run_dir
+        / "conditions"
+        / "option_b_qwen25_7b_together_v1"
+        / "runtime_mode_full_contract"
+        / "condition_summary.json"
+    )
+    costs = summary["per_mechanism_cost_usd"]
+    assert costs["agent_safe"] == 0.3
+    assert costs["proposal_gate"] == 0.3
+    assert costs["validation"] == 0.0
+    assert summary["diagnostic_non_load_bearing_cost_usd"] == 0.0
+    assert summary["cost_reconciliation"]["per_step_cost_usd"] == 0.6
+    assert summary["cost_reconciliation"]["allocated_cost_usd"] == 0.6
+    assert summary["cost_reconciliation"]["invariant_holds"] is True
+
+
+def test_missing_per_step_cost_values_do_not_fabricate_rollup_cost(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    task_id = "gab_l2_recover_user_input"
+    result = _run(
+        tmp_path,
+        monkeypatch,
+        [[_final_response(cost="not-a-number")]],
+        config=_config(tmp_path, task_ids=(task_id,)),
+    )
+
+    summary = _read_json(
+        result.run_dir
+        / "conditions"
+        / "option_b_qwen25_7b_together_v1"
+        / "runtime_mode_full_contract"
+        / "condition_summary.json"
+    )
+    assert summary["raw_cost_usd"] == 0.0
+    assert summary["per_mechanism_cost_usd"]["validation"] == 0.0
+    assert summary["diagnostic_non_load_bearing_cost_usd"] == 0.0
+    assert summary["cost_reconciliation"]["costed_step_count"] == 0
+    assert summary["cost_reconciliation"]["per_step_cost_usd"] == 0.0
+    assert summary["cost_reconciliation"]["allocated_cost_usd"] == 0.0
+    assert summary["cost_reconciliation"]["invariant_holds"] is True
 
 
 def test_mode_order_and_rep_calls_are_consecutive(
@@ -1226,6 +1325,11 @@ def test_meter_and_ledger_single_writer_per_turn(
     assert calls == [0, 1, 2]
     assert [turn["turn_index"] for turn in ledger["turns"]] == [0, 1, 2]
     assert summary["raw_cost_usd"] == 0.3
+    assert summary["diagnostic_non_load_bearing_cost_usd"] == 0.3
+    assert all(value == 0.0 for value in summary["per_mechanism_cost_usd"].values())
+    assert summary["cost_reconciliation"]["per_step_cost_usd"] == 0.3
+    assert summary["cost_reconciliation"]["allocated_cost_usd"] == 0.3
+    assert summary["cost_reconciliation"]["invariant_holds"] is True
 
 
 def test_evidence_tables_empty_skeleton(
