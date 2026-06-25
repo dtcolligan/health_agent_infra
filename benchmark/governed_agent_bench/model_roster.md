@@ -2,7 +2,8 @@
 
 **Status:** predeclared candidate roster for `WP-MODEL-ROSTER-001`.
 Approved by Dom on 2026-05-19 for roster inclusion only. No
-model-backed trajectories before the pilot-protocol lock.
+model-backed trajectories before the pilot-protocol lock. Lock-day
+D-O-01 selection on 2026-06-25: `option_b_qwen25_7b_together`.
 
 This file records the narrow preprint roster currently described in
 `/PAPER.md`. It is not frozen for paper-claim runs until Dom verifies the
@@ -215,9 +216,10 @@ optional Option C cell and one retry cycle.
 
 ## Freeze Checklist
 
-- [ ] Verify every model ID resolves on the named provider.
-- [ ] Verify pricing against live vendor docs as of the run date.
-- [ ] Decide D-O-01: 7B default or 32B fallback.
+- [x] Verify every model ID resolves on the named provider.
+- [x] Verify pricing against live vendor docs as of the run date.
+- [x] Decide D-O-01: 7B default or 32B fallback. Selected
+      `option_b_qwen25_7b_together` on 2026-06-25.
 - [ ] Record the SHA-256 of this file and the commit SHA before any
       paper-claim model run.
 - [ ] Ensure every paper-claim trajectory records the roster hash.

@@ -1,9 +1,9 @@
 {
   "$schema": "./schema/score.schema.json",
   "scorer_config_version": "paper_v1",
-  "scorer_config_status": "draft",
+  "scorer_config_status": "frozen",
   "scorer_config_drafted_on": "2026-05-11",
-  "scorer_config_freeze_status_note": "DRAFT. Maintainer must compute SHA-256 of this file and pin its hash via benchmark/governed_agent_bench/PILOT_PROTOCOL.md §14 before any paper-claim model run.",
+  "scorer_config_freeze_status_note": "FROZEN for the 2026-06-25 pilot lock. Maintainer must compute SHA-256 of this file and pin its hash via benchmark/governed_agent_bench/PILOT_PROTOCOL.md §14 before any paper-claim model run.",
   "provenance": {
     "source": "PAPER.md",
     "decision_id": "D-14",

@@ -2,8 +2,9 @@
 
 Mirrors ``test_model_roster_schema.py``: structural assertions on the schema
 dict (``jsonschema`` is not in the venv) plus writer-behaviour checks that the
-emitted manifest matches the §12/§14 contract and sources its 34 lock hashes
-from ``scripts/lock_hashes.json`` rather than hardcoding them.
+emitted manifest matches the §12/§14 contract and sources its 33 embedded
+input hashes
+from a generated lock-hash sidecar rather than hardcoding them.
 """
 
 from __future__ import annotations
@@ -24,11 +25,9 @@ from governed_agent_bench.pilot_manifest import (  # noqa: E402
     build_pilot_manifest,
     load_lock_hashes,
 )
+from governed_agent_bench.scripts import collect_lock_hashes  # noqa: E402
 
 SCHEMA_ROOT = BENCHMARK_ROOT / "governed_agent_bench" / "schema"
-LOCK_HASHES_PATH = (
-    BENCHMARK_ROOT / "governed_agent_bench" / "scripts" / "lock_hashes.json"
-)
 
 RUNTIME_MODES = [
     "full_contract",
@@ -71,6 +70,13 @@ def _draft_kwargs(**overrides) -> dict:
     )
     base.update(overrides)
     return base
+
+
+def _write_lock_hashes_sidecar(tmp_path: Path) -> Path:
+    output_path = tmp_path / "lock_hashes.json"
+    exit_code = collect_lock_hashes.main(["--output-json", str(output_path)])
+    assert exit_code == 0
+    return output_path
 
 
 # --- schema structure -------------------------------------------------------
@@ -121,7 +127,7 @@ def test_schema_conditions_executed_carries_inline_runtime_modes() -> None:
 
 
 def test_schema_locked_hashes_block_validates_shape_not_counts() -> None:
-    # Schema validates hash SHAPE only. The specific inventory counts (6/28/34)
+    # Schema validates hash SHAPE only. The specific inventory counts (5/28/33)
     # are derived data owned by the collector; pinning them in the schema would
     # create a drift-prone third source of truth. Equality to lock_hashes.json
     # is asserted by the writer test instead (single source = the collector).
@@ -170,26 +176,31 @@ def test_draft_manifest_omits_lock_block() -> None:
         assert lock_field not in manifest
 
 
-def test_locked_manifest_sources_all_34_hashes_from_sidecar() -> None:
+def test_locked_manifest_sources_all_33_embedded_input_hashes_from_sidecar(
+    tmp_path: Path,
+) -> None:
+    lock_hashes_path = _write_lock_hashes_sidecar(tmp_path)
     manifest = build_pilot_manifest(
         **_draft_kwargs(
             status="locked",
             d_o_01_selection="option_b_qwen25_7b_together",
-            lock_date="2026-06-22",
+            lock_date="2026-06-25",
             lock_commit_sha="a" * 40,
+            lock_hashes_path=lock_hashes_path,
         )
     )
 
-    expected = load_lock_hashes(LOCK_HASHES_PATH)
+    expected = load_lock_hashes(lock_hashes_path)
     assert manifest["locked_hashes"] == expected
-    assert manifest["locked_hashes"]["total_count"] == 34
-    assert len(manifest["locked_hashes"]["fixed_files"]) == 6
+    assert manifest["locked_hashes"]["total_count"] == 33
+    assert len(manifest["locked_hashes"]["fixed_files"]) == 5
     assert len(manifest["locked_hashes"]["task_files"]) == 28
-    assert manifest["lock_date"] == "2026-06-22"
+    assert manifest["lock_date"] == "2026-06-25"
     assert manifest["lock_commit_sha"] == "a" * 40
 
 
-def test_namespace_split_selection_vs_system_id() -> None:
+def test_namespace_split_selection_vs_system_id(tmp_path: Path) -> None:
+    lock_hashes_path = _write_lock_hashes_sidecar(tmp_path)
     # A2 must not conflate the two: selection has no _v1, system_id keeps it.
     manifest = build_pilot_manifest(
         **_draft_kwargs(
@@ -203,6 +214,7 @@ def test_namespace_split_selection_vs_system_id() -> None:
             ],
             lock_date="2026-06-22",
             lock_commit_sha="b" * 40,
+            lock_hashes_path=lock_hashes_path,
         )
     )
 

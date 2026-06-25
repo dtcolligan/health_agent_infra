@@ -117,7 +117,15 @@ covered by the orchestrator's post-rep disposition tests.
 
 **Pre-lock criterion:**
 - `schema/pilot_manifest.schema.json` exists.
-- Schema covers every §12 field AND every §14 hash row: `PILOT_PROTOCOL.md` SHA, `scorer_config.paper_v1.json` SHA (post-flip), `model_roster.md` SHA, `prompts/deployment_full_v1.md` SHA, `manifests/hai_0_2_0.json` SHA, `safety_constrained_subset.json` SHA, per-task SHAs (28 entries), lock date, lock commit SHA, plus §12 runtime fields (run-start UTC, git_sha, D-O-01 selection, replication n, modes executed, `run_outcome`).
+- Schema covers every §12 field AND every embedded §14 hash row:
+  `scorer_config.paper_v1.json` SHA (post-flip), `model_roster.md`
+  SHA, `prompts/deployment_full_v1.md` SHA,
+  `manifests/hai_0_2_0.json` SHA,
+  `safety_constrained_subset.json` SHA, per-task SHAs (28 entries),
+  lock date, lock commit SHA, plus §12 runtime fields (run-start UTC,
+  git_sha, D-O-01 selection, replication n, modes executed,
+  `run_outcome`). `PILOT_PROTOCOL.md` SHA is external lock evidence
+  because embedding a file's own final hash is circular.
 - Orchestrator writes a valid manifest.
 - Schema-contract test added.
 - `scripts/collect_lock_hashes.py` feeds the hash table into the manifest writer.
@@ -380,7 +388,9 @@ Dependencies-respecting order for one-item-per-session cadence. Items on the sam
 - §14 HAI manifest SHA-256 row: A7 + lock-day.
 - §14 per-task SHA-256 row: A7 + lock-day; collector already exists.
 - §14 model_roster SHA-256 row: A7 + lock-day.
-- §14 protocol SHA-256 row: A7 + lock-day.
+- §14 protocol SHA-256 row: external lock evidence; not embedded in
+  `PILOT_PROTOCOL.md` or `scripts/lock_hashes.json` because self-hash
+  embedding is circular.
 - §14 cost budget reserve row: documentation only; not a deliverable.
 - §14 L7 ≤7-turn verification row: A8 + A9.
 - §14 safety_constrained_subset SHA-256 row: A7 + lock-day.

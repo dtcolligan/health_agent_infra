@@ -214,7 +214,7 @@ def _check_lock_hashes() -> dict[str, Any]:
         return {"status": "fail", "detail": str(exc)}
     fixed_count = len(payload.get("fixed_files", {}))
     task_count = len(payload.get("task_files", {}))
-    status = "pass" if fixed_count == 6 and task_count == 28 else "fail"
+    status = "pass" if fixed_count == 5 and task_count == 28 else "fail"
     return {
         "status": status,
         "detail": f"{fixed_count} fixed files and {task_count} task files hashed",

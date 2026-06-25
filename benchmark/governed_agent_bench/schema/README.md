@@ -30,11 +30,14 @@ set the manifest carries. A `status` field gates two states. A `draft`
 manifest requires only the §12 runtime fields (run-start UTC, git SHA,
 replication n, conditions executed, D-O-01 selection, run outcome) and is used
 for pre-lock dry runs. A `locked` manifest additionally requires the full §14
-freeze block: `locked_hashes` (the 6 fixed-file and 28 per-task SHA-256 rows,
-sourced from `scripts/lock_hashes.json`), `lock_date`, `lock_commit_sha`, and a
-settled `d_o_01_selection`. The schema records hashes but does not compute
-them and does not execute the lock; `pilot_manifest.py` writes the manifest
-and the orchestrator populates it at run time.
+freeze block: `locked_hashes` (the 5 fixed input-file and 28 per-task SHA-256
+rows, sourced from `scripts/lock_hashes.json`), `lock_date`,
+`lock_commit_sha`, and a settled `d_o_01_selection`. `PILOT_PROTOCOL.md`
+itself is excluded from the embedded hash set because a file cannot contain
+its own final SHA-256; record that protocol hash in external lock evidence.
+The schema records hashes but does not compute them and does not execute the
+lock; `pilot_manifest.py` writes the manifest and the orchestrator populates it
+at run time.
 
 `condition_summary.schema.json`, `condition_index.schema.json`, and
 `rep_ledger.schema.json` define the A2 pilot-orchestrator artifacts. The

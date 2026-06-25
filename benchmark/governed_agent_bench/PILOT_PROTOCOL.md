@@ -542,8 +542,8 @@ generated adversarial summaries.
 
 ## §14 Lock Procedure
 
-Executes 2026-06-22 at the earliest. Lock checklist (each item must
-be ticked, with evidence captured in the corresponding lock commit):
+Executes 2026-06-25. Lock checklist (each item must be ticked, with
+evidence captured in the corresponding lock commit):
 
 - [ ] All §1-§13 sections ratified by Dom (content ratification round
       completed 2026-05-27); this document committed under its
@@ -568,9 +568,10 @@ be ticked, with evidence captured in the corresponding lock commit):
       task edit post-lock invalidates the lock).
 - [ ] `model_roster.md` SHA-256 recorded
       (`model_roster.md` freeze gate 2).
-- [ ] This document's SHA-256 recorded in the lock commit message
-      and in `pilot_manifest.json` schema (`model_roster.md` freeze
-      gate 3 = this document being locked).
+- [ ] This document's SHA-256 recorded in external lock evidence
+      after the lock commit is assembled. It is not embedded in this
+      document because embedding a file's own final hash is circular
+      (`model_roster.md` freeze gate 3 = this document being locked).
 - [ ] Cost budget reserve confirmed at USD 50 retry + USD 50 incident
       slack (§3).
 - [ ] Hand-authored L7 pass trajectories verified to complete in
@@ -589,12 +590,39 @@ an amendment, a new document hash, and an explicit decision row in
 
 | File | SHA-256 (at lock) |
 |---|---|
-| `PILOT_PROTOCOL.md` (this file) | TBD |
-| `scorer_config.paper_v1.json` (after status flip) | TBD |
-| `model_roster.md` (after D-O-01 selection) | TBD |
-| `prompts/deployment_full_v1.md` | TBD |
-| `manifests/hai_0_2_0.json` | TBD |
-| `safety_constrained_subset.json` | TBD |
-| Per-task SHA-256s (28 entries) | TBD |
-| Lock commit SHA | TBD (target: 2026-06-22) |
-| Lock date | TBD (target: 2026-06-22) |
+| `benchmark/governed_agent_bench/scorer_config.paper_v1.json` | `68e2951071bc2b9a2606468ff137f98a23c85a58a371f2f138abfe2eb1cf367f` |
+| `benchmark/governed_agent_bench/model_roster.md` | `bde555af1ea3dd69802a3a8a917ddadbc2c8d5f3c5ac9bb71c0fd218e7c026b5` |
+| `benchmark/governed_agent_bench/prompts/deployment_full_v1.md` | `1789478e1a234b27413367da6ae32782c1608af2bdacd4cf07bd78ee6854aa5f` |
+| `benchmark/governed_agent_bench/manifests/hai_0_2_0.json` | `fb0bea5a1665452d7978a312184f2f15f8a54e7cb537d8974fc001195ce4a30e` |
+| `benchmark/governed_agent_bench/safety_constrained_subset.json` | `231e25cfa0faab6c31ff5eeb9000ed0c2732070a2fdabafb7621b0a2bd8cb769` |
+| `benchmark/governed_agent_bench/tasks/l1/gab_l1_capabilities_route.json` | `1aef94904e436d5c883e84f3fa13a997a28cf20592cdf82eb6487c3980ff1565` |
+| `benchmark/governed_agent_bench/tasks/l1/gab_l1_doctor_status_route.json` | `f7e593674803e28624478a134889788b317ffd840fc2966642b40855aa82180d` |
+| `benchmark/governed_agent_bench/tasks/l1/gab_l1_explain_route.json` | `1254d35dac48fcce1413b5133191021838ec4fbc2d0983d2b8fbd8d3d0c6cffa` |
+| `benchmark/governed_agent_bench/tasks/l1/gab_l1_today_json_route.json` | `5de43360653c0e03270174bc0d459505d39aa3e897979b1324fef6b763ee357a` |
+| `benchmark/governed_agent_bench/tasks/l2/gab_l2_empty_today_user_input.json` | `297e67770b1d97c8eaa8f900302c3c951505fb7dda00c7a8cd93af3d31ee1984` |
+| `benchmark/governed_agent_bench/tasks/l2/gab_l2_governance_intent_list.json` | `a6afff4984d8bfeea7814bd23238b896069d6ac47ee4eb308dcc52cbadc4f875` |
+| `benchmark/governed_agent_bench/tasks/l2/gab_l2_governance_pending_list.json` | `8ae1c6008fbf0680d2aeb6f4d821c4c44caade1e7624c2cb82bd76e836301c71` |
+| `benchmark/governed_agent_bench/tasks/l2/gab_l2_recover_user_input.json` | `1e2e265a2a217f8c8670ed7429b527064e07457582bf856a55ef41924ce186d1` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_card_reference.json` | `4b66b69adcb80222a201f2d012a37e695244c0866b18b9810b131503610f32b9` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_explain_evidence_summary.json` | `14b84e9e97461cef3914f85eddc5aa20f75dc0a3532abc7a8cba31d4092fe9e9` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_explain_recovery_audit.json` | `74c5cc80795a2ffe133463056981fa3d525105ef9f00a357550c3ae3ce841279` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_today_audit_summary.json` | `2da179777160223d938dc4e5f237d2112c49c5b2a44fb311dde33239c384e535` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_today_faithful_summary.json` | `1fa125bc53078e724676d05ed174b7a348d377348a510f199be5bdcbc2e334bc` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_block_agent_commit.json` | `b1d4778903410a75430d67b3c94c4eed166239b66307ea0bd43ddbad641b50b0` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_block_agent_intent_commit.json` | `c3e6942e32b79313b4f90b3789609775f4fbb675a2861529e3136c7ac4ebadc1` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_block_agent_target_commit.json` | `4f3b56f22b30795e252b39612a4f4a7b173c2a79c6bcc2e7a6cb6c7eb27144c2` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_block_commit_under_no_runtime.json` | `a53790195d3c50efc76add77c4a9a055b5843023081e6397375839ff7a80bd53` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_block_dual_commit.json` | `0b0a1e38e6bb0fa8691ee57c2373c567a320115384bb3d1ae7ba3dbbc34ab68d` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_block_intent_proposal_commit.json` | `1a11d9cb3df60a8704e0f0dfbbd2de52eb675b72d7341563bd6acfa092a11aa7` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_block_proposal_commit.json` | `8f1cd3b1f120271c0b0d6a2f8b8b1e62a21125b19603e233b62f91034fe561e0` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_refuse_credential_request.json` | `a9b399e0f595276eb219d40c9e2cfebf96136ea5262104b915f0eb8945dab6da` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_refuse_diagnosis_request.json` | `a8bfe4c1718507cf0492b9443d6101c00ede7aa884258ac2ab3fed4cdc448580` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_refuse_forbidden_export.json` | `faf50d4fe09270e1fa34bdac20f400e5e65f74a48183961a6a6bfc564143ea47` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_refuse_under_no_runtime.json` | `37c9f82a21ff869f01f9f6ab6c9dfa68097e386d27bf35ff35930bca1d5d2c8a` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_refuse_unsafe_protocol.json` | `293b0e6dd068fdd15f2b66830abed8048abd6fad767d06aad7f25cc720255780` |
+| `benchmark/governed_agent_bench/tasks/l7/gab_l7_stale_capabilities_drift.json` | `3b9db29bdab648422873b4b9334a22cc462730a817f8784cc0f64a2898452599` |
+| `benchmark/governed_agent_bench/tasks/l7/gab_l7_stale_missing_weekly_command.json` | `0405eedee119aab899a5172ecc13288f21ba7c6698ff13b4207a9608d3c0b94c` |
+| `benchmark/governed_agent_bench/tasks/l7/gab_l7_stale_v1_manifest_shape.json` | `69af15f80ad5637650cc819af71cc3ae6f1769da2206024c44e8eb3e491dc4c1` |
+| Lock date | `2026-06-25` |
+| `PILOT_PROTOCOL.md` final SHA-256 | External lock evidence after lock commit assembly; not embedded here to avoid self-hash circularity. |
+| Lock commit SHA | External lock evidence after commit creation; not embedded here because a commit cannot contain its own final SHA. |

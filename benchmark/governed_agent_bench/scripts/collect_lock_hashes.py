@@ -19,7 +19,6 @@ DEFAULT_OUTPUT_JSON = (
 )
 
 FIXED_FILES: tuple[str, ...] = (
-    "benchmark/governed_agent_bench/PILOT_PROTOCOL.md",
     "benchmark/governed_agent_bench/scorer_config.paper_v1.json",
     "benchmark/governed_agent_bench/model_roster.md",
     "benchmark/governed_agent_bench/prompts/deployment_full_v1.md",
@@ -94,7 +93,12 @@ def _hash_group(relative_paths: tuple[str, ...], repo_root: Path) -> dict[str, s
 
 
 def build_lock_hashes_payload(repo_root: Path = REPO_ROOT) -> dict[str, Any]:
-    """Return the lock-hash sidecar payload for the fixed pilot file set."""
+    """Return hashes for lock inputs embedded in the pilot manifest.
+
+    ``PILOT_PROTOCOL.md`` is intentionally excluded because embedding a file's
+    own final SHA-256 inside that same file is circular. Record the protocol
+    file hash in external lock evidence after the commit is assembled.
+    """
 
     missing_paths = [
         relative_path

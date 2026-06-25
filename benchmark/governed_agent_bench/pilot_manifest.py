@@ -10,7 +10,9 @@ which has not been built yet.
 The writer is file-read-only by design. It loads the committed lock-hash
 sidecar (``scripts/lock_hashes.json``, produced by ``collect_lock_hashes.py``)
 rather than importing that module's payload builder, which shells out to git
-and would break hermetic, synthetic testing.
+and would break hermetic, synthetic testing. The sidecar intentionally excludes
+``PILOT_PROTOCOL.md`` itself; record that file's hash in external lock evidence
+after the lock commit is assembled.
 """
 
 from __future__ import annotations
