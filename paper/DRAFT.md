@@ -15,11 +15,30 @@ Protocol lock facts used by this draft:
   `option_b_qwen25_7b_together`.
 - Model-backed pilot status: not yet run.
 
+## Plain-Language Summary
+
+When an AI assistant acts on your behalf, reading your data, drafting
+changes, and deciding what to do next, most of its safety does not come
+from the model being clever. It comes from ordinary code wrapped around
+the model: code that checks each requested action, blocks the unsafe
+ones, makes you personally confirm before anything is changed, refuses
+requests that are out of bounds, and records what happened so it can be
+audited. This paper measures how much each of those guardrails actually
+matters. We hold one AI model and one fixed set of instructions
+constant, then switch the guardrails off one at a time and observe what
+breaks. Because the model and its instructions never change, any
+difference we see is caused by the guardrail, not by the model. We
+release the test cases, the runtime they run against, and the scoring
+code as a public benchmark, GovernedAgentBench, so others can rerun and
+extend the measurement. At the time of this draft the design is locked
+but the main model-backed experiment has not yet been run.
+
 ## Abstract
 
-Agent harnesses are usually discussed as a way to make language models
-more capable: expose tools, structure observations, and let a model
-act through a richer interface. This paper studies a complementary
+Agent harnesses, the software wrapped around a language model that lets
+it take actions, are usually studied as a way to make models more
+capable: expose tools, structure observations, and let a model act
+through a richer interface. This paper studies a complementary
 question. Holding the model, prompt, manifest, task suite, and scoring
 procedure fixed, can deterministic runtime mechanisms measurably change
 whether an agent operates within a governed software contract?
@@ -32,8 +51,9 @@ prompt variant: `full_contract` is compared against five single
 mechanism-off modes and a `no_runtime_enforcement` floor while the
 operator prompt remains deployment-realistic and constant. The
 ablatable mechanisms are typed-command and proposal validation (M4),
-`agent_safe` dispatch refusal (M5), the W57 proposal/commit user gate
-(M6), refusal of out-of-contract and non-clinical requests (M7), and
+dispatch refusal of agent-unsafe commands (M5), the proposal/commit
+user gate (M6), refusal of out-of-contract and non-clinical requests
+(M7), and
 audit evidence emission (M8). Transaction integrity (M9-TX) is held
 constant.
 
@@ -71,9 +91,11 @@ not ask whether a model with a detailed manifest outperforms a model
 without one; that comparison is already confounded by information
 access. Instead, every condition uses the same deployment-style prompt,
 the same manifest snapshot, the same model class, and the same task
-definitions. The hidden condition lever is `HAI_RUNTIME_MODE`, which
-selectively disables one deterministic governance mechanism at a time.
-The model is not told which mode is active.
+definitions. The only thing that changes between conditions is the
+runtime mode: a single hidden setting that turns off one deterministic
+governance mechanism at a time (implemented in the reference runtime as
+the `HAI_RUNTIME_MODE` environment variable). The model is not told
+which mode is active, so it cannot adapt its behavior to the test.
 
 The reference runtime is HAI, a local non-clinical personal-wellness
 system. HAI is not the contribution as a product. It is a pinned
@@ -84,6 +106,17 @@ contract: tasks may test refusal of diagnosis, treatment, prescribing,
 or autonomous medical decisions, but passing such tasks is evidence of
 boundary obedience, not evidence of medical reasoning or clinical
 quality.
+
+A concrete example makes the setup tangible. Suppose the user asks the
+agent to "go ahead and lock in tomorrow's plan." Under the full
+contract, the runtime lets the agent draft a proposal but refuses to
+activate it without an explicit user confirmation step, so the agent's
+only correct move is to surface the proposal and stop. With that one
+mechanism turned off, the same model, given the same request and the
+same prompt, may now push the change through on its own. The benchmark
+records both runs as structured transcripts and scores whether a state
+change happened without user confirmation. The difference between the
+two runs is attributable to the mechanism, because nothing else moved.
 
 The central empirical question is:
 
@@ -116,10 +149,12 @@ the locked pilot is executed:
    structured operator-action contract, synthetic fixtures, deterministic
    offline scoring, static oracle-pair canaries, targeted live runtime
    probes, and a locked model-backed pilot artifact schema.
-4. A pre-registered pilot protocol for the Option-B mechanism-ablation
-   experiment, including replication, cost ceilings, mode ordering,
-   failure triage, evidence-tier separation, and numerical
-   falsification thresholds.
+4. A pre-registered pilot protocol for the primary mechanism-ablation
+   experiment (labeled Option B in the protocol: one cloud model run
+   against the ablation suite), including replication, cost ceilings,
+   mode ordering, failure triage, evidence-tier separation, and
+   numerical falsification thresholds. An optional model-scale stretch
+   (Option C) compares two model sizes on a small cross-product.
 
 The result contribution is deferred:
 
@@ -127,7 +162,31 @@ The result contribution is deferred:
   result.]
 - [PILOT RESULT PLACEHOLDER: per-mechanism H1 verdicts and evidence
   tiers.]
-- [PILOT RESULT PLACEHOLDER: any Option-C stretch result, if run.]
+- [PILOT RESULT PLACEHOLDER: any model-scale stretch (Option C) result,
+  if run.]
+
+### Terms Used in This Paper
+
+The paper uses a small, fixed vocabulary. Field-standard terms are kept;
+terms specific to the reference runtime are defined here on first use.
+
+| Term | Meaning |
+|---|---|
+| Agent harness | The software wrapped around a language model that turns its text into actions and returns results: prompt, command list, action parser, execution sandbox, and logs. |
+| Operator action | One structured JSON action the model emits per turn: a command, a refusal, or a final answer. The model plays the operator of the runtime. |
+| Trajectory | The recorded transcript of one task run (ordered actions and observations). It is the unit of scoring; un-recorded model output is not evidence. |
+| Manifest | The frozen list of commands the runtime exposes, with arguments and safety flags. The agent may only call commands in the manifest. |
+| Runtime mode | The single hidden setting that selects which governance mechanisms are active. It is the only thing varied between conditions. |
+| `full_contract` | The reference mode: all governance mechanisms on. |
+| `no_validation`, `no_agent_safe`, `no_proposal_gate`, `no_refusal`, `no_audit_chain` | Each turns off exactly one mechanism (M4-M8 respectively). |
+| `no_runtime_enforcement` | All five mechanisms off at once; a robustness sanity floor, not per-mechanism evidence. |
+| M4-M8 | The five toggled mechanisms: validation, agent-safe dispatch refusal, proposal/commit gate, request refusal, audit-evidence emission. |
+| M9-TX | Transaction integrity. Always on, never toggled. |
+| `agent_safe` | A per-command flag marking whether the agent may run a command without a human in the loop. |
+| Oracle pair | A hand-authored matched pair of transcripts, one passing and one failing, used to confirm the scorer detects the intended consequence. |
+| Evidence tier | Which kind of evidence backs a claim: rule baseline (no model), static oracle pair, live runtime probe, or model-backed pilot. The paper never merges tiers into one causal claim. |
+| HAI | The specific non-clinical personal-wellness runtime used as the reference implementation of the contract. |
+| Option B / Option C | The primary single-model pilot / an optional stretch comparing two model sizes. |
 
 ## 2. Background and Related Work
 
@@ -212,7 +271,8 @@ structured operator action per turn, and the harness translates valid
 actions into HAI CLI invocations under hermetic fixture state. Command
 names come from a frozen manifest. Arguments are JSON objects, not
 shell strings. State mutation is mediated by runtime checks and, for
-W57-governed state, by proposal/commit separation.
+user-authored state, by proposal/commit separation (the agent may
+draft a change, but only an explicit user commit activates it).
 
 This substrate makes governance measurable. If a command is not in the
 manifest, M4 validation can reject it. If a command is not
@@ -317,16 +377,22 @@ The locked mechanism inventory is:
 |---|---|---|---|
 | M4 | Validation | `no_validation` | Validates typed commands and proposal payloads against manifest and schemas. |
 | M5 | `agent_safe` dispatch refusal | `no_agent_safe` | Refuses commands that are not safe for agent-context dispatch. |
-| M6 | W57 proposal/commit user gate | `no_proposal_gate` | Allows proposal generation while preventing agent-side activation or deactivation of user-authored state. |
+| M6 | Proposal/commit user gate (W57 in the runtime) | `no_proposal_gate` | Allows proposal generation while preventing agent-side activation or deactivation of user-authored state; only an explicit user commit changes state. |
 | M7 | Refusal | `no_refusal` | Enforces refusal on prose recommendation/refusal surfaces: the non-clinical boundary plus other out-of-contract requests (e.g. credential, forbidden-export, unsafe-protocol). JSON contract surfaces are exempt. The clinical-claim leg is a zero-tolerance invariant; the broader refusal behavior is scored on `refusal_accuracy`. |
 | M8 | Audit evidence emission | `no_audit_chain` | Ensures user-facing narration is backed by emitted audit/read-surface evidence. |
 | M9-TX | Transaction integrity | Held constant | Preserves atomic state-update integrity and is never ablated. |
 
-M8 is evidence emission, not the whole audit chain. M9-TX is the
-transaction-integrity invariant and is held constant in all runtime
-modes. `no_runtime_enforcement` disables M4-M8 together while leaving
-M1-M3 harness infrastructure and M9-TX on. It is a robustness sanity
-floor, not a per-mechanism attribution row.
+The numbering reflects the full runtime, not just the ablatable set.
+M1-M3 are the always-on harness plumbing that makes the benchmark
+runnable at all (command dispatch, manifest loading, and observation
+capture); they are never disabled because disabling them would stop the
+agent from running rather than test a governance property. M4-M8 are the
+five mechanisms we toggle. M9-TX is the transaction-integrity invariant.
+
+M8 is evidence emission, not the whole audit chain. M9-TX is held
+constant in all runtime modes. The `no_runtime_enforcement` mode
+disables M4-M8 together while leaving the M1-M3 plumbing and M9-TX on.
+It is a robustness sanity floor, not a per-mechanism attribution row.
 
 ### 3.2 What the Runtime Can and Cannot Guarantee
 
@@ -457,7 +523,7 @@ oracle pairs, which exercise refusal and proposal-gate obedience with
 all of M4-M8 disabled at once. The 23 per-mechanism pairs plus the 2
 composite pairs are the 25 static isolation oracle pairs the benchmark
 ships. The composite pairs are a robustness sanity floor and are
-excluded from per-mechanism attribution (Section 5.3, D-20).
+excluded from per-mechanism attribution (Section 5.3).
 
 ### 4.3 Evidence Tiers
 
@@ -587,7 +653,7 @@ The model-backed pilot protocol was locked on 2026-06-25 at commit
 `12f3830876c720aa16c789222a6844dd9f1bc064b571954f33f0d2d6804a2f28`.
 The pilot has not been run at the time of this draft.
 
-### 6.1 Option-B Model Condition
+### 6.1 Primary Model Condition (Option B)
 
 The Option-B starting condition is `option_b_qwen25_7b_together`:
 
@@ -622,7 +688,12 @@ Only each task's declared `runtime_modes_in_scope` cells run. The
 locked main-pilot volume is 53 in-scope task-by-mode cells times three
 reps, or 159 reps, before any conditional prelude or stretch cell.
 
-### 6.3 DR-9 Switch Logic
+### 6.3 Model-Escalation Rule
+
+The pilot starts on the 7B model. If that model turns out to be too
+capable to surface mechanism deltas (it never fails even with a
+guardrail off), a pre-registered rule, labeled DR-9 in the protocol,
+escalates to the larger 32B model. The rule uses two sequential gates.
 
 After the 7B `full_contract` mode completes, the protocol evaluates
 Gate A on the safety-constrained subset: the 14 of 28 tasks whose
@@ -743,7 +814,7 @@ alone. Acceptable wording: "The static matrix shows scorer sensitivity
 for the registered consequence," or "The live probe shows the runtime
 path is observable under hermetic HAI execution."
 
-### 7.3 Safety-Constrained Subset and DR-9
+### 7.3 Safety-Constrained Subset and Model Escalation
 
 [PILOT RESULT PLACEHOLDER: Report the 14-task safety-constrained subset
 pass count after 7B `full_contract`, Gate A status, whether Gate B
@@ -757,7 +828,7 @@ headline rows separately.]
 robustness sanity floor only. Do not use it for per-mechanism H1
 attribution.]
 
-### 7.5 Option-C Model-Scale Stretch
+### 7.5 Model-Scale Stretch (Option C)
 
 [OPTION C PLACEHOLDER: If the optional `claude-sonnet-4-6` cell runs,
 report only the pre-registered `full_contract` versus
