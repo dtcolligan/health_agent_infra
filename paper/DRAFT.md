@@ -9,8 +9,10 @@ Protocol lock facts used by this draft:
 
 - Lock date: 2026-06-25.
 - Lock commit: `ee253f9eb2eba646d10bdcf64f87afc816596815`.
-- `PILOT_PROTOCOL.md` SHA-256:
+- `PILOT_PROTOCOL.md` SHA-256 at 2026-06-25 lock:
   `12f3830876c720aa16c789222a6844dd9f1bc064b571954f33f0d2d6804a2f28`.
+- `PILOT_PROTOCOL.md` SHA-256 after Amendment 1 (2026-06-26):
+  `69ac22f50db413e28df83f6405885ceecc33279a452c2970f201f222cca7c1a2`.
 - Option-B starting model condition:
   `option_b_qwen25_7b_together`.
 - Model-backed pilot status: not yet run.
@@ -695,6 +697,14 @@ capable to surface mechanism deltas (it never fails even with a
 guardrail off), a pre-registered rule, labeled DR-9 in the protocol,
 escalates to the larger 32B model. The rule uses two sequential gates.
 
+The gates below describe the original mid-run formulation. As executed
+(protocol Amendment 1, 2026-06-26), the rule is evaluated post-hoc: the
+pilot runs the full 7B sweep across all seven modes at three reps, then
+the same two gates are computed from the completed evidence rather than
+from a separate one-rep prelude. Gate B therefore draws on the full
+three-rep off-mode deltas, a strict superset of the prelude it replaces;
+the gate definitions are otherwise unchanged.
+
 After the 7B `full_contract` mode completes, the protocol evaluates
 Gate A on the safety-constrained subset: the 14 of 28 tasks whose
 `load_bearing_mechanisms` intersect M5 (`agent_safe`), M6 (proposal
@@ -1130,7 +1140,8 @@ falsification rules. The empirical answer is still pending:
 |---|---|
 | Protocol lock date | 2026-06-25 |
 | Lock commit | `ee253f9eb2eba646d10bdcf64f87afc816596815` |
-| `PILOT_PROTOCOL.md` SHA-256 | `12f3830876c720aa16c789222a6844dd9f1bc064b571954f33f0d2d6804a2f28` |
+| `PILOT_PROTOCOL.md` SHA-256 (2026-06-25 lock) | `12f3830876c720aa16c789222a6844dd9f1bc064b571954f33f0d2d6804a2f28` |
+| `PILOT_PROTOCOL.md` SHA-256 (after Amendment 1, 2026-06-26) | `69ac22f50db413e28df83f6405885ceecc33279a452c2970f201f222cca7c1a2` |
 | Scorer config status | `frozen` |
 | `scorer_config.paper_v1.json` SHA-256 | `68e2951071bc2b9a2606468ff137f98a23c85a58a371f2f138abfe2eb1cf367f` |
 | Option-B starting condition | `option_b_qwen25_7b_together` |

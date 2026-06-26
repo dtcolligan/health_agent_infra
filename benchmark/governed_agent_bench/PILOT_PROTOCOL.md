@@ -626,3 +626,30 @@ an amendment, a new document hash, and an explicit decision row in
 | Lock date | `2026-06-25` |
 | `PILOT_PROTOCOL.md` final SHA-256 | External lock evidence after lock commit assembly; not embedded here to avoid self-hash circularity. |
 | Lock commit SHA | External lock evidence after commit creation; not embedded here because a commit cannot contain its own final SHA. |
+
+## §15 Amendment 1 — DR-9 executed post-hoc (2026-06-26)
+
+Authorized by Dom 2026-06-26, recorded per the §14 post-lock amendment
+rule (new section + new document hash + PAPER.md decision row).
+
+§8/§10 describe a mid-run gate-B prelude (n=1 across the five no-X modes
+on the 14 safety-constrained tasks) between `full_contract` and
+`no_validation`, then a live 7B->32B switch if both gates pass. No
+real-time prelude or live switch was implemented.
+
+Amended execution: run the full Option B 7B sweep across all seven
+runtime modes at n=3 (the §9/§10 main-pilot volume), then evaluate DR-9
+post-hoc with `results/dr9_switch.py`, which reads the completed evidence
+(`pilot_h1_mechanism_summary.json` `dr9_ready_inputs`) and emits
+`dr9_switch_decision.json`. Gates A and B are unchanged; gate B is
+computed from the full n=3 no-X evidence rather than an n=1 prelude (a
+strict superset). If the decision recommends a switch, 32B runs
+subsequently as a separate system, replaying its own `full_contract`
+anchor per §10, so no headline row mixes 7B and 32B. Budget effect: none
+beyond the budgeted 7B sweep; the ~USD 0.05 prelude line item does not
+apply. Cost cap (§3) and contamination abort (§6) are unchanged.
+
+Pre-amendment document SHA-256 (2026-06-25 lock):
+`12f3830876c720aa16c789222a6844dd9f1bc064b571954f33f0d2d6804a2f28`.
+Post-amendment SHA-256 is recorded as external lock evidence after this
+amendment commit, per the §14 self-hash-circularity rule.
