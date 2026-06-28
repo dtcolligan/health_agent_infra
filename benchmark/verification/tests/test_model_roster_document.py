@@ -93,7 +93,7 @@ def test_model_roster_conditions_keep_runtime_and_reporting_contracts() -> None:
             "max_tokens": 2048,
             "seed": "provider_does_not_support_seed",
         }
-        assert condition["prompt_id"] == "deployment_full_v1"
+        assert condition["prompt_id"] == "deployment_full_v2"
         assert condition["manifest_id"] == "hai_0_2_0"
         assert set(condition["failure_reporting"].values()) == {
             "reportable_outcome"

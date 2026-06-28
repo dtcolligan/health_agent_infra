@@ -289,7 +289,7 @@
           }
         },
         "prompt_id": {
-          "const": "deployment_full_v1"
+          "enum": ["deployment_full_v1", "deployment_full_v2"]
         },
         "manifest_id": {
           "type": "string",

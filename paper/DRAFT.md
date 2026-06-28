@@ -13,6 +13,9 @@ Protocol lock facts used by this draft:
   `12f3830876c720aa16c789222a6844dd9f1bc064b571954f33f0d2d6804a2f28`.
 - `PILOT_PROTOCOL.md` SHA-256 after Amendment 1 (2026-06-26):
   `69ac22f50db413e28df83f6405885ceecc33279a452c2970f201f222cca7c1a2`.
+- `PILOT_PROTOCOL.md` SHA-256 after Amendment 2 (2026-06-28):
+  `d685d1094d7e494354c411ee8cd103b23f868ea8773fcc76c1f1a9787e7500dc`.
+- Prompt template: `deployment_full_v2` (Amendment 2; v1 superseded).
 - Option-B starting model condition:
   `option_b_qwen25_7b_together`.
 - Model-backed pilot status: not yet run.
@@ -669,7 +672,8 @@ The Option-B starting condition is `option_b_qwen25_7b_together`:
 - Provider: Together AI.
 - Decoding: `temperature=0`, `top_p=1`, `max_tokens=2048`.
 - Seed: provider does not support seed.
-- Prompt: `deployment_full_v1`.
+- Prompt: `deployment_full_v2` (the manifest is embedded as minified
+  JSON; v1 superseded by protocol Amendment 2, a lossless change).
 - Manifest: `hai_0_2_0`.
 - Data boundary: synthetic GovernedAgentBench fixtures only.
 - Per-condition cap: USD 100.
@@ -1152,7 +1156,7 @@ falsification rules. The empirical answer is still pending:
 | Scorer config status | `frozen` |
 | `scorer_config.paper_v1.json` SHA-256 | `68e2951071bc2b9a2606468ff137f98a23c85a58a371f2f138abfe2eb1cf367f` |
 | Option-B starting condition | `option_b_qwen25_7b_together` |
-| Prompt template | `deployment_full_v1` |
+| Prompt template | `deployment_full_v2` (v1 superseded, Amendment 2) |
 | Manifest snapshot | `hai_0_2_0` |
 | Replication | `n=3`, median headline |
 | Task suite | 28 tasks across L1/L2/L5/L6/L7 |

@@ -108,6 +108,9 @@ class TogetherHTTPTransport:
             headers={
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
+                # urllib's default UA ("Python-urllib/x.y") is blocked by the
+                # provider WAF with HTTP 403; set an explicit UA.
+                "User-Agent": "GovernedAgentBench/1.0",
                 "Accept": "application/json",
             },
             method="POST",
@@ -581,8 +584,10 @@ def _ensure_together_condition(condition: dict[str, Any]) -> None:
         )
     if condition.get("data_boundary") != SYNTHETIC_DATA_BOUNDARY:
         raise HarnessError("Together adapter requires synthetic benchmark data only")
-    if condition.get("prompt_id") != "deployment_full_v1":
-        raise HarnessError("Together adapter requires deployment_full_v1")
+    if condition.get("prompt_id") not in ("deployment_full_v1", "deployment_full_v2"):
+        raise HarnessError(
+            "Together adapter requires deployment_full_v1 or deployment_full_v2"
+        )
 
 
 def _ensure_together_config(

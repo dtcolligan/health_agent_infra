@@ -147,7 +147,7 @@ def test_build_together_request_uses_deployment_prompt() -> None:
     assert "CAPABILITIES MANIFEST" in request["messages"][0]["content"]
     assert request["messages"][1]["role"] == "user"
     assert task["user_prompt"] in request["messages"][1]["content"]
-    assert prompt_metadata["prompt_template_id"] == "deployment_full_v1"
+    assert prompt_metadata["prompt_template_id"] == "deployment_full_v2"
     assert len(prompt_metadata["prompt_template_hash"]) == 64
 
 

@@ -313,14 +313,18 @@ def render_prompt(
     manifest_id = _manifest_id(task)
     manifest = manifest_snapshot.get("manifest", manifest_snapshot)
     rendered_system = system_template
+    # deployment_full_v2 embeds the manifest as minified JSON with null/empty
+    # fields dropped (lossless efficiency; no command/flag/value removed) so the
+    # prompt fits small-model context windows. v1 stays pretty-printed.
+    block = _json_block_min if template_id == "deployment_full_v2" else _json_block
     substitutions = {
         "{{manifest_snapshot_id}}": manifest_id,
-        "{{manifest_json}}": _json_block(manifest),
-        "{{refusal_taxonomy_json}}": _json_block(manifest.get("refusals", [])),
-        "{{mutation_classes_json}}": _json_block(
+        "{{manifest_json}}": block(manifest),
+        "{{refusal_taxonomy_json}}": block(manifest.get("refusals", [])),
+        "{{mutation_classes_json}}": block(
             manifest.get("mutation_classes", [])
         ),
-        "{{exit_code_taxonomy_json}}": _json_block(manifest.get("exit_codes", {})),
+        "{{exit_code_taxonomy_json}}": block(manifest.get("exit_codes", {})),
     }
     for placeholder, value in substitutions.items():
         rendered_system = rendered_system.replace(placeholder, value)
@@ -485,6 +489,37 @@ def _system_prompt_block(template_text: str) -> str:
 
 def _json_block(value: Any) -> str:
     return json.dumps(value, indent=2, sort_keys=True)
+
+
+def _is_empty(value: Any) -> bool:
+    """True for null / empty-string / empty-collection only. Keeps 0 and False."""
+
+    return value is None or value == "" or value == [] or value == {}
+
+
+def _strip_empty(value: Any) -> Any:
+    """Recursively drop null/empty dict values. Array elements are preserved.
+
+    Lossless for the manifest: every meaningful value (including 0 and false)
+    is retained; only fields carrying no information are removed.
+    """
+
+    if isinstance(value, dict):
+        stripped: dict[str, Any] = {}
+        for key, item in value.items():
+            reduced = _strip_empty(item)
+            if not _is_empty(reduced):
+                stripped[key] = reduced
+        return stripped
+    if isinstance(value, list):
+        return [_strip_empty(item) for item in value]
+    return value
+
+
+def _json_block_min(value: Any) -> str:
+    """Minified JSON with null/empty fields dropped (deployment_full_v2)."""
+
+    return json.dumps(_strip_empty(value), separators=(",", ":"), sort_keys=True)
 
 
 def _manifest_id(task: dict[str, Any]) -> str:

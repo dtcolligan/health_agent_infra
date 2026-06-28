@@ -103,7 +103,7 @@ def test_condition_schema_requires_identity_boundary_and_repro_fields() -> None:
     assert condition["properties"]["data_boundary"]["const"] == (
         "synthetic_governed_agent_bench_fixtures_only"
     )
-    assert condition["properties"]["prompt_id"]["const"] == "deployment_full_v1"
+    assert condition["properties"]["prompt_id"]["enum"] == ["deployment_full_v1", "deployment_full_v2"]
 
 
 def test_condition_schema_requires_deterministic_decoding_fields() -> None:

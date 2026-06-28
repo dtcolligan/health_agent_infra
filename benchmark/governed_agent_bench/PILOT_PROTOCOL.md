@@ -627,6 +627,15 @@ an amendment, a new document hash, and an explicit decision row in
 | `PILOT_PROTOCOL.md` final SHA-256 | External lock evidence after lock commit assembly; not embedded here to avoid self-hash circularity. |
 | Lock commit SHA | External lock evidence after commit creation; not embedded here because a commit cannot contain its own final SHA. |
 
+**Supersession note.** The table above records the 2026-06-25 lock
+snapshot. Two rows are superseded by §16 Amendment 2 (2026-06-28):
+`model_roster.md` is now `0fd8b6b51507fa5bf0d2b033011a19587fb66995498a2280f79e4af9df0d1227`
+(was `bde555af…e7c026b5`), and the prompt is now
+`prompts/deployment_full_v2.md`
+(`5b37946b606fda4b95543802c7f0c3e73da344d893996226dbf5131411a8312c`),
+superseding `deployment_full_v1.md`. `scripts/lock_hashes.json` carries
+the current values. All other rows are unchanged.
+
 ## §15 Amendment 1 — DR-9 executed post-hoc (2026-06-26)
 
 Authorized by Dom 2026-06-26, recorded per the §14 post-lock amendment
@@ -651,5 +660,61 @@ apply. Cost cap (§3) and contamination abort (§6) are unchanged.
 
 Pre-amendment document SHA-256 (2026-06-25 lock):
 `12f3830876c720aa16c789222a6844dd9f1bc064b571954f33f0d2d6804a2f28`.
+Post-amendment SHA-256 is recorded as external lock evidence after this
+amendment commit, per the §14 self-hash-circularity rule.
+
+## §16 Amendment 2 — Prompt minified to fit model context (2026-06-28)
+
+Authorized by Dom 2026-06-28, recorded per the §14 post-lock amendment
+rule (new section + new document hash + PAPER.md decision row).
+
+**Why.** The locked prompt `deployment_full_v1` embedded the manifest as
+pretty-printed JSON, rendering to ~43K tokens. The locked Option B model
+(Together `Qwen/Qwen2.5-7B-Instruct-Turbo`) has a 32,769-token context
+limit, so every model call returned HTTP 422 (input too long). The
+defect was undetected at the 2026-06-25 lock; a smoke test on 2026-06-28
+surfaced it for ~USD 0. The §14 checklist did not include a
+prompt-fits-model-context check; future locks should add one.
+
+**Change (lossless serialization efficiency).** A new prompt template
+`deployment_full_v2` embeds the *same* manifest as minified JSON
+(`separators=(",",":")`, sorted keys) with null/empty fields dropped.
+No command, flag, type, `choices`, `default`, `help` string, description,
+`agent_safe` flag, mutation class, or taxonomy entry is removed; only
+formatting whitespace and fields carrying no value
+(`null` / `[]` / `{}` / `""`) are dropped. Verified lossless by
+round-trip (`json.loads(minified) == strip_empty(manifest)`) and by
+confirming zero non-empty values and zero non-empty `help` strings were
+dropped. The rendered prompt falls to ~22K tokens (worst-case task ~24K
+including output), fitting the context window. The system-instruction
+block is byte-identical to v1.
+
+**Affected artifacts.**
+
+- New `prompts/deployment_full_v2.md`, SHA-256
+  `5b37946b606fda4b95543802c7f0c3e73da344d893996226dbf5131411a8312c`.
+  `deployment_full_v1.md` remains frozen for provenance (unchanged,
+  `1789478e1a234b27413367da6ae32782c1608af2bdacd4cf07bd78ee6854aa5f`)
+  but is superseded for the pilot.
+- `harness/core.py::render_prompt` is version-aware: v2 minifies (drops
+  null/empty), v1 stays pretty-printed.
+- `model_roster.md` condition `prompt_id` flipped v1 → v2. New roster
+  SHA-256
+  `0fd8b6b51507fa5bf0d2b033011a19587fb66995498a2280f79e4af9df0d1227`
+  (was `bde555af1ea3dd69802a3a8a917ddadbc2c8d5f3c5ac9bb71c0fd218e7c026b5`
+  at the 2026-06-25 lock).
+- `schema/model_roster.schema.json` `prompt_id` widened from
+  `const "deployment_full_v1"` to `enum ["deployment_full_v1",
+  "deployment_full_v2"]`.
+- Together and Fireworks adapter guards accept v1 or v2.
+- `scripts/lock_hashes.json` + `scripts/collect_lock_hashes.py` updated
+  to the v2 prompt. The §14 hashed set is otherwise unchanged (scorer
+  config, manifest, safety subset, 28 tasks).
+
+The held-constant-prompt invariant is preserved: every condition still
+uses the identical prompt (now v2); runtime mode remains the only lever.
+
+Pre-amendment document SHA-256 (after Amendment 1):
+`69ac22f50db413e28df83f6405885ceecc33279a452c2970f201f222cca7c1a2`.
 Post-amendment SHA-256 is recorded as external lock evidence after this
 amendment commit, per the §14 self-hash-circularity rule.
