@@ -139,6 +139,11 @@ class TogetherHTTPTransport:
                 raise TransportFailure(
                     kind="timeout", message="Together request timed out"
                 ) from exc
+            if isinstance(exc.reason, ConnectionError):
+                raise TransportFailure(
+                    kind="timeout",
+                    message=f"Together connection error: {exc}",
+                ) from exc
             raise TransportFailure(
                 kind="transport_error",
                 message=f"Together request failed: {exc}",

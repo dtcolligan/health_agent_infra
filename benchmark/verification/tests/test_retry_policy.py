@@ -582,3 +582,50 @@ def test_adapter_subprocess_crash_makes_no_retry(
     assert steps[-1]["exit_code"] == "EXIT_99"
     command_step = next(s for s in steps if s["step_type"] == "command")
     assert command_step["metadata"]["retry_count"] == 0
+
+
+# --------------------------------------------------------------------------- #
+# Connection-reset retryability (full-pilot halt regression)
+# --------------------------------------------------------------------------- #
+
+
+def test_connection_reset_is_retryable() -> None:
+    """Transient connection drops are retryable, not fatal adapter halts.
+
+    Regression: a full-pilot run halted on turn 2 when a RemoteDisconnected
+    fell through to a non-retryable adapter_halt.
+    """
+    import http.client
+
+    assert classify_retry(ConnectionResetError("reset")) == "timeout_class"
+    assert (
+        classify_retry(
+            http.client.RemoteDisconnected(
+                "Remote end closed connection without response"
+            )
+        )
+        == "timeout_class"
+    )
+    assert classify_retry(http.client.IncompleteRead(b"")) == "timeout_class"
+    assert classify_retry(BrokenPipeError("broken pipe")) == "timeout_class"
+
+
+def test_execute_with_retry_recovers_from_connection_reset() -> None:
+    """A transient RemoteDisconnected is retried, then the call succeeds."""
+    import http.client
+
+    state = {"n": 0}
+
+    def call() -> dict[str, Any]:
+        state["n"] += 1
+        if state["n"] < 3:
+            raise http.client.RemoteDisconnected(
+                "Remote end closed connection without response"
+            )
+        return {"ok": True}
+
+    sleeps: list[float] = []
+    outcome = execute_with_retry(call, sleeper=sleeps.append)
+    assert outcome.response == {"ok": True}
+    assert outcome.retry_count == 2
+    assert state["n"] == 3

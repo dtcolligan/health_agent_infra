@@ -164,6 +164,11 @@ class FireworksHTTPTransport:
                 raise TransportFailure(
                     kind="timeout", message="Fireworks request timed out"
                 ) from exc
+            if isinstance(exc.reason, ConnectionError):
+                raise TransportFailure(
+                    kind="timeout",
+                    message=f"Fireworks connection error: {exc}",
+                ) from exc
             raise TransportFailure(
                 kind="transport_error",
                 message=f"Fireworks request failed: {exc}",

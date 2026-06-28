@@ -18,6 +18,7 @@ Design contract (WP-A5):
 
 from __future__ import annotations
 
+import http.client
 import time
 from collections import deque
 from dataclasses import dataclass
@@ -143,6 +144,10 @@ def classify_retry(exc: Exception) -> RetryClass:
 
     if isinstance(exc, TimeoutError):
         return "timeout_class"
+    if isinstance(exc, (ConnectionError, http.client.IncompleteRead)):
+        # Transient connection drops (RemoteDisconnected / reset / broken
+        # pipe) are retryable like timeouts, not fatal adapter errors.
+        return "timeout_class"
     if isinstance(exc, TransportFailure):
         if exc.kind == "timeout":
             return "timeout_class"
@@ -160,6 +165,10 @@ def _as_transport_failure(exc: Exception) -> TransportFailure:
         return exc
     if isinstance(exc, TimeoutError):
         return TransportFailure(kind="timeout", message=str(exc))
+    if isinstance(exc, (ConnectionError, http.client.IncompleteRead)):
+        return TransportFailure(
+            kind="timeout", message=str(exc) or exc.__class__.__name__
+        )
     return TransportFailure(kind="transport_error", message=str(exc))
 
 
