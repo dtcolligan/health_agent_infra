@@ -4,25 +4,65 @@ Benchmark companion to *Measuring Deterministic Governance Mechanisms
 in Agent Harnesses*. Released as v1.0 on a GitHub tag alongside the
 2026-09-30 arXiv preprint.
 
+GovernedAgentBench treats the agent harness as the experimental
+intervention surface. It holds the model, prompt, manifest, task suite,
+and scorer fixed, then varies only `runtime_mode` to measure whether
+specific deterministic runtime mechanisms are load-bearing for
+constraint-respecting behavior.
+
 Project-wide scope, calendar, and decisions: [`/PAPER.md`](../../PAPER.md).
 Full benchmark specification: [`SPEC.md`](SPEC.md). Task authoring:
 [`TASK_AUTHORING.md`](TASK_AUTHORING.md).
 
 ## What It Measures
 
-Whether a model can operate a governed runtime through its public
-contract rather than relying on implicit prompt adherence, private
-implementation knowledge, or free-form guessing.
+The benchmark measures mechanism-level effects of a deterministic
+runtime contract around an agent. Runtime mode is the treatment; scored
+task outcomes and contract violations are the responses.
+
+The primary comparison is `full_contract` against single-mechanism
+disable modes:
+
+| Mechanism | Full-contract behavior | Disable mode |
+|---|---|---|
+| M4 validation | Reject malformed commands and proposal payloads | `no_validation` |
+| M5 `agent_safe` | Refuse agent-context dispatch of unsafe commands | `no_agent_safe` |
+| M6 proposal gate | Require explicit user commit for gated state changes | `no_proposal_gate` |
+| M7 refusal | Refuse clinical-boundary and forbidden requests | `no_refusal` |
+| M8 audit evidence | Emit audit evidence for scored narration and traceability | `no_audit_chain` |
+
+`no_runtime_enforcement` turns M4-M8 off together and is used as a
+sanity floor, not as per-mechanism attribution evidence.
 
 Load-bearing differentiation from ST-WebAgentBench: runtime-mode
 intervention with mechanism-isolable ablation under a held-constant
 prompt. The runtime is the intervention; the prompt does not vary.
 
-Domain-general in framing. HAI is the reference runtime instantiation and
-personal wellness the reference domain; the benchmark is designed to admit
-others. Clinical-boundary obedience is
-part of the evaluated contract: tasks must not require diagnosis,
-treatment, prescribing, or autonomous medical decisions.
+The benchmark evaluates whether the model can operate through the
+public contract rather than relying on implicit prompt adherence,
+private implementation knowledge, or free-form guessing. It does not
+score free-form coaching quality.
+
+HAI is the reference runtime instantiation and personal wellness is the
+reference domain. The benchmark is designed to admit other runtimes in
+future work. Clinical-boundary obedience is part of the evaluated
+contract: tasks must not require diagnosis, treatment, prescribing, or
+autonomous medical decisions.
+
+## Evidence Tiers
+
+GovernedAgentBench separates evidence tiers by design:
+
+| Tier | What it supports | What it does not support |
+|---|---|---|
+| Static oracle pairs | Scorer sensitivity, declared task coverage, marker-contamination checks | Live runtime causality |
+| Live runtime probes | Targeted hermetic HAI behavior under M4-M8 disable paths | Model behavior on the 28-task suite |
+| Rule baseline | Offline pipeline mechanics and deterministic reproducibility | Model-backed capability claims |
+| Model-backed trajectories | Behavior of the locked model condition through the harness | Universal claims across models, prompts, or domains |
+
+Paper claims must preserve these labels. A transcript that is not
+converted into trajectory JSON and scored offline is not benchmark
+evidence.
 
 ## Current State (preprint scope)
 
@@ -32,7 +72,7 @@ treatment, prescribing, or autonomous medical decisions.
 | Fixtures | 6 synthetic builders: `empty_user`, `ready_user_minimal`, `read_surface_user`, `governance_user`, `drift_user`, `adversarial_user` |
 | Pilot tasks | 28 tasks across L1, L2, L5, L6, L7; every M4-M8 has at least 3 static oracle-pair tasks |
 | Trajectories | 18 hand-authored seed trajectories plus 25 static isolation oracle pairs; targeted live isolation probes cover M4-M8 |
-| Scorer | MVP deterministic offline scorer at `scorer/core.py` with schema/determinism tests |
+| Scorer | Deterministic offline scorer at `scorer/core.py` with schema/determinism tests |
 | Harness | Model-agnostic harness at `harness/` with structured operator actions, runtime-mode toggling, hermetic subprocess execution, `mechanism_disabled` capture |
 | Baselines | Deterministic `rule_baseline_v1` + offline rule-baseline ablation runner. No model-backed baseline yet. |
 | Reproducibility | Evidence-table, SVG-figure, error-taxonomy generators at `results/`; single offline command regenerates derived artifacts |

@@ -19,21 +19,27 @@ Protocol lock facts used by this draft:
 
 ## Plain-Language Summary
 
-When an AI assistant acts on your behalf, reading your data, drafting
-changes, and deciding what to do next, most of its safety does not come
-from the model being clever. It comes from ordinary code wrapped around
-the model: code that checks each requested action, blocks the unsafe
-ones, makes you personally confirm before anything is changed, refuses
-requests that are out of bounds, and records what happened so it can be
-audited. This paper measures how much each of those guardrails actually
-matters. We hold one AI model and one fixed set of instructions
-constant, then switch the guardrails off one at a time and observe what
-breaks. Because the model and its instructions never change, any
-difference we see is caused by the guardrail, not by the model. We
-release the test cases, the runtime they run against, and the scoring
-code as a public benchmark, GovernedAgentBench, so others can rerun and
-extend the measurement. At the time of this draft the design is locked
-but the main model-backed experiment has not yet been run.
+This paper treats the agent harness, not the model, as the
+experimental intervention surface. When an AI assistant acts on your
+behalf, it is not only a model responding to a prompt. It is a model
+embedded inside software: command schemas, tool permissions, approval
+gates, refusal rules, audit logs, and transaction boundaries.
+
+The experiment asks whether those deterministic harness mechanisms are
+measurably load-bearing. We hold the model fixed, hold the prompt
+fixed, hold the task suite fixed, and vary only the runtime mode. In
+one condition, the full governance contract is active. In the ablation
+conditions, one mechanism is disabled at a time: validation,
+agent-safe dispatch, proposal gating, refusal enforcement, or audit
+evidence emission. Because the controller is fixed, observed deltas are
+reported as marginal contributions of the runtime mechanism within
+this harness, task suite, model, prompt, scorer, and evidence tier.
+
+We release the test cases, the runtime they run against, and the
+deterministic scoring code as a public benchmark, GovernedAgentBench,
+so others can rerun and extend the measurement. At the time of this
+draft the design is locked but the main model-backed experiment has not
+yet been run.
 
 ## Abstract
 
@@ -694,8 +700,9 @@ reps, or 159 reps, before any conditional prelude or stretch cell.
 
 The pilot starts on the 7B model. If that model turns out to be too
 capable to surface mechanism deltas (it never fails even with a
-guardrail off), a pre-registered rule, labeled DR-9 in the protocol,
-escalates to the larger 32B model. The rule uses two sequential gates.
+single governance mechanism disabled), a pre-registered rule, labeled
+DR-9 in the protocol, escalates to the larger 32B model. The rule uses
+two sequential gates.
 
 The gates below describe the original mid-run formulation. As executed
 (protocol Amendment 1, 2026-06-26), the rule is evaluated post-hoc: the

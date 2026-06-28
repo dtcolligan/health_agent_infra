@@ -1,8 +1,13 @@
 # HAI Reference Runtime
 
-HAI is the personal-wellness reference runtime for the runtime-contract
-research project. It is packaged as `health-agent-infra` and exposed
+HAI is the non-clinical personal-wellness reference runtime used by
+*Measuring Deterministic Governance Mechanisms in Agent Harnesses* and
+GovernedAgentBench. It is packaged as `health-agent-infra` and exposed
 through the local `hai` CLI.
+
+The paper does not evaluate HAI as a product. HAI is the concrete
+agent harness whose deterministic runtime mechanisms can be ablated
+under a fixed model and prompt.
 
 Paper-framing note: this file describes the HAI reference runtime;
 for active paper scope, calendar, and decisions, see
@@ -18,10 +23,12 @@ local user-owned state. A user talks to the host agent in natural
 language; the agent invokes `hai`; the runtime validates, gates, mutates,
 and records.
 
-Personal wellness is the reference domain. The broader research claim is
-that individual deterministic governance mechanisms in an agent harness
-are separately load-bearing for reliable, constraint-respecting bounded
-operation.
+Personal wellness is the reference domain because it contains natural
+contract boundaries: the runtime can help organize non-clinical wellness
+state while refusing diagnosis, treatment, prescribing, and autonomous
+medical decisions. The broader research claim is that individual
+deterministic governance mechanisms in an agent harness can be measured
+as load-bearing for reliable, constraint-respecting operation.
 
 **Local-only by construction.** No telemetry, no hosted backend, no cloud
 sync. State lives on your machine in SQLite plus JSONL audit logs;
@@ -151,18 +158,22 @@ command under an agent token.
 | Source honesty | Stale data, fixture data, live-source failures, and missing credentials surface explicitly. |
 | User-governed targets and intent | Agent-proposed goals require explicit user commit. |
 
-## What HAI May Enable Next
+## Frozen Scope
 
-| Capability | Status |
-|---|---|
-| Weekly review loop | v0.2.0 source tree includes evidence-card and weekly-claim-card substrate. |
-| Bloodwork and richer passive intake | Future, using the same typed-evidence pattern. |
-| Longer-horizon planning | Future, after daily and review loops are strong enough. |
-| MCP-portable agent surface | Future; the capabilities manifest is structured for non-Claude hosts. |
-| Personal-calibration evaluation | Future, measuring whether recommendations fit the individual user. |
+HAI is frozen as a product at v0.2.0 for the preprint. Runtime defects
+that directly affect GovernedAgentBench, reproducibility, or a paper
+mechanism may be fixed through named `WP-RUNTIME-FIX-NNN` packets.
+Those fixes do not reopen a product roadmap.
 
-Under the research-first roadmap, these are subordinate unless needed by
-the paper, GovernedAgentBench, HAI paper-readiness, or reproducible baselines.
+Out of scope for this repo:
+
+- consumer-product polish;
+- new wearable sources;
+- clinical or medical-decision features;
+- bloodwork or richer passive-intake expansion;
+- longer-horizon planning unless required by the benchmark contract;
+- any feature that would put private health rows into public benchmark
+  fixtures or reports.
 
 ## Install And Quickstart
 

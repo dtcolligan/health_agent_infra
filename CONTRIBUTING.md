@@ -11,6 +11,17 @@ with GovernedAgentBench v1.0 released alongside. HAI is frozen as a
 product. Do not propose HAI v0.2.1+ work, new domains, new wearable
 sources, or user-product breadth.
 
+Public framing must stay aligned with the paper thesis:
+
+> This project treats the agent harness, not the model, as the
+> experimental intervention surface.
+
+Describe contributions in terms of fixed model/prompt conditions,
+runtime-mode intervention, deterministic scorer outcomes, and separated
+evidence tiers. Do not reframe the repo as a model leaderboard, broad
+AI safety benchmark, health-product roadmap, or clinical-quality
+evaluation.
+
 ## Where Contributions Land
 
 | Surface | Path |

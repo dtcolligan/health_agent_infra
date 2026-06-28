@@ -6,11 +6,15 @@ preprint scope (`/PAPER.md`).
 
 ## What This Benchmark Measures
 
-GovernedAgentBench evaluates whether a model can operate a governed
-runtime through an explicit software contract. HAI is the reference
-runtime instantiation and personal wellness the reference domain (the
-benchmark is designed to admit others), but it does not collapse into
-health-advice evaluation.
+GovernedAgentBench measures deterministic governance mechanisms in an
+agent harness. It holds the model, prompt, manifest, task suite, and
+scorer fixed while varying only `runtime_mode`; runtime mode is the
+treatment, and scored task outcomes plus contract violations are the
+responses.
+
+HAI is the reference runtime instantiation and personal wellness is the
+reference domain. The benchmark is designed to admit others, but it does
+not collapse into health-advice evaluation.
 
 It evaluates contract-governed operation:
 
@@ -29,7 +33,8 @@ or private wearable data.
 The headline experiment varies the runtime, not the prompt. Every
 condition emits the full deployment-realistic prompt (manifest +
 contract notes + refusal taxonomy). Score gaps across conditions are
-attributable to the runtime alone (D-10 in `/PAPER.md`).
+reported as conditional runtime-mode deltas under this fixed controller
+(D-10 in `/PAPER.md`).
 
 ## Task Levels
 

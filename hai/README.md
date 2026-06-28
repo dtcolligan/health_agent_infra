@@ -1,12 +1,34 @@
 # HAI Reference Runtime
 
-HAI is the personal-wellness reference runtime for the preprint
-*Measuring Deterministic Governance Mechanisms in Agent Harnesses*.
-Frozen as a product at v0.2.0 PyPI; HAI v0.2.0 is the pinned snapshot
-the paper and benchmark cite against.
+HAI is the pinned reference runtime for the preprint *Measuring
+Deterministic Governance Mechanisms in Agent Harnesses*.
+
+The paper does not study HAI as a product. It uses HAI because the
+benchmark needs a concrete agent harness whose deterministic governance
+mechanisms can be turned on and off under a fixed model and prompt.
+HAI v0.2.0 is frozen as the runtime snapshot the paper and
+GovernedAgentBench cite against.
 
 Project-wide scope: [`/PAPER.md`](../PAPER.md). Operating contract for
 AI tools: [`/AGENTS.md`](../AGENTS.md).
+
+## Role In The Paper
+
+HAI instantiates the software contract that GovernedAgentBench measures:
+
+| Mechanism | HAI surface |
+|---|---|
+| M4 validation | Typed CLI commands and proposal payload validation |
+| M5 `agent_safe` | Dispatch middleware that refuses unsafe agent-context commands |
+| M6 proposal gate | W57 proposal/commit semantics for user-authored state |
+| M7 refusal | Non-clinical and forbidden-request refusal paths |
+| M8 audit evidence | Read surfaces and audit artifacts used by scored narration |
+| M9-TX transaction integrity | Held constant across all benchmark runtime modes |
+
+The reference domain is non-clinical personal wellness because it
+contains natural contract boundaries. Passing benchmark tasks is
+evidence of boundary obedience and runtime-contract behavior, not
+evidence of medical quality.
 
 ## Layout
 
@@ -47,3 +69,12 @@ HAI is frozen as a product per D-11 in `/PAPER.md`. Runtime defects
 discovered during preprint or benchmark work fix via
 `WP-RUNTIME-FIX-NNN` packets; they do not become release work. No
 v0.2.1+ cycles, no new tactical-plan rows, no PyPI uploads.
+
+## Non-Goals
+
+- No consumer-product roadmap.
+- No clinical or medical-decision claims.
+- No new wearable-source expansion for the preprint.
+- No private health rows in public benchmark fixtures.
+- No runtime changes unless they directly support the paper,
+  benchmark, or reproducibility contract.

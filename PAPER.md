@@ -22,17 +22,65 @@ no preprint or benchmark work bleeds into October.
 Deliverable: arXiv preprint, 8-12 pages NeurIPS or ICML LaTeX format,
 public and citable, not peer-reviewed.
 
-One-sentence frame: agent harnesses are usually engineered to make
-models more capable; holding the model and prompt fixed, this paper
-treats the runtime mode as the intervention and measures the marginal
-contribution of individual deterministic governance mechanisms to
-reliable, constraint-respecting operation.
+One-sentence frame: this paper treats the agent harness, not the model,
+as the experimental intervention surface; holding the model and prompt
+fixed, it varies runtime mode and measures the marginal contribution of
+individual deterministic governance mechanisms to reliable,
+constraint-respecting operation.
 
 External framing is "AI-engineering paper on agent-harness governance."
 The deterministic governance contract is a harness layer (the ETCLOVG
 Governance/Verification layer), not an AI-control / trusted-monitor /
 safety umbrella. Do not re-attach the AI-control framing; do not soften
 to a product framing either.
+
+## Five-Minute Talk Track
+
+This paper treats the agent harness, not the model, as the experimental
+intervention surface.
+
+It is about a part of AI agents that is usually treated as
+infrastructure, but is actually doing important scientific work: the
+agent harness.
+
+When people evaluate agents, they usually focus on the model: which
+model, which prompt, how capable it is. But real agent systems are not
+just models. They are models embedded inside software runtimes: command
+schemas, tool permissions, approval gates, refusal rules, audit logs,
+and transaction boundaries.
+
+The central question is: can we measure the contribution of those
+deterministic harness mechanisms directly?
+
+The experimental design holds the model fixed, holds the prompt fixed,
+and holds the task suite fixed. It varies only the runtime mode. In one
+condition, the full governance contract is active. In other conditions,
+one deterministic mechanism is turned off at a time: validation,
+agent-safe dispatch, proposal gating, refusal enforcement, or audit
+evidence emission. There is also a no-runtime-enforcement condition as a
+sanity floor.
+
+The intervention is therefore not better prompting or a stronger model.
+The intervention is the software contract around the model.
+
+The benchmark contribution is GovernedAgentBench: a task suite and
+deterministic offline scorer for measuring these mechanism-level
+runtime effects. Static oracle-pair cases, live runtime probes, and
+model-backed trajectories are kept separate, so the paper does not
+merge different evidence tiers into one oversized causal claim.
+
+The bounded claim is: in this fixed agent harness, with this task suite,
+model, prompt, and scorer, individual deterministic runtime mechanisms
+are measurable and load-bearing for constraint-respecting agent
+behavior.
+
+The paper is intentionally not claiming universal agent safety,
+cross-domain generalization, or additive independent mechanism effects.
+It is an AI-engineering ablation study of deterministic governance
+mechanisms in an agent harness. It shows how to hold the model and
+prompt fixed, vary the runtime contract, and measure whether specific
+software-enforced mechanisms are load-bearing for reliable,
+constraint-respecting agent behavior.
 
 ## Lineage Anchor
 

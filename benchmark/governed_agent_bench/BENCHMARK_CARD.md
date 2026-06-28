@@ -1,6 +1,6 @@
 # GovernedAgentBench Benchmark Card
 
-**Status:** Current benchmark card, 2026-05-10.
+**Status:** Current benchmark card, 2026-06-28.
 
 This card describes the committed GovernedAgentBench artifact. It is
 not a final paper claim and does not report model-backed performance.
@@ -8,25 +8,35 @@ Dom final review is still required before submission.
 
 ## Intended Use
 
-GovernedAgentBench evaluates whether an operator can use a governed
-runtime through an explicit software contract. The reference runtime is
-HAI, a local non-clinical personal-wellness runtime (the benchmark is
-designed to admit others).
+GovernedAgentBench evaluates deterministic governance mechanisms in an
+agent harness. It holds the model, prompt, manifest, task suite, and
+scorer fixed while varying only `runtime_mode`. The reference runtime
+is HAI, a local non-clinical personal-wellness runtime used to
+instantiate a concrete software contract. The benchmark is designed to
+admit other runtimes in future work.
 
 The benchmark is intended for:
 
+- measuring runtime-mode ablations under a held-constant prompt;
+- evaluating whether specific deterministic contract mechanisms are
+  load-bearing for constraint-respecting behavior;
 - evaluating command selection against a manifest;
 - evaluating structured operator actions;
 - evaluating refusal of out-of-contract requests;
 - evaluating respect for `agent_safe` and proposal/commit boundaries;
 - evaluating narration from runtime read surfaces and audit references;
-- evaluating robustness to stale contract snapshots;
-- measuring runtime-mode ablations under a held-constant prompt.
+- evaluating robustness to stale contract snapshots.
+
+The benchmark's main estimand is conditional: the marginal contribution
+of a mechanism within this fixed harness, task suite, prompt, model
+condition, and evidence tier.
 
 ## Non-Use And Misuse
 
 The benchmark must not be used as:
 
+- a universal agent-safety benchmark;
+- a model leaderboard divorced from the runtime contract;
 - a medical benchmark;
 - evidence of diagnosis, treatment, prescribing, or clinical reasoning;
 - evidence that HAI is a consumer health product;
@@ -34,6 +44,10 @@ The benchmark must not be used as:
   private data;
 - a benchmark for free-form coaching quality;
 - a benchmark for live wearable integrations.
+
+Do not collapse static oracle-pair rows, live runtime-probe rows, and
+model-backed trajectories into one causal claim. Those evidence tiers
+answer different questions.
 
 ## Data Provenance
 
@@ -93,7 +107,8 @@ canaries, not live mechanism-causality proof.
 
 ## Runtime Modes
 
-The prompt is held constant at `deployment_full_v1`. Runtime modes are:
+The prompt is held constant. Runtime mode is the treatment. Runtime
+modes are:
 
 - `full_contract`;
 - `no_validation`;
@@ -105,6 +120,17 @@ The prompt is held constant at `deployment_full_v1`. Runtime modes are:
 
 The model is not told which mode is active. Mechanism-off modes are
 allowed only under hermetic benchmark state.
+
+## Mechanisms Under Test
+
+| ID | Mechanism | Disable mode | Load-bearing consequence |
+|---|---|---|---|
+| M4 | Validation of typed commands and proposal payloads | `no_validation` | Malformed or unsupported structure can leak past the contract. |
+| M5 | `agent_safe` dispatch refusal | `no_agent_safe` | Agent-context calls to unsafe commands can execute instead of being refused. |
+| M6 | W57 proposal/commit gate | `no_proposal_gate` | User-gated state changes can be committed without explicit user confirmation. |
+| M7 | Clinical-boundary and forbidden-request refusal | `no_refusal` | Out-of-contract requests can reach user-facing output. |
+| M8 | Audit evidence emission | `no_audit_chain` | The runtime may omit evidence needed for faithful narration and traceability. |
+| M9-TX | Transaction integrity | Held constant | Not ablated; protects atomicity across all modes. |
 
 ## Model Conditions Tested
 
@@ -158,6 +184,10 @@ Current limitations:
 - The task set is synthetic and still narrow.
 - The rule baseline verifies pipeline mechanics but is not model
   evidence.
+- The primary claim is conditional on the fixed controller: harness,
+  task suite, prompt, model condition, scorer, and evidence tier.
+- Mechanisms are coupled. Per-mechanism deltas are marginal
+  contributions in this runtime, not additive independent effects.
 - Model-scale claims are blocked until Dom approves a predeclared model
   roster.
 - Rule-baseline ablation scores are mode-tagged plumbing evidence, not
