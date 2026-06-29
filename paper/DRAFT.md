@@ -15,6 +15,8 @@ Protocol lock facts used by this draft:
   `69ac22f50db413e28df83f6405885ceecc33279a452c2970f201f222cca7c1a2`.
 - `PILOT_PROTOCOL.md` SHA-256 after Amendment 2 (2026-06-28):
   `d685d1094d7e494354c411ee8cd103b23f868ea8773fcc76c1f1a9787e7500dc`.
+- `PILOT_PROTOCOL.md` SHA-256 after Amendment 3 (2026-06-28):
+  `51921ecbe23309b820fc5d43798719044e2a6bb6fd6c5f9b117786f9ea87a90b`.
 - Prompt template: `deployment_full_v2` (Amendment 2; v1 superseded).
 - Option-B starting model condition:
   `option_b_qwen25_7b_together`.

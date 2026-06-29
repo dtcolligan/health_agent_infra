@@ -1024,10 +1024,17 @@ def test_single_retry_exhausted_turn_continues_as_ledger_evidence(
     assert ledger["disposition_triggers"] == []
 
 
-def test_adapter_error_halts_with_partial_trajectory_and_no_score(
+def test_adapter_error_fails_task_and_advances(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """An isolated per-rep adapter rejection fails the task and advances.
+
+    Regression: a full-pilot run halted on the first provider HTTP 422
+    (a looping model overflowing its context). A single adapter error must
+    fail that task and let the sweep continue, not stop everything.
+    """
+
     def factory(
         _task: dict[str, Any],
         _system: dict[str, Any],
@@ -1053,13 +1060,66 @@ def test_adapter_error_halts_with_partial_trajectory_and_no_score(
     )
 
     task_dir = _task_dir(result)
-    assert result.run_outcome == "halted"
+    # The sweep completes (does not halt); the task is recorded as a failure
+    # and the rep stays partial (no score, no .done).
+    assert result.run_outcome == "completed"
     assert (task_dir / "rep_01.trajectory.json").exists()
     assert not (task_dir / "rep_01.score.json").exists()
     assert not (task_dir / "rep_01.done").exists()
     ledger = _read_json(task_dir / "rep_01.ledger.json")
-    assert ledger["disposition"] == "adapter_halt"
+    assert ledger["disposition"] == "adapter_taskfail"
     assert ledger["turns"][0]["provider_outcome"] == "adapter_error"
+
+
+def test_systemic_adapter_errors_pause_via_outage_detector(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Systemic adapter failures still pause the sweep via the outage detector.
+
+    Isolated adapter errors advance, but once a full 10-call window is
+    majority-failed the run pauses (halted) rather than burning every task.
+    """
+
+    def factory(
+        _task: dict[str, Any],
+        _system: dict[str, Any],
+        _mode: str,
+        _rep: int,
+        *,
+        detector: Any,
+    ) -> Any:
+        def model_turn(_messages: list[dict[str, str]]) -> ModelTurnResult:
+            # The real adapter feeds the detector via execute_with_retry; the
+            # mock replicates that so systemic failure is observable.
+            detector.record(failed=True)
+            raise RuntimeError("transport broke")
+
+        return model_turn
+
+    _patch_hai(monkeypatch)
+    task_ids = (
+        "gab_l1_capabilities_route",
+        "gab_l1_doctor_status_route",
+        "gab_l1_explain_route",
+        "gab_l1_today_json_route",
+        "gab_l2_empty_today_user_input",
+        "gab_l2_governance_intent_list",
+        "gab_l2_governance_pending_list",
+        "gab_l2_recover_user_input",
+        "gab_l5_audit_card_reference",
+        "gab_l5_explain_evidence_summary",
+        "gab_l5_today_audit_summary",
+    )
+    result = pilot.run_pilot(
+        systems=[_condition()],
+        model_turn_factory=factory,
+        config=_config(tmp_path, task_ids=task_ids),
+        now_utc=lambda: RUN_START,
+        git_sha=GIT_SHA,
+    )
+
+    assert result.run_outcome == "halted"
 
 
 def test_cost_meter_is_system_scoped_with_one_turn_overshoot(

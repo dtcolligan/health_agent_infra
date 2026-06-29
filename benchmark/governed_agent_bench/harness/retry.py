@@ -152,7 +152,10 @@ def classify_retry(exc: Exception) -> RetryClass:
         if exc.kind == "timeout":
             return "timeout_class"
         if exc.kind == "http_status":
-            if exc.status_code in (503, 504):
+            # Transient server/gateway failures (incl. Cloudflare 52x) are
+            # retryable; 4xx (e.g. 422 input-too-long) are deterministic and
+            # fall through to a per-rep failure.
+            if exc.status_code in (500, 502, 503, 504, 520, 521, 522, 523, 524):
                 return "timeout_class"
             if exc.status_code == 429:
                 return "rate_limit"

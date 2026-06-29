@@ -441,7 +441,7 @@ the draft `pilot_manifest.json` records a paused run as
 | Provider outage (§5 outage rule) | Pause condition; manifest `run_outcome="halted"`; Dom decides resume / abort / escalate |
 | Model emits direct-state-write attempt and HAI fails to block it under a mode where M5/M6 should block | Abort condition immediately — contract breach, not a benchmark signal |
 | Model emits clinical_claim under `full_contract` | Abort condition immediately — invariant breach |
-| Adapter implementation error (Together / Fireworks / Anthropic SDK exception not covered by retry policy) | Halt condition; capture trace; Dom decides |
+| Adapter implementation error (Together / Fireworks / Anthropic SDK exception not covered by retry policy) | **Superseded by §17 Amendment 3:** per-rep adapter errors now fail the task and advance; the outage detector halts the sweep only on systemic failure (full 10-call window majority-failed). |
 
 Halt and Abort differ: Halt preserves partial results and pauses for
 operator decision (no evidence-tier change yet). Abort marks the
@@ -716,5 +716,49 @@ uses the identical prompt (now v2); runtime mode remains the only lever.
 
 Pre-amendment document SHA-256 (after Amendment 1):
 `69ac22f50db413e28df83f6405885ceecc33279a452c2970f201f222cca7c1a2`.
+Post-amendment SHA-256 is recorded as external lock evidence after this
+amendment commit, per the §14 self-hash-circularity rule.
+
+## §17 Amendment 3 — Per-rep adapter errors advance, not halt (2026-06-28)
+
+Authorized by Dom 2026-06-28. No §14-hashed artifact changes (scorer
+config, roster, prompt, manifest, safety subset, and the 28 task files
+are unchanged); this amendment changes orchestrator failure-disposition
+behavior and supersedes the §11 "Adapter implementation error → Halt"
+row.
+
+**Why.** A full-pilot run halted on the first per-call provider
+rejection: the 7B model looped invalid JSON on one L1 task until the
+accumulated chat history exceeded the 32,769-token context, and the
+provider returned HTTP 422. The orchestrator treated that as the §11
+adapter-error halt and stopped the whole sweep on one bad task. A single
+task's failure must not end the run.
+
+**Change.** A per-rep adapter failure (provider HTTP rejection such as
+422, a non-retryable transport error, or an adapter exception) now FAILS
+that rep's task and ADVANCES, matching the §11 "≥3 retry-exhausted →
+task fails, advance" and subprocess-crash dispositions. The rep is
+recorded partial (trajectory preserved, no score, no `.done`); the task
+outcome is `fail`; the ledger disposition is `adapter_taskfail`. Systemic
+adapter failures are still caught: the outage detector pauses the sweep
+once a full 10-call window is majority-failed (a bad key or provider
+outage halts after ~10 reps, not 159). Unchanged stop conditions: cost
+cap, wall-time, contamination, `full_contract` agent-safe/clinical breach
+(abort), fixture-build error, and sustained outage.
+
+Additionally, transient server/gateway HTTP failures (500, 502, 503, 504,
+520-524) and connection resets (RemoteDisconnected / reset / broken pipe)
+are now retried as timeout-class (previously only 503/504), reducing
+spurious per-rep failures from provider blips.
+
+This changes operational robustness only; it does not change the
+held-constant prompt, runtime-mode toggling, scorer, task suite, or any
+mechanism. Failed tasks are recorded as failures (data), not crashes.
+Implemented in `harness/retry.py` and `pilot_orchestrator.py` with
+regression tests in `test_retry_policy.py` and
+`test_pilot_orchestrator.py`.
+
+Pre-amendment document SHA-256 (after Amendment 2):
+`d685d1094d7e494354c411ee8cd103b23f868ea8773fcc76c1f1a9787e7500dc`.
 Post-amendment SHA-256 is recorded as external lock evidence after this
 amendment commit, per the §14 self-hash-circularity rule.

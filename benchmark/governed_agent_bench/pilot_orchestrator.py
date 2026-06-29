@@ -540,7 +540,21 @@ def run_pilot(
                         partial = (rr.rep_label, rr.stop_cause)
                         if rr.stop_cause == "retry3_taskfail":
                             task_outcome = "fail"
-                        elif rr.stop_cause in {"cost_halt", "wall_halt", "adapter_halt"}:
+                        elif rr.stop_cause == "adapter_halt":
+                            # A per-rep adapter rejection (e.g. provider HTTP 422
+                            # when a looping model overflows its context, or a
+                            # non-retryable provider error) fails this task and
+                            # advances, matching retry3_taskfail and subprocess
+                            # crash. Systemic adapter failures are caught by the
+                            # outage detector's full-window >50% rule below, not
+                            # by halting the whole sweep on the first one.
+                            task_outcome = "fail"
+                            if detector.should_pause():
+                                pause = Disposition("pause", "provider_outage")
+                                _record_outage_signal(rr, detector)
+                                rep_dispositions.append(pause)
+                                disp = resolve(disp, pause)
+                        elif rr.stop_cause in {"cost_halt", "wall_halt"}:
                             halt = Disposition("halt", rr.stop_cause)
                             rep_dispositions.append(halt)
                             disp = resolve(disp, halt)
@@ -896,6 +910,10 @@ def finalize_rep_ledger_disposition(
         rr.ledger["disposition"] = winner.reason
     elif rr.stop_cause == "retry3_taskfail":
         rr.ledger["disposition"] = "retry3_taskfail"
+    elif rr.stop_cause == "adapter_halt":
+        # Per-rep adapter rejection that failed the task and advanced
+        # (no sweep-level halt). Labeled distinctly from a clean completion.
+        rr.ledger["disposition"] = "adapter_taskfail"
     else:
         rr.ledger["disposition"] = "completed"
 
