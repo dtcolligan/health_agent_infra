@@ -629,3 +629,21 @@ def test_execute_with_retry_recovers_from_connection_reset() -> None:
     assert outcome.response == {"ok": True}
     assert outcome.retry_count == 2
     assert state["n"] == 3
+
+
+def test_transient_5xx_retryable_deterministic_4xx_not() -> None:
+    """Transient server/gateway 5xx retry; deterministic 4xx (e.g. 422) do not."""
+    for code in (500, 502, 503, 504, 520, 521, 522, 523, 524):
+        assert (
+            classify_retry(TransportFailure(kind="http_status", status_code=code))
+            == "timeout_class"
+        ), code
+    assert (
+        classify_retry(TransportFailure(kind="http_status", status_code=429))
+        == "rate_limit"
+    )
+    for code in (400, 401, 403, 404, 422):
+        assert (
+            classify_retry(TransportFailure(kind="http_status", status_code=code))
+            == "none"
+        ), code
