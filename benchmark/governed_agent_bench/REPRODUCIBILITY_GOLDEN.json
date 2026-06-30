@@ -1,7 +1,7 @@
 {
   "schema_version": "governed_agent_bench.reproducibility_golden.v2",
-  "generated_at_utc": "2026-05-24T12:04:32Z",
-  "git_sha": "023288fa73624b9ebbdace987dd2f052befc264d",
+  "generated_at_utc": "2026-06-30T16:38:27Z",
+  "git_sha": "b352158284f5b97987be56dfa855b65f86014aee",
   "reproducer_command": "uv run python benchmark/governed_agent_bench/reproduce_offline.py --output-dir <OUTPUT>",
   "expected_wall_time_seconds_observed": 76,
   "baseline_hardware": "Darwin 23.4.0 arm64; Apple M2",
@@ -9,12 +9,12 @@
     {
       "path": "evidence_tables/evidence_table.json",
       "normalize_absolute_paths": true,
-      "sha256": "4b664ce7d911167f52d7d683497adafd561a5c46dbf6e75c891aeaa724b66b47"
+      "sha256": "4536d453f35e42dae166ff2b2d4519b7c4dfa511f3fed9b2a66d924acd4f8d76"
     },
     {
       "path": "evidence_tables/evidence_table.csv",
       "normalize_absolute_paths": false,
-      "sha256": "4cc782375cbe31d242bc92e55964ce6a4ee60b272ec0c68800a56e61fdb5eb98"
+      "sha256": "183c81e3e5530bb86fffaca700efe0f3659f3d828a79449c6068a4713cf92d1c"
     },
     {
       "path": "error_taxonomy/error_taxonomy.json",

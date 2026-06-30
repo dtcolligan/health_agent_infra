@@ -192,6 +192,9 @@ def fixture_for_task(
         check=True,
         capture_output=True,
         text=True,
+        # C3: bound the fixture builder so a hung builder cannot stall the
+        # whole pilot indefinitely; a timeout surfaces as FixtureBuildError.
+        timeout=120,
     )
     return fixture_root
 

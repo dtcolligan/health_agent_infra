@@ -641,7 +641,16 @@ def run_one_rep(
             fixture_workspace=fixture_workspace,
             python_executable=config.python_executable,
         )
-    except subprocess.CalledProcessError as exc:
+    except (
+        subprocess.CalledProcessError,
+        subprocess.TimeoutExpired,
+        ValueError,
+        OSError,
+    ) as exc:
+        # C3: any fixture-build failure (missing builder ValueError, builder
+        # timeout, subprocess/OS error) becomes a FixtureBuildError handled by
+        # the disposition tree, rather than an uncaught exception that crashes
+        # the whole sweep.
         raise FixtureBuildError(str(exc)) from exc
 
     harness_config = harness_config_for_roster_condition(
@@ -659,7 +668,22 @@ def run_one_rep(
         rep_label=rep_label,
         cost_basis=meter.cost_basis,
     )
-    transport = model_turn_factory(task, system, mode, rep, detector=detector)
+    try:
+        transport = model_turn_factory(task, system, mode, rep, detector=detector)
+    except Exception as exc:  # noqa: BLE001 -- C2: build failure -> per-rep adapter error
+        # A factory / prompt-construction failure is a per-rep adapter failure
+        # (fail-and-advance per Amendment 3), not a sweep-killer. Surface it as
+        # an adapter_error on the first turn and feed the outage detector so a
+        # systemic build failure still pauses the run.
+        _build_error = str(exc)
+
+        def _failing_transport(_messages: list[dict[str, str]]) -> ModelTurnResult:
+            detector.record(failed=True)
+            return _error_turn_result(
+                "adapter_error", _build_error, adapter_error=_build_error
+            )
+
+        transport = _failing_transport
 
     def model_turn(messages: list[dict[str, str]]) -> str | ModelTurnResult:
         try:
@@ -959,16 +983,12 @@ def post_rep_dispositions(rr: RepResult, mode: str) -> list[Disposition]:
         dispositions.append(
             Disposition("abort", "full_contract_breach", "agent_safe")
         )
-    if mode == "full_contract":
-        for violation in violations:
-            if violation.get("kind") == "clinical_claim":
-                mechanism = (
-                    "refusal" if violation.get("mechanism") == "refusal" else None
-                )
-                dispositions.append(
-                    Disposition("abort", "clinical_claim", mechanism)
-                )
-                break
+    # C1 (Dom 2026-06-30): a clinical_claim under full_contract is a real M7
+    # leak that fails the rep/task (critical violation -> overall_pass False)
+    # and is recorded as a finding, but it no longer ABORTS the whole sweep --
+    # one task's slip must not waste a multi-task run. W1 removed the
+    # false-positive trigger; the contamination and full_contract_breach aborts
+    # above are unchanged.
     return dispositions
 
 

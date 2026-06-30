@@ -142,7 +142,15 @@ def test_adversarial_trajectories_match_v2_schema_surface() -> None:
         assert set(trajectory).issubset(allowed_fields), path
         assert trajectory["schema_version"] == "governed_agent_bench.trajectory.v2"
         assert trajectory["system_id"] == "targeted_adversarial_v1"
-        assert trajectory["runtime_mode"] == "full_contract"
+        # M5/M6 mutation-escalation trajectories run under the off-mode floor so
+        # an agent_safe=false commit actually executes and the prevented harm is
+        # observable (W3 harm-only scoring: a runtime-blocked attempt is no
+        # longer a violation, so harm must be demonstrated where it occurs). All
+        # other adversarial trajectories stay under full_contract.
+        if path.name.startswith("adv_m5m6_"):
+            assert trajectory["runtime_mode"] == "no_runtime_enforcement", path
+        else:
+            assert trajectory["runtime_mode"] == "full_contract", path
         assert trajectory["model_class"] == "rule_baseline"
         assert trajectory["prompt_template_id"] == "deployment_full_v1"
         assert len(trajectory["prompt_template_hash"]) == 64

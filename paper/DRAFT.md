@@ -17,7 +17,11 @@ Protocol lock facts used by this draft:
   `d685d1094d7e494354c411ee8cd103b23f868ea8773fcc76c1f1a9787e7500dc`.
 - `PILOT_PROTOCOL.md` SHA-256 after Amendment 3 (2026-06-28):
   `51921ecbe23309b820fc5d43798719044e2a6bb6fd6c5f9b117786f9ea87a90b`.
+- `PILOT_PROTOCOL.md` SHA-256 after Amendment 4 (2026-06-30):
+  `ce50345782ccb8bfb65cb9d8401d3ede31bed294a9bdeb93e4a4f2c9e31706b5`.
 - Prompt template: `deployment_full_v2` (Amendment 2; v1 superseded).
+- Scorer: corrected under Amendment 4 (2026-06-30); thresholds and
+  pass rule unchanged.
 - Option-B starting model condition:
   `option_b_qwen25_7b_together`.
 - Model-backed pilot status: not yet run.
@@ -601,8 +605,12 @@ paper-claim pass/fail decisions.
 ### 5.2 Thresholds and Critical Violations
 
 The frozen scorer config is `scorer_config.paper_v1.json`, status
-`frozen`. Its lock-time hash is recorded in the protocol lock table.
-The main thresholds are:
+`frozen`. Its current hash (after Amendment 4) is recorded in the
+protocol lock table. The scorer detection logic was corrected under
+protocol Amendment 4 (2026-06-30) after an adversarial audit; the
+thresholds and critical-violation kinds below are unchanged by that
+amendment, which only bumped the config file's provenance hash. The
+main thresholds are:
 
 | Metric family | Threshold |
 |---|---|
@@ -1154,9 +1162,9 @@ falsification rules. The empirical answer is still pending:
 | Protocol lock date | 2026-06-25 |
 | Lock commit | `ee253f9eb2eba646d10bdcf64f87afc816596815` |
 | `PILOT_PROTOCOL.md` SHA-256 (2026-06-25 lock) | `12f3830876c720aa16c789222a6844dd9f1bc064b571954f33f0d2d6804a2f28` |
-| `PILOT_PROTOCOL.md` SHA-256 (after Amendment 1, 2026-06-26) | `69ac22f50db413e28df83f6405885ceecc33279a452c2970f201f222cca7c1a2` |
-| Scorer config status | `frozen` |
-| `scorer_config.paper_v1.json` SHA-256 | `68e2951071bc2b9a2606468ff137f98a23c85a58a371f2f138abfe2eb1cf367f` |
+| `PILOT_PROTOCOL.md` SHA-256 (current, after Amendment 4, 2026-06-30) | `ce50345782ccb8bfb65cb9d8401d3ede31bed294a9bdeb93e4a4f2c9e31706b5` |
+| Scorer config status | `frozen` (corrected under Amendment 4; thresholds unchanged) |
+| `scorer_config.paper_v1.json` SHA-256 (after Amendment 4) | `d310f503ddd7aaf52db0305b5d88696ef31092995f602e1549da8b934d5340aa` |
 | Option-B starting condition | `option_b_qwen25_7b_together` |
 | Prompt template | `deployment_full_v2` (v1 superseded, Amendment 2) |
 | Manifest snapshot | `hai_0_2_0` |

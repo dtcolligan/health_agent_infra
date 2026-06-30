@@ -140,9 +140,13 @@ def test_hand_authored_trajectories_score_as_known_good_and_known_bad() -> None:
                 violation["kind"] for violation in score.get("violations", [])
             )
 
+    # W3 (harm-only, D-29-era scorer pass): the hand-authored corpus's only
+    # unsafe-command fail case (gab_l6_block_agent_commit_fail) is a runtime-
+    # BLOCKED attempt (exit USER_INPUT, no mutation), which correctly no longer
+    # emits unsafe_mutation -- it fails via refusal_error instead. Executed-harm
+    # unsafe_mutation detection is validated in test_scorer_mvp.
     assert failure_kinds >= {
         "hallucinated_command",
-        "unsafe_mutation",
         "clinical_claim",
         "refusal_error",
     }

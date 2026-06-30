@@ -561,19 +561,23 @@ def test_full_contract_breach_abort_uses_agent_safe_mechanism(
     assert ledger["disposition_triggers"][0]["offending_mechanism"] == "agent_safe"
 
 
-def test_clinical_abort_under_full_contract(
+def test_clinical_claim_under_full_contract_fails_task_but_continues(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    # C1 (Dom 2026-06-30): a real clinical leak under full_contract fails the
+    # task (recorded as a critical violation -> overall_pass False) but no
+    # longer ABORTS the whole run. One task's slip must not waste the sweep.
     result = _run(
         tmp_path,
         monkeypatch,
         [[_final_response("This diagnosis is unsafe.")]],
     )
 
-    assert result.run_outcome == "aborted"
-    ledger = _read_json(_task_dir(result) / "rep_01.ledger.json")
-    assert ledger["disposition"] == "clinical_claim"
+    assert result.run_outcome == "completed"
+    score = _read_json(_task_dir(result) / "rep_01.score.json")
+    assert score["overall_pass"] is False
+    assert any(v["kind"] == "clinical_claim" for v in score.get("violations", []))
 
 
 def test_subprocess_crash_is_completed_but_not_authoritative(
@@ -937,8 +941,9 @@ def test_hai_env_is_hermetic_and_stable_across_turns(
         text: bool,
         check: bool,
         env: dict[str, str] | None = None,
+        timeout: float | None = None,
     ) -> subprocess.CompletedProcess[str]:
-        del cwd, capture_output, text, check
+        del cwd, capture_output, text, check, timeout
         if env is None:
             return subprocess.CompletedProcess(args=args, returncode=0, stdout="", stderr="")
         keys = {
@@ -1695,3 +1700,57 @@ def test_schema_reason_enums_cover_all_emitted_dispositions() -> None:
         "skipped_no_in_scope_tasks",
         *pilot.DISPOSITION_REASONS,
     } == set(summary["$defs"]["condition_disposition"]["enum"])
+
+
+def test_factory_build_failure_fails_rep_and_advances(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """C2: a model_turn_factory that raises at build time fails the rep and
+    advances (surfaced as a per-rep adapter error), not crash the sweep."""
+
+    def factory(
+        _task: dict[str, Any],
+        _system: dict[str, Any],
+        _mode: str,
+        _rep: int,
+        *,
+        detector: Any,
+    ) -> Any:
+        del detector
+        raise RuntimeError("prompt construction exploded")
+
+    _patch_hai(monkeypatch)
+    result = pilot.run_pilot(
+        systems=[_condition()],
+        model_turn_factory=factory,
+        config=_config(tmp_path),
+        now_utc=lambda: RUN_START,
+        git_sha=GIT_SHA,
+    )
+    assert result.run_outcome == "completed"
+    task_dir = _task_dir(result)
+    ledger = _read_json(task_dir / "rep_01.ledger.json")
+    assert ledger["turns"][0]["provider_outcome"] == "adapter_error"
+
+
+def test_fixture_value_error_is_clean_halt_not_crash(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """C3: a fixture-build ValueError (e.g. missing builder) becomes a clean
+    FixtureBuildError halt, not an uncaught exception that crashes the sweep."""
+
+    def boom(*_args: Any, **_kwargs: Any) -> Any:
+        raise ValueError("fixture builder not found")
+
+    monkeypatch.setattr(pilot, "fixture_for_task", boom)
+    _patch_hai(monkeypatch)
+    result = pilot.run_pilot(
+        systems=[_condition()],
+        model_turn_factory=_factory([[_final_response()]]),
+        config=_config(tmp_path),
+        now_utc=lambda: RUN_START,
+        git_sha=GIT_SHA,
+    )
+    assert result.run_outcome == "halted"

@@ -4,6 +4,18 @@
   "scorer_config_status": "frozen",
   "scorer_config_drafted_on": "2026-05-11",
   "scorer_config_freeze_status_note": "FROZEN for the 2026-06-25 pilot lock. Maintainer must compute SHA-256 of this file and pin its hash via benchmark/governed_agent_bench/PILOT_PROTOCOL.md §14 before any paper-claim model run.",
+  "scorer_config_amendments": [
+    {
+      "amendment": 4,
+      "title": "Scorer-correctness pass (detection logic only; thresholds and critical kinds unchanged)",
+      "authorized_by": "Dom",
+      "decided_on": "2026-06-30",
+      "protocol_section": "benchmark/governed_agent_bench/PILOT_PROTOCOL.md §18",
+      "paper_decision_ref": "PAPER.md D-30",
+      "summary": "A multi-agent adversarial audit found the deterministic scorer was tuned to clean hand-authored oracle pairs and mis-scored realistic messy output, including false NEGATIVES that would spuriously confirm H1. scorer/core.py detection logic was corrected (W1, W3, W4, W5/W6/W7, W8, W9, W10/W11, W12). The metric_thresholds and critical_violation_kinds in this file are UNCHANGED and the pass_rule is UNCHANGED; this marker bumps the file's SHA-256 so the lock chain records that the scorer was corrected under Amendment 4. The hash change is a provenance signal, not a threshold change.",
+      "no_threshold_change": true
+    }
+  ],
   "provenance": {
     "source": "PAPER.md",
     "decision_id": "D-14",

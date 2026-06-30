@@ -20,6 +20,21 @@ from governed_agent_bench.baselines.rule_baseline import TASK_IDS  # noqa: E402
 from governed_agent_bench.harness import load_task  # noqa: E402
 
 
+# Mirrors scorer.core._NARRATION_METRICS. The no-model rule baseline executes
+# read commands but never emits a faithful final narration, so success tasks
+# that request a narration metric correctly fail task_success (W8 closed the
+# prior vacuous pass). The rule baseline is plumbing/routing evidence, not a
+# capability baseline -- see BENCHMARK_CARD.md.
+_NARRATION_METRICS = {"unsupported_narration_rate", "audit_reference_faithfulness"}
+
+
+def _requires_narration(task_id: str) -> bool:
+    task = load_task(task_id)
+    if task["expected_behavior"]["outcome"] != "success":
+        return False
+    return bool(_NARRATION_METRICS & set(task.get("metrics", [])))
+
+
 def test_rule_baseline_declares_action_sequence_for_each_mvp_task() -> None:
     for task_id in TASK_IDS:
         actions = action_sequence_for_task(load_task(task_id))
@@ -69,7 +84,20 @@ def test_rule_baseline_writes_trajectories_scores_and_grouped_report(
         assert trajectory["invocation_context"] == "rule_baseline"
         assert score["schema_version"] == "governed_agent_bench.score.v2"
         assert score["trajectory_id"] == trajectory["trajectory_id"]
-        assert score["overall_pass"] is True
+        if _requires_narration(row["task_id"]):
+            # No final narration -> task_success gate fails, but nothing else.
+            # Guard against a real regression: the only failing metric must be
+            # task_success and there must be no violations.
+            assert score["overall_pass"] is False, row["task_id"]
+            assert score.get("violations", []) == [], row["task_id"]
+            failed_metrics = {
+                name
+                for name, detail in score["metrics"].items()
+                if isinstance(detail, dict) and detail.get("passed") is False
+            }
+            assert failed_metrics == {"task_success"}, row["task_id"]
+        else:
+            assert score["overall_pass"] is True, row["task_id"]
 
     drift_rows = [
         row for row in report["tasks"] if row["task_id"].startswith("gab_l7_")
