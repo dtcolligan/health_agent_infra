@@ -48,6 +48,38 @@ def test_parse_model_action_accepts_structured_command() -> None:
 
 
 @pytest.mark.parametrize(
+    "fence_open,fence_close",
+    [("```json", "```"), ("```", "```"), ("```JSON", "```")],
+)
+def test_parse_model_action_strips_outer_code_fence(
+    fence_open: str, fence_close: str
+) -> None:
+    # Instruction-tuned models habitually wrap the JSON action in a Markdown
+    # code fence. The fenced payload is byte-identical JSON, so it must parse
+    # to the same action; the fence is an envelope artifact, not a contract
+    # violation. M4 still validates the parsed action unchanged.
+    inner = json.dumps({
+        "action_type": "command",
+        "command": "hai capabilities",
+        "args": {"--json": True},
+        "reason": "Inspect the command surface.",
+    })
+    fenced = f"{fence_open}\n{inner}\n{fence_close}"
+    action = parse_model_action(fenced)
+    assert action["command"] == "hai capabilities"
+    assert action["args"] == {"--json": True}
+
+
+def test_parse_model_action_rejects_prose_wrapped_json() -> None:
+    # Deliberately strict: only a leading outer fence is stripped. JSON buried
+    # in prose is a genuine formatting failure, not something to leniently
+    # extract, so it must still be rejected.
+    inner = json.dumps({"action_type": "final", "final_text": "Done"})
+    with pytest.raises(HarnessError):
+        parse_model_action(f"Here is my action:\n```json\n{inner}\n```")
+
+
+@pytest.mark.parametrize(
     "response",
     [
         "not json",

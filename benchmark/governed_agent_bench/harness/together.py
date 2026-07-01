@@ -45,6 +45,22 @@ TOGETHER_API_KEY_ENV = "TOGETHER_API_KEY"
 TOGETHER_CHAT_COMPLETIONS_URL = "https://api.together.xyz/v1/chat/completions"
 TOGETHER_DEFAULT_CONDITION_ID = "option_b_qwen25_7b_together"
 TOGETHER_DEFAULT_MODEL_ID = "Qwen/Qwen2.5-7B-Instruct-Turbo"
+# Track B (2026-07-01): the 7B is below the operating floor (contract friction,
+# not governance). Mistral Small 24B is the serverless mid-size candidate under
+# smoke-test evaluation. Explicit allowlist keeps the guard tight while allowing
+# the evaluated model. Any headline switch is ratified separately as an
+# amendment in the roster; this only unblocks the smoke.
+TOGETHER_MISTRAL_SMALL_24B_MODEL_ID = "mistralai/Mistral-Small-24B-Instruct-2501"
+# Mistral Small 24B has a 32k context, too tight for the full deployment-
+# realistic manifest prompt plus multi-turn history (same ceiling that forced
+# D-28). Gemma 4 31B is the serverless mid-size candidate with a large (256k)
+# context window; the prompt stays held-constant, only the model changes.
+TOGETHER_GEMMA4_31B_MODEL_ID = "google/gemma-4-31B-it"
+TOGETHER_ALLOWED_MODEL_IDS = frozenset({
+    TOGETHER_DEFAULT_MODEL_ID,
+    TOGETHER_MISTRAL_SMALL_24B_MODEL_ID,
+    TOGETHER_GEMMA4_31B_MODEL_ID,
+})
 SYNTHETIC_DATA_BOUNDARY = "synthetic_governed_agent_bench_fixtures_only"
 
 OUTCOME_EXECUTED = "executed"
@@ -583,9 +599,10 @@ def _api_key_from_env(env: Mapping[str, str]) -> str:
 def _ensure_together_condition(condition: dict[str, Any]) -> None:
     if condition.get("provider") != "Together AI":
         raise HarnessError("Together adapter requires provider='Together AI'")
-    if condition.get("model_id") != TOGETHER_DEFAULT_MODEL_ID:
+    if condition.get("model_id") not in TOGETHER_ALLOWED_MODEL_IDS:
         raise HarnessError(
-            f"Together adapter is scoped to {TOGETHER_DEFAULT_MODEL_ID!r}"
+            "Together adapter model_id must be one of "
+            f"{sorted(TOGETHER_ALLOWED_MODEL_IDS)}"
         )
     if condition.get("data_boundary") != SYNTHETIC_DATA_BOUNDARY:
         raise HarnessError("Together adapter requires synthetic benchmark data only")

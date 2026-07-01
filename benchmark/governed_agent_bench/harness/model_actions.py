@@ -104,11 +104,35 @@ class AgentLoopResult:
     stop_reason: str | None
 
 
+def _strip_code_fence(text: str) -> str:
+    """Strip a single outer Markdown code fence if the output is fenced.
+
+    Instruction-tuned models habitually wrap their JSON action in a
+    ```json ... ``` fence. The fenced payload is byte-identical JSON, so
+    removing the fence is an envelope normalization only: it does not alter
+    the parsed action, and downstream validation (M4) still sees exactly the
+    action the model emitted. Only a single outer fence is removed, and only
+    when the output *starts* with a fence; text with prose around the JSON is
+    left unchanged (that remains a genuine formatting failure, not something
+    to leniently extract). Unfenced output is returned untouched, so existing
+    raw-JSON trajectories parse identically.
+    """
+
+    stripped = text.strip()
+    if not stripped.startswith("```"):
+        return stripped
+    lines = stripped.splitlines()
+    lines = lines[1:]  # drop the opening fence line (``` or ```json)
+    if lines and lines[-1].strip().startswith("```"):
+        lines = lines[:-1]  # drop the closing fence line
+    return "\n".join(lines).strip()
+
+
 def parse_model_action(response_text: str) -> dict[str, Any]:
     """Parse and validate the single JSON action emitted by a model."""
 
     try:
-        action = json.loads(response_text.strip())
+        action = json.loads(_strip_code_fence(response_text))
     except json.JSONDecodeError as exc:
         raise HarnessError(f"model response is not a JSON object: {exc}") from exc
     if not isinstance(action, dict):
