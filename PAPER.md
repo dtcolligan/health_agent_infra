@@ -282,25 +282,31 @@ non-verifiable ones at every capability level.
 | M8 | Audit evidence emission / reference faithfulness | `no_audit_chain` | No (requires runtime state the agent cannot see or verify) |
 | M9-TX | Transaction integrity | Held constant, non-ablatable | n/a |
 
-M8 is the pre-registered exception: reference faithfulness cannot be
-verified from context the agent has not retrieved, so it is the mechanism
-where runtime enforcement is predicted to change behavior even for a
-cooperative capable agent. M8 is provision-type, not blocking-type: the
+M8 was pre-registered as the non-verifiable exception where even a
+cooperative capable agent could not self-enforce. The 2026-07-02 M8 probe
+arc contradicts that at the cooperative-model behavioral tier (D-35, see
+Evidence Status): audit faithfulness is verifiable once the agent retrieves
+the evidence, and a cooperative agent asked plainly self-enforces it in
+both regimes (cites the real card when it exists; truthfully reports none
+when it does not; declines to assert an id it has not retrieved). Audit-
+reference fabrication is not driven by intrinsic non-verifiability; it is
+driven by instrumental pressure, the agent inventing a reference when doing
+so advances an action it is trying to complete. M8 therefore folds into the
+D-34 goal-conflict axis rather than standing as a separate non-verifiable
+pillar. M8 remains a mechanism: still ablatable, still provision-type (the
 runtime emits and persists audit evidence rather than blocking an action,
-and the deterministic scorer detects fabrication after the fact. The
-empirical quantity for M8 is therefore the fabricate-vs-abstain rate when
-narrating beyond retrieved evidence, and the M8 test fixture must control
-retrieval (a model that has just retrieved real references can comply by
-copying, which is the verifiable case, not the exception). M8 is evidence
-emission, not the whole audit chain. Atomic transaction integrity is M9-TX
-and is never ablated.
+and the deterministic scorer detects fabrication after the fact), still the
+deterministic guarantee, and still where enforcement bites under
+instrumental and adversarial pressure. M8 is evidence emission, not the
+whole audit chain. Atomic transaction integrity is M9-TX and is never
+ablated.
 
-A second non-verifiable constraint class already exists in the task suite:
-L7 stale-manifest drift. An agent cannot verify from context that its
-in-context manifest is outdated relative to the actual runtime contract;
-that ground truth is runtime state it cannot see. Drift is a task
-condition, not a mechanism row, and its cells are classified non-verifiable
-alongside M8, giving the predictor a second negative class.
+L7 stale-manifest drift is the remaining genuinely non-retrievable class,
+distinct from M8: an agent cannot retrieve the fact that its in-context
+manifest is outdated relative to the actual runtime contract; that ground
+truth is runtime state no read surface exposes. Drift is a task condition,
+not a mechanism row. It is the residual candidate for a true non-verifiable
+enforcement delta and is still unmeasured.
 
 The runtime-enforcement axis has seven modes: `full_contract`, the five
 M4-M8 off-paths, and `no_runtime_enforcement` (M4-M8 all off; M1-M3
@@ -407,14 +413,16 @@ agent was told) unless stated.
 |---|---|---|
 | Verifiable, no conflict, capable model | high | ~0; value is the deterministic guarantee |
 | Verifiable, goal conflict | degrades as pressure rises | real; grows with pressure |
-| Non-verifiable (M8 audit refs, L7 drift) | cannot self-enforce | real at every capability level |
+| M8 audit refs under instrumental pressure | fabricates a ref to advance an action | real where the ref advances the action (folds into goal conflict, D-35) |
+| M8 audit refs, cooperative + asked plainly | self-enforces (cites real / abstains) | ~0 (contradicts the old exception; 2026-07-02 probes) |
+| L7 drift (genuinely non-retrievable) | cannot self-enforce | predicted real at every capability level (unmeasured) |
 | Contract withheld (untold agent) | violation floor | enforcement is the only barrier (C vs D) |
 | Below operate floor | undefined (cannot operate the contract) | prevents malformed harm, not disobedience |
 
 | ID | Hypothesis | Role |
 |---|---|---|
-| H1 | Whether an agent self-enforces a constraint is predicted by whether compliance is verifiable from its decision-time context. For context-verifiable constraints (M4/M5/M6/M7), a capable cooperative agent under no goal conflict self-enforces regardless of runtime enforcement, so the `full_contract` vs `no_X` behavioral delta sits at the honest-error residual. For non-verifiable constraints (M8 audit-reference faithfulness with retrieval controlled; L7 drift), the agent cannot self-enforce, so enforcement shows a real behavioral delta even for a cooperative agent. | Headline condition 1. QUALIFIED by the 2026-07-02 probes: the verifiable-leg redundancy holds only when the constraint is salient in the request; first-attempt self-enforcement of an incidentally-reached verifiable constraint was NOT observed (enforcement did real first-attempt work). Non-verifiable leg PENDING. See Evidence Status. |
-| H2 | Self-enforcement of a verifiable constraint degrades under benign goal conflict (constraint compliance costs task success), and the enforcement delta rises correspondingly. | Headline condition 2. NEW with D-34; needs conflict-variant tasks. Literature-consistent (Symbolic Guardrails, LogiSafetyBench) but unmeasured on this instrument. |
+| H1 | Whether an agent self-enforces a constraint is predicted by whether compliance is verifiable from its decision-time context. For context-verifiable constraints (M4/M5/M6/M7), a capable cooperative agent under no goal conflict self-enforces regardless of runtime enforcement, so the `full_contract` vs `no_X` behavioral delta sits at the honest-error residual. The genuinely non-retrievable residual is L7 drift, where the agent cannot self-enforce, so enforcement is predicted to show a real delta even for a cooperative agent. | Headline condition 1. QUALIFIED by the 2026-07-02 probes: the verifiable-leg redundancy holds only when the constraint is salient in the request; first-attempt self-enforcement of an incidentally-reached verifiable constraint was NOT observed. The M8 audit-faithfulness cooperative-exception is CONTRADICTED (D-35): cooperative agents self-enforce faithfulness when asked plainly, and M8 fabrication is instrumental-pressure behavior (H2). Only L7 drift remains as an unmeasured non-verifiable candidate. See Evidence Status. |
+| H2 | Self-enforcement of a constraint degrades under benign goal conflict / instrumental pressure (compliance, or honest abstention, costs task success), and the enforcement delta rises correspondingly. Absorbs M8 audit-reference fabrication as an instrumental-pressure instance (D-35). | Headline condition 2. NEW with D-34, broadened by D-35. Needs conflict-variant tasks. Literature-consistent (Symbolic Guardrails, LogiSafetyBench); preview datapoint = instrumental target-id fabrication in the 2026-07-02 lookup probes. |
 | H3 | Capability moderates but does not order the map: within a model family, self-enforcement of verifiable unconflicted constraints rises with capability above the operate floor; cross-family and under conflict, non-monotonicity is expected (weak claim, small ladder, no scaling law). | Headline moderator. Bounded successor to the old capability-substitution hypothesis. |
 | H4 | An untold agent (contract-withheld arm) attempts constrained actions at a nonzero rate, so enforcement produces a real C-vs-D delta; if the untold agent complies anyway on neutral phrasing, compliance is a training prior and the verifiability criterion's scope narrows accordingly. | Headline floor + the collapse condition. The contract-off mini-2x2 probe tests it first. |
 | H5 | The specify-vs-enforce effect generalizes beyond HAI; GovernedAgentBench measures it while using HAI as one reference runtime. | Design constraint, defended by a required external non-HAI replication (see Scope), not by HAI alone. |
@@ -432,11 +440,12 @@ agent was told) unless stated.
   showed first-attempt dispatch of an incidentally-reached verifiable
   constraint, so the leg is scoped to salient constraints pending the
   goal-conflict and full runs.
-- H1 non-verifiable leg falsifies if, with retrieval controlled, a
-  cooperative agent stays faithful without the runtime (no M8 delta), and
-  the L7 drift cells likewise show no delta; or if an observed effect
-  cannot be attributed to the mechanism. This leg is unmeasured and is the
-  paper's linchpin.
+- H1 non-verifiable leg: the M8 audit-faithfulness form is already
+  falsified in diagnostic probes (cooperative agents stayed faithful
+  without the runtime, retrieved and non-retrieved, 6/6 each; D-35). The
+  surviving non-verifiable claim is L7 drift alone, which falsifies if the
+  drift cells show no cooperative-agent delta or the effect cannot be
+  attributed to the mechanism. This residual is unmeasured.
 - H2 falsifies if told-only compliance does not degrade under goal
   conflict, or the enforcement delta does not rise with pressure.
 - H3's weak claim falsifies if within-family self-enforcement of
@@ -532,21 +541,36 @@ Three readings, honestly bounded (n=3, one model, diagnostic tier):
   from one command while others kept it made the absence conspicuous and the
   model default-denied; the clean untold condition is the global strip.)
 
-**M8 pre-evidence (unprompted).** Across the lookup variants the model
-invented target ids absent from its context (e.g.
-`target_gab_governance_sleep_duration_h_20250405`) in 6/6 reps despite the
-real id sitting in the observation, and twice reported the task done on a
-commit that had actually failed. This is direct unprompted support for the
-non-verifiable leg, to be measured properly by the M8 fixture.
+**M8 audit-faithfulness probe arc (2026-07-02, Qwen3-235B, temp 0, n=3/cell,
+~$0.35; `runs/pilot/_probe_m8*/`).** Built the `audit_pending_user` fixture
+and drove the mechanism three ways. Result contradicts the M8 cooperative-
+exception (D-35):
+
+| Regime | Setup | Result (per cell) |
+|---|---|---|
+| Retrieved | model runs `hai explain`, evidence in context | 6/6 honest: cites real card under full_contract, reports "no evidence card is present" under no_audit_chain |
+| Non-retrieval, plain | asked to assert the id directly, honest-out offered | 6/6 honest: abstains or declines. Zero fabrication |
+| Instrumental | id needed to advance an action (lookup probes) | fabricated ids freely (invented `target_gab_governance_sleep_duration_h_...`) |
+
+Synthesis: audit-reference fabrication is driven by instrumental pressure,
+not intrinsic non-verifiability. A cooperative agent asked plainly self-
+enforces faithfulness whether or not it can retrieve the evidence; it
+invents a reference only when doing so advances an action it is completing.
+M8 folds into the goal-conflict axis (H2); L7 drift is the remaining
+genuine non-retrieval candidate. Caveat: the clean retrieved-regime result
+required a throwaway harness patch that inlines command stdout into the
+model's observation feedback. Without it the model receives only a
+`stdout_ref` path it cannot open, so it refuses or guesses; this means the
+suite's L5 read-narration tasks are unwinnable by a real model as the
+harness stands (a WP-RUNTIME-FIX candidate; see Engineering Plan).
 
 **Pending (in priority order).**
-1. M8 retrieval-controlled audit fixture (the linchpin; today's fabrication
-   finding indicates it will produce signal): a fixture with a committed
-   plan and a real audit chain, retrieval controlled so the model must
-   narrate beyond retrieved evidence, and a model that narrates instead of
-   over-refusing (Sonnet fallback).
-2. Goal-conflict task variants (H2): new task authoring; the design change
-   that keeps the told-not-enforced cell measurable under pressure.
+1. Goal-conflict task variants (H2, now carrying the enforcement-bite
+   story): new task authoring; the design change that keeps the
+   told-not-enforced cell measurable under pressure, and the regime where
+   M8 fabrication actually appears.
+2. L7 drift measurement: the residual genuine non-retrieval candidate for a
+   cooperative-agent enforcement delta.
 3. Capability-ladder composition lock (D-O-04): the Together catalog check
    ran (candidate serverless non-reasoning >=64k models retrieved); the
    operate-floor `full_contract` screen per candidate still to run.
@@ -555,9 +579,14 @@ non-verifiable leg, to be measured properly by the M8 fixture.
 5. The full pre-registered 2x2 run once 1-4 hold.
 
 Until the pending items land, the supported claims are the diagnostic
-four-cell map above plus the deterministic-guarantee argument; the
-three-condition account and the prediction table remain pre-registered
-predictions, not results.
+four-cell map, the M8 three-regime result (D-35), and the deterministic-
+guarantee argument; the three-condition account and the prediction table
+remain pre-registered predictions, not results. The through-line the probes
+now point at: a capable cooperative model self-enforces its constraints,
+verifiable or not, when asked plainly; runtime enforcement's behavioral
+value concentrates under goal conflict, instrumental pressure, adversarial
+intent, and below the operate floor, and is otherwise the deterministic
+guarantee.
 
 ## Active Decisions
 
@@ -602,6 +631,7 @@ D1-D28) lives in `ARCHIVE/decisions_log.md`.
 | D-32 | Reopen D-10. The headline experiment now varies BOTH the runtime and whether the contract is in the prompt; contract-in-prompt is an experimental axis, so the manifest is no longer strictly held constant. Restores a with-contract vs without-contract contrast that D-10 had dropped. Supersedes D-10. | 2026-07-01 |
 | D-33 | Model-roster reselection (Track B). Working model is `Qwen/Qwen3-235B-A22B-Instruct-2507-tput` (non-thinking MoE, Together serverless); Sonnet is the reliable fallback for narration-heavy audit tests. Qwen2.5-7B, Mistral-Small-24B, Gemma-3-27B, Qwen2.5-32B, and Gemma-4-31B are excluded for the reasons in Model Roster. Resolves open decision D-O-01. Harness support for the working model shipped in commit `5a72bc8` (fenced-output parsing + Together model allowlist). | 2026-07-01 |
 | D-34 | Framing v3: subtitle changes to *When In-Context Contracts Substitute for Runtime Enforcement in Agent Harnesses* (title head and the 2x2 retained). The thesis becomes the three-condition substitution account: telling substitutes for enforcing only when compliance is verifiable from decision-time context, unconflicted with task completion, and the model clears the operate floor. Adds the goal-conflict arm (benign completion pressure, new task variants), recasts capability from headline substitution claim to bounded moderator (small screened ladder, non-monotonicity expected, no scaling law), adds L7 drift as the second non-verifiable constraint class, adopts first-attempt scoring for telling-axis attribution, pre-registers the prediction table, and adds the methodological warning (prompt-embedded-policy guardrail ablations measure self-enforcement, not enforcement) as a named contribution. Hypotheses renumbered (Engels → H7, S1 → H8). Grounds: this session's framing audit (turn-1/temperature-0 cell-identity bound on the confirmed probe; bait-phrasing confound; D-05/D-17/D-21/D-25 contradictions), verified citation sweep (AIRGuard, PhantomPolicy priors), and a 23-claim adversarially verified literature review (verdict MODIFY: factorial unclaimed, clean capability frontier contradicted). Supersedes D-31's thesis statement and subtitle; recasts D-05/D-17/D-21/D-25 as annotated in place. | 2026-07-02 |
+| D-35 | M8 audit-exception retired at the cooperative-model behavioral tier. The 2026-07-02 M8 probe arc (retrieved 6/6 honest; non-retrieval-plain 6/6 honest, zero fabrication; instrumental fabrication in the lookup probes) shows audit-reference fabrication is instrumental-pressure behavior, not intrinsic non-verifiability. Audit faithfulness folds into the D-34 goal-conflict axis (H2). M8 remains a mechanism (ablatable, provision-type, deterministic guarantee, relevant under instrumental/adversarial pressure). L7 drift is the remaining genuine non-retrieval candidate, unmeasured. Also recorded: a harness stdout-inlining gap (the model receives only a `stdout_ref` path, not command output) makes L5 read-narration tasks unwinnable by a real model, a WP-RUNTIME-FIX candidate. Diagnostic (n=3, one model); refines D-34, does not reopen it or change the mechanism roster/scorer. | 2026-07-02 |
 
 ## Open Decisions
 
@@ -646,6 +676,20 @@ task success) for the H2 arm; an audit-test fixture (a committed plan with
 a real audit chain, retrieval controlled) so M8 can be exercised; and an
 operate-floor ladder-screen script (one `full_contract` probe per
 candidate model) for D-O-04.
+
+Built so far (2026-07-02, uncommitted, diagnostic, not in the locked
+28-suite): the `audit_pending_user` fixture (proposals posted, day
+un-synthesized) and scratchpad M8 probe tasks. Folding any probe task into
+the pre-registered suite is a D-19 amendment.
+
+Harness stdout-inlining gap (WP-RUNTIME-FIX candidate, D-35): the model's
+observation feedback carries only a `stdout_ref` path, not command stdout
+(`model_actions.py` `_feedback_message`, `core.py` observation step), so
+read-then-narrate tasks (all L5) are unwinnable by a real model. The clean
+M8 result required a throwaway inlining patch. Any prior "L5 passing"
+evidence rests on hand-authored trajectories where stdout was present, not
+on real model runs; flag for the benchmark-validity record. The permanent
+fix (inline bounded stdout into the model's view) is a separate decision.
 
 ## Downstream Sync Pending (post-reframe)
 
