@@ -1,8 +1,8 @@
 # HAI Reference Runtime
 
 HAI is the non-clinical personal-wellness reference runtime used by
-*Told or Enforced: Separating the Contributions of In-Context Contracts
-and Runtime Enforcement in Agent Harnesses* and GovernedAgentBench. It is
+*Told or Enforced: When In-Context Contracts Substitute for Runtime
+Enforcement in Agent Harnesses* and GovernedAgentBench. It is
 packaged as `health-agent-infra` and exposed through the local `hai` CLI.
 
 The paper does not evaluate HAI as a product. HAI is the concrete

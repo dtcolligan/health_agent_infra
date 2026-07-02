@@ -1,7 +1,7 @@
 # GovernedAgentBench
 
-Benchmark companion to *Told or Enforced: Separating the Contributions
-of In-Context Contracts and Runtime Enforcement in Agent Harnesses*.
+Benchmark companion to *Told or Enforced: When In-Context Contracts
+Substitute for Runtime Enforcement in Agent Harnesses*.
 Released as v1.0 on a GitHub tag alongside the 2026-09-30 arXiv preprint.
 
 GovernedAgentBench separates two levers per mechanism: whether a

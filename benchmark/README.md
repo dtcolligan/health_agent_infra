@@ -1,8 +1,8 @@
 # Benchmark Lane
 
 GovernedAgentBench is the benchmark companion to the preprint
-*Told or Enforced: Separating the Contributions of In-Context Contracts
-and Runtime Enforcement in Agent Harnesses*.
+*Told or Enforced: When In-Context Contracts Substitute for Runtime
+Enforcement in Agent Harnesses*.
 
 It separates two levers per mechanism: whether the constraint is specified
 in the in-context contract (the manifest in the prompt) and whether the

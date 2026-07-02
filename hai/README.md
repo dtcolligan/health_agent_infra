@@ -1,8 +1,8 @@
 # HAI Reference Runtime
 
 HAI is the pinned reference runtime for the preprint *Told or Enforced:
-Separating the Contributions of In-Context Contracts and Runtime
-Enforcement in Agent Harnesses*.
+When In-Context Contracts Substitute for Runtime Enforcement in Agent
+Harnesses*.
 
 The paper does not study HAI as a product. It uses HAI because the
 benchmark needs a concrete agent harness whose deterministic governance

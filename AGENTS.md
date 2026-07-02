@@ -7,8 +7,8 @@ and decisions live in `PAPER.md`. Read `PAPER.md` first.
 ## North Star
 
 This repo exists to ship one artifact: the arXiv preprint
-*Told or Enforced: Separating the Contributions of In-Context Contracts
-and Runtime Enforcement in Agent Harnesses* by 2026-09-30, with
+*Told or Enforced: When In-Context Contracts Substitute for Runtime
+Enforcement in Agent Harnesses* by 2026-09-30, with
 GovernedAgentBench v1.0 released beside it.
 
 The project is not a HAI product roadmap. HAI is the pinned reference
@@ -77,8 +77,13 @@ Default engineering lane today: **GovernedAgentBench**.
 
 - The headline experiment varies TWO levers, not one: whether the
   constraint is specified in the in-context contract, and whether the
-  runtime enforces it (the specify-vs-enforce 2x2, PAPER.md D-31/D-32).
-  It is not a single-axis runtime-mode ablation.
+  runtime enforces it (the specify-vs-enforce 2x2, PAPER.md
+  D-31/D-32/D-34). It is not a single-axis runtime-mode ablation. The 2x2
+  runs under three moderators: constraint verifiability, goal-conflict
+  pressure, and model capability (PAPER.md Experimental Design).
+- The goal-conflict arm is benign completion pressure (constraint
+  compliance costs task success), not adversarial injection. Injection
+  robustness is cited territory, not a claim of this paper.
 - Keep static oracle-pair evidence, live runtime probes, and
   model-backed trajectories clearly separated.
 - Mechanism inventory: M4 validation, M5 `agent_safe`, M6 W57

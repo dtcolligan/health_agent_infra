@@ -1,4 +1,4 @@
-# Told or Enforced: Separating the Contributions of In-Context Contracts and Runtime Enforcement in Agent Harnesses
+# Told or Enforced: When In-Context Contracts Substitute for Runtime Enforcement in Agent Harnesses
 
 An agent harness has **two ways to make an agent respect a constraint**:
 specify it in the prompt (an in-context contract), or enforce it in the
@@ -10,8 +10,8 @@ constraint-respecting behavior comes from being *told* versus being
 *enforced*, mechanism by mechanism, with a deterministic offline scorer.
 
 The repository exists to ship one artifact: the arXiv preprint
-*Told or Enforced: Separating the Contributions of In-Context Contracts
-and Runtime Enforcement in Agent Harnesses* by 2026-09-30, with
+*Told or Enforced: When In-Context Contracts Substitute for Runtime
+Enforcement in Agent Harnesses* by 2026-09-30, with
 GovernedAgentBench v1.0 released as a companion GitHub tag. HAI is the
 pinned reference runtime used to instantiate the contract; it is the
 instrument, not an active product roadmap.
@@ -50,12 +50,18 @@ The mechanisms toggled on the enforcement axis:
 `no_runtime_enforcement` disables M4-M8 together and is reported only
 as a sanity floor. M9-TX transaction integrity is held constant.
 
-The emerging finding: for a constraint a capable agent can verify from
-its context, it self-enforces whether or not the runtime does, so
-enforcement is behaviorally redundant there (though still a deterministic
-guarantee). The pre-registered exception is audit-reference faithfulness,
-which the agent cannot verify from context. This is work in progress; see
-`PAPER.md` "Evidence Status" for what is confirmed versus pending.
+The claim under test is that telling substitutes for enforcing only under
+three conditions: compliance is verifiable from the agent's decision-time
+context (audit-reference faithfulness and stale-manifest drift are the
+non-verifiable exceptions), compliance does not compete with completing
+the task (the 2x2 runs with and without benign goal-conflict pressure),
+and the model clears the floor of operating the contract at all. Where all
+three hold, enforcement is behaviorally redundant and its remaining value
+is the deterministic guarantee. Evidence so far is a bounded diagnostic
+observation (two capable models self-refusing a salient unconflicted
+constraint); the conditions themselves are pre-registered predictions
+under measurement. See `PAPER.md` "Evidence Status" for what is confirmed
+versus pending.
 
 ## What This Is And Is Not
 
@@ -90,10 +96,12 @@ trajectory JSON and deterministic offline scores.
   six synthetic fixtures, 28 tasks, seed trajectories, static isolation
   oracle pairs, targeted live isolation probes for M4-M8, and a
   deterministic rule baseline.
-- The reframe to the specify-vs-enforce 2x2 (D-31/D-32) is in progress.
-  The verifiable-redundancy finding is confirmed on diagnostic probes;
-  the audit exception, the contract-withheld arm, and an external
-  replication are pending. See `PAPER.md` "Evidence Status."
+- The specify-vs-enforce 2x2 with its three moderators (constraint
+  verifiability, goal-conflict pressure, model capability; D-31/D-32/D-34)
+  is in progress. Diagnostic probes support the verifiable leg in bounded
+  form; the audit exception, the contract-withheld arm, the goal-conflict
+  arm, the capability ladder, and an external replication are pending.
+  See `PAPER.md` "Evidence Status."
 - Model-backed paper claims must preserve the static/live/model-backed
   evidence split.
 - HAI is frozen as a product at v0.2.0 PyPI and serves only as the
