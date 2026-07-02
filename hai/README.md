@@ -1,13 +1,14 @@
 # HAI Reference Runtime
 
-HAI is the pinned reference runtime for the preprint *Measuring
-Deterministic Governance Mechanisms in Agent Harnesses*.
+HAI is the pinned reference runtime for the preprint *Told or Enforced:
+Separating the Contributions of In-Context Contracts and Runtime
+Enforcement in Agent Harnesses*.
 
 The paper does not study HAI as a product. It uses HAI because the
 benchmark needs a concrete agent harness whose deterministic governance
-mechanisms can be turned on and off under a fixed model and prompt.
-HAI v0.2.0 is frozen as the runtime snapshot the paper and
-GovernedAgentBench cite against.
+mechanisms can be turned on and off, and whose contract can be specified
+in or withheld from the prompt. HAI v0.2.0 is frozen as the runtime
+snapshot the paper and GovernedAgentBench cite against.
 
 Project-wide scope: [`/PAPER.md`](../PAPER.md). Operating contract for
 AI tools: [`/AGENTS.md`](../AGENTS.md).

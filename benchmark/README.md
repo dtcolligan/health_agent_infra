@@ -1,12 +1,14 @@
 # Benchmark Lane
 
 GovernedAgentBench is the benchmark companion to the preprint
-*Measuring Deterministic Governance Mechanisms in Agent Harnesses*.
+*Told or Enforced: Separating the Contributions of In-Context Contracts
+and Runtime Enforcement in Agent Harnesses*.
 
-It measures the harness layer directly: the model, prompt, task suite,
-manifest, and scorer are held constant while `runtime_mode` is varied.
-The treatment is the deterministic runtime contract; the scored
-responses are task success and contract-violation metrics.
+It separates two levers per mechanism: whether the constraint is specified
+in the in-context contract (the manifest in the prompt) and whether the
+runtime enforces it. The scored responses are task success and
+contract-violation metrics. (Detailed methodology docs are mid-sync to the
+2x2 design; see `PAPER.md` D-31/D-32 and "Downstream Sync Pending.")
 
 The benchmark lives at [`governed_agent_bench/`](governed_agent_bench/).
 The inner namespace is also the Python package and JSON schema-version

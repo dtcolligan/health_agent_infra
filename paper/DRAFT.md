@@ -1,4 +1,11 @@
-# Measuring Deterministic Governance Mechanisms in Agent Harnesses
+# Told or Enforced: Separating the Contributions of In-Context Contracts and Runtime Enforcement in Agent Harnesses
+
+> **STALE (2026-07-01): predates the D-31/D-32 reframe.** This draft still
+> describes the old single-axis mechanism-ablation framing. It is scheduled
+> for a full rewrite to the specify-vs-enforce 2x2 in the drafting phase.
+> `PAPER.md` (Title and Frame, Experimental Design, Hypotheses, Evidence
+> Status) is authoritative until then. Do not cite this draft's body as
+> current.
 
 Pre-results manuscript draft. This file is the active Markdown paper
 source until the project moves to LaTeX. Empirical results from the

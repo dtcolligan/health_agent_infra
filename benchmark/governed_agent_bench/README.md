@@ -1,14 +1,14 @@
 # GovernedAgentBench
 
-Benchmark companion to *Measuring Deterministic Governance Mechanisms
-in Agent Harnesses*. Released as v1.0 on a GitHub tag alongside the
-2026-09-30 arXiv preprint.
+Benchmark companion to *Told or Enforced: Separating the Contributions
+of In-Context Contracts and Runtime Enforcement in Agent Harnesses*.
+Released as v1.0 on a GitHub tag alongside the 2026-09-30 arXiv preprint.
 
-GovernedAgentBench treats the agent harness as the experimental
-intervention surface. It holds the model, prompt, manifest, task suite,
-and scorer fixed, then varies only `runtime_mode` to measure whether
-specific deterministic runtime mechanisms are load-bearing for
-constraint-respecting behavior.
+GovernedAgentBench separates two levers per mechanism: whether a
+constraint is specified in the in-context contract and whether the runtime
+enforces it, measuring how much constraint-respecting behavior comes from
+being told versus being enforced. (The detailed methodology sections below
+are mid-sync to this 2x2 framing; `PAPER.md` D-31/D-32 is authoritative.)
 
 Project-wide scope, calendar, and decisions: [`/PAPER.md`](../../PAPER.md).
 Full benchmark specification: [`SPEC.md`](SPEC.md). Task authoring:

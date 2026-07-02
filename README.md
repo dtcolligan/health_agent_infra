@@ -1,18 +1,20 @@
-# Measuring Deterministic Governance Mechanisms in Agent Harnesses
+# Told or Enforced: Separating the Contributions of In-Context Contracts and Runtime Enforcement in Agent Harnesses
 
-This project treats the **agent harness, not the model, as the
-experimental intervention surface**.
+An agent harness has **two ways to make an agent respect a constraint**:
+specify it in the prompt (an in-context contract), or enforce it in the
+runtime (a guardrail). Real systems do both, and rarely ask when one
+substitutes for the other.
 
-GovernedAgentBench measures deterministic governance mechanisms in
-agent harnesses by holding the model and prompt fixed, varying only the
-runtime contract, and scoring whether specific software-enforced
-mechanisms are load-bearing for constraint-respecting agent behavior.
+GovernedAgentBench separates the two. It measures how much of an agent's
+constraint-respecting behavior comes from being *told* versus being
+*enforced*, mechanism by mechanism, with a deterministic offline scorer.
 
 The repository exists to ship one artifact: the arXiv preprint
-*Measuring Deterministic Governance Mechanisms in Agent Harnesses* by
-2026-09-30, with GovernedAgentBench v1.0 released as a companion
-GitHub tag. HAI is the pinned reference runtime used to instantiate the
-contract; it is not an active product roadmap.
+*Told or Enforced: Separating the Contributions of In-Context Contracts
+and Runtime Enforcement in Agent Harnesses* by 2026-09-30, with
+GovernedAgentBench v1.0 released as a companion GitHub tag. HAI is the
+pinned reference runtime used to instantiate the contract; it is the
+instrument, not an active product roadmap.
 
 [![PyPI](https://img.shields.io/pypi/v/health-agent-infra)](https://pypi.org/project/health-agent-infra/)
 [![Tests](https://img.shields.io/badge/tests-2999_passing-green)](hai/verification/tests/)
@@ -22,43 +24,45 @@ contract; it is not an active product roadmap.
 ## The Experiment
 
 Most agent evaluations collapse model, prompt, tools, and runtime into
-one performance number. This project separates one layer: the
-deterministic software contract around the model.
+one performance number, and guardrail evaluations never check what the
+model would have done on its own. This project separates two levers with
+a 2x2 applied per mechanism:
 
-The primary experiment holds constant:
+- **Contract axis:** is the constraint specified in the in-context
+  contract (the manifest in the prompt), or withheld?
+- **Enforcement axis:** does the runtime enforce it, or not?
 
-- the model class;
-- the deployment-realistic prompt;
-- the manifest snapshot;
-- the task suite;
-- the deterministic scorer.
-
-It varies only `runtime_mode`. In `full_contract`, all deterministic
-governance mechanisms are active. In the ablation modes, one mechanism
-is disabled at a time:
-
-| ID | Mechanism | Off mode |
+|  | Runtime enforces | Runtime off |
 |---|---|---|
-| M4 | Typed-command and proposal validation | `no_validation` |
-| M5 | `agent_safe` dispatch refusal | `no_agent_safe` |
-| M6 | W57 proposal/commit user gate | `no_proposal_gate` |
-| M7 | Clinical-boundary and forbidden-request refusal | `no_refusal` |
-| M8 | Audit evidence emission | `no_audit_chain` |
+| **Contract in prompt** | deployment baseline | told, not enforced (self-enforcement) |
+| **Contract withheld** | enforced, not told | neither (violation floor) |
+
+The mechanisms toggled on the enforcement axis:
+
+| ID | Mechanism | Off mode | Context-verifiable? |
+|---|---|---|---|
+| M4 | Typed-command and proposal validation | `no_validation` | yes |
+| M5 | `agent_safe` dispatch refusal | `no_agent_safe` | yes |
+| M6 | W57 proposal/commit user gate | `no_proposal_gate` | yes |
+| M7 | Boundary and forbidden-request refusal | `no_refusal` | yes |
+| M8 | Audit evidence emission / reference faithfulness | `no_audit_chain` | no |
 
 `no_runtime_enforcement` disables M4-M8 together and is reported only
 as a sanity floor. M9-TX transaction integrity is held constant.
 
-The bounded claim is not that these mechanisms prove agent safety in
-general. It is that, in this fixed harness, task suite, prompt, model,
-and evidence tier, individual deterministic runtime mechanisms can be
-measured as load-bearing for reliable, constraint-respecting operation.
+The emerging finding: for a constraint a capable agent can verify from
+its context, it self-enforces whether or not the runtime does, so
+enforcement is behaviorally redundant there (though still a deterministic
+guarantee). The pre-registered exception is audit-reference faithfulness,
+which the agent cannot verify from context. This is work in progress; see
+`PAPER.md` "Evidence Status" for what is confirmed versus pending.
 
 ## What This Is And Is Not
 
 | This repo is | This repo is not |
 |---|---|
 | An AI-engineering study of agent-harness governance | A new model or prompting method |
-| A mechanism-level ablation of deterministic runtime contract code | A broad AI safety benchmark |
+| A study separating the in-context contract from runtime enforcement, per mechanism | A broad AI safety benchmark |
 | A reproducible benchmark with synthetic fixtures and offline scoring | A consumer health product evaluation |
 | A non-clinical reference runtime used to instantiate concrete mechanisms | Evidence of diagnosis, treatment, prescribing, or clinical quality |
 | A bounded empirical claim with separated evidence tiers | A universal causal claim about all agents or domains |
@@ -83,11 +87,15 @@ trajectory JSON and deterministic offline scores.
 - Preprint scope, title, mechanism inventory, threat model, hypotheses,
   calendar, and active decisions live in [`PAPER.md`](PAPER.md).
 - GovernedAgentBench has schemas, an offline scorer, harness code,
-  six synthetic fixtures, 28 pilot tasks, seed trajectories, static
-  isolation oracle pairs, targeted live isolation probes for M4-M8, and
-  a deterministic rule baseline.
-- Model-backed paper claims are pending the locked pilot workflow and
-  must preserve the static/live/model-backed evidence split.
+  six synthetic fixtures, 28 tasks, seed trajectories, static isolation
+  oracle pairs, targeted live isolation probes for M4-M8, and a
+  deterministic rule baseline.
+- The reframe to the specify-vs-enforce 2x2 (D-31/D-32) is in progress.
+  The verifiable-redundancy finding is confirmed on diagnostic probes;
+  the audit exception, the contract-withheld arm, and an external
+  replication are pending. See `PAPER.md` "Evidence Status."
+- Model-backed paper claims must preserve the static/live/model-backed
+  evidence split.
 - HAI is frozen as a product at v0.2.0 PyPI and serves only as the
   pinned reference runtime for the benchmark and preprint.
 

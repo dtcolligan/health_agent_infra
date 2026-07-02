@@ -7,8 +7,9 @@ and decisions live in `PAPER.md`. Read `PAPER.md` first.
 ## North Star
 
 This repo exists to ship one artifact: the arXiv preprint
-*Measuring Deterministic Governance Mechanisms in Agent Harnesses* by
-2026-09-30, with GovernedAgentBench v1.0 released beside it.
+*Told or Enforced: Separating the Contributions of In-Context Contracts
+and Runtime Enforcement in Agent Harnesses* by 2026-09-30, with
+GovernedAgentBench v1.0 released beside it.
 
 The project is not a HAI product roadmap. HAI is the pinned reference
 runtime used to instantiate and test the paper's runtime-contract
@@ -74,16 +75,21 @@ Default engineering lane today: **GovernedAgentBench**.
 
 ## Research Invariants
 
-- The headline experiment varies the runtime, not the prompt.
+- The headline experiment varies TWO levers, not one: whether the
+  constraint is specified in the in-context contract, and whether the
+  runtime enforces it (the specify-vs-enforce 2x2, PAPER.md D-31/D-32).
+  It is not a single-axis runtime-mode ablation.
 - Keep static oracle-pair evidence, live runtime probes, and
   model-backed trajectories clearly separated.
 - Mechanism inventory: M4 validation, M5 `agent_safe`, M6 W57
   proposal/commit gate, M7 refusal, M8 audit evidence emission, M9-TX
-  transaction integrity held constant.
+  transaction integrity held constant. M8 is the pre-registered
+  non-verifiable exception (PAPER.md Mechanism Inventory).
 - `no_runtime_enforcement` is a robustness sanity floor, not
   per-mechanism attribution evidence.
-- No model-backed trajectory runs until the pilot protocol and model
-  roster are explicitly locked by Dom.
+- No pre-registered model-backed run until the 2x2 design and model
+  roster are locked by Dom; diagnostic probes are allowed only under
+  explicit per-run Dom authorization.
 - No private health rows, live wearable exports, credentials, or
   maintainer personal data in benchmark fixtures, prompts, trajectories,
   reports, or reproducibility artifacts.

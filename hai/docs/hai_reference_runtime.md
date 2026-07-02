@@ -1,13 +1,13 @@
 # HAI Reference Runtime
 
 HAI is the non-clinical personal-wellness reference runtime used by
-*Measuring Deterministic Governance Mechanisms in Agent Harnesses* and
-GovernedAgentBench. It is packaged as `health-agent-infra` and exposed
-through the local `hai` CLI.
+*Told or Enforced: Separating the Contributions of In-Context Contracts
+and Runtime Enforcement in Agent Harnesses* and GovernedAgentBench. It is
+packaged as `health-agent-infra` and exposed through the local `hai` CLI.
 
 The paper does not evaluate HAI as a product. HAI is the concrete
-agent harness whose deterministic runtime mechanisms can be ablated
-under a fixed model and prompt.
+agent harness whose deterministic runtime mechanisms can be toggled, and
+whose contract can be specified in or withheld from the prompt.
 
 Paper-framing note: this file describes the HAI reference runtime;
 for active paper scope, calendar, and decisions, see

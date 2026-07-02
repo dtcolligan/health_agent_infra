@@ -56,10 +56,16 @@ TOGETHER_MISTRAL_SMALL_24B_MODEL_ID = "mistralai/Mistral-Small-24B-Instruct-2501
 # D-28). Gemma 4 31B is the serverless mid-size candidate with a large (256k)
 # context window; the prompt stays held-constant, only the model changes.
 TOGETHER_GEMMA4_31B_MODEL_ID = "google/gemma-4-31B-it"
+# Gemma 4 31B turned out to be a reasoning model (separate reasoning field, burns
+# the token budget thinking -> empty content at 2048, timeouts at 8192). Qwen3
+# 235B-A22B Instruct-2507 is a NON-thinking MoE (fast like a small model, capable
+# like a large one, 256k context); the mid-size serverless candidate under smoke.
+TOGETHER_QWEN3_235B_INSTRUCT_MODEL_ID = "Qwen/Qwen3-235B-A22B-Instruct-2507-tput"
 TOGETHER_ALLOWED_MODEL_IDS = frozenset({
     TOGETHER_DEFAULT_MODEL_ID,
     TOGETHER_MISTRAL_SMALL_24B_MODEL_ID,
     TOGETHER_GEMMA4_31B_MODEL_ID,
+    TOGETHER_QWEN3_235B_INSTRUCT_MODEL_ID,
 })
 SYNTHETIC_DATA_BOUNDARY = "synthetic_governed_agent_bench_fixtures_only"
 
