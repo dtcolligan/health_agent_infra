@@ -270,7 +270,7 @@ def run_agent_loop(
             })
             messages.append({
                 "role": "user",
-                "content": _feedback_message([steps[-1]]),
+                "content": _feedback_message([steps[-1]], config.output_dir),
             })
         else:
             append_operator_action_steps(parsed_action, config, state, steps)
@@ -279,7 +279,7 @@ def run_agent_loop(
                 appended_steps = steps[first_step_index:]
                 messages.append({
                     "role": "user",
-                    "content": _feedback_message(appended_steps),
+                    "content": _feedback_message(appended_steps, config.output_dir),
                 })
                 if _has_crash_observation(appended_steps):
                     turn_stop_reason = STOP_REASON_SUBPROCESS_CRASH
@@ -387,8 +387,41 @@ def _messages_from_rendered_prompt(rendered_prompt: str) -> list[dict[str, str]]
     ]
 
 
-def _feedback_message(steps: list[dict[str, Any]]) -> str:
-    return json.dumps({"steps": steps}, indent=2, sort_keys=True)
+FEEDBACK_STDOUT_MAX_CHARS = 24000
+
+
+def _read_observation_stdout(step: dict[str, Any], output_dir: Any) -> str | None:
+    """Read a bounded head of an observation's stdout artifact for the model.
+
+    The trajectory persists only ``stdout_ref`` (a path) to stay lean, but the
+    model must see command output to act on it (WP-RUNTIME-FIX: without this a
+    read-then-narrate task is unwinnable, since the agent receives only a file
+    reference it cannot open). Returns None when there is no artifact.
+    """
+
+    ref = step.get("stdout_ref")
+    if not ref or output_dir is None:
+        return None
+    try:
+        text = (Path(output_dir) / ref).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    if len(text) > FEEDBACK_STDOUT_MAX_CHARS:
+        text = text[:FEEDBACK_STDOUT_MAX_CHARS] + "\n...[truncated]"
+    return text
+
+
+def _feedback_message(
+    steps: list[dict[str, Any]], output_dir: Any = None
+) -> str:
+    enriched: list[dict[str, Any]] = []
+    for step in steps:
+        if step.get("step_type") == "observation" and "stdout" not in step:
+            stdout = _read_observation_stdout(step, output_dir)
+            if stdout is not None:
+                step = {**step, "stdout": stdout}
+        enriched.append(step)
+    return json.dumps({"steps": enriched}, indent=2, sort_keys=True)
 
 
 def _coerce_metadata_value(value: Any) -> int | float | None:

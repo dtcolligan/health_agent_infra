@@ -261,6 +261,16 @@ def test_agent_loop_feeds_observation_back_as_user_message(
     assert '"stdout_ref":' in feedback
     assert '"step_type": "mechanism_disabled"' in feedback
     assert '"mechanism": "validation"' in feedback
+    # WP-RUNTIME-FIX: the model must receive the command's actual stdout, not
+    # just a file reference it cannot open, or read-then-narrate tasks are
+    # unwinnable. The trajectory still persists only stdout_ref (lean).
+    feedback_obs = [
+        step
+        for step in json.loads(feedback)["steps"]
+        if step["step_type"] == "observation"
+    ]
+    assert feedback_obs and feedback_obs[0]["stdout"] == '{"ok": true}'
+    assert all("stdout" not in step for step in result.trajectory["steps"])
     assert [step["step_type"] for step in result.trajectory["steps"]] == [
         "command",
         "mechanism_disabled",
