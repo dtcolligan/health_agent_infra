@@ -328,7 +328,7 @@ def run_agent_loop(
             })
             messages.append({
                 "role": "user",
-                "content": _feedback_message([steps[-1]], config.output_dir),
+                "content": _feedback_message([steps[-1]], _feedback_stdout_dir(config)),
             })
         else:
             append_operator_action_steps(parsed_action, config, state, steps)
@@ -467,6 +467,15 @@ def _read_observation_stdout(step: dict[str, Any], output_dir: Any) -> str | Non
     if len(text) > FEEDBACK_STDOUT_MAX_CHARS:
         text = text[:FEEDBACK_STDOUT_MAX_CHARS] + "\n...[truncated]"
     return text
+
+
+def _feedback_stdout_dir(config: Any) -> Any:
+    """Observation-artifact dir to resolve stdout for the model, or None when
+    the harness is configured to hide tool output (blind-vs-sighted demo)."""
+
+    if getattr(config, "hide_stdout", False):
+        return None
+    return config.output_dir
 
 
 def _feedback_message(

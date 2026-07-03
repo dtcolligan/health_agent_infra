@@ -868,6 +868,7 @@ def test_fresh_fixture_workspace_per_rep(
         *,
         fixture_workspace: Path,
         python_executable: str,
+        runtime_mode: str = "full_contract",
     ) -> Path:
         assert python_executable == sys.executable
         fixture_workspace.mkdir(parents=True)
@@ -902,6 +903,7 @@ def test_fresh_fixture_workspace_per_cell(
         *,
         fixture_workspace: Path,
         python_executable: str,
+        runtime_mode: str = "full_contract",
     ) -> Path:
         del python_executable
         fixture_workspace.mkdir(parents=True)

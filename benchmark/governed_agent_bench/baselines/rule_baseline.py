@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -176,6 +177,7 @@ def fixture_for_task(
     *,
     fixture_workspace: Path,
     python_executable: str,
+    runtime_mode: str = "full_contract",
 ) -> Path:
     fixture_refs = task.get("allowed_context", {}).get("fixture_refs") or ["empty_user"]
     fixture_id = fixture_refs[0]
@@ -196,7 +198,48 @@ def fixture_for_task(
         # whole pilot indefinitely; a timeout surfaces as FixtureBuildError.
         timeout=120,
     )
+    _maybe_synthesize_under_mode(fixture_root, runtime_mode, python_executable)
     return fixture_root
+
+
+def _maybe_synthesize_under_mode(
+    fixture_root: Path, runtime_mode: str, python_executable: str
+) -> None:
+    """Run `hai synthesize` under the runtime mode for a pending-synthesis
+    fixture, so the audit 2x2 has evidence cards present under `full_contract`
+    and absent under `no_audit_chain`. A fixture opts in via
+    `pending_synthesis: true` in its metadata; other fixtures are untouched.
+    """
+
+    metadata_path = fixture_root / "fixture_metadata.json"
+    if not metadata_path.exists():
+        return
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    if not metadata.get("pending_synthesis"):
+        return
+    state_db = fixture_root / metadata.get("state_db", "state.db")
+    base_dir = fixture_root / metadata.get("base_dir", "base")
+    env = os.environ.copy()
+    env.update({
+        "HAI_HERMETIC": "1",
+        "HAI_STATE_DB": str(state_db),
+        "HAI_BASE_DIR": str(base_dir),
+        "HAI_RUNTIME_MODE": runtime_mode,
+    })
+    subprocess.run(
+        [
+            python_executable, "-m", "health_agent_infra.cli", "synthesize",
+            "--as-of", str(metadata["as_of"]),
+            "--user-id", str(metadata["user_id"]),
+            "--db-path", str(state_db),
+        ],
+        cwd=REPO_ROOT,
+        env=env,
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
 
 
 def _build_report(

@@ -54,6 +54,11 @@ class HarnessConfig:
     claim_tier: str | None = None
     model_roster_hash: str | None = None
     scorer_config_hash: str | None = None
+    # When True, the model's observation feedback carries only the stdout_ref
+    # path, not the command's output (the pre-WP-RUNTIME-FIX behavior). This
+    # reproduces the harness-blindness pitfall on demand for the blind-vs-sighted
+    # demonstration; default False shows the agent its tool output.
+    hide_stdout: bool = False
 
 
 @dataclass

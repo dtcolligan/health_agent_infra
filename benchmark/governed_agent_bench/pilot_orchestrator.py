@@ -640,6 +640,7 @@ def run_one_rep(
             task,
             fixture_workspace=fixture_workspace,
             python_executable=config.python_executable,
+            runtime_mode=mode,
         )
     except (
         subprocess.CalledProcessError,
