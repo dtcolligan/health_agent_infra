@@ -128,15 +128,73 @@ def _strip_code_fence(text: str) -> str:
     return "\n".join(lines).strip()
 
 
+def _extract_json_object(text: str) -> str | None:
+    """Return the first balanced top-level ``{...}`` substring, or None.
+
+    Envelope rescue for models that wrap their JSON action in prose (a common
+    cross-model formatting habit). This is envelope normalization only: the
+    extracted object is validated identically downstream, so M4 typed-command
+    validation is unchanged. Pure prose with no balanced object returns None
+    and remains a genuine formatting failure.
+    """
+
+    start = text.find("{")
+    if start == -1:
+        return None
+    depth = 0
+    in_str = False
+    escape = False
+    for i in range(start, len(text)):
+        ch = text[i]
+        if in_str:
+            if escape:
+                escape = False
+            elif ch == "\\":
+                escape = True
+            elif ch == '"':
+                in_str = False
+        elif ch == '"':
+            in_str = True
+        elif ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start : i + 1]
+    return None
+
+
 def parse_model_action(response_text: str) -> dict[str, Any]:
     """Parse and validate the single JSON action emitted by a model."""
 
+    text = _strip_code_fence(response_text)
     try:
-        action = json.loads(_strip_code_fence(response_text))
+        action = json.loads(text)
     except json.JSONDecodeError as exc:
-        raise HarnessError(f"model response is not a JSON object: {exc}") from exc
+        # Envelope rescue: a single JSON action wrapped in prose. Extraction
+        # does not alter the action (M4 still validates it exactly); pure prose
+        # with no balanced object stays a genuine failure.
+        extracted = _extract_json_object(text)
+        if extracted is None:
+            raise HarnessError(f"model response is not a JSON object: {exc}") from exc
+        try:
+            action = json.loads(extracted)
+        except json.JSONDecodeError as exc2:
+            raise HarnessError(
+                f"model response is not a JSON object: {exc2}"
+            ) from exc2
     if not isinstance(action, dict):
         raise HarnessError("model response must be one JSON object")
+
+    # Envelope normalization: an empty/null `final_text` on a command action
+    # carries no information. Drop it so the command is not rejected for a bare
+    # empty field. A non-empty final_text on a command stays a genuine failure
+    # (the model tried to both act and narrate).
+    if action.get("action_type") == "command" and action.get("final_text") in (
+        "",
+        None,
+    ):
+        action.pop("final_text", None)
 
     extra = sorted(set(action) - _ALLOWED_ACTION_FIELDS)
     if extra:

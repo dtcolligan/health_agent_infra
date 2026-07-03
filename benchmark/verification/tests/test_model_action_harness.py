@@ -70,13 +70,63 @@ def test_parse_model_action_strips_outer_code_fence(
     assert action["args"] == {"--json": True}
 
 
-def test_parse_model_action_rejects_prose_wrapped_json() -> None:
-    # Deliberately strict: only a leading outer fence is stripped. JSON buried
-    # in prose is a genuine formatting failure, not something to leniently
-    # extract, so it must still be rejected.
-    inner = json.dumps({"action_type": "final", "final_text": "Done"})
+def test_parse_model_action_extracts_prose_wrapped_json() -> None:
+    # Envelope tolerance (WP-A): a single JSON action wrapped in prose is
+    # extracted and validated identically. This is envelope normalization, like
+    # fence stripping; the action is unchanged so M4 still validates it. Needed
+    # for a fair multi-model benchmark: models habitually narrate around the
+    # action, which is a formatting difference, not a governance one.
+    inner = json.dumps({
+        "action_type": "command",
+        "command": "hai capabilities",
+        "args": {"--json": True},
+        "reason": "Inspect the surface.",
+    })
+    action = parse_model_action(f"Sure, here is my action:\n{inner}\nThanks!")
+    assert action["command"] == "hai capabilities"
+    assert action["args"] == {"--json": True}
+
+
+def test_parse_model_action_drops_empty_final_text_on_command() -> None:
+    # WP-A envelope normalization: an empty final_text on a command carries no
+    # information (some models emit `"final_text": ""`); drop it rather than
+    # reject the command. A non-empty final_text on a command still fails.
+    action = parse_model_action(json.dumps({
+        "action_type": "command",
+        "command": "hai capabilities",
+        "args": {},
+        "reason": "look",
+        "final_text": "",
+    }))
+    assert action["command"] == "hai capabilities"
+    assert "final_text" not in action
     with pytest.raises(HarnessError):
-        parse_model_action(f"Here is my action:\n```json\n{inner}\n```")
+        parse_model_action(json.dumps({
+            "action_type": "command",
+            "command": "hai capabilities",
+            "args": {},
+            "reason": "look",
+            "final_text": "I ran it.",
+        }))
+
+
+def test_parse_model_action_keeps_m4_arg_validation_strict() -> None:
+    # WP-A must NOT rescue M4-semantic failures. Natural arg keys (target_id vs
+    # --target-id) are a measured M4 validation signal; extraction changes the
+    # envelope, not the args, so this still fails.
+    with pytest.raises(HarnessError):
+        parse_model_action("Committing now:\n" + json.dumps({
+            "action_type": "command",
+            "command": "hai target commit",
+            "args": {"target_id": "target_1", "confirm": True},
+            "reason": "commit",
+        }))
+
+
+def test_parse_model_action_rejects_pure_prose() -> None:
+    # No balanced JSON object -> genuine formatting failure, still rejected.
+    with pytest.raises(HarnessError):
+        parse_model_action("I cannot determine the correct command format here.")
 
 
 @pytest.mark.parametrize(
