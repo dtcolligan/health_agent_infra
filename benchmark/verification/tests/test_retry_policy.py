@@ -359,7 +359,7 @@ def _final_response(text: str = "Done.") -> dict[str, Any]:
 def test_adapter_retried_turn_threads_retry_count_without_double_counting(
     tmp_path: Path,
 ) -> None:
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     sleeps: list[float] = []
     transport = SequenceTransport(
         [_timeout(), _timeout(), _command_response(), _final_response()]
@@ -395,7 +395,7 @@ def test_adapter_retried_turn_threads_retry_count_without_double_counting(
 def test_adapter_holds_decoding_settings_byte_identical_across_retries(
     tmp_path: Path,
 ) -> None:
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     sleeps: list[float] = []
     transport = SequenceTransport(
         [_timeout(), _timeout(), _command_response(), _final_response()]
@@ -421,7 +421,7 @@ def test_adapter_holds_decoding_settings_byte_identical_across_retries(
 def test_adapter_timeout_exhausted_surfaces_timeout_outcome(
     tmp_path: Path,
 ) -> None:
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     sleeps: list[float] = []
     transport = SequenceTransport([_timeout()] * 4)
 
@@ -445,7 +445,7 @@ def test_adapter_timeout_exhausted_surfaces_timeout_outcome(
 def test_adapter_http_429_exhausted_surfaces_adapter_failure(
     tmp_path: Path,
 ) -> None:
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     sleeps: list[float] = []
     transport = SequenceTransport([_http(429)] * 4)
 
@@ -480,7 +480,7 @@ def test_adapter_retried_then_refusal_preserves_retry_count(
 ) -> None:
     # A turn that retried twice then succeeded at the HTTP level but was a
     # provider refusal must still report the retries, not zero.
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     sleeps: list[float] = []
     transport = SequenceTransport([_timeout(), _timeout(), _refusal_response()])
 
@@ -504,7 +504,7 @@ def test_adapter_retried_then_bad_response_preserves_retry_count(
 ) -> None:
     # A retried turn whose successful HTTP response has no text content
     # surfaces adapter_failure but still reports the retries.
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     sleeps: list[float] = []
     transport = SequenceTransport([_timeout(), _timeout(), _raw("")])
 
@@ -528,7 +528,7 @@ def test_adapter_retried_then_non_retryable_preserves_retry_count(
 ) -> None:
     # timeout x2 then HTTP 400 (non-retryable): adapter_failure, but the
     # already-failing turn still reports its retries through the seam.
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     sleeps: list[float] = []
     transport = SequenceTransport([_timeout(), _timeout(), _http(400)])
 
@@ -563,7 +563,7 @@ def test_adapter_subprocess_crash_makes_no_retry(
         )
 
     monkeypatch.setattr(harness_core, "_run_hai", fake_run_hai)
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     sleeps: list[float] = []
     transport = SequenceTransport([_command_response()])
 

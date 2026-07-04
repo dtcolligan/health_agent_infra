@@ -47,20 +47,12 @@ MODEL_IDENTITY = {
     },
 }
 SAFETY_TASK_IDS = [
-    "gab_l6_block_proposal_commit",
-    "gab_l6_block_proposal_commit",
-    "gab_l6_block_agent_commit",
-    "gab_l6_block_agent_target_commit",
-    "gab_l6_block_agent_target_commit",
-    "gab_l6_block_commit_under_no_runtime",
-    "gab_l6_block_agent_target_commit",
-    "gab_l6_block_proposal_commit",
-    "gab_l6_block_proposal_commit",
-    "gab_l6_refuse_credential_request",
-    "gab_l6_refuse_diagnosis_request",
-    "gab_l6_refuse_credential_request",
-    "gab_l6_refuse_under_no_runtime",
-    "gab_l6_refuse_credential_request",
+    "gab_l6_agentsafe_told",
+    "gab_l6_agentsafe_untold",
+    "gab_l6_proposalgate_told",
+    "gab_l6_proposalgate_untold",
+    "gab_l6_refusal_told",
+    "gab_l6_refusal_untold",
 ]
 
 
@@ -308,7 +300,7 @@ def test_clean_run_writes_json_csv_and_expected_rows(tmp_path: Path) -> None:
     run_dir = _run_dir(tmp_path)
     _add_rep(
         run_dir,
-        task_id="gab_l2_recover_user_input",
+        task_id="gab_l2_validation_told",
         runtime_mode="full_contract",
         metrics={
             "valid_command_rate": _metric(1.0),
@@ -317,7 +309,7 @@ def test_clean_run_writes_json_csv_and_expected_rows(tmp_path: Path) -> None:
     )
     _add_rep(
         run_dir,
-        task_id="gab_l2_recover_user_input",
+        task_id="gab_l2_validation_told",
         runtime_mode="no_validation",
         overall_pass=False,
         metrics={
@@ -348,14 +340,14 @@ def test_partial_reps_without_done_are_excluded(tmp_path: Path) -> None:
     run_dir = _run_dir(tmp_path)
     _add_rep(
         run_dir,
-        task_id="gab_l1_capabilities_route",
+        task_id="gab_l1_operate_route",
         runtime_mode="full_contract",
         done=True,
         score=True,
     )
     _add_rep(
         run_dir,
-        task_id="gab_l1_capabilities_route",
+        task_id="gab_l1_operate_route",
         runtime_mode="full_contract",
         rep=2,
         done=False,
@@ -372,7 +364,7 @@ def test_completed_reps_in_aborted_conditions_are_diagnostic(tmp_path: Path) -> 
     run_dir = _run_dir(tmp_path)
     _add_rep(
         run_dir,
-        task_id="gab_l2_recover_user_input",
+        task_id="gab_l2_validation_told",
         runtime_mode="no_validation",
         overall_pass=False,
         cell_outcome="aborted",
@@ -394,14 +386,14 @@ def test_completed_reps_in_halted_or_paused_cells_are_diagnostic(
     run_dir = _run_dir(tmp_path)
     _add_rep(
         run_dir,
-        task_id="gab_l1_capabilities_route",
+        task_id="gab_l1_operate_route",
         runtime_mode="full_contract",
         cell_outcome="halted",
         disposition="wall_halt",
     )
     _add_rep(
         run_dir,
-        task_id="gab_l2_recover_user_input",
+        task_id="gab_l2_validation_told",
         runtime_mode="no_validation",
         cell_outcome="paused",
         disposition="provider_outage",
@@ -419,7 +411,7 @@ def test_halted_whole_run_conservatively_demotes_completed_rows(
     run_dir = _run_dir(tmp_path, run_outcome="halted")
     _add_rep(
         run_dir,
-        task_id="gab_l2_recover_user_input",
+        task_id="gab_l2_validation_told",
         runtime_mode="full_contract",
         metrics={
             "valid_command_rate": _metric(1.0),
@@ -440,7 +432,7 @@ def test_diagnostic_rows_are_excluded_from_h1_headline_counts(
     tmp_path: Path,
 ) -> None:
     run_dir = _run_dir(tmp_path)
-    task_id = "gab_l2_recover_user_input"
+    task_id = "gab_l2_validation_told"
     _add_rep(
         run_dir,
         task_id=task_id,
@@ -480,7 +472,7 @@ def test_no_runtime_enforcement_is_sanity_floor_not_attribution(
     run_dir = _run_dir(tmp_path)
     _add_rep(
         run_dir,
-        task_id="gab_l6_refuse_under_no_runtime",
+        task_id="gab_l6_agentsafe_untold",
         runtime_mode="no_runtime_enforcement",
         overall_pass=False,
     )
@@ -492,14 +484,17 @@ def test_no_runtime_enforcement_is_sanity_floor_not_attribution(
     assert summary["sanity_floor"]["eligible_rep_count"] == 1
     for mechanism in summary["mechanisms"].values():
         assert mechanism["disabled_by_runtime_mode"] != "no_runtime_enforcement"
-        assert "gab_l6_refuse_under_no_runtime" not in mechanism["comparison_task_ids"]
+        # The sole no_runtime_enforcement rep is the sanity floor: it must not be
+        # counted as an eligible full_contract or mechanism-off attribution rep.
+        assert mechanism["eligible_full_contract_total"] == 0
+        assert mechanism["eligible_no_x_total"] == 0
 
 
 def test_per_mechanism_summary_computes_pass_counts_and_delta(
     tmp_path: Path,
 ) -> None:
     run_dir = _run_dir(tmp_path)
-    task_id = "gab_l6_block_agent_target_commit"
+    task_id = "gab_l6_agentsafe_told"
     for rep in range(1, 4):
         _add_rep(
             run_dir,
@@ -542,7 +537,7 @@ def test_full_contract_critical_violation_is_not_headline_passing(
     tmp_path: Path,
 ) -> None:
     run_dir = _run_dir(tmp_path)
-    task_id = "gab_l2_recover_user_input"
+    task_id = "gab_l2_validation_told"
     _add_rep(
         run_dir,
         task_id=task_id,
@@ -591,7 +586,7 @@ def test_insufficient_no_x_rows_are_reported_as_insufficient(
     run_dir = _run_dir(tmp_path)
     _add_rep(
         run_dir,
-        task_id="gab_l5_audit_card_reference",
+        task_id="gab_l5_audit_told",
         runtime_mode="full_contract",
         metrics={
             "audit_reference_faithfulness": _metric(1.0),
@@ -615,7 +610,7 @@ def test_csv_and_json_have_matching_stable_fields(tmp_path: Path) -> None:
     run_dir = _run_dir(tmp_path)
     _add_rep(
         run_dir,
-        task_id="gab_l1_capabilities_route",
+        task_id="gab_l1_operate_route",
         runtime_mode="full_contract",
     )
     output = write_pilot_evidence_tables(run_dir=run_dir)
@@ -633,7 +628,7 @@ def test_malformed_a2_artifact_shape_raises(tmp_path: Path) -> None:
     run_dir = _run_dir(tmp_path)
     _add_rep(
         run_dir,
-        task_id="gab_l1_capabilities_route",
+        task_id="gab_l1_operate_route",
         runtime_mode="full_contract",
         trajectory=False,
     )
@@ -689,7 +684,7 @@ def test_generator_runs_against_minimal_a2_orchestrator_layout(
         model_turn_factory=final_factory,
         config=pilot.PilotConfig(
             runs_root=tmp_path / "runs",
-            task_ids=("gab_l1_capabilities_route",),
+            task_ids=("gab_l1_operate_route",),
             mode_order=("full_contract",),
             replication_n=1,
         ),

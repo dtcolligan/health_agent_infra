@@ -148,7 +148,7 @@ def _refusal_response() -> dict[str, Any]:
 
 
 def test_build_fireworks_request_uses_deployment_prompt() -> None:
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     condition = _condition()
 
     request, prompt_metadata = build_fireworks_chat_request(task, condition)
@@ -168,7 +168,7 @@ def test_build_fireworks_request_uses_deployment_prompt() -> None:
 def test_fireworks_request_model_override_sets_wire_model_only() -> None:
     # On-demand serving (D1): the deployment-qualified model string is
     # supplied at run time; the guard still validates the roster base id.
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     condition = _condition()
     deployment_model = f"{FIREWORKS_DEFAULT_MODEL_ID}#dom-pilot-deploy"
 
@@ -200,7 +200,7 @@ def test_fireworks_execution_rejects_unqualified_request_model(
     # None, empty/whitespace (which `request_model or base_id` would silently
     # fall back to the base id), and the non-serverless base id (even padded)
     # are rejected LOCALLY before any network call, independent of transport.
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     condition = _condition()
     config = _config(tmp_path, condition)
     transport = FakeTransport(_final_response("should not run"))
@@ -222,7 +222,7 @@ def test_fireworks_wire_model_provenance_classifies_and_hashes_distinctly(
 ) -> None:
     # R5: a router-form value classifies as "router"; distinct wire models
     # produce distinct hashes; the raw string never enters the report.
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     condition = _condition()
     router_model = "accounts/fireworks/routers/mock-router"
 
@@ -281,7 +281,7 @@ def test_fireworks_cost_estimate_reports_on_demand_semantics() -> None:
 def test_fireworks_adapter_records_raw_response_usage_cost_and_trajectory(
     tmp_path: Path,
 ) -> None:
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     condition = _condition()
     config = _config(tmp_path, condition)
     raw_responses = [_command_response(), _final_response()]
@@ -377,7 +377,7 @@ def test_fireworks_adapter_records_raw_response_usage_cost_and_trajectory(
 def test_fireworks_adapter_preserves_ordered_cross_turn_steps(
     tmp_path: Path,
 ) -> None:
-    task = load_task("gab_l2_recover_user_input")
+    task = load_task("gab_l2_validation_told")
     condition = _condition()
     config = _config(tmp_path, condition)
     transport = FakeTransport(
@@ -429,7 +429,7 @@ def test_fireworks_adapter_terminates_on_final_or_refusal(
     expected_step_type: str,
     expected_stop_reason: str,
 ) -> None:
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     condition = _condition()
     config = _config(tmp_path, condition)
     transport = FakeTransport(raw_response)
@@ -455,7 +455,7 @@ def test_fireworks_adapter_terminates_on_final_or_refusal(
 def test_fireworks_adapter_records_malformed_output_as_invalid_output(
     tmp_path: Path,
 ) -> None:
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     condition = _condition()
     config = _config(tmp_path, condition)
     transport = FakeTransport(
@@ -494,7 +494,7 @@ def test_fireworks_adapter_records_malformed_output_as_invalid_output(
 def test_fireworks_adapter_reads_api_key_from_environment_only(
     tmp_path: Path,
 ) -> None:
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     condition = _condition()
     config = _config(tmp_path, condition)
     transport = FakeTransport(_raw_fireworks_response("{}"))
@@ -556,7 +556,7 @@ def test_fireworks_adapter_reports_failure_outcomes(
     raw_expected: bool,
     expected_calls: int,
 ) -> None:
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     condition = _condition()
     config = _config(tmp_path, condition)
     sleeps: list[float] = []

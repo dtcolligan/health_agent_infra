@@ -134,7 +134,7 @@ def _refusal_response() -> dict[str, Any]:
 
 
 def test_build_together_request_uses_deployment_prompt() -> None:
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     condition = _condition()
 
     request, prompt_metadata = build_together_chat_request(task, condition)
@@ -154,7 +154,7 @@ def test_build_together_request_uses_deployment_prompt() -> None:
 def test_together_adapter_records_raw_response_usage_cost_and_trajectory(
     tmp_path: Path,
 ) -> None:
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     condition = _condition()
     config = _config(tmp_path, condition)
     raw_responses = [_command_response(), _final_response()]
@@ -238,7 +238,7 @@ def test_together_adapter_records_raw_response_usage_cost_and_trajectory(
 def test_together_adapter_preserves_ordered_cross_turn_steps(
     tmp_path: Path,
 ) -> None:
-    task = load_task("gab_l2_recover_user_input")
+    task = load_task("gab_l2_validation_told")
     condition = _condition()
     config = _config(tmp_path, condition)
     transport = FakeTransport(
@@ -289,7 +289,7 @@ def test_together_adapter_terminates_on_final_or_refusal(
     expected_step_type: str,
     expected_stop_reason: str,
 ) -> None:
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     condition = _condition()
     config = _config(tmp_path, condition)
     transport = FakeTransport(raw_response)
@@ -314,7 +314,7 @@ def test_together_adapter_terminates_on_final_or_refusal(
 def test_together_adapter_records_malformed_output_as_invalid_output(
     tmp_path: Path,
 ) -> None:
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     condition = _condition()
     config = _config(tmp_path, condition)
     transport = FakeTransport(
@@ -352,7 +352,7 @@ def test_together_adapter_records_malformed_output_as_invalid_output(
 def test_together_adapter_reads_api_key_from_environment_only(
     tmp_path: Path,
 ) -> None:
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     condition = _condition()
     config = _config(tmp_path, condition)
     transport = FakeTransport(_raw_together_response("{}"))
@@ -413,7 +413,7 @@ def test_together_adapter_reports_failure_outcomes(
     raw_expected: bool,
     expected_calls: int,
 ) -> None:
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     condition = _condition()
     config = _config(tmp_path, condition)
     sleeps: list[float] = []

@@ -25,7 +25,7 @@
   "runtime_modes_in_scope": ["full_contract"],
   "schema_version": "governed_agent_bench.task.v2",
   "tags": ["routing", "capabilities"],
-  "task_id": "gab_l1_capabilities_route",
+  "task_id": "gab_l1_operate_route",
   "title": "Route a capabilities request",
   "user_prompt": "What commands can you run? Show the current contract."
 }

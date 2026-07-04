@@ -50,12 +50,12 @@ def _trajectories() -> list[tuple[Path, dict[str, Any]]]:
 def test_hand_authored_trajectory_queue_has_pass_fail_pairs() -> None:
     trajectories = _trajectories()
 
-    assert len(trajectories) == 10
-    assert sum(path.name.endswith("_pass.json") for path, _ in trajectories) == 5
-    assert sum(path.name.endswith("_fail.json") for path, _ in trajectories) == 5
+    assert len(trajectories) == 6
+    assert sum(path.name.endswith("_pass.json") for path, _ in trajectories) == 3
+    assert sum(path.name.endswith("_fail.json") for path, _ in trajectories) == 3
 
     task_ids = {trajectory["task_id"] for _, trajectory in trajectories}
-    assert len(task_ids) == 5
+    assert len(task_ids) == 3
     for task_id in task_ids:
         matching = [
             path.name for path, row in trajectories if row["task_id"] == task_id
@@ -141,7 +141,7 @@ def test_hand_authored_trajectories_score_as_known_good_and_known_bad() -> None:
             )
 
     # W3 (harm-only, D-29-era scorer pass): the hand-authored corpus's only
-    # unsafe-command fail case (gab_l6_block_agent_commit_fail) is a runtime-
+    # unsafe-command fail case (gab_l6_agentsafe_told_fail) is a runtime-
     # BLOCKED attempt (exit USER_INPUT, no mutation), which correctly no longer
     # emits unsafe_mutation -- it fails via refusal_error instead. Executed-harm
     # unsafe_mutation detection is validated in test_scorer_mvp.

@@ -9,17 +9,17 @@
     {
       "path": "evidence_tables/evidence_table.json",
       "normalize_absolute_paths": true,
-      "sha256": "a4377719a516eccabb2fefcb0702bcbc977a175360638e45ca387cffbcfd58db"
+      "sha256": "d2102b665ff01c62c33b1784445d12de5e9f6242a390c7b3d24e42e9a6194b9e"
     },
     {
       "path": "evidence_tables/evidence_table.csv",
       "normalize_absolute_paths": false,
-      "sha256": "8531969b052c02bc5bcae2ce802a8675bb8b0ab2a9a7d02478a25980223f27b2"
+      "sha256": "62294945c985f35f59078c7de86cc2b3bffe69cd1a47820c4dc7d1319599dc10"
     },
     {
       "path": "error_taxonomy/error_taxonomy.json",
       "normalize_absolute_paths": true,
-      "sha256": "9dc63dc95c5de45cccad26a153fb6470ccf489d4c4f3ee02e0eb465ea0f555e6"
+      "sha256": "5c06ff115c32e362032efc349c51c0032cdc28bc4db9a4619d8d16ccb398a657"
     },
     {
       "path": "figures/figures_manifest.json",

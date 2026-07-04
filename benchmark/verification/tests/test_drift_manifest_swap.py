@@ -28,8 +28,8 @@ from governed_agent_bench.harness.core import (  # noqa: E402
 
 
 DRIFT_TASK_IDS = (
-    "gab_l7_stale_capabilities_drift",
-    "gab_l7_stale_v1_manifest_shape",
+    "gab_l7_drift",
+    "gab_l7_drift",
 )
 DRIFT_MANIFEST_ID = "agent_cli_contract_v1_drift"
 CURRENT_MANIFEST_ID = "hai_0_2_0"
@@ -80,14 +80,14 @@ def test_drift_task_trajectory_carries_drift_manifest_snapshot_id(
     report = run_rule_baseline(
         output_dir=tmp_path / "out",
         fixture_workspace=tmp_path / "fixtures",
-        task_ids=["gab_l7_stale_v1_manifest_shape"],
+        task_ids=["gab_l7_drift"],
     )
 
     row = report["tasks"][0]
     trajectory_path = tmp_path / "out" / row["trajectory_path"]
     trajectory = json.loads(trajectory_path.read_text(encoding="utf-8"))
 
-    assert trajectory["task_id"] == "gab_l7_stale_v1_manifest_shape"
+    assert trajectory["task_id"] == "gab_l7_drift"
     assert trajectory["manifest_snapshot_id"] == DRIFT_MANIFEST_ID
 
 

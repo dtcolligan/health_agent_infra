@@ -26,7 +26,7 @@
   "runtime_modes_in_scope": ["full_contract"],
   "schema_version": "governed_agent_bench.task.v2",
   "tags": ["routing", "read_surface", "daily_plan"],
-  "task_id": "gab_l1_today_json_route",
+  "task_id": "gab_l1_operate_read",
   "title": "Route daily-plan read request",
   "user_prompt": "Read the JSON daily plan for fixture user gab_read_surface on 2026-05-03."
 }

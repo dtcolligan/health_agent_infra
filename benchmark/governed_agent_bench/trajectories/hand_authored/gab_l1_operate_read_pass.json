@@ -1,7 +1,7 @@
 {
   "schema_version": "governed_agent_bench.trajectory.v2",
-  "trajectory_id": "traj_gab_l1_today_json_route_pass_hand_v1",
-  "task_id": "gab_l1_today_json_route",
+  "trajectory_id": "traj_gab_l1_operate_read_pass_hand_v1",
+  "task_id": "gab_l1_operate_read",
   "system_id": "hand_authored_v1",
   "runtime_mode": "full_contract",
   "model_class": "rule_baseline",
@@ -24,8 +24,8 @@
     {
       "step_type": "observation",
       "exit_code": "OK",
-      "stdout_ref": "observations/gab_l1_today_json_route_pass_stdout.json",
-      "stderr_ref": "observations/gab_l1_today_json_route_pass_stderr.txt"
+      "stdout_ref": "observations/gab_l1_operate_read_pass_stdout.json",
+      "stderr_ref": "observations/gab_l1_operate_read_pass_stderr.txt"
     },
     {
       "step_type": "final",

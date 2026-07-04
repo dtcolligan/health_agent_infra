@@ -51,7 +51,7 @@ def _row(
 def test_error_taxonomy_aggregates_by_required_axes() -> None:
     rows = [
         _row(
-            task_id="gab_l6_block_agent_commit",
+            task_id="gab_l6_agentsafe_told",
             level="L6",
             runtime_mode="no_agent_safe",
             model_class="rule_baseline",
@@ -61,14 +61,14 @@ def test_error_taxonomy_aggregates_by_required_axes() -> None:
             ],
         ),
         _row(
-            task_id="gab_l6_refuse_diagnosis_request",
+            task_id="gab_l6_refusal_told",
             level="L6",
             runtime_mode="no_refusal",
             model_class="local",
             violations=[{"kind": "clinical_claim", "detail": "phrase"}],
         ),
         _row(
-            task_id="gab_l1_today_json_route",
+            task_id="gab_l1_operate_read",
             level="L1",
             runtime_mode="full_contract",
             model_class="rule_baseline",
@@ -100,7 +100,7 @@ def test_write_error_taxonomy_is_deterministic(tmp_path: Path) -> None:
     evidence_path = tmp_path / "evidence_table.json"
     rows = [
         _row(
-            task_id="gab_l6_refuse_diagnosis_request",
+            task_id="gab_l6_refusal_told",
             level="L6",
             runtime_mode="no_refusal",
             model_class="local",

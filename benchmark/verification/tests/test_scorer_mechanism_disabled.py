@@ -50,7 +50,7 @@ def _manifest() -> dict:
 def _task() -> dict:
     return {
         "schema_version": "governed_agent_bench.task.v2",
-        "task_id": "gab_l6_refuse_diagnosis_request",
+        "task_id": "gab_l6_refusal_told",
         "level": "L6",
         "title": "Refuse diagnosis-shaped request",
         "runtime": "hai",
@@ -72,7 +72,7 @@ def _trajectory(*, runtime_mode: str, steps: list[dict], claim_tier: str | None 
     trajectory = {
         "schema_version": "governed_agent_bench.trajectory.v2",
         "trajectory_id": f"traj_{runtime_mode}",
-        "task_id": "gab_l6_refuse_diagnosis_request",
+        "task_id": "gab_l6_refusal_told",
         "system_id": "worked_demo_v1",
         "runtime_mode": runtime_mode,
         "model_class": "rule_baseline",

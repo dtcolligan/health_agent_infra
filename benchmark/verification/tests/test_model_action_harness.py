@@ -147,7 +147,7 @@ def test_parse_model_action_rejects_non_contract_shapes(response: str) -> None:
 
 
 def test_harness_requires_identity_for_model_backed_runs(tmp_path: Path) -> None:
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
 
     with pytest.raises(HarnessError, match="requires model_identity"):
         run_model_response_action(
@@ -169,7 +169,7 @@ def test_harness_requires_identity_for_model_backed_runs(tmp_path: Path) -> None
 def test_model_response_action_records_roster_identity_and_hash(
     tmp_path: Path,
 ) -> None:
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     condition = roster_condition("option_b_qwen25_7b_together")
     roster_hash = model_roster_hash()
     config = harness_config_for_roster_condition(
@@ -289,7 +289,7 @@ def test_agent_loop_feeds_observation_back_as_user_message(
         "runtime_mode": "no_validation",
     })
     _patch_hai_completed(monkeypatch, stderr=f"{marker}\n")
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     seen_messages: list[list[dict[str, str]]] = []
 
     result = run_agent_loop(
@@ -332,7 +332,7 @@ def test_agent_loop_feeds_observation_back_as_user_message(
 def test_agent_loop_records_invalid_output_and_feedback(
     tmp_path: Path,
 ) -> None:
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     seen_messages: list[list[dict[str, str]]] = []
 
     result = run_agent_loop(
@@ -355,7 +355,7 @@ def test_agent_loop_records_invalid_output_and_feedback(
 
 
 def test_agent_loop_stops_at_exactly_max_turns(tmp_path: Path) -> None:
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     calls = 0
 
     def model_turn(messages: list[dict[str, str]]) -> str:
@@ -385,7 +385,7 @@ def test_agent_loop_subprocess_crash_terminates_before_next_turn(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _patch_hai_completed(monkeypatch, returncode=99)
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     seen_messages: list[list[dict[str, str]]] = []
 
     result = run_agent_loop(
@@ -405,7 +405,7 @@ def test_agent_loop_after_turn_stop_signal_terminates(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _patch_hai_completed(monkeypatch)
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     seen_messages: list[list[dict[str, str]]] = []
     records_seen = []
 
@@ -469,7 +469,7 @@ def test_agent_loop_stamps_numeric_metadata_on_action_step(
         "runtime_mode": "no_validation",
     })
     _patch_hai_completed(monkeypatch, stderr=f"{marker}\n")
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     seen_messages: list[list[dict[str, str]]] = []
     turns = [
         ModelTurnResult(
@@ -537,7 +537,7 @@ def test_agent_loop_str_turn_stamps_present_none_metadata(
     action_index: int,
     action_type: str,
 ) -> None:
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     seen_messages: list[list[dict[str, str]]] = []
 
     result = run_agent_loop(
@@ -557,7 +557,7 @@ def test_agent_loop_str_turn_stamps_present_none_metadata(
 def test_agent_loop_coerces_non_numeric_metadata_to_none(
     tmp_path: Path,
 ) -> None:
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
     seen_messages: list[list[dict[str, str]]] = []
     turns = [
         ModelTurnResult(
@@ -586,7 +586,7 @@ def test_agent_loop_coerces_non_numeric_metadata_to_none(
 def test_run_model_response_action_omits_turn_metadata(
     tmp_path: Path,
 ) -> None:
-    task = load_task("gab_l1_capabilities_route")
+    task = load_task("gab_l1_operate_route")
 
     trajectory = run_model_response_action(
         task,
