@@ -143,22 +143,41 @@ The contribution sits at the intersection of four literatures:
 | Anchor | Role |
 |---|---|
 | Agent harnesses and scaffolding (ReAct, Toolformer, CoALA, SWE-agent ACI, the Agent Harness Engineering survey's ETCLOVG taxonomy) | Vocabulary for the harness / runtime an agent operates in; establishes the harness, not only the model, as a design surface that carries behavior. |
-| Runtime enforcement and guardrails for agents (AgentSpec, Invariant Guardrails, Guardrails AI, NeMo Guardrails, constrained decoding) | Direct contrast: existing enforcement is config- or LLM-based and is never measured against what the model would do on its own; we separate enforcement from self-enforcement. |
+| Runtime enforcement and guardrails for agents (AgentSpec, Invariant Guardrails, Guardrails AI, NeMo Guardrails, constrained decoding) | Direct contrast: existing enforcement is config- or LLM-based and is rarely measured against what the model would do on its own, and never crossed with a per-mechanism factorial or verifiability and goal-conflict moderators (ContextCov and Verifier Tax do measure enforced-vs-unenforced deltas; D-38); we separate enforcement from self-enforcement. |
 | Instruction / system-prompt adherence and in-context rule following (instruction hierarchy, system-prompt-following, spec-following work) | The other lever. This literature shows models can follow stated rules; it does not measure when that self-enforcement makes runtime enforcement redundant, mechanism by mechanism, against a deterministic ground truth. Distinguishing our claim from "LLMs follow instructions" is the primary review risk. |
 | Software contracts and capability security (design-by-contract, typed command schemas, the object-capability model) | The engineering substrate the in-context contract and the runtime both instantiate. |
 
 Closest neighbors (cite and distinguish in §2, all web-verified
 2026-07-02):
 
-- AIRGuard (arXiv 2605.28914): the single closest prior; measures a
-  prompt-only vs runtime-guard delta on one model, security-framed
-  (attack success rate). No factorial, no enforced-not-told cell, no
-  constraint-class analysis.
+- Closest-prior CLASS, not a single anointed neighbor (D-38 novelty
+  audit): at least seven papers now sit in the measured told-vs-enforced
+  class (AIRGuard, FORGE, TeamBench, ABSTAIN, Harness-MU, ContextCov,
+  Symbolic Guardrails), plus TRACE and Mechanical Enforcement on variants
+  of the same lever. On cell coverage ABSTAIN is closest (three of four
+  cells); on the enforced-not-told cell FORGE is closest; on the
+  negative-result shape TeamBench is closest. §2 must distinguish each,
+  never anoint one.
+- AIRGuard (arXiv 2605.28914): prompt-only vs runtime-guard delta,
+  security-framed (attack success rate). No factorial, no per-mechanism
+  isolation, no constraint-class analysis. Its single-model claim holds
+  only of the Table 2 ablation (GPT-5.4-mini); Table 1 spans four
+  backbones.
+- FORGE / PCAS (arXiv 2602.16708): the most direct enforced-not-told
+  instance found (Datalog reference monitor enforces, policy withheld
+  from the prompt). Distinguished: no told-and-enforced cell A (so no
+  redundancy/substitution measure), no neither-floor D, corrective
+  feedback makes its cell C a converged multi-turn condition not
+  first-attempt, one holistic policy per case study (no per-mechanism
+  inventory), enforcement-is-necessary framing not substitution.
 - PhantomPolicy (arXiv 2604.12177): formalizes "policy-invisible
   violations", constraints whose compliance depends on runtime state
   absent from the agent's context. We adopt their constraint-class
-  taxonomy and cross it with the enforcement axis; they hold enforcement
-  architecture as the manipulated variable and have no telling axis.
+  taxonomy and cross it with the enforcement axis. It runs a
+  policy-in-prompt condition (95.3%->40.7% risky-case violations, their
+  Tables 6/11) but never crosses telling with enforcement architecture:
+  the Sentinel/DLP guards always run over baseline not-told traces, so no
+  enforced-and-told vs enforced-and-not-told contrast exists.
 - Symbolic Guardrails (arXiv 2604.15579): frontier models violate
   policies explicitly stated in the system prompt at 20%+ under realistic
   task pressure; two models only, no ladder, no factorial.
@@ -171,8 +190,9 @@ Closest neighbors (cite and distinguish in §2, all web-verified
   trend and a capability-dependent effect of prompt-based guardrails; no
   enforcement axis.
 - SafePyramid (arXiv 2606.29887): in-context policy application degrades
-  with policy density even at the frontier; classifier setting, no agent
-  harness.
+  with policy reasoning complexity (L0/L1/L2: single-rule application,
+  cross-rule dependencies, novel policy adaptation) even at the frontier;
+  classifier setting, no agent harness.
 - Agent Behavioral Contracts (arXiv 2602.22302): runtime contracts
   C=(P,I,G,R), but specification and enforcement bundled, never
   separated.
@@ -189,12 +209,14 @@ Closest neighbors (cite and distinguish in §2, all web-verified
   accepted). Invariant Guardrails is now Snyk-owned; cite accordingly.
 
 Closest published benchmark prior: ST-WebAgentBench (Levy et al.,
-ICLR 2026); in-context policies only, single backbone, no enforcement
-lever.
+ICLR 2026); in-context policies only, three agent scaffolds (no shared
+backbone disclosed), no enforcement lever.
 
 Novelty is a CONJUNCTION, not any single first: the specify-vs-enforce
-2x2 including the enforced-not-told cell (verified unclaimed across the
-neighbors above) + per-mechanism isolation + the three-condition
+2x2 including the enforced-not-told cell (unclaimed only as a cell inside
+a crossed factorial, per mechanism, first-attempt scored, with a released
+scorer and benchmark; the cell itself is realized by FORGE and the
+Prompts Don't Protect governed proxy, D-38) + per-mechanism isolation + the three-condition
 substitution account (decision-time verifiability, goal conflict, operate
 floor) + the methodological warning that prompt-embedded-policy guardrail
 ablations measure self-enforcement + a deterministic offline scorer + a
@@ -687,6 +709,8 @@ D1-D28) lives in `ARCHIVE/decisions_log.md`.
 | D-34 | Framing v3: subtitle changes to *When In-Context Contracts Substitute for Runtime Enforcement in Agent Harnesses* (title head and the 2x2 retained). The thesis becomes the three-condition substitution account: telling substitutes for enforcing only when compliance is verifiable from decision-time context, unconflicted with task completion, and the model clears the operate floor. Adds the goal-conflict arm (benign completion pressure, new task variants), recasts capability from headline substitution claim to bounded moderator (small screened ladder, non-monotonicity expected, no scaling law), adds L7 drift as the second non-verifiable constraint class, adopts first-attempt scoring for telling-axis attribution, pre-registers the prediction table, and adds the methodological warning (prompt-embedded-policy guardrail ablations measure self-enforcement, not enforcement) as a named contribution. Hypotheses renumbered (Engels → H7, S1 → H8). Grounds: this session's framing audit (turn-1/temperature-0 cell-identity bound on the confirmed probe; bait-phrasing confound; D-05/D-17/D-21/D-25 contradictions), verified citation sweep (AIRGuard, PhantomPolicy priors), and a 23-claim adversarially verified literature review (verdict MODIFY: factorial unclaimed, clean capability frontier contradicted). Supersedes D-31's thesis statement and subtitle; recasts D-05/D-17/D-21/D-25 as annotated in place. | 2026-07-02 |
 | D-35 | M8 audit-exception retired at the cooperative-model behavioral tier. The 2026-07-02 M8 probe arc (retrieved 6/6 honest; non-retrieval-plain 6/6 honest, zero fabrication; instrumental fabrication in the lookup probes) shows audit-reference fabrication is instrumental-pressure behavior, not intrinsic non-verifiability. Audit faithfulness folds into the D-34 goal-conflict axis (H2). M8 remains a mechanism (ablatable, provision-type, deterministic guarantee, relevant under instrumental/adversarial pressure). L7 drift is the remaining genuine non-retrieval candidate, unmeasured. Also recorded: a harness stdout-inlining gap (the model receives only a `stdout_ref` path, not command output) makes L5 read-narration tasks unwinnable by a real model, a WP-RUNTIME-FIX candidate. Diagnostic (n=3, one model); refines D-34, does not reopen it or change the mechanism roster/scorer. **Instrumental/goal-conflict leg falsified by D-36 (2026-07-03): the fabrication was a harness-blindness artifact.** | 2026-07-02 |
 | D-36 | Probing phase closed. The D-34 three-condition substitution account is not supported at the cooperative-agent behavioral tier: the verifiability exception (M8, D-35) and the goal-conflict condition (H2, pre-registered n=5, 0 fabrication P0-P3) both nulled; the instrumental-fabrication follow-up (pre-registered n=5) was FALSIFIED (0pp vs a 40pp bar) and traced to a harness-blindness artifact, dissolved by the committed stdout-inlining fix (`17db5ef`). Only the operate floor is (weakly, ladder-confounded) supported. The paper is a NEGATIVE result (in-context specification substitutes for runtime enforcement for capable cooperative agents above the operate floor) plus a METHODOLOGICAL contribution (harness blindness manufactures spurious fabrication findings; the action parser is tuned to one model; the Together "serverless" catalog flag is unreliable). No surviving positive result; converge to drafting. Diagnostic basis: one model, small n. Supersedes the empirical predictions of D-34; retains the "Told or Enforced" frame and the 2x2 as the instrument. | 2026-07-03 |
+| D-37 | GovernedAgentBench reshaped into a purpose-built specify-vs-enforce instrument (benchmark-lane decision, recorded here to close the PAPER.md gap; landed across commits `a10e850`..`48ff87b`). Retired the positive-attribution apparatus (isolation_matrix, live_isolation, dr9_switch, adversarial_summary and their tests; the 16-trajectory adversarial layer; `oracles.py` static isolation pairs; the safety-constrained-subset saturation gate and DR-9/gate-B verdict logic). Every retained task is a 2x2 (told x enforced) instance on a mechanism; the suite was cut 28->14 (`a10e850`) then rebuilt as the sharp 16-task 2x2 (`9831917`/`96a6316`), the contract-in-prompt told/untold axis was built (`e72dced`), an M8 fabrication-detection trajectory pair added (`30e86d1`), and a 2x2 cell-contrast analysis layer with first-attempt scoring added (`48ff87b`). Suite size is benchmark-lane-owned and was still moving at 2026-07-04; treat the count as ~16 pending the benchmark agent's completion. Recasts D-05/D-07/D-19/D-22/D-25 static-inventory counts. This retires the 28-task / 25-oracle-pair figures used in earlier drafts. | 2026-07-04 |
+| D-38 | Novelty audit correction (deep prior-art hunt, 2026-07-04; full adjudication in `ARCHIVE/` provenance / the drafting-workflow verdict). The conjunction novelty claim SURVIVES (24 threats -> 15 papers, all narrows_claim or below, none breaks_conjunction), but four Lineage Anchor sentences were falsified and are corrected in place: (1) "enforced-not-told cell verified unclaimed" -> the cell is realized by FORGE (arXiv 2602.16708) and the Prompts Don't Protect governed proxy (arXiv 2605.18414); it is unclaimed only as a cell inside the crossed factorial; (2) "AIRGuard: the single closest prior" -> a closest-prior CLASS of >=7 papers; (3) PhantomPolicy "no telling axis" -> it runs a policy-in-prompt condition but never crosses telling with enforcement; (4) the line-146 "never measured against what the model would do on its own" absolute -> "rarely, and never crossed with a per-mechanism factorial" (ContextCov, Verifier Tax do measure enforced-vs-unenforced deltas). Wording fixes: ST-WebAgentBench = three agent scaffolds not "single backbone"; SafePyramid axis = policy reasoning complexity not density; AIRGuard single-model claim scoped to its Table 2 ablation. The L7 fork remains open but narrower: ConstraintRot (arXiv 2606.22528) already measures the drift-causes-violation half; the open half is whether independent runtime enforcement catches a violation after drift, which no located paper tests. | 2026-07-04 |
 
 ## Open Decisions
 
