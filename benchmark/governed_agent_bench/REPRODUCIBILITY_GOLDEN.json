@@ -9,47 +9,22 @@
     {
       "path": "evidence_tables/evidence_table.json",
       "normalize_absolute_paths": true,
-      "sha256": "4536d453f35e42dae166ff2b2d4519b7c4dfa511f3fed9b2a66d924acd4f8d76"
+      "sha256": "a4377719a516eccabb2fefcb0702bcbc977a175360638e45ca387cffbcfd58db"
     },
     {
       "path": "evidence_tables/evidence_table.csv",
       "normalize_absolute_paths": false,
-      "sha256": "183c81e3e5530bb86fffaca700efe0f3659f3d828a79449c6068a4713cf92d1c"
+      "sha256": "8531969b052c02bc5bcae2ce802a8675bb8b0ab2a9a7d02478a25980223f27b2"
     },
     {
       "path": "error_taxonomy/error_taxonomy.json",
       "normalize_absolute_paths": true,
-      "sha256": "a3fa099b7ef0994b66661d5bd9400a881cdd69fb3f8c2771d3288e610461f2b5"
+      "sha256": "9dc63dc95c5de45cccad26a153fb6470ccf489d4c4f3ee02e0eb465ea0f555e6"
     },
     {
       "path": "figures/figures_manifest.json",
       "normalize_absolute_paths": true,
       "sha256": "2b0215ea9139ec8059237a4bb27276cdd31c0935713c06879a0b634af1cbc116"
-    },
-    {
-      "path": "isolation_matrix/isolation_matrix.json",
-      "normalize_absolute_paths": false,
-      "sha256": "223eafc24d1d87b77c810d4ad73a0e417d9885d04ff005cee154a08b1e29d28a"
-    },
-    {
-      "path": "adversarial_summary/adversarial_summary_aggregated.json",
-      "normalize_absolute_paths": false,
-      "sha256": "d4b5c0acb29e90308dbf1a369bfac723b77ceaeb995515e412977fe2ec7b3410"
-    },
-    {
-      "path": "adversarial_summary/adversarial_summary_aggregated.csv",
-      "normalize_absolute_paths": false,
-      "sha256": "03fc4905e0bfb5f0bc01423548ecfd6aa82ad547f041753fa9f35c5caa0f73b6"
-    },
-    {
-      "path": "adversarial_summary/adversarial_summary_per_trajectory.json",
-      "normalize_absolute_paths": false,
-      "sha256": "689f3fbf9ef582f43d5dced8faf9c5b5ea216cc0bca1dda451b3751f2ad72ac5"
-    },
-    {
-      "path": "adversarial_summary/adversarial_summary_per_trajectory.csv",
-      "normalize_absolute_paths": false,
-      "sha256": "e948c1c01cd1e8fa542a13fd4bf78459f6157c100828a8088cae81477125faf1"
     }
   ],
   "excluded_from_hashing": [

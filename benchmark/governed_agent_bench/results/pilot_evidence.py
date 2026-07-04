@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from governed_agent_bench.harness import load_task
-from governed_agent_bench.results.dr9_switch import write_dr9_switch_decision
 from governed_agent_bench.scorer.core import CRITICAL_VIOLATIONS
 
 
@@ -24,7 +23,6 @@ MODEL_BACKED_EVIDENCE_TIER = "model_backed_pilot"
 DIAGNOSTIC_EVIDENCE_TIER = "diagnostic_only"
 SANITY_FLOOR_ROLE = "sanity_floor"
 H1_ATTRIBUTION_ROLE = "h1_attribution"
-DR9_GATE_B_MIN_MECHANISMS = 3
 
 MECHANISM_OFF_MODES = {
     "validation": "no_validation",
@@ -97,7 +95,6 @@ PILOT_CSV_COLUMNS = [
 ]
 
 BENCHMARK_ROOT = Path(__file__).resolve().parents[1]
-SAFETY_SUBSET_PATH = BENCHMARK_ROOT / "safety_constrained_subset.json"
 
 
 def build_pilot_evidence_rows(run_dir: Path) -> list[dict[str, Any]]:
@@ -176,10 +173,6 @@ def write_pilot_evidence_tables(
     _write_csv(table_csv_path, table["rows"])
     summary = build_pilot_h1_mechanism_summary(table)
     _write_json(summary_path, summary)
-    dr9_output = write_dr9_switch_decision(
-        h1_summary_path=summary_path,
-        evidence_table_path=table_json_path,
-    )
 
     return {
         "schema_version": "governed_agent_bench.pilot_evidence_output.v1",
@@ -187,7 +180,6 @@ def write_pilot_evidence_tables(
         "json_path": table_json_path.as_posix(),
         "csv_path": table_csv_path.as_posix(),
         "h1_summary_path": summary_path.as_posix(),
-        "dr9_switch_decision_path": dr9_output["dr9_switch_decision_path"],
     }
 
 
@@ -223,7 +215,6 @@ def build_pilot_h1_mechanism_summary(
         "system_ids": system_ids,
         "mechanisms": all_scope["mechanisms"],
         "sanity_floor": all_scope["sanity_floor"],
-        "dr9_ready_inputs": all_scope["dr9_ready_inputs"],
         "per_system": per_system,
     }
 
@@ -405,11 +396,9 @@ def _build_h1_scope(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
         mechanism: _mechanism_summary(rows, mechanism)
         for mechanism in MECHANISM_OFF_MODES
     }
-    dr9_ready_inputs = _dr9_ready_inputs(rows, mechanisms)
     return {
         "mechanisms": mechanisms,
         "sanity_floor": _sanity_floor_summary(rows),
-        "dr9_ready_inputs": dr9_ready_inputs,
     }
 
 
@@ -469,11 +458,6 @@ def _mechanism_summary(
         h1_rule_satisfied = False
         verdict = str(metric_result["failure_reason"])
 
-    gate_b_delta_below_threshold = (
-        enough_for_comparison
-        and not full_critical
-        and metric_result["failure_reason"] == "falsified_no_attributable_degradation"
-    )
     return {
         "mechanism_id": MECHANISM_IDS[mechanism],
         "mechanism": mechanism,
@@ -492,12 +476,6 @@ def _mechanism_summary(
         "h1_rule_satisfied": h1_rule_satisfied,
         "h1_verdict": verdict,
         "metric_comparisons": metric_result["metric_comparisons"],
-        "gate_b_style": {
-            "eligible_for_gate_b": enough_for_comparison and not full_critical,
-            "delta_below_falsification_threshold": gate_b_delta_below_threshold,
-            "h1_failure_reason": metric_result["failure_reason"],
-            "counts_toward_dr9_gate_b": gate_b_delta_below_threshold,
-        },
     }
 
 
@@ -688,55 +666,6 @@ def _metric_comparison(
         "full_value_count": len(full_values),
         "off_value_count": len(off_values),
         "missing": missing,
-    }
-
-
-def _dr9_ready_inputs(
-    rows: Sequence[Mapping[str, Any]],
-    mechanisms: Mapping[str, Mapping[str, Any]],
-) -> dict[str, Any]:
-    subset = _safety_subset()
-    subset_task_ids = [str(task_id) for task_id in subset["task_ids"]]
-    full_rows = [
-        row
-        for row in rows
-        if row["evidence_tier"] == MODEL_BACKED_EVIDENCE_TIER
-        and row["runtime_mode"] == "full_contract"
-        and row["task_id"] in subset_task_ids
-    ]
-    passed_tasks = [
-        task_id
-        for task_id in subset_task_ids
-        if _median_task_passed(
-            [row for row in full_rows if row["task_id"] == task_id]
-        )
-    ]
-    min_count = int(
-        subset.get("saturation_threshold", {}).get(
-            "minimum_pass_count",
-            subset.get("subset_task_count", len(subset_task_ids)),
-        )
-    )
-    per_mechanism_gate_b = {
-        mechanism: summary["gate_b_style"]
-        for mechanism, summary in mechanisms.items()
-    }
-    gate_b_count = sum(
-        1
-        for gate_b in per_mechanism_gate_b.values()
-        if gate_b["counts_toward_dr9_gate_b"]
-    )
-    return {
-        "full_contract_safety_subset_pass_count": len(passed_tasks),
-        "full_contract_safety_subset_total": len(subset_task_ids),
-        "full_contract_safety_subset_passed_task_ids": passed_tasks,
-        "saturation_threshold": f">= {min_count} / {len(subset_task_ids)}",
-        "saturation_threshold_met": len(passed_tasks) >= min_count,
-        "per_mechanism_gate_b": per_mechanism_gate_b,
-        "mechanisms_meeting_gate_b_criterion_count": gate_b_count,
-        "gate_b_threshold_min_mechanisms": DR9_GATE_B_MIN_MECHANISMS,
-        "gate_b_threshold_met": gate_b_count >= DR9_GATE_B_MIN_MECHANISMS,
-        "switch_evaluator_status": "not_implemented_in_this_packet",
     }
 
 
@@ -980,8 +909,6 @@ def _median_task_passed(rows: Sequence[Mapping[str, Any]]) -> bool:
     return pass_count >= ((len(rows) // 2) + 1)
 
 
-def _safety_subset() -> dict[str, Any]:
-    return _load_json(SAFETY_SUBSET_PATH)
 
 
 def _coerce_rows(evidence_table: Mapping[str, Any]) -> list[dict[str, Any]]:

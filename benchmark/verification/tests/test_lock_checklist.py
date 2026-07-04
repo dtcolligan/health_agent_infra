@@ -63,7 +63,6 @@ def test_lock_checklist_report_uses_mocked_provider_probe() -> None:
     assert report["mechanical_checks"]["provider_probe"]["status"] == "pass"
     assert report["mechanical_checks"]["lock_hashes"]["status"] == "pass"
     assert report["mechanical_checks"]["l7_turn_budget"]["status"] == "pass"
-    assert report["mechanical_checks"]["safety_subset"]["status"] == "pass"
     assert report["mechanical_checks"]["schema_json_parse"]["status"] == "pass"
     assert report["overall_status"] == "pending_operator_confirmation"
     assert any(

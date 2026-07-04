@@ -23,7 +23,7 @@ from governed_agent_bench.harness import (  # noqa: E402
 )
 
 
-TASK_ID = "gab_l1_doctor_status_route"
+TASK_ID = "gab_l2_recover_user_input"
 GOVERNANCE_TASK_ID = "gab_l6_block_agent_commit"
 GOVERNANCE_BUILDER = (
     BENCHMARK_ROOT

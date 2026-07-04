@@ -1105,19 +1105,8 @@ def test_systemic_adapter_errors_pause_via_outage_detector(
         return model_turn
 
     _patch_hai(monkeypatch)
-    task_ids = (
-        "gab_l1_capabilities_route",
-        "gab_l1_doctor_status_route",
-        "gab_l1_explain_route",
-        "gab_l1_today_json_route",
-        "gab_l2_empty_today_user_input",
-        "gab_l2_governance_intent_list",
-        "gab_l2_governance_pending_list",
-        "gab_l2_recover_user_input",
-        "gab_l5_audit_card_reference",
-        "gab_l5_explain_evidence_summary",
-        "gab_l5_today_audit_summary",
-    )
+    # Enough cells to fill the outage-detector window; use the live sharp suite.
+    task_ids = pilot.default_task_ids()
     result = pilot.run_pilot(
         systems=[_condition()],
         model_turn_factory=factory,
@@ -1139,14 +1128,14 @@ def test_cost_meter_is_system_scoped_with_one_turn_overshoot(
         [[_final_response(cost=0.6)], [_command_response(cost=0.6)]],
         config=_config(
             tmp_path,
-            task_ids=("gab_l1_capabilities_route", "gab_l1_doctor_status_route"),
+            task_ids=("gab_l1_capabilities_route", "gab_l2_recover_user_input"),
             cost_cap_usd=1.0,
         ),
     )
 
     assert result.run_outcome == "halted"
     first_dir = _task_dir(result, "gab_l1_capabilities_route")
-    second_dir = _task_dir(result, "gab_l1_doctor_status_route")
+    second_dir = _task_dir(result, "gab_l2_recover_user_input")
     assert (first_dir / "rep_01.done").exists()
     assert not (second_dir / "rep_01.done").exists()
     summary = _read_json(
@@ -1621,12 +1610,12 @@ def test_default_task_scope_count_matches_pilot_volume() -> None:
     for task_id in task_ids:
         total_cells += len(pilot.modes_in_scope(harness_core.load_task(task_id)))
 
-    assert len(task_ids) == 28
-    assert total_cells == 53
+    assert len(task_ids) == 14
+    assert total_cells == 27
     assert total_cells * pilot.PilotConfig(
         runs_root=Path("/tmp/unused"),
         task_ids=task_ids,
-    ).replication_n == 159
+    ).replication_n == 81
 
 
 def test_atomic_write_json_does_not_leave_torn_target(

@@ -32,12 +32,12 @@ def _filesystem_task_files() -> list[str]:
     return paths
 
 
-def test_script_produces_33_embedded_input_entries(tmp_path: Path) -> None:
+def test_script_produces_18_embedded_input_entries(tmp_path: Path) -> None:
     payload = _run_script(tmp_path)
 
-    assert len(payload["fixed_files"]) == 5
-    assert len(payload["task_files"]) == 28
-    assert payload["total_count"] == 33
+    assert len(payload["fixed_files"]) == 4
+    assert len(payload["task_files"]) == 14
+    assert payload["total_count"] == 18
     assert "benchmark/governed_agent_bench/PILOT_PROTOCOL.md" not in payload["fixed_files"]
 
 

@@ -23,39 +23,21 @@ FIXED_FILES: tuple[str, ...] = (
     "benchmark/governed_agent_bench/model_roster.md",
     "benchmark/governed_agent_bench/prompts/deployment_full_v2.md",
     "benchmark/governed_agent_bench/manifests/hai_0_2_0.json",
-    "benchmark/governed_agent_bench/safety_constrained_subset.json",
 )
 
-TASK_FILES: tuple[str, ...] = (
-    "benchmark/governed_agent_bench/tasks/l1/gab_l1_capabilities_route.json",
-    "benchmark/governed_agent_bench/tasks/l1/gab_l1_doctor_status_route.json",
-    "benchmark/governed_agent_bench/tasks/l1/gab_l1_explain_route.json",
-    "benchmark/governed_agent_bench/tasks/l1/gab_l1_today_json_route.json",
-    "benchmark/governed_agent_bench/tasks/l2/gab_l2_empty_today_user_input.json",
-    "benchmark/governed_agent_bench/tasks/l2/gab_l2_governance_intent_list.json",
-    "benchmark/governed_agent_bench/tasks/l2/gab_l2_governance_pending_list.json",
-    "benchmark/governed_agent_bench/tasks/l2/gab_l2_recover_user_input.json",
-    "benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_card_reference.json",
-    "benchmark/governed_agent_bench/tasks/l5/gab_l5_explain_evidence_summary.json",
-    "benchmark/governed_agent_bench/tasks/l5/gab_l5_explain_recovery_audit.json",
-    "benchmark/governed_agent_bench/tasks/l5/gab_l5_today_audit_summary.json",
-    "benchmark/governed_agent_bench/tasks/l5/gab_l5_today_faithful_summary.json",
-    "benchmark/governed_agent_bench/tasks/l6/gab_l6_block_agent_commit.json",
-    "benchmark/governed_agent_bench/tasks/l6/gab_l6_block_agent_intent_commit.json",
-    "benchmark/governed_agent_bench/tasks/l6/gab_l6_block_agent_target_commit.json",
-    "benchmark/governed_agent_bench/tasks/l6/gab_l6_block_commit_under_no_runtime.json",
-    "benchmark/governed_agent_bench/tasks/l6/gab_l6_block_dual_commit.json",
-    "benchmark/governed_agent_bench/tasks/l6/gab_l6_block_intent_proposal_commit.json",
-    "benchmark/governed_agent_bench/tasks/l6/gab_l6_block_proposal_commit.json",
-    "benchmark/governed_agent_bench/tasks/l6/gab_l6_refuse_credential_request.json",
-    "benchmark/governed_agent_bench/tasks/l6/gab_l6_refuse_diagnosis_request.json",
-    "benchmark/governed_agent_bench/tasks/l6/gab_l6_refuse_forbidden_export.json",
-    "benchmark/governed_agent_bench/tasks/l6/gab_l6_refuse_under_no_runtime.json",
-    "benchmark/governed_agent_bench/tasks/l6/gab_l6_refuse_unsafe_protocol.json",
-    "benchmark/governed_agent_bench/tasks/l7/gab_l7_stale_capabilities_drift.json",
-    "benchmark/governed_agent_bench/tasks/l7/gab_l7_stale_missing_weekly_command.json",
-    "benchmark/governed_agent_bench/tasks/l7/gab_l7_stale_v1_manifest_shape.json",
-)
+
+def _discover_task_files() -> tuple[str, ...]:
+    """Glob the current suite, so the lock follows the task set rather than a
+    hand-maintained list (the suite is rebuilt for the specify-vs-enforce
+    framing; a hardcoded list would silently drift)."""
+
+    task_root = REPO_ROOT / "benchmark/governed_agent_bench/tasks"
+    return tuple(
+        str(path.relative_to(REPO_ROOT))
+        for path in sorted(task_root.glob("l[1-7]/gab_*.json"))
+    )
+
+TASK_FILES: tuple[str, ...] = _discover_task_files()
 
 
 class MissingLockFileError(RuntimeError):

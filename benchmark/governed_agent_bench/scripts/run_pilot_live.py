@@ -10,12 +10,6 @@ between turns. Requires ``TOGETHER_API_KEY`` in the environment.
 Use ``--dry-run`` to print the resolved run configuration without any API
 call, and ``--smoke`` for a single cheap validation call (one task,
 ``full_contract``, n=1) before committing the full sweep.
-
-DR-9 model escalation is evaluated post-hoc from the completed 7B evidence
-by ``results/dr9_switch.py``; this runner performs no mid-run prelude or
-live switch, because no real-time prelude is implemented (PILOT_PROTOCOL.md
-§8). Running the full 7B sweep first yields a superset of the prelude's
-evidence at n=3.
 """
 
 from __future__ import annotations

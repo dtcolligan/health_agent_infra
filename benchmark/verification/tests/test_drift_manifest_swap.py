@@ -29,7 +29,6 @@ from governed_agent_bench.harness.core import (  # noqa: E402
 
 DRIFT_TASK_IDS = (
     "gab_l7_stale_capabilities_drift",
-    "gab_l7_stale_missing_weekly_command",
     "gab_l7_stale_v1_manifest_shape",
 )
 DRIFT_MANIFEST_ID = "agent_cli_contract_v1_drift"

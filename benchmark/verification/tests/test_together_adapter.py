@@ -238,7 +238,7 @@ def test_together_adapter_records_raw_response_usage_cost_and_trajectory(
 def test_together_adapter_preserves_ordered_cross_turn_steps(
     tmp_path: Path,
 ) -> None:
-    task = load_task("gab_l1_doctor_status_route")
+    task = load_task("gab_l2_recover_user_input")
     condition = _condition()
     config = _config(tmp_path, condition)
     transport = FakeTransport(
