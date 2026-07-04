@@ -132,11 +132,19 @@ offline-scorer / model-backed evidence-tier labels.
 ## Current Gate
 
 `WP-MODEL-ROSTER-001` is the active maintainer-judgement gate.
-[`model_roster.md`](model_roster.md) is committed as a draft, aligned
-to the narrow preprint roster in `/PAPER.md`: default
-`Qwen/Qwen2.5-7B-Instruct-Turbo` for Option B (final choice at the
-mid-June pilot lock per D-O-01), `Qwen/Qwen2.5-32B-Instruct` as the
-fallback if 7B saturates, and optionally one `claude-sonnet-4-6` cell
-for the Option C stretch. Cost ceiling is USD 300 (D-06).
+Per D-33 the working model is
+`Qwen/Qwen3-235B-A22B-Instruct-2507-tput` (non-thinking MoE, Together
+serverless), with `claude-sonnet-4-6` as the reliable fallback for
+narration-heavy audit tests. `Qwen2.5-7B` (below the operate floor as
+configured), `Qwen2.5-32B`, `Mistral-Small-24B`, `Gemma-3-27B`, and
+`Gemma-4-31B` are excluded (see `/PAPER.md` Model Roster). Capability is a
+bounded moderator, a small screened ladder above the operate floor, not a
+scaling-law claim (D-34/D-36); the DR-9 7B→32B switch is retired. Cost
+ceiling is USD 300 (D-06).
 
-Dom must freeze the roster before any paper-claim run. No model-backed trajectory runs until the pilot protocol locks.
+The machine-readable block in [`model_roster.md`](model_roster.md) still
+carries the superseded `option_b_qwen25_7b_together` condition and must be
+re-locked with vendor-verified Qwen3-235B provider fields before any
+paper-claim run.
+
+No model-backed trajectory runs until the pilot protocol locks.

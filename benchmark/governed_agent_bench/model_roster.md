@@ -1,14 +1,19 @@
 # Predeclared Model Roster — Paper v1
 
-**Status:** predeclared candidate roster for `WP-MODEL-ROSTER-001`.
-Approved by Dom on 2026-05-19 for roster inclusion only. No
-model-backed trajectories before the pilot-protocol lock. Lock-day
-D-O-01 selection on 2026-06-25: `option_b_qwen25_7b_together`.
+**Status:** predeclared candidate roster for `WP-MODEL-ROSTER-001`. The
+working-model selection was superseded by D-33 (2026-07-01): the working
+model is now `Qwen/Qwen3-235B-A22B-Instruct-2507-tput` (Together
+serverless), resolving the old D-O-01 `option_b_qwen25_7b_together`
+choice. No model-backed trajectories before the pilot-protocol lock.
 
-This file records the narrow preprint roster currently described in
-`/PAPER.md`. It is not frozen for paper-claim runs until Dom verifies the
-provider IDs/pricing against live vendor docs, records the roster hash,
-and locks the pilot protocol.
+This file records the narrow preprint roster described in `/PAPER.md`. It
+is not frozen for paper-claim runs until Dom verifies the provider
+IDs/pricing against live vendor docs, records the roster hash, and locks
+the pilot protocol. **The machine-readable block below still encodes the
+superseded 7B/32B conditions (the harness and tests read them via
+`roster_condition`); replacing them with vendor-verified Qwen3-235B
+provider fields is a roster re-lock and requires a new `roster_id` per the
+immutability rule.**
 
 ## Scope
 
@@ -18,12 +23,16 @@ optional small Option C stretch.
 
 ## Roster
 
+Working roster (D-33; descriptive — the machine-readable block below is
+pending re-lock):
+
 | Role | Model | Provider | Purpose |
 |---|---|---|---|
 | Rule baseline | deterministic harness | n/a | No model call; anchors routing, scorer, and reproducibility plumbing. |
-| Option B default | `Qwen/Qwen2.5-7B-Instruct-Turbo` | Together AI | Single model class for the mechanism-ablation headline. |
-| Option B fallback | `accounts/fireworks/models/qwen2p5-32b-instruct` | Fireworks | Use only if 7B saturates the safety-constrained subset and no `no_X` delta can surface. |
-| Option C stretch | `claude-sonnet-4-6` | Anthropic | Optional cloud cell for a small `runtime_mode` x `model_class` cross-product. |
+| Working model | `Qwen/Qwen3-235B-A22B-Instruct-2507-tput` | Together AI (serverless) | The capable cooperative agent above the operate floor for the 2×2. |
+| Audit fallback | `claude-sonnet-4-6` | Anthropic | Reliable fallback for narration-heavy audit (M8) tests. |
+| Capability ladder | small screened set above the operate floor | Together serverless | Bounded moderator (D-34/D-36), not a scaling-law claim. |
+| Excluded | `Qwen2.5-7B`, `Qwen2.5-32B`, `Mistral-Small-24B`, `Gemma-3-27B`, `Gemma-4-31B` | — | Below the operate floor as configured, or excluded per `/PAPER.md` Model Roster. |
 
 ## Budget
 
@@ -216,10 +225,14 @@ optional Option C cell and one retry cycle.
 
 ## Freeze Checklist
 
-- [x] Verify every model ID resolves on the named provider.
-- [x] Verify pricing against live vendor docs as of the run date.
-- [x] Decide D-O-01: 7B default or 32B fallback. Selected
-      `option_b_qwen25_7b_together` on 2026-06-25.
+- [x] Decide the working model. D-O-01 (`option_b_qwen25_7b_together`)
+      was superseded by D-33: working model is
+      `Qwen/Qwen3-235B-A22B-Instruct-2507-tput`.
+- [ ] Re-lock the machine-readable block: add a Qwen3-235B condition
+      (new `roster_id`) with vendor-verified provider ID, model-card URL,
+      snapshot date, and pricing from live Together docs.
+- [ ] Verify the model ID resolves on Together serverless and pricing
+      against live vendor docs as of the run date.
 - [ ] Record the SHA-256 of this file and the commit SHA before any
       paper-claim model run.
 - [ ] Ensure every paper-claim trajectory records the roster hash.

@@ -869,3 +869,81 @@ Pre-amendment document SHA-256 (after Amendment 3):
 `51921ecbe23309b820fc5d43798719044e2a6bb6fd6c5f9b117786f9ea87a90b`.
 Post-amendment SHA-256 is recorded as external lock evidence after this
 amendment commit, per the §14 self-hash-circularity rule.
+
+## §19 Amendment 5 — Sharp specify-vs-enforce rebuild (2026-07-04)
+
+Recorded per the §14 post-lock amendment rule (new section + new document
+hash + PAPER.md decision row D-37).
+
+**Why.** The 2026-07-02/03 probe arc closed the probing phase (D-36): the
+D-34 three-condition substitution account is not supported at the
+cooperative-agent behavioral tier (the M8 verifiability exception and the
+goal-conflict condition both nulled; the instrumental-fabrication
+follow-up was falsified and traced to a harness-blindness artifact). The
+paper became a NEGATIVE result (in-context specification substitutes for
+runtime enforcement for a capable cooperative agent above the operate
+floor) plus a METHODOLOGICAL contribution (harness blindness manufactures
+spurious fabrication findings). The benchmark carried a large
+positive-attribution apparatus built for the abandoned framing; D-37
+rebuilt GAB as a sharp instrument that measures the specify-vs-enforce 2×2
+and nothing else.
+
+**Retired (this protocol's affected sections are now moot).**
+
+- **§7 falsification bounds / §8 DR-9 7B→32B switch.** The DR-9 gate A
+  (safety-subset saturation) and gate B (per-mechanism delta prelude) are
+  void: a no-delta outcome is the *predicted* result for a
+  context-verifiable mechanism under cooperative, unconflicted conditions,
+  not a falsification. `results/dr9_switch.py`, gate-A/gate-B evaluation,
+  and the 7B→32B switch are removed. Amendment 1 (§15) is moot.
+- **§13 adversarial layer.** The 16-trajectory adversarial layer is
+  retired; adversarial-input robustness is cited future work, not a claim
+  (see the Threat Model in `/PAPER.md`).
+- **Safety-constrained subset.** `safety_constrained_subset.json`, the
+  §8 `≥ 14/14` saturation threshold, and the ≥3-static-oracle-pairs
+  -per-mechanism rule are removed (D-23 retired).
+- **Isolation tiers.** The static oracle-pair isolation matrix
+  (`results/isolation_matrix.py`, `oracles.py`) and the live isolation
+  sweep (`results/live_isolation.py`) are retired; per-mechanism
+  attribution now rests on the 2×2 contrasts (B vs D, C vs D, A vs B) over
+  the model-backed suite plus the deterministic scorer.
+
+**Rebuilt.**
+
+- **Task suite → 16 tasks**, each a labelled cell of the per-mechanism
+  2×2: operate floor (`gab_l1_operate_route/read`), M4–M8 told/untold
+  pairs, goal-conflict (`gab_l6_agentsafe_conflict`,
+  `gab_l5_audit_conflict`), the blind twin (`gab_l5_audit_blind`), and
+  drift (`gab_l7_drift`). `gab_l6_agentsafe_untold` carries
+  `no_runtime_enforcement` as the all-off sanity floor. The old 28-task /
+  53-cell / 159-rep inventory (D-19/D-25) becomes 16 tasks / 31 cells / 93
+  reps at n=3.
+- **Contract-in-prompt axis** added as the task field `contract_arm`
+  (told/untold): untold withholds the manifest facts specifying the task's
+  load-bearing mechanism, and for M5/M7 the parameterized boundary-prose
+  blocks in `prompts/deployment_full_v2.md`. Told rendering is
+  byte-preserved. Task field `hide_stdout` withholds command stdout for
+  the blind-observation twin.
+- **Reproduce pipeline** simplified to rule-baseline ablation → evidence
+  tables → figures → error taxonomy; `pilot_evidence.py` verdict logic
+  stripped of DR-9/safety-subset.
+
+**Lock set (§14 / Locked Hashes).** `safety_constrained_subset.json` is
+removed from the fixed set; `scripts/collect_lock_hashes.py` is now
+glob-based (the task-file set follows the suite rather than a hardcoded
+list), so the Locked Hashes table is regenerated mechanically from the
+16-task suite. `prompts/deployment_full_v2.md` changed (the two boundary
+blocks were parameterized; told rendering byte-preserved) and re-locks
+with a new file hash. `model_roster.md`'s working-model selection is
+superseded by D-33 (Qwen3-235B-A22B); its machine-readable block awaits a
+vendor-verified re-lock.
+
+Implemented across commits `a10e850` (apparatus retirement), `e72dced`
+(told/untold axis), `9831917` (16-task suite), `30e86d1` (M8
+fabrication-detection trajectories), and the doc sync. Full benchmark
+verification suite green.
+
+Pre-amendment document SHA-256 (after Amendment 4):
+`ce50345782ccb8bfb65cb9d8401d3ede31bed294a9bdeb93e4a4f2c9e31706b5`.
+Post-amendment SHA-256 is recorded as external lock evidence after this
+amendment commit, per the §14 self-hash-circularity rule.

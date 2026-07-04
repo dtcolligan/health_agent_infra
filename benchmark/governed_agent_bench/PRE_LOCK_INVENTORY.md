@@ -1,5 +1,13 @@
 # Pre-Lock Work Inventory
 
+> **Superseded by D-37 (2026-07-04) — historical record.** This document
+> is the engineering plan for the pre-lock pilot apparatus (DR-9 switch,
+> safety-constrained subset, static/live isolation, the 16-trajectory
+> adversarial layer). That apparatus was retired in the sharp
+> specify-vs-enforce rebuild; see `PILOT_PROTOCOL.md` §19 and PAPER.md
+> D-37 for the current benchmark state. Kept for provenance; do not treat
+> its items as current work.
+
 **Lock target:** 2026-06-22 (PAPER.md calendar; PILOT_PROTOCOL.md §14).
 **Status:** Final after 3 audit rounds (Claude implementer / Codex auditor) plus 6 Dom design decisions on 2026-06-01.
 **Source decision row:** PAPER.md D-24.
