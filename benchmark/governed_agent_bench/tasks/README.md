@@ -3,23 +3,29 @@
 Tasks are grouped by benchmark level. Each task must validate against
 `../schema/task.schema.json`.
 
-Preprint task-suite target:
+Every task is a labelled cell of the per-mechanism 2×2, crossing the
+contract-in-prompt axis (`contract_arm` told/untold) with the
+runtime-enforcement axis (`runtime_mode` on/off), plus the operate-floor,
+goal-conflict, blind-observation, and drift anchors.
 
-- L1 routing tasks: natural-language intent to valid `hai` command.
-- L2 recovery tasks: setup failure or `USER_INPUT` handling.
-- L5 narration tasks: faithful use of `hai today` / `hai explain`.
-- L6 governance/refusal tasks: forbidden commands and clinical-boundary
-  pressure.
-- L7 drift tasks: stale manifest or changed command surface.
+- L1 operate floor: can the agent drive the contract at all.
+- L2 validation (M4): recovery / `USER_INPUT` handling.
+- L5 audit (M8): faithful use of `hai explain` evidence.
+- L6 governance/refusal (M5/M6/M7): user-gated commits and the
+  clinical boundary.
+- L7 drift: stale manifest / changed command surface.
 
-Committed preprint seed set:
+Committed suite (16 tasks):
 
 | Level | Tasks |
 |---|---|
-| L1 | `gab_l1_capabilities_route`, `gab_l1_doctor_status_route`, `gab_l1_explain_route`, `gab_l1_today_json_route` |
-| L2 | `gab_l2_empty_today_user_input`, `gab_l2_governance_intent_list`, `gab_l2_governance_pending_list`, `gab_l2_recover_user_input` |
-| L5 | `gab_l5_audit_card_reference`, `gab_l5_explain_evidence_summary`, `gab_l5_explain_recovery_audit`, `gab_l5_today_audit_summary`, `gab_l5_today_faithful_summary` |
-| L6 | `gab_l6_block_agent_commit`, `gab_l6_block_agent_intent_commit`, `gab_l6_block_agent_target_commit`, `gab_l6_block_commit_under_no_runtime`, `gab_l6_block_dual_commit`, `gab_l6_block_intent_proposal_commit`, `gab_l6_block_proposal_commit`, `gab_l6_refuse_credential_request`, `gab_l6_refuse_diagnosis_request`, `gab_l6_refuse_forbidden_export`, `gab_l6_refuse_under_no_runtime`, `gab_l6_refuse_unsafe_protocol` |
-| L7 | `gab_l7_stale_capabilities_drift`, `gab_l7_stale_missing_weekly_command`, `gab_l7_stale_v1_manifest_shape` |
+| L1 | `gab_l1_operate_route`, `gab_l1_operate_read` |
+| L2 | `gab_l2_validation_told`, `gab_l2_validation_untold` |
+| L5 | `gab_l5_audit_told`, `gab_l5_audit_untold`, `gab_l5_audit_conflict`, `gab_l5_audit_blind` |
+| L6 | `gab_l6_agentsafe_told`, `gab_l6_agentsafe_untold`, `gab_l6_agentsafe_conflict`, `gab_l6_proposalgate_told`, `gab_l6_proposalgate_untold`, `gab_l6_refusal_told`, `gab_l6_refusal_untold` |
+| L7 | `gab_l7_drift` |
 
-The default offline rule baseline runs this full 28-task inventory.
+The `_untold` tasks carry `contract_arm: untold`; `gab_l5_audit_blind`
+carries `hide_stdout: true`; `gab_l6_agentsafe_untold` also scopes
+`no_runtime_enforcement` as the all-off sanity floor. The default offline
+rule baseline runs this full 16-task inventory.

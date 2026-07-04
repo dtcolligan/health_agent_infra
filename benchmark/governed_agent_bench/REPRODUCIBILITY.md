@@ -1,56 +1,52 @@
 # Offline Reproducibility
 
 The offline reproducibility path rebuilds synthetic fixtures and runs
-the deterministic `rule_baseline` ablation, static oracle-pair
-isolation matrix, local hermetic HAI live-isolation probes, evidence
-tables, figures, error taxonomy, and targeted adversarial summary
-tables. It does not call local models, cloud models, paid APIs, live
-wearable sources, or private health data.
+the deterministic sharp pipeline: `rule_baseline` ablation -> evidence
+tables -> figures -> error taxonomy. It does not call local models,
+cloud models, paid APIs, live wearable sources, or private health data,
+and it requires no network access.
 
 Run:
 
 ```bash
-uv run python benchmark/governed_agent_bench/reproduce_offline.py \
+PYTHONPATH=benchmark uv run python \
+  benchmark/governed_agent_bench/reproduce_offline.py \
   --output-dir /tmp/gab_offline_repro
 ```
 
 The command writes:
 
-- `rule_baseline_ablation/` trajectories, observations, scores, and
+- `rule_baseline_ablation/` trajectories, scores, and
   `rule_baseline_ablation_summary.json`;
 - `evidence_tables/evidence_table.json`;
 - `evidence_tables/evidence_table.csv`;
 - `figures/*.svg`;
 - `figures/figures_manifest.json`;
 - `error_taxonomy/error_taxonomy.json`;
-- `isolation_matrix/isolation_matrix.json`;
-- `live_isolation/live_isolation_matrix.json`;
-- `adversarial_summary/adversarial_summary_aggregated.json`;
-- `adversarial_summary/adversarial_summary_aggregated.csv`;
-- `adversarial_summary/adversarial_summary_per_trajectory.json`;
-- `adversarial_summary/adversarial_summary_per_trajectory.csv`;
-- `offline_repro_manifest.json`, including top-level
-  `isolation_matrix`, `live_isolation`, and `adversarial_summary`
-  metadata plus path-only artifact entries.
+- `offline_repro_manifest.json`, whose `artifacts` block carries
+  path-only entries keyed `rule_baseline_ablation_summary`,
+  `evidence_table_json`, `evidence_table_csv`, `figures_manifest`, and
+  `error_taxonomy`, plus top-level `row_count`, `figure_count`,
+  `violation_count`, and `runtime_modes`.
 
-Without `--task-id`, the command runs the full committed 28-task
-preprint inventory across each task's declared runtime modes.
-Repeating `--task-id` narrows the rule-baseline portion only; the
-static isolation matrix still runs its full hand-authored oracle-pair
-set, and the live isolation matrix still runs its full M4-M8 probe set.
+Without `--task-id`, the command runs the full committed 16-task
+preprint inventory (operate floor + per-mechanism told/untold +
+goal-conflict + blind + drift) across each task's declared runtime
+modes, producing 31 cells at n=3 (93 reps). Repeating `--task-id`
+narrows the ablation to the named subset.
 
 ## Prerequisites
 
 - `uv` (minimum version observed working: `uv 0.11.2`).
 - Python >=3.11 (observed `python3` version: Python 3.14.0).
-- Approximate output-dir size: 11M for a full offline run.
+- Approximate output-dir size: 4.1M for a full offline run.
 - macOS or Linux. No Windows support claim.
 - No network access required. No private health data required. No
   paid APIs.
 
 ## Expected runtime
 
-Observed 76 seconds on Apple M2 (Darwin 23.4.0, arm64). This is
+Observed 43 seconds on Apple M2 (Darwin 23.4.0, arm64). This is
 descriptive, not a portability guarantee. Expect 2-3x variance on
 other hardware and a 1.5-2x first-run cache penalty while uv builds
 its cache.
@@ -63,11 +59,9 @@ The offline reproducer's outputs split into two classes:
 - evidence_tables/evidence_table.{json,csv}
 - error_taxonomy/error_taxonomy.json
 - figures/figures_manifest.json
-- isolation_matrix/isolation_matrix.json
-- adversarial_summary/adversarial_summary_{aggregated,per_trajectory}.{json,csv}
 
 These artifacts are byte-stable across runs (after absolute-path
-normalization). They are the load-bearing outputs paper §§5-7 cite.
+normalization). They are the load-bearing outputs the paper cites.
 Drift on any one of them is a research-integrity signal.
 
 **Not pinned** (transient artifacts):
@@ -78,9 +72,8 @@ Drift on any one of them is a research-integrity signal.
 - rule_baseline_ablation/trajectories/** -- trajectory filenames
   embed random hashes; observation stdouts contain HAI runtime
   timestamps.
-- live_isolation/** -- live trajectory IDs and observation refs are
-  run-specific by construction. Live tier is mechanism evidence per
-  PAPER.md D-22, not byte-reproducible artifact.
+- figures/*.svg -- rendered plots; the pinned surface is
+  figures/figures_manifest.json, not the SVG bytes.
 - offline_repro_manifest.json -- contains absolute output_dir; the
   load-bearing contents are also captured in scoring artifacts.
 
@@ -97,19 +90,16 @@ commit the refresh alongside the change that justified it.
 For a small smoke run, repeat `--task-id`:
 
 ```bash
-uv run python benchmark/governed_agent_bench/reproduce_offline.py \
+PYTHONPATH=benchmark uv run python \
+  benchmark/governed_agent_bench/reproduce_offline.py \
   --output-dir /tmp/gab_offline_repro_smoke \
-  --task-id gab_l1_doctor_status_route \
-  --task-id gab_l2_empty_today_user_input
+  --task-id gab_l1_operate_read \
+  --task-id gab_l2_validation_told
 ```
 
-Use `--skip-live-isolation` for a fast path or CI job that should omit
-the local hermetic HAI probes. Static isolation still runs; the manifest
-sets `live_isolation` to `{"skipped": true, "reason": "skip_flag"}` and
-omits `artifacts.live_isolation_matrix`.
-
-The CLI writes `offline_repro_manifest.json` even when an isolation tier
-reports non-isolation, then exits 1.
+The command exits 0 when the ablation produced scored rows and
+figures (`row_count >= 1` and `figure_count >= 1`); it writes
+`offline_repro_manifest.json` and exits 1 otherwise.
 
 Model-backed reproducibility is intentionally absent until Dom approves
 `WP-MODEL-ROSTER-001`.

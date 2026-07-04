@@ -1,6 +1,7 @@
 # GovernedAgentBench Benchmark Card
 
-**Status:** Current benchmark card, 2026-06-28.
+**Status:** Current benchmark card, 2026-07-04 (post-D-37
+specify-vs-enforce rebuild).
 
 This card describes the committed GovernedAgentBench artifact. It is
 not a final paper claim and does not report model-backed performance.
@@ -8,28 +9,44 @@ Dom final review is still required before submission.
 
 ## Intended Use
 
-GovernedAgentBench evaluates deterministic governance mechanisms in an
-agent harness. It holds the model, prompt, manifest, task suite, and
-scorer fixed while varying only `runtime_mode`. The reference runtime
-is HAI, a local non-clinical personal-wellness runtime used to
-instantiate a concrete software contract. The benchmark is designed to
-admit other runtimes in future work.
+GovernedAgentBench is a purpose-built instrument for the *Told or
+Enforced* specify-vs-enforce paper. It evaluates deterministic
+governance mechanisms in an agent harness by varying two levers per
+mechanism: whether the constraint is **specified** in the in-context
+contract (task field `contract_arm`, told/untold) and whether the
+runtime **enforces** it (`runtime_mode`). The model, prompt template,
+manifest, task suite, and scorer are held fixed while those two axes
+move. The reference runtime is HAI, a local non-clinical
+personal-wellness runtime used to instantiate a concrete software
+contract. The benchmark is designed to admit other runtimes in future
+work.
+
+The benchmark supports two headline contributions:
+
+- a **negative result** — in-context specification substitutes for
+  runtime enforcement for capable, cooperative agents operating above
+  the operate floor; and
+- a **methodological** finding — harness blindness (withholding command
+  stdout) manufactures spurious fabrication findings.
 
 The benchmark is intended for:
 
-- measuring runtime-mode ablations under a held-constant prompt;
+- measuring the per-mechanism specify-vs-enforce 2x2 (told/untold x
+  enforcement on/off) under a held-constant prompt template;
 - evaluating whether specific deterministic contract mechanisms are
   load-bearing for constraint-respecting behavior;
 - evaluating command selection against a manifest;
 - evaluating structured operator actions;
 - evaluating refusal of out-of-contract requests;
 - evaluating respect for `agent_safe` and proposal/commit boundaries;
-- evaluating narration from runtime read surfaces and audit references;
+- evaluating narration from runtime read surfaces and audit references,
+  including under blind (stdout-withheld) observation;
 - evaluating robustness to stale contract snapshots.
 
 The benchmark's main estimand is conditional: the marginal contribution
-of a mechanism within this fixed harness, task suite, prompt, model
-condition, and evidence tier.
+of specification and of enforcement for a mechanism within this fixed
+harness, task suite, prompt template, model condition, and evidence
+tier.
 
 ## Non-Use And Misuse
 
@@ -45,9 +62,11 @@ The benchmark must not be used as:
 - a benchmark for free-form coaching quality;
 - a benchmark for live wearable integrations.
 
-Do not collapse static oracle-pair rows, live runtime-probe rows, and
-model-backed trajectories into one causal claim. Those evidence tiers
-answer different questions.
+Keep the two live evidence tiers separate: the deterministic offline
+scorer (pipeline mechanics and reproducibility) and the model-backed
+2x2 (behavioral specify-vs-enforce effects). Offline rule-baseline
+plumbing is mode-tagged evidence of pipeline correctness, not
+behavioral mode-delta evidence.
 
 ## Data Provenance
 
@@ -55,14 +74,18 @@ The committed task set uses synthetic benchmark fixtures only. Fixture
 builders live under `fixtures/` and construct state through HAI commands
 under hermetic environment redirection.
 
-Current fixtures:
+Committed fixture builders:
 
 - `empty_user`;
 - `ready_user_minimal`;
 - `read_surface_user`;
 - `governance_user`;
 - `drift_user`;
-- `adversarial_user`.
+- `adversarial_user`;
+- `audit_pending_user`.
+
+The live 16-task suite references `empty_user`, `read_surface_user`,
+`governance_user`, `drift_user`, and `adversarial_user`.
 
 No fixture is allowed to contain maintainer health data, live wearable
 exports, live credentials, clinical records, names, email addresses, or
@@ -90,25 +113,44 @@ obedience, not medical quality.
 
 ## Task Family Coverage
 
-The current preprint task set has 28 tasks:
+The sharp preprint suite has 16 tasks. Each task is a labelled cell of
+the per-mechanism specify-vs-enforce 2x2 (`contract_arm` told/untold x
+runtime enforcement on/off), plus an operate floor and a conflict/blind
+extension for the mechanisms that need one.
 
 | Level | Count | Coverage |
 |---|---:|---|
-| L1 | 4 | Intent-to-command routing. |
-| L2 | 4 | Setup/recovery and safe pending-state inspection. |
-| L5 | 5 | Faithful narration from read surfaces and audit evidence. |
-| L6 | 12 | Governance and refusal. |
-| L7 | 3 | Contract drift and stale manifest behavior. |
+| L1 | 2 | Operate floor: intent-to-command routing and read (`full_contract` only). |
+| L2 | 2 | M4 validation: recover from a `USER_INPUT` exit (told/untold). |
+| L5 | 4 | M8 audit: faithful narration from read/audit surfaces (told, untold, conflict, blind). |
+| L6 | 7 | Governance and refusal: M5 `agent_safe` (told/untold/conflict), M6 proposal gate (told/untold), M7 refusal (told/untold). |
+| L7 | 1 | Contract drift on a stale manifest (uses the M4 validation mechanism). |
 
-The task schema requires `load_bearing_mechanisms` and
-`runtime_modes_in_scope`. Static oracle-pair tests cover each ablatable
-mechanism M4..M8 with at least 3 tasks. These tests are scorer/coverage
-canaries, not live mechanism-causality proof.
+Task ids, grouped by mechanism:
 
-## Runtime Modes
+- Operate floor: `gab_l1_operate_route`, `gab_l1_operate_read`.
+- M4 validation: `gab_l2_validation_told`, `gab_l2_validation_untold`.
+- M5 `agent_safe`: `gab_l6_agentsafe_told`, `gab_l6_agentsafe_untold`,
+  `gab_l6_agentsafe_conflict`.
+- M6 proposal gate: `gab_l6_proposalgate_told`,
+  `gab_l6_proposalgate_untold`.
+- M7 refusal: `gab_l6_refusal_told`, `gab_l6_refusal_untold`.
+- M8 audit: `gab_l5_audit_told`, `gab_l5_audit_untold`,
+  `gab_l5_audit_conflict`, `gab_l5_audit_blind`.
+- Drift: `gab_l7_drift`.
 
-The prompt is held constant. Runtime mode is the treatment. Runtime
-modes are:
+Each task carries `load_bearing_mechanisms` and `runtime_modes_in_scope`
+in schema `governed_agent_bench.task.v2`. Summing the per-task
+runtime-mode set gives 31 task-cells; at n=3 replications this is 93
+reps. The all-off `no_runtime_enforcement` sanity floor is carried by
+`gab_l6_agentsafe_untold` alone.
+
+## Axes
+
+The prompt template is held constant. The benchmark moves two axes.
+
+**Enforcement axis (`runtime_mode`).** Whether the runtime enforces the
+mechanism:
 
 - `full_contract`;
 - `no_validation`;
@@ -118,8 +160,23 @@ modes are:
 - `no_audit_chain`;
 - `no_runtime_enforcement`.
 
-The model is not told which mode is active. Mechanism-off modes are
-allowed only under hermetic benchmark state.
+`no_runtime_enforcement` turns M4-M8 off together and is the all-off
+sanity floor, carried by `gab_l6_agentsafe_untold` only. The model is
+not told which mode is active. Mechanism-off modes are allowed only
+under hermetic benchmark state.
+
+**Contract-in-prompt axis (`contract_arm`).** Whether the constraint is
+specified to the agent. `told` (default) presents the full manifest;
+`untold` withholds the manifest facts that specify the task's
+load-bearing mechanism, plus the parameterized boundary-prose blocks in
+`prompts/deployment_full_v2.md` (`{{agent_safe_boundary}}`,
+`{{refusal_boundary}}`) for M5/M7. The `told` rendering is
+byte-preserved.
+
+**Blind observation (`hide_stdout`).** An orthogonal task field that
+withholds command stdout from the model's observation feedback.
+`gab_l5_audit_blind` is the blind twin of `gab_l5_audit_told` and
+underwrites the harness-blindness methodological finding.
 
 ## Mechanisms Under Test
 
@@ -131,6 +188,11 @@ allowed only under hermetic benchmark state.
 | M7 | Clinical-boundary and forbidden-request refusal | `no_refusal` | Out-of-contract requests can reach user-facing output. |
 | M8 | Audit evidence emission | `no_audit_chain` | The runtime may omit evidence needed for faithful narration and traceability. |
 | M9-TX | Transaction integrity | Held constant | Not ablated; protects atomicity across all modes. |
+
+M4-M7 are context-verifiable mechanisms: the agent could in principle
+satisfy the constraint from the in-context contract alone. M8 (audit
+reference faithfulness) is the pre-registered non-verifiable exception
+in the mechanism inventory. M9-TX is held constant and is not ablatable.
 
 ## Model Conditions Tested
 
@@ -188,15 +250,14 @@ Current limitations:
   task suite, prompt, model condition, scorer, and evidence tier.
 - Mechanisms are coupled. Per-mechanism deltas are marginal
   contributions in this runtime, not additive independent effects.
-- Model-scale claims are blocked until Dom approves a predeclared model
+- Model-backed claims are blocked until Dom approves a predeclared model
   roster.
 - Rule-baseline ablation scores are mode-tagged plumbing evidence, not
   behavioral mode-delta evidence.
-- Static isolation oracles are hand-authored canaries. Live isolation
-  now covers targeted hermetic runtime probes for M4-M8, but those rows
-  are mechanism probes, not model-result trajectories from the 28-task
-  suite. The M5/M6 live rows measure blocked-vs-allowed runtime outcome
-  separately from normal unsafe-action attempt scoring.
+- The static oracle-pair isolation matrix and the live isolation sweep
+  were retired in the D-37 rebuild. Evidence is now the deterministic
+  offline scorer plus the model-backed specify-vs-enforce 2x2. The
+  adversarial arm is future work only.
 - Unsupported narration, audit-reference faithfulness, exit-code
   recovery, drift robustness, and schema-valid proposal scoring are
   deterministic MVP heuristics and should be expanded before broad
@@ -213,6 +274,11 @@ uv run python benchmark/governed_agent_bench/reproduce_offline.py \
   --output-dir /tmp/gab_offline_repro
 ```
 
-This regenerates synthetic fixtures, rule-baseline ablation
-trajectories, scores, evidence tables, SVG figures, an error taxonomy,
-and an offline reproducibility manifest.
+The sharp pipeline (D-37) runs rule-baseline ablation -> evidence
+tables -> figures -> error taxonomy. It regenerates synthetic fixtures,
+rule-baseline ablation trajectories, scores, evidence tables, SVG
+figures, an error taxonomy, and an offline reproducibility manifest. It
+is deterministic and offline: no model call, no network. Results
+generators live under `results/` (`evidence_tables.py`,
+`error_taxonomy.py`, `figures.py`, `pilot_evidence.py`).
+`REPRODUCIBILITY_GOLDEN.json` fingerprints the expected outputs.

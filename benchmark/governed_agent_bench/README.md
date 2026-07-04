@@ -4,11 +4,11 @@ Benchmark companion to *Told or Enforced: When In-Context Contracts
 Substitute for Runtime Enforcement in Agent Harnesses*.
 Released as v1.0 on a GitHub tag alongside the 2026-09-30 arXiv preprint.
 
-GovernedAgentBench separates two levers per mechanism: whether a
-constraint is specified in the in-context contract and whether the runtime
-enforces it, measuring how much constraint-respecting behavior comes from
-being told versus being enforced. (The detailed methodology sections below
-are mid-sync to this 2x2 framing; `PAPER.md` D-31/D-32 is authoritative.)
+GovernedAgentBench crosses two levers per mechanism: whether a
+constraint is specified in the in-context contract (told vs untold) and
+whether the runtime enforces it (on vs off), measuring how much
+constraint-respecting behavior comes from being told versus being
+enforced. `PAPER.md` D-31/D-32/D-34 is authoritative for the design.
 
 Project-wide scope, calendar, and decisions: [`/PAPER.md`](../../PAPER.md).
 Full benchmark specification: [`SPEC.md`](SPEC.md). Task authoring:
@@ -17,10 +17,12 @@ Full benchmark specification: [`SPEC.md`](SPEC.md). Task authoring:
 ## What It Measures
 
 The benchmark measures mechanism-level effects of a deterministic
-runtime contract around an agent. Runtime mode is the treatment; scored
-task outcomes and contract violations are the responses.
+runtime contract around an agent across a per-mechanism 2x2. Two levers
+are crossed: the runtime-enforcement axis (`runtime_mode`) and the
+in-context specification axis (task field `contract_arm`, told|untold).
+Scored task outcomes and contract violations are the responses.
 
-The primary comparison is `full_contract` against single-mechanism
+The enforcement axis compares `full_contract` against single-mechanism
 disable modes:
 
 | Mechanism | Full-contract behavior | Disable mode |
@@ -32,11 +34,23 @@ disable modes:
 | M8 audit evidence | Emit audit evidence for scored narration and traceability | `no_audit_chain` |
 
 `no_runtime_enforcement` turns M4-M8 off together and is used as a
-sanity floor, not as per-mechanism attribution evidence.
+sanity floor, not as per-mechanism attribution evidence;
+`gab_l6_agentsafe_untold` carries it as the all-off cell.
 
-Load-bearing differentiation from ST-WebAgentBench: runtime-mode
-intervention with mechanism-isolable ablation under a held-constant
-prompt. The runtime is the intervention; the prompt does not vary.
+The specification axis withholds, in the `untold` arm, the manifest
+facts that specify a task's load-bearing mechanism (M4 exit codes, M5
+`agent_safe` flags, M6 mutation classes, M7 refusal taxonomy) and, for
+M5/M7, the parameterized boundary-prose blocks in
+`prompts/deployment_full_v2.md`; the `told` rendering is byte-preserved.
+A separate `hide_stdout` field withholds command stdout from the model's
+observation (blind observation); `gab_l5_audit_blind` is the blind twin
+of `gab_l5_audit_told`.
+
+Load-bearing differentiation from ST-WebAgentBench: a per-mechanism
+specify-vs-enforce 2x2 that isolates whether constraint-respecting
+behavior comes from in-context specification or from runtime
+enforcement. The deployment prose is held byte-constant except the
+parameterized told/untold blocks.
 
 The benchmark evaluates whether the model can operate through the
 public contract rather than relying on implicit prompt adherence,
@@ -55,27 +69,27 @@ GovernedAgentBench separates evidence tiers by design:
 
 | Tier | What it supports | What it does not support |
 |---|---|---|
-| Static oracle pairs | Scorer sensitivity, declared task coverage, marker-contamination checks | Live runtime causality |
-| Live runtime probes | Targeted hermetic HAI behavior under M4-M8 disable paths | Model behavior on the 28-task suite |
-| Rule baseline | Offline pipeline mechanics and deterministic reproducibility | Model-backed capability claims |
-| Model-backed trajectories | Behavior of the locked model condition through the harness | Universal claims across models, prompts, or domains |
+| Deterministic offline scorer / rule baseline | Scorer sensitivity, declared task coverage, offline pipeline mechanics and reproducibility | Model-backed capability claims |
+| Model-backed 2x2 | Behavior of the locked model condition through the harness across the specify-vs-enforce cells | Universal claims across models, prompts, or domains |
 
-Paper claims must preserve these labels. A transcript that is not
-converted into trajectory JSON and scored offline is not benchmark
-evidence.
+The static oracle-pair and live-isolation tiers were retired in the
+D-37 rebuild; the adversarial arm is future work. Paper claims must
+preserve these labels. A transcript that is not converted into
+trajectory JSON and scored offline is not benchmark evidence.
 
 ## Current State (preprint scope)
 
 | Surface | State |
 |---|---|
 | Frozen manifests | 2 snapshots: `manifests/hai_0_2_0.json` (≈ 189 KB, `agent_cli_contract.v2`) + `manifests/agent_cli_contract_v1_drift.json` for L7 |
-| Fixtures | 6 synthetic builders: `empty_user`, `ready_user_minimal`, `read_surface_user`, `governance_user`, `drift_user`, `adversarial_user` |
-| Pilot tasks | 28 tasks across L1, L2, L5, L6, L7; every M4-M8 has at least 3 static oracle-pair tasks |
-| Trajectories | 18 hand-authored seed trajectories plus 25 static isolation oracle pairs; targeted live isolation probes cover M4-M8 |
+| Fixtures | 7 synthetic builders: `empty_user`, `ready_user_minimal`, `read_surface_user`, `governance_user`, `audit_pending_user`, `drift_user`, `adversarial_user` |
+| Tasks | 16 tasks across L1, L2, L5, L6, L7 (L1:2, L2:2, L5:4, L6:7, L7:1), each a labelled cell of the per-mechanism told/untold x on/off 2x2 |
+| Cells | 31 task-cells / 93 reps at n=3 (from `runtime_modes_in_scope` x `contract_arm`) |
+| Trajectories | 8 hand-authored seed trajectories (pass/fail pairs) at `trajectories/hand_authored/` for scorer validation |
 | Scorer | Deterministic offline scorer at `scorer/core.py` with schema/determinism tests |
 | Harness | Model-agnostic harness at `harness/` with structured operator actions, runtime-mode toggling, hermetic subprocess execution, `mechanism_disabled` capture |
 | Baselines | Deterministic `rule_baseline_v1` + offline rule-baseline ablation runner. No model-backed baseline yet. |
-| Reproducibility | Evidence-table, SVG-figure, error-taxonomy generators at `results/`; single offline command regenerates derived artifacts |
+| Reproducibility | Rule-baseline ablation -> evidence tables -> figures -> error taxonomy generators at `results/`; single offline command regenerates derived artifacts, fingerprinted by `REPRODUCIBILITY_GOLDEN.json` |
 
 ## Directory Map
 
@@ -90,7 +104,7 @@ evidence.
 | `tasks/` | Benchmark tasks grouped by level (L1-L7) |
 | `manifests/` | Frozen runtime contract snapshots (current + drift) |
 | `fixtures/` | Synthetic HAI fixture-state plans and builders |
-| `prompts/` | Held-constant deployment-realistic prompt template |
+| `prompts/` | Deployment-realistic prompt base, held byte-constant except the parameterized told/untold blocks |
 | `trajectories/` | Hand-authored seed trajectories for scorer validation |
 | `harness/` | Action execution, trajectory capture, hermetic subprocess control |
 | `scorer/` | Offline scoring code and rubric helpers |
@@ -102,20 +116,18 @@ evidence.
 
 - Frozen HAI manifest snapshot exists under `manifests/`.
 - Task / trajectory / score schemas validate hand-authored fixtures.
-- 28 pilot tasks cover L1, L2, L5, L6, L7.
+- 16 tasks cover L1, L2, L5, L6, L7 as labelled 2x2 cells.
 - Scorer grades recorded trajectories without network access or private
   health rows.
 - Known-good and known-bad trajectories produce expected outcomes.
-- Every M4-M8 mechanism has at least 3 static oracle-pair tasks.
-- Targeted hermetic live probes cover every M4-M8 disable path.
+- Every context-verifiable mechanism (M4-M7) carries a told/untold task
+  pair; M8 audit and the L7 drift residual are covered.
 - No-model rule baseline regenerates trajectories, scores, evidence
   tables, figures, and error taxonomy offline.
 
 Preprint Option-B exit adds model-backed trajectories under the locked
-roster and preserves evidence-tier labels. The static matrix is
-scorer/coverage evidence, not standalone live causality evidence; the
-live matrix is targeted runtime-probe evidence, not model-result
-evidence.
+roster across the specify-vs-enforce cells and preserves the
+offline-scorer / model-backed evidence-tier labels.
 
 ## Current Gate
 

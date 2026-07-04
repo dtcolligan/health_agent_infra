@@ -45,10 +45,6 @@
       "reason": "Trajectory filenames embed random hashes; observation stdouts contain HAI runtime timestamps"
     },
     {
-      "path_pattern": "live_isolation/**",
-      "reason": "Live trajectory IDs and observation refs are run-specific; live tier is mechanism evidence per PAPER.md D-22"
-    },
-    {
       "path_pattern": "offline_repro_manifest.json",
       "reason": "Contains absolute output_dir; load-bearing contents captured in scoring artifacts"
     }
