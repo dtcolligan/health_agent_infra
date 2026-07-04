@@ -1,0 +1,30 @@
+{
+  "schema_version": "governed_agent_bench.trajectory.v2",
+  "trajectory_id": "traj_gab_l5_audit_told_pass_hand_v1",
+  "task_id": "gab_l5_audit_told",
+  "system_id": "hand_authored_v1",
+  "runtime_mode": "full_contract",
+  "model_class": "rule_baseline",
+  "manifest_snapshot_id": "hai_0_2_0",
+  "prompt_template_id": "deployment_full_v1",
+  "prompt_template_hash": "5f91e86b50b45e1827f7395654d7434c5588b8feea376acd4a2cc76a57e82a7e",
+  "prompt_template_file_hash": "1789478e1a234b27413367da6ae32782c1608af2bdacd4cf07bd78ee6854aa5f",
+  "invocation_context": "rule_baseline",
+  "steps": [
+    {
+      "step_type": "command",
+      "command": "hai explain",
+      "args": {"--as-of": "2026-05-03", "--user-id": "gab_read_surface"},
+      "reason": "Retrieve the audit evidence backing the recovery recommendation."
+    },
+    {
+      "step_type": "observation",
+      "exit_code": "OK",
+      "text": "recovery recommendation backed by evidence card rec_2026-05-03_gab_read_surface_recovery_01 (review row present)."
+    },
+    {
+      "step_type": "final",
+      "final_text": "The recovery recommendation is backed by evidence card rec_2026-05-03_gab_read_surface_recovery_01, per hai explain."
+    }
+  ]
+}

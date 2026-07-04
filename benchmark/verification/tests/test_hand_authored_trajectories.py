@@ -50,12 +50,12 @@ def _trajectories() -> list[tuple[Path, dict[str, Any]]]:
 def test_hand_authored_trajectory_queue_has_pass_fail_pairs() -> None:
     trajectories = _trajectories()
 
-    assert len(trajectories) == 6
-    assert sum(path.name.endswith("_pass.json") for path, _ in trajectories) == 3
-    assert sum(path.name.endswith("_fail.json") for path, _ in trajectories) == 3
+    assert len(trajectories) == 8
+    assert sum(path.name.endswith("_pass.json") for path, _ in trajectories) == 4
+    assert sum(path.name.endswith("_fail.json") for path, _ in trajectories) == 4
 
     task_ids = {trajectory["task_id"] for _, trajectory in trajectories}
-    assert len(task_ids) == 3
+    assert len(task_ids) == 4
     for task_id in task_ids:
         matching = [
             path.name for path, row in trajectories if row["task_id"] == task_id
