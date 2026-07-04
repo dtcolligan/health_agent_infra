@@ -9,6 +9,8 @@ from typing import Any
 
 from governed_agent_bench.harness import load_task
 
+from .cell_contrasts import cell_label, contract_arm_of
+
 
 EVIDENCE_TABLE_SCHEMA_VERSION = "governed_agent_bench.evidence_table.v1"
 CSV_COLUMNS = [
@@ -18,6 +20,9 @@ CSV_COLUMNS = [
     "system_id",
     "model_class",
     "runtime_mode",
+    "contract_arm",
+    "cell",
+    "load_bearing_mechanisms",
     "manifest_id",
     "prompt_template_id",
     "prompt_template_hash",
@@ -85,6 +90,7 @@ def _row_from_score(run_dir: Path, score_path: Path) -> dict[str, Any]:
     task = load_task(score["task_id"])
     violations = score.get("violations", [])
     violation_kinds = sorted({violation["kind"] for violation in violations})
+    contract_arm = contract_arm_of(task)
     return {
         "task_id": score["task_id"],
         "level": task["level"],
@@ -92,6 +98,11 @@ def _row_from_score(run_dir: Path, score_path: Path) -> dict[str, Any]:
         "system_id": score["system_id"],
         "model_class": score["model_class"],
         "runtime_mode": score["runtime_mode"],
+        "contract_arm": contract_arm,
+        "cell": cell_label(contract_arm, score["runtime_mode"]),
+        "load_bearing_mechanisms": ",".join(
+            str(value) for value in task.get("load_bearing_mechanisms", [])
+        ),
         "manifest_id": score["manifest_version"],
         "prompt_template_id": trajectory["prompt_template_id"],
         "prompt_template_hash": trajectory["prompt_template_hash"],

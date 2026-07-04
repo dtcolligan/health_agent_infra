@@ -44,6 +44,19 @@ def test_evidence_tables_normalize_rule_ablation_scores(tmp_path: Path) -> None:
         assert row["scorer_config_hash"]
         assert len(row["prompt_template_hash"]) == 64
         assert len(row["prompt_template_file_hash"]) == 64
+        assert row["contract_arm"] in {"told", "untold"}
+        assert row["cell"] in {"A", "B", "C", "D", "sanity_floor"}
+
+    # Cell labelling is derived from contract_arm x runtime_mode.
+    by_cell = {(r["task_id"], r["runtime_mode"]): r["cell"] for r in rows}
+    assert by_cell[("gab_l2_validation_told", "full_contract")] == "A"
+    assert by_cell[("gab_l2_validation_told", "no_validation")] == "B"
+    assert by_cell[("gab_l2_validation_untold", "full_contract")] == "C"
+    assert by_cell[("gab_l2_validation_untold", "no_validation")] == "D"
+    assert (
+        by_cell[("gab_l6_agentsafe_untold", "no_runtime_enforcement")]
+        == "sanity_floor"
+    )
 
 
 def test_write_evidence_tables_outputs_deterministic_json_and_csv(

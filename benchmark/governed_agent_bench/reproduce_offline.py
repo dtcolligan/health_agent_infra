@@ -19,6 +19,7 @@ if str(BENCHMARK_ROOT) not in sys.path:
 from governed_agent_bench.baselines import run_rule_baseline_ablation  # noqa: E402
 from governed_agent_bench.baselines.rule_baseline import TASK_IDS  # noqa: E402
 from governed_agent_bench.results import (  # noqa: E402
+    write_cell_contrasts,
     write_error_taxonomy,
     write_evidence_tables,
     write_result_figures,
@@ -53,6 +54,7 @@ def run_offline_repro(
     table_dir = output_dir / "evidence_tables"
     figure_dir = output_dir / "figures"
     taxonomy_dir = output_dir / "error_taxonomy"
+    contrast_dir = output_dir / "cell_contrasts"
 
     ablation_report = run_rule_baseline_ablation(
         output_dir=run_dir,
@@ -72,6 +74,10 @@ def run_offline_repro(
         evidence_table_path=table_dir / "evidence_table.json",
         output_dir=taxonomy_dir,
     )
+    contrasts = write_cell_contrasts(
+        run_dir=run_dir,
+        output_dir=contrast_dir,
+    )
 
     def _rel(path: str | Path) -> str:
         resolved = Path(path).resolve()
@@ -87,6 +93,7 @@ def run_offline_repro(
         "evidence_table_csv": _rel(evidence_output["csv_path"]),
         "figures_manifest": _rel(figure_dir / "figures_manifest.json"),
         "error_taxonomy": _rel(taxonomy["json_path"]),
+        "cell_contrasts": _rel(contrasts["json_path"]),
     }
 
     manifest = {

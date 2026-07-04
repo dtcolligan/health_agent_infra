@@ -27,6 +27,7 @@ _EXPECTED_ARTIFACTS = {
     "evidence_table_csv",
     "figures_manifest",
     "error_taxonomy",
+    "cell_contrasts",
 }
 
 

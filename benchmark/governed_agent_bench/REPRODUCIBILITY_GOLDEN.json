@@ -7,19 +7,24 @@
   "baseline_hardware": "Darwin 23.4.0 arm64; Apple M2",
   "hashed_files": [
     {
-      "path": "evidence_tables/evidence_table.json",
+      "path": "cell_contrasts/cell_contrasts.json",
       "normalize_absolute_paths": true,
-      "sha256": "d2102b665ff01c62c33b1784445d12de5e9f6242a390c7b3d24e42e9a6194b9e"
-    },
-    {
-      "path": "evidence_tables/evidence_table.csv",
-      "normalize_absolute_paths": false,
-      "sha256": "62294945c985f35f59078c7de86cc2b3bffe69cd1a47820c4dc7d1319599dc10"
+      "sha256": "a2716356e0d865b2af3d1b725219fa7229afd056d224ba5757ad329521433f4b"
     },
     {
       "path": "error_taxonomy/error_taxonomy.json",
       "normalize_absolute_paths": true,
       "sha256": "5c06ff115c32e362032efc349c51c0032cdc28bc4db9a4619d8d16ccb398a657"
+    },
+    {
+      "path": "evidence_tables/evidence_table.csv",
+      "normalize_absolute_paths": false,
+      "sha256": "68e404a7fa6f04bf1862b09665fede9f18cab7e003aa21430cf6844ff6950ea0"
+    },
+    {
+      "path": "evidence_tables/evidence_table.json",
+      "normalize_absolute_paths": true,
+      "sha256": "0f7dcc1f7a73e1313a31430ebdef2016efe424d556e70d6d6be28de09440883f"
     },
     {
       "path": "figures/figures_manifest.json",
