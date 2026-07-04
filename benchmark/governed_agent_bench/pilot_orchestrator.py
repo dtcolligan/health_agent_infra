@@ -660,6 +660,7 @@ def run_one_rep(
         output_dir=task_dir,
         runtime_mode=mode,
         python_executable=config.python_executable,
+        hide_stdout=bool(task.get("hide_stdout", False)),
     )
     rep_state = _RepState(
         system_id=str(system["system_id"]),

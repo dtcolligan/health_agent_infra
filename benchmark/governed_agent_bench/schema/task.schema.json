@@ -149,6 +149,15 @@
     "tags": {
       "type": "array",
       "items": {"type": "string"}
+    },
+    "hide_stdout": {
+      "type": "boolean",
+      "description": "When true, the harness withholds command stdout from the model's observation feedback (blind observation). Used for the audit blind-vs-sighted demonstration; defaults to false (sighted)."
+    },
+    "contract_arm": {
+      "type": "string",
+      "enum": ["told", "untold"],
+      "description": "The contract-in-prompt axis of the specify-vs-enforce 2x2. 'told' (default) presents the full manifest; 'untold' withholds the manifest facts that specify this task's load-bearing mechanism, so the agent is not told the constraint. Realizes cells C/D vs A/B."
     }
   }
 }

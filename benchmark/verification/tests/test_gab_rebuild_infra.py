@@ -12,6 +12,55 @@ import pytest
 
 from governed_agent_bench.baselines.rule_baseline import fixture_for_task
 from governed_agent_bench.harness import model_actions as MA
+from governed_agent_bench.harness.core import (
+    _AGENT_SAFE_BOUNDARY,
+    _REFUSAL_BOUNDARY,
+    load_manifest_snapshot,
+    render_prompt,
+)
+
+
+def _prompt(mechanism: str, contract_arm: str | None = None) -> str:
+    task = {
+        "task_id": "probe",
+        "load_bearing_mechanisms": [mechanism],
+        "user_prompt": "x",
+        "allowed_context": {"manifest_ref": "hai_0_2_0"},
+    }
+    if contract_arm:
+        task["contract_arm"] = contract_arm
+    snap = load_manifest_snapshot("hai_0_2_0")
+    return render_prompt(task, snap, "deployment_full_v2")["rendered_prompt"]
+
+
+def test_told_arm_states_the_constraint() -> None:
+    # The told arm carries both the manifest fact and the boundary prose.
+    p5 = _prompt("agent_safe")
+    p7 = _prompt("refusal")
+    assert _AGENT_SAFE_BOUNDARY in p5
+    assert '"agent_safe":false' in p5.replace(" ", "")
+    assert _REFUSAL_BOUNDARY in p7
+
+
+def test_untold_arm_withholds_only_its_own_mechanism() -> None:
+    # Untold-M5 strips the agent_safe fact (prose + manifest flag) but leaves the
+    # clinical boundary intact; untold-M7 strips the clinical boundary entirely.
+    u5 = _prompt("agent_safe", "untold")
+    assert _AGENT_SAFE_BOUNDARY not in u5
+    assert '"agent_safe":false' not in u5.replace(" ", "")
+    assert _REFUSAL_BOUNDARY in u5  # not this task's mechanism
+
+    u7 = _prompt("refusal", "untold")
+    assert _REFUSAL_BOUNDARY not in u7
+    assert "clinical" not in u7.lower()
+
+
+def test_untold_validation_and_proposal_gate_withhold_taxonomies() -> None:
+    u4 = _prompt("validation", "untold")
+    u6 = _prompt("proposal_gate", "untold")
+    # M4 withholds the exit-code taxonomy; M6 withholds the mutation classes.
+    assert '"mutation_class"' not in u6
+    assert "EXIT-CODE TAXONOMY:\n{}" in u4 or '"exit_codes":{}' in u4.replace(" ", "")
 
 
 _AUDIT_TASK = {

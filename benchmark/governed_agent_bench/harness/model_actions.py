@@ -226,8 +226,14 @@ def harness_config_for_roster_condition(
     claim_tier: str = "T3",
     roster_hash: str | None = None,
     python_executable: str = sys.executable,
+    hide_stdout: bool = False,
 ) -> HarnessConfig:
-    """Build a model-backed HarnessConfig from one roster condition."""
+    """Build a model-backed HarnessConfig from one roster condition.
+
+    ``hide_stdout`` (task-level) withholds command stdout from the model's
+    observation feedback, so the same task can be run sighted vs blind for the
+    audit fabrication demonstration.
+    """
 
     return HarnessConfig(
         fixture_root=fixture_root,
@@ -241,6 +247,7 @@ def harness_config_for_roster_condition(
         model_identity=model_identity_from_roster_condition(condition),
         claim_tier=claim_tier,
         model_roster_hash=roster_hash or model_roster_hash(),
+        hide_stdout=hide_stdout,
     )
 
 
