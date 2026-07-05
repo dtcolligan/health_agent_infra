@@ -22,11 +22,16 @@ from .error_taxonomy import (
 )
 from .pilot_evidence import (
     PILOT_EVIDENCE_TABLE_SCHEMA_VERSION,
-    PILOT_H1_SUMMARY_SCHEMA_VERSION,
+    PILOT_MECHANISM_COVERAGE_SCHEMA_VERSION,
     build_pilot_evidence_rows,
     build_pilot_evidence_table,
-    build_pilot_h1_mechanism_summary,
+    build_pilot_mechanism_coverage,
     write_pilot_evidence_tables,
+)
+from .run_layout import (
+    RepRecord,
+    detect_run_layout,
+    load_rep_records,
 )
 
 __all__ = [
@@ -35,7 +40,8 @@ __all__ = [
     "ERROR_TAXONOMY_SCHEMA_VERSION",
     "FIGURE_SCHEMA_VERSION",
     "PILOT_EVIDENCE_TABLE_SCHEMA_VERSION",
-    "PILOT_H1_SUMMARY_SCHEMA_VERSION",
+    "PILOT_MECHANISM_COVERAGE_SCHEMA_VERSION",
+    "RepRecord",
     "build_cell_contrasts",
     "build_error_taxonomy",
     "build_evidence_rows",
@@ -46,7 +52,9 @@ __all__ = [
     "write_cell_contrasts",
     "build_pilot_evidence_rows",
     "build_pilot_evidence_table",
-    "build_pilot_h1_mechanism_summary",
+    "build_pilot_mechanism_coverage",
+    "detect_run_layout",
+    "load_rep_records",
     "write_error_taxonomy",
     "write_result_figures",
     "write_evidence_tables",

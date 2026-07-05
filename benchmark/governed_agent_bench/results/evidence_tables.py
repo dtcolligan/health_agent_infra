@@ -1,4 +1,10 @@
-"""Deterministic evidence-table construction from score artifacts."""
+"""Deterministic evidence-table construction from score artifacts.
+
+Consumes the shared run-layout reader (SF-1), so both the flat rule-baseline
+layout (run_dir/scores + run_dir/trajectories) and the nested paid-pilot
+layout (conditions/<system>/runtime_mode_<mode>/tasks/<task>/rep_XX.*) yield
+the same normalized rows.
+"""
 
 from __future__ import annotations
 
@@ -10,6 +16,7 @@ from typing import Any
 from governed_agent_bench.harness import load_task
 
 from .cell_contrasts import cell_label, contract_arm_of
+from .run_layout import RepRecord, load_rep_records
 
 
 EVIDENCE_TABLE_SCHEMA_VERSION = "governed_agent_bench.evidence_table.v1"
@@ -41,11 +48,16 @@ CSV_COLUMNS = [
 def build_evidence_rows(run_dir: Path) -> list[dict[str, Any]]:
     """Build one normalized row per score/trajectory pair in a run dir."""
 
-    score_paths = sorted((run_dir / "scores").glob("*.score.json"))
-    if not score_paths:
-        raise ValueError(f"no score files found under {run_dir / 'scores'}")
-    rows = [_row_from_score(run_dir, path) for path in score_paths]
-    return sorted(rows, key=lambda row: (row["task_id"], row["runtime_mode"]))
+    rows = [_row_from_record(record) for record in load_rep_records(run_dir)]
+    return sorted(
+        rows,
+        key=lambda row: (
+            row["task_id"],
+            row["runtime_mode"],
+            row["system_id"],
+            row["trajectory_id"],
+        ),
+    )
 
 
 def write_evidence_tables(
@@ -82,12 +94,10 @@ def write_evidence_tables(
     }
 
 
-def _row_from_score(run_dir: Path, score_path: Path) -> dict[str, Any]:
-    score = _load_json(score_path)
-    trajectory_path = run_dir / "trajectories" / f"{score['trajectory_id']}.json"
-    trajectory = _load_json(trajectory_path)
-    _assert_score_trajectory_match(score, trajectory, score_path=score_path)
-    task = load_task(score["task_id"])
+def _row_from_record(record: RepRecord) -> dict[str, Any]:
+    score = record.score
+    trajectory = record.trajectory
+    task = load_task(record.task_id)
     violations = score.get("violations", [])
     violation_kinds = sorted({violation["kind"] for violation in violations})
     contract_arm = contract_arm_of(task)
@@ -124,31 +134,3 @@ def _row_from_score(run_dir: Path, score_path: Path) -> dict[str, Any]:
             separators=(",", ":"),
         ),
     }
-
-
-def _assert_score_trajectory_match(
-    score: dict[str, Any],
-    trajectory: dict[str, Any],
-    *,
-    score_path: Path,
-) -> None:
-    checks = {
-        "trajectory_id": trajectory["trajectory_id"],
-        "task_id": trajectory["task_id"],
-        "system_id": trajectory["system_id"],
-        "runtime_mode": trajectory["runtime_mode"],
-        "model_class": trajectory["model_class"],
-    }
-    for key, expected in checks.items():
-        if score[key] != expected:
-            raise ValueError(f"{score_path}: score/trajectory mismatch for {key}")
-    if score["manifest_version"] != trajectory["manifest_snapshot_id"]:
-        raise ValueError(
-            f"{score_path}: score manifest_version does not match trajectory"
-        )
-
-
-def _load_json(path: Path) -> dict[str, Any]:
-    if not path.exists():
-        raise ValueError(f"required artifact not found: {path}")
-    return json.loads(path.read_text(encoding="utf-8"))
