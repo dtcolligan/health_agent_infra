@@ -197,19 +197,59 @@ def prepare_operator_run(
     )
 
 
+# IC-1 (dress-rehearsal finding #1): how a manifest-disallowed command is
+# handled. The allowlist itself is ALWAYS-ON held-constant infrastructure
+# (M1-M3), not the M4 mechanism -- the choice is only whether the event is
+# THROWN (authored actions: a disallowed command is a test-authoring bug and
+# must fail fast) or RECORDED (model actions: a hallucinated command name is a
+# measured model behaviour; it becomes a rejected command step, consumes the
+# turn, and the sweep advances).
+DISALLOWED_COMMAND_RAISE = "raise"
+DISALLOWED_COMMAND_RECORD = "record"
+DISALLOWED_COMMAND_REASON = "command not in manifest snapshot"
+
+
 def append_operator_action_steps(
     action: dict[str, Any],
     config: HarnessConfig,
     state: OperatorRunState,
     steps: list[dict[str, Any]],
+    *,
+    on_disallowed_command: str = DISALLOWED_COMMAND_RAISE,
 ) -> list[int]:
     """Append trajectory steps for one parsed operator action."""
 
+    if on_disallowed_command not in {
+        DISALLOWED_COMMAND_RAISE,
+        DISALLOWED_COMMAND_RECORD,
+    }:
+        raise HarnessError(
+            f"unsupported on_disallowed_command: {on_disallowed_command!r}"
+        )
     first_index = len(steps)
     action_type = action.get("action_type")
     if action_type == "command":
         command = _command_text(action)
-        _ensure_command_allowed(command, state.command_manifest_snapshot)
+        if command not in _manifest_commands(state.command_manifest_snapshot):
+            if on_disallowed_command == DISALLOWED_COMMAND_RAISE:
+                _ensure_command_allowed(command, state.command_manifest_snapshot)
+            # RECORD path (model loop): the rejected command is a trajectory
+            # `command` step that is never executed (no hai subprocess, no
+            # observation). The scorer's `_invalid_commands` reads command
+            # steps against the manifest, so this exact shape is what feeds
+            # hallucinated_command_rate / valid_command_rate; the rejection
+            # metadata rides back to the model in the turn feedback.
+            steps.append({
+                "step_type": "command",
+                "command": command,
+                "args": dict(action.get("args") or {}),
+                "reason": action.get("reason", ""),
+                "metadata": {
+                    "manifest_rejected": True,
+                    "rejection_reason": DISALLOWED_COMMAND_REASON,
+                },
+            })
+            return list(range(first_index, len(steps)))
         steps.append({
             "step_type": "command",
             "command": command,
@@ -406,16 +446,19 @@ def _withhold_manifest_facts(
 def _scrub_forbidden_prose(node: Any, forbidden_tokens: tuple[str, ...]) -> None:
     """Recursively blank any prose-keyed string containing a forbidden token.
 
-    Only values under `_PROSE_KEYS` are touched, so structural strings (command
-    names, flag names, enum values) can never be corrupted. Blanked to "" so the
-    v2 strip-empty serializer drops the field entirely."""
+    Containment is case-insensitive (audit fix A12): a case-variant
+    restatement of a declared constraint must not leak into the untold
+    prompt. Only values under `_PROSE_KEYS` are touched, so structural
+    strings (command names, flag names, enum values) can never be
+    corrupted. Blanked to "" so the v2 strip-empty serializer drops the
+    field entirely."""
 
     if isinstance(node, dict):
         for key, value in node.items():
             if (
                 key in _PROSE_KEYS
                 and isinstance(value, str)
-                and any(token in value for token in forbidden_tokens)
+                and _contains_forbidden_token(value, forbidden_tokens)
             ):
                 node[key] = ""
             else:
@@ -423,6 +466,11 @@ def _scrub_forbidden_prose(node: Any, forbidden_tokens: tuple[str, ...]) -> None
     elif isinstance(node, list):
         for item in node:
             _scrub_forbidden_prose(item, forbidden_tokens)
+
+
+def _contains_forbidden_token(value: str, forbidden_tokens: tuple[str, ...]) -> bool:
+    lowered = value.lower()
+    return any(token.lower() in lowered for token in forbidden_tokens)
 
 
 def render_prompt(
@@ -473,20 +521,52 @@ def render_prompt(
     }
 
 
+# Audit fix A4: the HAI subprocess was the one unbounded wait in the loop.
+# The 120s bound matches the fixture-build timeout precedent in
+# baselines/rule_baseline.py. 124 is the shell timeout convention; it is
+# deliberately absent from EXIT_CODE_NAMES so the observation records
+# EXIT_124 and the agent loop classifies it as a subprocess crash.
+HAI_SUBPROCESS_TIMEOUT_SECONDS = 120
+HAI_SUBPROCESS_TIMEOUT_RETURNCODE = 124
+
+
+def _decoded_stream(value: str | bytes | None) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    return value
+
+
 def _run_hai(
     action: dict[str, Any],
     config: HarnessConfig,
 ) -> subprocess.CompletedProcess[str]:
     argv = action_to_argv(action)
     env = _subprocess_env(config)
-    return subprocess.run(
-        [config.python_executable, "-m", "health_agent_infra.cli", *argv],
-        cwd=REPO_ROOT,
-        env=env,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    command = [config.python_executable, "-m", "health_agent_infra.cli", *argv]
+    try:
+        return subprocess.run(
+            command,
+            cwd=REPO_ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=HAI_SUBPROCESS_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired as exc:
+        stderr = _decoded_stream(exc.stderr)
+        notice = (
+            f"hai subprocess exceeded {HAI_SUBPROCESS_TIMEOUT_SECONDS}s "
+            "and was killed by the harness timeout"
+        )
+        return subprocess.CompletedProcess(
+            args=command,
+            returncode=HAI_SUBPROCESS_TIMEOUT_RETURNCODE,
+            stdout=_decoded_stream(exc.stdout),
+            stderr=f"{stderr}\n{notice}" if stderr else notice,
+        )
 
 
 def _subprocess_env(config: HarnessConfig) -> dict[str, str]:
@@ -581,6 +661,21 @@ def _ensure_model_metadata(config: HarnessConfig) -> None:
     if config.model_class in MODEL_BACKED_CLASSES and config.model_identity is None:
         raise HarnessError(
             f"model_class={config.model_class!r} requires model_identity"
+        )
+    # Audit fix A6: deployment_full_v1 stays the default for rule-baseline
+    # artifacts, but its render exceeds the locked model's context window
+    # (deployment_full_v2 exists precisely because of that ceiling, D-28), so
+    # every call under it would 422. Model-backed configs take the template
+    # from the roster; a v1 leak here means the config was hand-built with the
+    # dead default, which must fail fast rather than burn a metered run.
+    if (
+        config.model_class in MODEL_BACKED_CLASSES
+        and config.prompt_template_id == "deployment_full_v1"
+    ):
+        raise HarnessError(
+            "model-backed runs must not use prompt_template_id="
+            "'deployment_full_v1' (render exceeds the locked model context; "
+            "roster conditions pin deployment_full_v2)"
         )
     if config.claim_tier in {"T3", "T4"} and not config.model_roster_hash:
         raise HarnessError(

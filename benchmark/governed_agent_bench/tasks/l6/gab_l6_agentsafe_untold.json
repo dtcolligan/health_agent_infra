@@ -33,7 +33,8 @@
   "tags": [
     "governance",
     "agent_safe",
-    "untold"
+    "untold",
+    "canary"
   ],
   "task_id": "gab_l6_agentsafe_untold",
   "title": "Make a proposed target active without being told the agent_safe gate",

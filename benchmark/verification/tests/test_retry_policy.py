@@ -30,11 +30,14 @@ from governed_agent_bench.harness import (  # noqa: E402
     run_together_model_action,
 )
 from governed_agent_bench.harness.retry import (  # noqa: E402
+    HTTP_ERROR_BODY_MAX_CHARS,
     OutageDetector,
     RetryExhausted,
     TransportFailure,
+    _http_error_message,
     classify_retry,
     execute_with_retry,
+    is_context_overflow,
 )
 from governed_agent_bench.harness.together import (  # noqa: E402
     OUTCOME_ADAPTER_FAILURE,
@@ -389,6 +392,7 @@ def test_adapter_retried_turn_threads_retry_count_without_double_counting(
         "prompt_tokens": 2000,
         "completion_tokens": 1000,
         "total_tokens": 3000,
+        "usage_complete": True,
     }
 
 
@@ -647,3 +651,91 @@ def test_transient_5xx_retryable_deterministic_4xx_not() -> None:
             classify_retry(TransportFailure(kind="http_status", status_code=code))
             == "none"
         ), code
+
+
+def test_http_408_request_timeout_is_timeout_class() -> None:
+    """Audit fix A13: HTTP 408 is a transient request timeout, retried like
+    the other timeout-class failures rather than aborting the rep."""
+
+    assert (
+        classify_retry(TransportFailure(kind="http_status", status_code=408))
+        == "timeout_class"
+    )
+    result, sleeps, call = _run([_http(408), _ok()])
+    assert result.response == {"ok": True}
+    assert result.retry_count == 1
+    assert sleeps == [1.0]
+    assert call.calls == 2
+
+
+# --------------------------------------------------------------------------- #
+# IB-3: context-overflow classification + error-body capture
+# --------------------------------------------------------------------------- #
+
+
+def test_is_context_overflow_classifies_any_422() -> None:
+    """Every http_status 422 is context_overflow (a clear body signal and an
+    ambiguous body classify identically; the raw message is the evidence)."""
+
+    clear = TransportFailure(
+        kind="http_status",
+        status_code=422,
+        message='Together HTTP 422: {"error": "context length exceeded"}',
+    )
+    ambiguous = TransportFailure(
+        kind="http_status", status_code=422, message="Together HTTP 422"
+    )
+    assert is_context_overflow(clear) is True
+    assert is_context_overflow(ambiguous) is True
+
+
+def test_is_context_overflow_rejects_non_422_and_non_transport() -> None:
+    assert is_context_overflow(
+        TransportFailure(kind="http_status", status_code=400, message="bad request")
+    ) is False
+    assert is_context_overflow(
+        TransportFailure(kind="timeout", message="timed out")
+    ) is False
+    assert is_context_overflow(RuntimeError("boom")) is False
+
+
+def _http_error(code: int, body: bytes) -> Any:
+    import io
+    import urllib.error
+
+    return urllib.error.HTTPError(
+        url="https://api.example.invalid/v1/chat/completions",
+        code=code,
+        msg="Unprocessable Entity",
+        hdrs=None,  # type: ignore[arg-type]
+        fp=io.BytesIO(body),
+    )
+
+
+def test_http_error_message_captures_bounded_body() -> None:
+    body = b'{"error": {"message": "tokens exceed context window"}}'
+    message = _http_error_message("Together", _http_error(422, body))
+    assert message.startswith("Together HTTP 422: ")
+    assert "tokens exceed context window" in message
+
+    long_body = b"x" * (HTTP_ERROR_BODY_MAX_CHARS + 500)
+    long_message = _http_error_message("Together", _http_error(422, long_body))
+    assert long_message.endswith("...[truncated]")
+    assert len(long_message) < HTTP_ERROR_BODY_MAX_CHARS + 100
+
+
+def test_http_error_message_degrades_to_status_only_on_unreadable_body() -> None:
+    error = _http_error(422, b"")
+    message = _http_error_message("Together", error)
+    assert message == "Together HTTP 422"
+
+    class ExplodingError:
+        code = 422
+
+        def read(self) -> bytes:
+            raise OSError("stream gone")
+
+    assert (
+        _http_error_message("Together", ExplodingError())  # type: ignore[arg-type]
+        == "Together HTTP 422"
+    )

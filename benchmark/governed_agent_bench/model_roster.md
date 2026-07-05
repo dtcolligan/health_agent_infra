@@ -1,13 +1,14 @@
 # Predeclared Model Roster — Paper v1
 
-**Status:** predeclared candidate roster for `WP-MODEL-ROSTER-001`. The
-working-model selection was superseded by D-33 (2026-07-01): the working
-model is now `Qwen/Qwen3-235B-A22B-Instruct-2507-tput` (Together
-serverless), resolving the old D-O-01 `option_b_qwen25_7b_together`
-choice. No model-backed trajectories before the pilot-protocol lock.
+**Status:** re-locked as `roster_v3` (2026-07-05, D-41): the four
+run-ladder conditions lead the machine-readable block, every field
+vendor-verified live by Dom (Together model pages + HF model cards) —
+IDs, serverless deployment, pricing, context windows, and per-model
+vendor-recommended sampling. Closes D-O-04. No model-backed trajectories
+before the pilot-protocol lock.
 
 This file records the narrow preprint roster described in `/PAPER.md`.
-**Re-locked as `roster_v2` on 2026-07-05:** the machine-readable block now
+**History — re-locked as `roster_v2` earlier on 2026-07-05:** the machine-readable block now
 leads with the vendor-verified `primary_qwen3_235b_together` condition
 (provider ID, serverless deployment, FP8 serving, and $0.20/$0.60 per 1M
 pricing verified live by Dom on the Together model page). The superseded
@@ -24,8 +25,17 @@ optional small Option C stretch.
 
 ## Roster
 
-Working roster (D-33; machine-readable block re-locked as `roster_v2`,
-2026-07-05):
+Run ladder (D-41; machine-readable block `roster_v3`, all fields
+vendor-verified live 2026-07-05):
+
+| Role | Condition | Model | $/1M in/out | Context | Sampling (vendor-recommended) |
+|---|---|---|---|---|---|
+| Primary capable | `run_primary_qwen3_235b` | `Qwen/Qwen3-235B-A22B-Instruct-2507-tput` | 0.20 / 0.60 | 262K | temp 0.7, top_p 0.8, top_k 20, min_p 0 |
+| Second capable (cross-family) | `run_capable_llama33_70b` | `meta-llama/Llama-3.3-70B-Instruct-Turbo` | 1.04 / 1.04 | 128K | temp 0.6, top_p 0.9 (Meta generation config) |
+| Near-floor | `run_nearfloor_qwen35_9b` | `Qwen/Qwen3.5-9B` | 0.17 / 0.25 | 262K | non-thinking: temp 0.7, top_p 0.8, top_k 20, min_p 0, presence_penalty 1.5 (thinking disabled via chat_template_kwargs; disclosed) |
+| Below-floor operate control | `run_belowfloor_qwen25_7b` | `Qwen/Qwen2.5-7B-Instruct-Turbo` | 0.30 / 0.30 | 32K (overflow pre-registered as expected; context_overflow category) | temp 0.7, top_p 0.8, top_k 20, rep_penalty 1.05 |
+
+Superseded descriptive roster (D-33 era):
 
 | Role | Model | Provider | Purpose |
 |---|---|---|---|
@@ -46,7 +56,7 @@ optional Option C cell and one retry cycle.
 ```json
 {
   "schema_version": "governed_agent_bench.model_roster.v1",
-  "roster_id": "roster_v2",
+  "roster_id": "roster_v3",
   "roster_file": "benchmark/governed_agent_bench/model_roster.md",
   "hash_algorithm": "sha256",
   "hash_scope": "entire_model_roster_md_file_bytes",
@@ -62,6 +72,250 @@ optional Option C cell and one retry cycle.
     "notes": "Roster inclusion only. No model-backed trajectories before the pilot-protocol lock. No private health data, live wearable rows, or hosted production state may be sent to model providers."
   },
   "conditions": [
+    {
+      "condition_id": "run_primary_qwen3_235b",
+      "system_id": "run_primary_qwen3_235b_v1",
+      "model_class": "cloud",
+      "model_family": "qwen3-instruct-moe",
+      "model_id": "Qwen/Qwen3-235B-A22B-Instruct-2507-tput",
+      "provider": "Together AI",
+      "provider_snapshot_date": "2026-07-05",
+      "model_card_snapshot": "https://www.together.ai/models/qwen3-235b-a22b-instruct-2507-fp8",
+      "parameter_count": "235B total / 22B active (MoE)",
+      "quantization": "FP8 provider serving (Throughput endpoint)",
+      "weights_source": "Qwen3 235B A22B Instruct 2507 (non-thinking) via Together serverless; sampling per HF card Best Practices (verified live 2026-07-05)",
+      "context_window": 262144,
+      "compute_boundary": {
+        "hardware": "Together AI managed serverless inference",
+        "runtime": "Together AI chat completions API",
+        "max_wall_time_minutes": 480,
+        "network_access": true
+      },
+      "cost_boundary": {
+        "budget_type": "approved_cloud_budget",
+        "max_cost_usd": 50.0,
+        "billing_boundary": "Vendor-verified 2026-07-05: input $0.20/1M, output $0.60/1M. D-06 USD 300 aggregate ceiling."
+      },
+      "data_boundary": "synthetic_governed_agent_bench_fixtures_only",
+      "decoding_settings": {
+        "temperature": 0.7,
+        "top_p": 0.8,
+        "top_k": 20,
+        "min_p": 0,
+        "max_tokens": 2048,
+        "seed": "provider_does_not_support_seed"
+      },
+      "prompt_id": "deployment_full_v2",
+      "manifest_id": "hai_0_2_0",
+      "runtime_modes": [
+        "full_contract",
+        "no_validation",
+        "no_agent_safe",
+        "no_proposal_gate",
+        "no_refusal",
+        "no_audit_chain",
+        "no_runtime_enforcement"
+      ],
+      "failure_reporting": {
+        "timeout": "reportable_outcome",
+        "refusal": "reportable_outcome",
+        "invalid_json": "reportable_outcome",
+        "adapter_failure": "reportable_outcome",
+        "context_overflow": "reportable_outcome",
+        "provider_filtered": "reportable_outcome",
+        "length_truncation": "reportable_outcome"
+      },
+      "cloud_approval": {
+        "approval_id": "d41_ladder_dom_2026_07_05",
+        "approved_by": "Dom",
+        "approved_at": "2026-07-05",
+        "approved_scope": "D-41 run ladder PRIMARY (capable cooperative agent). Vendor-recommended non-thinking sampling per Qwen/Qwen3-235B-A22B-Instruct-2507 HF card."
+      }
+    },
+    {
+      "condition_id": "run_capable_llama33_70b",
+      "system_id": "run_capable_llama33_70b_v1",
+      "model_class": "cloud",
+      "model_family": "llama-3.3-instruct",
+      "model_id": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      "provider": "Together AI",
+      "provider_snapshot_date": "2026-07-05",
+      "model_card_snapshot": "https://www.together.ai/models/llama-3-3-70b",
+      "parameter_count": "70B",
+      "quantization": "Turbo endpoint (FP8 per Together Turbo convention; page does not state)",
+      "weights_source": "Llama 3.3 70B Instruct Turbo via Together serverless; sampling per Meta generation_config (temperature 0.6, top_p 0.9; read from the ungated unsloth mirror of the gated Meta repo, 2026-07-05)",
+      "context_window": 131072,
+      "compute_boundary": {
+        "hardware": "Together AI managed serverless inference",
+        "runtime": "Together AI chat completions API",
+        "max_wall_time_minutes": 480,
+        "network_access": true
+      },
+      "cost_boundary": {
+        "budget_type": "approved_cloud_budget",
+        "max_cost_usd": 50.0,
+        "billing_boundary": "Vendor-verified 2026-07-05: input $1.04/1M, output $1.04/1M. D-06 USD 300 aggregate ceiling."
+      },
+      "data_boundary": "synthetic_governed_agent_bench_fixtures_only",
+      "decoding_settings": {
+        "temperature": 0.6,
+        "top_p": 0.9,
+        "max_tokens": 2048,
+        "seed": "provider_does_not_support_seed"
+      },
+      "prompt_id": "deployment_full_v2",
+      "manifest_id": "hai_0_2_0",
+      "runtime_modes": [
+        "full_contract",
+        "no_validation",
+        "no_agent_safe",
+        "no_proposal_gate",
+        "no_refusal",
+        "no_audit_chain",
+        "no_runtime_enforcement"
+      ],
+      "failure_reporting": {
+        "timeout": "reportable_outcome",
+        "refusal": "reportable_outcome",
+        "invalid_json": "reportable_outcome",
+        "adapter_failure": "reportable_outcome",
+        "context_overflow": "reportable_outcome",
+        "provider_filtered": "reportable_outcome",
+        "length_truncation": "reportable_outcome"
+      },
+      "cloud_approval": {
+        "approval_id": "d41_ladder_dom_2026_07_05",
+        "approved_by": "Dom",
+        "approved_at": "2026-07-05",
+        "approved_scope": "D-41 run ladder second capable point (cross-family). Meta generation defaults as vendor-recommended sampling."
+      }
+    },
+    {
+      "condition_id": "run_nearfloor_qwen35_9b",
+      "system_id": "run_nearfloor_qwen35_9b_v1",
+      "model_class": "cloud",
+      "model_family": "qwen3.5",
+      "model_id": "Qwen/Qwen3.5-9B",
+      "provider": "Together AI",
+      "provider_snapshot_date": "2026-07-05",
+      "model_card_snapshot": "https://www.together.ai/models/qwen3-5-9b",
+      "parameter_count": "9B",
+      "quantization": "provider serving (page does not state quantization)",
+      "weights_source": "Qwen3.5 9B via Together serverless. THINKING-BY-DEFAULT reasoning-class model run in NON-THINKING mode via chat_template_kwargs {enable_thinking: false} (mechanism documented on the Together model page); sampling per HF card 'Instruct (non-thinking) mode' Best Practices (verified live 2026-07-05). Disclosed in the paper.",
+      "context_window": 262144,
+      "compute_boundary": {
+        "hardware": "Together AI managed serverless inference",
+        "runtime": "Together AI chat completions API",
+        "max_wall_time_minutes": 480,
+        "network_access": true
+      },
+      "cost_boundary": {
+        "budget_type": "approved_cloud_budget",
+        "max_cost_usd": 50.0,
+        "billing_boundary": "Vendor-verified 2026-07-05: input $0.17/1M, output $0.25/1M. D-06 USD 300 aggregate ceiling."
+      },
+      "data_boundary": "synthetic_governed_agent_bench_fixtures_only",
+      "decoding_settings": {
+        "temperature": 0.7,
+        "top_p": 0.8,
+        "top_k": 20,
+        "min_p": 0,
+        "presence_penalty": 1.5,
+        "repetition_penalty": 1.0,
+        "max_tokens": 2048,
+        "seed": "provider_does_not_support_seed",
+        "chat_template_kwargs": {
+          "enable_thinking": false
+        }
+      },
+      "prompt_id": "deployment_full_v2",
+      "manifest_id": "hai_0_2_0",
+      "runtime_modes": [
+        "full_contract",
+        "no_validation",
+        "no_agent_safe",
+        "no_proposal_gate",
+        "no_refusal",
+        "no_audit_chain",
+        "no_runtime_enforcement"
+      ],
+      "failure_reporting": {
+        "timeout": "reportable_outcome",
+        "refusal": "reportable_outcome",
+        "invalid_json": "reportable_outcome",
+        "adapter_failure": "reportable_outcome",
+        "context_overflow": "reportable_outcome",
+        "provider_filtered": "reportable_outcome",
+        "length_truncation": "reportable_outcome"
+      },
+      "cloud_approval": {
+        "approval_id": "d41_ladder_dom_2026_07_05",
+        "approved_by": "Dom",
+        "approved_at": "2026-07-05",
+        "approved_scope": "D-41 run ladder near-floor point. Non-thinking mode; 262K native context removes the near-floor overflow confound."
+      }
+    },
+    {
+      "condition_id": "run_belowfloor_qwen25_7b",
+      "system_id": "run_belowfloor_qwen25_7b_v1",
+      "model_class": "cloud",
+      "model_family": "qwen2.5-instruct",
+      "model_id": "Qwen/Qwen2.5-7B-Instruct-Turbo",
+      "provider": "Together AI",
+      "provider_snapshot_date": "2026-07-05",
+      "model_card_snapshot": "https://www.together.ai/models/qwen2-5-7b-instruct-turbo",
+      "parameter_count": "7B",
+      "quantization": "FP8 provider serving",
+      "weights_source": "Qwen2.5 7B Instruct Turbo via Together serverless; sampling per Qwen/Qwen2.5-7B-Instruct generation_config (verified live 2026-07-05). Worst-case multi-turn context overflow at 32K is PRE-REGISTERED EXPECTED behavior for this control, reported via the context_overflow outcome category (never scored as model failure).",
+      "context_window": 32768,
+      "compute_boundary": {
+        "hardware": "Together AI managed serverless inference",
+        "runtime": "Together AI chat completions API",
+        "max_wall_time_minutes": 480,
+        "network_access": true
+      },
+      "cost_boundary": {
+        "budget_type": "approved_cloud_budget",
+        "max_cost_usd": 50.0,
+        "billing_boundary": "Pricing snapshot 2026-05-19: input $0.30/1M, output $0.30/1M (existing verified entry). D-06 USD 300 aggregate ceiling."
+      },
+      "data_boundary": "synthetic_governed_agent_bench_fixtures_only",
+      "decoding_settings": {
+        "temperature": 0.7,
+        "top_p": 0.8,
+        "top_k": 20,
+        "repetition_penalty": 1.05,
+        "max_tokens": 2048,
+        "seed": "provider_does_not_support_seed"
+      },
+      "prompt_id": "deployment_full_v2",
+      "manifest_id": "hai_0_2_0",
+      "runtime_modes": [
+        "full_contract",
+        "no_validation",
+        "no_agent_safe",
+        "no_proposal_gate",
+        "no_refusal",
+        "no_audit_chain",
+        "no_runtime_enforcement"
+      ],
+      "failure_reporting": {
+        "timeout": "reportable_outcome",
+        "refusal": "reportable_outcome",
+        "invalid_json": "reportable_outcome",
+        "adapter_failure": "reportable_outcome",
+        "context_overflow": "reportable_outcome",
+        "provider_filtered": "reportable_outcome",
+        "length_truncation": "reportable_outcome"
+      },
+      "cloud_approval": {
+        "approval_id": "d41_ladder_dom_2026_07_05",
+        "approved_by": "Dom",
+        "approved_at": "2026-07-05",
+        "approved_scope": "D-41 run ladder BELOW-FLOOR OPERATE CONTROL (pre-registered canary: predicted to fail to operate the contract). Supersedes option_b_qwen25_7b_together as the run condition; the old condition is retained for provenance."
+      },
+      "context_overflow_expected": true
+    },
     {
       "condition_id": "primary_qwen3_235b_together",
       "system_id": "primary_qwen3_235b_together_v1",

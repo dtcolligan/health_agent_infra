@@ -64,16 +64,21 @@ def test_model_roster_machine_readable_block_has_expected_conditions() -> None:
 
     condition_ids = {condition["condition_id"] for condition in roster["conditions"]}
     assert condition_ids == {
-        # roster_v2 (2026-07-05): the vendor-verified D-33 working model.
-        "primary_qwen3_235b_together",
+        # roster_v3 (2026-07-05): the four D-41 run-ladder conditions,
+        # vendor-verified live (Together pages + HF cards).
+        "run_primary_qwen3_235b",
+        "run_capable_llama33_70b",
+        "run_nearfloor_qwen35_9b",
+        "run_belowfloor_qwen25_7b",
         # Superseded conditions retained for provenance and harness/test
         # compatibility; not run targets.
+        "primary_qwen3_235b_together",
         "option_b_qwen25_7b_together",
         "option_b_fallback_qwen25_32b_fireworks",
         "option_c_stretch_claude_sonnet_46",
     }
-    assert roster["roster_id"] == "roster_v2"
-    assert roster["conditions"][0]["condition_id"] == "primary_qwen3_235b_together"
+    assert roster["roster_id"] == "roster_v3"
+    assert roster["conditions"][0]["condition_id"] == "run_primary_qwen3_235b"
 
 
 def test_model_roster_conditions_keep_runtime_and_reporting_contracts() -> None:
@@ -88,17 +93,47 @@ def test_model_roster_conditions_keep_runtime_and_reporting_contracts() -> None:
         "no_runtime_enforcement",
     ]
 
+    legacy_decoding = {
+        "temperature": 0,
+        "top_p": 1,
+        "max_tokens": 2048,
+        "seed": "provider_does_not_support_seed",
+    }
+    # D-41: run-ladder conditions carry per-model vendor-recommended
+    # sampling (verified live 2026-07-05); legacy conditions keep the
+    # temp-0 settings they were locked with.
+    run_decoding = {
+        "run_primary_qwen3_235b": {
+            "temperature": 0.7, "top_p": 0.8, "top_k": 20, "min_p": 0,
+            "max_tokens": 2048, "seed": "provider_does_not_support_seed",
+        },
+        "run_capable_llama33_70b": {
+            "temperature": 0.6, "top_p": 0.9,
+            "max_tokens": 2048, "seed": "provider_does_not_support_seed",
+        },
+        "run_nearfloor_qwen35_9b": {
+            "temperature": 0.7, "top_p": 0.8, "top_k": 20, "min_p": 0,
+            "presence_penalty": 1.5, "repetition_penalty": 1.0,
+            "max_tokens": 2048, "seed": "provider_does_not_support_seed",
+            "chat_template_kwargs": {"enable_thinking": False},
+        },
+        "run_belowfloor_qwen25_7b": {
+            "temperature": 0.7, "top_p": 0.8, "top_k": 20,
+            "repetition_penalty": 1.05,
+            "max_tokens": 2048, "seed": "provider_does_not_support_seed",
+        },
+    }
     for condition in roster["conditions"]:
         assert condition["model_class"] == "cloud"
         assert condition["data_boundary"] == (
             "synthetic_governed_agent_bench_fixtures_only"
         )
-        assert condition["decoding_settings"] == {
-            "temperature": 0,
-            "top_p": 1,
-            "max_tokens": 2048,
-            "seed": "provider_does_not_support_seed",
-        }
+        expected_decoding = run_decoding.get(
+            condition["condition_id"], legacy_decoding
+        )
+        assert condition["decoding_settings"] == expected_decoding, (
+            condition["condition_id"]
+        )
         assert condition["prompt_id"] == "deployment_full_v2"
         assert condition["manifest_id"] == "hai_0_2_0"
         assert set(condition["failure_reporting"].values()) == {

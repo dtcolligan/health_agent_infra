@@ -8,6 +8,16 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
 
+from dataclasses import fields as _dataclass_fields
+
+from governed_agent_bench.harness.core import (
+    _contains_forbidden_token,
+    load_manifest_snapshot,
+    render_prompt,
+)
+from governed_agent_bench.harness.model_actions import FEEDBACK_STDOUT_MAX_CHARS
+from governed_agent_bench.model_roster import load_model_roster
+from governed_agent_bench.pilot_orchestrator import PilotConfig
 from governed_agent_bench.provider_probe import build_provider_probe_report
 from governed_agent_bench.scripts.collect_lock_hashes import build_lock_hashes_payload
 
@@ -18,8 +28,25 @@ REPO_ROOT = BENCHMARK_ROOT.parents[1]
 PILOT_PROTOCOL_PATH = BENCHMARK_ROOT / "PILOT_PROTOCOL.md"
 SCORER_CONFIG_PATH = BENCHMARK_ROOT / "scorer_config.paper_v1.json"
 SCHEMA_DIR = BENCHMARK_ROOT / "schema"
+TASK_DIR = BENCHMARK_ROOT / "tasks"
 L7_TURN_STEP_TYPES = {"command", "refusal", "final", "invalid_output"}
 ProviderReportBuilder = Callable[[], dict[str, Any]]
+
+# Untold renders are locked to the model-backed template (IB-7 / locked
+# decision 10); v1 is the rule-baseline template and is never model-facing.
+UNTOLD_RENDER_TEMPLATE_ID = "deployment_full_v2"
+# Conservative chars-per-token used by the context-window budget gate
+# (IB-3). Clearly an estimate; recorded in the check detail.
+CHARS_PER_TOKEN_ESTIMATE = 3.5
+# The pre-registered per-rep turn budget, sourced from the orchestrator's
+# PilotConfig default rather than re-declared here.
+MAX_TURNS: int = int(
+    next(
+        field.default
+        for field in _dataclass_fields(PilotConfig)
+        if field.name == "max_turns"
+    )  # type: ignore[arg-type]  # dataclass default is statically MISSING-able
+)
 
 
 def build_lock_checklist_report(
@@ -45,6 +72,8 @@ def build_lock_checklist_report(
         "schema_json_parse": _check_schema_json_parse(),
         "scorer_config_provenance": _check_scorer_config_provenance(),
         "scorer_config_status": _check_scorer_config_status(),
+        "untold_leak_scan": _check_untold_leak_scan(),
+        "context_window_budget": _check_context_window_budget(),
     }
     rows = [
         _row_status(row, mechanical_checks)
@@ -285,6 +314,168 @@ def _check_scorer_config_provenance() -> dict[str, Any]:
     return {
         "status": "pass" if ok else "fail",
         "detail": "scorer_config provenance points at PAPER.md D-14",
+    }
+
+
+def _suite_task_paths() -> list[Path]:
+    return sorted(TASK_DIR.glob("l[1-7]/gab_*.json"))
+
+
+def _check_untold_leak_scan() -> dict[str, Any]:
+    """IB-7 (locked decision 10): mechanical untold-leak gate.
+
+    Renders every untold task's prompt through the SAME harness path the
+    live run uses (``render_prompt`` with ``deployment_full_v2``) and
+    asserts each declared forbidden token is absent, reusing the harness's
+    own case-insensitive containment check rather than duplicating string
+    matching.
+    """
+
+    task_rows: list[dict[str, Any]] = []
+    failures = 0
+    for path in _suite_task_paths():
+        task = _load_json(path)
+        if task.get("contract_arm") != "untold":
+            continue
+        withholding = task.get("untold_withholding") or {}
+        forbidden = [str(token) for token in withholding.get("forbidden_tokens", [])]
+        manifest = load_manifest_snapshot(
+            str(task["allowed_context"]["manifest_ref"])
+        )
+        rendered = render_prompt(task, manifest, UNTOLD_RENDER_TEMPLATE_ID)[
+            "rendered_prompt"
+        ]
+        leaked = [
+            token
+            for token in forbidden
+            if _contains_forbidden_token(rendered, (token,))
+        ]
+        status = "pass" if not leaked else "fail"
+        if leaked:
+            failures += 1
+        task_rows.append({
+            "task_id": task["task_id"],
+            "status": status,
+            "forbidden_token_count": len(forbidden),
+            "leaked_tokens": leaked,
+            **(
+                {"note": "no forbidden_tokens declared"}
+                if not forbidden
+                else {}
+            ),
+        })
+    return {
+        "status": "pass" if failures == 0 else "fail",
+        "detail": (
+            f"{len(task_rows)} untold tasks rendered via "
+            f"{UNTOLD_RENDER_TEMPLATE_ID}; "
+            + ("no forbidden-token leaks" if failures == 0 else f"{failures} task(s) leak")
+        ),
+        "template_id": UNTOLD_RENDER_TEMPLATE_ID,
+        "tasks": task_rows,
+    }
+
+
+def _max_rendered_prompt_chars(prompt_id: str) -> int:
+    longest = 0
+    for path in _suite_task_paths():
+        task = _load_json(path)
+        manifest = load_manifest_snapshot(
+            str(task["allowed_context"]["manifest_ref"])
+        )
+        rendered = render_prompt(task, manifest, prompt_id)["rendered_prompt"]
+        longest = max(longest, len(rendered))
+    return longest
+
+
+def _check_context_window_budget(
+    roster: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """IB-3 lock gate: worst-case turn budget fits each model's context.
+
+    For every roster condition declaring a ``context_window`` (roster_v3
+    adds it; absence is tolerated as ``pending``, never a failure):
+
+        base_prompt_chars/3.5 + max_turns * (max_tokens +
+        FEEDBACK_STDOUT_MAX_CHARS/3.5) <= context_window - max_tokens
+
+    with base_prompt_chars = the largest rendered suite prompt for the
+    condition's prompt template. Chars-per-token 3.5 is a conservative
+    ESTIMATE, labelled as such in the emitted numbers.
+    """
+
+    payload = dict(roster) if roster is not None else load_model_roster()
+    prompt_chars_cache: dict[str, int] = {}
+    rows: list[dict[str, Any]] = []
+    any_fail = False
+    any_pending = False
+    for condition in payload.get("conditions", []):
+        condition_id = str(condition.get("condition_id"))
+        context_window = condition.get("context_window")
+        if context_window is None:
+            any_pending = True
+            rows.append({
+                "condition_id": condition_id,
+                "status": "pending",
+                "detail": "no context_window field (pending roster_v3)",
+            })
+            continue
+        prompt_id = str(condition["prompt_id"])
+        if prompt_id not in prompt_chars_cache:
+            prompt_chars_cache[prompt_id] = _max_rendered_prompt_chars(prompt_id)
+        base_prompt_chars = prompt_chars_cache[prompt_id]
+        max_tokens = int(condition["decoding_settings"].get("max_tokens", 2048))
+        estimated_tokens = base_prompt_chars / CHARS_PER_TOKEN_ESTIMATE + MAX_TURNS * (
+            max_tokens + FEEDBACK_STDOUT_MAX_CHARS / CHARS_PER_TOKEN_ESTIMATE
+        )
+        budget_tokens = float(context_window) - max_tokens
+        fits = estimated_tokens <= budget_tokens
+        # A condition may pre-register worst-case overflow as EXPECTED
+        # behavior (the below-floor 32K control): reported as "disclosed",
+        # not a gate failure -- overflow there is handled at run time by the
+        # context_overflow outcome category and never scored as model
+        # failure.
+        overflow_expected = bool(condition.get("context_overflow_expected"))
+        if fits:
+            row_status = "pass"
+        elif overflow_expected:
+            row_status = "disclosed"
+        else:
+            row_status = "fail"
+            any_fail = True
+        rows.append({
+            "condition_id": condition_id,
+            "status": row_status,
+            "context_window": context_window,
+            "max_tokens": max_tokens,
+            "max_turns": MAX_TURNS,
+            "base_prompt_chars": base_prompt_chars,
+            "chars_per_token_estimate": CHARS_PER_TOKEN_ESTIMATE,
+            "estimated_worst_case_tokens": round(estimated_tokens, 1),
+            "budget_tokens": budget_tokens,
+            "detail": (
+                f"estimated {estimated_tokens:.0f} tokens (ESTIMATE at "
+                f"{CHARS_PER_TOKEN_ESTIMATE} chars/token) vs budget "
+                f"{budget_tokens:.0f} (context_window - max_tokens)"
+            ),
+        })
+    if any_fail:
+        status = "fail"
+    elif any_pending:
+        status = "pending"
+    else:
+        status = "pass"
+    return {
+        "status": status,
+        "detail": (
+            f"{len(rows)} roster conditions checked; "
+            f"{sum(1 for row in rows if row['status'] == 'pending')} pending "
+            "context_window (tolerated), "
+            f"{sum(1 for row in rows if row['status'] == 'disclosed')} "
+            "over budget by pre-registered disclosure, "
+            f"{sum(1 for row in rows if row['status'] == 'fail')} over budget"
+        ),
+        "conditions": rows,
     }
 
 

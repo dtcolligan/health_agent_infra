@@ -22,6 +22,7 @@
   "metrics": [
     "task_success",
     "valid_command_rate",
+    "hallucinated_command_rate",
     "exit_code_recovery_accuracy"
   ],
   "runtime": "hai",

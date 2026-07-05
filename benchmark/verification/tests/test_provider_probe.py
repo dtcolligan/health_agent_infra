@@ -77,11 +77,19 @@ def test_provider_probe_uses_only_mocked_read_only_metadata_and_docs() -> None:
         "https://api.together.xyz/v1/models": json.dumps(
             {"data": [
                 {"id": "Qwen/Qwen3-235B-A22B-Instruct-2507-tput"},
+                {"id": "meta-llama/Llama-3.3-70B-Instruct-Turbo"},
+                {"id": "Qwen/Qwen3.5-9B"},
                 {"id": "Qwen/Qwen2.5-7B-Instruct-Turbo"},
             ]}
         ),
         "https://www.together.ai/models/qwen3-235b-a22b-instruct-2507-fp8": (
             "Qwen/Qwen3-235B-A22B-Instruct-2507-tput input 0.20 output 0.60 Qwen"
+        ),
+        "https://www.together.ai/models/llama-3-3-70b": (
+            "meta-llama/Llama-3.3-70B-Instruct-Turbo input 1.04 output 1.04"
+        ),
+        "https://www.together.ai/models/qwen3-5-9b": (
+            "Qwen/Qwen3.5-9B input 0.17 output 0.25 Qwen 0.20 0.60"
         ),
         "https://www.together.ai/models/qwen2-5-7b-instruct-turbo": (
             "Qwen/Qwen2.5-7B-Instruct-Turbo"
@@ -94,10 +102,12 @@ def test_provider_probe_uses_only_mocked_read_only_metadata_and_docs() -> None:
             "accounts/fireworks/models/qwen2p5-32b-instruct"
         ),
         "https://fireworks.ai/pricing": "H100 7.0 B200 deployment pricing",
-        "https://docs.anthropic.com/en/docs/about-claude/models/overview": (
+        # Audit fix A13: the probe checks the roster's model_card_snapshot
+        # host (platform.claude.com), not the old docs.anthropic.com surface.
+        "https://platform.claude.com/docs/en/about-claude/models/overview": (
             "claude-sonnet-4-6"
         ),
-        "https://docs.anthropic.com/en/docs/about-claude/pricing": (
+        "https://platform.claude.com/docs/en/about-claude/pricing": (
             "Claude Sonnet pricing"
         ),
     }
@@ -165,3 +175,30 @@ def test_provider_probe_writes_json_and_markdown(tmp_path: Path) -> None:
 def test_provider_probe_rejects_model_invocation_endpoints(url: str) -> None:
     with pytest.raises(ValueError, match="forbidden model-invocation endpoint"):
         _assert_read_only_url(url)
+
+
+def test_anthropic_probe_urls_match_roster_model_card_host() -> None:
+    """Audit fix A13: the probe's Anthropic docs URLs verify the same host
+    the roster's model_card_snapshot pins (platform.claude.com), so the
+    pricing/model checks attest the surface the roster actually cites."""
+
+    from urllib.parse import urlparse
+
+    from governed_agent_bench.model_roster import load_model_roster
+    from governed_agent_bench.provider_probe import PROVIDER_SPECS
+
+    roster = load_model_roster()
+    anthropic_conditions = [
+        condition
+        for condition in roster.get("conditions", [])
+        if condition.get("provider") == "Anthropic"
+    ]
+    assert anthropic_conditions, "roster has no Anthropic condition"
+    roster_hosts = {
+        urlparse(str(condition["model_card_snapshot"])).netloc
+        for condition in anthropic_conditions
+    }
+    spec = PROVIDER_SPECS["Anthropic"]
+    probe_hosts = {urlparse(url).netloc for url in spec.docs_urls}
+    probe_hosts.add(urlparse(str(spec.pricing_snapshot["pricing_url"])).netloc)
+    assert probe_hosts == roster_hosts == {"platform.claude.com"}

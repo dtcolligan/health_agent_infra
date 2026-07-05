@@ -150,6 +150,10 @@
       "enum": [
         "completed",
         "retry3_taskfail",
+        "adapter_taskfail",
+        "context_overflow",
+        "provider_filtered",
+        "length_truncation",
         "cost_halt",
         "wall_halt",
         "adapter_halt",

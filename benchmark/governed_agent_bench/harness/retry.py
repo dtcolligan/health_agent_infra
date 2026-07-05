@@ -20,9 +20,16 @@ from __future__ import annotations
 
 import http.client
 import time
+import urllib.error
 from collections import deque
 from dataclasses import dataclass
 from typing import Any, Callable, Literal
+
+
+# Bounded capture of a provider HTTP error body: enough to preserve the
+# provider's structured error message (e.g. the 422 context-overflow
+# detail) without letting a pathological body flood ledgers/trajectories.
+HTTP_ERROR_BODY_MAX_CHARS = 2000
 
 
 RetryClass = Literal["timeout_class", "rate_limit", "none"]
@@ -139,6 +146,50 @@ class OutageDetector:
         )
 
 
+def _http_error_message(provider: str, exc: urllib.error.HTTPError) -> str:
+    """``"<provider> HTTP <code>"`` plus a bounded capture of the error body.
+
+    IB-3: the provider's raw error body (e.g. Together's 422
+    context-overflow detail) must be recorded, not discarded, so the
+    outcome classification carries its evidence. Reading the body must
+    never itself take the turn down: any read failure degrades to the
+    status-only message.
+    """
+
+    base = f"{provider} HTTP {exc.code}"
+    try:
+        body = exc.read().decode("utf-8", errors="replace").strip()
+    except Exception:  # noqa: BLE001 - body capture is best-effort evidence.
+        return base
+    if not body:
+        return base
+    if len(body) > HTTP_ERROR_BODY_MAX_CHARS:
+        body = body[:HTTP_ERROR_BODY_MAX_CHARS] + "...[truncated]"
+    return f"{base}: {body}"
+
+
+CONTEXT_OVERFLOW_STATUS_CODE = 422
+
+
+def is_context_overflow(exc: Exception) -> bool:
+    """True when a transport failure is a provider context-overflow rejection.
+
+    IB-3 (readiness SF-3): Together rejects an over-long request with HTTP
+    422. The transports capture the provider error body into
+    ``TransportFailure.message`` so the raw signal is recorded; because the
+    body wording is provider-version dependent (and an ambiguous 422 must
+    still not be misfiled as a generic adapter error that inflates
+    small-model failure at the operate floor), EVERY http_status 422 is
+    classified as context_overflow, with the raw message carried along.
+    """
+
+    return (
+        isinstance(exc, TransportFailure)
+        and exc.kind == "http_status"
+        and exc.status_code == CONTEXT_OVERFLOW_STATUS_CODE
+    )
+
+
 def classify_retry(exc: Exception) -> RetryClass:
     """Map a transport exception to its §5 retry class."""
 
@@ -152,10 +203,11 @@ def classify_retry(exc: Exception) -> RetryClass:
         if exc.kind == "timeout":
             return "timeout_class"
         if exc.kind == "http_status":
-            # Transient server/gateway failures (incl. Cloudflare 52x) are
-            # retryable; 4xx (e.g. 422 input-too-long) are deterministic and
-            # fall through to a per-rep failure.
-            if exc.status_code in (500, 502, 503, 504, 520, 521, 522, 523, 524):
+            # Transient server/gateway failures (incl. Cloudflare 52x) and
+            # HTTP 408 request-timeout are retryable; other 4xx (e.g. 422
+            # input-too-long) are deterministic and fall through to a
+            # per-rep failure.
+            if exc.status_code in (408, 500, 502, 503, 504, 520, 521, 522, 523, 524):
                 return "timeout_class"
             if exc.status_code == 429:
                 return "rate_limit"

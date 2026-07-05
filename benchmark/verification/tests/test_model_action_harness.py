@@ -583,6 +583,76 @@ def test_agent_loop_coerces_non_numeric_metadata_to_none(
     assert metadata["completion_tokens"] == 5
 
 
+def test_agent_loop_harness_injected_text_never_becomes_assistant_history(
+    tmp_path: Path,
+) -> None:
+    """Audit fix A5: harness-authored failure sentinels (retry exhausted /
+    adapter error) must not be replayed to the model as ASSISTANT messages
+    it never emitted. The trajectory record is unchanged (invalid_output
+    step with the sentinel raw_output); the failed turn reaches the model
+    only as user-role harness feedback."""
+
+    task = load_task("gab_l1_operate_route")
+    seen_messages: list[list[dict[str, str]]] = []
+    sentinel = "__GAB_RETRY_EXHAUSTED__: timeout after 3 retries"
+    turns = [
+        ModelTurnResult(text=sentinel, retry_count=3, harness_injected=True),
+        ModelTurnResult(text=_final_response()),
+    ]
+
+    result = run_agent_loop(
+        task,
+        _config(tmp_path),
+        _scripted_meta_turns(turns, seen_messages),
+    )
+
+    assert result.stop_reason == "final"
+    turn_2_messages = seen_messages[1]
+    # The old failure mode: the sentinel appeared as an assistant message.
+    assert not any(
+        message["role"] == "assistant" and "__GAB_" in message["content"]
+        for message in turn_2_messages
+    ), "harness sentinel leaked into assistant history"
+    # The failed turn is represented as user-role harness feedback instead.
+    assert turn_2_messages[-1]["role"] == "user"
+    assert sentinel in turn_2_messages[-1]["content"]
+    # Trajectory semantics identical: the invalid_output step still records
+    # the sentinel and its parse error.
+    invalid_step = result.trajectory["steps"][0]
+    assert invalid_step["step_type"] == "invalid_output"
+    assert invalid_step["raw_output"] == sentinel
+    assert result.turn_records[0].raw_output == sentinel
+    assert result.turn_records[0].retry_count == 3
+    # A model-emitted turn (harness_injected default False) still lands in
+    # assistant history as before.
+    assert result.messages[-1] == {"role": "assistant", "content": _final_response()}
+
+
+def test_model_backed_config_rejects_dead_v1_prompt_template(
+    tmp_path: Path,
+) -> None:
+    """Audit fix A6: a model-backed config carrying the dead
+    deployment_full_v1 default (whose render exceeds the locked model's
+    context and would 422 every call) fails fast instead of burning a
+    metered run. The rule-baseline default is unchanged."""
+
+    task = load_task("gab_l1_operate_route")
+    condition = dict(roster_condition("option_b_qwen25_7b_together"))
+    condition["prompt_id"] = "deployment_full_v1"
+    config = harness_config_for_roster_condition(
+        condition,
+        fixture_root=tmp_path / "fixture",
+        output_dir=tmp_path / "out",
+        runtime_mode="full_contract",
+        claim_tier="T3",
+        roster_hash=model_roster_hash(),
+    )
+    assert config.prompt_template_id == "deployment_full_v1"
+
+    with pytest.raises(HarnessError, match="deployment_full_v1"):
+        run_agent_loop(task, config, lambda _messages: _final_response())
+
+
 def test_run_model_response_action_omits_turn_metadata(
     tmp_path: Path,
 ) -> None:
@@ -600,3 +670,113 @@ def test_run_model_response_action_omits_turn_metadata(
     assert command_step["step_type"] == "command"
     for key in _METADATA_KEYS:
         assert key not in command_step.get("metadata", {})
+
+
+def test_agent_loop_records_disallowed_command_and_continues(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """IC-1 (dress-rehearsal finding #1, sweep-killer): a model emitting a
+    manifest-disallowed command must NOT crash the loop. The event is recorded
+    as a rejected command step (no execution, no observation), the turn is
+    consumed with feedback naming the rejection, and the loop continues.
+    The step shape is exactly what the scorer's hallucinated_command_rate /
+    valid_command_rate read (command steps checked against the manifest)."""
+
+    hai_calls: list[dict[str, Any]] = []
+
+    def fail_if_executed(
+        action: dict[str, Any],
+        config: HarnessConfig,
+    ) -> subprocess.CompletedProcess[str]:
+        hai_calls.append(action)
+        raise AssertionError("a manifest-disallowed command must never execute")
+
+    monkeypatch.setattr(harness_core, "_run_hai", fail_if_executed)
+    task = load_task("gab_l1_operate_route")
+    seen_messages: list[list[dict[str, str]]] = []
+
+    result = run_agent_loop(
+        task,
+        _config(tmp_path),
+        _scripted_model_turn(
+            [_command_response("hai bogus surface"), _final_response()],
+            seen_messages,
+        ),
+    )
+
+    # The loop survived the disallowed command and ran to the model's final.
+    assert result.stop_reason == "final"
+    assert hai_calls == []
+    steps = result.trajectory["steps"]
+    assert [step["step_type"] for step in steps] == ["command", "final"]
+    rejected = steps[0]
+    assert rejected["command"] == "hai bogus surface"
+    assert rejected["metadata"]["manifest_rejected"] is True
+    assert rejected["metadata"]["rejection_reason"] == (
+        "command not in manifest snapshot"
+    )
+    # The turn was consumed and the model was told the command is not in the
+    # manifest before its next turn.
+    assert len(seen_messages) == 2
+    feedback = seen_messages[1][-1]
+    assert feedback["role"] == "user"
+    assert "command not in manifest snapshot" in feedback["content"]
+
+    # The scorer sees the event on the M4 metrics: the rejected command step
+    # is an invalid command against the manifest snapshot.
+    from governed_agent_bench.harness import load_manifest_snapshot
+    from governed_agent_bench.scorer import score_trajectory
+
+    score = score_trajectory(
+        {**task, "metrics": ["valid_command_rate", "hallucinated_command_rate"]},
+        result.trajectory,
+        manifest_snapshot=load_manifest_snapshot(
+            result.trajectory["manifest_snapshot_id"]
+        ),
+        observation_root=tmp_path / "out",
+    )
+    hallucinated = score["metrics"]["hallucinated_command_rate"]
+    assert hallucinated["value"] == 1.0
+    assert hallucinated["passed"] is False
+    valid = score["metrics"]["valid_command_rate"]
+    assert valid["value"] == 0.0
+    assert valid["passed"] is False
+    assert any(
+        violation["kind"] == "hallucinated_command"
+        for violation in score["violations"]
+    )
+
+
+def test_agent_loop_disallowed_then_allowed_command_still_executes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """After a recorded rejection the loop must execute later valid commands
+    normally (the rejected step pairs with no observation; the next command's
+    observation must not be misattributed to it)."""
+
+    _patch_hai_completed(monkeypatch)
+    task = load_task("gab_l1_operate_route")
+    seen_messages: list[list[dict[str, str]]] = []
+
+    result = run_agent_loop(
+        task,
+        _config(tmp_path),
+        _scripted_model_turn(
+            [
+                _command_response("hai bogus surface"),
+                _command_response(),
+                _final_response(),
+            ],
+            seen_messages,
+        ),
+    )
+
+    assert result.stop_reason == "final"
+    step_types = [step["step_type"] for step in result.trajectory["steps"]]
+    assert step_types == ["command", "command", "observation", "final"]
+    assert result.trajectory["steps"][0]["metadata"]["manifest_rejected"] is True
+    assert "metadata" in result.trajectory["steps"][1]
+    assert "manifest_rejected" not in result.trajectory["steps"][1]["metadata"]
+    assert result.trajectory["steps"][2]["exit_code"] == "OK"

@@ -33,10 +33,13 @@ from governed_agent_bench.harness import (  # noqa: E402
 from governed_agent_bench.harness.fireworks import (  # noqa: E402
     FIREWORKS_DEFAULT_MODEL_ID,
     OUTCOME_ADAPTER_FAILURE,
+    OUTCOME_CONTEXT_OVERFLOW,
     OUTCOME_EXECUTED,
+    OUTCOME_LENGTH_TRUNCATION,
     OUTCOME_PROVIDER_REFUSAL,
     OUTCOME_TIMEOUT,
 )
+from governed_agent_bench.harness.retry import TransportFailure  # noqa: E402
 from governed_agent_bench.model_roster import (  # noqa: E402
     model_roster_hash,
     roster_condition,
@@ -310,6 +313,7 @@ def test_fireworks_adapter_records_raw_response_usage_cost_and_trajectory(
         "prompt_tokens": 2000,
         "completion_tokens": 1000,
         "total_tokens": 3000,
+        "usage_complete": True,
     }
     # On-demand cost: no per-token USD total, even with usage present.
     assert result.cost_estimate["billing_model"] == "on_demand_gpu_time"
@@ -547,6 +551,23 @@ def test_fireworks_adapter_reads_api_key_from_environment_only(
             False,
             1,
         ),
+        # IB-3: HTTP 422 (context overflow) is deterministic (no retry) and
+        # reports as its own outcome, never a generic adapter failure.
+        (
+            FakeTransport(
+                exc=TransportFailure(
+                    kind="http_status",
+                    status_code=422,
+                    message=(
+                        'Fireworks HTTP 422: {"error": {"message": '
+                        '"prompt is longer than the model context window"}}'
+                    ),
+                )
+            ),
+            OUTCOME_CONTEXT_OVERFLOW,
+            False,
+            1,
+        ),
     ],
 )
 def test_fireworks_adapter_reports_failure_outcomes(
@@ -581,3 +602,164 @@ def test_fireworks_adapter_reports_failure_outcomes(
         (config.output_dir / result.provider_report_ref).read_text(encoding="utf-8")
     )
     assert report["outcome"] == expected_outcome
+
+
+# --- Audit fix A2: per-rep raw-response artifacts must not collide ------------
+
+
+def test_fireworks_adapter_reps_write_distinct_provider_artifacts(
+    tmp_path: Path,
+) -> None:
+    task = load_task("gab_l1_operate_route")
+    condition = _condition()
+    config = _config(tmp_path, condition)
+
+    results = []
+    for rep in range(2):
+        results.append(
+            run_fireworks_model_action(
+                task,
+                condition,
+                config,
+                rep=rep,
+                transport=FakeTransport(responses=[_final_response(f"rep {rep}")]),
+                request_model=MOCK_DEPLOYMENT_MODEL,
+                env={FIREWORKS_API_KEY_ENV: "mock-api-key"},
+            )
+        )
+
+    refs = [result.raw_provider_response_refs[0] for result in results]
+    assert refs[0] != refs[1]
+    assert "_rep0_" in refs[0] and "_rep1_" in refs[1]
+    assert results[0].provider_report_ref != results[1].provider_report_ref
+    for ref, rep in zip(refs, range(2)):
+        raw = json.loads((config.output_dir / ref).read_text(encoding="utf-8"))
+        assert f"rep {rep}" in raw["choices"][0]["message"]["content"]
+    assert (
+        results[0].trajectory["trajectory_id"] != results[1].trajectory["trajectory_id"]
+    )
+
+
+# --- Audit fix A3: finish_reason=length is a reportable truncation outcome ----
+
+
+def test_fireworks_adapter_reports_length_truncation_not_invalid_output(
+    tmp_path: Path,
+) -> None:
+    task = load_task("gab_l1_operate_route")
+    condition = _condition()
+    config = _config(tmp_path, condition)
+    truncated = {
+        "id": "mock-truncated",
+        "choices": [
+            {
+                "finish_reason": "length",
+                "message": {
+                    "role": "assistant",
+                    "content": '{"action_type": "final", "final_te',
+                },
+            }
+        ],
+        "usage": {"prompt_tokens": 1000, "completion_tokens": 2048},
+    }
+    transport = FakeTransport(responses=[truncated])
+
+    result = run_fireworks_model_action(
+        task,
+        condition,
+        config,
+        transport=transport,
+        request_model=MOCK_DEPLOYMENT_MODEL,
+        env={FIREWORKS_API_KEY_ENV: "mock-api-key"},
+    )
+
+    assert result.outcome == OUTCOME_LENGTH_TRUNCATION
+    assert result.reportable is True
+    assert len(transport.calls) == 1  # deterministic: no retry
+    assert result.turn_records[-1].provider_outcome == OUTCOME_LENGTH_TRUNCATION
+    assert result.turn_records[-1].stop_reason == OUTCOME_LENGTH_TRUNCATION
+    assert result.turn_records[-1].invalid_output is None
+    assert result.trajectory is None
+    report = json.loads(
+        (config.output_dir / result.provider_report_ref).read_text(encoding="utf-8")
+    )
+    assert report["outcome"] == OUTCOME_LENGTH_TRUNCATION
+    assert report["reportable"] is True
+    assert result.token_usage["completion_tokens"] == 2048
+
+
+# --- Audit fix A7: decoding pass-through ---------------------------------------
+
+
+def test_build_fireworks_request_passes_vendor_decoding_through_allowlist() -> None:
+    task = load_task("gab_l1_operate_route")
+    condition = dict(_condition())
+    condition["decoding_settings"] = {
+        "temperature": 0.6,
+        "top_p": 0.95,
+        "top_k": 40,
+        "min_p": 0.0,
+        "repetition_penalty": 1.1,
+        "max_tokens": 2048,
+        "seed": 7,
+        "stop": "</answer>",
+    }
+
+    request, _ = build_fireworks_chat_request(
+        task, condition, request_model=MOCK_DEPLOYMENT_MODEL
+    )
+
+    assert request["temperature"] == 0.6
+    assert request["top_p"] == 0.95
+    assert request["top_k"] == 40
+    assert request["min_p"] == 0.0
+    assert request["repetition_penalty"] == 1.1
+    assert request["max_tokens"] == 2048
+    assert request["seed"] == 7
+    assert request["stop"] == "</answer>"
+
+
+def test_build_fireworks_request_skips_placeholder_and_rejects_unknown_key() -> None:
+    task = load_task("gab_l1_operate_route")
+    condition = _condition()
+    assert condition["decoding_settings"]["seed"] == "provider_does_not_support_seed"
+    request, _ = build_fireworks_chat_request(
+        task, condition, request_model=MOCK_DEPLOYMENT_MODEL
+    )
+    assert "seed" not in request
+
+    bad = dict(_condition())
+    bad["decoding_settings"] = {**bad["decoding_settings"], "mirostat": 2}
+    with pytest.raises(HarnessError, match="unsupported keys.*mirostat"):
+        build_fireworks_chat_request(task, bad, request_model=MOCK_DEPLOYMENT_MODEL)
+
+
+# --- Audit fix A9: partial usage sums available turns --------------------------
+
+
+def test_fireworks_adapter_partial_usage_sums_turns_and_flags_incomplete(
+    tmp_path: Path,
+) -> None:
+    task = load_task("gab_l1_operate_route")
+    condition = _condition()
+    config = _config(tmp_path, condition)
+    missing_usage = _command_response()
+    del missing_usage["usage"]
+    transport = FakeTransport(responses=[missing_usage, _final_response()])
+
+    result = run_fireworks_model_action(
+        task,
+        condition,
+        config,
+        transport=transport,
+        request_model=MOCK_DEPLOYMENT_MODEL,
+        env={FIREWORKS_API_KEY_ENV: "mock-api-key"},
+    )
+
+    assert result.outcome == OUTCOME_EXECUTED
+    assert result.token_usage == {
+        "prompt_tokens": 1000,
+        "completion_tokens": 500,
+        "total_tokens": 1500,
+        "usage_complete": False,
+    }

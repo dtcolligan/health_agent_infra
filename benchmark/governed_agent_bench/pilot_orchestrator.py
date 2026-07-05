@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -41,6 +42,7 @@ from governed_agent_bench.harness.retry import (
     RetryPolicy,
     TransportFailure,
     execute_with_retry,
+    is_context_overflow,
 )
 from governed_agent_bench.harness.together import (
     TOGETHER_API_KEY_ENV,
@@ -49,6 +51,7 @@ from governed_agent_bench.harness.together import (
     build_together_chat_request,
     estimate_together_cost,
     token_usage_from_together_response,
+    _is_length_truncated,
     _is_provider_refusal,
     _provider_output_text,
 )
@@ -79,6 +82,9 @@ RepStopCause: TypeAlias = Literal[
     "wall_halt",
     "adapter_halt",
     "retry3_taskfail",
+    "context_overflow",
+    "provider_filtered",
+    "length_truncation",
 ]
 RunOutcome: TypeAlias = Literal["completed", "aborted", "halted"]
 DispositionKind: TypeAlias = Literal["continue", "pause", "halt", "abort"]
@@ -92,12 +98,19 @@ DISPOSITION_REASONS = {
     "contamination_detected",
     "full_contract_unexpected_marker",
     "full_contract_breach",
+    # INTENTIONALLY DEAD (audit A10): C1 (Dom 2026-06-30) removed the
+    # clinical_claim abort trigger from post_rep_dispositions, so nothing
+    # emits this reason anymore. It is retained (not removed) only because
+    # the pre-registered rep_ledger / condition_summary schema enums include
+    # it and test_schema_reason_enums_cover_all_emitted_dispositions pins
+    # this set to those enums; dropping it is a schema amendment, Dom's call.
     "clinical_claim",
 }
 ABORT_REASONS = {
     "contamination_detected",
     "full_contract_unexpected_marker",
     "full_contract_breach",
+    # INTENTIONALLY DEAD (audit A10): see DISPOSITION_REASONS note above.
     "clinical_claim",
 }
 _SEVERITY = {"continue": 0, "pause": 1, "halt": 2, "abort": 3}
@@ -105,6 +118,8 @@ _ABORT_REASON_ORDER = [
     "full_contract_breach",
     "full_contract_unexpected_marker",
     "contamination_detected",
+    # INTENTIONALLY DEAD (audit A10): kept so _higher_abort stays total over
+    # ABORT_REASONS while the schema enums still include clinical_claim.
     "clinical_claim",
 ]
 _NATURAL_STOP_CAUSES = {
@@ -123,7 +138,29 @@ _PARTIAL_STOP_CAUSES = {
     "wall_halt",
     "adapter_halt",
     "retry3_taskfail",
+    "context_overflow",
+    "provider_filtered",
+    "length_truncation",
 }
+# IB-3/IB-4/IB-5: reportable per-rep model/provider outcomes with their own
+# ledger stop-cause + disposition. They fail-and-advance like adapter_halt
+# but are counted separately in condition summaries -- neither a pass nor a
+# model failure -- so a 422 context overflow at the operate floor, a
+# provider-side safety filter, or a max_tokens truncation can never inflate
+# the model's task-failure rate under an infrastructure label.
+REPORTABLE_REP_STOP_CAUSES = (
+    "context_overflow",
+    "provider_filtered",
+    "length_truncation",
+)
+# Rep-ledger dispositions that are per-rep bookkeeping only and never become
+# sweep-level Disposition reasons (the schema's rep_ledger_disposition enum
+# is {"completed"} | REP_ONLY_DISPOSITIONS | DISPOSITION_REASONS).
+REP_ONLY_DISPOSITIONS = frozenset({
+    "retry3_taskfail",
+    "adapter_taskfail",
+    *REPORTABLE_REP_STOP_CAUSES,
+})
 
 Transport: TypeAlias = Callable[[list[dict[str, str]]], str | ModelTurnResult]
 ModelTurnFactory: TypeAlias = Callable[..., Transport]
@@ -136,9 +173,21 @@ class PilotConfig:
     runs_root: Path
     task_ids: tuple[str, ...]
     mode_order: tuple[str, ...] = MODE_ORDER
-    replication_n: int = 3
+    # IB-6 (locked decision): the pre-registered replication count is n=4.
+    replication_n: int = 4
     cost_cap_usd: float = 100.0
     python_executable: str = sys.executable
+    # Audit fix A11: the pre-registered per-rep turn budget is explicit
+    # orchestrator config, not an implicit library default.
+    max_turns: int = 7
+    # IC-2 (dress-rehearsal finding b): opt-in rep-level resume. When set,
+    # run_pilot reuses this existing run dir instead of minting a new one,
+    # SKIPS every rep whose `.done` sentinel + artifacts are present
+    # (reloading its evidence from disk, never re-executing it), re-runs only
+    # incomplete reps, and rebuilds coverage/summaries/manifest at the end.
+    # The dir's run_config.json fingerprint (task set / mode order / n /
+    # max_turns / systems) must match this config or the resume is refused.
+    resume_run_dir: Path | None = None
 
 
 @dataclass
@@ -440,14 +489,43 @@ def run_pilot(
     cfg = config or default_pilot_config()
     if cfg.replication_n < 1:
         raise ValueError("replication_n must be >= 1")
+    if cfg.max_turns < 1:
+        raise ValueError("max_turns must be >= 1")
     git_full = git_sha or _git_sha()
     if len(git_full) < 7:
         raise ValueError("git_sha must be at least 7 characters")
     run_start = now_utc()
-    run_dir = cfg.runs_root / f"{run_start:%Y-%m-%dT%H%MZ}_lock-{git_full[:7]}"
-    if run_dir.exists():
-        raise FileExistsError(f"pilot run dir already exists: {run_dir}")
-    run_dir.mkdir(parents=True)
+    resuming = cfg.resume_run_dir is not None
+    if resuming:
+        run_dir = Path(cfg.resume_run_dir)  # type: ignore[arg-type]
+        if not run_dir.is_dir():
+            raise FileNotFoundError(f"resume run dir does not exist: {run_dir}")
+        stored = _verify_resume_fingerprint(run_dir, cfg, systems)
+        # Manifest coherence: the manifest's run_start and git sha stay those
+        # of the ORIGINAL invocation (the run dir name embeds them); the
+        # resume event itself is appended to run_config.json for provenance.
+        run_start = datetime.strptime(
+            str(stored["run_start_utc"]), "%Y-%m-%dT%H:%MZ"
+        ).replace(tzinfo=timezone.utc)
+        original_git_sha = str(stored["git_sha"])
+        resume_log = list(stored.get("resume_log", []))
+        resume_log.append({
+            "resumed_at_utc": _zfmt(now_utc()),
+            "git_sha": git_full,
+        })
+        git_full = original_git_sha
+        atomic_write_json(
+            run_dir / "run_config.json", {**stored, "resume_log": resume_log}
+        )
+    else:
+        run_dir = cfg.runs_root / f"{run_start:%Y-%m-%dT%H%MZ}_lock-{git_full[:7]}"
+        if run_dir.exists():
+            raise FileExistsError(f"pilot run dir already exists: {run_dir}")
+        run_dir.mkdir(parents=True)
+        atomic_write_json(
+            run_dir / "run_config.json",
+            _run_config_payload(cfg, systems, git_full, run_start),
+        )
 
     systems_outcomes: list[SystemOutcome] = []
     conditions_executed: list[dict[str, Any]] = []
@@ -495,6 +573,36 @@ def run_pilot(
                 completed_score_passes: list[bool] = []
 
                 for rep in range(cfg.replication_n):
+                    if resuming:
+                        reloaded = _reload_completed_rep(
+                            system, mode, task, rep, run_dir=run_dir
+                        )
+                        if reloaded is not None:
+                            # IC-2: completed-rep evidence is reloaded from
+                            # disk, never re-executed. Post-rep dispositions
+                            # (contamination / breach aborts) are re-derived
+                            # from the persisted score+trajectory so a resume
+                            # cannot silently sail past an abort-worthy rep;
+                            # meter halts are not reconstructed (the resume
+                            # session's meter starts fresh).
+                            reps_completed += 1
+                            completed_score_passes.append(
+                                bool(reloaded.score and reloaded.score["overall_pass"])
+                            )
+                            for post_disp in post_rep_dispositions(reloaded, mode):
+                                disp = resolve(disp, post_disp)
+                            _progress(
+                                f"{system_id} {mode} {task_id} "
+                                f"{reloaded.rep_label}: resumed from disk"
+                            )
+                            if _stops_sweep(disp):
+                                break
+                            continue
+                        # The incomplete rep may have left a partially-mutated
+                        # per-rep fixture behind; fixture_for_task would reuse
+                        # it (metadata-file cache) and contaminate the re-run.
+                        # Reset it so the rep re-executes hermetically.
+                        _reset_rep_fixture(run_dir, system, mode, task, rep)
                     try:
                         rr = run_one_rep(
                             system,
@@ -534,6 +642,10 @@ def run_pilot(
                                 disp = resolve(disp, pause)
                         finalize_rep_ledger_disposition(rr, rep_dispositions)
                         write_rep_artifacts(rr)
+                        _progress(
+                            f"{system_id} {mode} {task_id} {rr.rep_label}: "
+                            f"completed ({rr.ledger['disposition']})"
+                        )
                         if _stops_sweep(disp):
                             break
                     else:
@@ -541,25 +653,46 @@ def run_pilot(
                         if rr.stop_cause == "retry3_taskfail":
                             task_outcome = "fail"
                         elif rr.stop_cause == "adapter_halt":
-                            # A per-rep adapter rejection (e.g. provider HTTP 422
-                            # when a looping model overflows its context, or a
-                            # non-retryable provider error) fails this task and
-                            # advances, matching retry3_taskfail and subprocess
-                            # crash. Systemic adapter failures are caught by the
-                            # outage detector's full-window >50% rule below, not
-                            # by halting the whole sweep on the first one.
+                            # A per-rep adapter rejection (a non-retryable
+                            # provider error) fails this task and advances,
+                            # matching retry3_taskfail and subprocess crash.
+                            # Systemic adapter failures are caught by the
+                            # outage detector's full-window >50% rule below,
+                            # not by halting the whole sweep on the first one.
                             task_outcome = "fail"
                             if detector.should_pause():
                                 pause = Disposition("pause", "provider_outage")
                                 _record_outage_signal(rr, detector)
                                 rep_dispositions.append(pause)
                                 disp = resolve(disp, pause)
+                        elif rr.stop_cause in REPORTABLE_REP_STOP_CAUSES:
+                            # IB-3/IB-4/IB-5: context_overflow (HTTP 422),
+                            # provider_filtered (provider safety filter), and
+                            # length_truncation (max_tokens budget) advance
+                            # with NO task_outcome -- neither a pass nor a
+                            # model failure -- and are counted separately in
+                            # the condition summary.
+                            pass
                         elif rr.stop_cause in {"cost_halt", "wall_halt"}:
                             halt = Disposition("halt", rr.stop_cause)
                             rep_dispositions.append(halt)
                             disp = resolve(disp, halt)
+                        if (
+                            rr.stop_cause not in {"cost_halt", "wall_halt"}
+                            and rr.meter_halt is not None
+                        ):
+                            # A meter crossing coincident with a per-rep
+                            # failure must still halt the sweep: the meter
+                            # reports each crossing exactly once, so dropping
+                            # it here would silently disable the cap.
+                            rep_dispositions.append(rr.meter_halt)
+                            disp = resolve(disp, rr.meter_halt)
                         finalize_rep_ledger_disposition(rr, rep_dispositions)
                         write_rep_artifacts(rr)
+                        _progress(
+                            f"{system_id} {mode} {task_id} {rr.rep_label}: "
+                            f"partial ({rr.stop_cause})"
+                        )
                         break
 
                 if task_outcome is None and reps_completed == cfg.replication_n:
@@ -608,7 +741,9 @@ def run_pilot(
     atomic_write_json(manifest_path, manifest)
     latest_advanced = False
     if run_outcome == "completed" and manifest_path.exists():
-        _advance_latest(cfg.runs_root, run_dir)
+        # On resume the run dir already has a home; the `latest` symlink is a
+        # relative sibling link, so it must live in run_dir's actual parent.
+        _advance_latest(run_dir.parent if resuming else cfg.runs_root, run_dir)
         latest_advanced = True
     return PilotResult(run_dir, run_outcome, systems_outcomes, latest_advanced)
 
@@ -707,6 +842,16 @@ def run_one_rep(
         adapter_error = None
         if record.raw_output and record.raw_output.startswith("__GAB_ADAPTER_ERROR__"):
             adapter_error = record.raw_output
+        # IB-3/IB-4/IB-5: reportable model/provider outcome sentinels get
+        # their own stop cause instead of the generic adapter path. The raw
+        # sentinel text (incl. the provider error body for 422) stays in the
+        # trajectory's invalid_output step, so the evidence is durable.
+        reportable_stop: str | None = None
+        if record.raw_output:
+            for cause in REPORTABLE_REP_STOP_CAUSES:
+                if record.raw_output.startswith(_ERROR_SENTINEL_PREFIXES[cause]):
+                    reportable_stop = cause
+                    break
 
         halt, ledger_cost, ledger_wall_ms = meter.add_turn(record)
         if halt is not None:
@@ -717,7 +862,9 @@ def run_one_rep(
             "turn_index": record.turn_index,
             "retry_count": record.retry_count,
             "retry_exhausted": retry_exhausted,
-            "provider_outcome": _provider_outcome(record, retry_exhausted, adapter_error),
+            "provider_outcome": _provider_outcome(
+                record, retry_exhausted, adapter_error, reportable_stop
+            ),
             "adapter_error": adapter_error,
             "cost_usd_estimate": ledger_cost,
             "wall_time_ms": ledger_wall_ms,
@@ -731,6 +878,9 @@ def run_one_rep(
         if adapter_error is not None:
             rep_state.partial_stop_cause = "adapter_halt"
             return "stop"
+        if reportable_stop is not None:
+            rep_state.partial_stop_cause = reportable_stop
+            return "stop"
         if halt is not None:
             if record.stop_reason in _MODEL_EMITTED_TERMINALS:
                 return "continue"
@@ -742,6 +892,7 @@ def run_one_rep(
         task,
         harness_config,
         model_turn,
+        max_turns=config.max_turns,
         rep=rep,
         after_turn=after_turn,
         write_trajectory=False,
@@ -822,6 +973,15 @@ def together_model_turn_factory(
                 retry_exhausted=True,
             )
         except TransportFailure as exc:
+            if is_context_overflow(exc):
+                # IB-3: HTTP 422 context overflow is a reportable outcome
+                # with its own ledger stop cause; the raw provider error
+                # body (captured by the transport) rides in the message.
+                return _error_turn_result(
+                    "context_overflow",
+                    str(exc),
+                    retry_count=exc.retry_count,
+                )
             return _error_turn_result(
                 "adapter_error",
                 str(exc),
@@ -834,11 +994,26 @@ def together_model_turn_factory(
         raw_response = retry_outcome.response
         usage = token_usage_from_together_response(raw_response)
         if _is_provider_refusal(raw_response):
+            # IB-4 (locked decision 7): a provider-side safety filter
+            # (finish_reason content_filter/refusal/safety or a message
+            # refusal flag) is its own reportable outcome, never a generic
+            # adapter error that would count as a model task failure.
             return _error_turn_result(
-                "adapter_error",
-                "provider refusal",
+                "provider_filtered",
+                "provider safety filter "
+                "(finish_reason/content_filter/refusal detection)",
                 retry_count=retry_outcome.retry_count,
-                adapter_error="provider refusal",
+            )
+        if _is_length_truncated(raw_response):
+            # IB-5 (BUG-A residue): finish_reason=length is a harness budget
+            # artifact with its own reportable ledger stop cause; the
+            # truncated text must never fall through to JSON parsing where
+            # it would score as a model formatting violation.
+            return _error_turn_result(
+                "length_truncation",
+                "Together response truncated by max_tokens budget "
+                "(finish_reason=length)",
+                retry_count=retry_outcome.retry_count,
             )
         try:
             text = _provider_output_text(raw_response)
@@ -853,9 +1028,11 @@ def together_model_turn_factory(
             text=text,
             prompt_tokens=usage["prompt_tokens"],
             completion_tokens=usage["completion_tokens"],
-            cost_usd_estimate=estimate_together_cost(usage)[
-                "estimated_total_cost_usd"
-            ],
+            # A1: cost estimation routes by the condition's model_id; an
+            # unknown model raises rather than silently mispricing the run.
+            cost_usd_estimate=estimate_together_cost(
+                usage, str(system["model_id"])
+            )["estimated_total_cost_usd"],
             wall_time_ms=retry_outcome.wall_time_ms,
             retry_count=retry_outcome.retry_count,
         )
@@ -940,6 +1117,11 @@ def finalize_rep_ledger_disposition(
         # Per-rep adapter rejection that failed the task and advanced
         # (no sweep-level halt). Labeled distinctly from a clean completion.
         rr.ledger["disposition"] = "adapter_taskfail"
+    elif rr.stop_cause in REPORTABLE_REP_STOP_CAUSES:
+        # IB-3/IB-4/IB-5: reportable model/provider outcomes carry their own
+        # ledger disposition (context_overflow / provider_filtered /
+        # length_truncation), never the generic adapter label.
+        rr.ledger["disposition"] = rr.stop_cause
     else:
         rr.ledger["disposition"] = "completed"
 
@@ -1011,6 +1193,18 @@ def write_condition_summary(
         for row in rows.values()
         if row.status == "in_scope_run" and row.partial_rep is not None
     )
+    # IB-3/IB-4/IB-5: reportable model/provider outcomes are counted
+    # separately -- they are neither passes nor model failures.
+    reportable_counts = {
+        f"reps_{cause}": sum(
+            1
+            for row in rows.values()
+            if row.status == "in_scope_run"
+            and row.partial_rep is not None
+            and row.partial_rep.get("stop_cause") == cause
+        )
+        for cause in REPORTABLE_REP_STOP_CAUSES
+    }
     if not mode_attempted and tasks_run == 0:
         cell_outcome = "skipped_no_in_scope_tasks"
         disposition = "skipped_no_in_scope_tasks"
@@ -1060,6 +1254,7 @@ def write_condition_summary(
         "tasks_run": tasks_run,
         "reps_completed": reps_completed,
         "reps_partial": reps_partial,
+        **reportable_counts,
     }
     atomic_write_json(_mode_dir(coverage.run_dir, coverage.system_id, mode) / "condition_summary.json", payload)
     return payload
@@ -1212,6 +1407,160 @@ def _pilot_run_outcome(systems: list[SystemOutcome]) -> RunOutcome:
     return "halted"
 
 
+def _progress(message: str) -> None:
+    """Flushed per-rep progress line (IC-5b).
+
+    A crashed or killed sweep must not take its progress log with it into a
+    stdio buffer; every line is flushed as it is emitted.
+    """
+
+    print(f"[pilot] {message}", flush=True)
+
+
+RUN_CONFIG_SCHEMA_VERSION = "governed_agent_bench.pilot_run_config.v1"
+# The config facets that define what a run dir's rep artifacts MEAN. A resume
+# whose config diverges on any of these would silently mix two different
+# experiment definitions in one run dir, so it is refused.
+_RESUME_FINGERPRINT_FIELDS = (
+    "task_ids",
+    "mode_order",
+    "replication_n",
+    "max_turns",
+    "system_ids",
+)
+
+
+def _run_config_payload(
+    cfg: PilotConfig,
+    systems: list[dict[str, Any]],
+    git_sha: str,
+    run_start: datetime,
+) -> dict[str, Any]:
+    return {
+        "schema_version": RUN_CONFIG_SCHEMA_VERSION,
+        "git_sha": git_sha,
+        "run_start_utc": _zfmt(run_start),
+        "task_ids": sorted(str(task_id) for task_id in cfg.task_ids),
+        "mode_order": [str(mode) for mode in cfg.mode_order],
+        "replication_n": cfg.replication_n,
+        "max_turns": cfg.max_turns,
+        "system_ids": [str(system["system_id"]) for system in systems],
+        "resume_log": [],
+    }
+
+
+def _verify_resume_fingerprint(
+    run_dir: Path,
+    cfg: PilotConfig,
+    systems: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Load run_config.json and refuse resume on any fingerprint mismatch."""
+
+    config_path = run_dir / "run_config.json"
+    if not config_path.exists():
+        raise HarnessError(
+            f"resume refused: {run_dir} has no run_config.json fingerprint "
+            "(run dirs created before rep-level resume cannot be resumed)"
+        )
+    stored = _load_json_object(config_path)
+    current = _run_config_payload(cfg, systems, git_sha="", run_start=datetime.now(timezone.utc))
+    mismatches = {
+        field: {"stored": stored.get(field), "current": current[field]}
+        for field in _RESUME_FINGERPRINT_FIELDS
+        if stored.get(field) != current[field]
+    }
+    if mismatches:
+        raise HarnessError(
+            f"resume refused: config fingerprint mismatch for {run_dir}: "
+            f"{json.dumps(mismatches, sort_keys=True)}"
+        )
+    return stored
+
+
+_COMPLETED_REP_SUFFIXES = (".trajectory.json", ".ledger.json", ".score.json")
+
+
+def _reload_completed_rep(
+    system: dict[str, Any],
+    mode: str,
+    task: dict[str, Any],
+    rep: int,
+    *,
+    run_dir: Path,
+) -> RepResult | None:
+    """Reload a completed rep's evidence from disk, or None to (re)run it.
+
+    A rep counts as completed only when its `.done` sentinel AND all three
+    completed-rep artifacts are present; a sentinel with missing artifacts is
+    treated as incomplete and the rep re-executes (write_rep_artifacts
+    rewrites everything atomically).
+    """
+
+    rep_label = f"rep_{rep + 1:02d}"
+    task_dir = _task_dir(run_dir, str(system["system_id"]), mode, str(task["task_id"]))
+    prefix = task_dir / rep_label
+    if not prefix.with_suffix(".done").exists():
+        return None
+    if not all(
+        prefix.with_suffix(suffix).exists() for suffix in _COMPLETED_REP_SUFFIXES
+    ):
+        return None
+    trajectory = _load_json_object(prefix.with_suffix(".trajectory.json"))
+    ledger = _load_json_object(prefix.with_suffix(".ledger.json"))
+    score = _load_json_object(prefix.with_suffix(".score.json"))
+    rr = RepResult(
+        rep_index=rep,
+        rep_label=rep_label,
+        completed=True,
+        trajectory=trajectory,
+        stop_cause=_completed_stop_cause(trajectory, ledger),
+        ledger=ledger,
+        score=score,
+        meter_halt=None,
+    )
+    setattr(rr, "_task_dir", task_dir)
+    return rr
+
+
+def _reset_rep_fixture(
+    run_dir: Path,
+    system: dict[str, Any],
+    mode: str,
+    task: dict[str, Any],
+    rep: int,
+) -> None:
+    """Delete a crashed rep's per-rep fixture workspace before its re-run."""
+
+    fixture_workspace = (
+        run_dir
+        / "_fixtures"
+        / str(system["system_id"])
+        / mode
+        / str(task["task_id"])
+        / f"rep_{rep + 1:02d}"
+    )
+    if fixture_workspace.exists():
+        shutil.rmtree(fixture_workspace, ignore_errors=True)
+
+
+def _completed_stop_cause(
+    trajectory: Mapping[str, Any],
+    ledger: Mapping[str, Any],
+) -> RepStopCause:
+    """Reconstruct a completed rep's stop cause from its persisted artifacts."""
+
+    if ledger.get("task_success_authoritative") is False:
+        return "subprocess_crash"
+    steps = list(trajectory.get("steps", []))
+    if steps:
+        last_type = steps[-1].get("step_type")
+        if last_type == "final":
+            return "final"
+        if last_type == "refusal":
+            return "refusal"
+    return "max_turns"
+
+
 def _git_sha() -> str:
     result = subprocess.run(
         ["git", "rev-parse", "HEAD"],
@@ -1302,11 +1651,14 @@ def _provider_outcome(
     record: TurnRecord,
     retry_exhausted: bool,
     adapter_error: str | None,
+    reportable_stop: str | None = None,
 ) -> str:
     if adapter_error is not None:
         return "adapter_error"
     if retry_exhausted:
         return "retry_exhausted"
+    if reportable_stop is not None:
+        return reportable_stop
     return record.provider_outcome
 
 
@@ -1345,8 +1697,26 @@ def _round_cost(value: float) -> float:
     return round(value, 12)
 
 
+# Sentinel prefixes carried in harness-injected turn text so after_turn can
+# classify a failed turn without the adapter and orchestrator sharing state.
+# IB-3/IB-4/IB-5 add the three reportable model/provider outcome sentinels.
+_ERROR_SENTINEL_PREFIXES: dict[str, str] = {
+    "retry_exhausted": "__GAB_RETRY_EXHAUSTED__",
+    "adapter_error": "__GAB_ADAPTER_ERROR__",
+    "context_overflow": "__GAB_CONTEXT_OVERFLOW__",
+    "provider_filtered": "__GAB_PROVIDER_FILTERED__",
+    "length_truncation": "__GAB_LENGTH_TRUNCATION__",
+}
+
+
 def _error_turn_result(
-    kind: Literal["retry_exhausted", "adapter_error"],
+    kind: Literal[
+        "retry_exhausted",
+        "adapter_error",
+        "context_overflow",
+        "provider_filtered",
+        "length_truncation",
+    ],
     message: str,
     *,
     retry_count: int = 0,
@@ -1354,14 +1724,15 @@ def _error_turn_result(
     adapter_error: str | None = None,
 ) -> ModelTurnResult:
     del retry_exhausted, adapter_error
-    prefix = (
-        "__GAB_RETRY_EXHAUSTED__"
-        if kind == "retry_exhausted"
-        else "__GAB_ADAPTER_ERROR__"
-    )
+    prefix = _ERROR_SENTINEL_PREFIXES[kind]
+    # A5: the sentinel is harness bookkeeping, not model output. Flagging it
+    # harness_injected keeps it out of the ASSISTANT history the model sees
+    # on later turns (it reaches the model only as user-role harness
+    # feedback), while the trajectory/ledger record it exactly as before.
     return ModelTurnResult(
         text=f"{prefix}: {message}",
         retry_count=retry_count,
+        harness_injected=True,
     )
 
 
@@ -1447,6 +1818,8 @@ def _fsync_dir(path: Path) -> None:
 
 __all__ = [
     "MODE_ORDER",
+    "REPORTABLE_REP_STOP_CAUSES",
+    "REP_ONLY_DISPOSITIONS",
     "PilotConfig",
     "RepResult",
     "Disposition",

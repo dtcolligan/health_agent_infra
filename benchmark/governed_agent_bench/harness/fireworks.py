@@ -38,6 +38,7 @@ from governed_agent_bench.harness.core import (
     load_manifest_snapshot,
     render_prompt,
 )
+from governed_agent_bench.harness.decoding import decoding_request_fields
 from governed_agent_bench.harness.model_actions import (
     ModelTurnResult,
     TurnRecord,
@@ -49,7 +50,9 @@ from governed_agent_bench.harness.retry import (
     RetryExhausted,
     RetryPolicy,
     TransportFailure,
+    _http_error_message,
     execute_with_retry,
+    is_context_overflow,
 )
 from governed_agent_bench.model_roster import roster_condition
 
@@ -67,11 +70,21 @@ OUTCOME_TIMEOUT = "timeout"
 OUTCOME_INVALID_JSON = "invalid_json"
 OUTCOME_PROVIDER_REFUSAL = "provider_refusal"
 OUTCOME_ADAPTER_FAILURE = "adapter_failure"
+# Audit fix A3: finish_reason="length" is a harness budget artifact (the
+# max_tokens ceiling truncated the output), reported as its own outcome like
+# timeout -- never allowed to fall through to JSON parsing where it would be
+# recorded as a model formatting violation.
+OUTCOME_LENGTH_TRUNCATION = "length_truncation"
+# IB-3 (readiness SF-3): HTTP 422 is the provider's context-overflow
+# rejection. Reportable like timeout; the raw body rides in the message.
+OUTCOME_CONTEXT_OVERFLOW = "context_overflow"
 REPORTABLE_OUTCOMES = frozenset({
     OUTCOME_TIMEOUT,
     OUTCOME_INVALID_JSON,
     OUTCOME_PROVIDER_REFUSAL,
     OUTCOME_ADAPTER_FAILURE,
+    OUTCOME_LENGTH_TRUNCATION,
+    OUTCOME_CONTEXT_OVERFLOW,
 })
 
 # Qwen2.5-32B is on-demand only on Fireworks (serverless "Not supported";
@@ -153,11 +166,13 @@ class FireworksHTTPTransport:
         except urllib.error.HTTPError as exc:
             # HTTPError is a URLError subclass and must be caught first so
             # the status code and Retry-After survive for the retry layer.
+            # The error body is captured (bounded) so a 422 context-overflow
+            # classification records the provider's raw message (IB-3).
             raise TransportFailure(
                 kind="http_status",
                 status_code=exc.code,
                 retry_after=exc.headers.get("Retry-After") if exc.headers else None,
-                message=f"Fireworks HTTP {exc.code}",
+                message=_http_error_message("Fireworks", exc),
             ) from exc
         except urllib.error.URLError as exc:
             if isinstance(exc.reason, socket.timeout):
@@ -207,7 +222,7 @@ class FireworksAdapterResult:
     provider_output_text: str | None
     provider_output_texts: list[str]
     turn_records: list[TurnRecord]
-    token_usage: dict[str, int | None]
+    token_usage: dict[str, int | bool | None]
     cost_estimate: dict[str, Any]
     trajectory: dict[str, Any] | None
     error: str | None
@@ -240,13 +255,13 @@ def build_fireworks_chat_request(
         load_manifest_snapshot(manifest_id),
         str(condition["prompt_id"]),
     )
-    decoding = condition["decoding_settings"]
+    # Audit fix A7: the condition's full decoding_settings dict passes
+    # through an explicit allowlist (unknown keys raise; non-numeric
+    # placeholders like the roster's seed sentinel are skipped, not sent).
     request = {
         "model": request_model or condition["model_id"],
         "messages": _messages_from_rendered_prompt(prompt["rendered_prompt"]),
-        "temperature": decoding["temperature"],
-        "top_p": decoding["top_p"],
-        "max_tokens": decoding["max_tokens"],
+        **decoding_request_fields(condition["decoding_settings"]),
     }
     return request, {
         "prompt_template_id": prompt["prompt_template_id"],
@@ -260,6 +275,7 @@ def run_fireworks_model_action(
     condition: dict[str, Any],
     config: HarnessConfig,
     *,
+    rep: int = 0,
     request_model: str | None = None,
     transport: FireworksTransport | None = None,
     env: Mapping[str, str] | None = None,
@@ -272,20 +288,25 @@ def run_fireworks_model_action(
 ) -> FireworksAdapterResult:
     """Run a Fireworks-backed bounded model-action loop for one task.
 
-    ``request_model`` is the deployment-qualified model string for
-    on-demand serving (defaults to the roster base id). ``sleeper`` /
-    ``clock`` are injectable so retry backoff is testable without real
-    waits. ``outage_detector`` is condition-scoped and owned by the caller
-    (A2); this adapter only feeds per-attempt outcomes into it.
-    ``retry_policy`` defaults to the §5 policy.
+    ``rep`` is the replication index (audit fix A2): it is part of the
+    provider call id and trajectory id, so n>1 reps of the same cell write
+    distinct raw-response / report / trajectory artifacts instead of
+    overwriting each other. ``request_model`` is the deployment-qualified
+    model string for on-demand serving (defaults to the roster base id).
+    ``sleeper`` / ``clock`` are injectable so retry backoff is testable
+    without real waits. ``outage_detector`` is condition-scoped and owned
+    by the caller (A2); this adapter only feeds per-attempt outcomes into
+    it. ``retry_policy`` defaults to the §5 policy.
     """
 
+    if rep < 0:
+        raise HarnessError("rep must be non-negative")
     _ensure_fireworks_config(condition, config)
     _ensure_request_model(condition, request_model)
     request, prompt_metadata = build_fireworks_chat_request(
         task, condition, request_model=request_model
     )
-    call_id = _provider_call_id(task, condition, config, prompt_metadata)
+    call_id = _provider_call_id(task, condition, config, prompt_metadata, rep)
     env_map = os.environ if env is None else env
     raw_responses: list[dict[str, Any]] = []
     provider_output_texts: list[str] = []
@@ -346,9 +367,14 @@ def run_fireworks_model_action(
                 retry_count=exc.retry_count,
             ) from exc
         except TransportFailure as exc:
-            outcome = (
-                OUTCOME_TIMEOUT if exc.kind == "timeout" else OUTCOME_ADAPTER_FAILURE
-            )
+            if is_context_overflow(exc):
+                # IB-3: 422 context overflow is its own reportable outcome
+                # (like timeout); the raw provider body rides in str(exc).
+                outcome = OUTCOME_CONTEXT_OVERFLOW
+            elif exc.kind == "timeout":
+                outcome = OUTCOME_TIMEOUT
+            else:
+                outcome = OUTCOME_ADAPTER_FAILURE
             raise _FireworksTurnFailure(
                 outcome, str(exc), None, retry_count=exc.retry_count
             ) from exc
@@ -369,6 +395,17 @@ def run_fireworks_model_action(
             raise _FireworksTurnFailure(
                 OUTCOME_PROVIDER_REFUSAL,
                 "Fireworks response indicates provider-level refusal",
+                raw_response,
+                retry_count=retry_outcome.retry_count,
+            )
+        if _is_length_truncated(raw_response):
+            # A3: budget truncation is a harness artifact, reported as its
+            # own outcome; the truncated text must not reach JSON parsing
+            # where it would score as a model formatting violation.
+            raise _FireworksTurnFailure(
+                OUTCOME_LENGTH_TRUNCATION,
+                "Fireworks response truncated by max_tokens budget "
+                "(finish_reason=length)",
                 raw_response,
                 retry_count=retry_outcome.retry_count,
             )
@@ -405,6 +442,7 @@ def run_fireworks_model_action(
             task,
             config,
             model_turn,
+            rep=rep,
             after_turn=after_turn,
             write_trajectory=write_trajectory,
         )
@@ -533,17 +571,24 @@ def estimate_fireworks_cost(
 
 def _aggregate_token_usage(
     token_usage_by_turn: list[dict[str, int | None]],
-) -> dict[str, int | None]:
-    if not token_usage_by_turn:
-        return _empty_usage()
-    aggregate: dict[str, int | None] = {}
+) -> dict[str, int | bool | None]:
+    """Sum per-turn usage; flag incompleteness instead of nulling the sum.
+
+    Audit fix A9: a single turn without a usage object must not erase the
+    other turns' counts (that silently under-counts the real-time cost
+    cap). Available turns are summed and ``usage_complete: false`` marks
+    the aggregate as a lower bound.
+    """
+
+    aggregate: dict[str, int | bool | None] = {}
+    complete = True
     for key in ("prompt_tokens", "completion_tokens", "total_tokens"):
         values = [usage.get(key) for usage in token_usage_by_turn]
-        aggregate[key] = (
-            sum(value for value in values if value is not None)
-            if all(value is not None for value in values)
-            else None
-        )
+        present = [value for value in values if value is not None]
+        if len(present) != len(values):
+            complete = False
+        aggregate[key] = sum(present) if present else None
+    aggregate["usage_complete"] = complete
     return aggregate
 
 
@@ -559,7 +604,7 @@ def _record_adapter_result(
     raw_responses: list[dict[str, Any]],
     provider_output_texts: list[str],
     turn_records: list[TurnRecord],
-    token_usage: dict[str, int | None],
+    token_usage: dict[str, int | bool | None],
     cost_estimate: dict[str, Any],
     trajectory: dict[str, Any] | None,
     error: str | None,
@@ -722,7 +767,11 @@ def _provider_call_id(
     condition: dict[str, Any],
     config: HarnessConfig,
     prompt_metadata: Mapping[str, str],
+    rep: int,
 ) -> str:
+    # A2: rep is part of the digest AND visible in the id so n=3 reps of the
+    # same cell write distinct provider_responses/ and provider_reports/
+    # artifacts instead of overwriting each other.
     digest = hashlib.sha256(
         json.dumps(
             {
@@ -731,12 +780,29 @@ def _provider_call_id(
                 "system_id": config.system_id,
                 "runtime_mode": config.runtime_mode,
                 "prompt_template_hash": prompt_metadata["prompt_template_hash"],
+                "rep": rep,
             },
             sort_keys=True,
             separators=(",", ":"),
         ).encode("utf-8")
     ).hexdigest()[:12]
-    return f"{task['task_id']}_{config.system_id}_{digest}"
+    return f"{task['task_id']}_{config.system_id}_rep{rep}_{digest}"
+
+
+def _finish_reason(raw_response: Mapping[str, Any]) -> str:
+    choices = raw_response.get("choices")
+    if not isinstance(choices, list) or not choices:
+        return ""
+    first = choices[0]
+    if not isinstance(first, Mapping):
+        return ""
+    return str(first.get("finish_reason", "")).lower()
+
+
+def _is_length_truncated(raw_response: Mapping[str, Any]) -> bool:
+    """True when the provider stopped generation at the max_tokens budget."""
+
+    return _finish_reason(raw_response) == "length"
 
 
 def _is_provider_refusal(raw_response: Mapping[str, Any]) -> bool:
@@ -748,15 +814,14 @@ def _is_provider_refusal(raw_response: Mapping[str, Any]) -> bool:
             return True
         if error_code in _PROVIDER_REFUSAL_FINISH_REASONS:
             return True
+    if _finish_reason(raw_response) in _PROVIDER_REFUSAL_FINISH_REASONS:
+        return True
     choices = raw_response.get("choices")
     if not isinstance(choices, list) or not choices:
         return False
     first = choices[0]
     if not isinstance(first, Mapping):
         return False
-    finish_reason = str(first.get("finish_reason", "")).lower()
-    if finish_reason in _PROVIDER_REFUSAL_FINISH_REASONS:
-        return True
     message = first.get("message")
     return isinstance(message, Mapping) and bool(message.get("refusal"))
 

@@ -26,6 +26,6 @@ Committed suite (36 tasks; three scenario pairs per mechanism, D-39):
 | L7 | `gab_l7_drift` |
 
 The `_untold` tasks carry `contract_arm: untold`; `gab_l5_audit_blind`
-carries `hide_stdout: true`; `gab_l6_agentsafe_untold` also scopes
-`no_runtime_enforcement` as the all-off sanity floor. The default offline
+carries `hide_stdout: true`; `gab_l6_agentsafe_untold` and `gab_l6_proposalgate_untold` scope
+`no_runtime_enforcement` as the all-off sanity floor (canary carriers). The default offline
 rule baseline runs this full 36-task inventory.

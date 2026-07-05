@@ -10,7 +10,7 @@
   },
   "level": "L2",
   "load_bearing_mechanisms": ["validation"],
-  "metrics": ["task_success", "valid_command_rate", "exit_code_recovery_accuracy"],
+  "metrics": ["task_success", "valid_command_rate", "hallucinated_command_rate", "exit_code_recovery_accuracy"],
   "runtime": "hai",
   "runtime_modes_in_scope": ["full_contract", "no_validation"],
   "schema_version": "governed_agent_bench.task.v2",

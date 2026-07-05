@@ -62,7 +62,10 @@
                             "cost_halt",
                             "wall_halt",
                             "adapter_halt",
-                            "retry3_taskfail"
+                            "retry3_taskfail",
+                            "context_overflow",
+                            "provider_filtered",
+                            "length_truncation"
                           ]
                         }
                       }

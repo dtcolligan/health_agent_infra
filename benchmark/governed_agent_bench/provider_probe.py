@@ -107,6 +107,8 @@ PROVIDER_SPECS: dict[str, ProviderSpec] = {
         metadata_url="https://api.together.xyz/v1/models",
         docs_urls=(
             "https://www.together.ai/models/qwen3-235b-a22b-instruct-2507-fp8",
+            "https://www.together.ai/models/llama-3-3-70b",
+            "https://www.together.ai/models/qwen3-5-9b",
             "https://www.together.ai/models/qwen2-5-7b-instruct-turbo",
             "https://www.together.ai/pricing",
         ),
@@ -132,14 +134,17 @@ PROVIDER_SPECS: dict[str, ProviderSpec] = {
         provider="Anthropic",
         api_key_env=None,
         metadata_url=None,
+        # Audit fix A13: aligned with the roster's model_card_snapshot host
+        # (platform.claude.com); the old docs.anthropic.com paths verified a
+        # different surface than the one the roster pins.
         docs_urls=(
-            "https://docs.anthropic.com/en/docs/about-claude/models/overview",
-            "https://docs.anthropic.com/en/docs/about-claude/pricing",
+            "https://platform.claude.com/docs/en/about-claude/models/overview",
+            "https://platform.claude.com/docs/en/about-claude/pricing",
         ),
         pricing_terms=("Claude", "Sonnet"),
         pricing_snapshot={
             "pricing_source": "Anthropic public pricing docs",
-            "pricing_url": "https://docs.anthropic.com/en/docs/about-claude/pricing",
+            "pricing_url": "https://platform.claude.com/docs/en/about-claude/pricing",
             "adapter_constant_status": "not_applicable_no_anthropic_adapter_pre_lock",
         },
     ),

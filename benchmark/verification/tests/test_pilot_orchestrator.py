@@ -1160,6 +1160,172 @@ def test_systemic_adapter_errors_pause_via_outage_detector(
     assert result.run_outcome == "halted"
 
 
+@pytest.mark.parametrize(
+    "stop_cause",
+    ["context_overflow", "provider_filtered", "length_truncation"],
+)
+def test_reportable_outcome_advances_with_own_disposition_and_no_task_outcome(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    stop_cause: str,
+) -> None:
+    """IB-3/IB-4/IB-5: context_overflow / provider_filtered /
+    length_truncation are reportable per-rep outcomes: the sweep advances,
+    the ledger carries the category's own disposition, and the coverage row
+    records NO task_outcome (neither pass nor fail for the model)."""
+
+    result = _run(
+        tmp_path,
+        monkeypatch,
+        [[pilot._error_turn_result(stop_cause, "raw provider message")]],  # type: ignore[arg-type]
+    )
+
+    assert result.run_outcome == "completed"
+    task_dir = _task_dir(result)
+    assert (task_dir / "rep_01.trajectory.json").exists()
+    assert not (task_dir / "rep_01.score.json").exists()
+    assert not (task_dir / "rep_01.done").exists()
+    ledger = _read_json(task_dir / "rep_01.ledger.json")
+    assert ledger["disposition"] == stop_cause
+    assert ledger["disposition_triggers"] == []
+    assert ledger["turns"][0]["provider_outcome"] == stop_cause
+    index = _read_json(
+        result.run_dir
+        / "conditions"
+        / "option_b_qwen25_7b_together_v1"
+        / "condition_index.json"
+    )
+    row = index["coverage"]["full_contract"]["per_task"]["gab_l1_operate_route"]
+    assert row["task_outcome"] is None
+    assert row["partial_rep"] == {"rep_label": "rep_01", "stop_cause": stop_cause}
+    summary = _read_json(
+        result.run_dir
+        / "conditions"
+        / "option_b_qwen25_7b_together_v1"
+        / "runtime_mode_full_contract"
+        / "condition_summary.json"
+    )
+    for cause in pilot.REPORTABLE_REP_STOP_CAUSES:
+        assert summary[f"reps_{cause}"] == (1 if cause == stop_cause else 0)
+    assert summary["reps_partial"] == 1
+    # The raw message is durable in the trajectory's invalid_output step.
+    trajectory = _read_json(task_dir / "rep_01.trajectory.json")
+    assert "raw provider message" in json.dumps(trajectory)
+    _assert_orchestrator_schemas_valid(result)
+
+
+def test_wall_halt_coincident_with_reportable_outcome_still_halts_sweep(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A meter crossing on the same turn as a reportable outcome must not be
+    swallowed: the meter reports each crossing exactly once, so the sweep
+    must still halt even though the rep's stop cause is the reportable one."""
+
+    readings = iter([0.0, 0.0, 61.0, 61.0, 61.0])
+
+    def fake_clock() -> float:
+        return next(readings, 61.0)
+
+    _patch_hai(monkeypatch)
+    result = pilot.run_pilot(
+        systems=[_condition(compute_boundary={"max_wall_time_minutes": 1.0})],
+        model_turn_factory=_factory(
+            [[pilot._error_turn_result("context_overflow", "HTTP 422")]]  # type: ignore[arg-type]
+        ),
+        config=_config(tmp_path),
+        clock=fake_clock,
+        now_utc=lambda: RUN_START,
+        git_sha=GIT_SHA,
+    )
+
+    assert result.run_outcome == "halted"
+    ledger = _read_json(_task_dir(result) / "rep_01.ledger.json")
+    # The rep-level label stays the reportable category; the sweep-level
+    # wall halt is recorded as a disposition trigger and wins the ledger
+    # disposition per the severity resolve.
+    assert ledger["disposition_triggers"][0]["reason"] == "wall_halt"
+    assert ledger["disposition"] == "wall_halt"
+    index = _read_json(
+        result.run_dir
+        / "conditions"
+        / "option_b_qwen25_7b_together_v1"
+        / "condition_index.json"
+    )
+    row = index["coverage"]["full_contract"]["per_task"]["gab_l1_operate_route"]
+    assert row["partial_rep"] == {
+        "rep_label": "rep_01",
+        "stop_cause": "context_overflow",
+    }
+
+
+def test_together_factory_classifies_reportable_outcomes() -> None:
+    """IB-3/IB-4/IB-5 in the live path: the orchestrator's Together factory
+    classifies HTTP 422 as context_overflow, provider safety filters as
+    provider_filtered, and finish_reason=length as length_truncation --
+    never the generic adapter path."""
+
+    task = harness_core.load_task("gab_l1_operate_route")
+
+    def build_turn(transport: Any) -> Any:
+        return pilot.together_model_turn_factory(
+            task,
+            _condition(),
+            "full_contract",
+            0,
+            detector=pilot.OutageDetector(),
+            transport=transport,
+            env={"TOGETHER_API_KEY": "test-key"},
+            sleeper=lambda _seconds: None,
+            clock=lambda: 0.0,
+        )
+
+    class OverflowTransport:
+        def complete(self, request: Any, *, api_key: str, timeout_seconds: float) -> dict[str, Any]:
+            del request, api_key, timeout_seconds
+            raise pilot.TransportFailure(
+                kind="http_status",
+                status_code=422,
+                message='Together HTTP 422: {"error": "context length exceeded"}',
+            )
+
+    overflow = build_turn(OverflowTransport())([{"role": "user", "content": "x"}])
+    assert overflow.text.startswith("__GAB_CONTEXT_OVERFLOW__")
+    assert "context length exceeded" in overflow.text
+    assert overflow.harness_injected is True
+
+    class FilteredTransport:
+        def complete(self, request: Any, *, api_key: str, timeout_seconds: float) -> dict[str, Any]:
+            del request, api_key, timeout_seconds
+            return {
+                "choices": [{
+                    "finish_reason": "content_filter",
+                    "message": {"role": "assistant", "content": ""},
+                }],
+                "usage": {"prompt_tokens": 5, "completion_tokens": 0},
+            }
+
+    filtered = build_turn(FilteredTransport())([{"role": "user", "content": "x"}])
+    assert filtered.text.startswith("__GAB_PROVIDER_FILTERED__")
+
+    class TruncatedTransport:
+        def complete(self, request: Any, *, api_key: str, timeout_seconds: float) -> dict[str, Any]:
+            del request, api_key, timeout_seconds
+            return {
+                "choices": [{
+                    "finish_reason": "length",
+                    "message": {
+                        "role": "assistant",
+                        "content": '{"action_type": "final", "final_te',
+                    },
+                }],
+                "usage": {"prompt_tokens": 5, "completion_tokens": 2048},
+            }
+
+    truncated = build_turn(TruncatedTransport())([{"role": "user", "content": "x"}])
+    assert truncated.text.startswith("__GAB_LENGTH_TRUNCATION__")
+
+
 def test_cost_meter_is_system_scoped_with_one_turn_overshoot(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -1607,6 +1773,11 @@ def test_public_dataclass_shapes_and_default_config_path(
         "replication_n",
         "cost_cap_usd",
         "python_executable",
+        # Audit fix A11: the pre-registered per-rep turn budget is explicit
+        # orchestrator config.
+        "max_turns",
+        # IC-2: opt-in rep-level resume of an existing run dir.
+        "resume_run_dir",
     ]
     assert [field.name for field in fields(pilot.RepResult)] == [
         "rep_index",
@@ -1648,17 +1819,27 @@ def test_public_dataclass_shapes_and_default_config_path(
 
 
 def test_default_task_scope_count_matches_pilot_volume() -> None:
+    # IB-1 added no_runtime_enforcement to gab_l6_proposalgate_untold
+    # (second all-off floor carrier): 71 -> 72 cells. IB-6 locked n=4:
+    # 72 * 4 = 288 default reps.
     task_ids = pilot.default_task_ids()
     total_cells = 0
     for task_id in task_ids:
         total_cells += len(pilot.modes_in_scope(harness_core.load_task(task_id)))
 
     assert len(task_ids) == 36
-    assert total_cells == 71
+    assert total_cells == 72
     assert total_cells * pilot.PilotConfig(
         runs_root=Path("/tmp/unused"),
         task_ids=task_ids,
-    ).replication_n == 213
+    ).replication_n == 288
+
+
+def test_replication_default_is_four() -> None:
+    # IB-6 (locked decision): the pre-registered replication count is n=4.
+    assert pilot.PilotConfig(
+        runs_root=Path("/tmp/unused"), task_ids=()
+    ).replication_n == 4
 
 
 def test_atomic_write_json_does_not_leave_torn_target(
@@ -1724,9 +1905,20 @@ def test_schema_reason_enums_cover_all_emitted_dispositions() -> None:
     reasons = set(ledger["$defs"]["disposition_reason"]["enum"])
     assert pilot.DISPOSITION_REASONS == reasons
     assert set(summary["$defs"]["abort_reason"]["enum"]) == pilot.ABORT_REASONS
+    # IB-5: the rep-ledger disposition enum covers every rep-only
+    # disposition finalize_rep_ledger_disposition can write (the audit
+    # found "adapter_taskfail" was emitted but absent from the enum) plus
+    # the IB-3/IB-4/IB-5 reportable outcomes.
+    assert pilot.REP_ONLY_DISPOSITIONS == {
+        "retry3_taskfail",
+        "adapter_taskfail",
+        "context_overflow",
+        "provider_filtered",
+        "length_truncation",
+    }
     assert {
         "completed",
-        "retry3_taskfail",
+        *pilot.REP_ONLY_DISPOSITIONS,
         *pilot.DISPOSITION_REASONS,
     } == set(ledger["$defs"]["rep_ledger_disposition"]["enum"])
     assert {
@@ -1788,3 +1980,360 @@ def test_fixture_value_error_is_clean_halt_not_crash(
         git_sha=GIT_SHA,
     )
     assert result.run_outcome == "halted"
+
+
+def test_retry_exhausted_sentinel_is_not_replayed_as_assistant_message(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Audit fix A5: the harness-injected __GAB_RETRY_EXHAUSTED__ sentinel
+    from a failed turn must not appear on later turns as an ASSISTANT
+    message the model never emitted; it reaches the model only as
+    user-role harness feedback. Ledger semantics are unchanged."""
+
+    seen_messages: list[list[dict[str, str]]] = []
+
+    def factory(
+        _task: dict[str, Any],
+        _system: dict[str, Any],
+        _mode: str,
+        _rep: int,
+        *,
+        detector: Any,
+    ) -> Any:
+        del detector
+        responses = [
+            pilot._error_turn_result(
+                "retry_exhausted", "timeout", retry_count=3
+            ),
+            _final_response(),
+        ]
+
+        def model_turn(messages: list[dict[str, str]]) -> ModelTurnResult:
+            seen_messages.append(json.loads(json.dumps(messages)))
+            return responses.pop(0)
+
+        return model_turn
+
+    _patch_hai(monkeypatch)
+    result = pilot.run_pilot(
+        systems=[_condition()],
+        model_turn_factory=factory,
+        config=_config(tmp_path),
+        now_utc=lambda: RUN_START,
+        git_sha=GIT_SHA,
+    )
+
+    assert result.run_outcome == "completed"
+    assert len(seen_messages) == 2
+    turn_2_messages = seen_messages[1]
+    assert not any(
+        message["role"] == "assistant" and "__GAB_" in message["content"]
+        for message in turn_2_messages
+    ), "harness sentinel leaked into assistant history"
+    # The failed turn is visible to the model as user-role harness feedback.
+    assert turn_2_messages[-1]["role"] == "user"
+    assert "__GAB_RETRY_EXHAUSTED__" in turn_2_messages[-1]["content"]
+    # Ledger semantics identical: the turn still records retry exhaustion.
+    ledger = _read_json(_task_dir(result) / "rep_01.ledger.json")
+    assert ledger["turns"][0]["retry_exhausted"] is True
+    assert ledger["turns"][0]["provider_outcome"] == "retry_exhausted"
+    assert ledger["turns"][0]["retry_count"] == 3
+    assert ledger["turns"][1]["provider_outcome"] == "ok"
+    _assert_orchestrator_schemas_valid(result)
+
+
+def test_max_turns_is_explicit_pilot_config(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Audit fix A11: the pre-registered per-rep turn budget is visible
+    PilotConfig state (default 7) and is passed to the loop explicitly."""
+
+    assert pilot.PilotConfig(runs_root=tmp_path, task_ids=()).max_turns == 7
+
+    result = _run(
+        tmp_path,
+        monkeypatch,
+        # Three command turns scripted; only max_turns=2 may be consumed.
+        [[_command_response(), _command_response(), _command_response()]],
+        config=_config(tmp_path, max_turns=2),
+    )
+
+    assert result.run_outcome == "completed"
+    ledger = _read_json(_task_dir(result) / "rep_01.ledger.json")
+    assert len(ledger["turns"]) == 2
+    trajectory = _read_json(_task_dir(result) / "rep_01.trajectory.json")
+    command_steps = [
+        step for step in trajectory["steps"] if step["step_type"] == "command"
+    ]
+    assert len(command_steps) == 2
+
+
+def test_pilot_rejects_max_turns_below_one(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="max_turns must be >= 1"):
+        pilot.run_pilot(
+            systems=[_condition()],
+            model_turn_factory=_factory([[_final_response()]]),
+            config=_config(tmp_path, max_turns=0),
+            now_utc=lambda: RUN_START,
+            git_sha=GIT_SHA,
+        )
+
+
+# --------------------------------------------------------------------------- #
+# IC-1: a hallucinated (manifest-disallowed) model command must never kill
+# the sweep. It is recorded, scored against M4, fails the rep, and the sweep
+# advances to the remaining tasks/reps.
+# --------------------------------------------------------------------------- #
+def test_disallowed_model_command_fails_rep_but_sweep_advances(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config = _config(
+        tmp_path,
+        task_ids=("gab_l1_operate_route", "gab_l2_validation_told"),
+    )
+    result = _run(
+        tmp_path,
+        monkeypatch,
+        [
+            # sorted task order: gab_l1_operate_route hallucinates then finals;
+            # gab_l2_validation_told behaves.
+            [_command_response("hai bogus surface"), _final_response()],
+            [_command_response("hai today"), _final_response()],
+        ],
+        config=config,
+    )
+
+    assert result.run_outcome == "completed"
+    l1_dir = _task_dir(result, "gab_l1_operate_route")
+    l2_dir = _task_dir(result, "gab_l2_validation_told")
+    # The hallucinating rep completed (scored evidence, not a crash)...
+    assert (l1_dir / "rep_01.done").exists()
+    score = _read_json(l1_dir / "rep_01.score.json")
+    assert score["overall_pass"] is False
+    assert any(
+        violation["kind"] == "hallucinated_command"
+        for violation in score.get("violations", [])
+    )
+    trajectory = _read_json(l1_dir / "rep_01.trajectory.json")
+    rejected = trajectory["steps"][0]
+    assert rejected["step_type"] == "command"
+    assert rejected["metadata"]["manifest_rejected"] is True
+    # ...and the sweep advanced past it: the next task ran to a scored,
+    # completed rep untouched by the first task's hallucination.
+    assert (l2_dir / "rep_01.done").exists()
+    l2_score = _read_json(l2_dir / "rep_01.score.json")
+    assert not any(
+        violation["kind"] == "hallucinated_command"
+        for violation in l2_score.get("violations", [])
+    )
+    index = _read_json(
+        result.run_dir
+        / "conditions"
+        / "option_b_qwen25_7b_together_v1"
+        / "condition_index.json"
+    )
+    per_task = index["coverage"]["full_contract"]["per_task"]
+    assert per_task["gab_l1_operate_route"]["task_outcome"] == "fail"
+    l2_row = per_task["gab_l2_validation_told"]
+    assert l2_row["status"] == "in_scope_run"
+    assert l2_row["reps_completed"] == 1
+    _assert_orchestrator_schemas_valid(result)
+
+
+# --------------------------------------------------------------------------- #
+# IC-2: opt-in rep-level resume.
+# --------------------------------------------------------------------------- #
+def _kill_after_reps(
+    monkeypatch: pytest.MonkeyPatch,
+    completed_reps: int,
+) -> type[RuntimeError]:
+    """Crash run_pilot after N successful run_one_rep executions."""
+
+    original = pilot.run_one_rep
+    counter = {"n": 0}
+
+    class KillSignal(RuntimeError):
+        pass
+
+    def killing_run_one_rep(*args: Any, **kwargs: Any) -> Any:
+        if counter["n"] >= completed_reps:
+            raise KillSignal(f"simulated crash after {counter['n']} reps")
+        counter["n"] += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(pilot, "run_one_rep", killing_run_one_rep)
+    return KillSignal
+
+
+def test_resume_executes_only_missing_reps_and_rebuilds_run_artifacts(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config = _config(tmp_path, replication_n=3)
+    kill_signal = _kill_after_reps(monkeypatch, 2)
+    first_calls: list[tuple[str, str, int]] = []
+    with pytest.raises(kill_signal):
+        _run(
+            tmp_path,
+            monkeypatch,
+            [[_command_response(), _final_response()]] * 3,
+            config=config,
+            calls=first_calls,
+        )
+    run_dir = tmp_path / "runs" / f"{RUN_START:%Y-%m-%dT%H%MZ}_lock-{GIT_SHA[:7]}"
+    assert run_dir.is_dir()
+    assert first_calls == [
+        ("gab_l1_operate_route", "full_contract", 0),
+        ("gab_l1_operate_route", "full_contract", 1),
+    ]
+    task_dir = (
+        run_dir
+        / "conditions"
+        / "option_b_qwen25_7b_together_v1"
+        / "runtime_mode_full_contract"
+        / "tasks"
+        / "gab_l1_operate_route"
+    )
+    assert (task_dir / "rep_01.done").exists()
+    assert (task_dir / "rep_02.done").exists()
+    assert not (task_dir / "rep_03.done").exists()
+    assert not (run_dir / "pilot_manifest.json").exists()
+
+    # A crashed rep can leave a partially-mutated per-rep fixture behind;
+    # resume must rebuild it, not reuse it via the metadata-file cache.
+    stale_fixture = (
+        run_dir
+        / "_fixtures"
+        / "option_b_qwen25_7b_together_v1"
+        / "full_contract"
+        / "gab_l1_operate_route"
+        / "rep_03"
+        / "empty_user"
+    )
+    stale_fixture.mkdir(parents=True)
+    (stale_fixture / "fixture_metadata.json").write_text(
+        json.dumps({"stale": True}), encoding="utf-8"
+    )
+
+    # Resume: only the missing rep may reach the model-turn factory.
+    monkeypatch.undo()
+    resume_calls: list[tuple[str, str, int]] = []
+    result = _run(
+        tmp_path,
+        monkeypatch,
+        [[_command_response(), _final_response()]],
+        config=_config(tmp_path, replication_n=3, resume_run_dir=run_dir),
+        calls=resume_calls,
+    )
+
+    assert resume_calls == [("gab_l1_operate_route", "full_contract", 2)]
+    # The stale fixture was reset and rebuilt for the re-run rep.
+    rebuilt_metadata = _read_json(stale_fixture / "fixture_metadata.json")
+    assert "stale" not in rebuilt_metadata
+    assert rebuilt_metadata["fixture_id"] == "empty_user"
+    assert result.run_dir == run_dir
+    assert result.run_outcome == "completed"
+    assert result.latest_advanced is True
+    assert (tmp_path / "runs" / "latest").is_symlink()
+    for rep_label in ("rep_01", "rep_02", "rep_03"):
+        assert (task_dir / f"{rep_label}.done").exists()
+        assert (task_dir / f"{rep_label}.score.json").exists()
+    manifest = _read_json(run_dir / "pilot_manifest.json")
+    assert manifest["run_outcome"] == "completed"
+    assert manifest["replication_n"] == 3
+    index = _read_json(
+        run_dir
+        / "conditions"
+        / "option_b_qwen25_7b_together_v1"
+        / "condition_index.json"
+    )
+    row = index["coverage"]["full_contract"]["per_task"]["gab_l1_operate_route"]
+    assert row["reps_completed"] == 3
+    assert row["task_outcome"] == "pass"
+    # Provenance: the resume event is recorded in run_config.json and the
+    # manifest keeps the ORIGINAL run identity.
+    run_config = _read_json(run_dir / "run_config.json")
+    assert run_config["git_sha"] == GIT_SHA
+    assert len(run_config["resume_log"]) == 1
+    assert manifest["git_sha"] == GIT_SHA
+    _assert_orchestrator_schemas_valid(result)
+
+
+def test_resume_refuses_config_fingerprint_mismatch(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    result = _run(
+        tmp_path,
+        monkeypatch,
+        [[_command_response(), _final_response()]],
+    )
+    run_dir = result.run_dir
+
+    # Different task set.
+    with pytest.raises(harness_core.HarnessError, match="fingerprint mismatch"):
+        _run(
+            tmp_path,
+            monkeypatch,
+            [[_final_response()]],
+            config=_config(
+                tmp_path,
+                task_ids=("gab_l2_validation_told",),
+                resume_run_dir=run_dir,
+            ),
+        )
+    # Different replication_n.
+    with pytest.raises(harness_core.HarnessError, match="fingerprint mismatch"):
+        _run(
+            tmp_path,
+            monkeypatch,
+            [[_final_response()]],
+            config=_config(tmp_path, replication_n=2, resume_run_dir=run_dir),
+        )
+    # Missing dir refuses before any fingerprint logic.
+    with pytest.raises(FileNotFoundError, match="resume run dir does not exist"):
+        _run(
+            tmp_path,
+            monkeypatch,
+            [[_final_response()]],
+            config=_config(tmp_path, resume_run_dir=tmp_path / "runs" / "nope"),
+        )
+    # A dir without run_config.json (pre-resume era) refuses loudly.
+    legacy = tmp_path / "runs" / "legacy_lock-aaaaaaa"
+    legacy.mkdir(parents=True)
+    with pytest.raises(harness_core.HarnessError, match="run_config.json"):
+        _run(
+            tmp_path,
+            monkeypatch,
+            [[_final_response()]],
+            config=_config(tmp_path, resume_run_dir=legacy),
+        )
+
+
+def test_resume_with_all_reps_done_executes_nothing(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    first = _run(
+        tmp_path,
+        monkeypatch,
+        [[_command_response(), _final_response()]],
+    )
+    assert first.run_outcome == "completed"
+
+    resume_calls: list[tuple[str, str, int]] = []
+    result = _run(
+        tmp_path,
+        monkeypatch,
+        [],  # no scripts: any factory invocation would pop from an empty queue
+        config=_config(tmp_path, resume_run_dir=first.run_dir),
+        calls=resume_calls,
+    )
+
+    assert resume_calls == []
+    assert result.run_outcome == "completed"
+    assert result.run_dir == first.run_dir
+    _assert_orchestrator_schemas_valid(result)

@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any, Callable, Literal
 
 from governed_agent_bench.harness.core import (
+    DISALLOWED_COMMAND_RECORD,
     EXIT_CODE_NAMES,
     HarnessConfig,
     HarnessError,
@@ -62,6 +63,13 @@ class ModelTurnResult:
     per-turn cost / token / wall-time metadata onto the model's action
     step without becoming provider-aware. A bare ``str`` return is still
     accepted (treated as text with all metadata absent / ``None``).
+
+    ``harness_injected`` (audit fix A5) marks ``text`` as harness-authored
+    failure bookkeeping (e.g. a retry-exhausted sentinel) rather than model
+    output. The loop still records it in the trajectory (invalid_output
+    step, ledger semantics unchanged) but never replays it to the model as
+    an ASSISTANT message it did not emit; the failed turn reaches the model
+    only as user-role harness feedback.
     """
 
     text: str
@@ -70,6 +78,7 @@ class ModelTurnResult:
     cost_usd_estimate: float | None = None
     wall_time_ms: int | None = None
     retry_count: int = 0
+    harness_injected: bool = False
 
 
 ModelTurn = Callable[[list[dict[str, str]]], "str | ModelTurnResult"]
@@ -316,7 +325,8 @@ def run_agent_loop(
             else ModelTurnResult(text=turn_output)
         )
         raw_output = turn_meta.text
-        messages.append({"role": "assistant", "content": raw_output})
+        if not turn_meta.harness_injected:
+            messages.append({"role": "assistant", "content": raw_output})
         first_step_index = len(steps)
         parsed_action: dict[str, Any] | None = None
         invalid_output: dict[str, str] | None = None
@@ -338,7 +348,18 @@ def run_agent_loop(
                 "content": _feedback_message([steps[-1]], _feedback_stdout_dir(config)),
             })
         else:
-            append_operator_action_steps(parsed_action, config, state, steps)
+            # IC-1 (sweep-killer fix): in the model loop a manifest-disallowed
+            # command is RECORDED as a rejected command step (measured model
+            # behaviour feeding hallucinated_command_rate), never a raise that
+            # would strand the remaining reps of the sweep. The authored /
+            # rule-baseline path keeps the raise.
+            append_operator_action_steps(
+                parsed_action,
+                config,
+                state,
+                steps,
+                on_disallowed_command=DISALLOWED_COMMAND_RECORD,
+            )
             action_type = parsed_action["action_type"]
             if action_type == "command":
                 appended_steps = steps[first_step_index:]

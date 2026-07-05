@@ -20,7 +20,10 @@
     "cost_reconciliation",
     "tasks_run",
     "reps_completed",
-    "reps_partial"
+    "reps_partial",
+    "reps_context_overflow",
+    "reps_provider_filtered",
+    "reps_length_truncation"
   ],
   "properties": {
     "schema_version": {
@@ -133,6 +136,21 @@
     "reps_partial": {
       "type": "integer",
       "minimum": 0
+    },
+    "reps_context_overflow": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Reps stopped by a provider HTTP 422 context-overflow rejection. Reportable outcome: neither a pass nor a model task failure."
+    },
+    "reps_provider_filtered": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Reps stopped by a provider-side safety filter (finish_reason content_filter/refusal/safety or message refusal flag). Reportable outcome: neither a pass nor a model task failure."
+    },
+    "reps_length_truncation": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Reps stopped by a max_tokens budget truncation (finish_reason=length). Harness budget artifact: neither a pass nor a model task failure."
     }
   },
   "$defs": {

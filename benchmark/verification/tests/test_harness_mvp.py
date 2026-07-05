@@ -6,6 +6,7 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -21,6 +22,7 @@ from governed_agent_bench.harness import (  # noqa: E402
     render_prompt,
     run_operator_action,
 )
+import governed_agent_bench.harness.core as harness_core  # noqa: E402
 
 
 TASK_ID = "gab_l2_validation_told"
@@ -290,6 +292,59 @@ def test_harness_records_refusal_and_final_actions_without_subprocess(
     ]
 
 
+# --- Audit fix A4: the HAI subprocess wait is bounded --------------------------
+
+
+def test_hai_subprocess_timeout_maps_to_crash_observation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A hung HAI subprocess is killed at the 120s bound and surfaces as an
+    out-of-taxonomy exit code (EXIT_124), i.e. the subprocess_crash path --
+    not an unbounded wait that stalls the whole sweep."""
+
+    seen_timeouts: list[Any] = []
+
+    def hang(*args: Any, **kwargs: Any) -> Any:
+        seen_timeouts.append(kwargs.get("timeout"))
+        raise subprocess.TimeoutExpired(
+            cmd=list(args[0]),
+            timeout=kwargs.get("timeout"),
+            output="partial stdout before the hang",
+            stderr="",
+        )
+
+    monkeypatch.setattr(harness_core.subprocess, "run", hang)
+    task = load_task(TASK_ID)
+
+    trajectory = run_operator_action(
+        task,
+        {
+            "action_type": "command",
+            "command": "hai capabilities",
+            "args": {"--json": True},
+            "reason": "Exercise the harness subprocess timeout bound.",
+        },
+        _config(tmp_path),
+    )
+
+    assert seen_timeouts == [120]
+    observation = trajectory["steps"][-1]
+    assert observation["step_type"] == "observation"
+    # 124 is deliberately absent from EXIT_CODE_NAMES, so the observation
+    # classifies as a crash (the agent loop stops on it).
+    assert observation["exit_code"] == "EXIT_124"
+    assert observation["metadata"]["returncode"] == 124
+    stdout = (_config(tmp_path).output_dir / observation["stdout_ref"]).read_text(
+        encoding="utf-8"
+    )
+    assert "partial stdout before the hang" in stdout
+    stderr = (_config(tmp_path).output_dir / observation["stderr_ref"]).read_text(
+        encoding="utf-8"
+    )
+    assert "exceeded 120s" in stderr
+
+
 # --- M2: contract-in-prompt withholding (untold arm) --------------------------
 
 from governed_agent_bench.harness import load_manifest_snapshot  # noqa: E402
@@ -383,7 +438,10 @@ def test_untold_render_omits_its_forbidden_tokens(told_id: str, untold_id: str) 
     untold_render = render_prompt(untold, manifest, "deployment_full_v2")[
         "rendered_prompt"
     ]
-    leaked = [tok for tok in tokens if tok in untold_render]
+    # Audit fix A12: containment is case-insensitive, so a Case-Variant
+    # restatement of the constraint counts as a leak too.
+    lowered_render = untold_render.lower()
+    leaked = [tok for tok in tokens if tok.lower() in lowered_render]
     assert leaked == [], f"{untold_id} untold render still specifies: {leaked}"
 
     told_render = render_prompt(load_task(told_id), manifest, "deployment_full_v2")[
@@ -402,3 +460,49 @@ def test_untold_render_keeps_the_load_bearing_command_callable() -> None:
     assert "hai target commit" in render
     assert "--confirm" in render
     assert "auto-promote" not in render
+
+
+def test_scrub_forbidden_prose_matches_case_insensitively() -> None:
+    """Audit fix A12: a case-variant restatement of a forbidden token must be
+    blanked from prose surfaces; structural strings stay untouched."""
+
+    node = {
+        "name": "hai target commit",
+        "description": "Requires EXPLICIT User Approval before activation.",
+        "flags": [
+            {"name": "--confirm", "help": "Explicit USER approval gate."},
+            {"name": "--target-id", "help": "Which target to commit."},
+        ],
+        # Not a prose key: never scrubbed even if it matched.
+        "mutation_class": "explicit user approval",
+    }
+
+    harness_core._scrub_forbidden_prose(node, ("explicit user approval",))
+
+    assert node["description"] == ""
+    assert node["flags"][0]["help"] == ""
+    assert node["flags"][1]["help"] == "Which target to commit."
+    assert node["name"] == "hai target commit"
+    assert node["mutation_class"] == "explicit user approval"
+
+
+def test_append_operator_action_steps_rejects_unknown_disallowed_policy(
+    tmp_path: Path,
+) -> None:
+    """IC-1: the disallowed-command handling policy is a closed enum -- the
+    authored path raises (default, pinned by
+    test_harness_blocks_commands_absent_from_manifest), the model loop records,
+    and anything else is a programming error."""
+
+    task = load_task(TASK_ID)
+    config = _config(tmp_path)
+    state = harness_core.prepare_operator_run(task, config, trajectory_id="t")
+
+    with pytest.raises(HarnessError, match="on_disallowed_command"):
+        harness_core.append_operator_action_steps(
+            {"action_type": "command", "command": "hai imaginary", "args": {}},
+            config,
+            state,
+            [],
+            on_disallowed_command="ignore",
+        )
