@@ -1,15 +1,3 @@
-# Prior Art Notes
-
-Citation notes for the preprint S2 background and related work.
-Synced 2026-07-05 from the 2026-07-04 deep novelty audit (PAPER.md
-D-38); this file supersedes the earlier D-26-era three-literature
-version. Full adjudication, wording constraints, and verification
-bases are archived at [`/ARCHIVE/novelty_audit_2026-07-04/`](../ARCHIVE/novelty_audit_2026-07-04/)
-(verdict.md). Earlier distillations remain in
-[`/ARCHIVE/paper_planning/`](../ARCHIVE/paper_planning/).
-
----
-
 # Consolidated verified neighbor list (for related-work prose)
 
 Compiled 2026-07-04 (final synthesis pass) from neighbors_0..6.md and

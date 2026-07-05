@@ -13,6 +13,26 @@ in prose: [FORK-L7-DRIFT] (L7 stale-manifest drift, unmeasured) and
 [FORK-H5-REPLICATION] (external non-HAI replication, pending).
 Source of truth: PAPER.md. Where this draft and PAPER.md disagree,
 PAPER.md wins.
+
+RESULTS-UPDATE AGENT HANDOFF (2026-07-05). When the benchmark is frozen
+and the pre-registered runs land, do exactly this and no more:
+1. Section 5: current numbers are diagnostic-probe tier and STAY, labeled
+   as such; add the locked-suite results beside them (never merged), per
+   the D-37 sharp 16-task 2x2 suite. Every new number needs a source
+   pointer to an artifact under benchmark/governed_agent_bench/runs/.
+2. Appendix A: populate Table APPX.1 from the frozen suite only; confirm
+   the task count against the release tag before stating it anywhere.
+3. Fork stubs [FORK-L7-DRIFT] and [FORK-H5-REPLICATION]: fill only from
+   measured runs; if unmeasured at submission, the stubs convert to
+   future-work statements, not assumed outcomes.
+4. Rewrite the abstract LAST, against the final body.
+5. Binding constraints: the D-38 novelty-audit wording constraints on S2
+   (full adjudication in ARCHIVE/novelty_audit_2026-07-04/verdict.md);
+   the forbidden-claims register and claims ledger digest in the same
+   ARCHIVE directory (grounding_pack.md, forbidden.md, canon.md).
+6. Appendix E stays a stub until D-O-02 resolves.
+7. LaTeX conversion (8-12pp NeurIPS/ICML) happens after content
+   stabilizes, as its own pass; do not convert mid-update.
 -->
 
 ## Abstract
@@ -273,6 +293,8 @@ The outcome sets the claim scope. If substitution replicates, the negative resul
 
 ## 8 Discussion
 
+### 8.0 Scope conditions
+
 The negative result is conditional, not universal. In these diagnostics (one model, Qwen3-235B, n=3-5 per cell), substitution held when six conditions held together: the agent was capable, above the operate floor; the agent was cooperative; the constraint was stated in the in-context contract and told plainly; the constraint was salient at decision time; the harness surfaced command output to the agent; and the inputs were benign. Five of these, when they fail, mark regions where runtime enforcement retains demonstrated value (Section 8.1); the sixth, the harness surfacing command output, is a measurement-validity condition whose failure manufactures the spurious fabrication finding of Section 6 rather than a genuine enforcement region.
 
 ### 8.1 What runtime enforcement is still for
@@ -428,7 +450,7 @@ Appendix E content before D-O-02 resolves.
 
 ## References
 
-Formatted from the verified neighbor list (`paper/prior_art_notes.md`, compiled 2026-07-04); verification status per entry is recorded there. Section 2's external numeric claims were verified against primary sources 2026-07-04: ContextCov (88.3% vs 67.0%) and PhantomPolicy (95.3% to 40.7%) in the novelty audit; Mechanical Enforcement (MCC ~0.43 to 0.88; 73% deferral reduction) and Verifier Tax (up to 94% intercepted; SSR below 5%) by direct arXiv re-fetch. Entries are listed by the short name used in the text.
+Formatted from the verified neighbor list (`paper/prior_art_notes.md`, synced 2026-07-05 from the 2026-07-04 novelty audit, D-38; full adjudication archived at `ARCHIVE/novelty_audit_2026-07-04/`); verification status per entry is recorded there. Section 2's external numeric claims were verified against primary sources 2026-07-04: ContextCov (88.3% vs 67.0%) and PhantomPolicy (95.3% to 40.7%) in the novelty audit; Mechanical Enforcement (MCC ~0.43 to 0.88; 73% deferral reduction) and Verifier Tax (up to 94% intercepted; SSR below 5%) by direct arXiv re-fetch. Entries are listed by the short name used in the text.
 
 - ABSTAIN: Ojewale and Venkatasubramanian (Brown University). What Benchmarks Don't Measure. arXiv:2606.02965. Workshop paper.
 - Agent Behavioral Contracts: Bhardwaj. Agent Behavioral Contracts. arXiv:2602.22302.
