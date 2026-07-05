@@ -15,17 +15,17 @@ goal-conflict, blind-observation, and drift anchors.
   clinical boundary.
 - L7 drift: stale manifest / changed command surface.
 
-Committed suite (16 tasks):
+Committed suite (36 tasks; three scenario pairs per mechanism, D-39):
 
 | Level | Tasks |
 |---|---|
 | L1 | `gab_l1_operate_route`, `gab_l1_operate_read` |
-| L2 | `gab_l2_validation_told`, `gab_l2_validation_untold` |
-| L5 | `gab_l5_audit_told`, `gab_l5_audit_untold`, `gab_l5_audit_conflict`, `gab_l5_audit_blind` |
-| L6 | `gab_l6_agentsafe_told`, `gab_l6_agentsafe_untold`, `gab_l6_agentsafe_conflict`, `gab_l6_proposalgate_told`, `gab_l6_proposalgate_untold`, `gab_l6_refusal_told`, `gab_l6_refusal_untold` |
+| L2 | `gab_l2_validation_{told,untold}`, `gab_l2_validation_doctor_{told,untold}`, `gab_l2_validation_notfound_{told,untold}` |
+| L5 | `gab_l5_audit_{told,untold}`, `gab_l5_audit_running_{told,untold}`, `gab_l5_audit_sleep_{told,untold}`, `gab_l5_audit_conflict`, `gab_l5_audit_blind` |
+| L6 | `gab_l6_agentsafe_{told,untold}`, `gab_l6_agentsafe_intent_{told,untold}`, `gab_l6_agentsafe_auth_{told,untold}`, `gab_l6_agentsafe_conflict`, `gab_l6_proposalgate_{told,untold}`, `gab_l6_proposalgate_intent_{told,untold}`, `gab_l6_proposalgate_archive_{told,untold}`, `gab_l6_refusal_{told,untold}`, `gab_l6_refusal_credential_{told,untold}`, `gab_l6_refusal_export_{told,untold}` |
 | L7 | `gab_l7_drift` |
 
 The `_untold` tasks carry `contract_arm: untold`; `gab_l5_audit_blind`
 carries `hide_stdout: true`; `gab_l6_agentsafe_untold` also scopes
 `no_runtime_enforcement` as the all-off sanity floor. The default offline
-rule baseline runs this full 16-task inventory.
+rule baseline runs this full 36-task inventory.

@@ -293,6 +293,7 @@ def test_harness_records_refusal_and_final_actions_without_subprocess(
 # --- M2: contract-in-prompt withholding (untold arm) --------------------------
 
 from governed_agent_bench.harness import load_manifest_snapshot  # noqa: E402
+from governed_agent_bench.harness.core import TASK_ROOT  # noqa: E402
 
 # Rendered-prompt sha256[:16] for every told task under both deployment
 # templates. Captured before the M2 withholding change so the untold arm can be
@@ -310,14 +311,47 @@ _TOLD_RENDER_HASHES = {
     ("gab_l6_agentsafe_told", "deployment_full_v2"): "96f4fbf72342d799",
     ("gab_l6_refusal_told", "deployment_full_v1"): "7c1f7bd3754199c8",
     ("gab_l6_refusal_told", "deployment_full_v2"): "b8f00962408f9fe4",
+    # D-39 expansion pairs, pinned at authoring time (2026-07-05) as the told
+    # baseline going forward.
+    ("gab_l2_validation_doctor_told", "deployment_full_v1"): "c1982e54990beae2",
+    ("gab_l2_validation_doctor_told", "deployment_full_v2"): "722805f118de4514",
+    ("gab_l2_validation_notfound_told", "deployment_full_v1"): "593f7377a9763e9c",
+    ("gab_l2_validation_notfound_told", "deployment_full_v2"): "616121890bfe97b1",
+    ("gab_l6_agentsafe_intent_told", "deployment_full_v1"): "9b3bcc18e146e289",
+    ("gab_l6_agentsafe_intent_told", "deployment_full_v2"): "6c3b3cd9728daafc",
+    ("gab_l6_agentsafe_auth_told", "deployment_full_v1"): "3cbbe433e00d5f53",
+    ("gab_l6_agentsafe_auth_told", "deployment_full_v2"): "719fea3b5dd6ab9c",
+    ("gab_l6_proposalgate_intent_told", "deployment_full_v1"): "c447b2ad5239407b",
+    ("gab_l6_proposalgate_intent_told", "deployment_full_v2"): "c0c0aec8bef66095",
+    ("gab_l6_proposalgate_archive_told", "deployment_full_v1"): "6d5894084af282b5",
+    ("gab_l6_proposalgate_archive_told", "deployment_full_v2"): "9073ae8b789ef8e8",
+    ("gab_l6_refusal_credential_told", "deployment_full_v1"): "453455486804a904",
+    ("gab_l6_refusal_credential_told", "deployment_full_v2"): "b4e3b38318a97543",
+    ("gab_l6_refusal_export_told", "deployment_full_v1"): "a44c5a2ffc6f6012",
+    ("gab_l6_refusal_export_told", "deployment_full_v2"): "6e93abcf3b12b498",
 }
 
-_UNTOLD_PAIRS = [
-    ("gab_l2_validation_told", "gab_l2_validation_untold"),
-    ("gab_l6_proposalgate_told", "gab_l6_proposalgate_untold"),
-    ("gab_l6_agentsafe_told", "gab_l6_agentsafe_untold"),
-    ("gab_l6_refusal_told", "gab_l6_refusal_untold"),
-]
+def _discover_untold_pairs() -> list[tuple[str, str]]:
+    """Enumerate every told/untold pair that declares forbidden tokens.
+
+    Dynamic so newly authored pairs are covered automatically (the D-39
+    expansion added eight); M8 audit untold twins carry no
+    untold_withholding (nothing manifest-level to scrub) and are excluded
+    by the forbidden_tokens filter.
+    """
+
+    pairs: list[tuple[str, str]] = []
+    for path in sorted(TASK_ROOT.glob("l[1-7]/gab_*_untold.json")):
+        task = json.loads(path.read_text(encoding="utf-8"))
+        tokens = task.get("untold_withholding", {}).get("forbidden_tokens", [])
+        if not tokens:
+            continue
+        untold_id = task["task_id"]
+        pairs.append((untold_id.replace("_untold", "_told"), untold_id))
+    return pairs
+
+
+_UNTOLD_PAIRS = _discover_untold_pairs()
 
 
 def _sha16(text: str) -> str:

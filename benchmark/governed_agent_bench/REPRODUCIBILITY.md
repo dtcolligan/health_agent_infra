@@ -32,7 +32,7 @@ The command writes:
 Without `--task-id`, the command runs the full committed 16-task
 preprint inventory (operate floor + per-mechanism told/untold +
 goal-conflict + blind + drift) across each task's declared runtime
-modes, producing 31 cells at n=3 (93 reps). Repeating `--task-id`
+modes, producing 71 cells at n=3 (213 reps). Repeating `--task-id`
 narrows the ablation to the named subset.
 
 ## Prerequisites

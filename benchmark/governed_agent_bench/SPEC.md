@@ -70,7 +70,7 @@ controls and M9-TX still on).
 
 ## Suite Shape: the per-mechanism 2×2
 
-The task suite is 16 tasks, each a labelled cell of the per-mechanism
+The task suite is 36 tasks — three scenario pairs per mechanism (D-39) — each a labelled cell of the per-mechanism
 2×2 crossing the **contract-in-prompt** axis (`contract_arm`
 told/untold) with the **runtime-enforcement** axis (`runtime_mode`
 on/off). See *Conditions* below for the axes.
@@ -78,11 +78,11 @@ on/off). See *Conditions* below for the axes.
 | Group | Tasks |
 |---|---|
 | Operate floor (capability; `full_contract` only) | `gab_l1_operate_route`, `gab_l1_operate_read` |
-| M4 validation (told / untold) | `gab_l2_validation_told`, `gab_l2_validation_untold` |
-| M5 agent_safe (told / untold / conflict) | `gab_l6_agentsafe_told`, `gab_l6_agentsafe_untold`, `gab_l6_agentsafe_conflict` |
-| M6 proposal_gate (told / untold) | `gab_l6_proposalgate_told`, `gab_l6_proposalgate_untold` |
-| M7 refusal (told / untold) | `gab_l6_refusal_told`, `gab_l6_refusal_untold` |
-| M8 audit (told / untold / conflict / blind) | `gab_l5_audit_told`, `gab_l5_audit_untold`, `gab_l5_audit_conflict`, `gab_l5_audit_blind` |
+| M4 validation (3 told/untold pairs) | `gab_l2_validation_{told,untold}` (missing plan, USER_INPUT), `gab_l2_validation_doctor_{told,untold}` (runtime health, USER_INPUT), `gab_l2_validation_notfound_{told,untold}` (missing chain, NOT_FOUND) |
+| M5 agent_safe (3 pairs + conflict) | `gab_l6_agentsafe_{told,untold}` (target commit), `gab_l6_agentsafe_intent_{told,untold}` (intent commit), `gab_l6_agentsafe_auth_{told,untold}` (credential write), `gab_l6_agentsafe_conflict` |
+| M6 proposal_gate (3 pairs) | `gab_l6_proposalgate_{told,untold}` (target promote), `gab_l6_proposalgate_intent_{told,untold}` (intent promote), `gab_l6_proposalgate_archive_{told,untold}` (W57 deactivation) |
+| M7 refusal (3 pairs) | `gab_l6_refusal_{told,untold}` (clinical), `gab_l6_refusal_credential_{told,untold}` (secret disclosure), `gab_l6_refusal_export_{told,untold}` (state exfiltration) |
+| M8 audit (3 pairs + conflict + blind) | `gab_l5_audit_{told,untold}` (recovery card), `gab_l5_audit_running_{told,untold}`, `gab_l5_audit_sleep_{told,untold}`, `gab_l5_audit_conflict`, `gab_l5_audit_blind` |
 | Drift (residual non-verifiable) | `gab_l7_drift` |
 
 Every ablatable mechanism M4-M8 is load-bearing in the suite. A task is
@@ -95,8 +95,8 @@ typically scopes `[full_contract, no_MX]` (cells A/B); the matching
 also carries `no_runtime_enforcement` as the all-off sanity floor. There
 is no minimum-tasks-per-mechanism rule.
 
-Level distribution L1:2, L2:2, L5:4, L6:7, L7:1; totals 16 tasks / 31
-task×mode cells / 93 reps at n=3.
+Level distribution L1:2, L2:6, L5:8, L6:19, L7:1; totals 36 tasks / 71
+task×mode cells / 213 reps at n=3.
 
 ## Task Anatomy
 

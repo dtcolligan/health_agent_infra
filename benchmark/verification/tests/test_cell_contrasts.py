@@ -191,8 +191,20 @@ def test_build_cell_contrasts_on_rule_baseline(tmp_path: Path) -> None:
     assert validation["off_mode"] == "no_validation"
     assert "gab_l2_validation_told" in validation["base"]["cell_task_ids"]["A"]
     assert "gab_l2_validation_told" in validation["base"]["cell_task_ids"]["B"]
-    assert validation["base"]["cell_task_ids"]["C"] == ["gab_l2_validation_untold"]
-    assert validation["base"]["cell_task_ids"]["D"] == ["gab_l2_validation_untold"]
+    # D-39 expansion: three scenario pairs per mechanism populate the base
+    # cells; told tasks land in A/B, untold twins in C/D, nothing crosses.
+    assert "gab_l2_validation_untold" in validation["base"]["cell_task_ids"]["C"]
+    assert "gab_l2_validation_untold" in validation["base"]["cell_task_ids"]["D"]
+    for cell in ("A", "B"):
+        assert all(
+            task_id.endswith("_told")
+            for task_id in validation["base"]["cell_task_ids"][cell]
+        )
+    for cell in ("C", "D"):
+        assert all(
+            task_id.endswith("_untold")
+            for task_id in validation["base"]["cell_task_ids"][cell]
+        )
 
     # The no_runtime_enforcement floor is tracked out of the 2x2.
     assert report["sanity_floor"]["rep_count"] >= 1

@@ -83,8 +83,8 @@ trajectory JSON and scored offline is not benchmark evidence.
 |---|---|
 | Frozen manifests | 2 snapshots: `manifests/hai_0_2_0.json` (≈ 189 KB, `agent_cli_contract.v2`) + `manifests/agent_cli_contract_v1_drift.json` for L7 |
 | Fixtures | 7 synthetic builders: `empty_user`, `ready_user_minimal`, `read_surface_user`, `governance_user`, `audit_pending_user`, `drift_user`, `adversarial_user` |
-| Tasks | 16 tasks across L1, L2, L5, L6, L7 (L1:2, L2:2, L5:4, L6:7, L7:1), each a labelled cell of the per-mechanism told/untold x on/off 2x2 |
-| Cells | 31 task-cells / 93 reps at n=3 (from `runtime_modes_in_scope` x `contract_arm`) |
+| Tasks | 36 tasks across L1, L2, L5, L6, L7 (L1:2, L2:6, L5:8, L6:19, L7:1); three scenario pairs per mechanism (D-39), each a labelled cell of the per-mechanism told/untold x on/off 2x2 |
+| Cells | 71 task-cells / 213 reps at n=3 (from `runtime_modes_in_scope` x `contract_arm`) |
 | Trajectories | 8 hand-authored seed trajectories (pass/fail pairs) at `trajectories/hand_authored/` for scorer validation |
 | Scorer | Deterministic offline scorer at `scorer/core.py` with schema/determinism tests |
 | Harness | Model-agnostic harness at `harness/` with structured operator actions, runtime-mode toggling, hermetic subprocess execution, `mechanism_disabled` capture |
@@ -116,7 +116,7 @@ trajectory JSON and scored offline is not benchmark evidence.
 
 - Frozen HAI manifest snapshot exists under `manifests/`.
 - Task / trajectory / score schemas validate hand-authored fixtures.
-- 16 tasks cover L1, L2, L5, L6, L7 as labelled 2x2 cells.
+- 36 tasks cover L1, L2, L5, L6, L7 as labelled 2x2 cells (three scenario pairs per mechanism, D-39).
 - Scorer grades recorded trajectories without network access or private
   health rows.
 - Known-good and known-bad trajectories produce expected outcomes.

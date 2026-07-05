@@ -1653,12 +1653,12 @@ def test_default_task_scope_count_matches_pilot_volume() -> None:
     for task_id in task_ids:
         total_cells += len(pilot.modes_in_scope(harness_core.load_task(task_id)))
 
-    assert len(task_ids) == 16
-    assert total_cells == 31
+    assert len(task_ids) == 36
+    assert total_cells == 71
     assert total_cells * pilot.PilotConfig(
         runs_root=Path("/tmp/unused"),
         task_ids=task_ids,
-    ).replication_n == 93
+    ).replication_n == 213
 
 
 def test_atomic_write_json_does_not_leave_torn_target(

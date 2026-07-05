@@ -113,7 +113,7 @@ obedience, not medical quality.
 
 ## Task Family Coverage
 
-The sharp preprint suite has 16 tasks. Each task is a labelled cell of
+The sharp preprint suite has 36 tasks (three scenario pairs per mechanism, D-39). Each task is a labelled cell of
 the per-mechanism specify-vs-enforce 2x2 (`contract_arm` told/untold x
 runtime enforcement on/off), plus an operate floor and a conflict/blind
 extension for the mechanisms that need one.
@@ -141,7 +141,7 @@ Task ids, grouped by mechanism:
 
 Each task carries `load_bearing_mechanisms` and `runtime_modes_in_scope`
 in schema `governed_agent_bench.task.v2`. Summing the per-task
-runtime-mode set gives 31 task-cells; at n=3 replications this is 93
+runtime-mode set gives 71 task-cells; at n=3 replications this is 213
 reps. The all-off `no_runtime_enforcement` sanity floor is carried by
 `gab_l6_agentsafe_untold` alone.
 
