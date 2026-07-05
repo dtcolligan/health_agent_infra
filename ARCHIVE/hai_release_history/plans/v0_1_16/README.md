@@ -27,7 +27,7 @@ second-user transcript exists.
 
 | Old slot | New slot | Rationale |
 |---|---|---|
-| v0.1.16 (empirical, pending Mohil) | v0.1.19 (empirical, pending any second user) | Preserves the empirical-cycle pattern; pushes it after onboarding quality is improved. |
+| v0.1.16 (empirical, pending the candidate) | v0.1.19 (empirical, pending any second user) | Preserves the empirical-cycle pattern; pushes it after onboarding quality is improved. |
 | (gap) | v0.1.18 (onboarding cycle) | Close known onboarding gaps before a foreign user hits them. |
 | v0.1.17 (was post-v0.1.16) | v0.1.17 (next-active, no precondition) | The v0.1.16 → v0.1.17 dependency was transcript-driven, not technical — without a transcript, the precondition evaporates. |
 | v0.2.0 (was post-v0.1.16) | v0.2.0 (post-v0.1.19) | Hard prereq follows the renumbered empirical slot. |

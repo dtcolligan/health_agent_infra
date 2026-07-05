@@ -7,7 +7,7 @@
 
 The cycle was scoped as **empirical-by-design** against a wearable-
 bearing foreign-user session. v0.1.16 cancelled when its named
-candidate (Mohil Garg, per memory) became unavailable on 2026-05-04;
+candidate (name redacted; coursemate) became unavailable on 2026-05-04;
 v0.1.19 inherited the empirical scope after a v0.1.18 onboarding-
 quality cycle was inserted to close the install→first-plan gap before
 re-exposing it to a foreign user.
