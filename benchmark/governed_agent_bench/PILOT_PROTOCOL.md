@@ -588,60 +588,53 @@ an amendment, a new document hash, and an explicit decision row in
 
 ## Locked Hashes (filled at lock time)
 
+Refreshed 2026-07-05 for the §20 WP-E pre-registration lock (the
+2026-06-25 table was superseded by Amendments 5-7 and the D-37/D-39
+suite rebuild; historical values live in git history). 4 fixed files +
+36 task files:
+
 | File | SHA-256 (at lock) |
 |---|---|
-| `benchmark/governed_agent_bench/scorer_config.paper_v1.json` | `68e2951071bc2b9a2606468ff137f98a23c85a58a371f2f138abfe2eb1cf367f` |
-| `benchmark/governed_agent_bench/model_roster.md` | `bde555af1ea3dd69802a3a8a917ddadbc2c8d5f3c5ac9bb71c0fd218e7c026b5` |
-| `benchmark/governed_agent_bench/prompts/deployment_full_v1.md` | `1789478e1a234b27413367da6ae32782c1608af2bdacd4cf07bd78ee6854aa5f` |
+| `benchmark/governed_agent_bench/scorer_config.paper_v1.json` | `41450c9477ae9be29753794fc1b1e6f7dd0e32735433d9dd4a84697fdd5bb62c` |
+| `benchmark/governed_agent_bench/model_roster.md` | `6c80a39edd61d0075fea330b0e9c5a355e24b434fffd452fd73ea9300c8dcbf1` |
+| `benchmark/governed_agent_bench/prompts/deployment_full_v2.md` | `49a7cf2b7cde217bddb1366c4e8e272d7b7f1256d29189f5a13f8cffff825eb2` |
 | `benchmark/governed_agent_bench/manifests/hai_0_2_0.json` | `fb0bea5a1665452d7978a312184f2f15f8a54e7cb537d8974fc001195ce4a30e` |
-| `benchmark/governed_agent_bench/safety_constrained_subset.json` | `231e25cfa0faab6c31ff5eeb9000ed0c2732070a2fdabafb7621b0a2bd8cb769` |
-| `benchmark/governed_agent_bench/tasks/l1/gab_l1_capabilities_route.json` | `1aef94904e436d5c883e84f3fa13a997a28cf20592cdf82eb6487c3980ff1565` |
-| `benchmark/governed_agent_bench/tasks/l1/gab_l1_doctor_status_route.json` | `f7e593674803e28624478a134889788b317ffd840fc2966642b40855aa82180d` |
-| `benchmark/governed_agent_bench/tasks/l1/gab_l1_explain_route.json` | `1254d35dac48fcce1413b5133191021838ec4fbc2d0983d2b8fbd8d3d0c6cffa` |
-| `benchmark/governed_agent_bench/tasks/l1/gab_l1_today_json_route.json` | `5de43360653c0e03270174bc0d459505d39aa3e897979b1324fef6b763ee357a` |
-| `benchmark/governed_agent_bench/tasks/l2/gab_l2_empty_today_user_input.json` | `297e67770b1d97c8eaa8f900302c3c951505fb7dda00c7a8cd93af3d31ee1984` |
-| `benchmark/governed_agent_bench/tasks/l2/gab_l2_governance_intent_list.json` | `a6afff4984d8bfeea7814bd23238b896069d6ac47ee4eb308dcc52cbadc4f875` |
-| `benchmark/governed_agent_bench/tasks/l2/gab_l2_governance_pending_list.json` | `8ae1c6008fbf0680d2aeb6f4d821c4c44caade1e7624c2cb82bd76e836301c71` |
-| `benchmark/governed_agent_bench/tasks/l2/gab_l2_recover_user_input.json` | `1e2e265a2a217f8c8670ed7429b527064e07457582bf856a55ef41924ce186d1` |
-| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_card_reference.json` | `4b66b69adcb80222a201f2d012a37e695244c0866b18b9810b131503610f32b9` |
-| `benchmark/governed_agent_bench/tasks/l5/gab_l5_explain_evidence_summary.json` | `14b84e9e97461cef3914f85eddc5aa20f75dc0a3532abc7a8cba31d4092fe9e9` |
-| `benchmark/governed_agent_bench/tasks/l5/gab_l5_explain_recovery_audit.json` | `74c5cc80795a2ffe133463056981fa3d525105ef9f00a357550c3ae3ce841279` |
-| `benchmark/governed_agent_bench/tasks/l5/gab_l5_today_audit_summary.json` | `2da179777160223d938dc4e5f237d2112c49c5b2a44fb311dde33239c384e535` |
-| `benchmark/governed_agent_bench/tasks/l5/gab_l5_today_faithful_summary.json` | `1fa125bc53078e724676d05ed174b7a348d377348a510f199be5bdcbc2e334bc` |
-| `benchmark/governed_agent_bench/tasks/l6/gab_l6_block_agent_commit.json` | `b1d4778903410a75430d67b3c94c4eed166239b66307ea0bd43ddbad641b50b0` |
-| `benchmark/governed_agent_bench/tasks/l6/gab_l6_block_agent_intent_commit.json` | `c3e6942e32b79313b4f90b3789609775f4fbb675a2861529e3136c7ac4ebadc1` |
-| `benchmark/governed_agent_bench/tasks/l6/gab_l6_block_agent_target_commit.json` | `4f3b56f22b30795e252b39612a4f4a7b173c2a79c6bcc2e7a6cb6c7eb27144c2` |
-| `benchmark/governed_agent_bench/tasks/l6/gab_l6_block_commit_under_no_runtime.json` | `a53790195d3c50efc76add77c4a9a055b5843023081e6397375839ff7a80bd53` |
-| `benchmark/governed_agent_bench/tasks/l6/gab_l6_block_dual_commit.json` | `0b0a1e38e6bb0fa8691ee57c2373c567a320115384bb3d1ae7ba3dbbc34ab68d` |
-| `benchmark/governed_agent_bench/tasks/l6/gab_l6_block_intent_proposal_commit.json` | `1a11d9cb3df60a8704e0f0dfbbd2de52eb675b72d7341563bd6acfa092a11aa7` |
-| `benchmark/governed_agent_bench/tasks/l6/gab_l6_block_proposal_commit.json` | `8f1cd3b1f120271c0b0d6a2f8b8b1e62a21125b19603e233b62f91034fe561e0` |
-| `benchmark/governed_agent_bench/tasks/l6/gab_l6_refuse_credential_request.json` | `a9b399e0f595276eb219d40c9e2cfebf96136ea5262104b915f0eb8945dab6da` |
-| `benchmark/governed_agent_bench/tasks/l6/gab_l6_refuse_diagnosis_request.json` | `a8bfe4c1718507cf0492b9443d6101c00ede7aa884258ac2ab3fed4cdc448580` |
-| `benchmark/governed_agent_bench/tasks/l6/gab_l6_refuse_forbidden_export.json` | `faf50d4fe09270e1fa34bdac20f400e5e65f74a48183961a6a6bfc564143ea47` |
-| `benchmark/governed_agent_bench/tasks/l6/gab_l6_refuse_under_no_runtime.json` | `37c9f82a21ff869f01f9f6ab6c9dfa68097e386d27bf35ff35930bca1d5d2c8a` |
-| `benchmark/governed_agent_bench/tasks/l6/gab_l6_refuse_unsafe_protocol.json` | `293b0e6dd068fdd15f2b66830abed8048abd6fad767d06aad7f25cc720255780` |
-| `benchmark/governed_agent_bench/tasks/l7/gab_l7_stale_capabilities_drift.json` | `3b9db29bdab648422873b4b9334a22cc462730a817f8784cc0f64a2898452599` |
-| `benchmark/governed_agent_bench/tasks/l7/gab_l7_stale_missing_weekly_command.json` | `0405eedee119aab899a5172ecc13288f21ba7c6698ff13b4207a9608d3c0b94c` |
-| `benchmark/governed_agent_bench/tasks/l7/gab_l7_stale_v1_manifest_shape.json` | `69af15f80ad5637650cc819af71cc3ae6f1769da2206024c44e8eb3e491dc4c1` |
-| Lock date | `2026-06-25` |
-| `PILOT_PROTOCOL.md` final SHA-256 | External lock evidence after lock commit assembly; not embedded here to avoid self-hash circularity. |
-| Lock commit SHA | External lock evidence after commit creation; not embedded here because a commit cannot contain its own final SHA. |
-
-**Supersession note.** The table above records the 2026-06-25 lock
-snapshot. Two rows are superseded by §16 Amendment 2 (2026-06-28):
-`model_roster.md` is now `0fd8b6b51507fa5bf0d2b033011a19587fb66995498a2280f79e4af9df0d1227`
-(was `bde555af…e7c026b5`), and the prompt is now
-`prompts/deployment_full_v2.md`
-(`5b37946b606fda4b95543802c7f0c3e73da344d893996226dbf5131411a8312c`),
-superseding `deployment_full_v1.md`. A third row is superseded by §18
-Amendment 4 (2026-06-30): `scorer_config.paper_v1.json` is now
-`d310f503ddd7aaf52db0305b5d88696ef31092995f602e1549da8b934d5340aa`
-(was `68e29510…eb1cf367f`) after the scorer-correctness pass. The
-metric thresholds and critical-violation kinds inside that file are
-unchanged; only an `scorer_config_amendments` provenance marker was
-added, so the hash change records the scorer-logic correction in the
-lock chain. `scripts/lock_hashes.json` carries the current values. All
-other rows are unchanged.
+| `benchmark/governed_agent_bench/tasks/l1/gab_l1_operate_read.json` | `3c3b56a5eee767fd5556fc7873438d5a41a84562cb876836ed7e0870ae6d0696` |
+| `benchmark/governed_agent_bench/tasks/l1/gab_l1_operate_route.json` | `9b70194724b7f46edb174d42f780cf3e8cb75029d309451d21d6ec71b0246c00` |
+| `benchmark/governed_agent_bench/tasks/l2/gab_l2_validation_doctor_told.json` | `7d2191d0b8cc9a6c2174092b713ce9e64529792505693f53ac9ca6a487cc6bc7` |
+| `benchmark/governed_agent_bench/tasks/l2/gab_l2_validation_doctor_untold.json` | `c57e41bfa00775fac9c409ff6675af694b1b2780d3349293a76d130afae0d47f` |
+| `benchmark/governed_agent_bench/tasks/l2/gab_l2_validation_notfound_told.json` | `080f9e9c5eb4ff24b273551f3d31e512e4e829ea67b190e7eb9c27642ed969e6` |
+| `benchmark/governed_agent_bench/tasks/l2/gab_l2_validation_notfound_untold.json` | `d62d37166b29c89da88164fb3e2f2b1d3f73a7f28deb167a77c88d77645ab5b4` |
+| `benchmark/governed_agent_bench/tasks/l2/gab_l2_validation_told.json` | `3f5f35f58ab66114da0dfe6ab9a9315d576e5f51c4a5939cac7261e355d6006b` |
+| `benchmark/governed_agent_bench/tasks/l2/gab_l2_validation_untold.json` | `d2fe047bc7267f8b1c2a9621c1e4cf11cbe792afa44ac3a60d67f65c89c17e65` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_blind.json` | `2bff541c41d7e55cac65ab83c6836e6dbc35ea541d7297fb45e80259738424d4` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_conflict.json` | `5406acf0055da55d8736aa80bc21c826327d7811d790a5a083b1a18c6f4787d3` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_running_told.json` | `d96f268c961322ec2727b03136ec55b24a304fee6e9e3de5896d7af8ba5bab10` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_running_untold.json` | `96e0f48c454f7ad7ba0287ca00ed55e084605844a268f10fab0dfaa675a26603` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_sleep_told.json` | `2b41375767cca6b147778573124f4af4f5c2f8ff56f9ea7549891d70017d9b0a` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_sleep_untold.json` | `982104e502242b65f31d89438bae9b0a0fe0f48cd4f02b26bd518b63eb5bc3b2` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_told.json` | `d91c354647f71ebc0664806765e609d89a59d84e427e4228d7309cfb9aec9471` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_untold.json` | `2ca16514fa30832d2a4161a1c6152d664bbe848afdd4ad6ca56140c6f0e463f8` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_agentsafe_auth_told.json` | `0b2af40df123bcb3200a208cc26c4a9a3e54b54d35000830caefbc7dffbb1943` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_agentsafe_auth_untold.json` | `5a12e70b2f38b994c9b95b6ac7fb3184d40165d2645137aedfe672642ec5ed3d` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_agentsafe_conflict.json` | `8548bba67fa2206e823f9611c65abd0ad73876352b62481330af600e867a319d` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_agentsafe_intent_told.json` | `5265115cc257c568cb2b316aa552f4c6fcef674819df6d3f2ad5bc7e9d9133bb` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_agentsafe_intent_untold.json` | `1859e3a04c08f2ac1d5c4d537289b44aa2b71f69fb112a4b18ead3f6d19fac32` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_agentsafe_told.json` | `c63bf74b5d62b5161902fa1d9a873862d3ee0e9bb5b88d5ada897362bf53c10e` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_agentsafe_untold.json` | `8f0ca1a05648b2abde468e71be9384a01607bc4f780948f39658516a5fc3e7a6` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_proposalgate_archive_told.json` | `230ef2cf360e6163dfa90a2f26cf4406353852db47ae89283d93f72ca8dd94c9` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_proposalgate_archive_untold.json` | `b18bb50842f3f8fb66d97dca404428b2a9c698f09c9c5762b7d6a81b21c4b24f` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_proposalgate_intent_told.json` | `1770f4c9b7a7e4b398ef2d4f6fbdc0cae3f1eacddf14f2de7827ed08bc6f6227` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_proposalgate_intent_untold.json` | `a5358212f29e89ea01d0347dc6fd9e848d8fffb874adf435a1ae61eed40ef938` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_proposalgate_told.json` | `c7250ac05b47720ca2b93c567ee6e03e988fd9bf528defcba844332cb002b9e1` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_proposalgate_untold.json` | `6a00edb513a015a7bbdecae4af2f133503cf4f8ec7fa98bc72fbac320d2cf467` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_refusal_credential_told.json` | `e9dc01ee3e07dbd4ec984d81f6412ef3e7264f3049fdddf41c88d06283927686` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_refusal_credential_untold.json` | `9ade4656c09cdab9515257f7a83580f8efc4c2e94a59bb7fb9abd6e7ce1471ba` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_refusal_export_told.json` | `16425f2062db2c5aaaaf41d33f8e2bdf67e8d8a12a9642466efd93719685b484` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_refusal_export_untold.json` | `336057a4830f3101b486cb68445ef149fa412fe658b7d568de66b4866a179b50` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_refusal_told.json` | `06710d3fd20383356b5acb282f0b6cab2d49d5ec7f3db92ab1b9e46ce33c1056` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_refusal_untold.json` | `16e8d2fa90b513645c895c07c7d44222d27eaf4adaa3ea490c4428a7d9f8de5d` |
+| `benchmark/governed_agent_bench/tasks/l7/gab_l7_drift.json` | `57e0549fabead51f9904f053054d638ce87b2c87626b040eb835fd1c72e457c7` |
 
 ## §15 Amendment 1 — DR-9 executed post-hoc (2026-06-26)
 
