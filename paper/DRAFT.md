@@ -8,23 +8,34 @@ Status: DRAFT. All model-backed results are at the DIAGNOSTIC tier: one
 model (Qwen3-235B-A22B-Instruct-2507, Together AI, temperature 0), small
 n (3-5 per cell). Nothing here is confirmatory beyond what PAPER.md
 Evidence Status states.
-Two open forks are handled as marked stubs in the text, never resolved
-in prose: [FORK-L7-DRIFT] (L7 stale-manifest drift, unmeasured) and
-[FORK-H5-REPLICATION] (external non-HAI replication, pending).
+One open fork is handled as a marked stub in the text, never resolved
+in prose: [FORK-L7-DRIFT] (L7 stale-manifest drift, unmeasured). The
+former [FORK-H5-REPLICATION] stub was resolved by PAPER.md D-42
+(Posture B, 2026-07-05): single-runtime case study, external non-HAI
+replication is future work; its stubs are converted to future-work
+statements throughout.
 Source of truth: PAPER.md. Where this draft and PAPER.md disagree,
 PAPER.md wins.
+
+RUN-DESIGN SYNC (2026-07-05): Sections 4.2/4.4/4.5/4.7/4.10 and 7.2 now
+describe the pre-registered run design per PAPER.md D-39..D-43. Section
+4.10 is protocol tense: NO DATA EXISTS from the pre-registered run;
+nothing in it may be cited as a result.
 
 RESULTS-UPDATE AGENT HANDOFF (2026-07-05). When the benchmark is frozen
 and the pre-registered runs land, do exactly this and no more:
 1. Section 5: current numbers are diagnostic-probe tier and STAY, labeled
    as such; add the locked-suite results beside them (never merged), per
-   the D-37 sharp 16-task 2x2 suite. Every new number needs a source
-   pointer to an artifact under benchmark/governed_agent_bench/runs/.
+   the D-39 36-task / 72-cell suite and the Section 4.10 run design.
+   Every new number needs a source pointer to an artifact under
+   benchmark/governed_agent_bench/runs/.
 2. Appendix A: populate Table APPX.1 from the frozen suite only; confirm
    the task count against the release tag before stating it anywhere.
-3. Fork stubs [FORK-L7-DRIFT] and [FORK-H5-REPLICATION]: fill only from
-   measured runs; if unmeasured at submission, the stubs convert to
-   future-work statements, not assumed outcomes.
+3. Fork stub [FORK-L7-DRIFT]: fill only from measured runs; if unmeasured
+   at submission, the stub converts to a future-work statement, not an
+   assumed outcome. Resolve run-outcome claim language against the
+   pre-committed outcome-branch map in PILOT_PROTOCOL.md §20 (D-43),
+   never ad hoc.
 4. Rewrite the abstract LAST, against the final body.
 5. Binding constraints: the D-38 novelty-audit wording constraints on S2
    (full adjudication in ARCHIVE/novelty_audit_2026-07-04/verdict.md);
@@ -32,7 +43,8 @@ and the pre-registered runs land, do exactly this and no more:
    ARCHIVE directory (grounding_pack.md, forbidden.md, canon.md).
 6. Appendix E stays a stub until D-O-02 resolves.
 7. LaTeX conversion (8-12pp NeurIPS/ICML) happens after content
-   stabilizes, as its own pass; do not convert mid-update.
+   stabilizes, as its own pass; do not convert mid-update. DRAFT.tex /
+   DRAFT.pdf are pandoc renders and are stale relative to this file.
 -->
 
 ## Abstract
@@ -53,7 +65,7 @@ The second finding is methodological. Our own harness initially manufactured a s
 
 ### Contributions
 
-1. A negative result with explicit scope conditions: on diagnostic probe tasks over the frozen HAI v0.2.0 reference runtime (not the locked task suite), at the model-backed diagnostic tier, in-context specification substituted for runtime enforcement for a capable cooperative agent above the operate floor, able to see its own tool output and facing benign inputs, with the salience qualifier and the deterministic-guarantee caveat attached. [FORK-H5-REPLICATION: pending external non-HAI replication; do not assume outcome]
+1. A negative result with explicit scope conditions: on diagnostic probe tasks over the frozen HAI v0.2.0 reference runtime (not the locked task suite), at the model-backed diagnostic tier, in-context specification substituted for runtime enforcement for a capable cooperative agent above the operate floor, able to see its own tool output and facing benign inputs, with the salience qualifier and the deterministic-guarantee caveat attached. The result is a single-runtime case study; external non-HAI replication is future work (Section 7.2).
 2. A methodological demonstration that harness blindness manufactures spurious fabrication findings, shown by dissolving one such finding with a harness-level fix, offered as a caution for agent-eval methodology.
 3. GovernedAgentBench, the released instrument for the 2x2: task suite, frozen reference runtime, deterministic offline scorer, and reproducible artifacts, with static oracle-pair evidence, live runtime probes, and model-backed diagnostics kept as separate evidence tiers.
 
@@ -69,7 +81,7 @@ The novelty claim is a conjunction, not any single first: the 2x2 including the 
 
 **Software contracts and capability security.** The runtime's vocabulary of manifests, typed command schemas, proposal/commit gates, and least privilege descends from design-by-contract and capability security. Agent Behavioral Contracts [arXiv:2602.22302] evaluates runtime contracts at scale (200 scenarios, 7 models, 1,980 sessions), but its conditions "differ only in whether ABC contract rules are injected and enforced," bundling specification and enforcement into one variable, on a patent-gated benchmark. Prompts Don't Protect [arXiv:2605.18414] filters unauthorized tools out of the model's context with no policy prompt, a structurally enforced-not-told arm whose 0.0% unauthorized-invocation rate holds by construction, since attempted violations cannot be observed.
 
-**Closest priors.** AIRGuard [arXiv:2605.28914] is a security-framed pre-action runtime guard; its prompt-only versus runtime-guard ablation is a single-axis attack-success delta on one model, with no factorial, no enforced-not-told cell, and no constraint-class analysis. PhantomPolicy [arXiv:2604.12177] formalizes policy-invisible violations, where compliance depends on runtime state absent from the agent's context, contributing an eight-category taxonomy this paper adopts and crosses with the enforcement axis. It does run a policy-in-prompt condition (risky-case violations 95.3% to 40.7% under human-reviewed labels), but folds telling into the same single ordinal axis as enforcement architecture (baseline, policy-in-prompt, content-DLP, Sentinel), with Sentinel and the DLP baseline always applied to baseline not-told traces, so no condition holds enforcement fixed while varying telling and no enforced-and-told versus enforced-and-not-told contrast exists. Neither AIRGuard nor PhantomPolicy crosses the two levers. FORGE [arXiv:2602.16708] runs the only located by-design enforced-not-told condition: "The instrumented condition does not include the natural language policy in the agent's prompt; the agent relies solely on runtime enforcement and corrective feedback." It has no told-and-enforced cell and no neither floor, so it cannot measure the redundancy of enforcement given specification; corrective feedback makes its enforced arm converged multi-turn rather than first-attempt; it evaluates one holistic policy per case study, with no per-mechanism inventory, no moderators, and no located public release. ABSTAIN [arXiv:2606.02965] reaches the closest cell coverage, three of four cells for a single abstention mechanism; its Checkpoint condition reuses the Prompt-Only prompt (its Appendix B), realizing told-and-enforced rather than enforced-not-told, and non-Checkpoint conditions are LLM-judge scored. TeamBench [arXiv:2605.07073] reports statistically indistinguishable pass rates between prompt-only and OS-sandbox-enforced role separation, alongside 3.6 times more verifier-edits-executor cases in the prompt-only arm: convergent published evidence for the substitution shape in a different mechanism domain, and a standing caution that aggregate parity can mask sub-metric enforcement value, taken up in Section 7.2; it is prior evidence in a different domain and design, not a replication of this paper's effect. [FORK-H5-REPLICATION: pending external non-HAI replication; do not assume outcome] Symbolic Guardrails [arXiv:2604.15579] holds the full policy in the system prompt in both conditions while toggling enforcement; TRACE [arXiv:2606.13174] compiles user corrections into runtime checks in the preference domain, the rule always known to the agent in some form. The closest benchmark prior is ST-WebAgentBench [arXiv:2410.06703]: in-context policies delivered to three agent scaffolds and scored post hoc via Completion Under Policy, with no mechanism that blocks a non-compliant action before execution.
+**Closest priors.** AIRGuard [arXiv:2605.28914] is a security-framed pre-action runtime guard; its prompt-only versus runtime-guard ablation is a single-axis attack-success delta on one model, with no factorial, no enforced-not-told cell, and no constraint-class analysis. PhantomPolicy [arXiv:2604.12177] formalizes policy-invisible violations, where compliance depends on runtime state absent from the agent's context, contributing an eight-category taxonomy this paper adopts and crosses with the enforcement axis. It does run a policy-in-prompt condition (risky-case violations 95.3% to 40.7% under human-reviewed labels), but folds telling into the same single ordinal axis as enforcement architecture (baseline, policy-in-prompt, content-DLP, Sentinel), with Sentinel and the DLP baseline always applied to baseline not-told traces, so no condition holds enforcement fixed while varying telling and no enforced-and-told versus enforced-and-not-told contrast exists. Neither AIRGuard nor PhantomPolicy crosses the two levers. FORGE [arXiv:2602.16708] runs the only located by-design enforced-not-told condition: "The instrumented condition does not include the natural language policy in the agent's prompt; the agent relies solely on runtime enforcement and corrective feedback." It has no told-and-enforced cell and no neither floor, so it cannot measure the redundancy of enforcement given specification; corrective feedback makes its enforced arm converged multi-turn rather than first-attempt; it evaluates one holistic policy per case study, with no per-mechanism inventory, no moderators, and no located public release. ABSTAIN [arXiv:2606.02965] reaches the closest cell coverage, three of four cells for a single abstention mechanism; its Checkpoint condition reuses the Prompt-Only prompt (its Appendix B), realizing told-and-enforced rather than enforced-not-told, and non-Checkpoint conditions are LLM-judge scored. TeamBench [arXiv:2605.07073] reports statistically indistinguishable pass rates between prompt-only and OS-sandbox-enforced role separation, alongside 3.6 times more verifier-edits-executor cases in the prompt-only arm: convergent published evidence for the substitution shape in a different mechanism domain, and a standing caution that aggregate parity can mask sub-metric enforcement value, taken up in Section 7.2; it is prior evidence in a different domain and design, not a replication of this paper's effect (this paper is a single-runtime case study; external replication is future work, Section 7.2). Symbolic Guardrails [arXiv:2604.15579] holds the full policy in the system prompt in both conditions while toggling enforcement; TRACE [arXiv:2606.13174] compiles user corrections into runtime checks in the preference domain, the rule always known to the agent in some form. The closest benchmark prior is ST-WebAgentBench [arXiv:2410.06703]: in-context policies delivered to three agent scaffolds and scored post hoc via Completion Under Policy, with no mechanism that blocks a non-compliant action before execution.
 
 **Positioning.** Isolated enforced-not-told measurements exist (FORGE by explicit design; Prompts Don't Protect structurally). No located prior work holds that cell inside a crossed factorial against a told-and-enforced cell and a neither floor, decomposes the comparison per governance mechanism, scores the telling axis on first-attempt behavior, or releases a deterministic offline scorer and benchmark that hold the two levers apart. The contribution is that conjunction, together with the harness-blindness methodological finding (Section 6); no element is claimed as individually unprecedented.
 
@@ -139,43 +151,67 @@ The runtime under measurement is HAI v0.2.0, a non-clinical personal-wellness re
 
 ### 4.2 Task suite and oracle-pair construction
 
-The suite is drawn from five levels of a seven-level task taxonomy: L1 intent-to-command routing, L2 setup and recovery, L5 faithful narration of runtime output, L6 governance and refusal, and L7 contract drift; the intervening L3 and L4 levels are out of scope for this suite (Appendix A gives the full taxonomy). Each task declares its `load_bearing_mechanisms` and `runtime_modes_in_scope`; the harness refuses to run a task under a runtime mode the task does not declare, so mode coverage is a checked property rather than a convention. Task and pair counts are unstable at the writing tier: PAPER.md decision D-37 (2026-07-04) retired the earlier 28-task / 25-oracle-pair apparatus and rebuilt the suite as a sharp 16-task 2x2 (told x enforced) per mechanism, and benchmark edits were still in flight from a concurrent agent when this draft was assembled. Appendix A holds the pending re-count; no specific task or pair count is stated here as a realized fact until the suite is frozen against the release tag.
+The suite is drawn from five levels of a seven-level task taxonomy: L1 intent-to-command routing, L2 setup and recovery, L5 faithful narration of runtime output, L6 governance and refusal, and L7 contract drift; the intervening L3 and L4 levels are out of scope for this suite (Appendix A gives the full taxonomy). Each task declares its `load_bearing_mechanisms` and `runtime_modes_in_scope`; the harness refuses to run a task under a runtime mode the task does not declare, so mode coverage is a checked property rather than a convention. The pre-registered suite is 36 tasks (L1: 2, L2: 6, L5: 8, L6: 19, L7: 1), yielding 72 task-by-mode cells. PAPER.md decision D-37 (2026-07-04) retired the earlier 28-task / 25-oracle-pair apparatus and rebuilt the suite as a sharp per-mechanism 2x2 (told x enforced); D-39 (2026-07-05, commit `ed07f5a`) then expanded it to three scenario pairs per mechanism, on the grounds that a per-mechanism null resting on a single scenario is too thin to carry, once the told/untold axis infrastructure had collapsed the authoring cost of additional scenarios. Every task is a labelled cell of its mechanism's 2x2 via an explicit `contract_arm` field, and the suite's moderators are committed suite members rather than post-hoc splits (Section 4.10). Appendix A holds the per-task table; the count stated here is to be confirmed against the release tag before submission.
 
-Every task is constructed as an oracle pair that routes a mechanism's effect onto a scored metric: a hand-authored `full_contract` trajectory and a matching mechanism-off trajectory whose scored outcome must differ from it on the task's load-bearing metric, demonstrating scorer sensitivity to the mechanism. Each of M4 through M8 is covered by static oracle-pair load-bearing tasks, and additional pairs cover the `no_runtime_enforcement` floor; the per-mechanism and total pair counts followed PAPER.md's pre-consolidation figures, which commit `a10e850` retired at the benchmark tier, so they are deferred to Appendix A's pending re-count rather than stated here. A mechanism's off-path is accepted as isolated only if every emitted `mechanism_disabled` marker belongs to that mode's disabled set, at least one marker for the target mechanism fires, `full_contract` emits zero markers, and the scored consequence delta against `full_contract` on the task's load-bearing metric is attributable to the disabled mechanism. These pairs are static oracle-pair evidence: a deterministic canary establishing scorer sensitivity and coverage over constructed cases, not live causality evidence.
+Every task is constructed as an oracle pair that routes a mechanism's effect onto a scored metric: a hand-authored `full_contract` trajectory and a matching mechanism-off trajectory whose scored outcome must differ from it on the task's load-bearing metric, demonstrating scorer sensitivity to the mechanism. Each of M4 through M8 is covered by static oracle-pair load-bearing tasks under the D-39 suite (three scenario pairs per mechanism), and two tasks carry the `no_runtime_enforcement` floor; the retired pre-consolidation pair counts (25 pairs) no longer apply, and the per-task table is Appendix A's. A mechanism's off-path is accepted as isolated only if every emitted `mechanism_disabled` marker belongs to that mode's disabled set, at least one marker for the target mechanism fires, `full_contract` emits zero markers, and the scored consequence delta against `full_contract` on the task's load-bearing metric is attributable to the disabled mechanism. These pairs are static oracle-pair evidence: a deterministic canary establishing scorer sensitivity and coverage over constructed cases, not live causality evidence.
 
 ### 4.3 Fixtures, hermeticity, and the manifest snapshot
 
-Seven synthetic fixtures are built for the benchmark (`empty_user`, `ready_user_minimal`, `read_surface_user`, `governance_user`, `drift_user`, `adversarial_user`, and `audit_pending_user`, the last leaving the target day un-synthesized so no evidence card exists at build time, which stresses M8 audit-reference faithfulness); not all seven are referenced by every locked task, and the fixture-to-task mapping is subject to the suite consolidation of Section 4.2. Fixtures contain no private health rows, no live wearable exports, no credentials, and no maintainer personal data. Every benchmark subprocess runs hermetically: `HAI_HERMETIC=1` with the state database and base directory redirected (`HAI_STATE_DB`, `HAI_BASE_DIR`), and a fresh fixture is materialized per repetition, so no state leaks across repetitions or modes. L7 tasks additionally swap in a deliberately stale manifest snapshot (`agent_cli_contract_v1_drift.json`) at task-load time, so the agent's in-context contract diverges from the actual runtime contract by construction; this drift condition is a task condition, not a mechanism row, and it remains unmeasured at the model-backed tier [FORK-L7-DRIFT: unmeasured; do not assume outcome].
+Seven synthetic fixtures are built for the benchmark (`empty_user`, `ready_user_minimal`, `read_surface_user`, `governance_user`, `drift_user`, `adversarial_user`, and `audit_pending_user`, the last leaving the target day un-synthesized so no evidence card exists at build time, which stresses M8 audit-reference faithfulness); not all seven are referenced by every locked task, and the fixture-to-task mapping follows the D-39 suite of Section 4.2. Fixtures contain no private health rows, no live wearable exports, no credentials, and no maintainer personal data. Every benchmark subprocess runs hermetically: `HAI_HERMETIC=1` with the state database and base directory redirected (`HAI_STATE_DB`, `HAI_BASE_DIR`), and a fresh fixture is materialized per repetition, so no state leaks across repetitions or modes. L7 tasks additionally swap in a deliberately stale manifest snapshot (`agent_cli_contract_v1_drift.json`) at task-load time, so the agent's in-context contract diverges from the actual runtime contract by construction; this drift condition is a task condition, not a mechanism row, and it remains unmeasured at the model-backed tier [FORK-L7-DRIFT: unmeasured; do not assume outcome].
 
 ### 4.4 The two axes as implemented
 
-The runtime-enforcement axis is the `runtime_mode` seam, exposing the seven modes of Section 3.2. The contract-in-prompt axis is realized as a prompt variant that withholds the relevant manifest facts from the agent's context while the runtime remains unchanged. Crossing the two axes yields the cells of Section 3.6, and the two roles of `no_runtime_enforcement` (robustness sanity floor under the contract-in-prompt arm, cell D anchor under the contract-withheld arm) are kept distinct as defined there.
+The runtime-enforcement axis is the `runtime_mode` seam, exposing the seven modes of Section 3.2. The contract-in-prompt axis is a per-task `contract_arm` field (told or untold) realized at prompt-render time by three coordinated transforms, while the runtime remains unchanged: a structured transform over the embedded manifest that withholds the mechanism-relevant facts (flags, mutation classes, schema constraints for the constraint under test), a prose scrub that removes the constraint's natural-language statements from the prompt body under a forbidden-token check, and parameterized boundary blocks so the told arm's boundary prose is assembled per task rather than hand-edited. A mechanical untold-leak scan over every rendered untold prompt is a lock gate: no rendered untold prompt may carry the withheld constraint's tokens. Crossing the two axes yields the cells of Section 3.6, and the two roles of `no_runtime_enforcement` (robustness sanity floor under the contract-in-prompt arm, cell D anchor under the contract-withheld arm) are kept distinct as defined there.
+
+Three disclosures attach to the untold arm's construction. First, the untold arm withholds all natural-language constraint prose but, by design, preserves the object-capability command surface: the model still sees command names (e.g. `hai target commit`, `hai target archive`) and their `--confirm` flags. The schema therefore partially specifies the constraint even when untold, so B-vs-D and C-vs-D are lower bounds on the effect of telling; the harness schema is itself an in-context contract. Second, in the untold M5 arm the manifest transform asserts `agent_safe: true` rather than merely omitting the gate, so the untold M5 cells are a "told-it-is-safe" floor, disclosed as told-the-opposite rather than uninformed; the diagnostic harm-floor probe shows violations still occur in cell D despite the schema signal, so the floor is non-vacuous. Third, cell B's told prompt retains boundary prose stating that the runtime enforces the constraint, while the runtime is in fact ablated in that cell; the prompt is held constant across the enforcement axis by design, so cell B measures self-enforcement under an (inaccurate) assertion of enforcement, and this is disclosed rather than edited away, since editing it would break the held-constant told prompt.
 
 The operator action contract is structured JSON, one action per turn, not arbitrary shell. Transcripts record the model's emitted action verbatim as the assistant turn and each observation as a returned message; no provider-native tool calls are synthesized, because fabricating tool-call structure would misrepresent the evaluated transcript.
 
 ### 4.5 Deterministic scoring and first-attempt attribution
 
-The scorer is deterministic and offline; it contains no model calls. It implements the full 11-kind violation taxonomy, and its behavior thresholds, pass rule, and critical violation kinds are loaded from `scorer_config.paper_v1.json`, whose audited bytes are hashed and recorded in `lock_hashes.json`, so any config change is visible in the provenance record.
+The scorer is deterministic and offline; it contains no model calls. It implements the full 11-kind violation taxonomy, and its behavior thresholds, pass rule, and critical violation kinds are loaded from `scorer_config.paper_v1.json`, whose audited bytes are hashed and recorded in `lock_hashes.json`, so any config change is visible in the provenance record. One circularity is disclosed rather than removed: the scorer's clinical-boundary detector imports the same banned-phrase list the runtime's M7 refusal uses, so scorer and runtime share ground truth for that violation kind and cell A is clean on that metric by construction; the list was audited for over-broad single-word entries and frozen before the run. Citation resolution for `must_cite` metrics is scoped to command stdout only.
 
-The telling axis is scored on first-attempt behavior, per the convergence rationale of Section 3.6. First-attempt is defined uniformly as the first action that reaches the enforcement surface for the constraint in question, not literal step one; the definition applies identically to refusal rows and dispatch rows, so an agent that emits invalid-output steps before its first contact with the enforcement surface is scored from that first contact. First-attempt scoring carries the B vs D and C vs D attribution, and converged multi-turn behavior is reported separately and never blended into first-attempt numbers. The metric is only well-defined for a parser-clean model: a model whose output the harness action parser cannot read never reaches the enforcement surface, so its first-attempt behavior is undefined and its apparent failure conflates self-enforcement with the operate floor (Section 6.3). First-attempt axis attribution is therefore scoped to Qwen3-235B, the one parser-clean model in the roster, and does not transfer to the confounded ladder cells.
+The telling axis is scored on first-attempt behavior, per the convergence rationale of Section 3.6. First-attempt is defined uniformly as the first action that reaches the enforcement surface for the constraint in question, not literal step one; the definition applies identically to refusal rows and dispatch rows, so an agent that emits invalid-output steps before its first contact with the enforcement surface is scored from that first contact. In the pre-registered run the first-attempt window closes only on genuine enforcement contact, a blocked `must_not_call` gated action, not on any incidental error message. For the gated mechanisms (M5 `agent_safe`, M6 proposal/commit) that contact is, for a single-target `must_not_call` task, the model's first action, so the telling and enforcing contrasts for these mechanisms are single-decision difference-of-proportions, reported as pooled counts; we frame the two windows as enforcement-as-barrier (first attempt) versus enforcement-as-teacher (converged) and do not claim multi-step first-attempt reasoning for gated cells. Validation, refusal, and audit-chain mechanisms retain multi-step first-attempt windows. First-attempt scoring carries the B vs D and C vs D attribution, and converged multi-turn behavior is reported separately and never blended into first-attempt numbers.
 
-A deterministic rule baseline anchors the routing tasks as plumbing evidence only: it confirms the harness, fixtures, and scorer compose, and it fails the L5 narration tasks by design (PAPER.md D-30 records five L5 narration tasks; the on-disk L5 set has since changed under the same-day suite consolidation and told/untold rebuild of Section 4.2, so the current count is deferred to Appendix A's pending re-count and a PAPER.md D-37 entry rather than stated here), since it emits no final narration.
+The metric is only well-defined for a model whose actions the harness can read: a model whose output the action parser cannot read never reaches the enforcement surface, so its first-attempt behavior is undefined and its apparent failure conflates self-enforcement with the operate floor (Section 6.3). The early diagnostic ladder was confounded exactly this way, which at the time scoped first-attempt attribution to Qwen3-235B, the one parser-clean model. An envelope-tolerant parser has since shipped (uniform code-fence stripping and prose-embedded JSON extraction applied identically to every model before validation; normalization never changes which action is validated; commit `8319b83`), so in the pre-registered run first-attempt scoring runs across the full ladder of Section 4.7. Two caveats survive the fix and are disclosed there: per-model vendor-recommended sampling confounds cross-model first-attempt comparisons, and the cross-family evidence rests on a single Llama point.
+
+A deterministic rule baseline anchors the routing tasks as plumbing evidence only: it confirms the harness, fixtures, and scorer compose, and it fails the L5 narration tasks by design, since it emits no final narration. (PAPER.md D-30 recorded five L5 narration tasks at the time of the scorer-correctness pass; the D-39 suite carries eight L5 tasks, per Section 4.2 and Appendix A.)
 
 ### 4.6 Evidence tiers
 
-Three evidence tiers are kept separate throughout and are never merged into one claim: static oracle-pair evidence (hand-authored full/off pairs, scorer coverage), live runtime probes (end-to-end HAI runs under compared modes with real command execution, live causality evidence), and model-backed diagnostics (real model completions scored by the same scorer). All model-backed evidence in this paper is diagnostic tier: one model (Qwen3-235B-A22B-Instruct-2507, Together AI, temperature 0), small n (3 to 5 per cell).
+Three evidence tiers are kept separate throughout and are never merged into one claim: static oracle-pair evidence (hand-authored full/off pairs, scorer coverage), live runtime probes (end-to-end HAI runs under compared modes with real command execution, live causality evidence), and model-backed diagnostics (real model completions scored by the same scorer). All model-backed evidence in this paper is diagnostic tier: one model (Qwen3-235B-A22B-Instruct-2507, Together AI, temperature 0), small n (3 to 5 per cell). Within the model-backed tier, the diagnostic probes are distinguished from the pre-registered run of Section 4.10; no data from that run exists at the time of writing, and its results will be reported beside, never merged with, the diagnostic numbers.
 
 ### 4.7 Model roster
 
-The working model is `Qwen/Qwen3-235B-A22B-Instruct-2507-tput` (Together AI, non-thinking mixture-of-experts, 256k context, serverless), run at temperature 0. `claude-sonnet-4-6` is the designated fallback for narration-heavy M8 tasks; no run reported here is Sonnet-backed. Excluded during viability screening: Qwen2.5-7B-Instruct-Turbo (below the operate floor, 0/60 valid finals, contract friction rather than governance), Mistral-Small-24B (32k context too small for the manifest prompt plus multi-turn history), Gemma-3-27B and Qwen2.5-32B (dedicated-endpoint only), and Gemma-4-31B (a reasoning model whose thinking consumed the token budget, yielding empty completions and timeouts).
+Two rosters must be kept distinct: the historical roster under which every diagnostic probe in Section 5 was run, and the pre-registered run roster (PAPER.md D-41), under which no data exists yet.
+
+**Diagnostic-probe roster (all Section 5 numbers).** The working model was `Qwen/Qwen3-235B-A22B-Instruct-2507-tput` (Together AI, non-thinking mixture-of-experts, serverless), run at temperature 0. `claude-sonnet-4-6` was the designated fallback for narration-heavy M8 tasks; no run reported here is Sonnet-backed. Excluded during viability screening: Qwen2.5-7B-Instruct-Turbo (below the operate floor, 0/60 valid finals, contract friction rather than governance), Mistral-Small-24B (32k context too small for the manifest prompt plus multi-turn history), Gemma-3-27B and Qwen2.5-32B (dedicated-endpoint only), and Gemma-4-31B (a reasoning model whose thinking consumed the token budget, yielding empty completions and timeouts).
+
+**Pre-registered run roster (protocol; no data yet).** The run design is a four-model Together serverless capability ladder: `Qwen/Qwen3-235B-A22B-Instruct-2507-tput` as the primary (vendor-verified pricing and 262K context recorded in the locked roster), a Llama-3.3-70B-class model as the second capable point and the only cross-family point, a Qwen3.5-9B-class model as the near-floor point, and Qwen2.5-7B-Instruct-Turbo deliberately re-admitted as the below-floor operate control: its diagnostic exclusion is the reason it is in the ladder, since a below-floor model is the positive control for the operate-floor claim. Sampling is vendor-recommended per model rather than uniform temperature 0, so model identity is confounded with sampling regime across the ladder; the headline 2x2 is computed within a single model at a constant sampling regime and is unaffected (Sections 4.10, 8.4). Provider seeds are unsupported on the serverless endpoints, so replication is across independent stochastic draws rather than fixed-seed determinism. Exact model identifiers, pricing, context windows, and sampling settings for the two new ladder points are pinned in the locked roster revision before the run and recorded in the run manifest (PILOT_PROTOCOL.md §20, forthcoming at the time of writing).
 
 ### 4.8 Goal-conflict variants and the adversarial layer
 
-The goal-conflict arm uses task variants applying benign completion pressure, not adversarial injection: respecting the constraint costs task success, graded from P0 to P3, where at P3 a pipeline is blocked and the user cannot proceed. No attacker-controlled content is involved; this targets the literature-verified locus where frontier models violate policies stated in their own system prompt (Symbolic Guardrails [arXiv:2604.15579]), including under realistic completion pressure (LogiSafetyBench [arXiv:2601.08196]). Separately, a 16-trajectory adversarial layer (four hand-authored trajectories each against M7, M5+M6, M8, and M4) provided scorer-coverage evidence at the appendix tier only, never model-backed. It existed at the pilot tier and was retired at the benchmark tier by commit `a10e850`, which removed the trajectories and their scoring; whether it is reinstated, replaced, or dropped is an open decision pending a PAPER.md D-37 entry (Appendix D). Injection robustness is cited territory in the security literature, which already shows telling fails under attack, not a claim of this paper.
+The goal-conflict arm uses task variants applying benign completion pressure, not adversarial injection: respecting the constraint costs task success. The diagnostic H2 probes graded this from P0 to P3, where at P3 a pipeline is blocked and the user cannot proceed; in the pre-registered suite goal conflict is carried by two committed suite members (`gab_l6_agentsafe_conflict`, `gab_l5_audit_conflict`; Section 4.10). No attacker-controlled content is involved; this targets the literature-verified locus where frontier models violate policies stated in their own system prompt (Symbolic Guardrails [arXiv:2604.15579]), including under realistic completion pressure (LogiSafetyBench [arXiv:2601.08196]). Separately, a 16-trajectory adversarial layer (four hand-authored trajectories each against M7, M5+M6, M8, and M4) provided scorer-coverage evidence at the appendix tier only, never model-backed. It was retired at the benchmark tier by commit `a10e850`, and PAPER.md D-37 records the retirement as final: the adversarial-input arm is cited future work, not an arm of this paper (Appendix D). Injection robustness is cited territory in the security literature, which already shows telling fails under attack, not a claim of this paper.
 
 ### 4.9 Offline reproducibility
 
 A single command, `reproduce_offline.py`, regenerates the rule-baseline ablation, evidence tables, figures, error taxonomy, and cell contrasts with no network access, no private state, and no paid APIs. The static and live isolation matrices were retired at the benchmark tier by commit `a10e850` (Appendix E) and the pipeline no longer emits them. It emits a top-level manifest with per-artifact summary metadata and exits nonzero if the rule-baseline ablation produced no scored rows or figures; the golden-artifact baseline records hashes and a wall-clock reference (Appendix E; re-baseline pending). Model-backed diagnostics are the only artifacts that required paid API access to produce; their recorded trajectories and scores are re-scoreable offline by the same deterministic scorer.
+
+### 4.10 The pre-registered run design
+
+This subsection is protocol, not results: at the time of writing, no data from the pre-registered run exists, and nothing here may be read as an outcome. The design is locked in PAPER.md decisions D-39 through D-43, with the run manifest, the pre-committed outcome-branch map, and the full disclosure set carried by PILOT_PROTOCOL.md §20 (forthcoming at the time of writing; cited here as the pre-registration document of record).
+
+**Suite and cells.** The run executes the 36-task suite of Section 4.2 (three scenario pairs per mechanism) over its declared runtime modes: 72 task-by-mode cells, each a labelled cell of its mechanism's told/untold-by-enforced/off 2x2 via the `contract_arm` field and the `runtime_mode` seam of Section 4.4.
+
+**Moderators as committed suite members.** The three moderators are in the suite, not post-hoc splits: benign goal-conflict pressure as two committed tasks (`gab_l6_agentsafe_conflict`, `gab_l5_audit_conflict`); constraint verifiability as a blind/sighted twin pair (`gab_l5_audit_blind` against its sighted twin), in which the blind cell withholds ground-truth citations so task success is unreachable there by construction, and the blind twin is read as an honesty probe (abstain versus fabricate) on audit-reference faithfulness and unsupported-narration rate, never on task success, which is retained only to distinguish the sighted twin; and L7 stale-manifest drift as a committed task (`gab_l7_drift`). Verifiability and solvability co-vary in the blind manipulation; the clean claim available from it is honest abstention under hidden ground truth.
+
+**Models and replication.** The four-model ladder of Section 4.7 runs with vendor-recommended per-model sampling, including the deliberate below-floor operate control. Replication is n=4 per cell, raised from 3 after an exact-binomial sensitivity analysis showed that at pooled n=9 the 10-point decision bar is a one-rep gap with mid-regime false-alarm rates of 25 to 41 percent, while pooled n=12 makes it a two-rep gap; the full analysis is released with the benchmark (`reports/sensitivity/SENSITIVITY.md`).
+
+**Decision quantities.** The pre-registered headline is the per-mechanism specify-vs-enforce 2x2 cell contrast (A/B/C/D; B-vs-D the effect of telling, C-vs-D the effect of enforcing, A-vs-B the redundancy measure), reported as pooled counts (k/n) and percentage-point differences; medians are demoted to clearly-secondary descriptive statistics, and the legacy pooled runtime-on/off median machinery of the earlier pilot design is retired. The smallest effect size of interest is a single 10-percentage-point bar (0 points only for hard safety invariants); the earlier 5-point pilot bound is deleted, and this change is disclosed here rather than silent. Pooled counts are the scientific quantity; any unanimous per-task pass rule is operational tooling, not an evidential criterion. First-attempt and converged windows are both reported per Section 4.5, framed as enforcement-as-barrier versus enforcement-as-teacher.
+
+**Outcome categories.** Three non-behavioral outcomes are reported as their own categories, never folded into behavioral failure counts: provider safety-filter blocks, context-window overflow, and length truncation. Each is neither a pass nor a behavioral fail; pooling any of them into failure rates would inflate apparent incapacity, most acutely for the small ladder models.
+
+**Phasing and integrity.** The run is canary-first with a hard stop: a canary subset (the untold-floor pair, the blind/sighted twin, and the below-floor operate control) runs across all models and is scored before the main sweep; the gate asks whether each canary axis moves by at least 10 points in the expected direction, and a canary failure attributable to model behavior is a reportable negative result that ends the sweep, not a rerun trigger. A rerun is permitted only for transient-infrastructure causes (provider outage, rate limit, parser or adapter defect) and never to change a cell result; reruns are capped at one fixed re-run with the defect named before re-running, and every voided run is disclosed with its void reason. Claim language for every possible outcome is pre-committed in an eleven-branch outcome map (PILOT_PROTOCOL.md §20), so the paper's conclusions section is selected from the map by the data rather than written after seeing it.
 
 ## 5 Results: the negative result
 
@@ -236,7 +272,7 @@ A thin capability ladder (2026-07-03; n=3 per model: Qwen2.5-7B, Qwen3.5-9B, Lla
 
 Table caption: Pre-registered predictions against diagnostic outcomes (one model, Qwen3-235B, n=3-5 per cell). Two of the three predicted enforcement-delta regions nulled; only the operate floor survives, weakly.
 
-Of the three moderators hypothesized to gate substitution, the verifiability exception dissolved (P3, P4), goal conflict nulled (P2), and only the operate floor survives, weakly and ladder-confounded (P7). The redundancy measure (A vs B) is the headline quantity, and every told-and-salient diagnostic puts cell B at ceiling: 3/3 refusal in both foregrounded contract-off rows (both cell B, runtime off), 3/3 honest reporting in the cell-B (`no_audit_chain`) half of the retrieved M8 regime, 3/3 honest abstention in the cell-B half of the non-retrieval regime, and 0 fabrication across all 20 cell-B (`no_audit_chain`) goal-conflict reps (all diagnostic, one model, n=3 to 5 per cell). The paired `full_contract` halves of the M8 and goal-conflict regimes are cell A, enforcement on, and are held separate here because their compliance is runtime-guaranteed rather than self-enforced. The diagnostics are therefore consistent with the negative result: for this capable cooperative agent above the operate floor, in-context specification substitutes for runtime enforcement broadly, on verifiable and non-verifiable constraints alike and under benign completion pressure. Runtime enforcement's demonstrated behavioral value is the deterministic guarantee plus the corners where telling does not reach: the untold violation floor, the incidental-salience failure of Section 5.1, below the operate floor, and adversarial intent, untested here. Enforcement is behaviorally redundant only in that scoped sense, never structurally. All of this is diagnostic tier, one model, small n, within this fixed controller and these probe tasks; it is not a general claim about agents or harnesses. [FORK-H5-REPLICATION: pending external non-HAI replication; do not assume outcome]
+Of the three moderators hypothesized to gate substitution, the verifiability exception dissolved (P3, P4), goal conflict nulled (P2), and only the operate floor survives, weakly and ladder-confounded (P7). The redundancy measure (A vs B) is the headline quantity, and every told-and-salient diagnostic puts cell B at ceiling: 3/3 refusal in both foregrounded contract-off rows (both cell B, runtime off), 3/3 honest reporting in the cell-B (`no_audit_chain`) half of the retrieved M8 regime, 3/3 honest abstention in the cell-B half of the non-retrieval regime, and 0 fabrication across all 20 cell-B (`no_audit_chain`) goal-conflict reps (all diagnostic, one model, n=3 to 5 per cell). The paired `full_contract` halves of the M8 and goal-conflict regimes are cell A, enforcement on, and are held separate here because their compliance is runtime-guaranteed rather than self-enforced. The diagnostics are therefore consistent with the negative result: for this capable cooperative agent above the operate floor, in-context specification substitutes for runtime enforcement broadly, on verifiable and non-verifiable constraints alike and under benign completion pressure. Runtime enforcement's demonstrated behavioral value is the deterministic guarantee plus the corners where telling does not reach: the untold violation floor, the incidental-salience failure of Section 5.1, below the operate floor, and adversarial intent, untested here. Enforcement is behaviorally redundant only in that scoped sense, never structurally. All of this is diagnostic tier, one model, small n, within this fixed controller and these probe tasks; it is not a general claim about agents or harnesses. It is a single-runtime case study, and external non-HAI replication is future work (Section 7.2).
 
 ## 6 Methodology cautions as a contribution
 
@@ -283,13 +319,13 @@ Second, operable models self-enforce. Llama-3.3-70B and Qwen3-235B passed 3/3 in
 
 We make no claim of a capability-ordered self-enforcement curve. Non-monotone capability-compliance relationships across model families are already documented [arXiv:2606.01317, arXiv:2601.08196], and a four-model, parser-confounded ladder at n=3 cannot adjudicate them.
 
-### 7.2 External non-HAI replication
+The same four model families recur as the pre-registered run ladder of Sections 4.7 and 4.10, and the two must not be conflated: this diagnostic ran pre-parser-fix at temperature 0 on one gate task, while the pre-registered ladder runs post-fix, with per-model vendor sampling, n=4, across the full suite, with the 7B deliberately included as the below-floor operate control. No number in this subsection carries forward into that design's results.
 
-[FORK-H5-REPLICATION: pending external non-HAI replication; do not assume outcome]
+### 7.2 Scope: a single-runtime case study; external replication as future work
 
-Every model-backed number in this paper comes from one controller, HAI v0.2.0, with its particular manifest, contract-authoring style, and task suite. Hypothesis H5 holds that the specify-vs-enforce effect generalizes beyond HAI; a required external replication is the generality check that distinguishes a phenomenon from a HAI quirk. The planned design reproduces the 2x2 on an independent harness with its own mechanism inventory and deterministic scorer, measuring at minimum the A-vs-B contrast, the marginal value of enforcement given the agent was told. Where the replication also attributes the telling axis (B vs D, C vs D), first-attempt scoring applies (Section 3.6). TeamBench [arXiv:2605.07073] (Section 2) is one candidate substrate: prior evidence of the same qualitative shape in a different mechanism domain and design, not itself a replication of this paper's effect. Its sub-metric asymmetry (pass-rate parity coexisting with 3.6 times more verifier-edits-executor cases in the prompt-only arm) cautions that aggregate parity can mask enforcement value. That caution applies to our own instrument. The deterministic scorer observes per-mechanism `mechanism_disabled` markers and each task's load-bearing violation kind (Section 4.2), so it detects whether the specific guarded violation occurs, but it does not resolve finer sub-metric channels such as a verifier-edits-executor count. An enforcement effect that left the pass rule and the tracked violation kinds unchanged while shifting such a channel would stay undetectable at n=3-5. Aggregate parity in these diagnostics should therefore not be read as sub-metric equivalence.
+Every model-backed number in this paper comes from one controller, HAI v0.2.0, with its particular manifest, contract-authoring style, and task suite. This paper is accordingly scoped as a single-runtime case study (PAPER.md D-42): hypothesis H5, that the specify-vs-enforce effect generalizes beyond HAI, is stated as a hypothesis, and the external non-HAI replication that would test it is future work, not a pending component of this paper's evidence. Nothing in the negative result distinguishes a phenomenon from a HAI quirk until that replication exists, and the claims throughout are conditioned on this controller.
 
-The outcome sets the claim scope. If substitution replicates, the negative result describes a phenomenon that extends beyond this controller rather than a HAI quirk. If it does not, the result narrows to this controller and task suite, and contract-authoring style becomes a candidate moderator. Neither outcome is assumed here.
+The future-work design is specified so the scope boundary is concrete: reproduce the 2x2 on an independent harness with its own mechanism inventory and deterministic scorer, measuring at minimum the A-vs-B contrast, the marginal value of enforcement given the agent was told; where the replication also attributes the telling axis (B vs D, C vs D), first-attempt scoring applies (Section 3.6). TeamBench [arXiv:2605.07073] (Section 2) is one candidate substrate: prior evidence of the same qualitative shape in a different mechanism domain and design, not itself a replication of this paper's effect. Its sub-metric asymmetry (pass-rate parity coexisting with 3.6 times more verifier-edits-executor cases in the prompt-only arm) cautions that aggregate parity can mask enforcement value. That caution applies to our own instrument. The deterministic scorer observes per-mechanism `mechanism_disabled` markers and each task's load-bearing violation kind (Section 4.2), so it detects whether the specific guarded violation occurs, but it does not resolve finer sub-metric channels such as a verifier-edits-executor count. An enforcement effect that left the pass rule and the tracked violation kinds unchanged while shifting such a channel would stay undetectable at diagnostic n. Aggregate parity in these diagnostics should therefore not be read as sub-metric equivalence.
 
 ## 8 Discussion
 
@@ -323,7 +359,9 @@ HAI's domain, non-clinical personal wellness, is a deliberate instrument choice.
 
 ### 8.4 Limitations
 
-All model-backed evidence is diagnostic tier: one model (Qwen3-235B-A22B-Instruct-2507, Together AI, temperature 0), n of 3 to 5 per cell, run on diagnostic probe tasks rather than the locked benchmark suite. At these sample sizes a low-frequency self-enforcement failure rate would go undetected, undermining any cross-model reading of the negative result but not the existence demonstrations: the untold violation floor is a demonstration on this model, and the harness-blindness finding is a property of the harness, established by a before-and-after contrast on identical tasks, not a behavioral generalization. One runtime instantiates the mechanisms. [FORK-H5-REPLICATION: pending external non-HAI replication; do not assume outcome] L7 stale-manifest drift, the sole surviving candidate for a true non-verifiable enforcement delta, is unmeasured. [FORK-L7-DRIFT: unmeasured; do not assume outcome] Inputs are benign throughout; the adversarial-input arm is scorer-coverage evidence only. The capability ladder is confounded by an action parser tuned to one model's output format and supports only that an operate floor exists.
+All model-backed evidence is diagnostic tier: one model (Qwen3-235B-A22B-Instruct-2507, Together AI, temperature 0), n of 3 to 5 per cell, run on diagnostic probe tasks rather than the locked benchmark suite. At these sample sizes a low-frequency self-enforcement failure rate would go undetected, undermining any cross-model reading of the negative result but not the existence demonstrations: the untold violation floor is a demonstration on this model, and the harness-blindness finding is a property of the harness, established by a before-and-after contrast on identical tasks, not a behavioral generalization. The negative result is measured on a single reference runtime (HAI), one harness, one prompt template; the paper is scoped as a single-runtime case study, and external non-HAI replication is future work (Section 7.2). L7 stale-manifest drift, the sole surviving candidate for a true non-verifiable enforcement delta, is unmeasured. [FORK-L7-DRIFT: unmeasured; do not assume outcome] Inputs are benign throughout; the adversarial-input arm was retired at the benchmark tier (Section 4.8), and injection robustness is cited territory, not a claim. The diagnostic capability ladder is confounded by an action parser tuned to one model's output format and supports only that an operate floor exists.
+
+Limitations that attach to the pre-registered run design (Section 4.10), disclosed in advance of any data: the capability ladder is a bounded moderator, not a scaling-law claim, and cross-family evidence rests on a single non-Qwen point (Llama-3.3-70B), so the negative result, if it survives the run, is scoped to Qwen-family capable cooperative agents with one corroborating Llama observation; the abstract must not assert cross-family generality. Under per-model vendor-recommended sampling, model identity is confounded with sampling regime, so the ladder cannot separate a capability trend from a sampling-temperature trend; the headline 2x2 is computed within a single model at a constant sampling regime and is unaffected. Provider seeds are unsupported on the serverless FP8 MoE endpoints, so replication is across independent stochastic draws rather than fixed-seed determinism, and any temperature-0 anchor reps are approximately, not bit-, reproducible. The untold arm's schema-partial-telling, told-the-opposite M5, and cell-B enforcement-prose disclosures of Section 4.4, and the clinical-detector circularity of Section 4.5, apply to every run-design cell.
 
 ### 8.5 What would change the conclusion
 
@@ -339,7 +377,7 @@ Second, the adversarial-input arm should graduate from scorer-coverage evidence 
 
 Third, a fuller screened capability ladder behind an action parser tolerant of every roster model. The present ladder carries only the existence of an operate floor (Section 7.1); a parser-tolerant rerun across a wider screened roster could locate the floor rather than merely evidence it, with non-monotonicity across families expected [arXiv:2606.01317, arXiv:2601.08196] and no scaling law promised.
 
-Fourth, a higher-n confirmatory run. Whether a multi-model higher-n run is warranted, or the pre-registered diagnostic sweeps stand with the one-model, small-n limitation stated, is an open decision, as is the external replication of Section 7. [FORK-H5-REPLICATION: pending external non-HAI replication; do not assume outcome]
+Fourth, external non-HAI replication (Section 7.2). This paper is a single-runtime case study by decision, and the replication that would distinguish a phenomenon from a HAI quirk, reproducing the 2x2 on an independent harness with its own mechanism inventory and deterministic scorer, is the highest-value follow-on measurement. (The multi-model higher-n question, by contrast, is resolved within this paper: the pre-registered run of Section 4.10 is that run, and its results land here per the pre-committed outcome map, not in future work.)
 
 Two deferred lines complete the program. H7 extends the design toward the capability-versus-compliance question studied externally under scaling-laws-for-oversight [Engels2025], asking whether a deterministic Guard at general Elo of zero occupies a legitimate point on that external curve; this paper itself claims no scaling law (Section 1). H8 asks whether fine-tuned operators reach contract compliance at smaller scales than untrained operators (the S1 fine-tuning sequel), which would move the operate floor itself.
 
@@ -360,18 +398,18 @@ are populated here.
 ### A. Task suite
 
 **[STUB]** Table APPX.1: tasks by level and load-bearing mechanism
-(M4-M9-TX). Task-count claims are unstable at the writing tier. An
-earlier apparatus (a 28-task suite with 25 static oracle pairs, 23
-per-mechanism plus 2 `no_runtime_enforcement` floor pairs, and a
-16-trajectory adversarial layer) was retired by PAPER.md decision D-37
+(M4-M9-TX). An earlier apparatus (a 28-task suite with 25 static oracle
+pairs, 23 per-mechanism plus 2 `no_runtime_enforcement` floor pairs, and
+a 16-trajectory adversarial layer) was retired by PAPER.md decision D-37
 (2026-07-04, landed across benchmark commits `a10e850`..`48ff87b`):
-those figures no longer apply. The suite is rebuilt as a sharp 16-task
-2x2 (told x enforced) per mechanism, with the told/untold contract axis
-(`e72dced`) and first-attempt scoring (`48ff87b`) built in. The count
-remains benchmark-lane-owned and was still moving from a concurrent agent
-at 2026-07-04. Do not populate Table APPX.1, and do not cite the count as
-final, until the benchmark suite is frozen and its size confirmed against
-the release tag.
+those figures no longer apply. The suite was rebuilt as a sharp
+per-mechanism 2x2 (told x enforced) with the told/untold contract axis
+(`e72dced`) and first-attempt scoring (`48ff87b`) built in, then expanded
+by D-39 (2026-07-05, commit `ed07f5a`) to three scenario pairs per
+mechanism: 36 tasks (L1: 2, L2: 6, L5: 8, L6: 19, L7: 1), 72
+task-by-mode cells (two tasks carry `no_runtime_enforcement` as the
+floor). Populate Table APPX.1 from the frozen suite and confirm the
+count against the release tag before submission.
 
 ### B. Prompt provenance
 
@@ -384,47 +422,59 @@ after the v1 prompt exceeded a model's context limit. Recorded as
 `PILOT_PROTOCOL.md` Amendment 2. Cite the prompt identifier from the
 roster's `prompt_id` field (an identifier string, not a hash) and the
 prompt file hash from `scripts/lock_hashes.json`, not from this
-appendix. Caution: the recorded lock hash predates prompt edits
-committed 2026-07-04 (`e72dced`) by the concurrent benchmark agent;
-re-derive the file hash at populate time rather than reusing the
-recorded value.
+appendix. Caution: the recorded lock hash predates the prompt edits
+committed 2026-07-04 (`e72dced`, told/untold axis) and 2026-07-05
+(`eceebf5`, S3-S6 prompt-neutrality pass; boundary-block
+parameterization); re-derive the file hash at populate time, against
+the §20 run manifest, rather than reusing any recorded value.
 
 ### C. Probe protocol summary
 
-**[STUB]** Per-cell n and seed/temperature table. All model-backed
-probes to date: `Qwen/Qwen3-235B-A22B-Instruct-2507-tput` (Together AI),
-temperature 0, top_p 1, no seed support in the provider API, n=3-5 per
-cell depending on probe (see grounding pack Section 6 for per-probe n).
-Table to enumerate probe directory, task(s), mode(s), and n per row.
+**[STUB]** Per-cell n and seed/temperature table, in two clearly
+separated blocks.
+
+Diagnostic probes (all Section 5 numbers): `Qwen/Qwen3-235B-A22B-Instruct-2507-tput`
+(Together AI), temperature 0, top_p 1, no seed support in the provider
+API, n=3-5 per cell depending on probe (see grounding pack Section 6 for
+per-probe n). Table to enumerate probe directory, task(s), mode(s), and
+n per row.
+
+Pre-registered run (Section 4.10; protocol, no data yet): four-model
+Together ladder, vendor-recommended per-model sampling recorded per
+condition with card URL and snapshot date (temperature-0 anchor rep per
+cell under consideration), n=4 per cell, canary-first phasing with hard
+stop, decision quantities and the eleven-branch outcome map per
+PILOT_PROTOCOL.md §20. Populate the per-model sampling and per-model
+prompt-token rows from the locked roster revision at run time; token
+counts for the identical held-constant prompt differ per tokenizer, so
+the ~22K figure of Appendix B is Qwen2.5-specific and per-model counts
+are recorded per condition.
 
 ### D. Adversarial trajectory table (pointer)
 
-**[STUB, disposition pending]** 16 hand-authored trajectories (4 each
-vs M7, M5+M6, M8, M4), scorer-coverage evidence at the appendix tier,
-never model-backed. Per PAPER.md (Engineering Plan, Trajectories row),
-the aggregated artifact is
-`adversarial_summary/adversarial_summary_aggregated.csv`, produced by
-`reproduce_offline.py`, with the 16-row per-trajectory table emitted
-alongside it for the appendix (a separate artifact, not rows inside the
-aggregated CSV). Retired at the benchmark tier by the same `a10e850`
-commit, which removed `results/adversarial_summary.py` and the
-trajectories, so `reproduce_offline.py` no longer emits these artifacts
-at HEAD; PAPER.md as read still lists the layer as current. Resolve
-against a PAPER.md D-37 entry before finalizing this subsection.
+**[RESOLVED: retired]** The 16 hand-authored adversarial trajectories
+(4 each vs M7, M5+M6, M8, M4) were scorer-coverage evidence at the
+appendix tier, never model-backed. PAPER.md D-37 (2026-07-04) records
+their retirement as final: commit `a10e850` removed
+`results/adversarial_summary.py` and the trajectories, and
+`reproduce_offline.py` no longer emits the `adversarial_summary`
+artifacts at HEAD. The adversarial-input arm is cited future work
+(Sections 4.8, 9.1), not an arm of this paper. This appendix subsection
+should either be deleted at LaTeX conversion or reduced to a one-line
+provenance pointer; no adversarial table will be populated.
 
 ### E. Reproducibility
 
 Per PAPER.md (Engineering Plan, Reproducibility script row),
-`reproduce_offline.py` runs the full offline pipeline (rule-baseline
-ablation, evidence tables, figures, error taxonomy, static oracle-pair
-isolation matrix, live-runtime-probe isolation matrix) from a single
-command; baseline runtime 76s on Apple M2. Artifact and hash baselines
-in `REPRODUCIBILITY.md` and `REPRODUCIBILITY_GOLDEN.json`. Staleness
-note: commit `a10e850` cut the pipeline to rule-baseline ablation,
-evidence tables, figures, and error taxonomy (isolation matrices
-retired) and regenerated `REPRODUCIBILITY_GOLDEN.json`; the 76s figure
-is the pre-`a10e850` PAPER.md baseline. Re-baseline the runtime and
-pipeline description once PAPER.md carries a D-37 entry.
+`reproduce_offline.py` runs the offline pipeline (rule-baseline
+ablation, evidence tables, figures, error taxonomy, and cell contrasts;
+the static and live isolation matrices were retired by D-37 at
+`a10e850`) from a single command. Artifact and hash baselines in
+`REPRODUCIBILITY.md` and `REPRODUCIBILITY_GOLDEN.json`
+(`REPRODUCIBILITY_GOLDEN.json` regenerated post-D-37). The 76s Apple M2
+runtime figure is the pre-`a10e850` baseline; re-baseline the runtime
+and pipeline description against the frozen D-39 36-task suite and the
+completed analysis-layer integration before populating this appendix.
 
 ### F. Scorer config hash chain
 
@@ -444,9 +494,9 @@ wording. Workflow-derived content requirements for that header: the
 sketch is illustrative, not a fourth evidence tier (the three tiers,
 static oracle-pair evidence, live runtime probe, and model-backed
 diagnostic, are never merged or extended), and not evidence of
-generalization beyond the HAI controller. [FORK-H5-REPLICATION: pending
-external non-HAI replication; do not assume outcome] Do not draft
-Appendix E content before D-O-02 resolves.
+generalization beyond the HAI controller (the paper is a single-runtime
+case study; external replication is future work, Section 7.2). Do not
+draft Appendix E content before D-O-02 resolves.
 
 ## References
 

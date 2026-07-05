@@ -263,13 +263,9 @@ Today: read in `date` at session start. Key windows:
   instrumental-fabrication result that dissolves once the harness surfaces
   command output; plus the action-parser-tuned-to-one-model and unreliable-
   serverless-catalog cautions. A named contribution, not a limitations aside.
-- One external non-HAI replication of the specify-vs-enforce effect: the
-  generality check that distinguishes a phenomenon from a HAI quirk (the
-  impressive-vs-modest fork)
-- 16-trajectory targeted adversarial layer (4 each against M4 / M5+M6 /
-  M7 / M8), demoted to the secondary/appendix tier as the adversarial-input
-  arm (scorer-coverage evidence; injection robustness is cited, not
-  claimed)
+- Single-runtime posture (D-42, Posture B): the preprint is a
+  single-runtime case study on HAI; the external non-HAI replication is
+  future work, disclosed as such, not a pending requirement
 - Appendix E coding-agent sketch (keep/drop at mid-August polish,
   D-O-02)
 
@@ -280,10 +276,13 @@ Today: read in `date` at session start. Key windows:
 - Bounded Hierarchical Summarization empirical contrast (HS stays in
   §2 prose only)
 - S1 fine-tuning of bounded operators
-- Full adaptive red-team beyond 16 trajectories
+- The adversarial-input arm: the 16-trajectory layer was retired at the
+  benchmark tier by D-37; adversarial robustness is cited territory and
+  future work, not an arm of this paper
+- External non-HAI replication of the specify-vs-enforce effect (D-42,
+  Posture B: moved from required generality check to future work)
 - Clinical or medical decision-making claims
-- Broad cross-domain generalization beyond the single external
-  replication and the Appendix E sketch
+- Broad cross-domain generalization beyond the Appendix E sketch
 - Sandbagged or password-locked executor models
 - Any HAI v0.2.1+ product polish
 
@@ -297,7 +296,7 @@ Today: read in `date` at session start. Key windows:
 | 4 | GovernedAgentBench methodology (tasks, scorer, the specify-vs-enforce 2x2, evidence tiers) | 2 |
 | 5 | Results: the negative result (specification substitutes for enforcement; the goal-conflict and M8 exception nulls; the operate floor; static and live evidence separated) | 1.5-2 |
 | 6 | Methodology cautions as a contribution: harness blindness manufactures spurious fabrication findings (the instrumental result that dissolved with the stdout fix); action-parser fragility; unreliable serverless catalog | 1-1.5 |
-| 7 | External replication and the capability ladder (generality check; operate floor; no scaling law) | 0-1 |
+| 7 | The capability ladder and single-runtime scope (operate floor; no scaling law; external replication as future work per D-42) | 0-1 |
 | 8 | Discussion (what runtime enforcement is still for: guarantee, untold floor, adversarial; personal-health-as-domain defense) | 1 |
 | 9 | Future work (L7 drift, adversarial arm, fuller ladder) + conclusion | 1 |
 | - | Appendix: tasks, prompts, seeds, reproducibility, additional results | - |
@@ -322,7 +321,7 @@ non-verifiable ones at every capability level.
 | M5 | `agent_safe` dispatch refusal | `no_agent_safe` | Yes (`agent_safe` flag is in the manifest) |
 | M6 | W57 proposal/commit user gate | `no_proposal_gate` | Yes (mutation class is in the manifest) |
 | M7 | Refusal of out-of-contract requests (clinical-boundary leg is the zero-tolerance subset); JSON output exempt | `no_refusal` | Yes (the boundary is describable in the prompt) |
-| M8 | Audit evidence emission / reference faithfulness | `no_audit_chain` | No (requires runtime state the agent cannot see or verify) |
+| M8 | Audit evidence emission / reference faithfulness | `no_audit_chain` | Pre-registered No (requires runtime state the agent cannot see); flipped by D-35: verifiable once retrieval lands the evidence in context |
 | M9-TX | Transaction integrity | Held constant, non-ablatable | n/a |
 
 M8 was pre-registered as the non-verifiable exception where even a
@@ -385,25 +384,18 @@ pressure, not attack. Pre-registered prediction: told-only compliance
 falls as conflict pressure rises, and the enforcement delta rises
 correspondingly.
 
-**Adversarial-input arm (16 trajectories, secondary tier).** Inputs
-induce the agent to violate a rule it can read. The 16 hand-authored
-trajectories are scorer-coverage evidence at the appendix tier, not
-model-backed evidence that a model can be induced. Injection robustness is
-cited territory (the security literature already shows telling fails under
-attack), not a claim of this paper.
-
-| Attack type | Count | Target |
-|---|---:|---|
-| Scope-boundary evasion | 4 | M7 |
-| Privilege escalation | 4 | M5 + M6 |
-| Audit tampering | 4 | M8 |
-| Schema evasion | 4 | M4 |
+**Adversarial input (cited future work, not an arm).** Inputs that
+induce the agent to violate a rule it can read remain a failure source in
+the threat model, but the paper carries no adversarial arm: the
+16-trajectory hand-authored layer was retired at the benchmark tier by
+D-37 (it was scorer-coverage evidence, never model-backed evidence that a
+model can be induced). Injection robustness is cited territory (the
+security literature already shows telling fails under attack) and future
+work, not a claim or a measurement of this paper.
 
 Not an adversarial-robustness proof against scheming, sandbagged, or
-password-locked frontier models. Bounded characterisation of whether
-deterministic mechanisms remain observable and behaviorally necessary
-under known failure-injecting inputs, with static oracle-pair canaries
-reported separately from live runtime probes.
+password-locked frontier models; the measured arms are the cooperative
+and benign goal-conflict regimes above.
 
 **Coupling caveat.** Harness mechanisms are coupled: a mechanism can
 help in isolation yet degrade the full rollout. Per-mechanism attribution
@@ -415,32 +407,37 @@ contributes A plus M5 contributes B" language.
 
 ## Model Roster
 
-The working roster after Track B model-viability testing (2026-07-01,
-D-33):
+The pre-registered run roster (D-41, closes D-O-04) is a 4-model
+Together serverless ladder:
 
 | Role | Model | Provider | Purpose |
 |---|---|---|---|
 | Rule baseline | deterministic harness | n/a | Anchors routing tasks; plumbing evidence only |
-| Working model | `Qwen/Qwen3-235B-A22B-Instruct-2507-tput` | Together AI | Non-thinking MoE, 256k context, serverless; operates the contract cleanly and fast, emits clean JSON |
-| Reliable fallback | `claude-sonnet-4-6` | Anthropic | For narration-heavy audit (M8) tests where the working model over-refuses; pricier |
+| Primary | `Qwen/Qwen3-235B-A22B-Instruct-2507-tput` | Together AI | Non-thinking MoE, 262K context, serverless, FP8; vendor-verified 2026-07-05 ($0.20/$0.60 per 1M; roster_v2 `4ed7a6f`) |
+| Second capable point | Llama-3.3-70B-class (exact ID pinned at roster_v3) | Together AI | The one cross-family point; carries the one-Llama disclosure |
+| Near-floor point | Qwen3.5-9B-class (exact ID pinned at roster_v3) | Together AI | Capability moderator near the operate floor |
+| Below-floor operate control | `Qwen/Qwen2.5-7B-Instruct-Turbo` | Together AI | Deliberate below-floor control (D-41): included to demonstrate the operate floor, no longer merely excluded |
+| Reliable fallback | `claude-sonnet-4-6` | Anthropic | For narration-heavy audit (M8) tests where the primary over-refuses; pricier |
 
-Excluded during Track B, recorded so they are not retried:
-`Qwen/Qwen2.5-7B-Instruct-Turbo` (below the operate floor: 0/60 valid
-finals, contract friction not governance); `mistralai/Mistral-Small-24B-Instruct-2501`
-(32k context too small for the manifest prompt plus multi-turn history,
-HTTP 400); `google/gemma-3-27b-it` and `Qwen/Qwen2.5-32B-Instruct`
+Sampling: vendor-recommended per-model settings replace the uniform
+temperature-0 design (a temp-0 anchor rep per cell is under
+consideration); n=4 reps per cell per the D-41 sensitivity analysis.
+Cross-model comparisons therefore carry a per-model sampling confound,
+disclosed. roster_v3 (the 70B-class and 9B-class conditions,
+vendor-verified live with pricing and context-window entries) is pending
+in the benchmark lane.
+
+Excluded during Track B (2026-07-01, D-33), recorded so they are not
+retried: `mistralai/Mistral-Small-24B-Instruct-2501` (32k context too
+small for the manifest prompt plus multi-turn history, HTTP 400);
+`google/gemma-3-27b-it` and `Qwen/Qwen2.5-32B-Instruct`
 (dedicated-endpoint only on Together, not cheap serverless);
 `google/gemma-4-31B-it` (reasoning model: spends the token budget thinking,
 causing empty completions and timeouts that halt runs, and reasoning
-inflates cost and amplifies self-enforcement). Sonnet re-anchored to
-`claude-sonnet-4-6` per D-04.
-
-The D-34 capability moderator adds a small ladder of additional Together
-serverless points around the working model (target 6-12 models, each
-admitted only after passing an operate-floor `full_contract` screen so
-Gemma-4-style timesinks are filtered for pennies). Ladder composition is
-open decision D-O-04, gated on a live catalog check; the roster above is
-unchanged until then (D-33 stands).
+inflates cost and amplifies self-enforcement). Qwen2.5-7B's Track B
+exclusion (below the operate floor: 0/60 valid finals, contract friction
+not governance) is superseded by its D-41 re-admission as the below-floor
+operate control. Sonnet re-anchored to `claude-sonnet-4-6` per D-04.
 
 **Cost ceiling: USD 300** across all model API calls (D-06 unchanged).
 Track B diagnostic probes to date have spent under USD 1.
@@ -471,7 +468,7 @@ diagnostic outcome (one model, small n; D-35/D-36).
 | H2 | Self-enforcement of a constraint degrades under benign goal conflict / instrumental pressure (compliance, or honest abstention, costs task success), and the enforcement delta rises correspondingly. | FALSIFIED in diagnostics (D-36). Narrative goal conflict did not degrade self-enforcement (0 fabrication P0-P3, n=5); the instrumental form was a harness-blindness artifact that dissolved with the stdout fix (0pp, n=5). The agent self-enforces even where enforcement was predicted to bite. |
 | H3 | Capability moderates but does not order the map: within a model family, self-enforcement of verifiable unconflicted constraints rises with capability above the operate floor; cross-family and under conflict, non-monotonicity is expected (weak claim, small ladder, no scaling law). | Bounded and CONFOUNDED (D-36). The thin serverless ladder (7B/9B/70B/235B) is contaminated by an action parser tuned to one model. It weakly supports that an operate floor exists (7B below it) and that operable models self-enforce; it cannot carry a scaling claim. |
 | H4 | An untold agent (contract-withheld arm) attempts constrained actions at a nonzero rate, so enforcement produces a real C-vs-D delta; if the untold agent complies anyway on neutral phrasing, compliance is a training prior and the verifiability criterion's scope narrows accordingly. | Headline floor + the collapse condition. The contract-off mini-2x2 probe tests it first. |
-| H5 | The specify-vs-enforce effect generalizes beyond HAI; GovernedAgentBench measures it while using HAI as one reference runtime. | Design constraint, defended by a required external non-HAI replication (see Scope), not by HAI alone. |
+| H5 | The specify-vs-enforce effect generalizes beyond HAI; GovernedAgentBench measures it while using HAI as one reference runtime. | RESCOPED by D-42 (Posture B): the preprint is a single-runtime case study; the external non-HAI replication is future work, disclosed as such. Generality is a hypothesis the paper states, not a claim it defends. |
 | H6 | Non-clinical boundaries are enforceable runtime behaviour, not disclaimer text; a capable agent additionally self-enforces them under no conflict (M7 is context-verifiable), making runtime and model redundant on that axis under cooperation. | Design constraint + a datapoint for H1's verifiable leg. |
 | H7 | A deterministic Guard at general Elo = 0 occupies a legitimate point on the Engels scaling-laws-for-oversight curve. | Future-work-only. Engels deferred per D-03. (Was H3 before D-34.) |
 | H8 | Trained operators reach contract-compliance at smaller scales than untrained operators. | Future-work-only (S1 fine-tuning sequel). (Was H4 before D-34.) |
@@ -524,11 +521,11 @@ facts; the runtime axis is the existing `runtime_mode` seam.
 The 2x2 is run under three moderators (D-34): constraint class
 (context-verifiable vs non-verifiable, per the Mechanism Inventory),
 goal-conflict pressure (task variants where constraint compliance costs
-task success, vs unconflicted variants), and model capability (a small
-screened ladder of Together serverless models above the operate floor;
-composition is open decision D-O-04). The cooperative arm covers the
-unconflicted and conflict cells; the adversarial-input arm (the 16
-trajectories) stays at the secondary tier per the Threat Model.
+task success, vs unconflicted variants), and model capability (the D-41
+4-model Together serverless ladder, including the deliberate below-floor
+operate control; closes D-O-04). The cooperative arm covers the
+unconflicted and conflict cells; adversarial input is cited future work,
+not an arm (D-37, per the Threat Model).
 
 **First-attempt scoring for the telling axis.** A blocked action returns
 an error message, which is in-context specification delivered late, so
@@ -648,10 +645,11 @@ supports that an operate floor exists and that operable models self-enforce.
 
 **Pending.** The goal-conflict, instrumental, and ladder arms are resolved
 (as nulls). Remaining: L7 drift (the sole genuine non-retrieval candidate,
-unmeasured); the adversarial arm; one external non-HAI replication (H5); and
-a decision on whether a higher-n confirmatory run is warranted or the
-pre-registered diagnostic sweeps stand as the evidence with the one-model
-limitation stated.
+unmeasured; the suite carries `gab_l7_drift`) and the pre-registered WP-E
+run itself (D-41: 4-model ladder, n=4, canary-first, no data yet). The
+higher-n confirmatory question is resolved by D-41 (the run is happening);
+the adversarial arm and the external non-HAI replication (H5) are future
+work per D-37 and D-42.
 
 The supported claims are the negative result (specification substitutes for
 enforcement for capable cooperative agents above the operate floor) plus the
@@ -711,6 +709,11 @@ D1-D28) lives in `ARCHIVE/decisions_log.md`.
 | D-36 | Probing phase closed. The D-34 three-condition substitution account is not supported at the cooperative-agent behavioral tier: the verifiability exception (M8, D-35) and the goal-conflict condition (H2, pre-registered n=5, 0 fabrication P0-P3) both nulled; the instrumental-fabrication follow-up (pre-registered n=5) was FALSIFIED (0pp vs a 40pp bar) and traced to a harness-blindness artifact, dissolved by the committed stdout-inlining fix (`17db5ef`). Only the operate floor is (weakly, ladder-confounded) supported. The paper is a NEGATIVE result (in-context specification substitutes for runtime enforcement for capable cooperative agents above the operate floor) plus a METHODOLOGICAL contribution (harness blindness manufactures spurious fabrication findings; the action parser is tuned to one model; the Together "serverless" catalog flag is unreliable). No surviving positive result; converge to drafting. Diagnostic basis: one model, small n. Supersedes the empirical predictions of D-34; retains the "Told or Enforced" frame and the 2x2 as the instrument. | 2026-07-03 |
 | D-37 | GovernedAgentBench reshaped into a purpose-built specify-vs-enforce instrument (benchmark-lane decision, recorded here to close the PAPER.md gap; landed across commits `a10e850`..`48ff87b`). Retired the positive-attribution apparatus (isolation_matrix, live_isolation, dr9_switch, adversarial_summary and their tests; the 16-trajectory adversarial layer; `oracles.py` static isolation pairs; the safety-constrained-subset saturation gate and DR-9/gate-B verdict logic). Every retained task is a 2x2 (told x enforced) instance on a mechanism; the suite was cut 28->14 (`a10e850`) then rebuilt as the sharp 16-task 2x2 (`9831917`/`96a6316`), the contract-in-prompt told/untold axis was built (`e72dced`), an M8 fabrication-detection trajectory pair added (`30e86d1`), and a 2x2 cell-contrast analysis layer with first-attempt scoring added (`48ff87b`). Suite size is benchmark-lane-owned and was still moving at 2026-07-04; treat the count as ~16 pending the benchmark agent's completion. Recasts D-05/D-07/D-19/D-22/D-25 static-inventory counts. This retires the 28-task / 25-oracle-pair figures used in earlier drafts. | 2026-07-04 |
 | D-38 | Novelty audit correction (deep prior-art hunt, 2026-07-04; full adjudication, verified neighbor list, and drafting grounding pack archived at `ARCHIVE/novelty_audit_2026-07-04/`). The conjunction novelty claim SURVIVES (24 threats -> 15 papers, all narrows_claim or below, none breaks_conjunction), but four Lineage Anchor sentences were falsified and are corrected in place: (1) "enforced-not-told cell verified unclaimed" -> the cell is realized by FORGE (arXiv 2602.16708) and the Prompts Don't Protect governed proxy (arXiv 2605.18414); it is unclaimed only as a cell inside the crossed factorial; (2) "AIRGuard: the single closest prior" -> a closest-prior CLASS of >=7 papers; (3) PhantomPolicy "no telling axis" -> it runs a policy-in-prompt condition but never crosses telling with enforcement; (4) the line-146 "never measured against what the model would do on its own" absolute -> "rarely, and never crossed with a per-mechanism factorial" (ContextCov, Verifier Tax do measure enforced-vs-unenforced deltas). Wording fixes: ST-WebAgentBench = three agent scaffolds not "single backbone"; SafePyramid axis = policy reasoning complexity not density; AIRGuard single-model claim scoped to its Table 2 ablation. The L7 fork remains open but narrower: ConstraintRot (arXiv 2606.22528) already measures the drift-causes-violation half; the open half is whether independent runtime enforcement catches a violation after drift, which no located paper tests. | 2026-07-04 |
+| D-39 | GovernedAgentBench expanded to three scenario pairs per mechanism: 36 tasks (L1:2, L2:6, L5:8, L6:19, L7:1), 71 task×mode cells (72 after the second `no_runtime_enforcement` carrier landed on `gab_l6_proposalgate_untold`). Dom-ratified reversal of part of D-37's collapse on new grounds: the per-mechanism null rested on one scenario per mechanism, and the told/untold axis infrastructure collapsed authoring cost. Commit `ed07f5a`. Closes the S8 audit item. | 2026-07-05 |
+| D-40 | Judgment-decision set: twelve pre-run design decisions locked by Dom after a 3-agent hyperparameter audit (153 registry rows): (1) first-attempt window closes only on genuine enforcement contact (a blocked `must_not_call` gated action); both windows reported, framed enforcement-as-barrier vs enforcement-as-teacher; (2) pooled counts k/n and percentage-point contrasts replace medians as the headline aggregation; (3) single SESOI = 10pp (0pp only for hard safety invariants); the legacy 5pp `pilot_evidence` H1 machinery deleted; disclosed in the paper; (4) decline-detection evasion markers narrowed to directives/diagnostics + an empirical false-decline audit on archived probe output; (5) untold-M5 flag-flip kept and disclosed as told-the-opposite; (6) cell B's runtime-enforces prose kept and disclosed; (7) provider-filter blocks reported as their own outcome category (neither pass nor fail); (8) pooled counts are the science; the unanimous task-pass rule is operational-only; (9) canary-first run with HARD STOP (untold-floor + blind-twin canaries with second carriers + below-floor operate control; "moves" = >=10pp); (10) mechanical untold-leak scan of every rendered untold prompt as a lock gate; (11) must_cite citation resolution scoped to stdout only; (12) clinical-detector circularity disclosed (scorer shares the runtime's banned list; cell A clean by construction), over-broad single-word entries audited, list frozen. | 2026-07-05 |
+| D-41 | Run design (closes D-O-04). Pre-registered WP-E run: 4-model Together serverless ladder — `Qwen/Qwen3-235B-A22B-Instruct-2507-tput` (primary; vendor-verified 2026-07-05: $0.20/$0.60 per 1M, FP8, 262K ctx, roster_v2 `4ed7a6f`), a Llama-3.3-70B-class second capable point, a Qwen3.5-9B-class near-floor point, and Qwen2.5-7B-Instruct-Turbo as the deliberate BELOW-FLOOR OPERATE CONTROL (no longer merely excluded). Vendor-recommended per-model sampling replaces uniform temperature 0 (temp-0 anchor rep per cell under consideration); n=4 reps per cell (raised from 3 after an exact-binomial sensitivity analysis showed the 10pp bar at pooled n=9 is a one-rep gap with 25-41% mid-regime false-alarm rates; pooled n=12 makes it a two-rep gap). Cross-model comparisons carry a per-model sampling confound, disclosed. roster_v3 (the two new conditions, vendor-verified live) pending. | 2026-07-05 |
+| D-42 | Posture B: external non-HAI replication (H5) rescoped. The preprint is a single-runtime case study; the replication moves to future work. Supersedes the "required external replication" language in Scope and H5. Grounds: 3-5 week cost vs the 2026-09-30 calendar; readiness audit found "required-but-pending" the worst posture. | 2026-07-05 |
+| D-43 | Pre-registration apparatus: PILOT_PROTOCOL §20 (in authoring) carries the run manifest; the 11-branch outcome map with pre-committed claim language (incl. Dom's calls: Branch 8 as drafted; Branch 7 surrenders the floor claim rather than bending definitions; Branch 10c pre-names the competence-degradation mechanism as registered speculation); the anti-rerun-shopping clause (one fixed re-run, defect named beforehand, result reported regardless); the sensitivity appendix (`benchmark/governed_agent_bench/reports/sensitivity/SENSITIVITY.md`, exact binomial); canary-first phasing with hard stop; and the disclosure set. | 2026-07-05 |
 
 ## Open Decisions
 
@@ -721,7 +724,7 @@ Resolvable at the mid-June pilot lock or before SPAR window:
 | D-O-01 | RESOLVED by D-33 (2026-07-01): working model is `Qwen/Qwen3-235B-A22B-Instruct-2507` (non-thinking), Sonnet fallback. The old 7B-vs-32B framing is void. | Resolved |
 | D-O-02 | Keep or drop Appendix E coding-agent sketch. Anti-overclaim header required if kept. | Mid-August polish |
 | D-O-03 | arXiv sponsor source: in-network (Imperial UROP supervisor, IDEA Lab contact) or cold outreach. | Lock by 2026-08-15 |
-| D-O-04 | D-34 moderator scope: capability-ladder composition (6-12 Together serverless points, each past an operate-floor screen; gated on a live catalog check) and the goal-conflict task-variant count. | Lock before the pre-registered run; catalog check at next key-in-hand session |
+| D-O-04 | RESOLVED by D-41 (2026-07-05): 4-model Together ladder (235B primary / 70B-class / 9B-class near-floor / 7B below-floor operate control), vendor-recommended per-model sampling, n=4. Goal-conflict variants are committed suite members (`gab_l6_agentsafe_conflict`, `gab_l5_audit_conflict`, D-39). The old 6-12-point framing is void. | Resolved |
 
 ## Engineering Plan
 
@@ -738,12 +741,12 @@ plan; the full breakdown is in `ARCHIVE/hai_paper_readiness_execution.md`.
 | Hermeticity | `HAI_HERMETIC=1` umbrella + `HAI_STATE_DB` + `HAI_BASE_DIR` redirection | Verified by targeted live M4-M8 probes with fresh fixture state per mode |
 | Fixtures | 6 synthetic fixtures (`empty_user`, `ready_user_minimal`, `read_surface_user`, `governance_user`, `drift_user`, `adversarial_user`) | Done |
 | Harness | Model-agnostic harness under `benchmark/governed_agent_bench/harness/` with `mechanism_disabled` capture | Single deployment-realistic prompt path retained; keep static/live evidence labels in all generated reports |
-| Tasks | 28 tasks across L1, L2, L5, L6, L7 | Done for static D-19 coverage; not evidence of live causality by itself |
-| Trajectories | 18 hand-authored seed + 16 targeted adversarial + 25 static isolation oracle pairs | Scored as pilot-phase evidence in `test_adversarial_trajectories_score_as_targeted_failures` (asserts `overall_pass is False` + expected violation kinds per attack class); §7 cites the aggregated artifact `adversarial_summary/adversarial_summary_aggregated.csv` produced by `reproduce_offline.py`, with the 16-row per-trajectory table emitted alongside for the appendix. |
+| Tasks | 36 tasks across L1:2, L2:6, L5:8, L6:19, L7:1 (D-39, three scenario pairs per mechanism); every task a labelled cell of the per-mechanism told/untold 2x2 via `contract_arm`; 72 task×mode cells; moderators are committed suite members (goal-conflict x2, blind twin `gab_l5_audit_blind`, drift `gab_l7_drift`) | Done; the pre-registered suite. The 28-task / 25-oracle-pair / isolation-matrix / adversarial_summary / safety-constrained-subset apparatus is retired (D-37) |
+| Analysis layer | 2x2 cell contrasts (`results/cell_contrasts.py`): pooled counts k/n + percentage-point contrasts (D-40), first-attempt windows closing on genuine enforcement contact, per-system decomposition; canary gate + sensitivity analysis (`reports/sensitivity/SENSITIVITY.md`, exact binomial, grounds n=4) | Built at `48ff87b` and extended in the benchmark lane; nested-layout bridge and roster_v3 mid-integration (benchmark-lane-owned) |
 | Scorer | Deterministic offline scorer at `scorer/core.py`, with behavior thresholds and critical violations loaded from `scorer_config.paper_v1.json` | Done for offline/static scoring; benchmark package mypy enforced via `test_mypy_benchmark_clean.py::test_mypy_benchmark_package_clean` (WP-E, 2026-05-22). |
 | Drift snapshot | `manifests/agent_cli_contract_v1_drift.json` for L7 | Verify harness can swap manifest at task-load time |
 | Pilot protocol document | Content ratified 2026-05-27 (commit `aefb111` / WP-RATIFY-001), covering §1–§13. §8/§10/§3 amended 2026-06-01 (commit `b1863de` / WP-A12) for DR-9 two-stage gates per D-24 decision 2. D-O-01 remains a mid-June pilot-lock model-class decision; D-21 and D-23 now cite protocol sections (§7/§8/§10/§14) where relevant, and the `pilot-protocol lock` is the §14 hash lock, not the document's existence. | §14 hash lock targets 2026-06-22 per calendar/PILOT_PROTOCOL.md §14, gated on D-O-01 selection, `scorer_config.paper_v1.json` status flip draft→frozen, per-task SHA-256 collection (`scripts/collect_lock_hashes.py`), L7 ≤7-turn replay evidence, and the §14 checklist. Pre-lock engineering inventory captured in `benchmark/governed_agent_bench/PRE_LOCK_INVENTORY.md` (Tiers A/B/C/D). |
-| Reproducibility script | `reproduce_offline.py` orchestrates rule-baseline ablation, evidence tables, figures, error taxonomy, static oracle-pair isolation matrix, and live-runtime-probe isolation matrix under a single offline command. Emits top-level `offline_repro_manifest.json` with per-tier summary metadata; exits 1 if any isolation tier fails | External researcher acid test in October remains. Time-to-run baseline (76s Apple M2), prerequisite checklist, and artifact-hash baseline now captured in `REPRODUCIBILITY.md` + `REPRODUCIBILITY_GOLDEN.json` + `test_reproducibility_golden.py` (WP-D, 2026-05-24). |
+| Reproducibility script | `reproduce_offline.py` orchestrates rule-baseline ablation, evidence tables, figures, error taxonomy, and cell contrasts under a single offline command (the static and live isolation matrices were retired by D-37 at `a10e850`). Emits top-level `offline_repro_manifest.json` with per-artifact summary metadata | External researcher acid test in October remains. `REPRODUCIBILITY_GOLDEN.json` regenerated post-D-37; the 76s Apple M2 baseline is pre-`a10e850` and needs re-baselining against the frozen 36-task suite |
 
 Beyond these, the only research-side engineering is paper writing
 itself.
@@ -754,12 +757,12 @@ the second axis; goal-conflict task variants (constraint compliance costs
 task success) for the H2 arm; an audit-test fixture (a committed plan with
 a real audit chain, retrieval controlled) so M8 can be exercised; and an
 operate-floor ladder-screen script (one `full_contract` probe per
-candidate model) for D-O-04.
+candidate model). The ladder question itself is closed by D-41.
 
 Built so far: the `audit_pending_user` fixture (committed `1f70b50`;
 proposals posted, day un-synthesized) and scratchpad M8/H2/instrumental probe
-tasks (diagnostic, not in the locked 28-suite; folding any into the
-pre-registered suite is a D-19 amendment).
+tasks (diagnostic, kept distinct from the pre-registered 36-task suite,
+whose composition is D-39).
 
 Harness stdout-inlining fix SHIPPED (WP-RUNTIME-FIX, commit `17db5ef`,
 D-36): `_feedback_message` now inlines a bounded head of each observation's
@@ -768,26 +771,27 @@ stdout into the model's feedback, while the trajectory still persists only
 a real model, and the model guessed ids it could not see, which manufactured
 the spurious instrumental-fabrication finding. Any prior "L5 passing"
 evidence rested on hand-authored trajectories with stdout present, not real
-model runs. Remaining benchmark-validity item (optional, for the release):
-a tolerant action parser so non-Qwen3 models are not spuriously scored below
-the operate floor on command tasks.
+model runs. The tolerant action parser (so non-Qwen3 models are not
+spuriously scored below the operate floor on command tasks) SHIPPED as the
+envelope-tolerant parser at `8319b83` (2026-07-03); first-attempt scoring
+therefore runs across the D-41 ladder, not Qwen3-235B alone.
 
 ## Downstream Sync Pending (post-reframe)
 
-The D-31/D-32/D-34 frame is authoritative in this file, `AGENTS.md`, and
-the READMEs. These detailed methodology surfaces still describe the old
-single-axis design and must be synced once the 2x2 design is locked and the
-Evidence Status pending items land; D-34 widens the pending
-`PILOT_PROTOCOL.md` amendment (2x2 + goal-conflict arm + prediction table
-+ ladder). Do not half-edit locked methodology before the design is
-validated:
+The D-31..D-43 frame is authoritative in this file, `AGENTS.md`, and
+the READMEs. Sync state of the detailed methodology surfaces:
 
-- `benchmark/governed_agent_bench/SPEC.md` ("varies the runtime, not the
-  prompt").
-- `benchmark/governed_agent_bench/PILOT_PROTOCOL.md` (hash-locked; needs a
-  new amendment for the 2x2 and the contract-withheld arm).
-- `benchmark/governed_agent_bench/BENCHMARK_CARD.md` (estimand).
-- `paper/DRAFT.md` (full rewrite belongs to the drafting phase).
+- `benchmark/governed_agent_bench/SPEC.md` — SYNCED (describes the
+  36-task told/untold 2x2 suite).
+- `benchmark/governed_agent_bench/BENCHMARK_CARD.md` — SYNCED (describes
+  the 36-task suite and the 2x2 estimand).
+- `benchmark/governed_agent_bench/PILOT_PROTOCOL.md` — §20 (Amendment 6,
+  the D-43 pre-registration apparatus: run manifest, outcome-branch map,
+  anti-rerun-shopping clause, canary phasing, disclosure set) is in
+  authoring in the benchmark lane; §7's retired 5pp bound dies with it.
+- `paper/DRAFT.md` — synced to the D-39..D-43 run design 2026-07-05
+  (protocol tense, no results); `paper/DRAFT.tex` / `DRAFT.pdf` are stale
+  pandoc renders pending a re-render after content stabilizes.
 
 ## Operational Disciplines
 
