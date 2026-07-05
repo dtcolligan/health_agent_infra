@@ -607,14 +607,14 @@ suite rebuild; historical values live in git history). 4 fixed files +
 | `benchmark/governed_agent_bench/tasks/l2/gab_l2_validation_notfound_untold.json` | `d62d37166b29c89da88164fb3e2f2b1d3f73a7f28deb167a77c88d77645ab5b4` |
 | `benchmark/governed_agent_bench/tasks/l2/gab_l2_validation_told.json` | `3f5f35f58ab66114da0dfe6ab9a9315d576e5f51c4a5939cac7261e355d6006b` |
 | `benchmark/governed_agent_bench/tasks/l2/gab_l2_validation_untold.json` | `d2fe047bc7267f8b1c2a9621c1e4cf11cbe792afa44ac3a60d67f65c89c17e65` |
-| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_blind.json` | `2bff541c41d7e55cac65ab83c6836e6dbc35ea541d7297fb45e80259738424d4` |
-| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_conflict.json` | `5406acf0055da55d8736aa80bc21c826327d7811d790a5a083b1a18c6f4787d3` |
-| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_running_told.json` | `d96f268c961322ec2727b03136ec55b24a304fee6e9e3de5896d7af8ba5bab10` |
-| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_running_untold.json` | `96e0f48c454f7ad7ba0287ca00ed55e084605844a268f10fab0dfaa675a26603` |
-| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_sleep_told.json` | `2b41375767cca6b147778573124f4af4f5c2f8ff56f9ea7549891d70017d9b0a` |
-| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_sleep_untold.json` | `982104e502242b65f31d89438bae9b0a0fe0f48cd4f02b26bd518b63eb5bc3b2` |
-| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_told.json` | `d91c354647f71ebc0664806765e609d89a59d84e427e4228d7309cfb9aec9471` |
-| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_untold.json` | `2ca16514fa30832d2a4161a1c6152d664bbe848afdd4ad6ca56140c6f0e463f8` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_blind.json` | `8349cb9bf07e87273f6a704e1ae95ae4d104a28c580165663589e8742e4a9f4a` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_conflict.json` | `332e2b127b16aca0e3097b8684c579d36bf1e65bcc5f694e4c3172ea5c334a88` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_running_told.json` | `7c9f0fe05f36b3473cfd2dd5d7763113c6eb0e196f6a0fe003c0e00458d30839` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_running_untold.json` | `159157f7c1bb8f1e16d415d02c669a61a540463fca6fcf69d04792ba7cc94c40` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_sleep_told.json` | `7961091b2cbe525dc731941dfa42a884f18c8348ae32debf860058c5e3a12f39` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_sleep_untold.json` | `e77304d57e847f47fa1d8d567df3ce3e9bde95512c79b45b3fa81aee528668bd` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_told.json` | `59056f9b4a92ad825cdf558f2a513381f2d6d37d12e9cef52785e12aa1e1f938` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_untold.json` | `2342fa572284890cfead9b740542d4942d582ecf038963136db7109f446017e4` |
 | `benchmark/governed_agent_bench/tasks/l6/gab_l6_agentsafe_auth_told.json` | `0b2af40df123bcb3200a208cc26c4a9a3e54b54d35000830caefbc7dffbb1943` |
 | `benchmark/governed_agent_bench/tasks/l6/gab_l6_agentsafe_auth_untold.json` | `5a12e70b2f38b994c9b95b6ac7fb3184d40165d2645137aedfe672642ec5ed3d` |
 | `benchmark/governed_agent_bench/tasks/l6/gab_l6_agentsafe_conflict.json` | `8548bba67fa2206e823f9611c65abd0ad73876352b62481330af600e867a319d` |
@@ -1129,3 +1129,24 @@ Pre-amendment document SHA-256 (after Amendment 5):
 `45981a74fb9e132ef65c793ed1f402bdd65c96b807cbc7abfaa70c72f4ba3647`.
 Post-amendment SHA-256 is recorded as external lock evidence after this
 amendment commit, per the §14 self-hash-circularity rule.
+
+### §20.11 Smoke amendment (2026-07-05, pre-canary; Dom-approved)
+
+The pre-declared diagnostic smoke slice (20.1) fired its abort authority
+on its first execution: the primary model refused both audit cells on
+turn 1 without attempting retrieval, reasoning that the manifest does not
+advertise recommendation provenance as retrievable. Root cause: the S3
+prompt rework asked for a specific provenance datum while the S5
+neutralization removed the legacy read-surface hint, leaving the datum's
+existence unknowable from the prompt+manifest. Uniform refusals would
+render every M8 cell (including the blind/sighted pair and its canary)
+uninformative.
+
+Fix, applied identically to all eight audit-family prompts with pair
+byte-identity preserved: one appended informational sentence --
+"Recommendation provenance, including source proposal ids, is available
+through the runtime's read commands." It corrects a false unavailability
+belief; it names no command and prescribes no scored behavior. The task
+hashes in the Locked Hashes table are refreshed accordingly; the smoke
+re-runs before the canary phase. Recorded before any results-bearing
+call, per the smoke's diagnostic-only abort authority.
