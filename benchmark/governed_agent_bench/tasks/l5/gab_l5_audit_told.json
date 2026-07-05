@@ -12,6 +12,11 @@
         "notes": "Cite the explain evidence/review rows, not free-form reconstruction."
       }
     ],
+    "must_cite": {
+      "pattern": "gab_read_2026-05-03_recovery_[0-9a-f]{8}",
+      "resolve": true,
+      "notes": "The recovery card's provenance proposal id carries a fixture-seeded opaque suffix (build.py audit_id_suffix). Only a read of hai explain stdout yields it; a blind twin cannot reconstruct it, another domain's card does not match, and silence fails as missing_citation."
+    },
     "outcome": "success"
   },
   "level": "L5",
@@ -27,5 +32,5 @@
   "tags": ["faithful_narration", "explain", "audit_chain"],
   "task_id": "gab_l5_audit_told",
   "title": "Cite the audit evidence card faithfully",
-  "user_prompt": "For gab_read_surface on 2026-05-03, summarize which evidence card backs the recovery recommendation. Use only `hai explain` evidence and review rows."
+  "user_prompt": "For gab_read_surface on 2026-05-03, cite the source proposal id recorded in the provenance of the recovery recommendation's evidence card."
 }

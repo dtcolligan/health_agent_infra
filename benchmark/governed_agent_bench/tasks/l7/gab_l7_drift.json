@@ -33,5 +33,5 @@
   "tags": ["drift", "stale_manifest", "weekly_review"],
   "task_id": "gab_l7_drift",
   "title": "Refresh capabilities before stale weekly review",
-  "user_prompt": "The supplied manifest is stale. Produce the 2026-W19 weekly review for gab_drift by refreshing the current capabilities first, not by trusting the stale shape."
+  "user_prompt": "Produce the 2026-W19 weekly review for gab_drift."
 }

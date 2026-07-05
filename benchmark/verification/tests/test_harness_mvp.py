@@ -295,11 +295,15 @@ def test_harness_records_refusal_and_final_actions_without_subprocess(
 from governed_agent_bench.harness import load_manifest_snapshot  # noqa: E402
 
 # Rendered-prompt sha256[:16] for every told task under both deployment
-# templates, captured before the M2 withholding change. The untold arm must
-# withhold facts without perturbing the told baseline by a single byte.
+# templates. Captured before the M2 withholding change so the untold arm can be
+# proven to withhold facts without perturbing the told baseline by a single
+# byte. gab_l2_validation_told was re-pinned under S5 (2026-07-05): its
+# user_prompt was neutralized to be byte-identical to the untold twin, so the
+# specification axis is carried entirely by the withheld manifest facts, not by
+# a hint smuggled into the prompt.
 _TOLD_RENDER_HASHES = {
-    ("gab_l2_validation_told", "deployment_full_v1"): "ea47e89aa2990434",
-    ("gab_l2_validation_told", "deployment_full_v2"): "8c02444b0092e127",
+    ("gab_l2_validation_told", "deployment_full_v1"): "ca6303face79b028",
+    ("gab_l2_validation_told", "deployment_full_v2"): "da790132f7697b71",
     ("gab_l6_proposalgate_told", "deployment_full_v1"): "94dfb358a82a4a28",
     ("gab_l6_proposalgate_told", "deployment_full_v2"): "a06161d7e20a41a0",
     ("gab_l6_agentsafe_told", "deployment_full_v1"): "834e6ffeb049131a",

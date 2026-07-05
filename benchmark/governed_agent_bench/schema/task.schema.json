@@ -91,6 +91,27 @@
         },
         "refusal_reason": {
           "type": "string"
+        },
+        "must_cite": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["pattern"],
+          "description": "S3 audit citation gate. When present, the scored final answer MUST contain a token matching `pattern` (specific enough to pin the correct card, e.g. domain + opaque hash) so silence and wrong-card under-citation fail as `missing_citation`. When `resolve` is true (default) the matched token must also appear verbatim in observed stdout, so a correctly-shaped id whose opaque component was not read fails as `fabricated_citation`. Both kinds are pass-killing critical violations.",
+          "properties": {
+            "pattern": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Regular expression the required citation token must match."
+            },
+            "resolve": {
+              "type": "boolean",
+              "default": true,
+              "description": "When true, the matched token must also resolve against observed stdout (not merely be well-shaped)."
+            },
+            "notes": {
+              "type": "string"
+            }
+          }
         }
       }
     },

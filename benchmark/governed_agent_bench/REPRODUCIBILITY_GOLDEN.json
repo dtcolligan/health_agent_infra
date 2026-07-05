@@ -1,6 +1,6 @@
 {
   "schema_version": "governed_agent_bench.reproducibility_golden.v2",
-  "generated_at_utc": "2026-06-30T16:38:27Z",
+  "generated_at_utc": "2026-07-05T00:00:00Z",
   "git_sha": "b352158284f5b97987be56dfa855b65f86014aee",
   "reproducer_command": "uv run python benchmark/governed_agent_bench/reproduce_offline.py --output-dir <OUTPUT>",
   "expected_wall_time_seconds_observed": 76,
@@ -19,12 +19,12 @@
     {
       "path": "evidence_tables/evidence_table.csv",
       "normalize_absolute_paths": false,
-      "sha256": "af21c776b73ed323ed09214ab92d2b681ac56e55aacf9fad94c9b1e483c32c28"
+      "sha256": "2166b21a3e865bb166b3bf6572aee0b8421af9122c61430e1fb105699dfb747d"
     },
     {
       "path": "evidence_tables/evidence_table.json",
       "normalize_absolute_paths": true,
-      "sha256": "69f4b3ebf3de0c17169dc8b27ddf089fdf9b5364af0fc753ef16c9a45ba21a58"
+      "sha256": "6f43bee15cf9405bae31a35f5af1e4f8fabcfcf44b17a7bebc762e8118a68ec9"
     },
     {
       "path": "figures/figures_manifest.json",

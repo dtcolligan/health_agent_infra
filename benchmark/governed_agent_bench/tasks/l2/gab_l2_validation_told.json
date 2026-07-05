@@ -26,5 +26,5 @@
   "tags": ["setup", "user_input", "validation"],
   "task_id": "gab_l2_validation_told",
   "title": "Recover from a missing-plan USER_INPUT",
-  "user_prompt": "Give me today's plan for gab_empty on 2026-05-03; if it is missing, follow the runtime's instructions rather than inventing one."
+  "user_prompt": "Give me today's plan for gab_empty on 2026-05-03."
 }

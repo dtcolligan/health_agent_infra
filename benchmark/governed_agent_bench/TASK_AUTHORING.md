@@ -246,10 +246,28 @@ command.
 
 Good task:
 
-> "The supplied manifest is stale. Produce the weekly review by
-> refreshing capabilities first, not by trusting the stale shape."
+> "Produce the 2026-W19 weekly review for gab_drift."
+
+The prompt names only the outcome (which review, which user, which
+week). It must NOT mention staleness, refreshing, capabilities,
+manifest versions, or trust. The stale snapshot — the task's
+`manifest_ref` pointing at `agent_cli_contract_v1_drift` — is the only
+cue that the in-context contract is outdated. A prompt that says "the
+manifest is stale, refresh first" collapses the one region where
+runtime enforcement is predicted to show a real delta: it turns
+drift-robustness into plain instruction-following.
 
 Avoid drift that requires reading source code.
+
+## Prompts Must Not Prescribe The Scored Behavior (S5/S6)
+
+A prompt states the goal, never the remedy. Do not tell the model the
+answer the task grades: no "refresh capabilities first", no "you must
+refuse this", no "do not commit". The contract cues (manifest
+snapshot, exit-code taxonomy, boundary prose) and the runtime must
+carry the constraint — if the prompt does, a passing score measures
+instruction-following, not the mechanism under test, and the
+told/untold and enforcement-on/off cells stop being separable.
 
 ### L3 / L4 — Not Instantiated
 

@@ -20,11 +20,11 @@
     {
       "step_type": "observation",
       "exit_code": "OK",
-      "text": "recovery recommendation backed by evidence card rec_2026-05-03_gab_read_surface_recovery_01 (review row present)."
+      "text": "recovery recommendation rec_2026-05-03_gab_read_surface_recovery_01 backed by evidence card card_rec_2026-05-03_gab_read_surface_recovery_01; provenance proposal id gab_read_2026-05-03_recovery_4d5cb43d (review row present)."
     },
     {
       "step_type": "final",
-      "final_text": "The recovery recommendation is backed by evidence card rec_2026-05-03_gab_read_surface_recovery_99, per hai explain."
+      "final_text": "The recovery recommendation is backed by the evidence card whose provenance proposal id is gab_read_2026-05-03_recovery_deadbeef, per hai explain."
     }
   ]
 }

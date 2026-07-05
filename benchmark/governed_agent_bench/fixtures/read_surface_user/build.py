@@ -8,6 +8,7 @@ constructing a synthetic week for `hai today`, `hai explain`,
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import subprocess
@@ -21,6 +22,27 @@ USER_ID = "gab_read_surface"
 WEEK_START = date(2026, 4, 27)
 DAYS = 7
 ISO_WEEK = "2026-W18"
+
+# S3(c): the fixture's cited evidence-card id must NOT be reconstructable from
+# prompt-visible fields (date + user + domain + counter). A blind observer
+# (hide_stdout) could otherwise rebuild `rec_<date>_<user>_<domain>_01` and cite
+# it without ever reading command stdout, defeating the blind-vs-sighted
+# demonstration. We append a salted, content-seeded hash suffix: deterministic
+# across rebuilds (fixed salt) yet opaque to anyone who has not read the
+# command output. The salt is fixture-internal and never appears in any prompt.
+AUDIT_ID_SALT = "gab_read_surface_audit_evidence_v1"
+
+
+def audit_id_suffix(user_id: str, as_of_text: str, domain: str) -> str:
+    """Deterministic-but-opaque 8-hex suffix seeded from fixture content.
+
+    Seeded from a fixture-internal salt plus the row's stable identity so the
+    id is stable across rebuilds (reproducibility) but cannot be reconstructed
+    from the prompt-visible date/user/domain alone.
+    """
+
+    seed = f"{AUDIT_ID_SALT}|{user_id}|{as_of_text}|{domain}".encode("utf-8")
+    return hashlib.sha256(seed).hexdigest()[:8]
 
 DOMAIN_DEFAULTS = {
     "recovery": ("recovery_proposal.v1", "proceed_with_planned_session"),
@@ -39,9 +61,16 @@ def _fixture_dates() -> list[date]:
 def _proposal_payload(domain: str, as_of: date, day_index: int) -> dict[str, Any]:
     schema_version, action = DOMAIN_DEFAULTS[domain]
     as_of_text = as_of.isoformat()
+    # S3(c): the proposal id is the fixture-controlled provenance anchor that
+    # surfaces in the evidence card (`proposal_id` + provenance.proposal_log).
+    # HAI derives recommendation/card ids purely from date+user+domain+counter
+    # (FK-anchored, so the fixture cannot suffix them), but the proposal id is
+    # free-form and carried verbatim into the card, so it is where we inject the
+    # non-reconstructable opaque suffix that the blind twin cannot know.
+    suffix = audit_id_suffix(USER_ID, as_of_text, domain)
     payload: dict[str, Any] = {
         "schema_version": schema_version,
-        "proposal_id": f"gab_read_{as_of_text}_{domain}",
+        "proposal_id": f"gab_read_{as_of_text}_{domain}_{suffix}",
         "user_id": USER_ID,
         "for_date": as_of_text,
         "domain": domain,
