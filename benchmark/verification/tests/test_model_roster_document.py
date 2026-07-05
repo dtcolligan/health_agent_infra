@@ -64,10 +64,16 @@ def test_model_roster_machine_readable_block_has_expected_conditions() -> None:
 
     condition_ids = {condition["condition_id"] for condition in roster["conditions"]}
     assert condition_ids == {
+        # roster_v2 (2026-07-05): the vendor-verified D-33 working model.
+        "primary_qwen3_235b_together",
+        # Superseded conditions retained for provenance and harness/test
+        # compatibility; not run targets.
         "option_b_qwen25_7b_together",
         "option_b_fallback_qwen25_32b_fireworks",
         "option_c_stretch_claude_sonnet_46",
     }
+    assert roster["roster_id"] == "roster_v2"
+    assert roster["conditions"][0]["condition_id"] == "primary_qwen3_235b_together"
 
 
 def test_model_roster_conditions_keep_runtime_and_reporting_contracts() -> None:

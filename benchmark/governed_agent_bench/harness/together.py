@@ -90,6 +90,18 @@ TOGETHER_QWEN25_7B_PRICING: dict[str, str | float] = {
     "pricing_snapshot_date": "2026-05-19",
     "pricing_source": "Together AI public pricing as of 2026-05-19",
 }
+# roster_v2 primary condition (D-33): vendor-verified live by Dom on the
+# Together model page, 2026-07-05.
+TOGETHER_QWEN3_235B_PRICING: dict[str, str | float] = {
+    "currency": "USD",
+    "input_usd_per_1m_tokens": 0.20,
+    "output_usd_per_1m_tokens": 0.60,
+    "pricing_snapshot_date": "2026-07-05",
+    "pricing_source": (
+        "Together AI model page (Qwen3 235B A22B Instruct 2507 FP8 Throughput)"
+        " as of 2026-07-05"
+    ),
+}
 _PROVIDER_REFUSAL_FINISH_REASONS = frozenset({
     "content_filter",
     "refusal",

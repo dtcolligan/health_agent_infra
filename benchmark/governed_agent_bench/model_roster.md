@@ -6,14 +6,15 @@ model is now `Qwen/Qwen3-235B-A22B-Instruct-2507-tput` (Together
 serverless), resolving the old D-O-01 `option_b_qwen25_7b_together`
 choice. No model-backed trajectories before the pilot-protocol lock.
 
-This file records the narrow preprint roster described in `/PAPER.md`. It
-is not frozen for paper-claim runs until Dom verifies the provider
-IDs/pricing against live vendor docs, records the roster hash, and locks
-the pilot protocol. **The machine-readable block below still encodes the
-superseded 7B/32B conditions (the harness and tests read them via
-`roster_condition`); replacing them with vendor-verified Qwen3-235B
-provider fields is a roster re-lock and requires a new `roster_id` per the
-immutability rule.**
+This file records the narrow preprint roster described in `/PAPER.md`.
+**Re-locked as `roster_v2` on 2026-07-05:** the machine-readable block now
+leads with the vendor-verified `primary_qwen3_235b_together` condition
+(provider ID, serverless deployment, FP8 serving, and $0.20/$0.60 per 1M
+pricing verified live by Dom on the Together model page). The superseded
+7B/32B/Sonnet conditions are retained for provenance and harness/test
+compatibility (`roster_condition` still resolves them); they are not run
+targets. Remaining before any paper-claim run: record the roster hash and
+lock the pilot protocol.
 
 ## Scope
 
@@ -23,8 +24,8 @@ optional small Option C stretch.
 
 ## Roster
 
-Working roster (D-33; descriptive — the machine-readable block below is
-pending re-lock):
+Working roster (D-33; machine-readable block re-locked as `roster_v2`,
+2026-07-05):
 
 | Role | Model | Provider | Purpose |
 |---|---|---|---|
@@ -45,7 +46,7 @@ optional Option C cell and one retry cycle.
 ```json
 {
   "schema_version": "governed_agent_bench.model_roster.v1",
-  "roster_id": "roster_v1",
+  "roster_id": "roster_v2",
   "roster_file": "benchmark/governed_agent_bench/model_roster.md",
   "hash_algorithm": "sha256",
   "hash_scope": "entire_model_roster_md_file_bytes",
@@ -61,6 +62,60 @@ optional Option C cell and one retry cycle.
     "notes": "Roster inclusion only. No model-backed trajectories before the pilot-protocol lock. No private health data, live wearable rows, or hosted production state may be sent to model providers."
   },
   "conditions": [
+    {
+      "condition_id": "primary_qwen3_235b_together",
+      "system_id": "primary_qwen3_235b_together_v1",
+      "model_class": "cloud",
+      "model_family": "qwen3-instruct-moe",
+      "model_id": "Qwen/Qwen3-235B-A22B-Instruct-2507-tput",
+      "provider": "Together AI",
+      "provider_snapshot_date": "2026-07-05",
+      "model_card_snapshot": "https://www.together.ai/models/qwen3-235b-a22b-instruct-2507-fp8",
+      "parameter_count": "235B total / 22B active (MoE)",
+      "quantization": "FP8 provider serving (model page: Qwen3 235B A22B Instruct 2507 FP8 Throughput)",
+      "weights_source": "Qwen3 235B A22B Instruct 2507 (non-thinking) via Together AI serverless throughput endpoint; 262K context",
+      "compute_boundary": {
+        "hardware": "Together AI managed serverless inference",
+        "runtime": "Together AI chat completions API",
+        "max_wall_time_minutes": 240,
+        "network_access": true
+      },
+      "cost_boundary": {
+        "budget_type": "approved_cloud_budget",
+        "max_cost_usd": 100.0,
+        "billing_boundary": "Counts against the PAPER.md D-06 USD 300 aggregate model-call ceiling. Vendor-verified 2026-07-05 on the live Together model page: input $0.20/1M tokens, output $0.60/1M tokens."
+      },
+      "data_boundary": "synthetic_governed_agent_bench_fixtures_only",
+      "decoding_settings": {
+        "temperature": 0,
+        "top_p": 1,
+        "max_tokens": 2048,
+        "seed": "provider_does_not_support_seed"
+      },
+      "prompt_id": "deployment_full_v2",
+      "manifest_id": "hai_0_2_0",
+      "runtime_modes": [
+        "full_contract",
+        "no_validation",
+        "no_agent_safe",
+        "no_proposal_gate",
+        "no_refusal",
+        "no_audit_chain",
+        "no_runtime_enforcement"
+      ],
+      "failure_reporting": {
+        "timeout": "reportable_outcome",
+        "refusal": "reportable_outcome",
+        "invalid_json": "reportable_outcome",
+        "adapter_failure": "reportable_outcome"
+      },
+      "cloud_approval": {
+        "approval_id": "d33_roster_reselection_dom_2026_07_01",
+        "approved_by": "Dom",
+        "approved_at": "2026-07-01",
+        "approved_scope": "Working-model selection per PAPER.md D-33; provider ID, pricing, quantization, and model-card URL vendor-verified live by Dom (browser session) on 2026-07-05."
+      }
+    },
     {
       "condition_id": "option_b_qwen25_7b_together",
       "system_id": "option_b_qwen25_7b_together_v1",
@@ -228,11 +283,13 @@ optional Option C cell and one retry cycle.
 - [x] Decide the working model. D-O-01 (`option_b_qwen25_7b_together`)
       was superseded by D-33: working model is
       `Qwen/Qwen3-235B-A22B-Instruct-2507-tput`.
-- [ ] Re-lock the machine-readable block: add a Qwen3-235B condition
-      (new `roster_id`) with vendor-verified provider ID, model-card URL,
-      snapshot date, and pricing from live Together docs.
-- [ ] Verify the model ID resolves on Together serverless and pricing
-      against live vendor docs as of the run date.
+- [x] Re-lock the machine-readable block: `roster_v2` adds
+      `primary_qwen3_235b_together` with vendor-verified provider ID,
+      model-card URL, snapshot date (2026-07-05), and pricing
+      ($0.20/$0.60 per 1M) from the live Together model page.
+- [x] Verify the model ID resolves on Together serverless: the live page
+      lists Serverless deployment for endpoint
+      `QWEN/QWEN3-235B-A22B-INSTRUCT-2507-TPUT` (verified 2026-07-05).
 - [ ] Record the SHA-256 of this file and the commit SHA before any
       paper-claim model run.
 - [ ] Ensure every paper-claim trajectory records the roster hash.

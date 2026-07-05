@@ -75,7 +75,13 @@ def test_provider_probe_without_live_network_marks_lock_evidence_pending() -> No
 def test_provider_probe_uses_only_mocked_read_only_metadata_and_docs() -> None:
     bodies = {
         "https://api.together.xyz/v1/models": json.dumps(
-            {"data": [{"id": "Qwen/Qwen2.5-7B-Instruct-Turbo"}]}
+            {"data": [
+                {"id": "Qwen/Qwen3-235B-A22B-Instruct-2507-tput"},
+                {"id": "Qwen/Qwen2.5-7B-Instruct-Turbo"},
+            ]}
+        ),
+        "https://www.together.ai/models/qwen3-235b-a22b-instruct-2507-fp8": (
+            "Qwen/Qwen3-235B-A22B-Instruct-2507-tput input 0.20 output 0.60 Qwen"
         ),
         "https://www.together.ai/models/qwen2-5-7b-instruct-turbo": (
             "Qwen/Qwen2.5-7B-Instruct-Turbo"

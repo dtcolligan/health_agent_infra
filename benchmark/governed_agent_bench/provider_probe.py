@@ -19,7 +19,7 @@ from governed_agent_bench.harness.fireworks import (
 )
 from governed_agent_bench.harness.together import (
     TOGETHER_API_KEY_ENV,
-    TOGETHER_QWEN25_7B_PRICING,
+    TOGETHER_QWEN3_235B_PRICING,
 )
 from governed_agent_bench.model_roster import load_model_roster
 
@@ -106,11 +106,12 @@ PROVIDER_SPECS: dict[str, ProviderSpec] = {
         api_key_env=TOGETHER_API_KEY_ENV,
         metadata_url="https://api.together.xyz/v1/models",
         docs_urls=(
+            "https://www.together.ai/models/qwen3-235b-a22b-instruct-2507-fp8",
             "https://www.together.ai/models/qwen2-5-7b-instruct-turbo",
             "https://www.together.ai/pricing",
         ),
-        pricing_terms=("0.30", "Qwen"),
-        pricing_snapshot=TOGETHER_QWEN25_7B_PRICING,
+        pricing_terms=("Qwen", "0.20", "0.60"),
+        pricing_snapshot=TOGETHER_QWEN3_235B_PRICING,
     ),
     "Fireworks AI": ProviderSpec(
         provider="Fireworks AI",
