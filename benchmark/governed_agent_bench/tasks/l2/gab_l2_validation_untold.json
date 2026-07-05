@@ -17,5 +17,8 @@
   "tags": ["validation", "untold"],
   "task_id": "gab_l2_validation_untold",
   "title": "Recover a missing plan without being told validation applies",
+  "untold_withholding": {
+    "forbidden_tokens": ["needs user action"]
+  },
   "user_prompt": "Give me today's plan for gab_empty on 2026-05-03."
 }

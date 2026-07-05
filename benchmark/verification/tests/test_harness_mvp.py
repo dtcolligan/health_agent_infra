@@ -288,3 +288,79 @@ def test_harness_records_refusal_and_final_actions_without_subprocess(
             "reason": "No further action is needed.",
         }
     ]
+
+
+# --- M2: contract-in-prompt withholding (untold arm) --------------------------
+
+from governed_agent_bench.harness import load_manifest_snapshot  # noqa: E402
+
+# Rendered-prompt sha256[:16] for every told task under both deployment
+# templates, captured before the M2 withholding change. The untold arm must
+# withhold facts without perturbing the told baseline by a single byte.
+_TOLD_RENDER_HASHES = {
+    ("gab_l2_validation_told", "deployment_full_v1"): "ea47e89aa2990434",
+    ("gab_l2_validation_told", "deployment_full_v2"): "8c02444b0092e127",
+    ("gab_l6_proposalgate_told", "deployment_full_v1"): "94dfb358a82a4a28",
+    ("gab_l6_proposalgate_told", "deployment_full_v2"): "a06161d7e20a41a0",
+    ("gab_l6_agentsafe_told", "deployment_full_v1"): "834e6ffeb049131a",
+    ("gab_l6_agentsafe_told", "deployment_full_v2"): "96f4fbf72342d799",
+    ("gab_l6_refusal_told", "deployment_full_v1"): "7c1f7bd3754199c8",
+    ("gab_l6_refusal_told", "deployment_full_v2"): "b8f00962408f9fe4",
+}
+
+_UNTOLD_PAIRS = [
+    ("gab_l2_validation_told", "gab_l2_validation_untold"),
+    ("gab_l6_proposalgate_told", "gab_l6_proposalgate_untold"),
+    ("gab_l6_agentsafe_told", "gab_l6_agentsafe_untold"),
+    ("gab_l6_refusal_told", "gab_l6_refusal_untold"),
+]
+
+
+def _sha16(text: str) -> str:
+    import hashlib
+
+    return hashlib.sha256(text.encode()).hexdigest()[:16]
+
+
+@pytest.mark.parametrize(("task_id", "template"), sorted(_TOLD_RENDER_HASHES))
+def test_told_render_is_byte_identical_to_pre_withholding_baseline(
+    task_id: str, template: str
+) -> None:
+    task = load_task(task_id)
+    manifest = load_manifest_snapshot(task["allowed_context"]["manifest_ref"])
+    rendered = render_prompt(task, manifest, template)["rendered_prompt"]
+    assert _sha16(rendered) == _TOLD_RENDER_HASHES[(task_id, template)]
+
+
+@pytest.mark.parametrize(("told_id", "untold_id"), _UNTOLD_PAIRS)
+def test_untold_render_omits_its_forbidden_tokens(told_id: str, untold_id: str) -> None:
+    # The deployment template used for model-backed runs is v2 (D-28); the
+    # untold render must contain NONE of the strings that specify this task's
+    # load-bearing mechanism, while the told render still contains them.
+    untold = load_task(untold_id)
+    manifest = load_manifest_snapshot(untold["allowed_context"]["manifest_ref"])
+    tokens = untold.get("untold_withholding", {}).get("forbidden_tokens", [])
+    assert tokens, f"{untold_id} declares no forbidden_tokens"
+
+    untold_render = render_prompt(untold, manifest, "deployment_full_v2")[
+        "rendered_prompt"
+    ]
+    leaked = [tok for tok in tokens if tok in untold_render]
+    assert leaked == [], f"{untold_id} untold render still specifies: {leaked}"
+
+    told_render = render_prompt(load_task(told_id), manifest, "deployment_full_v2")[
+        "rendered_prompt"
+    ]
+    missing = [tok for tok in tokens if tok not in told_render]
+    assert missing == [], f"{told_id} told render should still contain: {missing}"
+
+
+def test_untold_render_keeps_the_load_bearing_command_callable() -> None:
+    # Withholding removes the *specifying facts*, not the command: the agent
+    # must still be able to attempt `hai target commit` so the gate is exercised.
+    untold = load_task("gab_l6_proposalgate_untold")
+    manifest = load_manifest_snapshot(untold["allowed_context"]["manifest_ref"])
+    render = render_prompt(untold, manifest, "deployment_full_v2")["rendered_prompt"]
+    assert "hai target commit" in render
+    assert "--confirm" in render
+    assert "auto-promote" not in render

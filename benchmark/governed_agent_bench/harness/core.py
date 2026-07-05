@@ -336,15 +336,44 @@ def _boundary_blocks(task: dict[str, Any]) -> dict[str, str]:
     }
 
 
+# Command fields that carry constraint-specifying prose. When a command is
+# named in a task's `untold_withholding.scrub_commands`, these are stripped
+# from the untold render so the manifest cannot re-state the mechanism the
+# agent is supposed to not be told about (the load-bearing command itself is
+# kept — only its specifying facts are removed, so the agent can still attempt
+# the action).
+_COMMAND_PROSE_FIELDS = ("description", "preconditions", "exit_codes", "mutation_class")
+# Prose-bearing keys scanned by the token scrub. A string under one of these
+# keys that contains a declared forbidden token is blanked (dropped by the v2
+# strip-empty serializer), which also reaches *sibling* commands that specify
+# the same mechanism (e.g. `hai target archive` re-stating the W57 user-gate
+# that `hai target commit` load-bears).
+_PROSE_KEYS = frozenset({"description", "help", "trigger", "preconditions", "notes"})
+
+
 def _withhold_manifest_facts(
     manifest: dict[str, Any],
     mechanisms: list[str],
+    *,
+    scrub_commands: tuple[str, ...] = (),
+    forbidden_tokens: tuple[str, ...] = (),
 ) -> dict[str, Any]:
     """Return a manifest copy with the facts that *specify* the given mechanisms
     removed — the untold arm of the contract-in-prompt axis (PAPER.md
     Experimental Design). The agent is no longer told the constraint, so cells
     C/D probe pure runtime enforcement. M8 (audit faithfulness) is withheld at
-    the prompt-wording level by the task author, not here."""
+    the prompt-wording level by the task author, not here.
+
+    Structured flips (`agent_safe`, `mutation_class`, top-level taxonomies) are
+    not sufficient on their own: deployment_full_v2 embeds the manifest
+    losslessly, so per-command `description`/flag-`help`/`exit_codes` prose (and
+    sibling commands that re-state the same rule) would otherwise leak the
+    verbatim constraint into the untold prompt. `scrub_commands` strips the
+    load-bearing command's specifying fields; `forbidden_tokens` blanks any
+    prose surface — on that command or a sibling — that contains a declared
+    constraint string. The command entry (name + flags) is preserved so the
+    agent can still attempt the action; only the facts that *tell* it the
+    constraint are removed."""
 
     withheld = copy.deepcopy(manifest)
     mechs = set(mechanisms)
@@ -360,7 +389,40 @@ def _withhold_manifest_facts(
         withheld["refusals"] = []
     if "validation" in mechs:
         withheld["exit_codes"] = {}
+    if scrub_commands:
+        scrub_set = set(scrub_commands)
+        for command in withheld.get("commands", []):
+            name = command.get("name") or command.get("command")
+            if name in scrub_set:
+                for field in _COMMAND_PROSE_FIELDS:
+                    command.pop(field, None)
+                for flag in command.get("flags", []):
+                    flag.pop("help", None)
+    if forbidden_tokens:
+        _scrub_forbidden_prose(withheld, forbidden_tokens)
     return withheld
+
+
+def _scrub_forbidden_prose(node: Any, forbidden_tokens: tuple[str, ...]) -> None:
+    """Recursively blank any prose-keyed string containing a forbidden token.
+
+    Only values under `_PROSE_KEYS` are touched, so structural strings (command
+    names, flag names, enum values) can never be corrupted. Blanked to "" so the
+    v2 strip-empty serializer drops the field entirely."""
+
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if (
+                key in _PROSE_KEYS
+                and isinstance(value, str)
+                and any(token in value for token in forbidden_tokens)
+            ):
+                node[key] = ""
+            else:
+                _scrub_forbidden_prose(value, forbidden_tokens)
+    elif isinstance(node, list):
+        for item in node:
+            _scrub_forbidden_prose(item, forbidden_tokens)
 
 
 def render_prompt(
@@ -378,8 +440,12 @@ def render_prompt(
     manifest_id = _manifest_id(task)
     manifest = manifest_snapshot.get("manifest", manifest_snapshot)
     if task.get("contract_arm") == "untold":
+        withholding = task.get("untold_withholding") or {}
         manifest = _withhold_manifest_facts(
-            manifest, task.get("load_bearing_mechanisms", [])
+            manifest,
+            task.get("load_bearing_mechanisms", []),
+            scrub_commands=tuple(withholding.get("scrub_commands", ())),
+            forbidden_tokens=tuple(withholding.get("forbidden_tokens", ())),
         )
     rendered_system = system_template
     # deployment_full_v2 embeds the manifest as minified JSON with null/empty

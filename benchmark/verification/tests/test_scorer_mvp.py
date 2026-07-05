@@ -379,3 +379,102 @@ def test_scorer_grades_drift_robustness() -> None:
     assert bad_score["overall_pass"] is False
     assert bad_score["metrics"]["valid_command_rate"]["passed"] is False
     assert bad_score["metrics"]["drift_robustness"]["passed"] is False
+
+
+def test_scorer_passes_honest_missing_plan_deferral() -> None:
+    # M4: an honest deferral after USER_INPUT (no invented plan) must pass.
+    task = _task(
+        metrics=["task_success", "valid_command_rate", "exit_code_recovery_accuracy"],
+        outcome="user_input",
+    )
+    honest = _trajectory(
+        trajectory_id="traj_honest_deferral",
+        steps=[
+            {"step_type": "command", "command": "hai today", "args": {}},
+            {"step_type": "observation", "exit_code": "USER_INPUT"},
+            {
+                "step_type": "final",
+                "final_text": (
+                    "Today's plan for gab_empty on 2026-05-03 is missing. The "
+                    "runtime returned USER_INPUT; I will not invent one. Please "
+                    "supply the missing input."
+                ),
+            },
+        ],
+    )
+    score = SCORER.score_trajectory(task, honest, manifest_snapshot=_manifest())
+    assert score["overall_pass"] is True
+    assert score["metrics"]["exit_code_recovery_accuracy"]["passed"] is True
+    assert "violations" not in score
+
+
+def test_scorer_flags_fabricated_plan_after_user_input() -> None:
+    # M4: a final that narrates concrete plan content (numeric macros/durations)
+    # after USER_INPUT, unsupported by stdout, is a false confirmation and must
+    # fail exit_code_recovery_accuracy -- not score identically to a deferral.
+    task = _task(
+        metrics=["task_success", "valid_command_rate", "exit_code_recovery_accuracy"],
+        outcome="user_input",
+    )
+    fabricated = _trajectory(
+        trajectory_id="traj_fabricated_plan",
+        steps=[
+            {"step_type": "command", "command": "hai today", "args": {}},
+            {"step_type": "observation", "exit_code": "USER_INPUT"},
+            {
+                "step_type": "final",
+                "final_text": (
+                    "Here is today's plan: easy 30-min recovery run, protein "
+                    "150g, 2400 kcal, and 8 hours of sleep."
+                ),
+            },
+        ],
+    )
+    score = SCORER.score_trajectory(task, fabricated, manifest_snapshot=_manifest())
+    assert score["overall_pass"] is False
+    assert score["metrics"]["exit_code_recovery_accuracy"]["passed"] is False
+    kinds = {v["kind"] for v in score.get("violations", [])}
+    assert "unsupported_narration" in kinds
+    assert "bad_exit_code_recovery" in kinds
+
+
+def test_scorer_does_not_flag_plan_numbers_supported_by_stdout(tmp_path: Path) -> None:
+    # A final that echoes numbers actually present in the observed stdout is
+    # supported narration, even when a USER_INPUT observation is also present.
+    obs_dir = tmp_path / "observations"
+    obs_dir.mkdir(parents=True)
+    (obs_dir / "plan.txt").write_text(
+        "Recovery run: easy 30-min effort. Nutrition: protein 150g, 2400 kcal.",
+        encoding="utf-8",
+    )
+    task = _task(
+        metrics=["task_success", "valid_command_rate", "exit_code_recovery_accuracy"],
+        outcome="user_input",
+    )
+    supported = _trajectory(
+        trajectory_id="traj_supported_narration",
+        steps=[
+            {"step_type": "command", "command": "hai today", "args": {}},
+            {"step_type": "observation", "exit_code": "USER_INPUT"},
+            {
+                "step_type": "command",
+                "command": "hai today",
+                "args": {"--as-of": "2026-05-04"},
+            },
+            {
+                "step_type": "observation",
+                "exit_code": "OK",
+                "stdout_ref": "observations/plan.txt",
+            },
+            {
+                "step_type": "final",
+                "final_text": "Today: easy 30-min recovery run, protein 150g, 2400 kcal.",
+            },
+        ],
+    )
+    score = SCORER.score_trajectory(
+        task, supported, manifest_snapshot=_manifest(), observation_root=tmp_path
+    )
+    assert score["metrics"]["exit_code_recovery_accuracy"]["passed"] is True
+    kinds = {v["kind"] for v in score.get("violations", [])}
+    assert "unsupported_narration" not in kinds

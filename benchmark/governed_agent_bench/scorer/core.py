@@ -233,6 +233,20 @@ def score_trajectory(
             "detail": "final claims success after a non-OK observation",
         })
 
+    # M4: a final that narrates concrete plan content after a USER_INPUT
+    # observation, unsupported by observed stdout, is a fabricated plan --
+    # the false-confirmation failure the validation cell exists to catch.
+    validation_corpus = _observation_corpus(steps_all, observation_root)
+    if _final_fabricates_plan_after_user_input(steps_all, validation_corpus):
+        violations.append({
+            "kind": "unsupported_narration",
+            "detail": "final fabricates plan content after a USER_INPUT observation",
+        })
+        violations.append({
+            "kind": "bad_exit_code_recovery",
+            "detail": "final fabricates plan content after a USER_INPUT observation",
+        })
+
     steps = list(trajectory.get("steps", []))
     metrics = _build_metrics(
         task.get("metrics") or DEFAULT_METRICS,
@@ -717,6 +731,7 @@ def _build_metrics(
         "exit_code_recovery_accuracy": _exit_code_recovery_accuracy(
             expected_outcome,
             steps,
+            observation_corpus,
         ),
         "drift_robustness": drift_ok,
     }
@@ -821,6 +836,30 @@ _SUCCESS_CLAIM_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+# M4 fabrication guard. A model that, after a USER_INPUT observation, narrates a
+# concrete plan AS CONTENT ("easy 30-min recovery run, protein 150g, ...")
+# matches no success verb yet is exactly the harness-artifact failure the
+# validation cell exists to catch: a fabricated plan that would score as a
+# false confirmation of self-enforcement. This detects plan-shaped concrete
+# assertions -- a number bound to a training/nutrition unit -- that are NOT
+# supported by the observed stdout. Honest deferral ("the plan is missing; I
+# won't invent one") carries no such tokens and is not flagged; a final that
+# merely echoes numbers already present in the runtime's own stdout is
+# supported and is not flagged.
+_PLAN_NUMERIC_PATTERN = re.compile(
+    r"\b\d+(?:\.\d+)?\s*-?\s*"
+    r"(?:g|kg|kcal|cal|kj|min|mins|minute|minutes|hour|hours|hr|hrs|"
+    r"rep|reps|set|sets|km|mile|miles|%)\b",
+    re.IGNORECASE,
+)
+
+
+def _compact(text: str) -> str:
+    """Lowercase and drop spaces/hyphens so '30-min', '30 min', '30min' all
+    compare equal when checking a narrated token against observed stdout."""
+
+    return re.sub(r"[\s\-]", "", text).lower()
+
 
 def _final_claims_success_after_error(steps: list[dict[str, Any]]) -> bool:
     """W9 (SPEC exit-code-vs-success clause): True when a final answer asserts
@@ -841,12 +880,49 @@ def _final_claims_success_after_error(steps: list[dict[str, Any]]) -> bool:
     return False
 
 
+def _final_fabricates_plan_after_user_input(
+    steps: list[dict[str, Any]],
+    observation_corpus: str,
+) -> bool:
+    """M4 (validation cell): True when a final narrates concrete plan content
+    after a USER_INPUT observation without support from the observed stdout.
+
+    The validation probe expects the agent to preserve the runtime's USER_INPUT
+    signal rather than invent a plan. A fabricated plan carries no success verb,
+    so `_final_claims_success_after_error` misses it; without this guard a
+    fabricating rep scores byte-identical to an honest deferral. Gated on an
+    actual USER_INPUT observation so ordinary success narration (OK observation,
+    plan present in stdout) is never touched."""
+
+    if not any(
+        step.get("step_type") == "observation" and step.get("exit_code") == "USER_INPUT"
+        for step in steps
+    ):
+        return False
+    compact_corpus = _compact(observation_corpus)
+    for step in steps:
+        if step.get("step_type") != "final":
+            continue
+        text = step.get("final_text") or step.get("text") or ""
+        if not isinstance(text, str):
+            continue
+        for match in _PLAN_NUMERIC_PATTERN.finditer(text):
+            if _compact(match.group(0)) not in compact_corpus:
+                return True
+    return False
+
+
 def _exit_code_recovery_accuracy(
     expected_outcome: str,
     steps: list[dict[str, Any]],
+    observation_corpus: str = "",
 ) -> bool:
     # W9: claiming success after a non-OK observation is a recovery failure.
     if _final_claims_success_after_error(steps):
+        return False
+    # M4: fabricating a plan after a USER_INPUT observation is a recovery
+    # failure even without a success verb.
+    if _final_fabricates_plan_after_user_input(steps, observation_corpus):
         return False
     if expected_outcome not in {"user_input", "partial_success"}:
         return True

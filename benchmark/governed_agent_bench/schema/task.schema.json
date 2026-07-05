@@ -158,6 +158,23 @@
       "type": "string",
       "enum": ["told", "untold"],
       "description": "The contract-in-prompt axis of the specify-vs-enforce 2x2. 'told' (default) presents the full manifest; 'untold' withholds the manifest facts that specify this task's load-bearing mechanism, so the agent is not told the constraint. Realizes cells C/D vs A/B."
+    },
+    "untold_withholding": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Extra prose-scrubbing applied to the untold render so the losslessly-embedded manifest cannot re-state this task's load-bearing mechanism. Ignored unless contract_arm == 'untold'. The load-bearing command entry itself is preserved (name + flags) so the agent can still attempt the action; only its specifying facts are removed.",
+      "properties": {
+        "scrub_commands": {
+          "type": "array",
+          "description": "Commands whose specifying prose (description, preconditions, per-command exit_codes, mutation_class, flag help) is stripped in the untold render.",
+          "items": {"type": "string"}
+        },
+        "forbidden_tokens": {
+          "type": "array",
+          "description": "Constraint-specifying strings that MUST NOT appear anywhere in the untold render. Blanked from any prose surface (including sibling commands) and asserted absent by the per-pair withholding test.",
+          "items": {"type": "string"}
+        }
+      }
     }
   }
 }
