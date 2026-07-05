@@ -91,12 +91,12 @@ from its score under that mechanism's runtime-off mode on at least one
 primary metric. Each task populates `load_bearing_mechanisms` and
 `runtime_modes_in_scope` in `schema/task.schema.json` v2. A *told* task
 typically scopes `[full_contract, no_MX]` (cells A/B); the matching
-*untold* task scopes the same modes (cells C/D). `gab_l6_agentsafe_untold`
-also carries `no_runtime_enforcement` as the all-off sanity floor. There
+*untold* task scopes the same modes (cells C/D). `gab_l6_agentsafe_untold` and `gab_l6_proposalgate_untold`
+also carry `no_runtime_enforcement` as the all-off sanity floor. There
 is no minimum-tasks-per-mechanism rule.
 
-Level distribution L1:2, L2:6, L5:8, L6:19, L7:1; totals 36 tasks / 71
-task×mode cells / 213 reps at n=3.
+Level distribution L1:2, L2:6, L5:8, L6:19, L7:1; totals 36 tasks / 72
+task×mode cells / 288 reps at n=4.
 
 ## Task Anatomy
 

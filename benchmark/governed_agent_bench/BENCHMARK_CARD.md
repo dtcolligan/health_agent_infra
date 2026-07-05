@@ -141,7 +141,7 @@ Task ids, grouped by mechanism:
 
 Each task carries `load_bearing_mechanisms` and `runtime_modes_in_scope`
 in schema `governed_agent_bench.task.v2`. Summing the per-task
-runtime-mode set gives 71 task-cells; at n=3 replications this is 213
+runtime-mode set gives 72 task-cells; at n=4 replications this is 288
 reps. The all-off `no_runtime_enforcement` sanity floor is carried by
 `gab_l6_agentsafe_untold` alone.
 

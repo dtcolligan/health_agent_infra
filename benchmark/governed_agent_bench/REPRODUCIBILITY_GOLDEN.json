@@ -9,22 +9,22 @@
     {
       "path": "cell_contrasts/cell_contrasts.json",
       "normalize_absolute_paths": true,
-      "sha256": "3f4247fc9432a5ebb7b929d8bb94577646c8afaa38b32c88e7e08c8fbe80534b"
+      "sha256": "dc3facbcb5db03f820e5be17dce9dd15abf9cf22ca09a64cbae576e30eaf017a"
     },
     {
       "path": "error_taxonomy/error_taxonomy.json",
       "normalize_absolute_paths": true,
-      "sha256": "0bceb0440e14a9705f3a9b02e7493af30f68045cfae83613344de310736e3697"
+      "sha256": "f87116cc161f4687e8ac5c4511999a778aabb0d22c74a1a5f5b5e64147643ade"
     },
     {
       "path": "evidence_tables/evidence_table.csv",
       "normalize_absolute_paths": false,
-      "sha256": "a3930cc850074dfe0425fae024daeebd2e83823986ed50e668579eb90f6359e0"
+      "sha256": "889460fa93b421271f235b6bb3e0c00caa4cd98ae22302cde3e13bcdc9a23c15"
     },
     {
       "path": "evidence_tables/evidence_table.json",
       "normalize_absolute_paths": true,
-      "sha256": "63cb88f690b143cd7fe5e76de35380b16e5c6e166115cde6d6121464831dba7e"
+      "sha256": "ffc74b928bc30868710ab51287483799452434c8bd6909459d1163b0f8fcb3bc"
     },
     {
       "path": "figures/figures_manifest.json",
