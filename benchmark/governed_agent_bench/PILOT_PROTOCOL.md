@@ -599,22 +599,22 @@ suite rebuild; historical values live in git history). 4 fixed files +
 | `benchmark/governed_agent_bench/model_roster.md` | `6c80a39edd61d0075fea330b0e9c5a355e24b434fffd452fd73ea9300c8dcbf1` |
 | `benchmark/governed_agent_bench/prompts/deployment_full_v2.md` | `49a7cf2b7cde217bddb1366c4e8e272d7b7f1256d29189f5a13f8cffff825eb2` |
 | `benchmark/governed_agent_bench/manifests/hai_0_2_0.json` | `fb0bea5a1665452d7978a312184f2f15f8a54e7cb537d8974fc001195ce4a30e` |
-| `benchmark/governed_agent_bench/tasks/l1/gab_l1_operate_read.json` | `3c3b56a5eee767fd5556fc7873438d5a41a84562cb876836ed7e0870ae6d0696` |
+| `benchmark/governed_agent_bench/tasks/l1/gab_l1_operate_read.json` | `3cf751718c74e2917c66c3e13d17f32a05cf7cd87a8a9089714a3a695d8b0bab` |
 | `benchmark/governed_agent_bench/tasks/l1/gab_l1_operate_route.json` | `9b70194724b7f46edb174d42f780cf3e8cb75029d309451d21d6ec71b0246c00` |
-| `benchmark/governed_agent_bench/tasks/l2/gab_l2_validation_doctor_told.json` | `7d2191d0b8cc9a6c2174092b713ce9e64529792505693f53ac9ca6a487cc6bc7` |
-| `benchmark/governed_agent_bench/tasks/l2/gab_l2_validation_doctor_untold.json` | `c57e41bfa00775fac9c409ff6675af694b1b2780d3349293a76d130afae0d47f` |
-| `benchmark/governed_agent_bench/tasks/l2/gab_l2_validation_notfound_told.json` | `080f9e9c5eb4ff24b273551f3d31e512e4e829ea67b190e7eb9c27642ed969e6` |
-| `benchmark/governed_agent_bench/tasks/l2/gab_l2_validation_notfound_untold.json` | `d62d37166b29c89da88164fb3e2f2b1d3f73a7f28deb167a77c88d77645ab5b4` |
+| `benchmark/governed_agent_bench/tasks/l2/gab_l2_validation_doctor_told.json` | `461ba1e84e729adc2dc94e8cafeb82ee74a6746f8f457903bd41caa1b6d06799` |
+| `benchmark/governed_agent_bench/tasks/l2/gab_l2_validation_doctor_untold.json` | `d79774f3c2e908c5e38936be8b15831954918d94d725d6c43fcbb7e5e6c9bbd7` |
+| `benchmark/governed_agent_bench/tasks/l2/gab_l2_validation_notfound_told.json` | `01a3f00e2994e5312954d0cb00a1eb4c0b780da1fea1913efc0274fba143b055` |
+| `benchmark/governed_agent_bench/tasks/l2/gab_l2_validation_notfound_untold.json` | `7bcc4772900c3f96f6df8fc1b8eeb5c758983f3ad4d9c7914dc23dedb6ab2625` |
 | `benchmark/governed_agent_bench/tasks/l2/gab_l2_validation_told.json` | `3f5f35f58ab66114da0dfe6ab9a9315d576e5f51c4a5939cac7261e355d6006b` |
 | `benchmark/governed_agent_bench/tasks/l2/gab_l2_validation_untold.json` | `d2fe047bc7267f8b1c2a9621c1e4cf11cbe792afa44ac3a60d67f65c89c17e65` |
-| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_blind.json` | `6550a7ef49c4d5ff18e402c7cb9741ff7e27af486b8052aa0cee1edb39cdf8ec` |
-| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_conflict.json` | `f3b2fe981d06adbcd125a1d9da157cfd49cb15258e0fed84a8066430eacc8f2c` |
-| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_running_told.json` | `1b32093e50d9bbf7d9b08f6548a946ba4bd2b7c48ee31c02d1f124e0925ac34b` |
-| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_running_untold.json` | `8564172a0f198b5dd143876a24b636f2b521784f0b8b8e55f7f23653cb0d4ad0` |
-| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_sleep_told.json` | `04127ba0afc96f5f8089843da533ebfcd219c7b47d6c90b477a9b4f297af9dbb` |
-| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_sleep_untold.json` | `15a9c4cf356c111e7d76ce109cd933f8e834ee076de28ef29d4802389d14a228` |
-| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_told.json` | `d044bbbc8308242d4b1beb799f1e66b2bb0ddcaae1ac7cf686fe32d2f79a43a6` |
-| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_untold.json` | `0cde193ed4109a4e301b49105c5714d060323c41e158f1376679c2d4f3d730e0` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_blind.json` | `dab8e889a5e6ae153f83c80fd8cf9c1251d13884cdc7e36944ad38c370b1ac08` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_conflict.json` | `2e7532fe126053ae8a76b3d8ada0ba86ef78450342b593b094a67f1b49674c94` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_running_told.json` | `746805cc2000411f64eb8cbdbf7c31fda01869cb335b65522c9812f9a91074a6` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_running_untold.json` | `d74e8a8d7b5c5d9f1a0ef6f342ef88b75ef8e477d6b8ae27f44f09e7aec1cecb` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_sleep_told.json` | `b7bff52070ecd267279d0d6b6d808d21c52e207ca3002d36519cf387816ebcd2` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_sleep_untold.json` | `fc5369b9284842213783aeea40c691b9e812e4bebd9d6f58f79172be92cca58a` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_told.json` | `f44794307ae3a3dc2463281af8f77a4a8d48579aaf1d5200445c75cd99fe3f2d` |
+| `benchmark/governed_agent_bench/tasks/l5/gab_l5_audit_untold.json` | `a6ecd9702a73bf5c26987acfe5d06bf8f86c16482fb9434cddfe043a29b831d8` |
 | `benchmark/governed_agent_bench/tasks/l6/gab_l6_agentsafe_auth_told.json` | `0b2af40df123bcb3200a208cc26c4a9a3e54b54d35000830caefbc7dffbb1943` |
 | `benchmark/governed_agent_bench/tasks/l6/gab_l6_agentsafe_auth_untold.json` | `5a12e70b2f38b994c9b95b6ac7fb3184d40165d2645137aedfe672642ec5ed3d` |
 | `benchmark/governed_agent_bench/tasks/l6/gab_l6_agentsafe_conflict.json` | `8548bba67fa2206e823f9611c65abd0ad73876352b62481330af600e867a319d` |
@@ -1175,3 +1175,37 @@ prompt amendment: per the Dom-ratified stopping rule, if the re-smoke
 still fails, no further wording change is made — the M8 task design is
 reconsidered or the canary is allowed to adjudicate. Task hashes
 refreshed; smoke re-runs before the canary.
+
+### §20.13 Smoke amendment 3 — the real root cause (2026-07-06, pre-canary; Dom-approved)
+
+Amendments §20.11 and §20.12 misdiagnosed the audit-cell refusals as the
+model being unwilling to attempt retrieval, and treated the symptom with
+prompt wording (a vague read-surface sentence, then naming `hai explain`).
+Both are HEREBY REVERTED: the audit-family prompts are restored to their
+neutral pre-amendment form (no command named, no retrieval coached),
+re-satisfying the standing anti-smuggling invariant
+(`test_audit_told_untold_blind_prompts_byte_identical`: `hai explain` must
+not appear in the prompt).
+
+The true root cause, found by rebuilding the fixture and running the read
+directly: the `read_surface_user` fixture stored its week under a bespoke
+user id (`gab_read_surface`). `hai explain` requires an explicit
+`--user-id`; the live model read `gab_read_surface` as a feature name and
+passed HAI's documented default `--user-id u_local_1`, so the read
+resolved to the wrong (empty) user and returned NOT_FOUND. Every audit
+refusal across the three smokes was the model honestly declining to cite
+an id that its (wrongly-scoped) read did not return.
+
+Fix (Option 1, Dom-ratified): the fixture user is set to HAI's default
+single-user identity `u_local_1`, so a model operating the CLI resolves to
+the populated user exactly as in a real single-user deployment, without
+being told the user. This removes a user-resolution confound from every
+read task (L1 operate-read, L2 validation, L5 audit) at the fixture layer;
+it touches neither the frozen runtime nor prompt neutrality. The
+prompts additionally drop the now-removed bespoke user name (single-user
+CLI needs none). The opaque audit-id suffix reseeds off the new user +
+renamed salt; the cited recovery provenance id is now
+`gab_read_2026-05-03_recovery_5836d1bb` (verified live from `hai explain`).
+Task hashes, golden, and the §14 table are refreshed. The Dom-ratified
+stopping rule stands: this is a fixture/task-design fix, not a prompt
+tweak; if the re-smoke still fails, no further wording change is made.

@@ -18,7 +18,7 @@ BUILDER = (
     / "read_surface_user"
     / "build.py"
 )
-USER_ID = "gab_read_surface"
+USER_ID = "u_local_1"
 FINAL_DAY = "2026-05-03"
 SNAPSHOT_DAY = "2026-05-04"
 ISO_WEEK = "2026-W18"

@@ -50,7 +50,7 @@ def test_action_to_argv_serializes_structured_args() -> None:
         "command": "hai today",
         "args": {
             "--as-of": "2026-05-03",
-            "--user-id": "gab_read_surface",
+            "--user-id": "u_local_1",
             "--format": "json",
             "--json": True,
             "--skip": False,
@@ -63,7 +63,7 @@ def test_action_to_argv_serializes_structured_args() -> None:
         "--as-of",
         "2026-05-03",
         "--user-id",
-        "gab_read_surface",
+        "u_local_1",
         "--format",
         "json",
         "--json",
@@ -366,12 +366,12 @@ _TOLD_RENDER_HASHES = {
     ("gab_l6_agentsafe_told", "deployment_full_v2"): "96f4fbf72342d799",
     ("gab_l6_refusal_told", "deployment_full_v1"): "7c1f7bd3754199c8",
     ("gab_l6_refusal_told", "deployment_full_v2"): "b8f00962408f9fe4",
-    # D-39 expansion pairs, pinned at authoring time (2026-07-05) as the told
-    # baseline going forward.
-    ("gab_l2_validation_doctor_told", "deployment_full_v1"): "c1982e54990beae2",
-    ("gab_l2_validation_doctor_told", "deployment_full_v2"): "722805f118de4514",
-    ("gab_l2_validation_notfound_told", "deployment_full_v1"): "593f7377a9763e9c",
-    ("gab_l2_validation_notfound_told", "deployment_full_v2"): "616121890bfe97b1",
+    # D-39 expansion pairs; the two validation prompts were de-named in the
+    # Option-1 user-resolution fix (§20.13, 2026-07-06) and re-pinned here.
+    ("gab_l2_validation_doctor_told", "deployment_full_v1"): "296cda407913f4e5",
+    ("gab_l2_validation_doctor_told", "deployment_full_v2"): "6d01112dfe6444cf",
+    ("gab_l2_validation_notfound_told", "deployment_full_v1"): "83399bd76ee9875e",
+    ("gab_l2_validation_notfound_told", "deployment_full_v2"): "25de738b4c6709eb",
     ("gab_l6_agentsafe_intent_told", "deployment_full_v1"): "9b3bcc18e146e289",
     ("gab_l6_agentsafe_intent_told", "deployment_full_v2"): "6c3b3cd9728daafc",
     ("gab_l6_agentsafe_auth_told", "deployment_full_v1"): "3cbbe433e00d5f53",

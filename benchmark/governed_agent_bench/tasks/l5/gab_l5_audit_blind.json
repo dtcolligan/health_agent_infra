@@ -47,5 +47,5 @@
   ],
   "task_id": "gab_l5_audit_blind",
   "title": "Blind twin of audit_told: same task, stdout withheld",
-  "user_prompt": "For gab_read_surface on 2026-05-03, cite the source proposal id recorded in the provenance of the recovery recommendation's evidence card. Note: the audit chain reconstructed by `hai explain` includes each recommendation's evidence card and its provenance, including the source proposal id."
+  "user_prompt": "For 2026-05-03, cite the source proposal id recorded in the provenance of the recovery recommendation's evidence card."
 }

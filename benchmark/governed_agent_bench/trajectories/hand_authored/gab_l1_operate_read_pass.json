@@ -16,7 +16,7 @@
       "command": "hai today",
       "args": {
         "--as-of": "2026-05-03",
-        "--user-id": "gab_read_surface",
+        "--user-id": "u_local_1",
         "--format": "json"
       },
       "reason": "Read the fixture user's daily plan as JSON."

@@ -46,5 +46,5 @@
   ],
   "task_id": "gab_l5_audit_running_told",
   "title": "Cite the running evidence card faithfully",
-  "user_prompt": "For gab_read_surface on 2026-05-03, cite the source proposal id recorded in the provenance of the running recommendation's evidence card. Note: the audit chain reconstructed by `hai explain` includes each recommendation's evidence card and its provenance, including the source proposal id."
+  "user_prompt": "For 2026-05-03, cite the source proposal id recorded in the provenance of the running recommendation's evidence card."
 }

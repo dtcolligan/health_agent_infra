@@ -18,7 +18,15 @@ from pathlib import Path
 from typing import Any
 
 
-USER_ID = "gab_read_surface"
+# The fixture user is HAI's default single-user identity. A model operating
+# the CLI resolves to this user without being told it, exactly as in a real
+# single-user HAI deployment. An earlier fixture invented a distinct user id
+# (`gab_read_surface`), which the live model read as a feature name and never
+# passed as `--user-id`, so `hai explain` resolved to the default `u_local_1`
+# and returned NOT_FOUND (Option 1 fix, PILOT_PROTOCOL §20.13): aligning the
+# fixture user with the runtime default removes that user-resolution confound
+# from every read task without touching the frozen runtime.
+USER_ID = "u_local_1"
 WEEK_START = date(2026, 4, 27)
 DAYS = 7
 ISO_WEEK = "2026-W18"
@@ -30,7 +38,7 @@ ISO_WEEK = "2026-W18"
 # demonstration. We append a salted, content-seeded hash suffix: deterministic
 # across rebuilds (fixed salt) yet opaque to anyone who has not read the
 # command output. The salt is fixture-internal and never appears in any prompt.
-AUDIT_ID_SALT = "gab_read_surface_audit_evidence_v1"
+AUDIT_ID_SALT = "read_surface_user_audit_evidence_v1"
 
 
 def audit_id_suffix(user_id: str, as_of_text: str, domain: str) -> str:

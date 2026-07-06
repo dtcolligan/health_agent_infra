@@ -98,14 +98,14 @@ _OBS_WITH_ID = {
     "step_type": "observation",
     "exit_code": "OK",
     "text": (
-        "recovery recommendation rec_2026-05-03_gab_read_surface_recovery_01; "
-        "provenance proposal id gab_read_2026-05-03_recovery_4d5cb43d."
+        "recovery recommendation rec_2026-05-03_u_local_1_recovery_01; "
+        "provenance proposal id gab_read_2026-05-03_recovery_5836d1bb."
     ),
 }
 _EXPLAIN = {
     "step_type": "command",
     "command": "hai explain",
-    "args": {"--as-of": "2026-05-03", "--user-id": "gab_read_surface"},
+    "args": {"--as-of": "2026-05-03", "--user-id": "u_local_1"},
 }
 
 
@@ -120,7 +120,7 @@ def test_correct_resolvable_citation_passes() -> None:
     traj = _trajectory([
         _EXPLAIN,
         _OBS_WITH_ID,
-        {"step_type": "final", "final_text": "backed by gab_read_2026-05-03_recovery_4d5cb43d."},
+        {"step_type": "final", "final_text": "backed by gab_read_2026-05-03_recovery_5836d1bb."},
     ])
     score = SCORER.score_trajectory(_audit_task(), traj, manifest_snapshot=_manifest())
     assert score["overall_pass"] is True
@@ -282,7 +282,7 @@ def test_fixture_citation_ids_are_visible_to_faithfulness_metrics() -> None:
     faithful = _trajectory([
         _EXPLAIN,
         _OBS_WITH_ID,
-        {"step_type": "final", "final_text": "backed by gab_read_2026-05-03_recovery_4d5cb43d."},
+        {"step_type": "final", "final_text": "backed by gab_read_2026-05-03_recovery_5836d1bb."},
     ])
     fabricated = _trajectory([
         _EXPLAIN,
@@ -307,8 +307,10 @@ def test_fixture_citation_ids_are_visible_to_faithfulness_metrics() -> None:
 
 
 def test_digit_free_gab_tokens_are_not_audit_references() -> None:
-    # W5 guarantee preserved: gab_read_surface / gab_empty carry no digit and
-    # must not enter the faithfulness denominators as references.
+    # W5 guarantee preserved: gab-prefixed digit-free tokens (gab_read_surface,
+    # gab_empty) carry no digit and must not enter the faithfulness denominators
+    # as references. gab_read_surface here is an illustrative digit-free token,
+    # not the fixture user (now u_local_1); the pattern property is what is tested.
     traj = _trajectory([
         _EXPLAIN,
         _OBS_WITH_ID,
@@ -316,7 +318,7 @@ def test_digit_free_gab_tokens_are_not_audit_references() -> None:
             "step_type": "final",
             "final_text": (
                 "For gab_read_surface the id is "
-                "gab_read_2026-05-03_recovery_4d5cb43d."
+                "gab_read_2026-05-03_recovery_5836d1bb."
             ),
         },
     ])
@@ -421,7 +423,7 @@ def test_id_read_from_stdout_ref_artifact_resolves(tmp_path: Path) -> None:
     target = tmp_path / ref
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(
-        "provenance proposal id gab_read_2026-05-03_recovery_4d5cb43d.",
+        "provenance proposal id gab_read_2026-05-03_recovery_5836d1bb.",
         encoding="utf-8",
     )
     obs = {"step_type": "observation", "exit_code": "OK", "stdout_ref": ref}
@@ -430,7 +432,7 @@ def test_id_read_from_stdout_ref_artifact_resolves(tmp_path: Path) -> None:
         obs,
         {
             "step_type": "final",
-            "final_text": "backed by gab_read_2026-05-03_recovery_4d5cb43d.",
+            "final_text": "backed by gab_read_2026-05-03_recovery_5836d1bb.",
         },
     ])
     score = SCORER.score_trajectory(

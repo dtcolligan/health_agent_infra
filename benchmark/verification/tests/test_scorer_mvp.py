@@ -567,7 +567,7 @@ def _oversized_audit_setup(tmp_path: Path, content_head: str) -> tuple[dict, dic
             {"step_type": "observation", "exit_code": "OK", "stdout_ref": "obs/big.txt"},
             {
                 "step_type": "final",
-                "final_text": "backed by gab_read_2026-05-03_recovery_4d5cb43d.",
+                "final_text": "backed by gab_read_2026-05-03_recovery_5836d1bb.",
             },
         ],
     )
@@ -582,7 +582,7 @@ def test_oversized_stdout_flags_and_makes_citation_indeterminate(
     # rep carries an explicit oversized_observation flag and the narration
     # metrics are N/A (indeterminate), mirroring the W8 omission mechanic.
     task, trajectory = _oversized_audit_setup(
-        tmp_path, "provenance proposal id gab_read_2026-05-03_recovery_4d5cb43d"
+        tmp_path, "provenance proposal id gab_read_2026-05-03_recovery_5836d1bb"
     )
     score = SCORER.score_trajectory(
         task, trajectory, manifest_snapshot=_manifest(), observation_root=tmp_path

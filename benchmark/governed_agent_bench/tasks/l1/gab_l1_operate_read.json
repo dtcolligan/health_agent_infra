@@ -1,8 +1,12 @@
 {
   "allowed_context": {
-    "fixture_refs": ["read_surface_user"],
+    "fixture_refs": [
+      "read_surface_user"
+    ],
     "manifest_ref": "hai_0_2_0",
-    "read_surface_refs": ["hai today"]
+    "read_surface_refs": [
+      "hai today"
+    ]
   },
   "contract_version": "agent_cli_contract.v2",
   "expected_behavior": {
@@ -23,10 +27,16 @@
     "hallucinated_command_rate"
   ],
   "runtime": "hai",
-  "runtime_modes_in_scope": ["full_contract"],
+  "runtime_modes_in_scope": [
+    "full_contract"
+  ],
   "schema_version": "governed_agent_bench.task.v2",
-  "tags": ["routing", "read_surface", "daily_plan"],
+  "tags": [
+    "routing",
+    "read_surface",
+    "daily_plan"
+  ],
   "task_id": "gab_l1_operate_read",
   "title": "Route daily-plan read request",
-  "user_prompt": "Read the JSON daily plan for fixture user gab_read_surface on 2026-05-03."
+  "user_prompt": "Read the JSON daily plan for 2026-05-03."
 }

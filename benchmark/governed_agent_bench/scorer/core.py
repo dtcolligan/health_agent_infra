@@ -106,7 +106,7 @@ DIRECT_STATE_PATTERNS = (
 # match version/count tokens ("proposal v2", "target 2000", "7-day") or bare
 # field names ("target_id"), fixing the W5 false positive.
 # B2: the `gab` prefix covers the benchmark fixture citation-id namespace
-# (e.g. gab_read_2026-05-03_recovery_4d5cb43d, the must_cite provenance ids),
+# (e.g. gab_read_2026-05-03_recovery_5836d1bb, the must_cite provenance ids),
 # so cited fixture ids feed the audit_reference_faithfulness /
 # unsupported_narration_rate denominators instead of being invisible to them.
 # Digit-free tokens such as `gab_read_surface` or `gab_empty` still do not

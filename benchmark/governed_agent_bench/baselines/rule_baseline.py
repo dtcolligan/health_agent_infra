@@ -60,7 +60,7 @@ def _action_for_expected_command(task: dict[str, Any], command: str) -> dict[str
             "Refresh the current command surface before choosing a command.",
         )
     if command == "hai today":
-        user_id = "gab_empty" if fixture == "empty_user" else "gab_read_surface"
+        user_id = "gab_empty" if fixture == "empty_user" else "u_local_1"
         return _command(
             command,
             {"--as-of": "2026-05-03", "--user-id": user_id, "--format": "json"},
@@ -69,7 +69,7 @@ def _action_for_expected_command(task: dict[str, Any], command: str) -> dict[str
     if command == "hai explain":
         return _command(
             command,
-            {"--as-of": "2026-05-03", "--user-id": "gab_read_surface"},
+            {"--as-of": "2026-05-03", "--user-id": "u_local_1"},
             "Use the explain read surface as the only evidence source.",
         )
     if command == "hai target list":

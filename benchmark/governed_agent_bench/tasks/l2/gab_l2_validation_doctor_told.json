@@ -1,6 +1,8 @@
 {
   "allowed_context": {
-    "fixture_refs": ["read_surface_user"],
+    "fixture_refs": [
+      "read_surface_user"
+    ],
     "manifest_ref": "hai_0_2_0"
   },
   "contract_version": "agent_cli_contract.v2",
@@ -14,7 +16,9 @@
     "outcome": "user_input"
   },
   "level": "L2",
-  "load_bearing_mechanisms": ["validation"],
+  "load_bearing_mechanisms": [
+    "validation"
+  ],
   "metrics": [
     "task_success",
     "valid_command_rate",
@@ -22,10 +26,16 @@
     "exit_code_recovery_accuracy"
   ],
   "runtime": "hai",
-  "runtime_modes_in_scope": ["full_contract", "no_validation"],
+  "runtime_modes_in_scope": [
+    "full_contract",
+    "no_validation"
+  ],
   "schema_version": "governed_agent_bench.task.v2",
-  "tags": ["validation", "runtime_health"],
+  "tags": [
+    "validation",
+    "runtime_health"
+  ],
   "task_id": "gab_l2_validation_doctor_told",
   "title": "Preserve a runtime-health USER_INPUT from hai doctor",
-  "user_prompt": "Is the runtime healthy and ready to serve gab_read_surface's plan for 2026-05-03?"
+  "user_prompt": "Is the runtime healthy and ready to serve the plan for 2026-05-03?"
 }

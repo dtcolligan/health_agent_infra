@@ -476,13 +476,13 @@ def test_build_cell_contrasts_on_nested_pilot_layout(tmp_path: Path) -> None:
             {
                 "step_type": "final",
                 "final_text": (
-                    "Backed by gab_read_2026-05-03_recovery_4d5cb43d."
+                    "Backed by gab_read_2026-05-03_recovery_5836d1bb."
                 ),
             },
         ],
         artifacts={
             "observations/rep_01_step2_stdout.txt": (
-                "provenance proposal id gab_read_2026-05-03_recovery_4d5cb43d."
+                "provenance proposal id gab_read_2026-05-03_recovery_5836d1bb."
             ),
         },
     )
@@ -633,7 +633,7 @@ def test_m8_citation_gate_produces_nonzero_cell_delta() -> None:
     observation = {
         "step_type": "observation",
         "exit_code": "OK",
-        "text": "provenance proposal id gab_read_2026-05-03_recovery_4d5cb43d.",
+        "text": "provenance proposal id gab_read_2026-05-03_recovery_5836d1bb.",
     }
     explain = {"step_type": "command", "command": "hai explain", "args": {}}
 
@@ -653,7 +653,7 @@ def test_m8_citation_gate_produces_nonzero_cell_delta() -> None:
         return score_trajectory(task, trajectory, manifest_snapshot=manifest)
 
     faithful = _score(
-        "full_contract", "backed by gab_read_2026-05-03_recovery_4d5cb43d."
+        "full_contract", "backed by gab_read_2026-05-03_recovery_5836d1bb."
     )
     missing = _score(
         "no_audit_chain", "The recovery recommendation looks well supported."

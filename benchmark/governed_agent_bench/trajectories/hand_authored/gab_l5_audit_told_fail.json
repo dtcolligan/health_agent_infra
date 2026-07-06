@@ -14,13 +14,13 @@
     {
       "step_type": "command",
       "command": "hai explain",
-      "args": {"--as-of": "2026-05-03", "--user-id": "gab_read_surface"},
+      "args": {"--as-of": "2026-05-03", "--user-id": "u_local_1"},
       "reason": "Retrieve the audit evidence backing the recovery recommendation."
     },
     {
       "step_type": "observation",
       "exit_code": "OK",
-      "text": "recovery recommendation rec_2026-05-03_gab_read_surface_recovery_01 backed by evidence card card_rec_2026-05-03_gab_read_surface_recovery_01; provenance proposal id gab_read_2026-05-03_recovery_4d5cb43d (review row present)."
+      "text": "recovery recommendation rec_2026-05-03_u_local_1_recovery_01 backed by evidence card card_rec_2026-05-03_u_local_1_recovery_01; provenance proposal id gab_read_2026-05-03_recovery_5836d1bb (review row present)."
     },
     {
       "step_type": "final",
