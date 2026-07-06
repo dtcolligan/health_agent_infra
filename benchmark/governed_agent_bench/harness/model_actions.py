@@ -37,6 +37,10 @@ from .core import run_operator_action
 
 _COMMAND_RE = re.compile(r"^hai [a-z0-9][a-z0-9_-]*(?: [a-z0-9][a-z0-9_-]*)*$")
 _ARG_RE = re.compile(r"^(?:--)?[a-z0-9][a-z0-9_-]*$")
+# Path flags the harness controls via env (fixture redirection). A model must
+# not be able to repoint the runtime's state/base surfaces outside the fixture
+# sandbox; these are stripped from every model command (hermeticity guard).
+_HARNESS_CONTROLLED_FLAGS = frozenset({"--db-path", "--base-dir"})
 _ALLOWED_ACTION_FIELDS = {
     "schema_version",
     "action_type",
@@ -421,11 +425,25 @@ def run_agent_loop(
                     normalized,
                     state.command_manifest_snapshot,
                 )
+                # §20.18 hermeticity guard: the state/base surfaces are
+                # harness-controlled via env (HAI_STATE_DB / HAI_BASE_DIR into
+                # the fixture). A model-supplied `--db-path` / `--base-dir`
+                # overrides the env and could point the runtime outside the
+                # fixture (an absolute path escapes; `~` is contained by the
+                # fixture HOME). Strip them so the fixture env always wins and
+                # sandbox isolation holds regardless of what the model passes.
+                stripped_paths = sorted(
+                    key for key in coerced if key in _HARNESS_CONTROLLED_FLAGS
+                )
+                for key in stripped_paths:
+                    coerced.pop(key, None)
                 parsed_action["args"] = coerced
                 if rewrites:
                     parsed_action["_arg_key_normalizations"] = rewrites
                 if coercions:
                     parsed_action["_boolean_flag_coercions"] = coercions
+                if stripped_paths:
+                    parsed_action["_harness_controlled_flags_stripped"] = stripped_paths
         except HarnessError as exc:
             invalid_output = {
                 "raw_output": raw_output,
