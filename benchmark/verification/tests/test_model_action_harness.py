@@ -282,6 +282,46 @@ def test_feedback_never_leaks_mechanism_disabled_marker() -> None:
     assert "observation" in msg
 
 
+def test_stdout_channel_never_leaks_mechanism_disabled_marker(tmp_path: Path) -> None:
+    # §20.18 3rd-channel fix: hai synthesize prints its result dict to STDOUT,
+    # and that dict embeds mechanism_disabled_markers (the runtime-mode lever).
+    # The step-whitelist and stderr filter did NOT cover stdout. Scrub it.
+    from governed_agent_bench.harness.model_actions import (
+        _scrub_stdout_control_markers, _read_observation_stdout,
+    )
+    synth = json.dumps({
+        "daily_plan_id": "plan_2026-05-03_u_local_1",
+        "recovery": {"action": "proceed"},
+        "mechanism_disabled_markers": [
+            {"step_type": "mechanism_disabled", "mechanism": "refusal",
+             "runtime_mode": "no_refusal"}
+        ],
+    })
+    scrubbed = _scrub_stdout_control_markers(synth)
+    assert "mechanism_disabled" not in scrubbed
+    assert "no_refusal" not in scrubbed
+    assert "refusal" not in scrubbed
+    # legitimate plan output preserved
+    assert "plan_2026-05-03_u_local_1" in scrubbed
+    assert "proceed" in scrubbed
+
+    # end-to-end through the observation read (marker in a stdout artifact)
+    obs_dir = tmp_path
+    (obs_dir / "obs.txt").write_text(synth, encoding="utf-8")
+    surfaced = _read_observation_stdout(
+        {"step_type": "observation", "stdout_ref": "obs.txt"}, obs_dir
+    )
+    assert surfaced is not None
+    assert "mechanism_disabled" not in surfaced and "no_refusal" not in surfaced
+    assert "plan_2026-05-03_u_local_1" in surfaced
+
+    # a card payload with NO markers is returned byte-unchanged (id preserved)
+    card = json.dumps({"card_id": "card_x",
+                       "provenance": {"proposal_log": ["gab_read_2026-05-03_recovery_5836d1bb"]}})
+    assert _scrub_stdout_control_markers(card) == card
+    assert "5836d1bb" in _scrub_stdout_control_markers(card)
+
+
 def test_envelope_batch_feedback_carries_schema_reminder() -> None:
     # Finding 8: invalid_output feedback restates the schema incl. the refusal
     # shape, so a verbose model can convert its own decision into the form.

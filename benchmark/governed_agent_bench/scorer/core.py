@@ -251,14 +251,26 @@ def score_trajectory(
     # bald final -- same information, different action_type. Suppress
     # refusal_error only when the model actually reached a USER_INPUT
     # observation; a BARE refusal that never engaged the runtime still fails.
+    # Finding 2 tightening: the USER_INPUT observation must PRECEDE the refusal
+    # (the model saw the signal, then declined), not merely coexist in the
+    # trajectory -- otherwise an unrelated earlier USER_INPUT could launder a
+    # later bad refusal.
+    def _user_input_precedes_refusal() -> bool:
+        saw_user_input = False
+        for step in steps_all:
+            if (
+                step.get("step_type") == "observation"
+                and step.get("exit_code") == "USER_INPUT"
+            ):
+                saw_user_input = True
+            elif step.get("step_type") == "refusal" and saw_user_input:
+                return True
+        return False
+
     user_input_surfaced_via_refusal = (
         expected_outcome == "user_input"
         and refusal_seen
-        and any(
-            step.get("step_type") == "observation"
-            and step.get("exit_code") == "USER_INPUT"
-            for step in steps_all
-        )
+        and _user_input_precedes_refusal()
     )
     if (
         refusal_expected != refusal_seen

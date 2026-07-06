@@ -711,13 +711,80 @@ def _read_observation_stderr(step: dict[str, Any], output_dir: Any) -> str | Non
     return filtered
 
 
+def _is_mechanism_marker(obj: Any) -> bool:
+    return isinstance(obj, dict) and (
+        obj.get("step_type") == "mechanism_disabled"
+        or ("mechanism" in obj and "runtime_mode" in obj)
+    )
+
+
+def _scrub_control_markers_obj(obj: Any) -> Any:
+    """Recursively drop mechanism_disabled control markers from a parsed stdout
+    payload, preserving every other value (legitimate command output)."""
+
+    if isinstance(obj, dict):
+        return {
+            key: _scrub_control_markers_obj(value)
+            for key, value in obj.items()
+            if key != "mechanism_disabled_markers"
+        }
+    if isinstance(obj, list):
+        return [
+            _scrub_control_markers_obj(item)
+            for item in obj
+            if not _is_mechanism_marker(item)
+        ]
+    return obj
+
+
+def _scrub_stdout_control_markers(text: str) -> str:
+    """§20.18 cumulative-audit Finding (3rd channel): the disabled-mechanism
+    marker leaks to the model through observation STDOUT -- `hai synthesize`
+    prints its result dict, and that dict embeds `mechanism_disabled_markers`
+    (the runtime-mode lever). The step-channel whitelist and the stderr-text
+    filter did not cover stdout. Strip the markers from the model-visible
+    stdout read here. The stored artifact (which the scorer resolves against)
+    is untouched, and legitimate output (evidence cards, plan ids) is
+    preserved.
+    """
+
+    stripped = text.strip()
+    if stripped[:1] in ("{", "["):
+        try:
+            obj = json.loads(stripped)
+        except (json.JSONDecodeError, ValueError):
+            obj = None
+        if obj is not None:
+            scrubbed = _scrub_control_markers_obj(obj)
+            if scrubbed != obj:
+                return json.dumps(scrubbed, sort_keys=True, indent=2)
+            return text
+    kept: list[str] = []
+    for line in text.splitlines():
+        line_stripped = line.strip()
+        if line_stripped:
+            try:
+                parsed = json.loads(line_stripped)
+            except (json.JSONDecodeError, ValueError):
+                parsed = None
+            if isinstance(parsed, dict) and (
+                parsed.get("step_type") == "mechanism_disabled"
+                or "mechanism" in parsed
+            ):
+                continue
+        kept.append(line)
+    return "\n".join(kept)
+
+
 def _read_observation_stdout(step: dict[str, Any], output_dir: Any) -> str | None:
     """Read a bounded head of an observation's stdout artifact for the model.
 
     The trajectory persists only ``stdout_ref`` (a path) to stay lean, but the
     model must see command output to act on it (WP-RUNTIME-FIX: without this a
     read-then-narrate task is unwinnable, since the agent receives only a file
-    reference it cannot open). Returns None when there is no artifact.
+    reference it cannot open). Returns None when there is no artifact. The
+    disabled-mechanism control marker is scrubbed so it can never leak the
+    runtime mode to the model (§20.18 3rd-channel fix).
     """
 
     ref = step.get("stdout_ref")
@@ -727,6 +794,7 @@ def _read_observation_stdout(step: dict[str, Any], output_dir: Any) -> str | Non
         text = (Path(output_dir) / ref).read_text(encoding="utf-8", errors="replace")
     except OSError:
         return None
+    text = _scrub_stdout_control_markers(text)
     if len(text) > FEEDBACK_STDOUT_MAX_CHARS:
         text = text[:FEEDBACK_STDOUT_MAX_CHARS] + "\n...[truncated]"
     return text
