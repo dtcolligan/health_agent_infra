@@ -437,7 +437,9 @@ def run_agent_loop(
             })
             messages.append({
                 "role": "user",
-                "content": _feedback_message([steps[-1]], _feedback_stdout_dir(config)),
+                "content": _feedback_message(
+                    [steps[-1]], _feedback_stdout_dir(config), config.output_dir
+                ),
             })
         else:
             # IC-1 (sweep-killer fix): in the model loop a manifest-disallowed
@@ -457,7 +459,16 @@ def run_agent_loop(
                 appended_steps = steps[first_step_index:]
                 messages.append({
                     "role": "user",
-                    "content": _feedback_message(appended_steps, config.output_dir),
+                    # CRITICAL FIX (§20.18): the command-observation feedback
+                    # must gate stdout on hide_stdout via _feedback_stdout_dir.
+                    # It previously passed config.output_dir directly, so the
+                    # blind twin (P3 fabrication demo) NEVER blinded the read
+                    # surface -- the model saw the card and cited the real
+                    # opaque id. stderr is surfaced from config.output_dir
+                    # (guidance the model needs), control markers filtered.
+                    "content": _feedback_message(
+                        appended_steps, _feedback_stdout_dir(config), config.output_dir
+                    ),
                 })
                 if _has_crash_observation(appended_steps):
                     turn_stop_reason = STOP_REASON_SUBPROCESS_CRASH
@@ -631,6 +642,55 @@ def _messages_from_rendered_prompt(rendered_prompt: str) -> list[dict[str, str]]
 
 
 FEEDBACK_STDOUT_MAX_CHARS = 24000
+FEEDBACK_STDERR_MAX_CHARS = 4000
+# stderr lines that json-parse to an object carrying one of these keys are HAI
+# control markers (e.g. the `mechanism_disabled` JSON that reveals which
+# runtime mechanism is off). They must NEVER be surfaced to the model -- doing
+# so would leak the runtime_mode condition. Plain-text stderr (usage errors,
+# USER_INPUT guidance) is surfaced.
+_STDERR_CONTROL_MARKER_KEYS = ("step_type", "mechanism")
+
+
+def _read_observation_stderr(step: dict[str, Any], output_dir: Any) -> str | None:
+    """Bounded, control-marker-filtered stderr for the model (§20.18).
+
+    stderr carries the human-readable USER_INPUT guidance and error messages a
+    real agent operating the CLI would see and act on ("hai explain rejected:
+    provide --user-id"). Without it, a model that mis-invokes a command sees
+    only a bare USER_INPUT exit with empty stdout and cannot recover -- it
+    refuses. This affected even the capable models across the M4 validation and
+    audit families. But stderr ALSO carries the JSON ``mechanism_disabled``
+    control markers that reveal which mechanism is off; those are dropped here
+    so the runtime_mode is never leaked. stderr never carries the read-surface
+    payload (that is stdout), so this is safe under ``hide_stdout``.
+    """
+
+    ref = step.get("stderr_ref")
+    if not ref or output_dir is None:
+        return None
+    try:
+        text = (Path(output_dir) / ref).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    kept: list[str] = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped:
+            try:
+                obj = json.loads(stripped)
+            except (json.JSONDecodeError, ValueError):
+                obj = None
+            if isinstance(obj, dict) and any(
+                key in obj for key in _STDERR_CONTROL_MARKER_KEYS
+            ):
+                continue  # control marker: never surfaced (condition leak guard)
+        kept.append(line)
+    filtered = "\n".join(kept).strip()
+    if not filtered:
+        return None
+    if len(filtered) > FEEDBACK_STDERR_MAX_CHARS:
+        filtered = filtered[:FEEDBACK_STDERR_MAX_CHARS] + "\n...[truncated]"
+    return filtered
 
 
 def _read_observation_stdout(step: dict[str, Any], output_dir: Any) -> str | None:
@@ -684,14 +744,25 @@ _INVALID_OUTPUT_SCHEMA_REMINDER = (
 
 
 def _feedback_message(
-    steps: list[dict[str, Any]], output_dir: Any = None
+    steps: list[dict[str, Any]],
+    stdout_dir: Any = None,
+    stderr_dir: Any = None,
 ) -> str:
+    # stdout is gated on hide_stdout (the blind twin) via ``stdout_dir``; stderr
+    # (usage / USER_INPUT guidance, control markers already filtered) is surfaced
+    # from ``stderr_dir`` regardless, because it never carries the blinded
+    # read-surface payload.
     enriched: list[dict[str, Any]] = []
     for step in steps:
-        if step.get("step_type") == "observation" and "stdout" not in step:
-            stdout = _read_observation_stdout(step, output_dir)
-            if stdout is not None:
-                step = {**step, "stdout": stdout}
+        if step.get("step_type") == "observation":
+            if "stdout" not in step:
+                stdout = _read_observation_stdout(step, stdout_dir)
+                if stdout is not None:
+                    step = {**step, "stdout": stdout}
+            if "stderr" not in step:
+                stderr = _read_observation_stderr(step, stderr_dir)
+                if stderr is not None:
+                    step = {**step, "stderr": stderr}
         enriched.append(step)
     payload: dict[str, Any] = {"steps": enriched}
     if any(step.get("step_type") == "invalid_output" for step in enriched):
