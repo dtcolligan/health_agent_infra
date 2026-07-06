@@ -1161,7 +1161,7 @@
     },
     {
       "agent_safe": true,
-      "description": "Reconstruct the full audit chain (planned / adapted / firings / performed) for a committed plan. Strictly read-only \u2014 never recomputes runtime state.",
+      "description": "Reconstruct the full audit chain (planned / adapted / firings / performed) for a committed plan, including each recommendation's evidence card and its provenance (source proposal ids). Strictly read-only \u2014 never recomputes runtime state.",
       "exit_codes": [
         "OK",
         "USER_INPUT",

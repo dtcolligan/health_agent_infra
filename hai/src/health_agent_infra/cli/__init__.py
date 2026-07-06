@@ -926,8 +926,10 @@ def build_parser() -> argparse.ArgumentParser:
         agent_safe=True,
         description=(
             "Reconstruct the full audit chain (planned / adapted / "
-            "firings / performed) for a committed plan. Strictly "
-            "read-only — never recomputes runtime state."
+            "firings / performed) for a committed plan, including each "
+            "recommendation's evidence card and its provenance (source "
+            "proposal ids). Strictly read-only — never recomputes "
+            "runtime state."
         ),
     )
 
