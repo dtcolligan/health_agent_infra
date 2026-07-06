@@ -665,14 +665,15 @@ def run_pilot(
                                 _record_outage_signal(rr, detector)
                                 rep_dispositions.append(pause)
                                 disp = resolve(disp, pause)
-                        elif rr.stop_cause in REPORTABLE_REP_STOP_CAUSES:
+                        reportable_only = False
+                        if rr.stop_cause in REPORTABLE_REP_STOP_CAUSES:
                             # IB-3/IB-4/IB-5: context_overflow (HTTP 422),
                             # provider_filtered (provider safety filter), and
                             # length_truncation (max_tokens budget) advance
                             # with NO task_outcome -- neither a pass nor a
                             # model failure -- and are counted separately in
                             # the condition summary.
-                            pass
+                            reportable_only = True
                         elif rr.stop_cause in {"cost_halt", "wall_halt"}:
                             halt = Disposition("halt", rr.stop_cause)
                             rep_dispositions.append(halt)
@@ -687,12 +688,24 @@ def run_pilot(
                             # it here would silently disable the cap.
                             rep_dispositions.append(rr.meter_halt)
                             disp = resolve(disp, rr.meter_halt)
+                            reportable_only = False
                         finalize_rep_ledger_disposition(rr, rep_dispositions)
                         write_rep_artifacts(rr)
                         _progress(
                             f"{system_id} {mode} {task_id} {rr.rep_label}: "
                             f"partial ({rr.stop_cause})"
                         )
+                        # §20.16 (Finding 4): a reportable rep outcome
+                        # (overflow / provider_filtered / length_truncation)
+                        # does NOT recur deterministically, so it must not abort
+                        # the task's remaining reps -- doing so left a selection
+                        # effect (only the terser reps of a verbose near-floor
+                        # model survived) and shrank the pooled n. Continue to
+                        # the next rep; only genuine sweep halts (cost / wall /
+                        # meter, and the retry3_taskfail / adapter_halt failure
+                        # causes below) break the loop.
+                        if reportable_only:
+                            continue
                         break
 
                 if task_outcome is None and reps_completed == cfg.replication_n:

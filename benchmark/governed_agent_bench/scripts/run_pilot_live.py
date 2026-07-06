@@ -444,10 +444,20 @@ def run_ladder(
             flush=True,
         )
 
+    # §20.5(a)/§20.16: the pooled MOVEMENT contrasts (untold floor, blind twin)
+    # pool over the CAPABLE models only. The near-floor point is mapped
+    # separately (§20.8 Branches 6a-6c) and would otherwise dilute the pooled
+    # movement and hard-stop the run for a pooling reason.
+    capable_condition_ids = [
+        condition_id
+        for condition_id in canary_run_dirs
+        if condition_id.startswith(("run_primary", "run_capable"))
+    ]
     gate_report = gate_evaluator(
         ladder_run_dirs=canary_run_dirs,
         below_floor_condition_id=below_floor_condition_id,
         operate_floor_pass_rate=operate_floor_pass_rate,
+        movement_contrast_condition_ids=capable_condition_ids,
     )
     ladder_root.mkdir(parents=True, exist_ok=True)
     gate_path = ladder_root / "canary_gate_report.json"

@@ -185,22 +185,37 @@ def evaluate_canary_gate(
     ladder_run_dirs: Mapping[str, Path],
     below_floor_condition_id: str,
     operate_floor_pass_rate: float = DEFAULT_OPERATE_FLOOR_PASS_RATE,
+    movement_contrast_condition_ids: Iterable[str] | None = None,
 ) -> dict[str, Any]:
     """Evaluate the pre-registered canary gate over per-model canary runs.
 
     ``ladder_run_dirs`` maps condition_id -> that condition's canary-phase
     pilot run dir. The below-floor control contributes ONLY the operate
-    component; every other condition contributes to the two pooled
-    movement contrasts. Returns a structured report whose
-    ``overall_status`` is ``"pass"`` only when all three components pass
-    (the ladder runner hard-stops on anything else).
+    component. The two pooled MOVEMENT contrasts (untold floor, blind twin)
+    pool over ``movement_contrast_condition_ids`` -- the CAPABLE models, per
+    PILOT_PROTOCOL §20.5(a) ("pooled over the capable models"). A near-floor
+    model that barely operates would otherwise dilute the pooled difference
+    toward zero and hard-stop the run for a pooling reason rather than a
+    model-behavior reason (§20.16). When the argument is omitted, every
+    condition except the below-floor control is pooled (legacy behavior,
+    retained for tests). Returns a structured report whose ``overall_status``
+    is ``"pass"`` only when all three components pass (the ladder runner
+    hard-stops on anything else).
     """
 
-    contrast_dirs = {
-        condition_id: run_dir
-        for condition_id, run_dir in ladder_run_dirs.items()
-        if condition_id != below_floor_condition_id
-    }
+    if movement_contrast_condition_ids is None:
+        contrast_dirs = {
+            condition_id: run_dir
+            for condition_id, run_dir in ladder_run_dirs.items()
+            if condition_id != below_floor_condition_id
+        }
+    else:
+        wanted = set(movement_contrast_condition_ids)
+        contrast_dirs = {
+            condition_id: run_dir
+            for condition_id, run_dir in ladder_run_dirs.items()
+            if condition_id in wanted
+        }
 
     untold_enforced = _merge(
         _pool_cells(run_dir, task_ids=UNTOLD_FLOOR_TASK_IDS, modes=("full_contract",))
