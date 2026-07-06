@@ -245,6 +245,22 @@ def test_envelope_batch_coerces_boolean_string_flags() -> None:
     assert notes == {"--markdown": "'true'->bool"}
 
 
+def test_hallucinated_dashed_flag_is_caught_as_invalid_not_transient() -> None:
+    # §20.18 convergence fix: a `--`-prefixed flag that is NOT a real flag of
+    # the command (`--domain` on `hai explain`) must be rejected as an invalid
+    # arg (recoverable invalid_output) instead of reaching argparse, exiting 2,
+    # and being mislabeled TRANSIENT. The loop validates every key against the
+    # command's real manifest flags; here we assert the flag sets that drive it.
+    from governed_agent_bench.harness.core import (
+        _manifest_command_flags, load_manifest_snapshot,
+    )
+    manifest = load_manifest_snapshot("hai_0_2_0")
+    assert "--domain" not in _manifest_command_flags(manifest, "hai explain")
+    assert "--domain" in _manifest_command_flags(manifest, "hai today")
+    # a real explain flag stays valid
+    assert "--for-date" in _manifest_command_flags(manifest, "hai explain")
+
+
 def test_envelope_batch_feedback_carries_schema_reminder() -> None:
     # Finding 8: invalid_output feedback restates the schema incl. the refusal
     # shape, so a verbose model can convert its own decision into the form.

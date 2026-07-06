@@ -22,6 +22,7 @@ from governed_agent_bench.harness.core import (
     EXIT_CODE_NAMES,
     HarnessConfig,
     HarnessError,
+    _manifest_command_flags,
     append_operator_action_steps,
     coerce_boolean_flag_values,
     normalize_command_arg_keys,
@@ -389,15 +390,31 @@ def run_agent_loop(
                     dict(parsed_action.get("args") or {}),
                     state.command_manifest_snapshot,
                 )
-                unresolved = [
-                    key for key in normalized if not str(key).startswith("--")
-                ]
-                if unresolved:
-                    # A key that is not a syntactic variant of any real flag
-                    # stays an invalid arg (e.g. an invented flag name),
-                    # rejected exactly as before the normalizer existed.
+                # §20.18 convergence fix: a key is valid iff, after syntactic
+                # normalization, it is a REAL flag of this command in the
+                # manifest. This catches BOTH a bare/invented key that resolves
+                # to nothing (`as_of_date`) AND a hallucinated `--`-prefixed
+                # flag (`--domain` on `hai explain`, which has no such flag).
+                # The latter previously slipped past the `startswith("--")`
+                # check, reached argparse, and exited 2 -> mislabeled TRANSIENT
+                # (deterministic usage error read as a retryable infra blip).
+                # Now it is a recoverable invalid_output with clear feedback,
+                # never a spurious TRANSIENT. Commands with no manifest flag
+                # entry (unknown to the snapshot) fall back to the old shape
+                # check so an out-of-manifest command still routes normally.
+                real_flags = _manifest_command_flags(
+                    state.command_manifest_snapshot,
+                    str(parsed_action.get("command")),
+                )
+                if real_flags:
+                    invalid = [key for key in normalized if key not in real_flags]
+                else:
+                    invalid = [
+                        key for key in normalized if not str(key).startswith("--")
+                    ]
+                if invalid:
                     raise HarnessError(
-                        f"model command arg key is invalid: {unresolved[0]!r}"
+                        f"model command arg key is invalid: {invalid[0]!r}"
                     )
                 coerced, coercions = coerce_boolean_flag_values(
                     str(parsed_action.get("command")),
