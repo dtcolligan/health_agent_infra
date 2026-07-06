@@ -321,6 +321,17 @@ def test_stdout_channel_never_leaks_mechanism_disabled_marker(tmp_path: Path) ->
     assert _scrub_stdout_control_markers(card) == card
     assert "5836d1bb" in _scrub_stdout_control_markers(card)
 
+    # Gate-2c belt-and-suspenders: a marker as a plain dict VALUE (not under the
+    # markers key, not a list element) is also dropped.
+    nested = json.dumps({
+        "plan": "plan_x",
+        "diag": {"step_type": "mechanism_disabled", "mechanism": "validation",
+                 "runtime_mode": "no_validation"},
+    })
+    out = _scrub_stdout_control_markers(nested)
+    assert "mechanism_disabled" not in out and "no_validation" not in out
+    assert "plan_x" in out
+
 
 def test_envelope_batch_feedback_carries_schema_reminder() -> None:
     # Finding 8: invalid_output feedback restates the schema incl. the refusal

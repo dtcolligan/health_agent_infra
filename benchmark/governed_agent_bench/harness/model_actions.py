@@ -723,10 +723,14 @@ def _scrub_control_markers_obj(obj: Any) -> Any:
     payload, preserving every other value (legitimate command output)."""
 
     if isinstance(obj, dict):
+        # Drop the marker-list key AND any key whose value IS a marker (Gate-2c
+        # belt-and-suspenders: no current runtime path emits the latter shape,
+        # but this makes the scrub complete regardless of future emissions).
         return {
             key: _scrub_control_markers_obj(value)
             for key, value in obj.items()
             if key != "mechanism_disabled_markers"
+            and not _is_mechanism_marker(value)
         }
     if isinstance(obj, list):
         return [
