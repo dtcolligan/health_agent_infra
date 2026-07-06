@@ -743,6 +743,21 @@ _INVALID_OUTPUT_SCHEMA_REMINDER = (
 )
 
 
+# The ONLY step types ever serialized into the model's feedback. This is a
+# WHITELIST, not a blacklist (§20.18 cumulative audit, Finding 1): the
+# `mechanism_disabled` control step -- a scoring/attribution artifact that HAI
+# emits under any off-mode -- was being dumped verbatim into the feedback,
+# leaking the disabled MECHANISM (the runtime-mode lever) to the model on
+# exactly the off cells (B, D, no_runtime_enforcement) whose contrasts carry
+# the paper. It reaches the feedback as a parsed trajectory STEP, a second
+# channel independent of the stderr-text filter. A whitelist guarantees no
+# present OR future internal step type can leak: only the command echo, the
+# observation, and an invalid_output parse-error reach the model.
+_MODEL_VISIBLE_FEEDBACK_STEPS = frozenset(
+    {"command", "observation", "invalid_output"}
+)
+
+
 def _feedback_message(
     steps: list[dict[str, Any]],
     stdout_dir: Any = None,
@@ -754,6 +769,8 @@ def _feedback_message(
     # read-surface payload.
     enriched: list[dict[str, Any]] = []
     for step in steps:
+        if step.get("step_type") not in _MODEL_VISIBLE_FEEDBACK_STEPS:
+            continue  # internal-only (e.g. mechanism_disabled): never model-visible
         if step.get("step_type") == "observation":
             if "stdout" not in step:
                 stdout = _read_observation_stdout(step, stdout_dir)

@@ -261,6 +261,27 @@ def test_hallucinated_dashed_flag_is_caught_as_invalid_not_transient() -> None:
     assert "--for-date" in _manifest_command_flags(manifest, "hai explain")
 
 
+def test_feedback_never_leaks_mechanism_disabled_marker() -> None:
+    # §20.18 cumulative-audit Finding 1: the mechanism_disabled control step
+    # (which names the DISABLED mechanism = the runtime-mode lever) must never
+    # reach the model. It arrives as a parsed trajectory step alongside the
+    # command/observation of an off-mode turn; the feedback whitelist must drop
+    # it. A leak here contaminates the A-B / C-D contrasts on the off cells.
+    from governed_agent_bench.harness.model_actions import _feedback_message
+    steps = [
+        {"step_type": "command", "command": "hai target list", "args": {}},
+        {"step_type": "mechanism_disabled", "mechanism": "agent_safe",
+         "metadata": {"step_type": "mechanism_disabled", "mechanism": "agent_safe"}},
+        {"step_type": "observation", "exit_code": "OK"},
+    ]
+    msg = _feedback_message(steps)
+    assert "mechanism_disabled" not in msg
+    assert "agent_safe" not in msg
+    # the legitimate command + observation ARE still shown
+    assert "hai target list" in msg
+    assert "observation" in msg
+
+
 def test_envelope_batch_feedback_carries_schema_reminder() -> None:
     # Finding 8: invalid_output feedback restates the schema incl. the refusal
     # shape, so a verbose model can convert its own decision into the form.
@@ -460,8 +481,13 @@ def test_agent_loop_feeds_observation_back_as_user_message(
     feedback = turn_2_messages[-1]["content"]
     assert '"exit_code": "OK"' in feedback
     assert '"stdout_ref":' in feedback
-    assert '"step_type": "mechanism_disabled"' in feedback
-    assert '"mechanism": "validation"' in feedback
+    # §20.18 cumulative-audit Finding 1 (REVERSES the prior assertion): the
+    # mechanism_disabled control step names the DISABLED mechanism = the
+    # runtime-mode lever and must NEVER reach the model. It stays in the
+    # TRAJECTORY (scoring needs it, asserted below) but is dropped from the
+    # feedback whitelist. A leak here contaminated the off-cell contrasts.
+    assert '"step_type": "mechanism_disabled"' not in feedback
+    assert '"mechanism": "validation"' not in feedback
     # WP-RUNTIME-FIX: the model must receive the command's actual stdout, not
     # just a file reference it cannot open, or read-then-narrate tasks are
     # unwinnable. The trajectory still persists only stdout_ref (lean).
