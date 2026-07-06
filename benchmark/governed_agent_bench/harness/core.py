@@ -250,12 +250,18 @@ def append_operator_action_steps(
                 },
             })
             return list(range(first_index, len(steps)))
-        steps.append({
+        command_step: dict[str, Any] = {
             "step_type": "command",
             "command": command,
             "args": dict(action.get("args") or {}),
             "reason": action.get("reason", ""),
-        })
+        }
+        normalizations = action.get("_arg_key_normalizations")
+        if normalizations:
+            command_step["metadata"] = {
+                "arg_key_normalizations": dict(normalizations)
+            }
+        steps.append(command_step)
         completed = _run_hai(action, config)
         stdout_ref, stderr_ref = _write_observation_artifacts(
             completed,
@@ -699,6 +705,84 @@ def _manifest_commands(manifest_snapshot: dict[str, Any]) -> set[str]:
         if name:
             commands.add(str(name))
     return commands
+
+
+def _manifest_command_flags(
+    manifest_snapshot: dict[str, Any], command: str
+) -> set[str]:
+    """Canonical ``--flag`` tokens (names + aliases) for ``command``."""
+
+    manifest = manifest_snapshot.get("manifest", manifest_snapshot)
+    for row in manifest.get("commands", []):
+        name = row.get("name") or row.get("command")
+        if str(name) != command:
+            continue
+        flags: set[str] = set()
+        for entry in row.get("flags", []) or []:
+            flag_name = entry.get("name") or entry.get("flag")
+            if flag_name:
+                flags.add(str(flag_name))
+            for alias in entry.get("aliases", []) or []:
+                flags.add(str(alias))
+        return flags
+    return set()
+
+
+def _norm_flag_key(key: str) -> str:
+    """Syntactic key normalizer: drop leading dashes, ``_``->``-``, lowercase.
+
+    This is the ONLY transformation applied when matching a model-supplied
+    arg key against a real flag: it collapses the purely syntactic
+    variation (missing ``--`` prefix, underscores for hyphens, case) that
+    weaker models produce far more often than capable ones, without any
+    semantic guessing.
+    """
+
+    return key.lstrip("-").replace("_", "-").lower()
+
+
+def normalize_command_arg_keys(
+    command: str,
+    args: dict[str, Any],
+    manifest_snapshot: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, str]]:
+    """Rewrite arg keys that are pure SYNTACTIC variants of a real flag of
+    ``command`` to that flag's canonical token.
+
+    Construct-validity fix (PILOT_PROTOCOL §20.15): the operator contract
+    requires ``--``-prefixed flag keys; a model that selects the right
+    command and value but writes ``user_id`` / ``as_of`` / ``db-path``
+    instead of ``--user-id`` / ``--as-of`` / ``--db-path`` was scored as a
+    total failure. That penalty is strongly capability-correlated (weaker
+    models malform far more), confounding the capability moderator with a
+    trivial syntax detail. This rewrite maps a key to a real flag ONLY when
+    the two are identical after ``_norm_flag_key`` (dashes / underscores /
+    case) -- never by semantic similarity -- so a genuinely wrong flag name
+    (e.g. ``as_of_date`` when the flag is ``--as-of``) stays unresolved and
+    is rejected downstream exactly as before. It never helps the model
+    choose a command, a value, or a governance decision.
+
+    Returns ``(normalized_args, rewrites)`` where ``rewrites`` maps each
+    changed original key to its canonical form (recorded for transparency).
+    """
+
+    real = _manifest_command_flags(manifest_snapshot, command)
+    canonical: dict[str, str] = {}
+    for flag in real:
+        canonical.setdefault(_norm_flag_key(flag), flag)
+    new_args: dict[str, Any] = {}
+    rewrites: dict[str, str] = {}
+    for key, value in args.items():
+        if key in real or not isinstance(key, str):
+            new_args[key] = value
+            continue
+        candidate = canonical.get(_norm_flag_key(key))
+        if candidate is not None and candidate != key:
+            new_args[candidate] = value
+            rewrites[key] = candidate
+        else:
+            new_args[key] = value
+    return new_args, rewrites
 
 
 def _system_prompt_block(template_text: str) -> str:

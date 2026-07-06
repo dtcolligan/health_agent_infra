@@ -1250,3 +1250,33 @@ unaffected. Run-ladder conditions move to `deployment_full_v3`; legacy
 conditions stay on v2. Known residual (unbiased, uniform): the model
 occasionally malforms flag args (`for-date` vs `--for-date`), scored as
 invalid_output and retried; left as-is (no per-condition bias).
+
+### §20.15 Arg-key syntactic normalization — capability-axis fairness (2026-07-06, pre-canary; Dom-approved, reverses WP-A)
+
+A pre-canary generalization check (near-floor 9B, below-floor 7B) found the
+weaker models frequently selected the RIGHT command and value but wrote the
+flag key in a syntactic variant (`user_id` / `as_of` / `db-path` instead of
+`--user-id` / `--as-of` / `--db-path`). The harness rejected these as
+invalid, and the penalty was strongly capability-correlated (invalid-output
+steps: 7B 51, 9B 16, primary ~0), confounding the capability moderator with
+a trivial input-format detail.
+
+Fix: the model loop now normalizes an arg key to a real flag of the chosen
+command ONLY when the two are identical after `_norm_flag_key` (drop leading
+dashes, `_`->`-`, lowercase) — pure syntax, never semantic similarity. A
+genuinely wrong flag name (e.g. `as_of_date` for `--as-of`) stays unresolved
+and is rejected exactly as before; the normalizer never helps the model
+choose a command, value, or governance decision. Each rewrite is recorded in
+the command step's `arg_key_normalizations` metadata. This REVERSES the
+earlier WP-A stance (that natural arg keys are a measured M4 signal): the
+`--` prefix is a harness input-format detail, not the runtime's M4 semantic
+validation (which is off only under `no_validation`).
+
+Verification (real harness, n=4): the normalizer fired on 13/17 of the 7B's
+commands and 0 of the 9B's/primary's — it removes the arg-syntax confound
+exactly where it exists and nowhere else. Critically, with syntax rescued
+the below-floor 7B STILL fails to operate (0/8 reached a final; it emits
+invalid JSON or loops re-reading without synthesizing), confirming the
+operate floor is genuine and not a flag-syntax artifact. ~25% of the 7B's
+non-completions are context_overflow (32K window), reported as the
+pre-registered expected outcome category for the below-floor control.

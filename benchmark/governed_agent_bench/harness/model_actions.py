@@ -22,6 +22,7 @@ from governed_agent_bench.harness.core import (
     HarnessConfig,
     HarnessError,
     append_operator_action_steps,
+    normalize_command_arg_keys,
     prepare_operator_run,
     trajectory_from_steps,
     write_trajectory_artifact,
@@ -32,7 +33,7 @@ from .core import run_operator_action
 
 
 _COMMAND_RE = re.compile(r"^hai [a-z0-9][a-z0-9_-]*(?: [a-z0-9][a-z0-9_-]*)*$")
-_ARG_RE = re.compile(r"^--[a-z0-9][a-z0-9-]*$")
+_ARG_RE = re.compile(r"^(?:--)?[a-z0-9][a-z0-9_-]*$")
 _ALLOWED_ACTION_FIELDS = {
     "schema_version",
     "action_type",
@@ -334,6 +335,25 @@ def run_agent_loop(
 
         try:
             parsed_action = parse_model_action(raw_output)
+            if parsed_action.get("action_type") == "command":
+                normalized, rewrites = normalize_command_arg_keys(
+                    str(parsed_action.get("command")),
+                    dict(parsed_action.get("args") or {}),
+                    state.command_manifest_snapshot,
+                )
+                unresolved = [
+                    key for key in normalized if not str(key).startswith("--")
+                ]
+                if unresolved:
+                    # A key that is not a syntactic variant of any real flag
+                    # stays an invalid arg (e.g. an invented flag name),
+                    # rejected exactly as before the normalizer existed.
+                    raise HarnessError(
+                        f"model command arg key is invalid: {unresolved[0]!r}"
+                    )
+                parsed_action["args"] = normalized
+                if rewrites:
+                    parsed_action["_arg_key_normalizations"] = rewrites
         except HarnessError as exc:
             invalid_output = {
                 "raw_output": raw_output,

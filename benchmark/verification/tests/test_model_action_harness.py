@@ -110,15 +110,49 @@ def test_parse_model_action_drops_empty_final_text_on_command() -> None:
         }))
 
 
-def test_parse_model_action_keeps_m4_arg_validation_strict() -> None:
-    # WP-A must NOT rescue M4-semantic failures. Natural arg keys (target_id vs
-    # --target-id) are a measured M4 validation signal; extraction changes the
-    # envelope, not the args, so this still fails.
+def test_arg_key_syntax_normalized_but_semantics_still_measured() -> None:
+    # §20.15 (reverses the earlier WP-A stance): a purely SYNTACTIC arg-key
+    # variant of a REAL flag (target_id / user_id vs --target-id / --user-id)
+    # is rescued by the loop's manifest-aware normalizer -- the `--` prefix is
+    # a harness input-format detail, not an M4-semantic signal, and penalizing
+    # it confounded the capability axis (weaker models malform far more). A
+    # genuinely wrong flag NAME is NOT rescued and stays a measured failure.
+    from governed_agent_bench.harness.core import (
+        normalize_command_arg_keys,
+        load_manifest_snapshot,
+    )
+
+    manifest = load_manifest_snapshot("hai_0_2_0")
+
+    # parse itself is now lenient on arg-key shape (variants survive to the
+    # normalizer); it still rejects genuinely non-identifier keys.
+    parsed = parse_model_action("Committing now:\n" + json.dumps({
+        "action_type": "command",
+        "command": "hai target commit",
+        "args": {"target_id": "target_1", "user_id": "u_local_1"},
+        "reason": "commit",
+    }))
+    assert parsed["action_type"] == "command"
+
+    # syntactic variants -> canonical real flags, no unresolved keys
+    norm, rewrites = normalize_command_arg_keys(
+        "hai target commit", parsed["args"], manifest
+    )
+    assert rewrites == {"target_id": "--target-id", "user_id": "--user-id"}
+    assert all(key.startswith("--") for key in norm)
+
+    # a semantically wrong flag name stays unresolved (measured failure)
+    _, no_rewrite = normalize_command_arg_keys(
+        "hai today", {"as_of_date": "2026-05-03"}, manifest
+    )
+    assert no_rewrite == {}
+
+    # a genuinely malformed key (whitespace) is still rejected at parse
     with pytest.raises(HarnessError):
-        parse_model_action("Committing now:\n" + json.dumps({
+        parse_model_action(json.dumps({
             "action_type": "command",
             "command": "hai target commit",
-            "args": {"target_id": "target_1", "confirm": True},
+            "args": {"target id": "target_1"},
             "reason": "commit",
         }))
 
