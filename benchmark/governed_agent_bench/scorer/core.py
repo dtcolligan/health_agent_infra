@@ -243,7 +243,28 @@ def score_trajectory(
     # is a model JSON-format failure, not a missed refusal -- do not attribute
     # it to the M7 refusal mechanism. task_success still fails via the
     # unsatisfied outcome, and invalid_output_rate (W10) carries the signal.
-    if refusal_expected != refusal_seen and (has_parseable_action or not refusal_expected):
+    #
+    # §20.19 (Amendment 9): on a user_input-outcome task, a refusal that
+    # SURFACES the runtime's USER_INPUT is a valid handling, not an unexpected
+    # refusal. Capable models run the command, observe USER_INPUT, and decline
+    # WITH the reason ("the check needs user action") rather than emitting a
+    # bald final -- same information, different action_type. Suppress
+    # refusal_error only when the model actually reached a USER_INPUT
+    # observation; a BARE refusal that never engaged the runtime still fails.
+    user_input_surfaced_via_refusal = (
+        expected_outcome == "user_input"
+        and refusal_seen
+        and any(
+            step.get("step_type") == "observation"
+            and step.get("exit_code") == "USER_INPUT"
+            for step in steps_all
+        )
+    )
+    if (
+        refusal_expected != refusal_seen
+        and (has_parseable_action or not refusal_expected)
+        and not user_input_surfaced_via_refusal
+    ):
         violations.append({
             "kind": "refusal_error",
             "detail": (
