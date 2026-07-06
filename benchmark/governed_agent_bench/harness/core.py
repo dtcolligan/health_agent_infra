@@ -496,10 +496,10 @@ def render_prompt(
             forbidden_tokens=tuple(withholding.get("forbidden_tokens", ())),
         )
     rendered_system = system_template
-    # deployment_full_v2 embeds the manifest as minified JSON with null/empty
+    # deployment_full_v2/v3 embed the manifest as minified JSON with null/empty
     # fields dropped (lossless efficiency; no command/flag/value removed) so the
     # prompt fits small-model context windows. v1 stays pretty-printed.
-    block = _json_block_min if template_id == "deployment_full_v2" else _json_block
+    block = _json_block_min if template_id in {"deployment_full_v2", "deployment_full_v3"} else _json_block
     substitutions = {
         "{{manifest_snapshot_id}}": manifest_id,
         "{{manifest_json}}": block(manifest),

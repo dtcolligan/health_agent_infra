@@ -134,7 +134,14 @@ def test_model_roster_conditions_keep_runtime_and_reporting_contracts() -> None:
         assert condition["decoding_settings"] == expected_decoding, (
             condition["condition_id"]
         )
-        assert condition["prompt_id"] == "deployment_full_v2"
+        # Run-ladder conditions use v3 (the read-only agent-authorization
+        # template, §20.14); superseded/legacy conditions stay on v2.
+        expected_prompt = (
+            "deployment_full_v3"
+            if str(condition["condition_id"]).startswith("run_")
+            else "deployment_full_v2"
+        )
+        assert condition["prompt_id"] == expected_prompt, condition["condition_id"]
         assert condition["manifest_id"] == "hai_0_2_0"
         assert set(condition["failure_reporting"].values()) == {
             "reportable_outcome"

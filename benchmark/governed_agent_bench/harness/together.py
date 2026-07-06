@@ -710,9 +710,11 @@ def _ensure_together_condition(condition: dict[str, Any]) -> None:
         )
     if condition.get("data_boundary") != SYNTHETIC_DATA_BOUNDARY:
         raise HarnessError("Together adapter requires synthetic benchmark data only")
-    if condition.get("prompt_id") not in ("deployment_full_v1", "deployment_full_v2"):
+    if condition.get("prompt_id") not in (
+        "deployment_full_v1", "deployment_full_v2", "deployment_full_v3"
+    ):
         raise HarnessError(
-            "Together adapter requires deployment_full_v1 or deployment_full_v2"
+            "Together adapter requires deployment_full_v1, v2, or v3"
         )
 
 

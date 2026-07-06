@@ -1,6 +1,6 @@
 {
   "contract_schema_version": "agent_cli_contract.v2",
-  "generated_at": "2026-05-10T14:34:07Z",
+  "generated_at": "2026-07-06T00:00:00Z",
   "generated_by": "uv run hai capabilities --json",
   "hai_version": "0.2.0",
   "manifest": {
@@ -1166,7 +1166,7 @@
       },
       {
         "agent_safe": true,
-        "description": "Reconstruct the full audit chain (planned / adapted / firings / performed) for a committed plan. Strictly read-only \u2014 never recomputes runtime state.",
+        "description": "Reconstruct the full audit chain (planned / adapted / firings / performed) for a committed plan, including each recommendation's evidence card and its provenance (source proposal ids). Strictly read-only \u2014 never recomputes runtime state.",
         "exit_codes": [
           "OK",
           "USER_INPUT",
@@ -5722,6 +5722,7 @@
     "schema_version": "agent_cli_contract.v2"
   },
   "manifest_version": "hai_0_2_0",
+  "regen_note": "hai explain description enriched (WP-RUNTIME-FIX-001): output now advertises evidence-card provenance / proposal ids. Snapshot re-captured in lockstep with the runtime source.",
   "schema_version": "governed_agent_bench.manifest_snapshot.v1",
   "source_commit": "0f114e31da67bcd245702c903d8e12b0bb92a197"
 }

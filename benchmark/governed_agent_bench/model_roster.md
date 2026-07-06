@@ -105,7 +105,7 @@ optional Option C cell and one retry cycle.
         "max_tokens": 2048,
         "seed": "provider_does_not_support_seed"
       },
-      "prompt_id": "deployment_full_v2",
+      "prompt_id": "deployment_full_v3",
       "manifest_id": "hai_0_2_0",
       "runtime_modes": [
         "full_contract",
@@ -163,7 +163,7 @@ optional Option C cell and one retry cycle.
         "max_tokens": 2048,
         "seed": "provider_does_not_support_seed"
       },
-      "prompt_id": "deployment_full_v2",
+      "prompt_id": "deployment_full_v3",
       "manifest_id": "hai_0_2_0",
       "runtime_modes": [
         "full_contract",
@@ -228,7 +228,7 @@ optional Option C cell and one retry cycle.
           "enable_thinking": false
         }
       },
-      "prompt_id": "deployment_full_v2",
+      "prompt_id": "deployment_full_v3",
       "manifest_id": "hai_0_2_0",
       "runtime_modes": [
         "full_contract",
@@ -288,7 +288,7 @@ optional Option C cell and one retry cycle.
         "max_tokens": 2048,
         "seed": "provider_does_not_support_seed"
       },
-      "prompt_id": "deployment_full_v2",
+      "prompt_id": "deployment_full_v3",
       "manifest_id": "hai_0_2_0",
       "runtime_modes": [
         "full_contract",

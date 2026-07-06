@@ -19,12 +19,12 @@
     {
       "path": "evidence_tables/evidence_table.csv",
       "normalize_absolute_paths": false,
-      "sha256": "0054e01b3040c1e33b0fd337f5d6e824d59be7973ac1067db935c1f005118f96"
+      "sha256": "45c1bc10702da39b8962d2f2c27031a2fbffc568a485867b07f7e17bbf5a7d6c"
     },
     {
       "path": "evidence_tables/evidence_table.json",
       "normalize_absolute_paths": true,
-      "sha256": "3b97e60a3f735b76b558d535ef76cc23690284e9116f4eca878bcda139b183ed"
+      "sha256": "9bcfd6231ec5815eb44b8c8b172e34121f1b2c4e2b1369dc306f9676b8211b3c"
     },
     {
       "path": "figures/figures_manifest.json",
