@@ -100,14 +100,19 @@ def test_parse_model_action_drops_empty_final_text_on_command() -> None:
     }))
     assert action["command"] == "hai capabilities"
     assert "final_text" not in action
-    with pytest.raises(HarnessError):
-        parse_model_action(json.dumps({
-            "action_type": "command",
-            "command": "hai capabilities",
-            "args": {},
-            "reason": "look",
-            "final_text": "I ran it.",
-        }))
+    # §20.17 Finding 7: a NON-empty final_text on a command is now folded into
+    # the reason (narration, not a second decision), not rejected. Here reason
+    # is already set, so the stray narration is simply dropped.
+    folded = parse_model_action(json.dumps({
+        "action_type": "command",
+        "command": "hai capabilities",
+        "args": {},
+        "reason": "look",
+        "final_text": "I ran it.",
+    }))
+    assert folded["command"] == "hai capabilities"
+    assert "final_text" not in folded
+    assert folded["reason"] == "look"
 
 
 def test_arg_key_syntax_normalized_but_semantics_still_measured() -> None:
@@ -157,6 +162,99 @@ def test_arg_key_syntax_normalized_but_semantics_still_measured() -> None:
         }))
 
 
+def test_envelope_batch_drops_unknown_fields() -> None:
+    # Finding 1: a narration field (thought/rationale) alongside a correct
+    # action is dropped, not fatal.
+    parsed = parse_model_action(json.dumps({
+        "action_type": "command", "command": "hai explain",
+        "args": {"--for-date": "2026-05-03"},
+        "reason": "read", "thought": "I should read the card", "confidence": 0.9,
+    }))
+    assert parsed["action_type"] == "command"
+    assert parsed["command"] == "hai explain"
+    assert parsed["args"] == {"--for-date": "2026-05-03"}
+    assert set(parsed["_dropped_fields"]) == {"confidence", "thought"}
+
+
+def test_envelope_batch_peels_inline_flags() -> None:
+    # Finding 2: flags typed inline in the command string move into args.
+    parsed = parse_model_action(json.dumps({
+        "action_type": "command",
+        "command": "hai explain --for-date 2026-05-03 --user-id u_local_1",
+        "args": {}, "reason": "read",
+    }))
+    assert parsed["command"] == "hai explain"
+    assert parsed["args"] == {
+        "--for-date": "2026-05-03", "--user-id": "u_local_1",
+    }
+
+
+def test_envelope_batch_defaults_missing_args() -> None:
+    # Finding 3: a no-arg command with args omitted defaults to {}.
+    parsed = parse_model_action(json.dumps({
+        "action_type": "command", "command": "hai capabilities", "reason": "list",
+    }))
+    assert parsed["args"] == {}
+
+
+def test_envelope_batch_parses_python_literal_dialect() -> None:
+    # Finding 4: single quotes / trailing comma / Python bool are rescued.
+    parsed = parse_model_action(
+        "{'action_type': 'command', 'command': 'hai explain', "
+        "'args': {'--for-date': '2026-05-03',}, 'reason': 'r'}"
+    )
+    assert parsed["command"] == "hai explain"
+    assert parsed["args"] == {"--for-date": "2026-05-03"}
+
+
+def test_envelope_batch_folds_stray_final_text_on_command() -> None:
+    # Finding 7: a non-empty final_text on a command is folded into an empty
+    # reason, not rejected.
+    parsed = parse_model_action(json.dumps({
+        "action_type": "command", "command": "hai explain", "args": {},
+        "final_text": "I'll read the card next.",
+    }))
+    assert parsed["action_type"] == "command"
+    assert "final_text" not in parsed
+    assert parsed["reason"] == "I'll read the card next."
+
+
+def test_envelope_batch_skips_leading_prose_object() -> None:
+    # Finding 10: a stray brace-object in leading prose is skipped in favor of
+    # the object that actually carries an action_type.
+    parsed = parse_model_action(
+        "Reasoning {step 1, step 2}. Action: "
+        '{"action_type": "command", "command": "hai explain", "args": {}}'
+    )
+    assert parsed["action_type"] == "command"
+    assert parsed["command"] == "hai explain"
+
+
+def test_envelope_batch_coerces_boolean_string_flags() -> None:
+    # Finding 9: a store_true flag given as the string "true" is coerced to bool
+    # for manifest-declared boolean flags only.
+    from governed_agent_bench.harness.core import (
+        coerce_boolean_flag_values, load_manifest_snapshot,
+    )
+    manifest = load_manifest_snapshot("hai_0_2_0")
+    coerced, notes = coerce_boolean_flag_values(
+        "hai review weekly", {"--markdown": "true", "--user-id": "true"}, manifest,
+    )
+    assert coerced["--markdown"] is True          # store_false boolean flag
+    assert coerced["--user-id"] == "true"         # not a boolean flag: untouched
+    assert notes == {"--markdown": "'true'->bool"}
+
+
+def test_envelope_batch_feedback_carries_schema_reminder() -> None:
+    # Finding 8: invalid_output feedback restates the schema incl. the refusal
+    # shape, so a verbose model can convert its own decision into the form.
+    from governed_agent_bench.harness.model_actions import _feedback_message
+    msg = _feedback_message([{"step_type": "invalid_output", "raw_output": "oops",
+                              "parse_error": "not json"}])
+    assert "action_type" in msg and "refusal" in msg
+    assert "do not decline in prose" in msg
+
+
 def test_parse_model_action_rejects_pure_prose() -> None:
     # No balanced JSON object -> genuine formatting failure, still rejected.
     with pytest.raises(HarnessError):
@@ -172,10 +270,13 @@ def test_parse_model_action_rejects_pure_prose() -> None:
         json.dumps({"action_type": "command", "command": "hai today", "args": "bad"}),
         json.dumps({"action_type": "refusal", "reason": "No", "args": {}}),
         json.dumps({"action_type": "final", "command": "hai today", "final_text": "Done"}),
-        json.dumps({"action_type": "final", "final_text": "Done", "extra": True}),
     ],
 )
 def test_parse_model_action_rejects_non_contract_shapes(response: str) -> None:
+    # These are wrong-SHAPE actions (refusal carrying args, final carrying a
+    # command) that remain genuine failures. An unknown top-level field is no
+    # longer here: per §20.17 Finding 1 it is dropped, not fatal (see
+    # test_envelope_batch_drops_unknown_fields).
     with pytest.raises(HarnessError):
         parse_model_action(response)
 

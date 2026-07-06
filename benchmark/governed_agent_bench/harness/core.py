@@ -728,6 +728,61 @@ def _manifest_command_flags(
     return set()
 
 
+def _manifest_boolean_flags(
+    manifest_snapshot: dict[str, Any], command: str
+) -> set[str]:
+    """Canonical ``--flag`` tokens (names + aliases) of ``command`` that are
+    store_true / store_false (boolean) flags."""
+
+    manifest = manifest_snapshot.get("manifest", manifest_snapshot)
+    for row in manifest.get("commands", []):
+        name = row.get("name") or row.get("command")
+        if str(name) != command:
+            continue
+        booleans: set[str] = set()
+        for entry in row.get("flags", []) or []:
+            if entry.get("action") not in ("store_true", "store_false"):
+                continue
+            flag_name = entry.get("name") or entry.get("flag")
+            if flag_name:
+                booleans.add(str(flag_name))
+            for alias in entry.get("aliases", []) or []:
+                booleans.add(str(alias))
+        return booleans
+    return set()
+
+
+def coerce_boolean_flag_values(
+    command: str,
+    args: dict[str, Any],
+    manifest_snapshot: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, str]]:
+    """Coerce ``"true"`` / ``"false"`` string values to bools for the
+    manifest-declared boolean flags of ``command`` (Finding 9).
+
+    Scoped strictly to boolean flags: a flag that legitimately takes the string
+    ``"true"`` is untouched. Without this, ``{"--dry-run": "true"}`` serializes
+    to ``--dry-run true`` (a stray positional) instead of the bare ``--dry-run``
+    the model intended. Returns ``(new_args, coercions)``.
+    """
+
+    booleans = _manifest_boolean_flags(manifest_snapshot, command)
+    if not booleans:
+        return dict(args), {}
+    new_args: dict[str, Any] = {}
+    coercions: dict[str, str] = {}
+    for key, value in args.items():
+        if key in booleans and isinstance(value, str) and value.strip().lower() in (
+            "true",
+            "false",
+        ):
+            new_args[key] = value.strip().lower() == "true"
+            coercions[key] = f"{value!r}->bool"
+        else:
+            new_args[key] = value
+    return new_args, coercions
+
+
 def _norm_flag_key(key: str) -> str:
     """Syntactic key normalizer: drop leading dashes, ``_``->``-``, lowercase.
 

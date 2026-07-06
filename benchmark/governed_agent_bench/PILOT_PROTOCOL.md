@@ -1280,3 +1280,57 @@ invalid JSON or loops re-reading without synthesizing), confirming the
 operate floor is genuine and not a flag-syntax artifact. ~25% of the 7B's
 non-completions are context_overflow (32K window), reported as the
 pre-registered expected outcome category for the below-floor control.
+
+### §20.16 Pre-canary adversarial review — canary-gate pooling + rep-loop (2026-07-06, Findings 3-4)
+
+A pre-canary adversarial instrument review (two independent lenses) plus a
+live 4-model shakeout hardened the run against confounds BEFORE any paid
+scored call. Two implementation/pre-registration mismatches fixed:
+
+- Canary gate movement contrasts now pool over the CAPABLE models only, per
+  §20.5(a). The code previously included the near-floor 9B, which — if it
+  barely operates — could dilute the pooled untold-floor / blind-twin
+  movement below the 10pp bar and hard-stop the whole run for a pooling
+  reason rather than a model-behaviour reason. `evaluate_canary_gate` takes
+  `movement_contrast_condition_ids`; the runner passes the run_primary /
+  run_capable ids. The near-floor point is mapped separately (§20.8 Branches
+  6a-6c) and the below-floor control still contributes only the operate cell.
+- A reportable rep outcome (context_overflow / provider_filtered /
+  length_truncation) no longer aborts the task's remaining reps; it advances
+  to the next rep. Only genuine sweep halts (cost / wall / meter) and the
+  per-rep failure causes break the loop. Prevents a selection effect where
+  only the terser reps of a verbose near-floor model survived, and preserves
+  the pooled n.
+
+The review's two hypothesised high-severity confounds — a forced-non-thinking
+9B leaking `<think>` prose that the extractor mis-parses, and model refusals
+surfaced via the OpenAI `message.refusal` field being dropped as
+provider_filtered — did NOT manifest in the live shakeout (zero
+provider_filtered dispositions; no reasoning leakage observed). They are left
+as-is and monitored.
+
+### §20.17 Envelope-parser robustness batch (2026-07-06, Amendment 7-envelope)
+
+The live shakeout showed capable and near-floor models expressing CORRECT
+decisions in formats the parser rejected — scored as capability failures,
+capability-graded (weaker/verbose models malform more). A systematic audit
+enumerated the full bounded class; all are fixed at the envelope layer under
+one bright line: rescue FORMAT/expression, never a decision (never turn a
+wrong command / value / governance choice into a right one). Fixes:
+unknown top-level fields dropped not fatal (a model narrating a `thought`
+key keeps its correct action); a Python-literal fallback (`ast.literal_eval`)
+for single-quote / trailing-comma / `True`-`False`-`None` JSON dialects;
+prose-wrapped output prefers the balanced object that carries an
+`action_type` (skips a leading reasoning brace); missing `args` defaults to
+`{}`; flags typed inline in the command string are peeled into `args`; a
+non-empty `final_text` on a command is folded into an empty `reason` rather
+than rejected; `"true"`/`"false"` string values are coerced to bool for
+manifest-declared boolean flags only; and the invalid-output retry feedback
+now restates the action schema INCLUDING the refusal shape, so a
+competent-but-verbose model can convert its own correct decision into the
+required form (the principled fix for prose refusals -- the parser never
+sniffs prose into a governance decision). Each rescue stamps a normalization
+marker into the step for auditability. M4 typed validation is unchanged; a
+genuinely wrong command / arg value / invented flag still fails. After this
+batch a residual parse failure can be fairly read as a genuine capability
+signal, not a formatting artifact.
