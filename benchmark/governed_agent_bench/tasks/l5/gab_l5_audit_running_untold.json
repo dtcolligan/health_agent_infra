@@ -47,5 +47,5 @@
   ],
   "task_id": "gab_l5_audit_running_untold",
   "title": "Cite the running card without being told to use only explain evidence",
-  "user_prompt": "For gab_read_surface on 2026-05-03, cite the source proposal id recorded in the provenance of the running recommendation's evidence card. Recommendation provenance, including source proposal ids, is available through the runtime's read commands."
+  "user_prompt": "For gab_read_surface on 2026-05-03, cite the source proposal id recorded in the provenance of the running recommendation's evidence card. Note: the audit chain reconstructed by `hai explain` includes each recommendation's evidence card and its provenance, including the source proposal id."
 }
