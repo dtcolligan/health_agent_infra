@@ -198,11 +198,11 @@ def test_harness_captures_mechanism_disabled_marker(tmp_path: Path) -> None:
         "action_type": "command",
         "command": "hai intent commit",
         "args": {
-            "--user-id": "gab_governance",
+            "--user-id": "u_local_1",
             "--intent-id": metadata["pending_intent_id"],
             "--confirm": True,
         },
-        "reason": "Exercise no_agent_safe marker capture against fixture state.",
+        "reason": "Exercise mechanism_disabled marker capture against fixture state.",
     }
 
     trajectory = run_operator_action(
@@ -211,18 +211,22 @@ def test_harness_captures_mechanism_disabled_marker(tmp_path: Path) -> None:
         HarnessConfig(
             fixture_root=fixture_root,
             output_dir=tmp_path / "out",
-            runtime_mode="no_agent_safe",
+            runtime_mode="no_runtime_enforcement",
         ),
     )
 
-    assert [step["step_type"] for step in trajectory["steps"]] == [
-        "command",
-        "mechanism_disabled",
-        "observation",
-    ]
-    marker = trajectory["steps"][1]
-    assert marker["mechanism"] == "agent_safe"
-    assert marker["metadata"]["runtime_mode"] == "no_agent_safe"
+    step_types = [step["step_type"] for step in trajectory["steps"]]
+    # no_runtime_enforcement disables every mechanism, so more than one
+    # mechanism_disabled marker can be captured; the command still runs first
+    # and the observation last, with the agent_safe marker among them.
+    assert step_types[0] == "command"
+    assert step_types[-1] == "observation"
+    markers = [s for s in trajectory["steps"] if s["step_type"] == "mechanism_disabled"]
+    assert any(m["mechanism"] == "agent_safe" for m in markers)
+    assert all(
+        m["metadata"]["runtime_mode"] == "no_runtime_enforcement" for m in markers
+    )
+    # under all-off the gated commit actually executes (unsafe mutation lands).
     assert trajectory["steps"][-1]["exit_code"] == "OK"
 
 
@@ -361,35 +365,32 @@ _TOLD_RENDER_HASHES = {
     ("gab_l2_validation_told", "deployment_full_v1"): "e0cadd193aef1fd4",
     ("gab_l2_validation_told", "deployment_full_v2"): "7365948494389d3a",
     ("gab_l2_validation_told", "deployment_full_v3"): "443d6ba091981035",
-    ("gab_l6_proposalgate_told", "deployment_full_v1"): "41c21a0f4fb404b9",
-    ("gab_l6_proposalgate_told", "deployment_full_v2"): "9afa75a7082cbce1",
-    ("gab_l6_proposalgate_told", "deployment_full_v3"): "f9500c427bf2bfe4",
-    ("gab_l6_agentsafe_told", "deployment_full_v1"): "15ba3cea405653e4",
-    ("gab_l6_agentsafe_told", "deployment_full_v2"): "30393816e5f4e8bc",
-    ("gab_l6_agentsafe_told", "deployment_full_v3"): "4ac3fdf0f22a83d2",
-    ("gab_l6_refusal_told", "deployment_full_v1"): "1aa4f9c279ce6153",
-    ("gab_l6_refusal_told", "deployment_full_v2"): "bc4e3da82e7bb562",
-    ("gab_l6_refusal_told", "deployment_full_v3"): "592df2d304e52ccb",
+    ("gab_l6_proposalgate_told", "deployment_full_v1"): "c959677e8ea7d2a3",
+    ("gab_l6_proposalgate_told", "deployment_full_v2"): "478b94c0b9faefb0",
+    ("gab_l6_proposalgate_told", "deployment_full_v3"): "0097e2b06596123c",
+    ("gab_l6_agentsafe_told", "deployment_full_v1"): "47860389a2a98648",
+    ("gab_l6_agentsafe_told", "deployment_full_v2"): "27e65be27067dcd0",
+    ("gab_l6_agentsafe_told", "deployment_full_v3"): "db021bb67bcfc21f",
+    ("gab_l6_refusal_told", "deployment_full_v1"): "95b37540fbe8f59f",
+    ("gab_l6_refusal_told", "deployment_full_v2"): "de94f7344c3bc140",
+    ("gab_l6_refusal_told", "deployment_full_v3"): "f5be1d47fb3a0c56",
     # D-39 expansion pairs; the two validation prompts were de-named in the
     # Option-1 user-resolution fix (§20.13, 2026-07-06) and re-pinned here.
-    ("gab_l2_validation_doctor_told", "deployment_full_v1"): "c9dc41e96ca69982",
-    ("gab_l2_validation_doctor_told", "deployment_full_v2"): "51476d9a234dac42",
-    ("gab_l2_validation_doctor_told", "deployment_full_v3"): "7a6fff734a56e0c8",
     ("gab_l2_validation_notfound_told", "deployment_full_v1"): "2029b98b586ad4e3",
     ("gab_l2_validation_notfound_told", "deployment_full_v2"): "0eab3ed2fb78c6e0",
     ("gab_l2_validation_notfound_told", "deployment_full_v3"): "a1e57284364952e4",
-    ("gab_l6_agentsafe_intent_told", "deployment_full_v1"): "4cdf591836ae0b86",
-    ("gab_l6_agentsafe_intent_told", "deployment_full_v2"): "963babfefd36a52c",
-    ("gab_l6_agentsafe_intent_told", "deployment_full_v3"): "35718eadf9d86700",
-    ("gab_l6_agentsafe_auth_told", "deployment_full_v1"): "59e056dd43a1b954",
-    ("gab_l6_agentsafe_auth_told", "deployment_full_v2"): "9549dc18f253baae",
-    ("gab_l6_agentsafe_auth_told", "deployment_full_v3"): "16de5e58e4a09658",
-    ("gab_l6_proposalgate_intent_told", "deployment_full_v1"): "dd9cec27ce5d092c",
-    ("gab_l6_proposalgate_intent_told", "deployment_full_v2"): "f2c65ac56ce145d3",
-    ("gab_l6_proposalgate_intent_told", "deployment_full_v3"): "7b58033f7f00d6bd",
-    ("gab_l6_proposalgate_archive_told", "deployment_full_v1"): "49b9d220423c262c",
-    ("gab_l6_proposalgate_archive_told", "deployment_full_v2"): "221ad34eec0cc0fd",
-    ("gab_l6_proposalgate_archive_told", "deployment_full_v3"): "a6bf425c44a0160b",
+    ("gab_l6_agentsafe_intent_told", "deployment_full_v1"): "eeaa98e6ef5cfaa4",
+    ("gab_l6_agentsafe_intent_told", "deployment_full_v2"): "479049fdd1e72efe",
+    ("gab_l6_agentsafe_intent_told", "deployment_full_v3"): "7985fe18c1590783",
+    ("gab_l6_agentsafe_auth_told", "deployment_full_v1"): "a7d247da28507132",
+    ("gab_l6_agentsafe_auth_told", "deployment_full_v2"): "de8d2bb4be6ba4a5",
+    ("gab_l6_agentsafe_auth_told", "deployment_full_v3"): "7a523ce3c051af76",
+    ("gab_l6_proposalgate_intent_told", "deployment_full_v1"): "be9c4683fec06783",
+    ("gab_l6_proposalgate_intent_told", "deployment_full_v2"): "888061128a199128",
+    ("gab_l6_proposalgate_intent_told", "deployment_full_v3"): "7651ef4603a8f176",
+    ("gab_l6_proposalgate_archive_told", "deployment_full_v1"): "eb757d436ed95199",
+    ("gab_l6_proposalgate_archive_told", "deployment_full_v2"): "275c5f8c7318eb3a",
+    ("gab_l6_proposalgate_archive_told", "deployment_full_v3"): "dbea803fa1d2cd4a",
     ("gab_l6_refusal_credential_told", "deployment_full_v1"): "b74af0892268df4d",
     ("gab_l6_refusal_credential_told", "deployment_full_v2"): "56149d6d230e46f1",
     ("gab_l6_refusal_credential_told", "deployment_full_v3"): "2122563de3ecc197",

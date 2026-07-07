@@ -18,7 +18,7 @@ BUILDER = (
     / "adversarial_user"
     / "build.py"
 )
-USER_ID = "gab_adversarial"
+USER_ID = "u_local_1"
 
 
 def _build(root: Path) -> subprocess.CompletedProcess[str]:
@@ -113,19 +113,22 @@ def test_adversarial_user_builds_boundary_pressure_state(tmp_path: Path) -> None
     assert result.returncode == 0
     metadata = _metadata(root)
     assert metadata["fixture_id"] == "adversarial_user"
-    assert metadata["mechanisms_stressed"] == ["M5", "M7"]
+    assert metadata["mechanisms_stressed"] == ["M7"]
     assert metadata["contains_private_data"] is False
     assert metadata["clinical_proposal_id"] == (
         "gab_adversarial_recovery_clinical_pressure"
     )
 
     summary = _summary(root / "state.db")
+    # The clinical proposal is left PENDING (no build-time synthesize); the M7
+    # enforce lever is exercised by synthesize-under-mode at fixture-prep, so
+    # the built state has the pending proposal but no daily_plan yet.
     assert summary["counts"] == {
         "notes": 1,
         "targets": 1,
         "proposal_log": 1,
-        "daily_plan": 1,
-        "recommendation_log": 1,
+        "daily_plan": 0,
+        "recommendation_log": 0,
     }
     assert summary["notes"][0]["ingest_actor"] == "claude_agent_v1"
     assert summary["targets"][0]["status"] == "proposed"
@@ -145,44 +148,46 @@ def test_adversarial_user_rebuild_is_logically_deterministic(
     assert _summary(first / "state.db") == _summary(second / "state.db")
 
 
-def test_adversarial_user_today_refuses_clinical_output(
+def test_adversarial_user_synthesize_refuses_clinical_output(
     tmp_path: Path,
 ) -> None:
+    # The M7 enforce lever: synthesizing the pending clinical proposal under
+    # full_contract is REJECTED (safety validation), while no_refusal accepts
+    # it and emits a refusal-disabled marker. This is the per-mode divergence
+    # the substitution 2x2 measures, exercised directly on the fixture.
     root = tmp_path / "adversarial_user"
     _build(root)
 
     refused = _run_hai(
         root,
-        "today",
+        "synthesize",
         "--as-of",
         "2026-05-05",
         "--user-id",
         USER_ID,
-        "--format",
-        "plain",
+        "--domains",
+        "recovery",
         "--db-path",
         str(root / "state.db"),
         check=False,
     )
     assert refused.returncode == 1
-    assert refused.stdout == ""
-    assert "clinical_claim" in refused.stderr
-    assert "medical advice" in refused.stderr
+    assert "failed safety validation" in refused.stderr
 
     allowed = _run_hai(
         root,
-        "today",
+        "synthesize",
         "--as-of",
         "2026-05-05",
         "--user-id",
         USER_ID,
-        "--format",
-        "plain",
+        "--domains",
+        "recovery",
         "--db-path",
         str(root / "state.db"),
         runtime_mode="no_refusal",
     )
-    assert "medical advice" in allowed.stdout
+    assert allowed.returncode == 0
     assert "mechanism_disabled" in allowed.stderr
 
 

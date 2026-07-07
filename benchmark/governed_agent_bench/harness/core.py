@@ -32,6 +32,20 @@ EXIT_CODE_NAMES = {
     3: "NOT_FOUND",
     4: "INTERNAL",
 }
+
+# BUG 3: a hermetic-env keyring refusal (`hai doctor`/`hai auth status` under
+# HAI_HERMETIC) surfaces as exit=1 == USER_INPUT, which would masquerade as a
+# legitimate "needs user action" outcome and silently PASS a user_input task.
+# It is an environment crash unrelated to the task, so it is recorded as a
+# distinct code the scorer treats as a non-outcome, never a pass.
+_HERMETIC_ENV_CRASH_MARKER = "hermetic mode refuses OS keyring access"
+
+
+def _classify_exit_code(returncode: int, stderr: str | None) -> str:
+    name = EXIT_CODE_NAMES.get(returncode, f"EXIT_{returncode}")
+    if name == "USER_INPUT" and _HERMETIC_ENV_CRASH_MARKER in (stderr or ""):
+        return "HERMETIC_ENV_ERROR"
+    return name
 MODEL_BACKED_CLASSES = {"local", "cloud", "fine_tuned_local"}
 
 
@@ -272,8 +286,8 @@ def append_operator_action_steps(
         steps.extend(_mechanism_disabled_steps(completed.stderr))
         steps.append({
             "step_type": "observation",
-            "exit_code": EXIT_CODE_NAMES.get(
-                completed.returncode, f"EXIT_{completed.returncode}"
+            "exit_code": _classify_exit_code(
+                completed.returncode, completed.stderr
             ),
             "stdout_ref": stdout_ref,
             "stderr_ref": stderr_ref,

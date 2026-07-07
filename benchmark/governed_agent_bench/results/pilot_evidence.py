@@ -46,12 +46,14 @@ DIAGNOSTIC_EVIDENCE_TIER = "diagnostic_only"
 SANITY_FLOOR_ROLE = "sanity_floor"
 H1_ATTRIBUTION_ROLE = "h1_attribution"
 
+# Post-audit substitution 2x2 (D-48): only two clean MODEL-ACTION constraints.
+# The mutation gate is M5+M6 jointly (redundant defense-in-depth), isolable only
+# at the all-off floor (no_agent_safe leaves the untold arm W57-blocked). M7
+# clinical refusal is uniquely isolable. M4 validation and M8 audit are
+# runtime-internal (reported as scope / blind twin, not 2x2 cells).
 MECHANISM_OFF_MODES = {
-    "validation": "no_validation",
-    "agent_safe": "no_agent_safe",
-    "proposal_gate": "no_proposal_gate",
+    "agent_safe": "no_runtime_enforcement",
     "refusal": "no_refusal",
-    "audit_chain": "no_audit_chain",
 }
 MECHANISM_IDS = {
     "validation": "M4",

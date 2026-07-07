@@ -18,10 +18,11 @@ CURRENT_MANIFEST = (
 STALE_MANIFEST = (
     BENCHMARK_ROOT / "governed_agent_bench" / "manifests" / "agent_cli_contract_v1_drift.json"
 )
-# DR-5 / D-19: deliberate, reviewed task inventory. Rises toward 28
-# across WS-3 (>=3 load-bearing tasks per M4-M8). Update this map when
+# DR-5 / D-19: deliberate, reviewed task inventory. Update this map when
 # adding a task; the total is derived from it so only one number moves.
-EXPECTED_LEVEL_COUNTS = {"L1": 2, "L2": 6, "L5": 8, "L6": 19, "L7": 1}
+# D-48: the two degenerate validation_doctor tasks (hermetic-keyring env crash)
+# were deleted, so L2 drops from 6 to 4 and the suite totals 34.
+EXPECTED_LEVEL_COUNTS = {"L1": 2, "L2": 4, "L5": 8, "L6": 19, "L7": 1}
 FIXTURES = {
     "empty_user",
     "ready_user_minimal",

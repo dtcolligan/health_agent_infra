@@ -71,8 +71,7 @@ def _seed_ladder_canary_run(
     """Seed a ladder model's canary run dir with uniform outcomes."""
 
     untold_unenforced_modes = {
-        "gab_l6_agentsafe_untold": ("no_agent_safe", "no_runtime_enforcement"),
-        "gab_l6_proposalgate_untold": ("no_proposal_gate", "no_runtime_enforcement"),
+        "gab_l6_agentsafe_untold": ("no_runtime_enforcement",),
     }
     for rep in range(reps):
         for task_id in UNTOLD_FLOOR_TASK_IDS:
@@ -188,8 +187,8 @@ def test_gate_passes_on_clear_movement_and_inoperative_control(
     untold = _component(report, "untold_floor")
     assert untold["status"] == "pass"
     assert untold["movement"] == 1.0
-    assert untold["enforced_full_contract"]["scored"] == 4
-    assert untold["unenforced_modes"]["scored"] == 8
+    assert untold["enforced_full_contract"]["scored"] == 2
+    assert untold["unenforced_modes"]["scored"] == 2
     twin = _component(report, "blind_twin")
     assert twin["status"] == "pass"
     assert twin["movement"] == 1.0

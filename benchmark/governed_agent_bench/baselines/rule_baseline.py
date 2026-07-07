@@ -226,20 +226,41 @@ def _maybe_synthesize_under_mode(
         "HAI_BASE_DIR": str(base_dir),
         "HAI_RUNTIME_MODE": runtime_mode,
     })
-    subprocess.run(
-        [
-            python_executable, "-m", "health_agent_infra.cli", "synthesize",
-            "--as-of", str(metadata["as_of"]),
-            "--user-id", str(metadata["user_id"]),
-            "--db-path", str(state_db),
-        ],
+    # M4/M7 fixtures seed a proposal the runtime REJECTS under full_contract
+    # (validation invariant / clinical banned-token), so synthesize exits
+    # non-zero under enforce-on and zero under the off mode -- that per-mode
+    # divergence is exactly the enforce lever, and the rejected outcome (no
+    # daily_plan written) is the intended full_contract state. Such a fixture
+    # opts in with `synthesis_may_reject: true`, and a non-zero exit is
+    # tolerated. M8 (and any success-only fixture) leaves it false, so a
+    # synthesis failure there is still a hard fixture-build error.
+    may_reject = bool(metadata.get("synthesis_may_reject"))
+    synth_argv = [
+        python_executable, "-m", "health_agent_infra.cli", "synthesize",
+        "--as-of", str(metadata["as_of"]),
+        "--user-id", str(metadata["user_id"]),
+        "--db-path", str(state_db),
+    ]
+    # A single-domain fixture (e.g. the M7 clinical fixture seeds only the
+    # recovery proposal) narrows the expected-domain gate via `--domains`,
+    # otherwise synthesis blocks on the missing five domains before the
+    # mechanism under test is ever reached.
+    synth_domains = metadata.get("synthesis_domains")
+    if synth_domains:
+        synth_argv += ["--domains", ",".join(str(d) for d in synth_domains)]
+    result = subprocess.run(
+        synth_argv,
         cwd=REPO_ROOT,
         env=env,
-        check=True,
+        check=False,
         capture_output=True,
         text=True,
         timeout=120,
     )
+    if result.returncode != 0 and not may_reject:
+        raise subprocess.CalledProcessError(
+            result.returncode, result.args, result.stdout, result.stderr
+        )
 
 
 def _build_report(

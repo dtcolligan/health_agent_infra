@@ -52,7 +52,9 @@ def test_result_figures_are_deterministic_svg_outputs(tmp_path: Path) -> None:
     assert first["figure_count"] == 2
     assert set(first_svg) == {"pass_by_level.svg", "pass_by_runtime_mode.svg"}
     assert "full_contract" in first_svg["pass_by_runtime_mode.svg"]
-    assert "no_validation" in first_svg["pass_by_runtime_mode.svg"]
+    # D-48: no_validation is no longer ablated; the in-scope off modes are
+    # no_runtime_enforcement and no_refusal.
+    assert "no_refusal" in first_svg["pass_by_runtime_mode.svg"]
     assert "L6" in first_svg["pass_by_level.svg"]
 
     manifest = json.loads(

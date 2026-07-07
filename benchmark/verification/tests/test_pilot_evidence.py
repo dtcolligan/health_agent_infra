@@ -438,39 +438,35 @@ def test_halted_whole_run_conservatively_demotes_completed_rows(
 def test_diagnostic_rows_are_excluded_from_eligible_counts(
     tmp_path: Path,
 ) -> None:
+    # D-48: the 2x2 mutation gate is agent_safe (off = no_runtime_enforcement);
+    # a diagnostic off-row must still be dropped from the eligible counts.
     run_dir = _run_dir(tmp_path)
-    task_id = "gab_l2_validation_told"
+    task_id = "gab_l6_agentsafe_told"
     _add_rep(
         run_dir,
         task_id=task_id,
         runtime_mode="full_contract",
-        metrics={
-            "valid_command_rate": _metric(1.0),
-            "hallucinated_command_rate": _metric(0.0),
-        },
+        metrics={"unsafe_action_rate": _metric(0.0)},
     )
     _add_rep(
         run_dir,
         task_id=task_id,
-        runtime_mode="no_validation",
+        runtime_mode="no_runtime_enforcement",
         overall_pass=False,
-        metrics={
-            "valid_command_rate": _metric(0.0, passed=False),
-            "hallucinated_command_rate": _metric(1.0, passed=False),
-        },
+        metrics={"unsafe_action_rate": _metric(1.0, passed=False)},
         cell_outcome="aborted",
         disposition="contamination_detected",
         abort_reason="contamination_detected",
-        offending_mechanism="validation",
+        offending_mechanism="agent_safe",
     )
     output = write_pilot_evidence_tables(run_dir=run_dir)
     summary = _read_json(Path(output["mechanism_coverage_path"]))
 
-    validation = summary["mechanisms"]["validation"]
-    assert validation["eligible_full_contract_total"] == 1
-    assert validation["eligible_no_x_total"] == 0
+    agent_safe = summary["mechanisms"]["agent_safe"]
+    assert agent_safe["eligible_full_contract_total"] == 1
+    assert agent_safe["eligible_no_x_total"] == 0
     assert (
-        validation["enough_eligible_rows_for_model_backed_comparison"] is False
+        agent_safe["enough_eligible_rows_for_model_backed_comparison"] is False
     )
 
 
@@ -490,12 +486,20 @@ def test_no_runtime_enforcement_is_sanity_floor_not_attribution(
 
     assert table["rows"][0]["evidence_role"] == "sanity_floor"
     assert summary["sanity_floor"]["eligible_rep_count"] == 1
+    # The sole no_runtime_enforcement rep carries the sanity-floor role and must
+    # NEVER be miscounted as an ENFORCED (full_contract) rep for any mechanism.
     for mechanism in summary["mechanisms"].values():
-        assert mechanism["disabled_by_runtime_mode"] != "no_runtime_enforcement"
-        # The sole no_runtime_enforcement rep is the sanity floor: it must not be
-        # counted as an eligible full_contract or mechanism-off attribution rep.
         assert mechanism["eligible_full_contract_total"] == 0
-        assert mechanism["eligible_no_x_total"] == 0
+    # D-48: no_runtime_enforcement IS the mutation gate's (agent_safe) enforce-off
+    # mode, so the floor rep doubles as agent_safe's off (D) column -- while a
+    # mechanism whose off-mode is not no_runtime_enforcement (refusal) never
+    # picks it up.
+    agent_safe = summary["mechanisms"]["agent_safe"]
+    assert agent_safe["disabled_by_runtime_mode"] == "no_runtime_enforcement"
+    assert agent_safe["eligible_no_x_total"] == 1
+    refusal = summary["mechanisms"]["refusal"]
+    assert refusal["disabled_by_runtime_mode"] == "no_refusal"
+    assert refusal["eligible_no_x_total"] == 0
 
 
 def test_per_mechanism_summary_computes_pass_counts_and_delta(
@@ -519,7 +523,7 @@ def test_per_mechanism_summary_computes_pass_counts_and_delta(
         _add_rep(
             run_dir,
             task_id=task_id,
-            runtime_mode="no_agent_safe",
+            runtime_mode="no_runtime_enforcement",
             rep=rep,
             overall_pass=passed,
             metrics={"unsafe_action_rate": _metric(unsafe_rate, passed=passed)},
@@ -543,47 +547,43 @@ def test_per_mechanism_summary_computes_pass_counts_and_delta(
 def test_full_contract_critical_violation_is_surfaced(
     tmp_path: Path,
 ) -> None:
+    # D-48: surfaced on the mutation gate (agent_safe). A critical violation in a
+    # full_contract (enforced) cell must be reported even though the cell aborted.
     run_dir = _run_dir(tmp_path)
-    task_id = "gab_l2_validation_told"
+    task_id = "gab_l6_agentsafe_told"
     _add_rep(
         run_dir,
         task_id=task_id,
         runtime_mode="full_contract",
         overall_pass=False,
-        metrics={
-            "valid_command_rate": _metric(1.0),
-            "hallucinated_command_rate": _metric(0.0),
-        },
+        metrics={"unsafe_action_rate": _metric(0.0)},
         violations=[
             {
                 "kind": "mechanism_disabled_unexpected",
-                "detail": "unexpected validation marker",
-                "mechanism": "validation",
+                "detail": "unexpected agent_safe marker",
+                "mechanism": "agent_safe",
             }
         ],
         cell_outcome="aborted",
         disposition="full_contract_unexpected_marker",
         abort_reason="full_contract_unexpected_marker",
-        offending_mechanism="validation",
+        offending_mechanism="agent_safe",
     )
     _add_rep(
         run_dir,
         task_id=task_id,
-        runtime_mode="no_validation",
+        runtime_mode="no_runtime_enforcement",
         overall_pass=False,
-        metrics={
-            "valid_command_rate": _metric(0.0, passed=False),
-            "hallucinated_command_rate": _metric(1.0, passed=False),
-        },
+        metrics={"unsafe_action_rate": _metric(1.0, passed=False)},
     )
     summary = _read_json(
         Path(write_pilot_evidence_tables(run_dir=run_dir)["mechanism_coverage_path"])
     )
 
-    validation = summary["mechanisms"]["validation"]
-    assert validation["full_contract_critical_violation_observed"] is True
+    agent_safe = summary["mechanisms"]["agent_safe"]
+    assert agent_safe["full_contract_critical_violation_observed"] is True
     kinds = {
-        item["kind"] for item in validation["full_contract_critical_violations"]
+        item["kind"] for item in agent_safe["full_contract_critical_violations"]
     }
     assert kinds == {"mechanism_disabled_unexpected"}
 
@@ -591,24 +591,26 @@ def test_full_contract_critical_violation_is_surfaced(
 def test_missing_no_x_rows_mark_comparison_not_enough(
     tmp_path: Path,
 ) -> None:
+    # D-48: exercised on the clinical-refusal constraint (off = no_refusal). One
+    # enforced rep with no off-row twin cannot support a model-backed comparison.
     run_dir = _run_dir(tmp_path)
     _add_rep(
         run_dir,
-        task_id="gab_l5_audit_told",
+        task_id="gab_l6_refusal_told",
         runtime_mode="full_contract",
         metrics={
-            "audit_reference_faithfulness": _metric(1.0),
-            "unsupported_narration_rate": _metric(0.0),
+            "clinical_claim_rate": _metric(0.0),
+            "refusal_accuracy": _metric(True),
         },
     )
     summary = _read_json(
         Path(write_pilot_evidence_tables(run_dir=run_dir)["mechanism_coverage_path"])
     )
 
-    audit = summary["mechanisms"]["audit_chain"]
-    assert audit["eligible_full_contract_total"] == 1
-    assert audit["eligible_no_x_total"] == 0
-    assert audit["enough_eligible_rows_for_model_backed_comparison"] is False
+    refusal = summary["mechanisms"]["refusal"]
+    assert refusal["eligible_full_contract_total"] == 1
+    assert refusal["eligible_no_x_total"] == 0
+    assert refusal["enough_eligible_rows_for_model_backed_comparison"] is False
 
 
 
@@ -706,15 +708,16 @@ def test_generator_runs_against_minimal_a2_orchestrator_layout(
     assert table["rows"][0]["evidence_tier"] == MODEL_BACKED_EVIDENCE_TIER
 
 
-def test_proposal_gate_coverage_is_computable(
+def test_mutation_gate_coverage_is_computable(
     tmp_path: Path,
 ) -> None:
-    # B1 (residual): proposal_gate coverage must be computable from the rows
-    # proposalgate tasks actually produce; the per-metric comparison now
-    # lives in cell_contrasts (MECHANISM_METRICS maps M6 to
-    # unsafe_action_rate).
+    # D-48: the mutation gate is agent_safe (M5+M6 jointly, off =
+    # no_runtime_enforcement); coverage must be computable from the rows the
+    # agentsafe tasks actually produce. proposal_gate is no longer a 2x2 cell.
+    # The per-metric comparison lives in cell_contrasts (MECHANISM_METRICS maps
+    # agent_safe to unsafe_action_rate).
     run_dir = _run_dir(tmp_path)
-    task_id = "gab_l6_proposalgate_told"
+    task_id = "gab_l6_agentsafe_told"
     _add_rep(
         run_dir,
         task_id=task_id,
@@ -728,7 +731,7 @@ def test_proposal_gate_coverage_is_computable(
     _add_rep(
         run_dir,
         task_id=task_id,
-        runtime_mode="no_proposal_gate",
+        runtime_mode="no_runtime_enforcement",
         overall_pass=False,
         metrics={
             "task_success": _metric(False, passed=False),
@@ -741,11 +744,11 @@ def test_proposal_gate_coverage_is_computable(
         Path(write_pilot_evidence_tables(run_dir=run_dir)["mechanism_coverage_path"])
     )
 
-    proposal_gate = summary["mechanisms"]["proposal_gate"]
-    assert proposal_gate["enough_eligible_rows_for_model_backed_comparison"] is True
-    assert proposal_gate["eligible_full_contract_pass_count"] == 1
-    assert proposal_gate["eligible_no_x_pass_count"] == 0
-    assert proposal_gate["pass_rate_delta_full_minus_no_x"] == 1.0
+    agent_safe = summary["mechanisms"]["agent_safe"]
+    assert agent_safe["enough_eligible_rows_for_model_backed_comparison"] is True
+    assert agent_safe["eligible_full_contract_pass_count"] == 1
+    assert agent_safe["eligible_no_x_pass_count"] == 0
+    assert agent_safe["pass_rate_delta_full_minus_no_x"] == 1.0
 
 
 def test_median_task_passed_dead_rule_is_removed() -> None:

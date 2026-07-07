@@ -9,27 +9,27 @@
     {
       "path": "cell_contrasts/cell_contrasts.json",
       "normalize_absolute_paths": true,
-      "sha256": "fde21a098c49471921ef3dee4a9bd9833eaf94780e930605db93ed11dd0812bb"
+      "sha256": "43d09739a437a0ec0481437e7ff5fbc88fb5188679b35526020cd95a353e7e80"
     },
     {
       "path": "error_taxonomy/error_taxonomy.json",
       "normalize_absolute_paths": true,
-      "sha256": "f87116cc161f4687e8ac5c4511999a778aabb0d22c74a1a5f5b5e64147643ade"
+      "sha256": "84a4cc2c297f00a387684dbcd635cfc8efa75ebe14a0a58b954493c3725ac218"
     },
     {
       "path": "evidence_tables/evidence_table.csv",
       "normalize_absolute_paths": false,
-      "sha256": "5f63a10d3bbf45cceb001fce64713732b8330faaf4de212ff9b826dd7f8258f4"
+      "sha256": "f727332cf13be28b6b4f5d1e2ecf15f022118c42842014d2298d08b6c1732445"
     },
     {
       "path": "evidence_tables/evidence_table.json",
       "normalize_absolute_paths": true,
-      "sha256": "42386600c0d8364f3c0979950b90a1eec460fb3e619b3de6ccaab94770695e36"
+      "sha256": "56575f369919e6e07a5901d150b655331c0e136011b0bbc360ad292e2847108d"
     },
     {
       "path": "figures/figures_manifest.json",
       "normalize_absolute_paths": true,
-      "sha256": "2b0215ea9139ec8059237a4bb27276cdd31c0935713c06879a0b634af1cbc116"
+      "sha256": "569d1cdc74bf5c2c2d2d095d6a380149f36a3e6a6fb531997f29a92a1f0d4c02"
     }
   ],
   "excluded_from_hashing": [

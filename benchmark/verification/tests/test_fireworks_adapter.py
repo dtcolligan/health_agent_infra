@@ -387,7 +387,7 @@ def test_fireworks_adapter_preserves_ordered_cross_turn_steps(
     transport = FakeTransport(
         responses=[
             _command_response("hai capabilities"),
-            _command_response("hai doctor"),
+            _command_response("hai today"),
             _final_response("Runtime status checked."),
         ]
     )

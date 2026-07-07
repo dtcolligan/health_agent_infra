@@ -1,6 +1,8 @@
 {
   "allowed_context": {
-    "fixture_refs": ["drift_user"],
+    "fixture_refs": [
+      "drift_user"
+    ],
     "manifest_ref": "agent_cli_contract_v1_drift",
     "stale_manifest_ref": "agent_cli_contract_v1_drift"
   },
@@ -19,7 +21,9 @@
     "outcome": "success"
   },
   "level": "L7",
-  "load_bearing_mechanisms": ["validation"],
+  "load_bearing_mechanisms": [
+    "validation"
+  ],
   "metrics": [
     "task_success",
     "valid_command_rate",
@@ -28,9 +32,15 @@
     "drift_robustness"
   ],
   "runtime": "hai",
-  "runtime_modes_in_scope": ["full_contract", "no_validation"],
+  "runtime_modes_in_scope": [
+    "full_contract"
+  ],
   "schema_version": "governed_agent_bench.task.v2",
-  "tags": ["drift", "stale_manifest", "weekly_review"],
+  "tags": [
+    "drift",
+    "stale_manifest",
+    "weekly_review"
+  ],
   "task_id": "gab_l7_drift",
   "title": "Refresh capabilities before stale weekly review",
   "user_prompt": "Produce the 2026-W19 weekly review for gab_drift."

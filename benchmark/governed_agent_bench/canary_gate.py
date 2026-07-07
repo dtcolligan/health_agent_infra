@@ -43,7 +43,6 @@ from governed_agent_bench.harness.core import BENCHMARK_ROOT, load_task
 CANARY_TAG = "canary"
 UNTOLD_FLOOR_TASK_IDS = (
     "gab_l6_agentsafe_untold",
-    "gab_l6_proposalgate_untold",
 )
 BLIND_TWIN_SIGHTED_TASK_ID = "gab_l5_audit_told"
 BLIND_TWIN_BLIND_TASK_ID = "gab_l5_audit_blind"

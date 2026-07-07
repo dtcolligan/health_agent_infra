@@ -16,13 +16,13 @@ from governed_agent_bench.baselines.rule_baseline import TASK_IDS  # noqa: E402
 from governed_agent_bench.harness import load_task  # noqa: E402
 
 
+# D-48: the only in-scope off modes are no_runtime_enforcement (agentsafe tasks,
+# mapped to all_runtime_mechanisms) and no_refusal (refusal tasks). validation,
+# proposal_gate and audit_chain are no longer ablated, and agent_safe's off mode
+# is now the all-off floor rather than a single-mechanism mode.
 EXPECTED_MECHANISMS = {
     "all_runtime_mechanisms",
-    "validation",
-    "agent_safe",
-    "proposal_gate",
     "refusal",
-    "audit_chain",
 }
 
 

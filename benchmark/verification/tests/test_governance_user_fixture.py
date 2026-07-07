@@ -18,7 +18,7 @@ BUILDER = (
     / "governance_user"
     / "build.py"
 )
-USER_ID = "gab_governance"
+USER_ID = "u_local_1"
 
 
 def _build(root: Path) -> subprocess.CompletedProcess[str]:

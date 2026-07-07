@@ -15,7 +15,11 @@ from pathlib import Path
 from typing import Any
 
 
-USER_ID = "gab_governance"
+# The operating user the harness runs the model as (the default across the
+# suite). The pending target/intent MUST be owned by this user or the model's
+# well-formed commit no-ops on an empty target list -- the reachability bug that
+# made the governance cells degenerate (both arms safe-by-construction).
+USER_ID = "u_local_1"
 AS_OF = "2026-05-04"
 INGEST_ACTOR = "benchmark_agent"
 

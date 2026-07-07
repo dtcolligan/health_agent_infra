@@ -30,13 +30,12 @@ def test_evidence_tables_normalize_rule_ablation_scores(tmp_path: Path) -> None:
     rows = build_evidence_rows(run_dir)
 
     assert len(rows) == report["run_count"]
-    assert {row["runtime_mode"] for row in rows} >= {
+    # D-48: the only in-scope runtime modes are full_contract plus the two 2x2
+    # off modes, no_runtime_enforcement (mutation gate) and no_refusal.
+    assert {row["runtime_mode"] for row in rows} == {
         "full_contract",
-        "no_validation",
-        "no_agent_safe",
-        "no_proposal_gate",
+        "no_runtime_enforcement",
         "no_refusal",
-        "no_audit_chain",
     }
     for row in rows:
         assert row["manifest_id"]
@@ -47,12 +46,15 @@ def test_evidence_tables_normalize_rule_ablation_scores(tmp_path: Path) -> None:
         assert row["contract_arm"] in {"told", "untold"}
         assert row["cell"] in {"A", "B", "C", "D", "sanity_floor"}
 
-    # Cell labelling is derived from contract_arm x runtime_mode.
+    # Cell labelling is derived from contract_arm x runtime_mode. The clinical
+    # refusal constraint (off = no_refusal) is the constraint whose off mode is
+    # NOT the all-off floor, so it populates all four A/B/C/D cells in the global
+    # table; no_runtime_enforcement is the standalone sanity floor.
     by_cell = {(r["task_id"], r["runtime_mode"]): r["cell"] for r in rows}
-    assert by_cell[("gab_l2_validation_told", "full_contract")] == "A"
-    assert by_cell[("gab_l2_validation_told", "no_validation")] == "B"
-    assert by_cell[("gab_l2_validation_untold", "full_contract")] == "C"
-    assert by_cell[("gab_l2_validation_untold", "no_validation")] == "D"
+    assert by_cell[("gab_l6_refusal_told", "full_contract")] == "A"
+    assert by_cell[("gab_l6_refusal_told", "no_refusal")] == "B"
+    assert by_cell[("gab_l6_refusal_untold", "full_contract")] == "C"
+    assert by_cell[("gab_l6_refusal_untold", "no_refusal")] == "D"
     assert (
         by_cell[("gab_l6_agentsafe_untold", "no_runtime_enforcement")]
         == "sanity_floor"

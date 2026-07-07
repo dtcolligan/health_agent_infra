@@ -861,7 +861,12 @@ def test_mode_order_and_rep_calls_are_consecutive(
 ) -> None:
     calls: list[tuple[str, str, int]] = []
     prelude_calls: list[tuple[str, str]] = []
-    task_id = "gab_l2_validation_told"
+    # D-48: no task is in scope for no_validation anymore (validation is no longer
+    # a 2x2 lever). Keep no_validation in the sweep to exercise the prelude hook
+    # (hardcoded to the full_contract->no_validation transition), and show
+    # rep-consecutiveness on the in-scope mutation-gate off mode
+    # no_runtime_enforcement carried by the agentsafe tasks.
+    task_id = "gab_l6_agentsafe_told"
     condition = _condition()
 
     _patch_hai(monkeypatch)
@@ -879,7 +884,7 @@ def test_mode_order_and_rep_calls_are_consecutive(
         config=_config(
             tmp_path,
             task_ids=(task_id,),
-            mode_order=("full_contract", "no_validation"),
+            mode_order=("full_contract", "no_validation", "no_runtime_enforcement"),
             replication_n=2,
         ),
         now_utc=lambda: RUN_START,
@@ -894,8 +899,8 @@ def test_mode_order_and_rep_calls_are_consecutive(
     assert calls == [
         (task_id, "full_contract", 0),
         (task_id, "full_contract", 1),
-        (task_id, "no_validation", 0),
-        (task_id, "no_validation", 1),
+        (task_id, "no_runtime_enforcement", 0),
+        (task_id, "no_runtime_enforcement", 1),
     ]
 
 
@@ -959,14 +964,16 @@ def test_fresh_fixture_workspace_per_cell(
         [[_final_response()], [_final_response()]],
         config=_config(
             tmp_path,
-            task_ids=("gab_l2_validation_told",),
-            mode_order=("full_contract", "no_validation"),
+            # D-48: use the in-scope mutation-gate off mode; validation is no
+            # longer ablated so no_validation carries no in-scope task.
+            task_ids=("gab_l6_agentsafe_told",),
+            mode_order=("full_contract", "no_runtime_enforcement"),
         ),
     )
 
     assert [workspace.parts[-3:] for workspace in workspaces] == [
-        ("full_contract", "gab_l2_validation_told", "rep_01"),
-        ("no_validation", "gab_l2_validation_told", "rep_01"),
+        ("full_contract", "gab_l6_agentsafe_told", "rep_01"),
+        ("no_runtime_enforcement", "gab_l6_agentsafe_told", "rep_01"),
     ]
     assert workspaces[0] != workspaces[1]
 
@@ -1524,14 +1531,18 @@ def test_mid_cell_halt_finalizes_exactly_one_coverage_status(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    # D-48: exercise the mid-cell halt across the in-scope mutation-gate off mode.
+    # operate_route is full_contract-only (out of scope for no_runtime_enforcement);
+    # agentsafe_told carries both, so it demonstrates not_run_after_stop in the
+    # off mode once the cost cap halts the sweep in the first cell.
     result = _run(
         tmp_path,
         monkeypatch,
         [[_command_response(cost=2.0)]],
         config=_config(
             tmp_path,
-            task_ids=("gab_l1_operate_route", "gab_l2_validation_told"),
-            mode_order=("full_contract", "no_validation"),
+            task_ids=("gab_l1_operate_route", "gab_l6_agentsafe_told"),
+            mode_order=("full_contract", "no_runtime_enforcement"),
             cost_cap_usd=1.0,
         ),
     )
@@ -1544,13 +1555,13 @@ def test_mid_cell_halt_finalizes_exactly_one_coverage_status(
     )
     coverage = index["coverage"]
     assert coverage["full_contract"]["per_task"]["gab_l1_operate_route"]["status"] == "in_scope_run"
-    assert coverage["full_contract"]["per_task"]["gab_l2_validation_told"]["status"] == "not_run_after_stop"
-    assert coverage["no_validation"]["per_task"]["gab_l1_operate_route"]["status"] == "out_of_scope_skip"
-    assert coverage["no_validation"]["per_task"]["gab_l2_validation_told"]["status"] == "not_run_after_stop"
+    assert coverage["full_contract"]["per_task"]["gab_l6_agentsafe_told"]["status"] == "not_run_after_stop"
+    assert coverage["no_runtime_enforcement"]["per_task"]["gab_l1_operate_route"]["status"] == "out_of_scope_skip"
+    assert coverage["no_runtime_enforcement"]["per_task"]["gab_l6_agentsafe_told"]["status"] == "not_run_after_stop"
     for mode_rows in coverage.values():
         assert set(mode_rows["per_task"]) == {
             "gab_l1_operate_route",
-            "gab_l2_validation_told",
+            "gab_l6_agentsafe_told",
         }
 
 
@@ -1819,20 +1830,21 @@ def test_public_dataclass_shapes_and_default_config_path(
 
 
 def test_default_task_scope_count_matches_pilot_volume() -> None:
-    # IB-1 added no_runtime_enforcement to gab_l6_proposalgate_untold
-    # (second all-off floor carrier): 71 -> 72 cells. IB-6 locked n=4:
-    # 72 * 4 = 288 default reps.
+    # D-48: 34 tasks (two degenerate validation_doctor tasks deleted). The only
+    # in-scope off modes are no_runtime_enforcement (7 agentsafe tasks) and
+    # no_refusal (2 refusal tasks): 34 + 7 + 2 = 43 cells. IB-6 locked n=4:
+    # 43 * 4 = 172 default reps.
     task_ids = pilot.default_task_ids()
     total_cells = 0
     for task_id in task_ids:
         total_cells += len(pilot.modes_in_scope(harness_core.load_task(task_id)))
 
-    assert len(task_ids) == 36
-    assert total_cells == 72
+    assert len(task_ids) == 34
+    assert total_cells == 43
     assert total_cells * pilot.PilotConfig(
         runs_root=Path("/tmp/unused"),
         task_ids=task_ids,
-    ).replication_n == 288
+    ).replication_n == 172
 
 
 def test_replication_default_is_four() -> None:
