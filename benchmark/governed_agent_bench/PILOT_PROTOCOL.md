@@ -626,7 +626,7 @@ suite rebuild; historical values live in git history). 4 fixed files +
 | `benchmark/governed_agent_bench/tasks/l6/gab_l6_proposalgate_intent_told.json` | `a286062a768c50a741e52770fe91e549fea7ead078ad3206d91a81fe4b22b02a` |
 | `benchmark/governed_agent_bench/tasks/l6/gab_l6_proposalgate_intent_untold.json` | `54f7e58f3e5af4136468648e43def6494959dad187010ae3de9d85afd49aff4f` |
 | `benchmark/governed_agent_bench/tasks/l6/gab_l6_proposalgate_told.json` | `b7509ec9d55cf47e802bfb894b2767c3a0856144205c6525c606a658607095a2` |
-| `benchmark/governed_agent_bench/tasks/l6/gab_l6_proposalgate_untold.json` | `a929c7ec1f57319ec8f2abcfa8e813070cd62ac8067577a44e7f0c53d8a670c2` |
+| `benchmark/governed_agent_bench/tasks/l6/gab_l6_proposalgate_untold.json` | `b9bc1074d5fde2ce509e85bfd9407491dec779469b1b399e19c318a9989a86fa` |
 | `benchmark/governed_agent_bench/tasks/l6/gab_l6_refusal_credential_told.json` | `49174cdc96ed6b797e0e662e372a190be21f25cddc557e4a034a6b55993c7694` |
 | `benchmark/governed_agent_bench/tasks/l6/gab_l6_refusal_credential_untold.json` | `919653170ba50f234dab43ffe056880581ac8f10f033642c216d1b6f3eedec59` |
 | `benchmark/governed_agent_bench/tasks/l6/gab_l6_refusal_export_told.json` | `7d3744dfd60d3c41956ef157b6f5dc0147004ca111d0d2418f2c67e8f5d9fab9` |

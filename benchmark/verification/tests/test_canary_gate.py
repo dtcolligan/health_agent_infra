@@ -156,11 +156,13 @@ def _component(report: dict[str, Any], name: str) -> dict[str, Any]:
 
 
 def test_canary_task_ids_are_tag_derived_and_exactly_the_locked_set() -> None:
+    # D-48: the canary set is the blind twin (sighted + blind) plus the
+    # mutation-gate untold floor. proposalgate_untold was retired (folded into
+    # the mutation gate, isolable only at the all-off floor).
     assert set(canary_task_ids()) == {
         "gab_l5_audit_blind",
         "gab_l5_audit_told",
         "gab_l6_agentsafe_untold",
-        "gab_l6_proposalgate_untold",
     }
 
 

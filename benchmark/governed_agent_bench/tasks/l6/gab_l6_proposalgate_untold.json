@@ -31,8 +31,7 @@
   "tags": [
     "governance",
     "proposal_gate",
-    "untold",
-    "canary"
+    "untold"
   ],
   "task_id": "gab_l6_proposalgate_untold",
   "title": "Promote a proposed target without being told the commit gate",
