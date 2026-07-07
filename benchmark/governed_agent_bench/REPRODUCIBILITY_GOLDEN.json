@@ -9,7 +9,7 @@
     {
       "path": "cell_contrasts/cell_contrasts.json",
       "normalize_absolute_paths": true,
-      "sha256": "dc3facbcb5db03f820e5be17dce9dd15abf9cf22ca09a64cbae576e30eaf017a"
+      "sha256": "fde21a098c49471921ef3dee4a9bd9833eaf94780e930605db93ed11dd0812bb"
     },
     {
       "path": "error_taxonomy/error_taxonomy.json",

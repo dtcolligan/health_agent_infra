@@ -412,3 +412,34 @@ def test_resume_flag_rejects_smoke_and_dry_run(
     )
     assert exit_code == run_pilot_live.EXIT_BAD_SELECTION
     assert "--resume" in capsys.readouterr().err
+
+
+def test_capable_movement_pool_excludes_floor_points_and_fails_closed() -> None:
+    # F5 (analysis-layer audit): the pooled movement contrasts pool over the
+    # CAPABLE models only; a near-floor / below-floor point must be excluded so
+    # it cannot dilute the movement and hard-stop the run for a pooling reason.
+    ladder = [
+        "run_primary_qwen3_235b",
+        "run_capable_llama33_70b",
+        "run_nearfloor_qwen35_9b",
+        "run_belowfloor_qwen25_7b",
+    ]
+    capable = run_pilot_live.capable_movement_condition_ids(ladder)
+    assert capable == ["run_primary_qwen3_235b", "run_capable_llama33_70b"]
+    # order and dict inputs both work; a renamed/unknown id is excluded (fails
+    # closed) rather than silently pooled in.
+    assert run_pilot_live.capable_movement_condition_ids(
+        {"run_nearfloor_qwen35_9b": None, "renamed_capable_model": None}
+    ) == []
+
+
+def test_capable_movement_pool_matches_locked_roster_run_ladder() -> None:
+    # The prefix heuristic must actually select the capable tier of the real
+    # locked roster, not just a hand-built list.
+    ids = [c["condition_id"] for c in run_pilot_live.together_ladder_conditions()]
+    capable = run_pilot_live.capable_movement_condition_ids(ids)
+    assert capable, "roster must expose at least one capable run condition"
+    assert all(
+        c.startswith(("run_primary", "run_capable")) for c in capable
+    )
+    assert not any("nearfloor" in c or "belowfloor" in c for c in capable)

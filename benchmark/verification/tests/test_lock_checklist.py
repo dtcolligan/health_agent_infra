@@ -101,7 +101,7 @@ def test_untold_leak_scan_passes_on_committed_suite() -> None:
     check = _check_untold_leak_scan()
 
     assert check["status"] == "pass"
-    assert check["template_id"] == "deployment_full_v2"
+    assert check["template_id"] == "deployment_full_v3"
     assert check["tasks"], "the suite has untold tasks; the scan must see them"
     scanned_ids = {row["task_id"] for row in check["tasks"]}
     assert "gab_l6_agentsafe_untold" in scanned_ids

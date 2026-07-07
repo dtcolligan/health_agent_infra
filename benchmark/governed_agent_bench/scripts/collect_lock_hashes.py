@@ -21,6 +21,9 @@ DEFAULT_OUTPUT_JSON = (
 FIXED_FILES: tuple[str, ...] = (
     "benchmark/governed_agent_bench/scorer_config.paper_v1.json",
     "benchmark/governed_agent_bench/model_roster.md",
+    # deployment_full_v3 is the run template (§20.14); v2 is retained for the
+    # legacy conditions, so both are pinned.
+    "benchmark/governed_agent_bench/prompts/deployment_full_v3.md",
     "benchmark/governed_agent_bench/prompts/deployment_full_v2.md",
     "benchmark/governed_agent_bench/manifests/hai_0_2_0.json",
 )

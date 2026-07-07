@@ -30,7 +30,7 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Collection, Mapping
 
 from governed_agent_bench.canary_gate import (
     DEFAULT_OPERATE_FLOOR_PASS_RATE,
@@ -144,6 +144,33 @@ def resolve_conditions(
             )
         resolved.append(by_id[condition_id])
     return resolved
+
+
+# The roster (roster_v3, immutable) encodes each run condition's capability
+# TIER in its condition_id prefix: run_primary_* and run_capable_* are the
+# capable models; run_nearfloor_* and run_belowfloor_* are the floor points.
+# The pooled movement contrasts (blind twin, untold floor) pool over CAPABLE
+# models only (§20.16) -- a floor point would dilute the movement and hard-stop
+# the run for a pooling reason. Centralized + tested here (F5): the inline
+# heuristic was correct for the locked roster but its production path was
+# unverified.
+_CAPABLE_CONDITION_PREFIXES = ("run_primary", "run_capable")
+
+
+def capable_movement_condition_ids(condition_ids: Collection[str]) -> list[str]:
+    """The capable-tier subset of ``condition_ids``, for movement pooling.
+
+    Fails closed: an id that does not match a capable prefix (near-floor,
+    below-floor, or a renamed condition) is excluded, so at worst the movement
+    pool is empty and the gate hard-stops -- it can never silently pool a floor
+    point into the capable movement.
+    """
+
+    return [
+        condition_id
+        for condition_id in condition_ids
+        if str(condition_id).startswith(_CAPABLE_CONDITION_PREFIXES)
+    ]
 
 
 def apply_wall_override(
@@ -448,11 +475,7 @@ def run_ladder(
     # pool over the CAPABLE models only. The near-floor point is mapped
     # separately (§20.8 Branches 6a-6c) and would otherwise dilute the pooled
     # movement and hard-stop the run for a pooling reason.
-    capable_condition_ids = [
-        condition_id
-        for condition_id in canary_run_dirs
-        if condition_id.startswith(("run_primary", "run_capable"))
-    ]
+    capable_condition_ids = capable_movement_condition_ids(canary_run_dirs)
     gate_report = gate_evaluator(
         ladder_run_dirs=canary_run_dirs,
         below_floor_condition_id=below_floor_condition_id,

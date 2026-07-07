@@ -15,10 +15,11 @@ import shutil
 import subprocess
 import sys
 import time
-from dataclasses import asdict, dataclass
+from collections import Counter
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Literal, Mapping, TypeAlias
+from typing import Any, Callable, Literal, Mapping, Sequence, TypeAlias
 
 from health_agent_infra.core.refusal.clinical import scan_clinical_phrases
 from health_agent_infra.core.runtime_mode import SUPPORTED_RUNTIME_MODES
@@ -59,6 +60,7 @@ from governed_agent_bench.pilot_manifest import build_pilot_manifest
 from governed_agent_bench.scorer.core import (
     _looks_like_direct_state_write,
     score_trajectory,
+    scorer_config_hash,
 )
 from governed_agent_bench.harness import load_manifest_snapshot, load_task
 
@@ -229,7 +231,12 @@ class CoverageRow:
     status: Literal["in_scope_run", "out_of_scope_skip", "not_run_after_stop"]
     task_outcome: Literal["pass", "fail"] | None = None
     reps_completed: int = 0
+    # partial_rep keeps the LAST partial (backward-compatible condition_index
+    # field); partial_rep_counts (F3) counts EVERY partial rep of this task by
+    # stop_cause, so a task with >1 partial of the same cause is disclosed in
+    # full rather than collapsed to one.
     partial_rep: dict[str, str] | None = None
+    partial_rep_counts: dict[str, int] = field(default_factory=dict)
 
 
 @dataclass
@@ -289,20 +296,22 @@ class CoverageMatrix:
         task_id: str,
         status: Literal["in_scope_run", "out_of_scope_skip", "not_run_after_stop"],
         reps_completed: int = 0,
-        partial: tuple[str, str] | None = None,
+        partials: Sequence[tuple[str, str]] = (),
         task_outcome: Literal["pass", "fail"] | None = None,
     ) -> None:
         if task_id in self._rows[mode]:
             raise HarnessError(f"coverage double-label for {mode}/{task_id}")
+        last_partial = partials[-1] if partials else None
         self._rows[mode][task_id] = CoverageRow(
             status=status,
             task_outcome=task_outcome,
             reps_completed=reps_completed,
             partial_rep=(
-                {"rep_label": partial[0], "stop_cause": partial[1]}
-                if partial is not None
+                {"rep_label": last_partial[0], "stop_cause": last_partial[1]}
+                if last_partial is not None
                 else None
             ),
+            partial_rep_counts=dict(Counter(cause for _label, cause in partials)),
         )
 
     def start_mode(self, mode: str, meter: SystemMeter) -> None:
@@ -392,6 +401,7 @@ class SystemMeter:
         cost_cap_usd: float,
         wall_cap_min: float,
         cost_basis: str,
+        prior_cost_usd: float = 0.0,
     ) -> None:
         if cost_basis not in {"per_step_usd", "condition_level"}:
             raise ValueError(f"unsupported cost_basis={cost_basis!r}")
@@ -400,7 +410,11 @@ class SystemMeter:
         self._wall_cap_min = float(wall_cap_min)
         self.cost_basis = cost_basis
         self._start = float(clock())
-        self._cost_usd = 0.0
+        # F4: seed with the system's already-persisted spend so the cost cap is
+        # CUMULATIVE across a resume boundary. Without this each resume starts
+        # the meter at 0 and a run interrupted near the cap could spend up to a
+        # full cap again before halting.
+        self._cost_usd = float(prior_cost_usd)
         self._cost_crossed = False
         self._wall_crossed = False
 
@@ -532,11 +546,15 @@ def run_pilot(
 
     for system in systems:
         system_id = str(system["system_id"])
+        prior_cost = (
+            _prior_system_cost(run_dir, system_id) if resuming else 0.0
+        )
         meter = SystemMeter(
             clock,
             cfg.cost_cap_usd,
             wall_cap_min(system),
             cost_basis(system),
+            prior_cost_usd=prior_cost,
         )
         detector = OutageDetector()
         coverage = CoverageMatrix(
@@ -568,7 +586,7 @@ def run_pilot(
                     break
                 mode_attempted = True
                 reps_completed = 0
-                partial: tuple[str, str] | None = None
+                partials: list[tuple[str, str]] = []
                 task_outcome: Literal["pass", "fail"] | None = None
                 completed_score_passes: list[bool] = []
 
@@ -582,9 +600,11 @@ def run_pilot(
                             # disk, never re-executed. Post-rep dispositions
                             # (contamination / breach aborts) are re-derived
                             # from the persisted score+trajectory so a resume
-                            # cannot silently sail past an abort-worthy rep;
-                            # meter halts are not reconstructed (the resume
-                            # session's meter starts fresh).
+                            # cannot silently sail past an abort-worthy rep.
+                            # Per-rep meter-halt DISPOSITIONS are not
+                            # reconstructed, but the meter is seeded with the
+                            # system's prior persisted spend (F4), so the cost
+                            # cap stays cumulative across the resume boundary.
                             reps_completed += 1
                             completed_score_passes.append(
                                 bool(reloaded.score and reloaded.score["overall_pass"])
@@ -649,7 +669,7 @@ def run_pilot(
                         if _stops_sweep(disp):
                             break
                     else:
-                        partial = (rr.rep_label, rr.stop_cause)
+                        partials.append((rr.rep_label, rr.stop_cause))
                         if rr.stop_cause == "retry3_taskfail":
                             task_outcome = "fail"
                         elif rr.stop_cause == "adapter_halt":
@@ -715,7 +735,7 @@ def run_pilot(
                     task_id,
                     "in_scope_run",
                     reps_completed,
-                    partial,
+                    partials,
                     task_outcome,
                 )
                 if _stops_sweep(disp):
@@ -1201,20 +1221,22 @@ def write_condition_summary(
     reps_completed = sum(
         row.reps_completed for row in rows.values() if row.status == "in_scope_run"
     )
+    # F3: count EVERY partial rep (via partial_rep_counts), not one row per
+    # task -- a task with >1 partial of the same cause (e.g. 3 context_overflow
+    # reps) must be disclosed in full, else the reconciliation
+    # (planned - completed - disclosed_drops) silently fails to zero.
     reps_partial = sum(
-        1
+        sum(row.partial_rep_counts.values())
         for row in rows.values()
-        if row.status == "in_scope_run" and row.partial_rep is not None
+        if row.status == "in_scope_run"
     )
     # IB-3/IB-4/IB-5: reportable model/provider outcomes are counted
     # separately -- they are neither passes nor model failures.
     reportable_counts = {
         f"reps_{cause}": sum(
-            1
+            row.partial_rep_counts.get(cause, 0)
             for row in rows.values()
             if row.status == "in_scope_run"
-            and row.partial_rep is not None
-            and row.partial_rep.get("stop_cause") == cause
         )
         for cause in REPORTABLE_REP_STOP_CAUSES
     }
@@ -1285,6 +1307,7 @@ def _coverage_row_payload(row: CoverageRow) -> dict[str, Any]:
         "task_outcome": row.task_outcome,
         "reps_completed": row.reps_completed,
         "partial_rep": row.partial_rep,
+        "partial_rep_counts": row.partial_rep_counts,
     }
 
 
@@ -1440,6 +1463,9 @@ _RESUME_FINGERPRINT_FIELDS = (
     "replication_n",
     "max_turns",
     "system_ids",
+    # F6: refuse resume after a scorer change -- resuming would mix reloaded
+    # scores from the old scorer with freshly-scored reps from the new one.
+    "scorer_config_hash",
 )
 
 
@@ -1458,6 +1484,7 @@ def _run_config_payload(
         "replication_n": cfg.replication_n,
         "max_turns": cfg.max_turns,
         "system_ids": [str(system["system_id"]) for system in systems],
+        "scorer_config_hash": scorer_config_hash(),
         "resume_log": [],
     }
 
@@ -1603,6 +1630,28 @@ def _advance_latest(runs_root: Path, run_dir: Path) -> None:
 
 def _task_dir(run_dir: Path, system_id: str, mode: str, task_id: str) -> Path:
     return _mode_dir(run_dir, system_id, mode) / "tasks" / task_id
+
+
+def _prior_system_cost(run_dir: Path, system_id: str) -> float:
+    """F4: sum a system's already-persisted per_step spend from its written
+    condition_summary.json files, so a resumed meter continues the cumulative
+    cost cap rather than restarting at zero. Missing / condition_level (None)
+    costs contribute nothing.
+    """
+
+    total = 0.0
+    system_dir = _system_dir(run_dir, system_id)
+    if not system_dir.exists():
+        return 0.0
+    for summary_path in sorted(system_dir.glob("runtime_mode_*/condition_summary.json")):
+        try:
+            summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        raw = summary.get("raw_cost_usd")
+        if isinstance(raw, (int, float)) and not isinstance(raw, bool):
+            total += float(raw)
+    return round(total, 12)
 
 
 def _system_dir(run_dir: Path, system_id: str) -> Path:

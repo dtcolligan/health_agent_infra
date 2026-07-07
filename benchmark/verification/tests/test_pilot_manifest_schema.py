@@ -176,7 +176,7 @@ def test_draft_manifest_omits_lock_block() -> None:
         assert lock_field not in manifest
 
 
-def test_locked_manifest_sources_all_40_embedded_input_hashes_from_sidecar(
+def test_locked_manifest_sources_all_41_embedded_input_hashes_from_sidecar(
     tmp_path: Path,
 ) -> None:
     lock_hashes_path = _write_lock_hashes_sidecar(tmp_path)
@@ -192,8 +192,8 @@ def test_locked_manifest_sources_all_40_embedded_input_hashes_from_sidecar(
 
     expected = load_lock_hashes(lock_hashes_path)
     assert manifest["locked_hashes"] == expected
-    assert manifest["locked_hashes"]["total_count"] == 40
-    assert len(manifest["locked_hashes"]["fixed_files"]) == 4
+    assert manifest["locked_hashes"]["total_count"] == 41
+    assert len(manifest["locked_hashes"]["fixed_files"]) == 5
     assert len(manifest["locked_hashes"]["task_files"]) == 36
     assert manifest["lock_date"] == "2026-06-25"
     assert manifest["lock_commit_sha"] == "a" * 40

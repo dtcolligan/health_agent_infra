@@ -34,7 +34,7 @@ ProviderReportBuilder = Callable[[], dict[str, Any]]
 
 # Untold renders are locked to the model-backed template (IB-7 / locked
 # decision 10); v1 is the rule-baseline template and is never model-facing.
-UNTOLD_RENDER_TEMPLATE_ID = "deployment_full_v2"
+UNTOLD_RENDER_TEMPLATE_ID = "deployment_full_v3"
 # Conservative chars-per-token used by the context-window budget gate
 # (IB-3). Clearly an estimate; recorded in the check detail.
 CHARS_PER_TOKEN_ESTIMATE = 3.5
@@ -325,7 +325,7 @@ def _check_untold_leak_scan() -> dict[str, Any]:
     """IB-7 (locked decision 10): mechanical untold-leak gate.
 
     Renders every untold task's prompt through the SAME harness path the
-    live run uses (``render_prompt`` with ``deployment_full_v2``) and
+    live run uses (``render_prompt`` with ``deployment_full_v3``) and
     asserts each declared forbidden token is absent, reusing the harness's
     own case-insensitive containment check rather than duplicating string
     matching.

@@ -22,6 +22,7 @@ from governed_agent_bench.harness import load_manifest_snapshot  # noqa: E402
 from governed_agent_bench.harness import load_task  # noqa: E402
 from governed_agent_bench.results.cell_contrasts import (  # noqa: E402
     CELL_CONTRASTS_SCHEMA_VERSION,
+    _completeness_guard,
     _load_reps,
     _mechanism_report,
     build_cell_contrasts,
@@ -839,3 +840,58 @@ def test_every_load_bearing_task_requests_its_mechanism_metrics() -> None:
                     gaps.append((task_id, mechanism, metric_name))
 
     assert gaps == []
+
+
+# --- F1 (analysis-layer audit): completeness guard ---------------------------
+
+def _write_condition_summary(run: Path, system: str, mode: str, cell_outcome: str) -> None:
+    d = run / "conditions" / system / f"runtime_mode_{mode}"
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "condition_summary.json").write_text(
+        json.dumps({"cell_outcome": cell_outcome}), encoding="utf-8"
+    )
+
+
+def test_f1_completeness_guard_excludes_halted_conditions(tmp_path: Path) -> None:
+    run = tmp_path / "run"
+    run.mkdir()
+    (run / "pilot_manifest.json").write_text(
+        json.dumps({"run_outcome": "completed"}), encoding="utf-8"
+    )
+    _write_condition_summary(run, "sys_a", "full_contract", "completed")
+    _write_condition_summary(run, "sys_a", "no_agent_safe", "halted")
+    reps = [
+        {"system_id": "sys_a", "runtime_mode": "full_contract"},
+        {"system_id": "sys_a", "runtime_mode": "no_agent_safe"},
+    ]
+    kept, completeness = _completeness_guard(run, reps)
+    # the halted off-cell rep is excluded from the headline 2x2
+    assert [r["runtime_mode"] for r in kept] == ["full_contract"]
+    assert completeness["guard"] == "applied"
+    assert completeness["excluded_conditions"] == ["sys_a/no_agent_safe"]
+    assert completeness["excluded_rep_count"] == 1
+    # a run with an excluded condition is NOT a trustworthy headline
+    assert completeness["headline_trustworthy"] is False
+
+
+def test_f1_guard_is_noop_without_pilot_manifest(tmp_path: Path) -> None:
+    # offline / free-baseline layout: nothing to halt, every rep kept.
+    reps = [{"system_id": "sys_a", "runtime_mode": "full_contract"}]
+    kept, completeness = _completeness_guard(tmp_path, reps)
+    assert kept == reps
+    assert completeness["guard"] == "not_applicable_no_pilot_manifest"
+    assert completeness["headline_trustworthy"] is True
+
+
+def test_f1_clean_completed_run_is_trustworthy(tmp_path: Path) -> None:
+    run = tmp_path / "run"
+    run.mkdir()
+    (run / "pilot_manifest.json").write_text(
+        json.dumps({"run_outcome": "completed"}), encoding="utf-8"
+    )
+    _write_condition_summary(run, "sys_a", "full_contract", "completed")
+    reps = [{"system_id": "sys_a", "runtime_mode": "full_contract"}]
+    kept, completeness = _completeness_guard(run, reps)
+    assert kept == reps
+    assert completeness["headline_trustworthy"] is True
+    assert completeness["excluded_rep_count"] == 0

@@ -2337,3 +2337,84 @@ def test_resume_with_all_reps_done_executes_nothing(
     assert result.run_outcome == "completed"
     assert result.run_dir == first.run_dir
     _assert_orchestrator_schemas_valid(result)
+
+
+# --- Analysis-layer audit regression locks (F3/F4/F6) ------------------------
+
+def test_f4_cost_cap_seeds_prior_spend_so_it_is_cumulative_across_resume() -> None:
+    from types import SimpleNamespace
+
+    clock = lambda: 0.0  # noqa: E731 -- no wall time in this unit
+    turn = lambda cost: SimpleNamespace(cost_usd_estimate=cost, wall_time_ms=1)  # noqa: E731
+    # Seeded near the cap (a resumed condition that already spent $9 of $10):
+    # a $2 turn crosses cumulatively and halts at once.
+    seeded = pilot.SystemMeter(clock, 10.0, 1.0e9, "per_step_usd", prior_cost_usd=9.0)
+    disp, _ledger, _wall = seeded.add_turn(turn(2.0))
+    assert disp is not None and disp.reason == "cost_halt"
+    # The old resume behavior (fresh meter, prior spend forgotten) would NOT
+    # halt on the same $2 turn -- that was the overspend hole.
+    fresh = pilot.SystemMeter(clock, 10.0, 1.0e9, "per_step_usd")
+    assert fresh.add_turn(turn(2.0))[0] is None
+
+
+def test_f4_prior_system_cost_sums_condition_summaries(tmp_path: Path) -> None:
+    run = tmp_path / "run"
+    for mode, cost in (("full_contract", 3.5), ("no_agent_safe", 1.25)):
+        mode_dir = run / "conditions" / "sys_a" / f"runtime_mode_{mode}"
+        mode_dir.mkdir(parents=True)
+        (mode_dir / "condition_summary.json").write_text(
+            json.dumps({"raw_cost_usd": cost}), encoding="utf-8"
+        )
+    # a condition_level (None) cost contributes nothing
+    none_dir = run / "conditions" / "sys_a" / "runtime_mode_no_refusal"
+    none_dir.mkdir(parents=True)
+    (none_dir / "condition_summary.json").write_text(
+        json.dumps({"raw_cost_usd": None}), encoding="utf-8"
+    )
+    assert pilot._prior_system_cost(run, "sys_a") == 4.75
+    assert pilot._prior_system_cost(run, "absent_system") == 0.0
+
+
+def test_f6_resume_refused_on_scorer_config_hash_change(tmp_path: Path) -> None:
+    from governed_agent_bench.scorer.core import scorer_config_hash
+
+    cfg = _config(tmp_path)
+    systems = [{"system_id": "sys_a"}]
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    payload = pilot._run_config_payload(cfg, systems, git_sha="g", run_start=RUN_START)
+    assert payload["scorer_config_hash"] == scorer_config_hash()
+    payload["scorer_config_hash"] = "STALE_DIFFERENT_HASH"
+    (run_dir / "run_config.json").write_text(json.dumps(payload), encoding="utf-8")
+    with pytest.raises(pilot.HarnessError, match="fingerprint mismatch"):
+        pilot._verify_resume_fingerprint(run_dir, cfg, systems)
+    # sanity: the same (current) hash resumes without complaint
+    payload["scorer_config_hash"] = scorer_config_hash()
+    (run_dir / "run_config.json").write_text(json.dumps(payload), encoding="utf-8")
+    pilot._verify_resume_fingerprint(run_dir, cfg, systems)
+
+
+def test_f3_partial_rep_counts_accumulate_every_same_cause_partial(tmp_path: Path) -> None:
+    cov = pilot.CoverageMatrix(
+        run_dir=tmp_path,
+        system_id="sys_a",
+        mode_order=("full_contract",),
+        task_ids=("gab_l1_operate_route",),
+    )
+    cov.set(
+        "full_contract",
+        "gab_l1_operate_route",
+        "in_scope_run",
+        1,
+        [
+            ("rep_01", "context_overflow"),
+            ("rep_02", "context_overflow"),
+            ("rep_03", "context_overflow"),
+        ],
+        None,
+    )
+    row = cov.mode_rows("full_contract")["gab_l1_operate_route"]
+    # F3: all three overflow reps are counted, not collapsed to the last one.
+    assert row.partial_rep_counts == {"context_overflow": 3}
+    # partial_rep still keeps the LAST partial (backward-compatible field).
+    assert row.partial_rep == {"rep_label": "rep_03", "stop_cause": "context_overflow"}

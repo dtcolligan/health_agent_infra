@@ -31,7 +31,7 @@
             "additionalProperties": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["status", "task_outcome", "reps_completed", "partial_rep"],
+              "required": ["status", "task_outcome", "reps_completed", "partial_rep", "partial_rep_counts"],
               "properties": {
                 "status": {
                   "type": "string",
@@ -72,6 +72,13 @@
                     },
                     {"type": "null"}
                   ]
+                },
+                "partial_rep_counts": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
                 }
               }
             }

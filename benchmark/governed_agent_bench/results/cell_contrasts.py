@@ -68,7 +68,18 @@ from governed_agent_bench.scorer.core import (
 )
 
 from .pilot_evidence import MECHANISM_IDS, MECHANISM_OFF_MODES
-from .run_layout import RepRecord, detect_run_layout, load_rep_records
+from .run_layout import (
+    RepRecord,
+    detect_run_layout,
+    iter_nested_condition_dirs,
+    load_json_object,
+    load_rep_records,
+)
+
+# F2 (analysis-layer audit): a contrast whose thinner cell has fewer than this
+# many scored reps rests on too little data to trust as a headline; it is
+# flagged (not dropped) so a reader never mistakes an n=1 pp for a stable one.
+_MIN_TRUSTWORTHY_CELL_N = 3
 
 
 CELL_CONTRASTS_SCHEMA_VERSION = "governed_agent_bench.cell_contrasts.v2"
@@ -260,7 +271,8 @@ def build_cell_contrasts(run_dir: Path) -> dict[str, Any]:
     """Build the per-system, per-mechanism A/B/C/D cell + contrast report."""
 
     layout = detect_run_layout(run_dir)
-    reps = _load_reps(run_dir)
+    reps_all = _load_reps(run_dir)
+    reps, completeness = _completeness_guard(run_dir, reps_all)
     system_ids = sorted({str(rep["system_id"]) for rep in reps})
     systems = {
         system_id: _system_report(
@@ -273,6 +285,7 @@ def build_cell_contrasts(run_dir: Path) -> dict[str, Any]:
         "source_run_dir": str(run_dir),
         "run_layout": layout,
         "rep_count": len(reps),
+        "completeness": completeness,
         "windows": ["first_attempt", "converged"],
         "cell_definition": {
             "A": "told + full_contract (deployment baseline / enforced)",
@@ -340,6 +353,63 @@ def _system_report(reps: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
             "rep_count": len(sanity_reps),
             "task_ids": sorted({rep["task_id"] for rep in sanity_reps}),
         },
+    }
+
+
+def _completeness_guard(
+    run_dir: Path,
+    reps: Sequence[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """F1 (analysis-layer audit): exclude reps from conditions that did NOT
+    cleanly complete before feeding the headline 2x2.
+
+    A paid run can halt mid-way (cost cap, canary hard-stop, provider outage).
+    ``pilot_evidence`` already demotes such reps to diagnostic-only via
+    ``_evidence_tier``; the contrast module must mirror that or a partial cell
+    (e.g. B with n=1 because the condition halted after one off-rep) silently
+    inflates a headline contrast. Mirrors ``_evidence_tier``: a rep whose
+    condition ``cell_outcome`` is aborted/halted/paused, or whose run
+    ``run_outcome`` is halted, is excluded. Offline/free-baseline runs carry no
+    ``pilot_manifest.json`` -- there is nothing to halt, so the guard is a
+    no-op and every rep is kept.
+    """
+
+    manifest_path = run_dir / "pilot_manifest.json"
+    if not manifest_path.exists():
+        return list(reps), {
+            "guard": "not_applicable_no_pilot_manifest",
+            "run_outcome": None,
+            "excluded_conditions": [],
+            "excluded_rep_count": 0,
+            "headline_trustworthy": True,
+        }
+    manifest = load_json_object(manifest_path)
+    run_outcome = str(manifest.get("run_outcome", ""))
+    run_halted = run_outcome == "halted"
+    excluded: set[tuple[str, str]] = set()
+    for system_id, _system_dir, runtime_mode, mode_dir in iter_nested_condition_dirs(
+        run_dir
+    ):
+        summary_path = mode_dir / "condition_summary.json"
+        if not summary_path.exists():
+            continue
+        cell_outcome = load_json_object(summary_path).get("cell_outcome")
+        if run_halted or cell_outcome in {"aborted", "halted", "paused"}:
+            excluded.add((system_id, runtime_mode))
+    kept = [
+        rep
+        for rep in reps
+        if (str(rep["system_id"]), str(rep["runtime_mode"])) not in excluded
+    ]
+    return kept, {
+        "guard": "applied",
+        "run_outcome": run_outcome,
+        "excluded_conditions": sorted(f"{s}/{m}" for s, m in excluded),
+        "excluded_rep_count": len(reps) - len(kept),
+        # The headline is trustworthy only if the run completed cleanly AND no
+        # condition was excluded; otherwise the 2x2 is built on a partial run
+        # and must be read as such.
+        "headline_trustworthy": run_outcome == "completed" and not excluded,
     }
 
 
@@ -553,9 +623,14 @@ def _metric_contrast(
             name: _median_delta(cell_values[hi], cell_values[lo])
             for name, (hi, lo) in CONTRASTS.items()
         }
+        contrast_flags = {
+            name: _contrast_flags(cell_values[hi], cell_values[lo])
+            for name, (hi, lo) in CONTRASTS.items()
+        }
         windows[window] = {
             "cell_values": cell_values,
             "contrasts": contrasts,
+            "contrast_flags": contrast_flags,
             "median_contrasts": median_contrasts,
         }
     return {
@@ -635,6 +710,30 @@ def _median_delta(
     if high is None or low is None:
         return None
     return _round(float(high["median"]) - float(low["median"]))
+
+
+def _contrast_flags(
+    high: Mapping[str, Any] | None,
+    low: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """F2 (analysis-layer audit): per-contrast trust flags.
+
+    ``low_n`` marks a contrast whose thinner cell has fewer than
+    ``_MIN_TRUSTWORTHY_CELL_N`` scored reps; ``min_cell_n`` carries that count.
+    A missing cell (None) is min_cell_n=0 and always low_n. These annotate --
+    never suppress -- the pp so a reader cannot mistake a one-rep delta for a
+    stable one.
+    """
+
+    ns = [
+        int(cell["n"]) if cell is not None else 0
+        for cell in (high, low)
+    ]
+    min_cell_n = min(ns)
+    return {
+        "min_cell_n": min_cell_n,
+        "low_n": min_cell_n < _MIN_TRUSTWORTHY_CELL_N,
+    }
 
 
 def _round(value: float) -> float:

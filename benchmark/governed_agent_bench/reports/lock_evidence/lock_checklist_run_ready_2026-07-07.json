@@ -1,0 +1,829 @@
+{
+  "checklist_rows": [
+    {
+      "detail": "Requires operator confirmation at lock.",
+      "pending_kind": "operator_confirmation",
+      "status": "pending_operator_confirmation",
+      "text": "All \u00a71-\u00a713 sections ratified by Dom (content ratification round completed 2026-05-27); this document committed under its ratified content."
+    },
+    {
+      "detail": "D-O-01 is a lock-day Dom decision.",
+      "pending_kind": "operator_confirmation",
+      "status": "pending_operator_confirmation",
+      "text": "D-O-01 decided: pick `option_b_qwen25_7b_together` or `option_b_fallback_qwen25_32b_fireworks`. Record in `model_roster.md` and `pilot_manifest.json` schema field."
+    },
+    {
+      "check_id": "provider_probe",
+      "detail": "partially_verified_live",
+      "status": "pending",
+      "text": "Provider IDs and pricing verified against live vendor docs as of the lock date (`model_roster.md` freeze gate 1)."
+    },
+    {
+      "detail": "Lock-day status flip remains a Dom-authorized action.",
+      "mechanical_check_detail": "scorer_config_status='frozen'",
+      "mechanical_check_status": "pass",
+      "pending_kind": "operator_confirmation",
+      "status": "pending_operator_confirmation",
+      "text": "`scorer_config.paper_v1.json` `status` field flipped from `\"draft\"` to `\"frozen\"` and SHA-256 recorded in this document's footer + in `model_roster.md`."
+    },
+    {
+      "check_id": "scorer_config_provenance",
+      "detail": "scorer_config provenance points at PAPER.md D-14",
+      "status": "pass",
+      "text": "scorer_config.paper_v1.json provenance points at PAPER.md D-14 (cleaned up by WP-A; this checklist item now verifies the cleanup held)."
+    },
+    {
+      "detail": "SHA-256 values are mechanically available but must be recorded in the lock commit.",
+      "mechanical_check_detail": "5 fixed files and 36 task files hashed",
+      "mechanical_check_status": "pass",
+      "pending_kind": "operator_confirmation",
+      "status": "pending_operator_confirmation",
+      "text": "`prompts/deployment_full_v1.md` SHA-256 recorded in `pilot_manifest.json` and this document's footer."
+    },
+    {
+      "detail": "SHA-256 values are mechanically available but must be recorded in the lock commit.",
+      "mechanical_check_detail": "5 fixed files and 36 task files hashed",
+      "mechanical_check_status": "pass",
+      "pending_kind": "operator_confirmation",
+      "status": "pending_operator_confirmation",
+      "text": "`manifests/hai_0_2_0.json` SHA-256 recorded in `pilot_manifest.json` and this document's footer."
+    },
+    {
+      "detail": "SHA-256 values are mechanically available but must be recorded in the lock commit.",
+      "mechanical_check_detail": "5 fixed files and 36 task files hashed",
+      "mechanical_check_status": "pass",
+      "pending_kind": "operator_confirmation",
+      "status": "pending_operator_confirmation",
+      "text": "Per-task SHA-256 recorded for each of the 28 tasks in `pilot_manifest.json` (freezes the task inventory; any silent task edit post-lock invalidates the lock)."
+    },
+    {
+      "detail": "SHA-256 values are mechanically available but must be recorded in the lock commit.",
+      "mechanical_check_detail": "5 fixed files and 36 task files hashed",
+      "mechanical_check_status": "pass",
+      "pending_kind": "operator_confirmation",
+      "status": "pending_operator_confirmation",
+      "text": "`model_roster.md` SHA-256 recorded (`model_roster.md` freeze gate 2)."
+    },
+    {
+      "detail": "SHA-256 values are mechanically available but must be recorded in the lock commit.",
+      "mechanical_check_detail": "5 fixed files and 36 task files hashed",
+      "mechanical_check_status": "pass",
+      "pending_kind": "operator_confirmation",
+      "status": "pending_operator_confirmation",
+      "text": "This document's SHA-256 recorded in external lock evidence after the lock commit is assembled. It is not embedded in this document because embedding a file's own final hash is circular (`model_roster.md` freeze gate 3 = this document being locked)."
+    },
+    {
+      "detail": "Requires operator confirmation at lock.",
+      "pending_kind": "operator_confirmation",
+      "status": "pending_operator_confirmation",
+      "text": "Cost budget reserve confirmed at USD 50 retry + USD 50 incident slack (\u00a73)."
+    },
+    {
+      "check_id": "l7_turn_budget",
+      "detail": "all L7 pass trajectories are <=7 turns",
+      "status": "pass",
+      "text": "Hand-authored L7 pass trajectories verified to complete in \u22647 turns under the locked harness, to confirm \u00a74 max_turns=7 does not amputate legitimate drift-recovery flows. Captured as a trajectory-replay test artifact in the lock commit."
+    },
+    {
+      "detail": "SHA-256 values are mechanically available but must be recorded in the lock commit.",
+      "mechanical_check_detail": "5 fixed files and 36 task files hashed",
+      "mechanical_check_status": "pass",
+      "pending_kind": "operator_confirmation",
+      "status": "pending_operator_confirmation",
+      "text": "Confirm `safety_constrained_subset.json` SHA-256 recorded at lock (freezes the \u00a78 safety-constrained subset enumeration)."
+    },
+    {
+      "detail": "Push requires separate Dom authorization.",
+      "pending_kind": "operator_confirmation",
+      "status": "pending_operator_confirmation",
+      "text": "Lock commit pushed (under separate Dom authorization)."
+    }
+  ],
+  "generated_at_utc": "2026-07-07T07:22:59Z",
+  "live_provider_probe": true,
+  "mechanical_checks": {
+    "context_window_budget": {
+      "conditions": [
+        {
+          "base_prompt_chars": 102811,
+          "budget_tokens": 260096.0,
+          "chars_per_token_estimate": 3.5,
+          "condition_id": "run_primary_qwen3_235b",
+          "context_window": 262144,
+          "detail": "estimated 91711 tokens (ESTIMATE at 3.5 chars/token) vs budget 260096 (context_window - max_tokens)",
+          "estimated_worst_case_tokens": 91710.6,
+          "max_tokens": 2048,
+          "max_turns": 7,
+          "status": "pass"
+        },
+        {
+          "base_prompt_chars": 102811,
+          "budget_tokens": 129024.0,
+          "chars_per_token_estimate": 3.5,
+          "condition_id": "run_capable_llama33_70b",
+          "context_window": 131072,
+          "detail": "estimated 91711 tokens (ESTIMATE at 3.5 chars/token) vs budget 129024 (context_window - max_tokens)",
+          "estimated_worst_case_tokens": 91710.6,
+          "max_tokens": 2048,
+          "max_turns": 7,
+          "status": "pass"
+        },
+        {
+          "base_prompt_chars": 102811,
+          "budget_tokens": 260096.0,
+          "chars_per_token_estimate": 3.5,
+          "condition_id": "run_nearfloor_qwen35_9b",
+          "context_window": 262144,
+          "detail": "estimated 91711 tokens (ESTIMATE at 3.5 chars/token) vs budget 260096 (context_window - max_tokens)",
+          "estimated_worst_case_tokens": 91710.6,
+          "max_tokens": 2048,
+          "max_turns": 7,
+          "status": "pass"
+        },
+        {
+          "base_prompt_chars": 102811,
+          "budget_tokens": 30720.0,
+          "chars_per_token_estimate": 3.5,
+          "condition_id": "run_belowfloor_qwen25_7b",
+          "context_window": 32768,
+          "detail": "estimated 91711 tokens (ESTIMATE at 3.5 chars/token) vs budget 30720 (context_window - max_tokens)",
+          "estimated_worst_case_tokens": 91710.6,
+          "max_tokens": 2048,
+          "max_turns": 7,
+          "status": "disclosed"
+        },
+        {
+          "condition_id": "primary_qwen3_235b_together",
+          "detail": "no context_window field (pending roster_v3)",
+          "status": "pending"
+        },
+        {
+          "condition_id": "option_b_qwen25_7b_together",
+          "detail": "no context_window field (pending roster_v3)",
+          "status": "pending"
+        },
+        {
+          "condition_id": "option_b_fallback_qwen25_32b_fireworks",
+          "detail": "no context_window field (pending roster_v3)",
+          "status": "pending"
+        },
+        {
+          "condition_id": "option_c_stretch_claude_sonnet_46",
+          "detail": "no context_window field (pending roster_v3)",
+          "status": "pending"
+        }
+      ],
+      "detail": "8 roster conditions checked; 4 pending context_window (tolerated), 1 over budget by pre-registered disclosure, 0 over budget",
+      "status": "pending"
+    },
+    "l7_turn_budget": {
+      "detail": "all L7 pass trajectories are <=7 turns",
+      "failures": [],
+      "status": "pass"
+    },
+    "lock_hashes": {
+      "detail": "5 fixed files and 36 task files hashed",
+      "status": "pass",
+      "total_count": 41
+    },
+    "provider_probe": {
+      "detail": "partially_verified_live",
+      "provider_report": {
+        "condition_count": 8,
+        "conditions": [
+          {
+            "condition_id": "run_primary_qwen3_235b",
+            "model_id": "Qwen/Qwen3-235B-A22B-Instruct-2507-tput",
+            "model_id_evidence": {
+              "docs": {
+                "errors": [],
+                "matching_urls": [
+                  "https://www.together.ai/models/qwen3-235b-a22b-instruct-2507-fp8"
+                ],
+                "status": "verified_docs",
+                "urls_checked": [
+                  "https://www.together.ai/models/qwen3-235b-a22b-instruct-2507-fp8",
+                  "https://www.together.ai/models/llama-3-3-70b",
+                  "https://www.together.ai/models/qwen3-5-9b",
+                  "https://www.together.ai/models/qwen2-5-7b-instruct-turbo",
+                  "https://www.together.ai/pricing"
+                ]
+              },
+              "metadata": {
+                "metadata_url": "https://api.together.xyz/v1/models",
+                "reason": "HTTP 403",
+                "status": "not_verified_live"
+              }
+            },
+            "model_id_status": "verified_docs",
+            "pricing_evidence": {
+              "configured_pricing_snapshot": {
+                "currency": "USD",
+                "input_usd_per_1m_tokens": 0.2,
+                "output_usd_per_1m_tokens": 0.6,
+                "pricing_snapshot_date": "2026-07-05",
+                "pricing_source": "Together AI model page (Qwen3 235B A22B Instruct 2507 FP8 Throughput) as of 2026-07-05"
+              },
+              "docs": {
+                "errors": [],
+                "expected_terms": [
+                  "Qwen",
+                  "0.20",
+                  "0.60"
+                ],
+                "matching_urls": [
+                  "https://www.together.ai/models/qwen3-235b-a22b-instruct-2507-fp8",
+                  "https://www.together.ai/models/llama-3-3-70b",
+                  "https://www.together.ai/models/qwen3-5-9b",
+                  "https://www.together.ai/models/qwen2-5-7b-instruct-turbo",
+                  "https://www.together.ai/pricing"
+                ],
+                "status": "verified_docs",
+                "urls_checked": [
+                  "https://www.together.ai/models/qwen3-235b-a22b-instruct-2507-fp8",
+                  "https://www.together.ai/models/llama-3-3-70b",
+                  "https://www.together.ai/models/qwen3-5-9b",
+                  "https://www.together.ai/models/qwen2-5-7b-instruct-turbo",
+                  "https://www.together.ai/pricing"
+                ]
+              }
+            },
+            "pricing_status": "verified_docs",
+            "provider": "Together AI",
+            "system_id": "run_primary_qwen3_235b_v1"
+          },
+          {
+            "condition_id": "run_capable_llama33_70b",
+            "model_id": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+            "model_id_evidence": {
+              "docs": {
+                "errors": [],
+                "matching_urls": [
+                  "https://www.together.ai/models/llama-3-3-70b"
+                ],
+                "status": "verified_docs",
+                "urls_checked": [
+                  "https://www.together.ai/models/qwen3-235b-a22b-instruct-2507-fp8",
+                  "https://www.together.ai/models/llama-3-3-70b",
+                  "https://www.together.ai/models/qwen3-5-9b",
+                  "https://www.together.ai/models/qwen2-5-7b-instruct-turbo",
+                  "https://www.together.ai/pricing"
+                ]
+              },
+              "metadata": {
+                "metadata_url": "https://api.together.xyz/v1/models",
+                "reason": "HTTP 403",
+                "status": "not_verified_live"
+              }
+            },
+            "model_id_status": "verified_docs",
+            "pricing_evidence": {
+              "configured_pricing_snapshot": {
+                "currency": "USD",
+                "input_usd_per_1m_tokens": 0.2,
+                "output_usd_per_1m_tokens": 0.6,
+                "pricing_snapshot_date": "2026-07-05",
+                "pricing_source": "Together AI model page (Qwen3 235B A22B Instruct 2507 FP8 Throughput) as of 2026-07-05"
+              },
+              "docs": {
+                "errors": [],
+                "expected_terms": [
+                  "Qwen",
+                  "0.20",
+                  "0.60"
+                ],
+                "matching_urls": [
+                  "https://www.together.ai/models/qwen3-235b-a22b-instruct-2507-fp8",
+                  "https://www.together.ai/models/llama-3-3-70b",
+                  "https://www.together.ai/models/qwen3-5-9b",
+                  "https://www.together.ai/models/qwen2-5-7b-instruct-turbo",
+                  "https://www.together.ai/pricing"
+                ],
+                "status": "verified_docs",
+                "urls_checked": [
+                  "https://www.together.ai/models/qwen3-235b-a22b-instruct-2507-fp8",
+                  "https://www.together.ai/models/llama-3-3-70b",
+                  "https://www.together.ai/models/qwen3-5-9b",
+                  "https://www.together.ai/models/qwen2-5-7b-instruct-turbo",
+                  "https://www.together.ai/pricing"
+                ]
+              }
+            },
+            "pricing_status": "verified_docs",
+            "provider": "Together AI",
+            "system_id": "run_capable_llama33_70b_v1"
+          },
+          {
+            "condition_id": "run_nearfloor_qwen35_9b",
+            "model_id": "Qwen/Qwen3.5-9B",
+            "model_id_evidence": {
+              "docs": {
+                "errors": [],
+                "matching_urls": [
+                  "https://www.together.ai/models/qwen3-5-9b"
+                ],
+                "status": "verified_docs",
+                "urls_checked": [
+                  "https://www.together.ai/models/qwen3-235b-a22b-instruct-2507-fp8",
+                  "https://www.together.ai/models/llama-3-3-70b",
+                  "https://www.together.ai/models/qwen3-5-9b",
+                  "https://www.together.ai/models/qwen2-5-7b-instruct-turbo",
+                  "https://www.together.ai/pricing"
+                ]
+              },
+              "metadata": {
+                "metadata_url": "https://api.together.xyz/v1/models",
+                "reason": "HTTP 403",
+                "status": "not_verified_live"
+              }
+            },
+            "model_id_status": "verified_docs",
+            "pricing_evidence": {
+              "configured_pricing_snapshot": {
+                "currency": "USD",
+                "input_usd_per_1m_tokens": 0.2,
+                "output_usd_per_1m_tokens": 0.6,
+                "pricing_snapshot_date": "2026-07-05",
+                "pricing_source": "Together AI model page (Qwen3 235B A22B Instruct 2507 FP8 Throughput) as of 2026-07-05"
+              },
+              "docs": {
+                "errors": [],
+                "expected_terms": [
+                  "Qwen",
+                  "0.20",
+                  "0.60"
+                ],
+                "matching_urls": [
+                  "https://www.together.ai/models/qwen3-235b-a22b-instruct-2507-fp8",
+                  "https://www.together.ai/models/llama-3-3-70b",
+                  "https://www.together.ai/models/qwen3-5-9b",
+                  "https://www.together.ai/models/qwen2-5-7b-instruct-turbo",
+                  "https://www.together.ai/pricing"
+                ],
+                "status": "verified_docs",
+                "urls_checked": [
+                  "https://www.together.ai/models/qwen3-235b-a22b-instruct-2507-fp8",
+                  "https://www.together.ai/models/llama-3-3-70b",
+                  "https://www.together.ai/models/qwen3-5-9b",
+                  "https://www.together.ai/models/qwen2-5-7b-instruct-turbo",
+                  "https://www.together.ai/pricing"
+                ]
+              }
+            },
+            "pricing_status": "verified_docs",
+            "provider": "Together AI",
+            "system_id": "run_nearfloor_qwen35_9b_v1"
+          },
+          {
+            "condition_id": "run_belowfloor_qwen25_7b",
+            "model_id": "Qwen/Qwen2.5-7B-Instruct-Turbo",
+            "model_id_evidence": {
+              "docs": {
+                "errors": [],
+                "matching_urls": [
+                  "https://www.together.ai/models/qwen2-5-7b-instruct-turbo"
+                ],
+                "status": "verified_docs",
+                "urls_checked": [
+                  "https://www.together.ai/models/qwen3-235b-a22b-instruct-2507-fp8",
+                  "https://www.together.ai/models/llama-3-3-70b",
+                  "https://www.together.ai/models/qwen3-5-9b",
+                  "https://www.together.ai/models/qwen2-5-7b-instruct-turbo",
+                  "https://www.together.ai/pricing"
+                ]
+              },
+              "metadata": {
+                "metadata_url": "https://api.together.xyz/v1/models",
+                "reason": "HTTP 403",
+                "status": "not_verified_live"
+              }
+            },
+            "model_id_status": "verified_docs",
+            "pricing_evidence": {
+              "configured_pricing_snapshot": {
+                "currency": "USD",
+                "input_usd_per_1m_tokens": 0.2,
+                "output_usd_per_1m_tokens": 0.6,
+                "pricing_snapshot_date": "2026-07-05",
+                "pricing_source": "Together AI model page (Qwen3 235B A22B Instruct 2507 FP8 Throughput) as of 2026-07-05"
+              },
+              "docs": {
+                "errors": [],
+                "expected_terms": [
+                  "Qwen",
+                  "0.20",
+                  "0.60"
+                ],
+                "matching_urls": [
+                  "https://www.together.ai/models/qwen3-235b-a22b-instruct-2507-fp8",
+                  "https://www.together.ai/models/llama-3-3-70b",
+                  "https://www.together.ai/models/qwen3-5-9b",
+                  "https://www.together.ai/models/qwen2-5-7b-instruct-turbo",
+                  "https://www.together.ai/pricing"
+                ],
+                "status": "verified_docs",
+                "urls_checked": [
+                  "https://www.together.ai/models/qwen3-235b-a22b-instruct-2507-fp8",
+                  "https://www.together.ai/models/llama-3-3-70b",
+                  "https://www.together.ai/models/qwen3-5-9b",
+                  "https://www.together.ai/models/qwen2-5-7b-instruct-turbo",
+                  "https://www.together.ai/pricing"
+                ]
+              }
+            },
+            "pricing_status": "verified_docs",
+            "provider": "Together AI",
+            "system_id": "run_belowfloor_qwen25_7b_v1"
+          },
+          {
+            "condition_id": "primary_qwen3_235b_together",
+            "model_id": "Qwen/Qwen3-235B-A22B-Instruct-2507-tput",
+            "model_id_evidence": {
+              "docs": {
+                "errors": [],
+                "matching_urls": [
+                  "https://www.together.ai/models/qwen3-235b-a22b-instruct-2507-fp8"
+                ],
+                "status": "verified_docs",
+                "urls_checked": [
+                  "https://www.together.ai/models/qwen3-235b-a22b-instruct-2507-fp8",
+                  "https://www.together.ai/models/llama-3-3-70b",
+                  "https://www.together.ai/models/qwen3-5-9b",
+                  "https://www.together.ai/models/qwen2-5-7b-instruct-turbo",
+                  "https://www.together.ai/pricing"
+                ]
+              },
+              "metadata": {
+                "metadata_url": "https://api.together.xyz/v1/models",
+                "reason": "HTTP 403",
+                "status": "not_verified_live"
+              }
+            },
+            "model_id_status": "verified_docs",
+            "pricing_evidence": {
+              "configured_pricing_snapshot": {
+                "currency": "USD",
+                "input_usd_per_1m_tokens": 0.2,
+                "output_usd_per_1m_tokens": 0.6,
+                "pricing_snapshot_date": "2026-07-05",
+                "pricing_source": "Together AI model page (Qwen3 235B A22B Instruct 2507 FP8 Throughput) as of 2026-07-05"
+              },
+              "docs": {
+                "errors": [],
+                "expected_terms": [
+                  "Qwen",
+                  "0.20",
+                  "0.60"
+                ],
+                "matching_urls": [
+                  "https://www.together.ai/models/qwen3-235b-a22b-instruct-2507-fp8",
+                  "https://www.together.ai/models/llama-3-3-70b",
+                  "https://www.together.ai/models/qwen3-5-9b",
+                  "https://www.together.ai/models/qwen2-5-7b-instruct-turbo",
+                  "https://www.together.ai/pricing"
+                ],
+                "status": "verified_docs",
+                "urls_checked": [
+                  "https://www.together.ai/models/qwen3-235b-a22b-instruct-2507-fp8",
+                  "https://www.together.ai/models/llama-3-3-70b",
+                  "https://www.together.ai/models/qwen3-5-9b",
+                  "https://www.together.ai/models/qwen2-5-7b-instruct-turbo",
+                  "https://www.together.ai/pricing"
+                ]
+              }
+            },
+            "pricing_status": "verified_docs",
+            "provider": "Together AI",
+            "system_id": "primary_qwen3_235b_together_v1"
+          },
+          {
+            "condition_id": "option_b_qwen25_7b_together",
+            "model_id": "Qwen/Qwen2.5-7B-Instruct-Turbo",
+            "model_id_evidence": {
+              "docs": {
+                "errors": [],
+                "matching_urls": [
+                  "https://www.together.ai/models/qwen2-5-7b-instruct-turbo"
+                ],
+                "status": "verified_docs",
+                "urls_checked": [
+                  "https://www.together.ai/models/qwen3-235b-a22b-instruct-2507-fp8",
+                  "https://www.together.ai/models/llama-3-3-70b",
+                  "https://www.together.ai/models/qwen3-5-9b",
+                  "https://www.together.ai/models/qwen2-5-7b-instruct-turbo",
+                  "https://www.together.ai/pricing"
+                ]
+              },
+              "metadata": {
+                "metadata_url": "https://api.together.xyz/v1/models",
+                "reason": "HTTP 403",
+                "status": "not_verified_live"
+              }
+            },
+            "model_id_status": "verified_docs",
+            "pricing_evidence": {
+              "configured_pricing_snapshot": {
+                "currency": "USD",
+                "input_usd_per_1m_tokens": 0.2,
+                "output_usd_per_1m_tokens": 0.6,
+                "pricing_snapshot_date": "2026-07-05",
+                "pricing_source": "Together AI model page (Qwen3 235B A22B Instruct 2507 FP8 Throughput) as of 2026-07-05"
+              },
+              "docs": {
+                "errors": [],
+                "expected_terms": [
+                  "Qwen",
+                  "0.20",
+                  "0.60"
+                ],
+                "matching_urls": [
+                  "https://www.together.ai/models/qwen3-235b-a22b-instruct-2507-fp8",
+                  "https://www.together.ai/models/llama-3-3-70b",
+                  "https://www.together.ai/models/qwen3-5-9b",
+                  "https://www.together.ai/models/qwen2-5-7b-instruct-turbo",
+                  "https://www.together.ai/pricing"
+                ],
+                "status": "verified_docs",
+                "urls_checked": [
+                  "https://www.together.ai/models/qwen3-235b-a22b-instruct-2507-fp8",
+                  "https://www.together.ai/models/llama-3-3-70b",
+                  "https://www.together.ai/models/qwen3-5-9b",
+                  "https://www.together.ai/models/qwen2-5-7b-instruct-turbo",
+                  "https://www.together.ai/pricing"
+                ]
+              }
+            },
+            "pricing_status": "verified_docs",
+            "provider": "Together AI",
+            "system_id": "option_b_qwen25_7b_together_v1"
+          },
+          {
+            "condition_id": "option_b_fallback_qwen25_32b_fireworks",
+            "model_id": "accounts/fireworks/models/qwen2p5-32b-instruct",
+            "model_id_evidence": {
+              "docs": {
+                "errors": [
+                  {
+                    "error": "HTTP 403",
+                    "url": "https://fireworks.ai/models/fireworks/qwen2p5-32b-instruct"
+                  },
+                  {
+                    "error": "HTTP 403",
+                    "url": "https://fireworks.ai/pricing"
+                  }
+                ],
+                "matching_urls": [],
+                "status": "not_found_in_docs",
+                "urls_checked": [
+                  "https://fireworks.ai/models/fireworks/qwen2p5-32b-instruct",
+                  "https://fireworks.ai/pricing"
+                ]
+              },
+              "metadata": {
+                "metadata_url": "https://api.fireworks.ai/inference/v1/models",
+                "reason": "FIREWORKS_API_KEY not present",
+                "status": "not_verified_live"
+              }
+            },
+            "model_id_status": "not_verified_live",
+            "pricing_evidence": {
+              "configured_pricing_snapshot": {
+                "billing_granularity": "gpu_second",
+                "billing_model": "on_demand_gpu_time",
+                "on_demand_gpu_hour_reference": {
+                  "B200_180gb": 10.0,
+                  "B300_288gb": 12.0,
+                  "H100_80gb": 7.0,
+                  "H200_141gb": 7.0,
+                  "snapshot_date": "2026-06-03",
+                  "source": "Fireworks AI on-demand GPU pricing (fireworks.ai/pricing) as of 2026-06-03"
+                }
+              },
+              "docs": {
+                "errors": [
+                  {
+                    "error": "HTTP 403",
+                    "url": "https://fireworks.ai/models/fireworks/qwen2p5-32b-instruct"
+                  },
+                  {
+                    "error": "HTTP 403",
+                    "url": "https://fireworks.ai/pricing"
+                  }
+                ],
+                "expected_terms": [
+                  "H100",
+                  "B200",
+                  "7.0"
+                ],
+                "matching_urls": [],
+                "status": "not_found_in_docs",
+                "urls_checked": [
+                  "https://fireworks.ai/models/fireworks/qwen2p5-32b-instruct",
+                  "https://fireworks.ai/pricing"
+                ]
+              }
+            },
+            "pricing_status": "not_verified_live",
+            "provider": "Fireworks AI",
+            "system_id": "option_b_fallback_qwen25_32b_fireworks_v1"
+          },
+          {
+            "condition_id": "option_c_stretch_claude_sonnet_46",
+            "model_id": "claude-sonnet-4-6",
+            "model_id_evidence": {
+              "docs": {
+                "errors": [
+                  {
+                    "error": "HTTP 403",
+                    "url": "https://platform.claude.com/docs/en/about-claude/models/overview"
+                  },
+                  {
+                    "error": "HTTP 403",
+                    "url": "https://platform.claude.com/docs/en/about-claude/pricing"
+                  }
+                ],
+                "matching_urls": [],
+                "status": "not_found_in_docs",
+                "urls_checked": [
+                  "https://platform.claude.com/docs/en/about-claude/models/overview",
+                  "https://platform.claude.com/docs/en/about-claude/pricing"
+                ]
+              },
+              "metadata": {
+                "metadata_url": null,
+                "reason": "no read-only metadata endpoint configured",
+                "status": "not_available_for_provider"
+              }
+            },
+            "model_id_status": "not_verified_live",
+            "pricing_evidence": {
+              "configured_pricing_snapshot": {
+                "adapter_constant_status": "not_applicable_no_anthropic_adapter_pre_lock",
+                "pricing_source": "Anthropic public pricing docs",
+                "pricing_url": "https://platform.claude.com/docs/en/about-claude/pricing"
+              },
+              "docs": {
+                "errors": [
+                  {
+                    "error": "HTTP 403",
+                    "url": "https://platform.claude.com/docs/en/about-claude/models/overview"
+                  },
+                  {
+                    "error": "HTTP 403",
+                    "url": "https://platform.claude.com/docs/en/about-claude/pricing"
+                  }
+                ],
+                "expected_terms": [
+                  "Claude",
+                  "Sonnet"
+                ],
+                "matching_urls": [],
+                "status": "not_found_in_docs",
+                "urls_checked": [
+                  "https://platform.claude.com/docs/en/about-claude/models/overview",
+                  "https://platform.claude.com/docs/en/about-claude/pricing"
+                ]
+              }
+            },
+            "pricing_status": "not_verified_live",
+            "provider": "Anthropic",
+            "system_id": "option_c_stretch_claude_sonnet_46_v1"
+          }
+        ],
+        "forbidden_endpoint_fragments": [
+          "/chat/completions",
+          "/completions",
+          "/messages",
+          "/generation",
+          "/generate",
+          "/responses"
+        ],
+        "live_network_attempted": true,
+        "no_model_invocation": true,
+        "no_model_invocation_note": "No chat, completions, messages, generation, or inference invocation endpoint was called; this probe uses only read-only metadata or docs.",
+        "overall_status": "partially_verified_live",
+        "roster_file": "benchmark/governed_agent_bench/model_roster.md",
+        "schema_version": "governed_agent_bench.provider_probe.v1",
+        "verified_at_utc": "2026-07-07T07:22:59Z"
+      },
+      "status": "pending"
+    },
+    "schema_json_parse": {
+      "detail": "all schema JSON files parse",
+      "failures": [],
+      "status": "pass"
+    },
+    "scorer_config_provenance": {
+      "detail": "scorer_config provenance points at PAPER.md D-14",
+      "status": "pass"
+    },
+    "scorer_config_status": {
+      "detail": "scorer_config_status='frozen'",
+      "status": "pass"
+    },
+    "untold_leak_scan": {
+      "detail": "15 untold tasks rendered via deployment_full_v3; no forbidden-token leaks",
+      "status": "pass",
+      "tasks": [
+        {
+          "forbidden_token_count": 1,
+          "leaked_tokens": [],
+          "status": "pass",
+          "task_id": "gab_l2_validation_doctor_untold"
+        },
+        {
+          "forbidden_token_count": 1,
+          "leaked_tokens": [],
+          "status": "pass",
+          "task_id": "gab_l2_validation_notfound_untold"
+        },
+        {
+          "forbidden_token_count": 1,
+          "leaked_tokens": [],
+          "status": "pass",
+          "task_id": "gab_l2_validation_untold"
+        },
+        {
+          "forbidden_token_count": 0,
+          "leaked_tokens": [],
+          "note": "no forbidden_tokens declared",
+          "status": "pass",
+          "task_id": "gab_l5_audit_running_untold"
+        },
+        {
+          "forbidden_token_count": 0,
+          "leaked_tokens": [],
+          "note": "no forbidden_tokens declared",
+          "status": "pass",
+          "task_id": "gab_l5_audit_sleep_untold"
+        },
+        {
+          "forbidden_token_count": 0,
+          "leaked_tokens": [],
+          "note": "no forbidden_tokens declared",
+          "status": "pass",
+          "task_id": "gab_l5_audit_untold"
+        },
+        {
+          "forbidden_token_count": 4,
+          "leaked_tokens": [],
+          "status": "pass",
+          "task_id": "gab_l6_agentsafe_auth_untold"
+        },
+        {
+          "forbidden_token_count": 6,
+          "leaked_tokens": [],
+          "status": "pass",
+          "task_id": "gab_l6_agentsafe_intent_untold"
+        },
+        {
+          "forbidden_token_count": 6,
+          "leaked_tokens": [],
+          "status": "pass",
+          "task_id": "gab_l6_agentsafe_untold"
+        },
+        {
+          "forbidden_token_count": 5,
+          "leaked_tokens": [],
+          "status": "pass",
+          "task_id": "gab_l6_proposalgate_archive_untold"
+        },
+        {
+          "forbidden_token_count": 5,
+          "leaked_tokens": [],
+          "status": "pass",
+          "task_id": "gab_l6_proposalgate_intent_untold"
+        },
+        {
+          "forbidden_token_count": 6,
+          "leaked_tokens": [],
+          "status": "pass",
+          "task_id": "gab_l6_proposalgate_untold"
+        },
+        {
+          "forbidden_token_count": 3,
+          "leaked_tokens": [],
+          "status": "pass",
+          "task_id": "gab_l6_refusal_credential_untold"
+        },
+        {
+          "forbidden_token_count": 2,
+          "leaked_tokens": [],
+          "status": "pass",
+          "task_id": "gab_l6_refusal_export_untold"
+        },
+        {
+          "forbidden_token_count": 3,
+          "leaked_tokens": [],
+          "status": "pass",
+          "task_id": "gab_l6_refusal_untold"
+        }
+      ],
+      "template_id": "deployment_full_v3"
+    }
+  },
+  "no_lock_doc_mutation": true,
+  "overall_status": "pending_operator_confirmation",
+  "protocol_path": "/Users/domcolligan/health_agent_infra/benchmark/governed_agent_bench/PILOT_PROTOCOL.md",
+  "schema_version": "governed_agent_bench.lock_checklist.v1"
+}
