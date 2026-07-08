@@ -202,7 +202,16 @@ def prepare_operator_run(
     _ensure_model_metadata(config)
     manifest_id = _manifest_id(task)
     manifest_snapshot = load_manifest_snapshot(manifest_id)
-    prompt = render_prompt(task, manifest_snapshot, config.prompt_template_id)
+    fixture_metadata: dict[str, Any] = {}
+    meta_path = config.fixture_root / "fixture_metadata.json"
+    if meta_path.exists():
+        fixture_metadata = json.loads(meta_path.read_text(encoding="utf-8"))
+    prompt = render_prompt(
+        task,
+        manifest_snapshot,
+        config.prompt_template_id,
+        fixture_metadata=fixture_metadata,
+    )
     return OperatorRunState(
         manifest_id=manifest_id,
         prompt=prompt,
@@ -497,8 +506,19 @@ def render_prompt(
     task: dict[str, Any],
     manifest_snapshot: dict[str, Any],
     template_id: str = "deployment_full_v1",
+    *,
+    fixture_metadata: dict[str, Any] | None = None,
 ) -> dict[str, str]:
-    """Render the deployment prompt and return text plus stable hashes."""
+    """Render the deployment prompt and return text plus stable hashes.
+
+    D-49 reachability fix: a task's ``user_prompt`` may reference the fixture's
+    pending row id via ``{{pending_target_id}}`` / ``{{pending_intent_id}}``.
+    Naming the id the user is asking about removes the CLI-discovery step (the
+    seeded row is only listable with the right ``--user-id``/``--all`` flags), so
+    the agent_safe cell measures the governance decision rather than whether the
+    model guessed the right ``list`` incantation. The id is an identifier only,
+    not a withheld safety fact, so injecting it does not weaken the untold arm.
+    """
 
     template_path = PROMPT_ROOT / f"{template_id}.md"
     if not template_path.exists():
@@ -530,13 +550,33 @@ def render_prompt(
         "{{exit_code_taxonomy_json}}": block(manifest.get("exit_codes", {})),
         **_boundary_blocks(task),
     }
+    meta = fixture_metadata or {}
+    pending_id_subs = {
+        "{{pending_target_id}}": str(meta.get("pending_target_id", "")),
+        "{{pending_intent_id}}": str(meta.get("pending_intent_id", "")),
+    }
+    # Manifest/boundary blocks only ever appear in the system block; apply them
+    # to the combined system+user text so a pending-id placeholder in the
+    # user_prompt can also be filled below.
+    base = f"{rendered_system}\nUSER:\n{task.get('user_prompt', '')}\n"
     for placeholder, value in substitutions.items():
-        rendered_system = rendered_system.replace(placeholder, value)
-    rendered = f"{rendered_system}\nUSER:\n{task.get('user_prompt', '')}\n"
+        base = base.replace(placeholder, value)
+    # rendered_prompt carries the instance fixture ids -- the model needs the
+    # real seeded-row id to act on it. prompt_template_hash fingerprints the
+    # TEMPLATE, so the pending-id placeholders are canonicalized to a stable
+    # token before hashing; otherwise the per-build random fixture id would make
+    # the hash (and evidence_table.prompt_template_hash) non-deterministic
+    # across fixture builds and break offline reproducibility (D-49).
+    rendered = base
+    for placeholder, value in pending_id_subs.items():
+        rendered = rendered.replace(placeholder, value)
+    hash_form = base
+    for placeholder in pending_id_subs:
+        hash_form = hash_form.replace(placeholder, "<pending_id>")
     return {
         "prompt_template_id": template_id,
         "prompt_template_file_hash": _sha256_text(template_text),
-        "prompt_template_hash": _sha256_text(rendered),
+        "prompt_template_hash": _sha256_text(hash_form),
         "rendered_prompt": rendered,
     }
 

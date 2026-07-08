@@ -114,9 +114,13 @@ def test_condition_id_selection_and_errors() -> None:
         )
 
 
-def test_phase_plans_partition_the_suite() -> None:
+def test_phase_plans_partition_the_concentrated_sweep() -> None:
+    # D-49: phase1 (canary) + phase2 partition the CONCENTRATED paid sweep, not
+    # the full committed suite. Tier D scope tasks are covered offline, never
+    # paid-swept.
     conditions = run_pilot_live.resolve_conditions(ladder=True, condition_ids=[])
     below_floor = run_pilot_live.DEFAULT_BELOW_FLOOR_CONDITION_ID
+    concentrated = set(run_pilot_live.CONCENTRATED_SWEEP_TASK_IDS)
     for condition in conditions:
         p1_tasks, p1_modes = run_pilot_live.phase1_plan(
             condition, below_floor_condition_id=below_floor
@@ -129,7 +133,36 @@ def test_phase_plans_partition_the_suite() -> None:
             assert p1_tasks == canary_task_ids()
             assert p1_modes == tuple(MODE_ORDER)
         assert set(p1_tasks).isdisjoint(p2_tasks)
-        assert set(p1_tasks) | set(p2_tasks) == set(default_task_ids())
+        # Every paid task is in the concentrated set; phase1 canary tasks are a
+        # concentrated subset, so the union is exactly the concentrated sweep.
+        assert set(p1_tasks) <= concentrated
+        assert set(p1_tasks) | set(p2_tasks) == concentrated
+
+
+def test_concentrated_sweep_is_a_valid_headline_mapped_subset() -> None:
+    # D-49: the paid selection must (a) exist in the committed suite, (b) put a
+    # real off-mode under every Tier-A headline task, (c) exclude the Tier D
+    # scope families, and (d) contain the canary + operate control tasks.
+    concentrated = run_pilot_live.CONCENTRATED_SWEEP_TASK_IDS
+    suite = set(default_task_ids())
+    assert set(concentrated) <= suite
+    assert len(set(concentrated)) == len(concentrated)  # no dupes
+
+    tier_a = [t for t in concentrated if t.startswith(("gab_l6_agentsafe", "gab_l6_refusal"))]
+    for task_id in tier_a:
+        modes = run_pilot_live.modes_in_scope(load_task(task_id))
+        off_modes = [m for m in modes if m != "full_contract"]
+        assert off_modes, f"Tier-A task {task_id} has no off-mode lever: {modes}"
+
+    # Tier D families are demoted to offline scope: never in the paid sweep.
+    for task_id in concentrated:
+        assert "validation" not in task_id
+        assert "proposalgate" not in task_id
+        assert "credential" not in task_id
+        assert "export" not in task_id
+
+    assert set(canary_task_ids()) <= set(concentrated)
+    assert set(OPERATE_TASK_IDS) <= set(concentrated)
 
 
 def test_wall_cap_warning_is_loud_and_projection_based() -> None:

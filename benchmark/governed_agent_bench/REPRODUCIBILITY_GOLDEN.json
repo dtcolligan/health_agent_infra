@@ -1,37 +1,5 @@
 {
-  "schema_version": "governed_agent_bench.reproducibility_golden.v2",
-  "generated_at_utc": "2026-07-05T00:00:00Z",
-  "git_sha": "b352158284f5b97987be56dfa855b65f86014aee",
-  "reproducer_command": "uv run python benchmark/governed_agent_bench/reproduce_offline.py --output-dir <OUTPUT>",
-  "expected_wall_time_seconds_observed": 76,
   "baseline_hardware": "Darwin 23.4.0 arm64; Apple M2",
-  "hashed_files": [
-    {
-      "path": "cell_contrasts/cell_contrasts.json",
-      "normalize_absolute_paths": true,
-      "sha256": "43d09739a437a0ec0481437e7ff5fbc88fb5188679b35526020cd95a353e7e80"
-    },
-    {
-      "path": "error_taxonomy/error_taxonomy.json",
-      "normalize_absolute_paths": true,
-      "sha256": "84a4cc2c297f00a387684dbcd635cfc8efa75ebe14a0a58b954493c3725ac218"
-    },
-    {
-      "path": "evidence_tables/evidence_table.csv",
-      "normalize_absolute_paths": false,
-      "sha256": "f727332cf13be28b6b4f5d1e2ecf15f022118c42842014d2298d08b6c1732445"
-    },
-    {
-      "path": "evidence_tables/evidence_table.json",
-      "normalize_absolute_paths": true,
-      "sha256": "56575f369919e6e07a5901d150b655331c0e136011b0bbc360ad292e2847108d"
-    },
-    {
-      "path": "figures/figures_manifest.json",
-      "normalize_absolute_paths": true,
-      "sha256": "569d1cdc74bf5c2c2d2d095d6a380149f36a3e6a6fb531997f29a92a1f0d4c02"
-    }
-  ],
   "excluded_from_hashing": [
     {
       "path_pattern": "fixtures/*/state.db",
@@ -53,5 +21,37 @@
       "path_pattern": "offline_repro_manifest.json",
       "reason": "Contains absolute output_dir; load-bearing contents captured in scoring artifacts"
     }
-  ]
+  ],
+  "expected_wall_time_seconds_observed": 76,
+  "generated_at_utc": "2026-07-08T14:03:47Z",
+  "git_sha": "638acd9ee6c32661ef45c535210b025ec9194674",
+  "hashed_files": [
+    {
+      "normalize_absolute_paths": true,
+      "path": "cell_contrasts/cell_contrasts.json",
+      "sha256": "b090bbff71fad38560cc761fd050c861a965e0c5d54866491f15b121f5a38b9f"
+    },
+    {
+      "normalize_absolute_paths": true,
+      "path": "error_taxonomy/error_taxonomy.json",
+      "sha256": "df9aa98246d04bc894c46aa48b718279b94cfa5c36451754def040d5f5dd25fe"
+    },
+    {
+      "normalize_absolute_paths": false,
+      "path": "evidence_tables/evidence_table.csv",
+      "sha256": "91bd544aae6460e8eab0c6e0671393e04b814a944fa90d894ec11b915e859e01"
+    },
+    {
+      "normalize_absolute_paths": true,
+      "path": "evidence_tables/evidence_table.json",
+      "sha256": "5e5978ab67240f5a550092075ba366c4c66067d050a58c6608189ad856a32715"
+    },
+    {
+      "normalize_absolute_paths": true,
+      "path": "figures/figures_manifest.json",
+      "sha256": "569d1cdc74bf5c2c2d2d095d6a380149f36a3e6a6fb531997f29a92a1f0d4c02"
+    }
+  ],
+  "reproducer_command": "uv run python benchmark/governed_agent_bench/reproduce_offline.py --output-dir <OUTPUT>",
+  "schema_version": "governed_agent_bench.reproducibility_golden.v2"
 }

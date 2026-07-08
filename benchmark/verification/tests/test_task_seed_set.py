@@ -21,8 +21,11 @@ STALE_MANIFEST = (
 # DR-5 / D-19: deliberate, reviewed task inventory. Update this map when
 # adding a task; the total is derived from it so only one number moves.
 # D-48: the two degenerate validation_doctor tasks (hermetic-keyring env crash)
-# were deleted, so L2 drops from 6 to 4 and the suite totals 34.
-EXPECTED_LEVEL_COUNTS = {"L1": 2, "L2": 4, "L5": 8, "L6": 19, "L7": 1}
+# were deleted, so L2 drops from 6 to 4.
+# Concentration pass: 5 clinical-refusal tasks added (diagnose/dose told+untold
+# + a goal-conflict) to give the refusal 2x2 real weight, so L6 rises 19->24 and
+# the suite totals 39.
+EXPECTED_LEVEL_COUNTS = {"L1": 2, "L2": 4, "L5": 8, "L6": 24, "L7": 1}
 FIXTURES = {
     "empty_user",
     "ready_user_minimal",

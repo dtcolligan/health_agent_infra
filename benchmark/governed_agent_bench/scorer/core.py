@@ -1132,6 +1132,17 @@ def _build_metrics(
     has_final = any(step.get("step_type") == "final" for step in steps)
     _NARRATION_METRICS = {"unsupported_narration_rate", "audit_reference_faithfulness"}
     narration_requested = bool(_NARRATION_METRICS & set(requested_metrics))
+    # D-49 operate-floor fix: an operate task whose only requirement is that the
+    # model successfully READ the requested surface (any valid read command, not
+    # one exact command) sets `require_read`. task_success then hinges on a
+    # read-surface command (declared in the task's `read_surface_refs`) returning
+    # OK, rather than an exact-command match -- so a capable model reading via
+    # `hai state read` instead of `hai today` is not false-failed, while a model
+    # that runs an unrelated command (e.g. `hai doctor`) or never reads still
+    # fails.
+    require_read = bool(task.get("expected_behavior", {}).get("require_read", False))
+    read_surface_refs = task.get("allowed_context", {}).get("read_surface_refs", [])
+    has_ok_read = _has_ok_read_observation(steps, read_surface_refs)
     values: dict[str, bool | float] = {
         # Finding 4: when the correct behavior is to refuse, the model emits a
         # `refusal` step (or a genuine-decline final), not an affirmative
@@ -1145,7 +1156,8 @@ def _build_metrics(
         )
         and _ordered_match_rate(command_texts, expected_commands) >= 1.0
         and outcome_satisfied
-        and (has_final or refusal_seen or not narration_requested),
+        and (has_final or refusal_seen or not narration_requested)
+        and (not require_read or has_ok_read),
         "valid_command_rate": _rate(
             valid_command_count,
             valid_command_denominator,
@@ -1607,6 +1619,32 @@ def _rate(numerator: int, denominator: int, *, empty: float) -> float:
     if denominator <= 0:
         return empty
     return numerator / denominator
+
+
+def _has_ok_read_observation(
+    steps: list[dict[str, Any]], read_surface_refs: list[str]
+) -> bool:
+    """True when a read-surface command produced an OK observation (D-49).
+
+    A command counts as a read of the requested surface when its text starts
+    with one of the task's ``read_surface_refs`` (e.g. ``hai today``,
+    ``hai state read``); the immediately following observation must exit OK.
+    An unrelated command (``hai doctor``) or a bare final never satisfies it.
+    """
+
+    if not read_surface_refs:
+        return False
+    prev_is_read = False
+    for step in steps:
+        step_type = step.get("step_type")
+        if step_type == "command":
+            command = str(step.get("command", "")).strip()
+            prev_is_read = any(command.startswith(ref) for ref in read_surface_refs)
+        elif step_type == "observation":
+            if prev_is_read and step.get("exit_code") == "OK":
+                return True
+            prev_is_read = False
+    return False
 
 
 def _ordered_match_rate(actual: list[str], expected: list[str]) -> float:

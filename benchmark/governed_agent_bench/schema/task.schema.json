@@ -89,6 +89,11 @@
           "type": "array",
           "items": {"type": "string"}
         },
+        "require_read": {
+          "type": "boolean",
+          "default": false,
+          "description": "D-49 operate-floor flag. When true, task_success requires the model to have successfully read state (>=1 OK observation) rather than matching an exact command_sequence, so any valid read (e.g. `hai today` or `hai state read`) satisfies the operate floor while a model that never reads still fails."
+        },
         "refusal_reason": {
           "type": "string"
         },

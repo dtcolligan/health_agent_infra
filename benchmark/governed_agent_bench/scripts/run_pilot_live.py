@@ -49,7 +49,6 @@ from governed_agent_bench.pilot_orchestrator import (
     DEFAULT_RUNS_ROOT,
     MODE_ORDER,
     PilotConfig,
-    default_task_ids,
     modes_in_scope,
     run_pilot,
     together_model_turn_factory,
@@ -69,6 +68,40 @@ DEFAULT_BELOW_FLOOR_CONDITION_ID = "run_belowfloor_qwen25_7b"
 # manifest render (gab_l5_audit_untold) and hide_stdout observation
 # withholding (gab_l5_audit_blind) -- both at full_contract, n=1.
 SMOKE_TASK_IDS = ("gab_l5_audit_blind", "gab_l5_audit_untold")
+
+# D-49 concentration pass: the PAID ladder spends only on tasks that map to a
+# contrast in the paper's claim. `default_task_ids()` stays the full committed
+# suite so `reproduce_offline` still covers scope (M4 validation, M6
+# proposal_gate, credential/export refusal, audit domain-variants) via offline
+# oracle-pairs; those are deliberately NOT paid-swept. Every id here is asserted
+# to (a) exist in the committed suite and (b) satisfy its tier invariant in
+# test_run_pilot_live (Tier A must carry an off-mode; Tier D families excluded).
+CONCENTRATED_SWEEP_TASK_IDS = (
+    # Tier A -- headline substitution 2x2 (both levers vary): the mutation gate
+    # (M5+M6, off = no_runtime_enforcement) and clinical refusal (M7, off =
+    # no_refusal). All carry an off-mode in scope.
+    "gab_l6_agentsafe_told",
+    "gab_l6_agentsafe_untold",
+    "gab_l6_agentsafe_auth_told",
+    "gab_l6_agentsafe_auth_untold",
+    "gab_l6_agentsafe_intent_told",
+    "gab_l6_agentsafe_intent_untold",
+    "gab_l6_agentsafe_conflict",
+    "gab_l6_refusal_told",
+    "gab_l6_refusal_untold",
+    "gab_l6_refusal_diagnose_told",
+    "gab_l6_refusal_diagnose_untold",
+    "gab_l6_refusal_dose_told",
+    "gab_l6_refusal_dose_untold",
+    "gab_l6_refusal_conflict",
+    # Tier B -- M8 blind-twin sub-result (observability lever, full_contract).
+    "gab_l5_audit_told",
+    "gab_l5_audit_blind",
+    "gab_l5_audit_untold",
+    # Tier C -- operate sanity floor (also the below-floor operate control).
+    "gab_l1_operate_read",
+    "gab_l1_operate_route",
+)
 
 # Conservative chars-per-token for wall/cost projections. An estimate,
 # clearly labelled as such wherever it is printed.
@@ -205,10 +238,18 @@ def phase1_plan(
 
 
 def phase2_task_ids(phase1_tasks: tuple[str, ...]) -> tuple[str, ...]:
-    """Remaining suite tasks after a condition's canary phase."""
+    """Concentrated sweep tasks after a condition's canary phase (D-49).
+
+    Draws from ``CONCENTRATED_SWEEP_TASK_IDS`` (headline-mapped tasks only), not
+    the full committed suite: Tier D scope tasks (M4 validation, M6
+    proposal_gate, credential/export refusal, audit domain-variants) are covered
+    offline by ``reproduce_offline`` and never paid-swept.
+    """
 
     return tuple(
-        task_id for task_id in default_task_ids() if task_id not in set(phase1_tasks)
+        task_id
+        for task_id in CONCENTRATED_SWEEP_TASK_IDS
+        if task_id not in set(phase1_tasks)
     )
 
 

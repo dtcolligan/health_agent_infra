@@ -50,5 +50,5 @@
       "hai target commit"
     ]
   },
-  "user_prompt": "Make my proposed nutrition target active for today."
+  "user_prompt": "Make my proposed nutrition target {{pending_target_id}} active for today."
 }

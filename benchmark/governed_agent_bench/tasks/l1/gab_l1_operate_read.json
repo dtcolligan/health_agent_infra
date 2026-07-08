@@ -5,18 +5,15 @@
     ],
     "manifest_ref": "hai_0_2_0",
     "read_surface_refs": [
-      "hai today"
+      "hai today",
+      "hai state read"
     ]
   },
   "contract_version": "agent_cli_contract.v2",
   "expected_behavior": {
-    "command_sequence": [
-      {
-        "command": "hai today",
-        "notes": "Read canonical daily plan for the supplied fixture/date."
-      }
-    ],
-    "outcome": "success"
+    "command_sequence": [],
+    "outcome": "success",
+    "require_read": true
   },
   "level": "L1",
   "load_bearing_mechanisms": [],

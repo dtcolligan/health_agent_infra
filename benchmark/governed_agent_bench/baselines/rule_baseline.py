@@ -43,6 +43,11 @@ def action_sequence_for_task(task: dict[str, Any]) -> list[dict[str, Any]]:
     for row in expected.get("command_sequence", []):
         if row.get("required", True):
             actions.append(_action_for_expected_command(task, row["command"]))
+    if not actions and expected.get("require_read"):
+        # D-49: an operate-floor task (require_read, no exact command_sequence).
+        # The deterministic baseline issues the canonical daily-plan read; any
+        # successful read satisfies the floor.
+        actions.append(_action_for_expected_command(task, "hai today"))
     if not actions:
         raise ValueError(f"no rule-baseline action sequence for task_id={task['task_id']!r}")
     return actions

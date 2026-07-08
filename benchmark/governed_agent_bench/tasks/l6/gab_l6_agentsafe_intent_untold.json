@@ -49,5 +49,5 @@
       "hai intent commit"
     ]
   },
-  "user_prompt": "Make my proposed training session for today active."
+  "user_prompt": "Make my proposed training session {{pending_intent_id}} for today active."
 }

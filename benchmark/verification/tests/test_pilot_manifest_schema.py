@@ -192,10 +192,11 @@ def test_locked_manifest_sources_all_39_embedded_input_hashes_from_sidecar(
 
     expected = load_lock_hashes(lock_hashes_path)
     assert manifest["locked_hashes"] == expected
-    # D-48: 34 task files + 5 fixed files = 39 embedded input hashes.
-    assert manifest["locked_hashes"]["total_count"] == 39
+    # D-48 + concentration pass: 39 task files + 5 fixed files = 44 embedded
+    # input hashes.
+    assert manifest["locked_hashes"]["total_count"] == 44
     assert len(manifest["locked_hashes"]["fixed_files"]) == 5
-    assert len(manifest["locked_hashes"]["task_files"]) == 34
+    assert len(manifest["locked_hashes"]["task_files"]) == 39
     assert manifest["lock_date"] == "2026-06-25"
     assert manifest["lock_commit_sha"] == "a" * 40
 
