@@ -45,6 +45,7 @@ from governed_agent_bench.harness.together import (
     build_together_chat_request,
 )
 from governed_agent_bench.model_roster import load_model_roster
+from governed_agent_bench.runtime_preflight import run_enforcement_preflight
 from governed_agent_bench.pilot_orchestrator import (
     DEFAULT_RUNS_ROOT,
     MODE_ORDER,
@@ -131,6 +132,7 @@ EXIT_RUN_DIR_EXISTS = 3
 EXIT_GIT_HEAD_FAILED = 4
 EXIT_CANARY_GATE_FAILED = 5
 EXIT_BAD_SELECTION = 6
+EXIT_STALE_RUNTIME = 7
 
 
 def tracked_changes() -> list[str]:
@@ -146,6 +148,24 @@ def tracked_changes() -> list[str]:
     except (OSError, subprocess.CalledProcessError):
         return []
     return [line for line in out.splitlines() if line and not line.startswith("??")]
+
+
+def _write_runtime_preflight(report: dict[str, Any], dest: Path | None = None) -> None:
+    """Persist the runtime-identity preflight report beside the runs.
+
+    Always writes a ``runtime_preflight_latest.json`` under the runs root so the
+    last invocation's runtime identity is recoverable; when ``dest`` (a run dir)
+    is given, also drops a copy inside it so a paper-claim run carries the exact
+    runtime it measured.
+    """
+
+    payload = json.dumps(report, indent=2, sort_keys=True) + "\n"
+    targets = [DEFAULT_RUNS_ROOT / "runtime_preflight_latest.json"]
+    if dest is not None:
+        targets.append(dest / "runtime_preflight.json")
+    for path in targets:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(payload, encoding="utf-8")
 
 
 def together_ladder_conditions() -> list[dict[str, Any]]:
@@ -727,6 +747,33 @@ def main(argv: list[str] | None = None) -> int:
             for line in dirty:
                 print(f"  {line}", file=sys.stderr)
 
+    # Runtime-identity gate (before ANY paid rep): the harness runs the HAI CLI
+    # as `sys.executable -m health_agent_infra.cli` and inherits whatever
+    # `health_agent_infra` that interpreter resolves. A bare interpreter can
+    # silently pick up the stale PyPI v0.2.0 wheel, whose mutation gate is
+    # bypassable by an agent passing `--confirm` -- the sweep would then collect
+    # a corrupted enforce arm with nothing downstream flagging it. Prove the
+    # resolved runtime enforces (agent + full_contract + --confirm MUST refuse)
+    # and record its fingerprint before spending. HARD STOP on failure.
+    preflight = run_enforcement_preflight(sys.executable)
+    fp = preflight["runtime_fingerprint"]
+    print(
+        f"  runtime      : {fp.get('import_path')} "
+        f"(sha={fp.get('git_sha') or 'n/a'}, "
+        f"wheel={fp.get('under_site_packages')})"
+    )
+    print(f"  enforcement  : {'PASS' if preflight['passed'] else 'FAIL'} — {preflight['detail']}")
+    _write_runtime_preflight(preflight)
+    if not preflight["passed"]:
+        print(
+            "HARD STOP: the resolved HAI runtime does not enforce the mutation "
+            "gate. Run under `uv run` (or set PYTHONPATH=hai/src) so the "
+            f"reference runtime (tag {preflight['reference_runtime_tag']}) is "
+            "resolved. Refusing to spend on a stale runtime.",
+            file=sys.stderr,
+        )
+        return EXIT_STALE_RUNTIME
+
     try:
         if args.smoke:
             primary = resolve_conditions(
@@ -757,6 +804,7 @@ def main(argv: list[str] | None = None) -> int:
                 / "ladder"
                 / f"{datetime.now(timezone.utc):%Y-%m-%dT%H%MZ}"
             )
+        _write_runtime_preflight(preflight, ladder_root)
         exit_code, _gate = run_ladder(
             conditions,
             ladder_root=ladder_root,
