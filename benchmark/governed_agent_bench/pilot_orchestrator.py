@@ -451,13 +451,61 @@ def _default_now_utc() -> datetime:
 
 
 def default_task_ids() -> tuple[str, ...]:
+    # The committed suite is l[1-7]/; the exploratory disposition-pilot tasks
+    # live in tasks/pilot/ (audit #2) and are never part of the frozen suite.
     return tuple(
         path.stem for path in sorted((BENCHMARK_ROOT / "tasks").glob("l[1-7]/gab_*.json"))
     )
 
 
+def disposition_pilot_task_ids() -> tuple[str, ...]:
+    """The exploratory disposition-mapping pilot tasks (tasks/pilot/).
+
+    These are the jointly-instrumented mutation-gate directiveness gradient and
+    the disposition-taxonomy (scope / clinical) pilots. They are DELIBERATELY
+    excluded from ``default_task_ids`` and the frozen lock (audit #2), so a paid
+    pilot run must select them explicitly via ``default_pilot_disposition_config``
+    or by passing this set. A run that used ``default_task_ids`` would produce
+    zero pilot data -- the exact gap the pre-registration audit flagged.
+    """
+
+    return tuple(
+        path.stem for path in sorted((BENCHMARK_ROOT / "tasks" / "pilot").glob("gab_*.json"))
+    )
+
+
 def default_pilot_config() -> PilotConfig:
     return PilotConfig(runs_root=DEFAULT_RUNS_ROOT, task_ids=default_task_ids())
+
+
+# Disposition-pilot replication floor. The DiD statistic S=(A-B)-(C-D) reads
+# four independent binomial cells, so its CI is much wider than a single
+# contrast's at the same per-cell n: at n=4 the S CI spans the whole [-100,100]
+# range and is uninformative (results/cell_contrasts _difference_in_differences).
+# The pilot therefore runs a higher per-cell n than the frozen suite's n=3/4.
+# n=20 gives the clean-effect S a ~+/-30pp CI; tightening to the 10pp SESOI
+# needs n~50+ OR paraphrase pooling (>=3 prompt variants per gradient level,
+# pooled into one cell -- same per-rep cost, more effective n, better
+# generalization). The exact n/pooling and its cost are locked in the
+# pre-registration (PILOT_PROTOCOL §22) at the Dom spend gate, not here.
+DISPOSITION_PILOT_REPLICATION_N = 20
+
+
+def default_pilot_disposition_config(
+    replication_n: int = DISPOSITION_PILOT_REPLICATION_N,
+) -> PilotConfig:
+    """Pilot config that runs the disposition-mapping tasks, not the frozen
+    suite. This is the entry point for the (Dom-authorized, paid) disposition
+    pilot; keeping it a named factory means the pilot task set is wired into a
+    real runner rather than left dangling in tasks/pilot/. ``replication_n``
+    defaults to the power-adequate floor above and is overridable so the
+    pre-registered value drives the paid run."""
+
+    return PilotConfig(
+        runs_root=DEFAULT_RUNS_ROOT,
+        task_ids=disposition_pilot_task_ids(),
+        replication_n=replication_n,
+    )
 
 
 def _noop(*_args: Any, **_kwargs: Any) -> None:

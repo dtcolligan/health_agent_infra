@@ -149,7 +149,8 @@
               "mechanism_disabled_unexpected",
               "missing_citation",
               "fabricated_citation",
-              "oversized_observation"
+              "oversized_observation",
+              "forbidden_content"
             ]
           },
           "detail": {

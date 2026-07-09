@@ -53,6 +53,7 @@ harness change is required to reconstruct the window offline.
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 from statistics import median
 from typing import Any, Collection, Mapping, Sequence
@@ -80,6 +81,89 @@ from .run_layout import (
 # many scored reps rests on too little data to trust as a headline; it is
 # flagged (not dropped) so a reader never mistakes an n=1 pp for a stable one.
 _MIN_TRUSTWORTHY_CELL_N = 3
+
+# Two-sided 95% normal quantile for the difference intervals below. The pp
+# deltas the reporter emits are point estimates only; a reader cannot tell an
+# n=6 20pp from an n=60 20pp without an interval. We attach a Newcombe
+# score-based CI to each pairwise contrast and a normal-approx CI to the
+# difference-in-differences (§ _difference_cis). Dependency-free (no scipy):
+# Wilson intervals + Newcombe method 10, which have honest small-n coverage
+# where a Wald interval would run off the [0,1] boundary.
+_Z95 = 1.959963984540054
+
+
+def _wilson_interval(k: int, n: int, z: float = _Z95) -> tuple[float, float]:
+    """Wilson score interval for a binomial proportion k/n, as fractions."""
+
+    if n == 0:
+        return (0.0, 1.0)
+    phat = k / n
+    z2 = z * z
+    denom = 1.0 + z2 / n
+    center = (phat + z2 / (2 * n)) / denom
+    half = (z / denom) * math.sqrt(phat * (1 - phat) / n + z2 / (4 * n * n))
+    return (max(0.0, center - half), min(1.0, center + half))
+
+
+def _newcombe_ci(
+    high: Mapping[str, Any] | None,
+    low: Mapping[str, Any] | None,
+    z: float = _Z95,
+) -> list[float] | None:
+    """Newcombe (method 10) 95% CI in PERCENTAGE POINTS for the pp delta of two
+    independent binomial pass rates (minuend - subtrahend), matching
+    ``_rate_pp_delta``'s sign. None when either cell is absent."""
+
+    if high is None or low is None:
+        return None
+    k1, n1 = int(high["passes"]), int(high["n"])
+    k2, n2 = int(low["passes"]), int(low["n"])
+    if n1 == 0 or n2 == 0:
+        return None
+    p1, p2 = k1 / n1, k2 / n2
+    l1, u1 = _wilson_interval(k1, n1, z)
+    l2, u2 = _wilson_interval(k2, n2, z)
+    diff = p1 - p2
+    lower = diff - math.sqrt((p1 - l1) ** 2 + (u2 - p2) ** 2)
+    upper = diff + math.sqrt((u1 - p1) ** 2 + (p2 - l2) ** 2)
+    return [_round(100.0 * lower), _round(100.0 * upper)]
+
+
+def _difference_in_differences(
+    cell_values: Mapping[str, Mapping[str, Any] | None],
+    z: float = _Z95,
+) -> dict[str, Any] | None:
+    """S = (A - B) - (C - D): the substitution statistic.
+
+    How much the specify-axis effect (told vs untold, enforcement off: A - B)
+    exceeds the enforce-axis effect (enforced vs off, contract withheld:
+    C - D). Positive S => specification does more than enforcement on this
+    constraint. A DiD needs the full 2x2, so None if any cell is missing.
+    The CI is a normal-approx (Wald) over the four independent cell variances;
+    ``normal_approx: true`` flags that Newcombe does not extend to a 4-way
+    linear combination."""
+
+    needed = ("A", "B", "C", "D")
+    if any(cell_values.get(c) is None for c in needed):
+        return None
+    rate: dict[str, float] = {}
+    var = 0.0
+    for c in needed:
+        cell = cell_values[c]
+        assert cell is not None  # guarded above
+        n = int(cell["n"])
+        if n == 0:
+            return None
+        p = int(cell["passes"]) / n
+        rate[c] = p
+        var += p * (1 - p) / n
+    s = (rate["A"] - rate["B"]) - (rate["C"] - rate["D"])
+    half = z * math.sqrt(var)
+    return {
+        "value_pp": _round(100.0 * s),
+        "ci95_pp": [_round(100.0 * (s - half)), _round(100.0 * (s + half))],
+        "normal_approx": True,
+    }
 
 
 CELL_CONTRASTS_SCHEMA_VERSION = "governed_agent_bench.cell_contrasts.v2"
@@ -644,6 +728,10 @@ def _metric_contrast(
             name: _rate_pp_delta(cell_values[hi], cell_values[lo])
             for name, (hi, lo) in CONTRASTS.items()
         }
+        contrast_ci95_pp = {
+            name: _newcombe_ci(cell_values[hi], cell_values[lo])
+            for name, (hi, lo) in CONTRASTS.items()
+        }
         median_contrasts = {
             name: _median_delta(cell_values[hi], cell_values[lo])
             for name, (hi, lo) in CONTRASTS.items()
@@ -655,6 +743,8 @@ def _metric_contrast(
         windows[window] = {
             "cell_values": cell_values,
             "contrasts": contrasts,
+            "contrast_ci95_pp": contrast_ci95_pp,
+            "difference_in_differences": _difference_in_differences(cell_values),
             "contrast_flags": contrast_flags,
             "median_contrasts": median_contrasts,
         }

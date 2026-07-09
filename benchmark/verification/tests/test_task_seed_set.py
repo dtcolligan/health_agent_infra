@@ -127,6 +127,36 @@ def test_clinical_boundary_tasks_are_refusal_tasks() -> None:
             assert "refusal_accuracy" in task["metrics"], path
 
 
+def test_disposition_pilot_tasks_are_disjoint_from_frozen_suite() -> None:
+    """Audit #2: the exploratory disposition-pilot tasks live in tasks/pilot/,
+    are wired into a real runner (``disposition_pilot_task_ids``), and never
+    leak into the frozen suite / lock accounting."""
+
+    from governed_agent_bench.pilot_orchestrator import (
+        default_task_ids,
+        disposition_pilot_task_ids,
+    )
+
+    frozen = set(default_task_ids())
+    pilot = set(disposition_pilot_task_ids())
+
+    # The pilot set is non-empty and resolvable (so a paid run has data).
+    assert pilot, "disposition pilot task set is empty -- a paid run yields nothing"
+    # Every task physically in tasks/pilot/ is a _pilot_ task (no stray frozen
+    # task hiding there); `all()` over an empty dir is vacuously true.
+    assert all(
+        "_pilot_" in path.stem
+        for path in (TASK_ROOT / "pilot").glob("gab_*.json")
+    )
+    # No leak in either direction.
+    assert frozen.isdisjoint(pilot)
+    assert len(frozen) == sum(EXPECTED_LEVEL_COUNTS.values())
+    # Pilot tasks are NOT under l[0-9]/ (so no frozen-suite glob can see them).
+    assert not any(
+        "_pilot_" in path.stem for path in TASK_ROOT.glob("l[0-9]/gab_*.json")
+    )
+
+
 def test_l7_tasks_use_stale_manifest_and_current_only_weekly_command() -> None:
     current_commands = _current_commands()
     stale_commands = _stale_commands()

@@ -98,7 +98,12 @@ def load_task(path_or_id: str | Path) -> dict[str, Any]:
     path = Path(path_or_id)
     if path.exists():
         return load_json(path)
-    matches = sorted(TASK_ROOT.glob(f"l[1-7]/{path_or_id}.json"))
+    # The committed suite lives in l[1-7]/; the exploratory disposition-pilot
+    # tasks live in tasks/pilot/ (kept out of the frozen suite globs but still
+    # resolvable by id for the pilot runner).
+    matches = sorted(TASK_ROOT.glob(f"l[1-7]/{path_or_id}.json")) + sorted(
+        TASK_ROOT.glob(f"pilot/{path_or_id}.json")
+    )
     if len(matches) != 1:
         raise HarnessError(f"task not found or ambiguous: {path_or_id}")
     return load_json(matches[0])
@@ -536,6 +541,18 @@ def render_prompt(
             forbidden_tokens=tuple(withholding.get("forbidden_tokens", ())),
         )
     rendered_system = system_template
+    # Disposition-pilot instrumentation: a task may carry a per-task
+    # `contract_clause` -- an arbitrary deployment rule the model has no prior
+    # about. It is injected into the contract for the TOLD arm and omitted for
+    # the UNTOLD arm, so (told - untold) isolates the in-context specification's
+    # causal effect (B - D) with disposition held at zero. Only tasks that
+    # declare a clause are affected, so committed render pins are unchanged.
+    contract_clause = task.get("contract_clause", "")
+    if contract_clause and task.get("contract_arm") != "untold":
+        rendered_system = (
+            f"{rendered_system}\n\nDEPLOYMENT POLICY (binding for this run):\n"
+            f"{contract_clause}"
+        )
     # deployment_full_v2/v3 embed the manifest as minified JSON with null/empty
     # fields dropped (lossless efficiency; no command/flag/value removed) so the
     # prompt fits small-model context windows. v1 stays pretty-printed.
