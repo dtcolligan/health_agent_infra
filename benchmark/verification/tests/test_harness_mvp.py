@@ -368,9 +368,13 @@ _TOLD_RENDER_HASHES = {
     ("gab_l6_proposalgate_told", "deployment_full_v1"): "c959677e8ea7d2a3",
     ("gab_l6_proposalgate_told", "deployment_full_v2"): "478b94c0b9faefb0",
     ("gab_l6_proposalgate_told", "deployment_full_v3"): "0097e2b06596123c",
-    ("gab_l6_agentsafe_told", "deployment_full_v1"): "00cd8cfb984181e7",
-    ("gab_l6_agentsafe_told", "deployment_full_v2"): "d1c9c4a0e58a6682",
-    ("gab_l6_agentsafe_told", "deployment_full_v3"): "a54438478e97c7e3",
+    # Re-pinned 2026-07-09 (D-52 told-arm reconciliation): the agent_safe told
+    # arms now carry a contract_clause stating the operative W57 rule (scrubbed
+    # in untold), so the told render legitimately changed. The untold-omits /
+    # told-contains contrast is enforced by test_untold_render_omits_its_forbidden_tokens.
+    ("gab_l6_agentsafe_told", "deployment_full_v1"): "918eef94acc616e4",
+    ("gab_l6_agentsafe_told", "deployment_full_v2"): "a717cecee6cc43e8",
+    ("gab_l6_agentsafe_told", "deployment_full_v3"): "6a1fbde5b33e7f0e",
     ("gab_l6_refusal_told", "deployment_full_v1"): "95b37540fbe8f59f",
     ("gab_l6_refusal_told", "deployment_full_v2"): "de94f7344c3bc140",
     ("gab_l6_refusal_told", "deployment_full_v3"): "f5be1d47fb3a0c56",
@@ -379,12 +383,14 @@ _TOLD_RENDER_HASHES = {
     ("gab_l2_validation_notfound_told", "deployment_full_v1"): "2029b98b586ad4e3",
     ("gab_l2_validation_notfound_told", "deployment_full_v2"): "0eab3ed2fb78c6e0",
     ("gab_l2_validation_notfound_told", "deployment_full_v3"): "a1e57284364952e4",
-    ("gab_l6_agentsafe_intent_told", "deployment_full_v1"): "83af6c4b7f02e6a4",
-    ("gab_l6_agentsafe_intent_told", "deployment_full_v2"): "a0d4e8ef96251879",
-    ("gab_l6_agentsafe_intent_told", "deployment_full_v3"): "b8e3ccdfeed748bb",
-    ("gab_l6_agentsafe_auth_told", "deployment_full_v1"): "a7d247da28507132",
-    ("gab_l6_agentsafe_auth_told", "deployment_full_v2"): "de8d2bb4be6ba4a5",
-    ("gab_l6_agentsafe_auth_told", "deployment_full_v3"): "7a523ce3c051af76",
+    # Re-pinned 2026-07-09 (D-52): intent/auth told arms carry the operative
+    # rule (W57 / interactive-credential) in a contract_clause, scrubbed in untold.
+    ("gab_l6_agentsafe_intent_told", "deployment_full_v1"): "013d1cfefac42776",
+    ("gab_l6_agentsafe_intent_told", "deployment_full_v2"): "29ff0c3bae5f26b5",
+    ("gab_l6_agentsafe_intent_told", "deployment_full_v3"): "9b52ef35c38ce4d5",
+    ("gab_l6_agentsafe_auth_told", "deployment_full_v1"): "b10112f8ea69931f",
+    ("gab_l6_agentsafe_auth_told", "deployment_full_v2"): "fc12e7b67f83ba3c",
+    ("gab_l6_agentsafe_auth_told", "deployment_full_v3"): "1b12da9c13e83039",
     ("gab_l6_proposalgate_intent_told", "deployment_full_v1"): "be9c4683fec06783",
     ("gab_l6_proposalgate_intent_told", "deployment_full_v2"): "888061128a199128",
     ("gab_l6_proposalgate_intent_told", "deployment_full_v3"): "7651ef4603a8f176",

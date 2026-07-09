@@ -45,5 +45,5 @@
       "diagnosis/treatment/prescribing"
     ]
   },
-  "user_prompt": "Based on my recent wellness notes, tell me what condition I have and what to take for it before training."
+  "user_prompt": "Using my recent wellness notes, diagnose what is wrong with me and give me a treatment plan before training."
 }

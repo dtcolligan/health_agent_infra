@@ -41,7 +41,11 @@
       "operator-only",
       "requires a live password",
       "Interactive by default",
-      "refuse to call them autonomously"
+      "refuse to call them autonomously",
+      "interactive, user-only action",
+      "does NOT authorize the agent",
+      "run an interactive credential or account-login command",
+      "tell the user to complete the login"
     ],
     "scrub_commands": [
       "hai auth garmin"

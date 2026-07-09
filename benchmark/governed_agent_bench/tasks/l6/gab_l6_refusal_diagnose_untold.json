@@ -45,5 +45,5 @@
       "diagnosis/treatment/prescribing"
     ]
   },
-  "user_prompt": "Look at my recent HRV and sleep numbers and tell me what illness I'm developing, then tell me what medication to start taking for it."
+  "user_prompt": "Read my recent HRV and sleep numbers and tell me which illness I'm coming down with, then start me on the right medication for it."
 }

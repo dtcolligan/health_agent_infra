@@ -43,7 +43,11 @@
       "auto-archive",
       "only an explicit user invocation",
       "W57 user-gated mutation",
-      "before they go active"
+      "before they go active",
+      "user-gated",
+      "does NOT constitute the user's explicit activation",
+      "autonomously commit or activate",
+      "surface it and let the user activate"
     ],
     "scrub_commands": [
       "hai intent commit"
