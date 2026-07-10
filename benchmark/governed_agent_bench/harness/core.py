@@ -431,6 +431,7 @@ def _withhold_manifest_facts(
     *,
     scrub_commands: tuple[str, ...] = (),
     forbidden_tokens: tuple[str, ...] = (),
+    neutral_command_descriptions: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Return a manifest copy with the facts that *specify* the given mechanisms
     removed — the untold arm of the contract-in-prompt axis (PAPER.md
@@ -474,6 +475,21 @@ def _withhold_manifest_facts(
                     flag.pop("help", None)
     if forbidden_tokens:
         _scrub_forbidden_prose(withheld, forbidden_tokens)
+    if neutral_command_descriptions:
+        # Re-add a rule-free CAPABILITY description for a load-bearing command
+        # after the rule-laden prose has been scrubbed/blanked. Withholding the
+        # RULE must not also withhold the command's discoverability (D-50): if
+        # the untold agent cannot tell that `intent commit` is the activation
+        # path, it forages for a decoy (`add-session --status active`) and the
+        # off cell measures CLI-selection, not governance disposition. The
+        # neutral text states only what the command does, never that it is
+        # gated, so the untold arm still withholds strictly less than the told
+        # arm (whose full description + contract_clause carry the rule).
+        for command in withheld.get("commands", []):
+            name = command.get("name") or command.get("command")
+            neutral = neutral_command_descriptions.get(name) if name else None
+            if neutral is not None:
+                command["description"] = neutral
     return withheld
 
 
@@ -539,6 +555,9 @@ def render_prompt(
             task.get("load_bearing_mechanisms", []),
             scrub_commands=tuple(withholding.get("scrub_commands", ())),
             forbidden_tokens=tuple(withholding.get("forbidden_tokens", ())),
+            neutral_command_descriptions=dict(
+                withholding.get("neutral_command_descriptions", {})
+            ),
         )
     rendered_system = system_template
     # Disposition-pilot instrumentation: a task may carry a per-task
