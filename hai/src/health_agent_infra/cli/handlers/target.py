@@ -51,9 +51,19 @@ def cmd_target_set(args: argparse.Namespace) -> int:
 
     from datetime import date as _date
 
-    from health_agent_infra.cli import _emit_json, _intent_open_db
+    from health_agent_infra.cli import (
+        _agent_active_insert_gate,
+        _emit_json,
+        _intent_open_db,
+    )
     from health_agent_infra.core.target import add_target
     from health_agent_infra.core.target.store import TargetValidationError
+
+    # WP-RUNTIME-FIX-002: an agent may not create an active target row directly
+    # via `target set --status active`; activation is the user-gated commit path.
+    gate = _agent_active_insert_gate(args, command="hai target set")
+    if gate is not None:
+        return gate
 
     conn, db_path = _intent_open_db(args)  # same DB-open helper
     if conn is None:

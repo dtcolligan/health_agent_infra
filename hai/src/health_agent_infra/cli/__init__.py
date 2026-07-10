@@ -349,6 +349,7 @@ from health_agent_infra.cli.handlers.review import (  # noqa: E402
 # _w57_user_gate from health_agent_infra.cli keep resolving.
 from health_agent_infra.cli.handlers.intent import (  # noqa: E402
     _add_intent_common,
+    _agent_active_insert_gate,
     _intent_open_db,
     _intent_record_to_dict,
     _w57_user_gate,

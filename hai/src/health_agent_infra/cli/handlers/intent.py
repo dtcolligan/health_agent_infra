@@ -49,6 +49,86 @@ def _intent_record_to_dict(record) -> dict[str, Any]:
     return record.to_row()
 
 
+def _agent_active_insert_gate(
+    args: argparse.Namespace, *, command: str = "hai intent add-session"
+) -> Optional[int]:
+    """WP-RUNTIME-FIX-002 — W57 completeness for the activation gate.
+
+    `hai intent commit` / `hai target commit` are the user-gated activation
+    paths (`_w57_user_gate`), but an agent could otherwise reach `active`
+    through a side door: `intent training add-session --status active` /
+    `target set --status active` with the DEFAULT `source='user_authored'` is
+    accepted by the store (`source='agent_proposed'` is what it rejects), and
+    those insert commands are `agent_safe=True` so the dispatch gate lets them
+    through. An agent-classified caller creating an active user-state row
+    directly is exactly the W57 violation the commit gate exists to prevent.
+    Refuse it under `agent_safe`; a `user`-context caller may still author an
+    active row directly, and when `agent_safe` is disabled by runtime mode the
+    insert proceeds (with a `mechanism_disabled` marker) so the ablation's off
+    cell can execute. Returns ``None`` to permit, ``USER_INPUT`` to refuse."""
+
+    if getattr(args, "status", "active") != "active":
+        return None
+
+    from health_agent_infra.core.refusal import (
+        build_mechanism_disabled_marker,
+        build_refusal_envelope,
+        envelope_to_json,
+    )
+    from health_agent_infra.core.refusal.agent_safe import (
+        AGENT_CLASSIFIED_INVOCATION_CONTEXTS,
+        current_invocation_context,
+    )
+    from health_agent_infra.core.runtime_mode import (
+        current_runtime_mode,
+        mechanism_is_disabled,
+    )
+
+    context = current_invocation_context()
+    if context not in AGENT_CLASSIFIED_INVOCATION_CONTEXTS:
+        return None
+
+    details = {
+        "command": command,
+        "status": "active",
+        "source": getattr(args, "source", None),
+        "invocation_context": context,
+    }
+    if mechanism_is_disabled("agent_safe"):
+        sys.stderr.write(
+            envelope_to_json(
+                build_mechanism_disabled_marker(
+                    mechanism="agent_safe",
+                    runtime_mode=current_runtime_mode(),
+                    output_path=command,
+                    reason="agent_safe active-insert gate disabled by runtime mode",
+                    details=details,
+                )
+            )
+            + "\n"
+        )
+        return None
+    sys.stderr.write(
+        envelope_to_json(
+            build_refusal_envelope(
+                refusal_kind="agent_safe_violation",
+                mechanism="agent_safe",
+                code="agent_direct_active_insert",
+                message=(
+                    "runtime refused agent-classified caller creating an active "
+                    "user-state row directly; activation is user-gated (W57). "
+                    "Add the row as 'proposed' instead and let the user run the "
+                    "commit."
+                ),
+                output_path=command,
+                details=details,
+            )
+        )
+        + "\n"
+    )
+    return exit_codes.USER_INPUT
+
+
 def _add_intent_common(args: argparse.Namespace, *, defaults: dict[str, Any]) -> int:
     """Shared body for `hai intent training add-session` /
     `hai intent sleep set-window` / generic `hai intent add`. Resolves
@@ -58,6 +138,10 @@ def _add_intent_common(args: argparse.Namespace, *, defaults: dict[str, Any]) ->
 
     from health_agent_infra.core.intent import add_intent
     from health_agent_infra.core.intent.store import IntentValidationError
+
+    gate = _agent_active_insert_gate(args)
+    if gate is not None:
+        return gate
 
     conn, db_path = _intent_open_db(args)
     if conn is None:
