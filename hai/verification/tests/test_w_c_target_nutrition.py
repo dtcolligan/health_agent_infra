@@ -384,12 +384,17 @@ def test_hai_target_nutrition_user_path_writes_4_active_rows(
 
 
 def test_hai_target_nutrition_agent_path_writes_4_proposed_rows(
-    tmp_path: Path, capsys,
+    tmp_path: Path, capsys, monkeypatch,
 ):
-    """Agent-invoked (--ingest-actor claude_agent_v1): 4 rows with
-    source='agent_proposed', status='proposed' per W57 invariant."""
+    """Agent-invoked (HAI_INVOCATION_CONTEXT=agent): 4 rows with
+    source='agent_proposed', status='proposed' per W57 invariant.
+
+    WP-RUNTIME-FIX-003: the agent path is now selected by the runtime
+    invocation context, NOT the caller-supplied --ingest-actor string (which
+    an agent could omit to mint active user-state)."""
 
     db = _init_db(tmp_path)
+    monkeypatch.setenv("HAI_INVOCATION_CONTEXT", "agent")
 
     rc = cli_main([
         "target", "nutrition",
@@ -401,7 +406,6 @@ def test_hai_target_nutrition_agent_path_writes_4_proposed_rows(
         "--effective-from", TODAY.isoformat(),
         "--user-id", USER,
         "--db-path", str(db),
-        "--ingest-actor", "claude_agent_v1",
     ])
     assert rc == exit_codes.OK
     capsys.readouterr()
@@ -427,7 +431,7 @@ def test_hai_target_nutrition_agent_path_writes_4_proposed_rows(
 
 
 def test_hai_target_commit_promotes_one_proposed_row_at_a_time(
-    tmp_path: Path, capsys,
+    tmp_path: Path, capsys, monkeypatch,
 ):
     """Per OQ-10 ratification + PLAN §2.D test 4: the W57 commit gate
     is per-row. Promoting one row leaves the other 3 in 'proposed'.
@@ -439,6 +443,7 @@ def test_hai_target_commit_promotes_one_proposed_row_at_a_time(
     <id>' or equivalent."""
 
     db = _init_db(tmp_path)
+    monkeypatch.setenv("HAI_INVOCATION_CONTEXT", "agent")
 
     rc = cli_main([
         "target", "nutrition",
@@ -446,7 +451,6 @@ def test_hai_target_commit_promotes_one_proposed_row_at_a_time(
         "--carbs-g", "350", "--fat-g", "90",
         "--phase", "cut", "--effective-from", TODAY.isoformat(),
         "--user-id", USER, "--db-path", str(db),
-        "--ingest-actor", "claude_agent_v1",
     ])
     assert rc == exit_codes.OK
     capsys.readouterr()
@@ -464,6 +468,11 @@ def test_hai_target_commit_promotes_one_proposed_row_at_a_time(
     proposed_kcal = next(
         r["target_id"] for r in rows if r["target_type"] == "calories_kcal"
     )
+
+    # The W57 flow: an AGENT proposed the rows above; the USER activates one.
+    # Commit is user-gated, so it runs in the user context (the dispatch gate
+    # refuses an agent-classified caller on this agent_safe=false command).
+    monkeypatch.setenv("HAI_INVOCATION_CONTEXT", "user")
 
     # Try committing exactly the kcal row. The W57 gate accepts
     # `--confirm` for non-interactive callers (the test runner is

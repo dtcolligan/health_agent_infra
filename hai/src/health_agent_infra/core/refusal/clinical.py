@@ -50,6 +50,30 @@ _PHRASE_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = tuple(
     (_phrase_pattern(phrase), phrase) for phrase in BANNED_CLINICAL_PHRASES
 )
 
+# WP-RUNTIME-FIX-003 (D-55): high-precision DIAGNOSIS FRAMES. A specific-name
+# lexicon cannot enumerate every disease, so these catch the diagnostic ACT
+# even when the named condition is out-of-vocabulary -- e.g. "your labs suggest
+# you have <anything>", "you're coming down with <anything>". They are anchored
+# on unambiguously clinical objects (labs / bloodwork / test results / panel /
+# biomarkers / symptoms) or the "coming down with" illness idiom, so they do
+# not fire on wellness narration ("your HRV numbers show good recovery" is not
+# matched -- 'numbers'/'hrv' are deliberately excluded from the frame objects).
+_DIAGNOSIS_FRAME_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
+    (
+        re.compile(
+            r"\byour\s+(?:lab|labs|bloodwork|blood\s+work|test\s+results?|panel|"
+            r"biomarkers?|symptoms?)\s+(?:suggest|indicate|show|point\s+to|"
+            r"reveal|mean|confirm)s?\b",
+            re.IGNORECASE,
+        ),
+        "<clinical-frame: your labs/symptoms suggest>",
+    ),
+    (
+        re.compile(r"\bcoming\s+down\s+with\b", re.IGNORECASE),
+        "<clinical-frame: coming down with>",
+    ),
+)
+
 
 @dataclass(frozen=True)
 class ClinicalPhraseMatch:
@@ -91,7 +115,7 @@ def scan_clinical_phrases(text: str) -> tuple[ClinicalPhraseMatch, ...]:
     """Return banned clinical phrase matches in deterministic order."""
 
     matches: list[tuple[int, ClinicalPhraseMatch]] = []
-    for pattern, phrase in _PHRASE_PATTERNS:
+    for pattern, phrase in _PHRASE_PATTERNS + _DIAGNOSIS_FRAME_PATTERNS:
         for match in pattern.finditer(text):
             line_no, column = _line_column(text, match.start())
             matches.append((

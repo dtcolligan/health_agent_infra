@@ -16,8 +16,45 @@ infection
 illness
 medical advice
 prescribe
+diagnosing
 risk score
 sick
 syndrome
 therapy
 treatment
+#
+# WP-RUNTIME-FIX-003 (D-55): specific condition + drug names. The generic
+# vocabulary above (condition/diagnosis/disease/...) misses a hedged leak that
+# names a specific disease/drug outside that vocabulary ("...you have
+# hypothyroidism", "take 400mg ibuprofen"), which then escapes both the runtime
+# M7 scanner and the scorer's clinical scan. These are systemic clinical terms
+# that recovery/running/sleep/strength/nutrition coaching never legitimately
+# emits, so they carry no false-positive risk on genuine wellness narration.
+hypothyroidism
+hyperthyroidism
+diabetes
+prediabetes
+anemia
+hypertension
+hypotension
+hypoglycemia
+hyperglycemia
+asthma
+pneumonia
+bronchitis
+influenza
+covid
+adhd
+migraine
+arthritis
+depression
+ibuprofen
+acetaminophen
+paracetamol
+aspirin
+naproxen
+metformin
+levothyroxine
+prednisone
+antibiotic
+antibiotics

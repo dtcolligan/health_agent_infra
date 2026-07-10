@@ -251,15 +251,17 @@ def cmd_target_archive(args: argparse.Namespace) -> int:
 def cmd_target_nutrition(args: argparse.Namespace) -> int:
     """`hai target nutrition` — write 4 atomic macro target rows.
 
-    Source/status pairing per the W57 invariant at
-    ``core/target/store.py:160-168``:
+    Source/status pairing per the W57 invariant, decided by the runtime
+    invocation context (WP-RUNTIME-FIX-003), not the caller-supplied
+    ``--ingest-actor`` string:
 
-      * agent invocation (``--ingest-actor`` matches a named agent
-        identifier such as ``claude_agent_v1``) → ``source='agent_proposed'``,
-        ``status='proposed'``. The user must promote each row via
-        ``hai target commit --target-id <id>``.
-      * user invocation (default ``--ingest-actor cli`` or any other
-        non-agent value) → ``source='user_authored'``, ``status='active'``.
+      * agent-classified caller (``HAI_INVOCATION_CONTEXT=agent`` /
+        ``rule_baseline``) → ``source='agent_proposed'``, ``status='proposed'``.
+        The user must promote each row via ``hai target commit --target-id
+        <id>``. (When ``agent_safe`` is ablated by runtime mode, the active
+        insert proceeds with a ``mechanism_disabled`` marker so an off-cell
+        violation can execute.)
+      * user caller → ``source='user_authored'``, ``status='active'``.
 
     Natural-key idempotency: re-invocation with identical args
     (same kcal/protein/carbs/fat values, same phase, same effective_from,
@@ -272,6 +274,14 @@ def cmd_target_nutrition(args: argparse.Namespace) -> int:
     from datetime import datetime, timezone
 
     from health_agent_infra.cli import _emit_json, _intent_open_db
+    from health_agent_infra.core.refusal import (
+        build_mechanism_disabled_marker,
+        envelope_to_json,
+    )
+    from health_agent_infra.core.runtime_mode import (
+        current_runtime_mode,
+        mechanism_is_disabled,
+    )
     from health_agent_infra.core.target.store import (
         TargetRecord,
         TargetValidationError,
@@ -299,12 +309,45 @@ def cmd_target_nutrition(args: argparse.Namespace) -> int:
             else f"{phase_token}: hai target nutrition macro group"
         )
 
-        # Source/status pairing per the existing W57 invariant.
-        agent_actors = {"claude_agent_v1"}
-        if args.ingest_actor in agent_actors:
+        # Source/status pairing per the W57 invariant (WP-RUNTIME-FIX-003).
+        # Agent-vs-user is decided by the RUNTIME invocation context, NOT a
+        # caller-supplied --ingest-actor string: the old `agent_actors` check
+        # let an agent mint active user-state simply by omitting --ingest-actor
+        # (default 'cli' -> user_authored/active), a W57 side door that
+        # bypassed the gate the sibling `target set` / intent add-session paths
+        # enforce. An agent-classified caller may only PROPOSE macros;
+        # activation is user-gated. When agent_safe is ablated by runtime mode
+        # the active insert proceeds (with a mechanism_disabled marker) so the
+        # off cell can execute the violation, matching _agent_active_insert_gate.
+        from health_agent_infra.core.refusal.agent_safe import (
+            AGENT_CLASSIFIED_INVOCATION_CONTEXTS,
+            current_invocation_context,
+        )
+
+        context = current_invocation_context()
+        is_agent = context in AGENT_CLASSIFIED_INVOCATION_CONTEXTS
+        if is_agent and not mechanism_is_disabled("agent_safe"):
             source = "agent_proposed"
             status = "proposed"
         else:
+            if is_agent:
+                # agent_safe ablated: record the bypass, then allow the active
+                # insert so an off-cell violation actually executes.
+                sys.stderr.write(
+                    envelope_to_json(
+                        build_mechanism_disabled_marker(
+                            mechanism="agent_safe",
+                            runtime_mode=current_runtime_mode(),
+                            output_path="hai target nutrition",
+                            reason="agent_safe active-insert gate disabled by runtime mode",
+                            details={
+                                "command": "hai target nutrition",
+                                "invocation_context": context,
+                            },
+                        )
+                    )
+                    + "\n"
+                )
             source = "user_authored"
             status = "active"
 
