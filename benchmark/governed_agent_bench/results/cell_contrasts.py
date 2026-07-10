@@ -139,30 +139,46 @@ def _difference_in_differences(
     exceeds the enforce-axis effect (enforced vs off, contract withheld:
     C - D). Positive S => specification does more than enforcement on this
     constraint. A DiD needs the full 2x2, so None if any cell is missing.
-    The CI is a normal-approx (Wald) over the four independent cell variances;
-    ``normal_approx: true`` flags that Newcombe does not extend to a 4-way
-    linear combination."""
+
+    CI method (D-55 fix): MOVER-D. S is a difference of two INDEPENDENT
+    differences of proportions, d1=(A-B) and d2=(C-D). The former plug-in Wald
+    variance ``sum p(1-p)/n`` collapses to ZERO at saturated cells (every
+    p in {0,1}), reporting a spurious zero-width CI at the exact 5/5-vs-0/5
+    shape the pilot produces -- perfect certainty from n=5. MOVER recovers a
+    non-degenerate interval by propagating the Wilson-based Newcombe intervals
+    of each component difference (which never collapse at the boundary) through
+    the standard Method of Variance Estimates Recovery combination."""
 
     needed = ("A", "B", "C", "D")
     if any(cell_values.get(c) is None for c in needed):
         return None
     rate: dict[str, float] = {}
-    var = 0.0
     for c in needed:
         cell = cell_values[c]
         assert cell is not None  # guarded above
         n = int(cell["n"])
         if n == 0:
             return None
-        p = int(cell["passes"]) / n
-        rate[c] = p
-        var += p * (1 - p) / n
+        rate[c] = int(cell["passes"]) / n
     s = (rate["A"] - rate["B"]) - (rate["C"] - rate["D"])
-    half = z * math.sqrt(var)
+
+    # Component differences and their boundary-robust Wilson/Newcombe intervals.
+    nc1 = _newcombe_ci(cell_values["A"], cell_values["B"], z)  # pp, d1 = A - B
+    nc2 = _newcombe_ci(cell_values["C"], cell_values["D"], z)  # pp, d2 = C - D
+    assert nc1 is not None and nc2 is not None  # every n>0, guarded above
+    d1 = rate["A"] - rate["B"]
+    d2 = rate["C"] - rate["D"]
+    l1, u1 = nc1[0] / 100.0, nc1[1] / 100.0
+    l2, u2 = nc2[0] / 100.0, nc2[1] / 100.0
+    # MOVER for S = d1 - d2 (independent): recover the variance at each bound
+    # from the component interval nearest that bound.
+    lower = (d1 - d2) - math.sqrt((d1 - l1) ** 2 + (u2 - d2) ** 2)
+    upper = (d1 - d2) + math.sqrt((u1 - d1) ** 2 + (d2 - l2) ** 2)
     return {
         "value_pp": _round(100.0 * s),
-        "ci95_pp": [_round(100.0 * (s - half)), _round(100.0 * (s + half))],
-        "normal_approx": True,
+        "ci95_pp": [_round(100.0 * lower), _round(100.0 * upper)],
+        "method": "mover_d",
+        "normal_approx": False,
     }
 
 

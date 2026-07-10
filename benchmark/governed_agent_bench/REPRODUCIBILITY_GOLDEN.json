@@ -23,13 +23,13 @@
     }
   ],
   "expected_wall_time_seconds_observed": 76,
-  "generated_at_utc": "2026-07-10T08:25:18Z",
-  "git_sha": "f967e09effcb2dc250e7f7637e5740517b9138c0",
+  "generated_at_utc": "2026-07-10T15:09:32Z",
+  "git_sha": "21310cf03545fd7e2830ee2c71eaad56838d0ce3",
   "hashed_files": [
     {
       "normalize_absolute_paths": true,
       "path": "cell_contrasts/cell_contrasts.json",
-      "sha256": "956bfe19879d53dbf3865deb893bebb1102ea75f3d8e77354620eb674c9b4b1e"
+      "sha256": "717823fedc3a3f545b49c920be908767674df8af9e5ab816a1dc3d7eac81f46d"
     },
     {
       "normalize_absolute_paths": true,
@@ -39,12 +39,12 @@
     {
       "normalize_absolute_paths": false,
       "path": "evidence_tables/evidence_table.csv",
-      "sha256": "c274c5db2663693d0310fec5e37c3d70de38dc3f72da579dd98938a6eb4f7cd3"
+      "sha256": "3b86041439840a249b765b2b74ac236bc3e6fa8b89876d2c1f0018145b199cff"
     },
     {
       "normalize_absolute_paths": true,
       "path": "evidence_tables/evidence_table.json",
-      "sha256": "c00607dd021913b85525fb85881da479ca943832eb08c148e945262809f6f49a"
+      "sha256": "7818df07dd5e3fd21ef0c388382f4e8a4e70cee660d2b8666274ba183c8c9212"
     },
     {
       "normalize_absolute_paths": true,
