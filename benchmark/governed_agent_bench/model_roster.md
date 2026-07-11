@@ -30,8 +30,15 @@ vendor-verified live 2026-07-05):
 
 | Role | Condition | Model | $/1M in/out | Context | Sampling (vendor-recommended) |
 |---|---|---|---|---|---|
-| Primary capable | `run_primary_qwen3_235b` | `Qwen/Qwen3-235B-A22B-Instruct-2507-tput` | 0.20 / 0.60 | 262K | temp 0.7, top_p 0.8, top_k 20, min_p 0 |
+| Primary capable | `run_primary_minimax_m3` | `MiniMaxAI/MiniMax-M3` | 0.30 / 1.20 | 524K | temp 0.7, top_p 0.8, top_k 20, min_p 0 |
 | Second capable (cross-family) | `run_capable_llama33_70b` | `meta-llama/Llama-3.3-70B-Instruct-Turbo` | 1.04 / 1.04 | 128K | temp 0.6, top_p 0.9 (Meta generation config) |
+
+D-56 (2026-07-11): Together removed `Qwen/Qwen3-235B-A22B-Instruct-2507-tput`
+from serverless on 2026-07-10 (the `-FP8` variant is dedicated-endpoint-only).
+`run_primary_minimax_m3` (MiniMaxAI/MiniMax-M3) is the deprecation-forced PRIMARY
+replacement, canary-validated 2026-07-11: operates, mutation-gate B−D = +100pp
+(replicates the deprecated 235B cross-family), refusal disposition-covered. The
+deprecated 235B condition is retained (non-`run_`-prefixed) for provenance.
 | Near-floor | `run_nearfloor_qwen35_9b` | `Qwen/Qwen3.5-9B` | 0.17 / 0.25 | 262K | non-thinking: temp 0.7, top_p 0.8, top_k 20, min_p 0, presence_penalty 1.5 (thinking disabled via chat_template_kwargs; disclosed) |
 | Below-floor operate control | `run_belowfloor_qwen25_7b` | `Qwen/Qwen2.5-7B-Instruct-Turbo` | 0.30 / 0.30 | 32K (overflow pre-registered as expected; context_overflow category) | temp 0.7, top_p 0.8, top_k 20, rep_penalty 1.05 |
 
@@ -73,8 +80,69 @@ optional Option C cell and one retry cycle.
   },
   "conditions": [
     {
-      "condition_id": "run_primary_qwen3_235b",
-      "system_id": "run_primary_qwen3_235b_v1",
+      "condition_id": "run_primary_minimax_m3",
+      "system_id": "run_primary_minimax_m3_v1",
+      "model_class": "cloud",
+      "model_family": "minimax-m3-moe",
+      "model_id": "MiniMaxAI/MiniMax-M3",
+      "provider": "Together AI",
+      "provider_snapshot_date": "2026-07-11",
+      "model_card_snapshot": "https://www.together.ai/models/minimax-m3",
+      "parameter_count": "large MoE (parameter count not published on the provider page)",
+      "quantization": "provider serverless serving",
+      "weights_source": "MiniMaxAI MiniMax-M3 via Together serverless; adopted 2026-07-11 as the deprecation-forced replacement for the removed Qwen3-235B primary (D-56). Decoding matches the deprecated primary's canary-validated config.",
+      "context_window": 524288,
+      "compute_boundary": {
+        "hardware": "Together AI managed serverless inference",
+        "runtime": "Together AI chat completions API",
+        "max_wall_time_minutes": 480,
+        "network_access": true
+      },
+      "cost_boundary": {
+        "budget_type": "approved_cloud_budget",
+        "max_cost_usd": 50.0,
+        "billing_boundary": "Together /v1/models 2026-07-11: input $0.30/1M, output $1.20/1M. D-06 USD 300 aggregate ceiling."
+      },
+      "data_boundary": "synthetic_governed_agent_bench_fixtures_only",
+      "decoding_settings": {
+        "temperature": 0.7,
+        "top_p": 0.8,
+        "top_k": 20,
+        "min_p": 0,
+        "max_tokens": 2048,
+        "seed": "provider_does_not_support_seed"
+      },
+      "prompt_id": "deployment_full_v3",
+      "manifest_id": "hai_0_2_0",
+      "runtime_modes": [
+        "full_contract",
+        "no_validation",
+        "no_agent_safe",
+        "no_proposal_gate",
+        "no_refusal",
+        "no_audit_chain",
+        "no_runtime_enforcement"
+      ],
+      "failure_reporting": {
+        "timeout": "reportable_outcome",
+        "refusal": "reportable_outcome",
+        "invalid_json": "reportable_outcome",
+        "adapter_failure": "reportable_outcome",
+        "context_overflow": "reportable_outcome",
+        "provider_filtered": "reportable_outcome",
+        "length_truncation": "reportable_outcome"
+      },
+      "cloud_approval": {
+        "approval_id": "d56_minimax_primary_dom_2026_07_11",
+        "approved_by": "Dom",
+        "approved_at": "2026-07-11",
+        "approved_scope": "D-56 deprecation-forced PRIMARY replacement. Canary-validated 2026-07-11 (USD 0.76): operates, mutation-gate B-D=+100pp (replicates the deprecated 235B cross-family), refusal disposition-covered. Mild structured-output quirk on multi-step routing noted."
+      }
+    },
+    {
+      "condition_id": "deprecated_primary_qwen3_235b_tput",
+      "system_id": "deprecated_primary_qwen3_235b_tput_v1",
+      "deprecation_note": "Together AI removed this model from serverless on 2026-07-10 (verified via /v1/models 2026-07-11: the -tput endpoint is GONE, the -FP8 variant is dedicated-endpoint-only). Retained for provenance per D-41; superseded as PRIMARY by run_primary_minimax_m3 (D-56). This condition is intentionally not run_-prefixed so the ladder excludes it.",
       "model_class": "cloud",
       "model_family": "qwen3-instruct-moe",
       "model_id": "Qwen/Qwen3-235B-A22B-Instruct-2507-tput",

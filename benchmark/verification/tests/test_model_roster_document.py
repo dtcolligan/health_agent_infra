@@ -64,12 +64,16 @@ def test_model_roster_machine_readable_block_has_expected_conditions() -> None:
 
     condition_ids = {condition["condition_id"] for condition in roster["conditions"]}
     assert condition_ids == {
-        # roster_v3 (2026-07-05): the four D-41 run-ladder conditions,
-        # vendor-verified live (Together pages + HF cards).
-        "run_primary_qwen3_235b",
+        # roster_v3 D-41 run-ladder. D-56 (2026-07-11): the primary was swapped
+        # from the deprecated Qwen3-235B to MiniMax-M3 after Together removed the
+        # -tput model from serverless.
+        "run_primary_minimax_m3",
         "run_capable_llama33_70b",
         "run_nearfloor_qwen35_9b",
         "run_belowfloor_qwen25_7b",
+        # D-56: the former primary, deprecated by the provider, retained for
+        # provenance (non-run_-prefixed so the ladder excludes it).
+        "deprecated_primary_qwen3_235b_tput",
         # Superseded conditions retained for provenance and harness/test
         # compatibility; not run targets.
         "primary_qwen3_235b_together",
@@ -78,7 +82,7 @@ def test_model_roster_machine_readable_block_has_expected_conditions() -> None:
         "option_c_stretch_claude_sonnet_46",
     }
     assert roster["roster_id"] == "roster_v3"
-    assert roster["conditions"][0]["condition_id"] == "run_primary_qwen3_235b"
+    assert roster["conditions"][0]["condition_id"] == "run_primary_minimax_m3"
 
 
 def test_model_roster_conditions_keep_runtime_and_reporting_contracts() -> None:
@@ -103,7 +107,13 @@ def test_model_roster_conditions_keep_runtime_and_reporting_contracts() -> None:
     # sampling (verified live 2026-07-05); legacy conditions keep the
     # temp-0 settings they were locked with.
     run_decoding = {
-        "run_primary_qwen3_235b": {
+        "run_primary_minimax_m3": {
+            "temperature": 0.7, "top_p": 0.8, "top_k": 20, "min_p": 0,
+            "max_tokens": 2048, "seed": "provider_does_not_support_seed",
+        },
+        # D-56: the deprecated former-primary retains its run_-era config
+        # (v3 prompt, 0.7 sampling) for accurate provenance.
+        "deprecated_primary_qwen3_235b_tput": {
             "temperature": 0.7, "top_p": 0.8, "top_k": 20, "min_p": 0,
             "max_tokens": 2048, "seed": "provider_does_not_support_seed",
         },
@@ -135,10 +145,12 @@ def test_model_roster_conditions_keep_runtime_and_reporting_contracts() -> None:
             condition["condition_id"]
         )
         # Run-ladder conditions use v3 (the read-only agent-authorization
-        # template, §20.14); superseded/legacy conditions stay on v2.
+        # template, §20.14); superseded/legacy conditions stay on v2. D-56: the
+        # deprecated former-primary keeps its run_-era v3 for provenance.
         expected_prompt = (
             "deployment_full_v3"
             if str(condition["condition_id"]).startswith("run_")
+            or condition["condition_id"] == "deprecated_primary_qwen3_235b_tput"
             else "deployment_full_v2"
         )
         assert condition["prompt_id"] == expected_prompt, condition["condition_id"]

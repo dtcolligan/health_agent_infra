@@ -136,11 +136,21 @@ TOGETHER_QWEN3_235B_PRICING: dict[str, str | float] = {
         " as of 2026-07-05"
     ),
 }
+# D-56: MiniMax-M3 is the deprecation-forced PRIMARY replacement after Together
+# removed Qwen3-235B-...-tput from serverless (2026-07-10).
+TOGETHER_MINIMAX_M3_PRICING: dict[str, str | float] = {
+    "currency": "USD",
+    "input_usd_per_1m_tokens": 0.30,
+    "output_usd_per_1m_tokens": 1.20,
+    "pricing_snapshot_date": "2026-07-11",
+    "pricing_source": "Together AI /v1/models (MiniMaxAI/MiniMax-M3) as of 2026-07-11",
+}
 # Audit fix A1: cost estimation routes by the condition's model_id. An
 # unknown model_id raises -- a metered run must never silently misprice.
 TOGETHER_PRICING_BY_MODEL_ID: dict[str, dict[str, str | float]] = {
     TOGETHER_DEFAULT_MODEL_ID: TOGETHER_QWEN25_7B_PRICING,
     TOGETHER_QWEN3_235B_INSTRUCT_MODEL_ID: TOGETHER_QWEN3_235B_PRICING,
+    "MiniMaxAI/MiniMax-M3": TOGETHER_MINIMAX_M3_PRICING,
     "meta-llama/Llama-3.3-70B-Instruct-Turbo": TOGETHER_LLAMA33_70B_PRICING,
     "Qwen/Qwen3.5-9B": TOGETHER_QWEN35_9B_PRICING,
 }

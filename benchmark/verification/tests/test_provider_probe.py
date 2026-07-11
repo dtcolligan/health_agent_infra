@@ -76,11 +76,17 @@ def test_provider_probe_uses_only_mocked_read_only_metadata_and_docs() -> None:
     bodies = {
         "https://api.together.xyz/v1/models": json.dumps(
             {"data": [
+                {"id": "MiniMaxAI/MiniMax-M3"},
                 {"id": "Qwen/Qwen3-235B-A22B-Instruct-2507-tput"},
                 {"id": "meta-llama/Llama-3.3-70B-Instruct-Turbo"},
                 {"id": "Qwen/Qwen3.5-9B"},
                 {"id": "Qwen/Qwen2.5-7B-Instruct-Turbo"},
             ]}
+        ),
+        # D-56: MiniMax-M3 is the new primary; the deprecated 235B card is kept
+        # (its condition is retained for provenance).
+        "https://www.together.ai/models/minimax-m3": (
+            "MiniMaxAI/MiniMax-M3 input 0.30 output 1.20"
         ),
         "https://www.together.ai/models/qwen3-235b-a22b-instruct-2507-fp8": (
             "Qwen/Qwen3-235B-A22B-Instruct-2507-tput input 0.20 output 0.60 Qwen"

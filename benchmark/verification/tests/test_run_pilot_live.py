@@ -77,7 +77,7 @@ def test_ladder_selection_follows_roster_declared_order() -> None:
         and str(c["condition_id"]).startswith("run_")
     ]
     assert expected == [
-        "run_primary_qwen3_235b",
+        "run_primary_minimax_m3",
         "run_capable_llama33_70b",
         "run_nearfloor_qwen35_9b",
         "run_belowfloor_qwen25_7b",

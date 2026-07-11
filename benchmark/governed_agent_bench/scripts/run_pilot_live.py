@@ -58,7 +58,7 @@ from governed_agent_bench.pilot_orchestrator import (
 
 TOGETHER_API_KEY_ENV = "TOGETHER_API_KEY"
 TOGETHER_PROVIDER = "Together AI"
-PRIMARY_CONDITION_ID = "run_primary_qwen3_235b"
+PRIMARY_CONDITION_ID = "run_primary_minimax_m3"
 # Below-floor operate control (locked ladder design): the 7B runs the L1
 # operate/base cells in the canary phase; the gate asserts it fails to
 # operate.
