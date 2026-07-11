@@ -388,11 +388,95 @@ def first_attempt_step_count(
 
 
 def build_cell_contrasts(run_dir: Path) -> dict[str, Any]:
-    """Build the per-system, per-mechanism A/B/C/D cell + contrast report."""
+    """Per-system, per-mechanism A/B/C/D cell + contrast report from one run dir.
 
-    layout = detect_run_layout(run_dir)
-    reps_all = _load_reps(run_dir)
-    reps, completeness = _completeness_guard(run_dir, reps_all)
+    Backward-compatible entry point; delegates to ``build_cell_contrasts_pooled``
+    with a single dir (identical output shape for the single-dir case)."""
+
+    return build_cell_contrasts_pooled([run_dir])
+
+
+def ladder_condition_run_dirs(ladder_dir: Path, condition_id: str) -> list[Path]:
+    """Resolve a ladder condition's per-phase run dirs (canary then main) for
+    D-58 pooling.
+
+    A ladder run splits a condition's evidence across ``canary/`` and ``main/``
+    phase trees. Returns the resolved run dir for each phase that exists,
+    preferring the ``latest`` symlink and falling back to the newest timestamp
+    dir; main is returned last so main-phase reps dominate ordering."""
+
+    ladder_dir = Path(ladder_dir)
+    resolved: list[Path] = []
+    for phase in ("canary", "main"):
+        base = ladder_dir / phase / condition_id
+        latest = base / "latest"
+        if latest.exists():
+            resolved.append(latest.resolve())
+            continue
+        if base.is_dir():
+            stamped = sorted(
+                p for p in base.iterdir() if p.is_dir() and p.name != "latest"
+            )
+            if stamped:
+                resolved.append(stamped[-1])
+    return resolved
+
+
+def build_cell_contrasts_pooled(run_dirs: Sequence[Path]) -> dict[str, Any]:
+    """Per-system, per-mechanism report over reps POOLED across several run dirs.
+
+    D-58: a ladder condition's evidence is split across phases -- the canary
+    phase runs the pre-registered untold-floor carriers (PILOT_PROTOCOL 20.5,
+    e.g. ``gab_l6_agentsafe_untold``) while their told siblings run in the main
+    phase. Reading only the main dir leaves the untold arm on a MISMATCHED task
+    basis (told cells span the target+intent gates; untold cells are intent-only)
+    and leaves the target-commit untold-off cell unmeasured for the capable
+    models -- biasing the substitution index S. Pooling a condition's canary and
+    main dirs -- identical system_id, scorer version, scorer config, and runtime
+    lock -- restores the matched 2x2. The completeness guard runs per phase dir
+    and the ``headline_trustworthy`` flags are AND-ed across phases. Reps are NOT
+    deduped: canary and main run disjoint task sets per condition, and a task
+    that legitimately ran in both phases yields two distinct measurements that
+    both count. Loading each phase's resolved ``latest`` dir (not a parent that
+    also contains the ``latest`` symlink) avoids the symlink double-count.
+    """
+
+    dirs = [Path(run_dir) for run_dir in run_dirs]
+    if not dirs:
+        raise ValueError("build_cell_contrasts_pooled requires at least one run dir")
+
+    reps: list[dict[str, Any]] = []
+    per_run: list[tuple[Path, str, dict[str, Any]]] = []
+    for run_dir in dirs:
+        layout = detect_run_layout(run_dir)
+        reps_all = _load_reps(run_dir)
+        kept, comp = _completeness_guard(run_dir, reps_all)
+        reps.extend(kept)
+        per_run.append((run_dir, layout, comp))
+
+    if len(dirs) == 1:
+        source_run_dir: str | list[str] = str(dirs[0])
+        run_layout: str | list[str] = per_run[0][1]
+        completeness: dict[str, Any] = per_run[0][2]
+    else:
+        source_run_dir = [str(run_dir) for run_dir in dirs]
+        layouts = sorted({layout for _run_dir, layout, _comp in per_run})
+        run_layout = layouts[0] if len(layouts) == 1 else layouts
+        completeness = {
+            "guard": "pooled_multi_run",
+            "per_run": [
+                {"run_dir": str(run_dir), **comp}
+                for run_dir, _layout, comp in per_run
+            ],
+            "excluded_rep_count": sum(
+                int(comp["excluded_rep_count"]) for _run_dir, _layout, comp in per_run
+            ),
+            "headline_trustworthy": all(
+                bool(comp["headline_trustworthy"])
+                for _run_dir, _layout, comp in per_run
+            ),
+        }
+
     system_ids = sorted({str(rep["system_id"]) for rep in reps})
     systems = {
         system_id: _system_report(
@@ -402,8 +486,8 @@ def build_cell_contrasts(run_dir: Path) -> dict[str, Any]:
     }
     return {
         "schema_version": CELL_CONTRASTS_SCHEMA_VERSION,
-        "source_run_dir": str(run_dir),
-        "run_layout": layout,
+        "source_run_dir": source_run_dir,
+        "run_layout": run_layout,
         "rep_count": len(reps),
         "completeness": completeness,
         "windows": ["first_attempt", "converged"],
@@ -445,6 +529,27 @@ def write_cell_contrasts(
     """Write the cell-contrast report as a deterministic JSON artifact."""
 
     report = build_cell_contrasts(run_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    json_path = output_dir / "cell_contrasts.json"
+    json_path.write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return {
+        "schema_version": "governed_agent_bench.cell_contrasts_output.v1",
+        "rep_count": report["rep_count"],
+        "json_path": json_path.as_posix(),
+    }
+
+
+def write_cell_contrasts_pooled(
+    *,
+    run_dirs: Sequence[Path],
+    output_dir: Path,
+) -> dict[str, Any]:
+    """Write the cell-contrast report over reps pooled across run dirs (D-58)."""
+
+    report = build_cell_contrasts_pooled(run_dirs)
     output_dir.mkdir(parents=True, exist_ok=True)
     json_path = output_dir / "cell_contrasts.json"
     json_path.write_text(

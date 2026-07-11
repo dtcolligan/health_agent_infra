@@ -26,9 +26,11 @@ from governed_agent_bench.results.cell_contrasts import (  # noqa: E402
     _load_reps,
     _mechanism_report,
     build_cell_contrasts,
+    build_cell_contrasts_pooled,
     cell_label,
     contract_arm_of,
     first_attempt_step_count,
+    ladder_condition_run_dirs,
     write_cell_contrasts,
 )
 from governed_agent_bench.results.run_layout import (  # noqa: E402
@@ -574,6 +576,80 @@ def test_build_cell_contrasts_pins_substitution_and_did_end_to_end(
         assert set(sysd["contrast_ci95_pp"]) == {"B_vs_D", "C_vs_D", "A_vs_B"}
         # low-n honesty flag is present (n=1 per cell here)
         assert sysd["contrast_flags"]["B_vs_D"]["low_n"] is True
+
+
+def test_pooled_cell_contrasts_recovers_split_canary_untold_floor(
+    tmp_path: Path,
+) -> None:
+    """D-58: the untold-floor carrier (gab_l6_agentsafe_untold) is canary-tagged,
+    so on the ladder it runs in the CANARY phase dir while its told sibling runs
+    in the MAIN phase dir. Reading only the main dir leaves the untold arm
+    unmeasured -- cells C/D empty and the substitution S undefined. Pooling the
+    condition's canary + main dirs (same system, scorer, lock) restores the
+    matched 2x2 and recovers S. This is the regression lock for the analysis-scope
+    bug the Phase-4 robustness audit surfaced on the 2026-07-11 ladder sweep."""
+
+    system = "system_alpha"
+    main = tmp_path / "main" / "run_x" / "2026-07-11T1534Z_lock-ccccccc"
+    canary = tmp_path / "canary" / "run_x" / "2026-07-11T1534Z_lock-ccccccc"
+    # main phase: the TOLD sibling -> cells A (enforced) and B (told + off,
+    # self-enforces via refusal).
+    for mode in ("full_contract", "no_runtime_enforcement"):
+        _add_nested_rep(
+            main,
+            system_id=system,
+            task_id="gab_l6_agentsafe_told",
+            runtime_mode=mode,
+            steps=[_REFUSE],
+        )
+    # canary phase: the UNTOLD-floor carrier -> cells C (enforced-not-told: the
+    # gated commit is blocked, agent converges to refusal) and D (floor: the
+    # commit executes).
+    _add_nested_rep(
+        canary,
+        system_id=system,
+        task_id="gab_l6_agentsafe_untold",
+        runtime_mode="full_contract",
+        steps=[_COMMIT, _BLOCKED, _REFUSE],
+    )
+    _add_nested_rep(
+        canary,
+        system_id=system,
+        task_id="gab_l6_agentsafe_untold",
+        runtime_mode="no_runtime_enforcement",
+        steps=[_COMMIT, _EXECUTED],
+    )
+
+    # main-only: the untold arm is UNMEASURED -> C/D empty, S undefined (the bug).
+    main_only = build_cell_contrasts(main)
+    conv_main = main_only["systems"][system]["mechanisms"]["agent_safe"]["base"][
+        "metrics"
+    ]["unsafe_action_rate"]["converged"]
+    assert conv_main["cell_values"]["C"] is None
+    assert conv_main["cell_values"]["D"] is None
+    assert conv_main["difference_in_differences"] is None
+
+    # pooled canary+main: matched 2x2, substitution recovered.
+    pooled = build_cell_contrasts_pooled([canary, main])
+    assert pooled["rep_count"] == 4
+    assert pooled["completeness"]["guard"] == "pooled_multi_run"
+    assert pooled["completeness"]["headline_trustworthy"] is True
+    asafe = pooled["systems"][system]["mechanisms"]["agent_safe"]["base"]
+    assert asafe["cell_rep_counts"] == {"A": 1, "B": 1, "C": 1, "D": 1}
+    conv = asafe["metrics"]["unsafe_action_rate"]["converged"]
+    assert conv["contrasts"] == {"B_vs_D": 100.0, "C_vs_D": 100.0, "A_vs_B": 0.0}
+    assert conv["difference_in_differences"]["value_pp"] == -100.0
+
+    # single-dir call is byte-identical to the legacy path (backward compat).
+    assert build_cell_contrasts_pooled([main]) == main_only
+    assert isinstance(main_only["source_run_dir"], str)
+    assert main_only["run_layout"] == "nested"
+
+    # ladder resolver pairs the condition's canary + main phase dirs.
+    dirs = ladder_condition_run_dirs(tmp_path, "run_x")
+    assert len(dirs) == 2
+    assert dirs[0].parent.parent.name == "canary"
+    assert dirs[1].parent.parent.name == "main"
 
 
 def test_nested_first_attempt_window_closes_on_gated_block(
