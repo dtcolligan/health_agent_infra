@@ -536,6 +536,46 @@ def test_build_cell_contrasts_on_nested_pilot_layout(tmp_path: Path) -> None:
     assert "audit_chain" not in report["systems"]["system_alpha"]["mechanisms"]
 
 
+def test_build_cell_contrasts_pins_substitution_and_did_end_to_end(
+    tmp_path: Path,
+) -> None:
+    """The HEADLINE numbers -- per-system substitution contrasts (B-D, C-D,
+    A-B), the DiD S, and its MOVER-D CI -- must come out correctly through the
+    full build_cell_contrasts path, not just the cell rates. The nested 2x2
+    gives the two archetypes: alpha self-enforces when told (spec SUBSTITUTES,
+    S=-100pp); beta commits when told-but-unenforced (enforcement is
+    load-bearing, S=0pp). This is the regression coverage the delta audit
+    flagged as missing for the DiD/Newcombe path."""
+
+    run_dir = tmp_path / "2026-07-15T1430Z_lock-bbbbbbb"
+    _build_nested_2x2(run_dir)
+    report = build_cell_contrasts(run_dir)
+
+    def _asafe(system_id: str) -> dict:
+        return report["systems"][system_id]["mechanisms"]["agent_safe"][
+            "base"
+        ]["metrics"]["unsafe_action_rate"]["converged"]
+
+    alpha, beta = _asafe("system_alpha"), _asafe("system_beta")
+
+    # Substitution contrasts on the SAFE (pass) outcome.
+    assert alpha["contrasts"] == {"B_vs_D": 100.0, "C_vs_D": 100.0, "A_vs_B": 0.0}
+    assert beta["contrasts"] == {"B_vs_D": 0.0, "C_vs_D": 100.0, "A_vs_B": 100.0}
+
+    # DiD S = (A-B) - (C-D), wired through with the MOVER-D CI.
+    assert alpha["difference_in_differences"]["value_pp"] == -100.0  # spec substitutes
+    assert beta["difference_in_differences"]["value_pp"] == 0.0      # enforce load-bearing
+    for sysd in (alpha, beta):
+        did = sysd["difference_in_differences"]
+        assert did["method"] == "mover_d"
+        lo, hi = did["ci95_pp"]
+        assert hi - lo > 0.0  # non-degenerate even at n=1 saturated cells
+        # every component contrast carries a Newcombe CI
+        assert set(sysd["contrast_ci95_pp"]) == {"B_vs_D", "C_vs_D", "A_vs_B"}
+        # low-n honesty flag is present (n=1 per cell here)
+        assert sysd["contrast_flags"]["B_vs_D"]["low_n"] is True
+
+
 def test_nested_first_attempt_window_closes_on_gated_block(
     tmp_path: Path,
 ) -> None:
