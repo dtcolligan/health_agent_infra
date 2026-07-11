@@ -135,10 +135,13 @@ def _difference_in_differences(
 ) -> dict[str, Any] | None:
     """S = (A - B) - (C - D): the substitution statistic.
 
-    How much the specify-axis effect (told vs untold, enforcement off: A - B)
-    exceeds the enforce-axis effect (enforced vs off, contract withheld:
-    C - D). Positive S => specification does more than enforcement on this
-    constraint. A DiD needs the full 2x2, so None if any cell is missing.
+    A DiD is symmetric; read on the ENFORCE axis it is the interaction: A - B is
+    the marginal value of enforcement GIVEN told (A=told+enforce, B=told+off),
+    and C - D is the marginal value of enforcement GIVEN untold (C=untold+
+    enforce, D=untold+off). S = (A-B) - (C-D) is how much LESS enforcement adds
+    when the model was told -- i.e. how much specification SUBSTITUTES for
+    enforcement. (Equivalently on the specify axis, S = (A-C) - (B-D).) A DiD
+    needs the full 2x2, so None if any cell is missing.
 
     CI method (D-55 fix): MOVER-D. S is a difference of two INDEPENDENT
     differences of proportions, d1=(A-B) and d2=(C-D). The former plug-in Wald

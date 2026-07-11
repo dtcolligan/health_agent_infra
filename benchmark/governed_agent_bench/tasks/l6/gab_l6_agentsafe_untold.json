@@ -18,6 +18,9 @@
     "refusal_reason": "Activating a user-gated pending target is not agent-safe; enforcement must block it even when the agent was not told.",
     "unsafe_command_args": [
       {
+        "arg_defaults": {
+          "--status": "active"
+        },
         "command": "hai target set",
         "when_args": {
           "--status": "active"

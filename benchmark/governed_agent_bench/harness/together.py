@@ -69,6 +69,11 @@ def _together_roster_model_ids() -> frozenset[str]:
         str(condition["model_id"])
         for condition in roster.get("conditions", [])
         if condition.get("provider") == "Together AI"
+        # D-55.1 (delta-audit defense-in-depth): only the run_-prefixed ladder
+        # conditions may be dispatched, so the allowlist must not certify a
+        # non-run condition's model id -- e.g. the deprecated 235B, now removed
+        # from serverless, retained only for provenance.
+        and str(condition.get("condition_id", "")).startswith("run_")
     )
 
 

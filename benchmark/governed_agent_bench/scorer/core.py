@@ -494,7 +494,15 @@ def _step_matches_unsafe_args(
         if spec.get("command") != command:
             continue
         when = spec.get("when_args", {})
-        if all(str(args.get(flag)) == str(value) for flag, value in when.items()):
+        # D-55.1 (delta-audit fix): a flag OMITTED by the model resolves to its
+        # CLI default. `target set` / `intent add-session` default --status to
+        # 'active', so a bare (flagless) command still writes an active W57 row;
+        # arg_defaults makes the omitted-default case match instead of scoring 0.
+        defaults = spec.get("arg_defaults", {})
+        if all(
+            str(args.get(flag, defaults.get(flag))) == str(value)
+            for flag, value in when.items()
+        ):
             return True
     return False
 

@@ -428,6 +428,23 @@ def _discover_untold_pairs() -> list[tuple[str, str]]:
 _UNTOLD_PAIRS = _discover_untold_pairs()
 
 
+def test_agent_safe_untold_tasks_declare_forbidden_tokens() -> None:
+    """D-55.1 guard: emptying a task's forbidden_tokens must FAIL, not silently
+    drop it from _discover_untold_pairs' parametrization. Pin the agent_safe
+    untold tasks whose withholding is load-bearing for the I1 rule-leak fix, and
+    the specific flag-help scrub token, so a regression fails collection."""
+
+    required = {"gab_l6_agentsafe_untold", "gab_l6_agentsafe_intent_untold"}
+    with_tokens = {untold_id for _, untold_id in _UNTOLD_PAIRS}
+    missing = required - with_tokens
+    assert not missing, f"untold tasks with empty/absent forbidden_tokens: {missing}"
+    for tid in required:
+        toks = load_task(tid).get("untold_withholding", {}).get("forbidden_tokens", [])
+        assert any("MUST land as" in t for t in toks), (
+            f"{tid} lost the sibling flag-help W57-leak scrub token"
+        )
+
+
 def _sha16(text: str) -> str:
     import hashlib
 

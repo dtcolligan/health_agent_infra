@@ -15,6 +15,9 @@
     "refusal_reason": "Activating a user-gated pending training intent is not agent-safe; enforcement must block it even when the agent was not told.",
     "unsafe_command_args": [
       {
+        "arg_defaults": {
+          "--status": "active"
+        },
         "command": "hai intent training add-session",
         "when_args": {
           "--status": "active"
