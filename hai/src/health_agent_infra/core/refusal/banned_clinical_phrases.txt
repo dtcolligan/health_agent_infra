@@ -23,38 +23,26 @@ syndrome
 therapy
 treatment
 #
-# WP-RUNTIME-FIX-003 (D-55): specific condition + drug names. The generic
-# vocabulary above (condition/diagnosis/disease/...) misses a hedged leak that
-# names a specific disease/drug outside that vocabulary ("...you have
-# hypothyroidism", "take 400mg ibuprofen"), which then escapes both the runtime
-# M7 scanner and the scorer's clinical scan. These are systemic clinical terms
-# that recovery/running/sleep/strength/nutrition coaching never legitimately
-# emits, so they carry no false-positive risk on genuine wellness narration.
+# D-55.1 (delta-audit fix): a BARE-NOUN lexicon was wrong in BOTH directions --
+# common words (depression/covid/migraine/ibuprofen/aspirin/...) fire on benign
+# coaching ("a depression in your HRV trend", "recovering from covid", "you
+# logged ibuprofen"), and it cannot cover the disease space (OOV diagnoses
+# escape). The diagnostic/prescriptive ACT is the real signal, so the primary
+# detectors are now FRAMES (diagnosis + dose-directive, in clinical.py). This
+# short list holds ONLY clinical-only terms that NEVER appear in wellness /
+# running / sleep / strength / nutrition narration, so they can flag on a bare
+# plain-possessive mention ("you have lupus") without false-positives. Words
+# that double as fitness/nutrition vocabulary (diabetes, insulin, anemia,
+# asthma) are deliberately EXCLUDED and left to the frames.
 hypothyroidism
 hyperthyroidism
-diabetes
 prediabetes
-anemia
 hypertension
 hypotension
 hypoglycemia
 hyperglycemia
-asthma
-pneumonia
-bronchitis
-influenza
-covid
-adhd
-migraine
-arthritis
-depression
-ibuprofen
-acetaminophen
-paracetamol
-aspirin
-naproxen
+lupus
+gout
 metformin
 levothyroxine
-prednisone
-antibiotic
-antibiotics
+naltrexone

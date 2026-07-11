@@ -519,11 +519,13 @@ def test_estimate_together_cost_rejects_unknown_model_id() -> None:
         )
 
 
-def test_together_adapter_prices_primary_235b_condition_with_its_own_rates(
+def test_together_adapter_prices_primary_condition_with_its_own_rates(
     tmp_path: Path,
 ) -> None:
+    # D-56: the primary is now MiniMax-M3 ($0.30/$1.20); the deprecated 235B is
+    # non-run_-prefixed and no longer dispatchable via the allowlist.
     task = load_task("gab_l1_operate_route")
-    condition = roster_condition("primary_qwen3_235b_together")
+    condition = roster_condition("run_primary_minimax_m3")
     config = _config(tmp_path, condition)
     transport = FakeTransport(responses=[_final_response()])
 
@@ -536,13 +538,13 @@ def test_together_adapter_prices_primary_235b_condition_with_its_own_rates(
     )
 
     assert result.outcome == OUTCOME_EXECUTED
-    # 1000 prompt * $0.20/1M + 500 completion * $0.60/1M, NOT the 7B $0.30 flat
-    # rates the old code applied to every model.
-    assert result.cost_estimate["input_cost_usd"] == 0.0002
-    assert result.cost_estimate["output_cost_usd"] == 0.0003
-    assert result.cost_estimate["estimated_total_cost_usd"] == 0.0005
-    assert result.cost_estimate["input_usd_per_1m_tokens"] == 0.20
-    assert result.cost_estimate["output_usd_per_1m_tokens"] == 0.60
+    # 1000 prompt * $0.30/1M + 500 completion * $1.20/1M, per-model rates (NOT a
+    # flat rate applied to every model).
+    assert result.cost_estimate["input_cost_usd"] == 0.0003
+    assert result.cost_estimate["output_cost_usd"] == 0.0006
+    assert result.cost_estimate["estimated_total_cost_usd"] == 0.0009
+    assert result.cost_estimate["input_usd_per_1m_tokens"] == 0.30
+    assert result.cost_estimate["output_usd_per_1m_tokens"] == 1.20
 
 
 # --- Audit fix A2: per-rep raw-response artifacts must not collide ------------
@@ -704,10 +706,13 @@ def test_build_together_request_rejects_unknown_decoding_key() -> None:
 
 
 def test_together_allowlist_is_derived_from_roster_conditions() -> None:
-    # The two committed Together conditions are allowed...
-    assert TOGETHER_QWEN3_235B_INSTRUCT_MODEL_ID in TOGETHER_ALLOWED_MODEL_IDS
+    # D-56/D-55.1: the allowlist derives from the run_-prefixed ladder only.
+    # The current primary (MiniMax-M3) and below-floor (7B) are allowed...
+    assert "MiniMaxAI/MiniMax-M3" in TOGETHER_ALLOWED_MODEL_IDS
     assert TOGETHER_DEFAULT_MODEL_ID in TOGETHER_ALLOWED_MODEL_IDS
-    # ...and the roster-excluded smoke candidates are gone from the guard.
+    # ...the deprecated 235B (non-run_, retained only for provenance) is NOT
+    # certifiable, and roster-excluded smoke candidates stay gone.
+    assert TOGETHER_QWEN3_235B_INSTRUCT_MODEL_ID not in TOGETHER_ALLOWED_MODEL_IDS
     assert "mistralai/Mistral-Small-24B-Instruct-2501" not in TOGETHER_ALLOWED_MODEL_IDS
     assert "google/gemma-4-31B-it" not in TOGETHER_ALLOWED_MODEL_IDS
 

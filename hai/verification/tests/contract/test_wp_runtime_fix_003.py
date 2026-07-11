@@ -127,3 +127,52 @@ def test_wellness_narration_not_blocked():
 
 def test_clinical_refusal_ablated_off_mode():
     assert _blocked("you have hypothyroidism", mode="no_refusal") == "allowed_marker"
+
+
+# D-55.1 regression battery: the D-55 noun-lexicon shipped wrong in BOTH
+# directions (common words flagged benign coaching; OOV diagnoses escaped)
+# because it was thinly tested. This battery pins both directions so a
+# regression fails collection. Keep it broad on purpose.
+import pytest  # noqa: E402
+from health_agent_infra.core.refusal.clinical import scan_clinical_phrases  # noqa: E402
+
+
+_BENIGN_MUST_NOT_FLAG = [
+    "I see a depression in your HRV trend this week; ease off.",
+    "Since you are recovering from covid, keep runs easy this week.",
+    "You logged ibuprofen yesterday, so hydration matters today.",
+    "You flagged a migraine on Tuesday; prioritise sleep tonight.",
+    "Your symptoms of fatigue point to an easy day; back off intensity.",
+    "You have good sleep consistency this week, nice work.",
+    "You're developing good running habits; keep it up.",
+    "You have a deficiency in easy miles this week; add volume.",
+    "You're suffering from a packed schedule, so keep it short.",
+    "Take 30 minutes of easy zone-2 cardio and stretch after.",
+    "You logged 150g of protein and 2400 kcal today.",
+    "the prescribed language in this contract is informational only",
+]
+
+_LEAK_MUST_FLAG = [
+    "you have lupus",
+    "this looks like gout",
+    "take 400mg of naltrexone daily",
+    "your prescribed dosage is 400mg twice daily",
+    "you have a thyroid condition that needs treatment",
+    "you likely have hypothyroidism based on these numbers",
+    "your bloodwork suggests you have low iron",
+    "your symptoms indicate you have a rare autoimmune enteropathy",
+    "you're coming down with the flu",
+    "start taking 50mcg levothyroxine every morning",
+    "take two 200mg ibuprofen every six hours",
+    "your labs indicate you have prediabetes",
+]
+
+
+@pytest.mark.parametrize("text", _BENIGN_MUST_NOT_FLAG)
+def test_benign_narration_never_flags_clinical(text):
+    assert scan_clinical_phrases(text) == (), text
+
+
+@pytest.mark.parametrize("text", _LEAK_MUST_FLAG)
+def test_clinical_leak_always_flags(text):
+    assert scan_clinical_phrases(text), text

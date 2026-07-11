@@ -50,27 +50,80 @@ _PHRASE_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = tuple(
     (_phrase_pattern(phrase), phrase) for phrase in BANNED_CLINICAL_PHRASES
 )
 
-# WP-RUNTIME-FIX-003 (D-55): high-precision DIAGNOSIS FRAMES. A specific-name
-# lexicon cannot enumerate every disease, so these catch the diagnostic ACT
-# even when the named condition is out-of-vocabulary -- e.g. "your labs suggest
-# you have <anything>", "you're coming down with <anything>". They are anchored
-# on unambiguously clinical objects (labs / bloodwork / test results / panel /
-# biomarkers / symptoms) or the "coming down with" illness idiom, so they do
-# not fire on wellness narration ("your HRV numbers show good recovery" is not
-# matched -- 'numbers'/'hrv' are deliberately excluded from the frame objects).
+# D-55.1 (delta-audit fix): the diagnostic/prescriptive ACT is the signal, not
+# a bare disease/drug word. These FRAMES catch the act for ANY (incl.
+# out-of-vocabulary) condition or drug, while a bare mention of a benign word
+# ("a depression in your HRV trend", "you logged ibuprofen") does NOT match.
+# Deliberately anchored so ordinary coaching does not fire: the labs frame uses
+# only unambiguously clinical objects (NOT bare "symptoms"/"numbers"/"hrv"); the
+# possessive-diagnosis frame requires a generic clinical OBJECT
+# (condition/disease/...) or a diagnostic VERB, not a plain "you have <X>"; the
+# dose frame requires a dose UNIT (mg/mcg/iu) with a directive or schedule (NOT
+# bare grams, so "protein 150g" is safe).
 _DIAGNOSIS_FRAME_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
     (
         re.compile(
             r"\byour\s+(?:lab|labs|bloodwork|blood\s+work|test\s+results?|panel|"
-            r"biomarkers?|symptoms?)\s+(?:suggest|indicate|show|point\s+to|"
-            r"reveal|mean|confirm)s?\b",
+            r"biomarkers?)\s+(?:suggest|indicate|show|point\s+to|reveal|mean|"
+            r"confirm)s?\b",
             re.IGNORECASE,
         ),
-        "<clinical-frame: your labs/symptoms suggest>",
+        "<clinical-frame: your labs/bloodwork suggest>",
     ),
     (
+        # "your symptoms <diagnostic-verb> (that) you have/are ..." -- catches a
+        # symptom-based diagnostic CONCLUSION about the user, while bare "your
+        # symptoms of fatigue point to an easy day" (no "you have/are") stays
+        # safe. This is why "symptoms" is not an anchor in the labs frame above.
+        re.compile(
+            r"\byour\s+symptoms?\s+(?:suggest|indicate|show|point\s+to|reveal|"
+            r"mean|confirm)s?\s+(?:that\s+)?you(?:'?re|\s+are|\s+have|\s+may|"
+            r"\s+likely|\s+probably)\b",
+            re.IGNORECASE,
+        ),
+        "<clinical-frame: your symptoms indicate you have>",
+    ),
+    (
+        # The "coming down with" illness idiom (low false-positive: you come
+        # down with an illness, not a schedule). The broader diagnostic verbs
+        # (developing / suffering from / showing signs of) are DELIBERATELY
+        # excluded -- they take benign objects ("developing good habits",
+        # "suffering from a packed schedule", "showing signs of fatigue"), so a
+        # named condition there is left to the lexicon / possessive frame.
         re.compile(r"\bcoming\s+down\s+with\b", re.IGNORECASE),
         "<clinical-frame: coming down with>",
+    ),
+    (
+        # Possessive/copula diagnosis anchored on a generic clinical OBJECT
+        # (condition/disease/disorder/infection/syndrome/illness) with a
+        # REQUIRED article, so "you have good sleep" / "a deficiency in miles"
+        # are safe but "you have a thyroid condition" / "an infection" fire.
+        re.compile(
+            r"\byou(?:'?ve\s+got|\s+have|\s+likely\s+have|\s+probably\s+have|"
+            r"\s+may\s+have|\s+might\s+have)\s+(?:a|an)\s+(?:\w+\s+){0,2}"
+            r"(?:condition|disease|disorder|infection|syndrome|illness)\b",
+            re.IGNORECASE,
+        ),
+        "<clinical-frame: you have a condition/disorder/infection>",
+    ),
+    (
+        # Dose directive: a dose UNIT with a directive verb OR a schedule.
+        re.compile(
+            r"\b(?:take|taking|takes|use|using|start|starting|administer|"
+            r"swallow|inject|dose|dosage|prescrib\w*)\b[^.\n]{0,40}?\b\d+\s?"
+            r"(?:mg|mcg|milligrams?|micrograms?|iu|units?)\b",
+            re.IGNORECASE,
+        ),
+        "<clinical-frame: dose directive>",
+    ),
+    (
+        re.compile(
+            r"\b\d+\s?(?:mg|mcg|milligrams?|micrograms?|iu)\b[^.\n]{0,25}?\b"
+            r"(?:daily|twice|per\s+day|every|three\s+times|each\s+morning|"
+            r"each\s+night|hours?|a\s+day)\b",
+            re.IGNORECASE,
+        ),
+        "<clinical-frame: dose schedule>",
     ),
 )
 
