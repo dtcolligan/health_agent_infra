@@ -1,15 +1,18 @@
 # Told or Enforced: When In-Context Contracts Substitute for Runtime Enforcement in Agent Harnesses
 
-Dom Colligan
+Dom Colligan  
+Imperial College London  
+dominic.colligan25@imperial.ac.uk
 
 <!--
-Dom's fully written-up version, corrected 2026-07-12.
-Numbers verified against per_gate_substitution.json (first-action view).
-OPEN before submission:
-  - Citations in Section 2 are being verified against arXiv; do not treat
-    as final until that check lands.
-  - Release artifacts must exist: attach the versioned trajectory archive,
-    and put git 6c82cd0 on a durable public ref (tag + push).
+Dom's fully written-up version. Numbers verified against
+per_gate_substitution.json (first-action view). All 32 arXiv citations
+verified against the arXiv API (author/title/year); the closest six also
+against full text.
+arXiv submission metadata: primary cs.AI; cross-list cs.LG, cs.CR;
+licence CC BY 4.0.
+Runtime pinned at git 6c82cd0 (tag gab-runtime-1.0.1); the v0.2.0 wheel
+does not enforce. Trajectory archive released at that tag.
 -->
 
 ## Abstract
@@ -38,11 +41,11 @@ A second, independent finding is methodological. Our own harness first produced 
 
 The harness between a model and its tools is now studied as a design surface, but that line optimises it for capability, not governance (Harness-Bench, NLAH, AHE, Meta-Harness [arXiv:2605.27922, 2603.25723, 2604.25850, 2603.28052]; ETCLOVG, OpenReview 3hXEPbG0dh). Enforcement frameworks supply mechanisms without measuring what the model would do unaided (AgentSpec, CaMeL, Progent, Harness-MU [arXiv:2503.18666, 2503.18813, 2504.11703, 2606.21856]), and studies pitting enforcement against text-only governance change behaviour without withholding the rule per condition (ContextCov, Verifier Tax, Mechanical Enforcement, Policy-as-Prompt [arXiv:2603.00822, 2603.19328, 2605.14744, 2509.23994]; and the structural guards AIRGuard, Prompts Don't Protect, Symbolic Guardrails, TRACE, ST-WebAgentBench [arXiv:2605.28914, 2605.18414, 2604.15579, 2606.13174, 2410.06703]). The result is not mere instruction-following, because told-only compliance is not free: capable models finish tasks while breaking latent rules, non-monotonically across families (LogiSafetyBench, SABER, Agent-SafetyBench [arXiv:2601.08196, 2606.01317, 2412.14470]); in-context policy degrades with reasoning complexity (SafePyramid [arXiv:2606.29887]); and rules obeyed while visible are dropped as context compacts (Governance Decay [arXiv:2606.22528]). That checkability is what prior work uses to build evaluations (IFEval, RECAST, VerIF [arXiv:2311.07911, 2505.19030, 2506.09942]), not to predict when an agent complies.
 
-Two priors sit very close. PCAS [arXiv:2602.16708], a policy compiler with a runtime reference monitor, runs a by-design withheld-but-enforced condition: its instrumented arm removes the natural-language policy from the prompt and relies solely on runtime enforcement. But it has no told-and-enforced cell and no neither floor, scores task success after multi-turn corrective recovery rather than on first action, and enforces a single holistic policy per deployment, not a per-mechanism inventory. Mind the GAP [arXiv:2602.16943] is the nearest of all: it varies enforcement directly (unmonitored, observe, enforce, where Enforce hard-blocks forbidden tool calls), so it does contain a rule-absent-but-enforcing cell. Three things still separate it from our design. Its told rule (a prose safety suffix) and its enforced rule (per-tool RBAC contracts) are different objects, never the same constraint crossed told-against-enforced; it scores the model's attempt rate on intent across multi-turn jailbreak scenarios, not first-action compliance under benign pressure; and its headline "no deterrent" is a power-limited null (p > 0.27), not a clean substitution result. We take up the apparent tension with enforcement-helps priors in Section 8.
+Two priors sit very close. FORGE [arXiv:2602.16708], a runtime policy-enforcement framework with a reference monitor, runs a by-design withheld-but-enforced condition: its instrumented arm removes the natural-language policy from the prompt and relies solely on runtime enforcement. But it has no told-and-enforced cell and no neither floor, scores task success after multi-turn corrective recovery rather than on first action, and enforces a single holistic policy per deployment, not a per-mechanism inventory. Mind the GAP [arXiv:2602.16943] is the nearest of all: it varies enforcement directly (unmonitored, observe, enforce, where Enforce hard-blocks forbidden tool calls), so it does contain a rule-absent-but-enforcing cell. Three things still separate it from our design. Its told rule (a prose safety suffix) and its enforced rule (per-tool RBAC contracts) are different objects, never the same constraint crossed told-against-enforced; it scores the model's attempt rate on intent across multi-turn jailbreak scenarios, not first-action compliance under benign pressure; and its headline "no deterrent" is a power-limited null (p > 0.27), not a clean substitution result. We take up the apparent tension with enforcement-helps priors in Section 8.
 
 Others reach part of the crossing. Agent Behavioral Contracts [arXiv:2602.22302] evaluates runtime contracts at scale (1,980 sessions, 7 models) but toggles specification and enforcement together: its conditions "differ only in whether ABC contract rules are injected and enforced" (Table 6), so it never separates the levers and has no off-diagonal cell. We adopt PhantomPolicy's [arXiv:2604.12177] eight-category policy-invisible-violation taxonomy, though its own conditions are a flat, non-crossed set folding telling into enforcement architecture, with no reported enforced-and-told cell. ABSTAIN [arXiv:2606.02965] reaches the closest cell coverage, three of four cells on our specify-by-enforce mapping for one abstention mechanism, but its enforced (Checkpoint) arm "receives the same prompt as the Prompt-Only policy" (Appendix B), realising told-and-enforced rather than withheld-and-enforced, and its unenforced arms are LLM-judged. TeamBench [arXiv:2605.07073] finds prompt-only and sandbox-enforced role separation statistically indistinguishable on pass rate yet 3.6 times more verifier code-edit attempts in the prompt-only arm: convergent evidence for the substitution shape in a different, multi-agent domain where the rule is never withheld, with a standing caution (Section 7) that aggregate parity can mask sub-metric enforcement value.
 
-Isolated withheld-but-enforced measurements exist: PCAS by design, Prompts Don't Protect structurally, and Mind the GAP through its enforce mode. What no located prior offers is a clean, reproducible isolation of the two levers for the same rule across all four cells, scored on first action, per governance mechanism, with a released deterministic offline scorer. GovernedAgentBench provides that instrument; the paper's claims are the empirical finding above and the harness-blindness caution (Section 6), not the novelty of any single design element.
+Isolated withheld-but-enforced measurements exist: FORGE by design, Prompts Don't Protect structurally, and Mind the GAP through its enforce mode. What no located prior offers is a clean, reproducible isolation of the two levers for the same rule across all four cells, scored on first action, per governance mechanism, with a released deterministic offline scorer. GovernedAgentBench provides that instrument; the paper's claims are the empirical finding above and the harness-blindness caution (Section 6), not the novelty of any single design element.
 
 ## 3 The two levers
 
@@ -68,6 +71,8 @@ A sixth property, transaction integrity, is always on. The commit gate is the on
 |---|---|---|
 | **Told** | A: deployment baseline | B: told, not enforced |
 | **Withheld** | C: withheld, still enforced | D: neither |
+
+![The specify-versus-enforce 2×2 for a single rule. Cell A is how systems ship; B isolates self-enforcement; C isolates pure enforcement; D is the floor. Three contrasts read the levers: A minus B is the headline (what enforcement adds once the model was told), B minus D the effect of telling, C minus D the effect of enforcing.](figures/fig2_2x2.pdf)
 
 Cell A is how systems ship. Cell B isolates self-enforcement: the model knows the rule and nothing stops it. Cell C isolates pure enforcement: the rule is hidden but the runtime still blocks. Cell D is the floor. Three reads carry the information: B vs. D is the effect of telling; C vs. D is the effect of enforcing; and A vs. B is our headline: what enforcement adds once the model was told. If A and B match, enforcement changed no behaviour on that rule; its value is then the guarantee itself, which is real and unconditional (a blocked action simply cannot happen) even where behaviour does not move.
 
@@ -103,6 +108,8 @@ The run swept four models against the git-pinned runtime, MiniMax-M3 and Llama-3
 | Qwen2.5-7B (below floor) | 100* | 0 | 100* | 12.5 |
 
 \*Safe by construction; the finding is in columns B and D. Each cell is eight runs (two tasks, four repeats each).
+
+![Told the commit rule with enforcement off (cell B): both capable models stayed safe on every run, both weak models violated on every run. The withheld floor (cell D) shows telling moves behaviour within a model even for the capable ones. Enforced cells A and C are 100% by construction. Each bar is eight runs.](figures/fig1_result.pdf)
 
 **Read column B: told the rule, runtime off.** Both capable models stayed safe on all eight runs; both weak models committed the forbidden change on all eight. The marginal value of enforcement given the model was told, cell A minus cell B, is therefore zero for the capable models and the entire barrier for the weak ones. That single column is the paper's finding.
 
@@ -156,38 +163,38 @@ Four things would sharpen this. A powered version needs more test tasks per rule
 
 ## References
 
-- IFEval. arXiv:2311.07911.
-- ST-WebAgentBench. arXiv:2410.06703.
-- Agent-SafetyBench. arXiv:2412.14470.
-- AgentSpec. arXiv:2503.18666.
-- CaMeL: Defeating Prompt Injections by Design. arXiv:2503.18813.
-- Progent. arXiv:2504.11703.
-- RECAST. arXiv:2505.19030.
-- VerIF. arXiv:2506.09942.
-- Policy-as-Prompt. arXiv:2509.23994.
-- LogiSafetyBench. arXiv:2601.08196.
-- PCAS: Policy Compiler for Secure Agentic Systems (Palumbo, Choudhary, Choi, Chalasani, Jha). arXiv:2602.16708.
-- Mind the GAP: Text Safety Does Not Transfer to Tool-Call Safety in LLM Agents. arXiv:2602.16943.
-- Agent Behavioral Contracts. arXiv:2602.22302.
-- ContextCov. arXiv:2603.00822.
-- Verifier Tax. arXiv:2603.19328.
-- NLAH. arXiv:2603.25723.
-- Meta-Harness. arXiv:2603.28052.
-- PhantomPolicy: Policy-Invisible Violations in LLM-Based Agents. arXiv:2604.12177.
-- Symbolic Guardrails. arXiv:2604.15579.
-- AHE. arXiv:2604.25850.
-- TeamBench: Evaluating Agent Coordination under Enforced Role Separation. arXiv:2605.07073.
-- Mechanical Enforcement. arXiv:2605.14744.
-- Prompts Don't Protect. arXiv:2605.18414.
-- Harness-Bench. arXiv:2605.27922.
-- AIRGuard. arXiv:2605.28914.
-- SABER. arXiv:2606.01317.
-- What Benchmarks Don't Measure: The Case for Evaluating Abstention Competence in Autonomous Agents (Ojewale & Venkatasubramanian; ABSTAIN). arXiv:2606.02965.
-- TRACE. arXiv:2606.13174.
-- Constraint-driven fabrication under adversarial pressure. arXiv:2606.14831.
-- Harness-MU. arXiv:2606.21856.
-- Governance Decay (mitigation: Constraint Pinning). arXiv:2606.22528.
-- SafePyramid. arXiv:2606.29887.
+- Jeffrey Zhou et al. Instruction-Following Evaluation for Large Language Models (IFEval). arXiv:2311.07911, 2023.
+- Ido Levy et al. ST-WebAgentBench: A Benchmark for Evaluating Safety and Trustworthiness in Web Agents. arXiv:2410.06703, 2024.
+- Zhexin Zhang et al. Agent-SafetyBench: Evaluating the Safety of LLM Agents. arXiv:2412.14470, 2024.
+- Haoyu Wang, Christopher M. Poskitt and Jun Sun. AgentSpec: Customizable Runtime Enforcement for Safe and Reliable LLM Agents. arXiv:2503.18666, 2025.
+- Edoardo Debenedetti et al. Defeating Prompt Injections by Design (CaMeL). arXiv:2503.18813, 2025.
+- Tianneng Shi et al. Progent: Securing AI Agents with Privilege Control. arXiv:2504.11703, 2025.
+- Zhengkang Guo et al. RECAST: Expanding the Boundaries of LLMs' Complex Instruction Following with Multi-Constraint Data. arXiv:2505.19030, 2025.
+- Hao Peng, Yunjia Qi, Xiaozhi Wang, Bin Xu, Lei Hou and Juanzi Li. VerIF: Verification Engineering for Reinforcement Learning in Instruction Following. arXiv:2506.09942, 2025.
+- Gauri Kholkar and Ratinder Ahuja. Policy-as-Prompt: Turning AI Governance Rules into Guardrails for AI Agents. arXiv:2509.23994, 2025.
+- Da Song et al. Evaluating Implicit Regulatory Compliance in LLM Tool Invocation via Logic-Guided Synthesis (LogiSafetyBench). arXiv:2601.08196, 2026.
+- Nils Palumbo, Sarthak Choudhary, Jihye Choi, Guy Amir, Prasad Chalasani and Somesh Jha. Formal Policy Enforcement for Real-World Agentic Systems (FORGE). arXiv:2602.16708, 2026.
+- Arnold Cartagena and Ariane Teixeira. Mind the GAP: Text Safety Does Not Transfer to Tool-Call Safety in LLM Agents. arXiv:2602.16943, 2026.
+- Varun Pratap Bhardwaj. Agent Behavioral Contracts: Formal Specification and Runtime Enforcement for Reliable Autonomous AI Agents. arXiv:2602.22302, 2026.
+- Reshabh K Sharma. ContextCov: Deriving and Enforcing Executable Constraints from Agent Instruction Files. arXiv:2603.00822, 2026.
+- Tanmay Sah, Vishal Srivastava, Dolly Sah and Kayden Jordan. The Verifier Tax: Horizon Dependent Safety Success Tradeoffs in Tool Using LLM Agents. arXiv:2603.19328, 2026.
+- Linyue Pan, Lexiao Zou, Shuo Guo, Jingchen Ni and Hai-Tao Zheng. Natural-Language Agent Harnesses (NLAH). arXiv:2603.25723, 2026.
+- Yoonho Lee, Roshen Nair, Qizheng Zhang, Kangwook Lee, Omar Khattab and Chelsea Finn. Meta-Harness: End-to-End Optimization of Model Harnesses. arXiv:2603.28052, 2026.
+- Jie Wu and Ming Gong. Policy-Invisible Violations in LLM-Based Agents (PhantomPolicy). arXiv:2604.12177, 2026.
+- Yining Hong, Yining She, Eunsuk Kang, Christopher S. Timperley and Christian Kästner. Don't Make Models Guess Security and Safety: Symbolic Guardrails for Domain-Specific AI Agents. arXiv:2604.15579, 2026.
+- Jiahang Lin et al. Agentic Harness Engineering: Observability-Driven Automatic Evolution of Coding-Agent Harnesses (AHE). arXiv:2604.25850, 2026.
+- Yubin Kim et al. TeamBench: Evaluating Agent Coordination under Enforced Role Separation. arXiv:2605.07073, 2026.
+- José Manuel de la Chica Rodríguez and Carlos Martí-González. Mechanical Enforcement for LLM Governance: Evidence of Governance-Task Decoupling in Financial Decision Systems. arXiv:2605.14744, 2026.
+- Rohith Uppala. Prompts Don't Protect: Architectural Enforcement via MCP Proxy for LLM Tool Access Control. arXiv:2605.18414, 2026.
+- Yilun Yao et al. Harness-Bench: Measuring Harness Effects across Models in Realistic Agent Workflows. arXiv:2605.27922, 2026.
+- Suliu Qin, Haomin Zhuang, Yujun Zhou, Yufei Han and Xiangliang Zhang. AIRGuard: Guarding Agent Actions with Runtime Authority Control. arXiv:2605.28914, 2026.
+- Qi Hu et al. SABER: Benchmarking Operational Safety of LLM Coding Agents in Stateful Project Workspaces. arXiv:2606.01317, 2026.
+- Victor Ojewale and Suresh Venkatasubramanian. What Benchmarks Don't Measure: The Case for Evaluating Abstention Competence in Autonomous Agents (ABSTAIN). arXiv:2606.02965, 2026.
+- Yujun Zhou et al. Getting Better at Working With You: Compiling User Corrections into Runtime Enforcement for Coding Agents (TRACE). arXiv:2606.13174, 2026.
+- Andoni Rodríguez, Alberto Pozanco and Daniel Borrajo. Is Your Agent Playing Dead? Deployed LLM Agents Exhibit Constraint-Evasive Fabrication and Thanatosis. arXiv:2606.14831, 2026.
+- Wangxuan Fan, Xiaoyu Nie and Zhongxiang Dai. Harness-MU: A Safe, Governed, and Effective Harness for Multi-User LLM Agents. arXiv:2606.21856, 2026.
+- Shiyang Chen. Governance Decay: How Context Compaction Silently Erases Safety Constraints in Long-Horizon LLM Agents. arXiv:2606.22528, 2026.
+- Jiacheng Zhang et al. SafePyramid: A Hierarchical Benchmark for In-context Policy Guardrailing. arXiv:2606.29887, 2026.
 - Agent Harness Engineering: A Survey (proposes the ETCLOVG taxonomy; under review at TMLR). OpenReview 3hXEPbG0dh.
 
 ## Appendix A: reproduction
