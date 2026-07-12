@@ -1,12 +1,15 @@
 cff-version: 1.2.0
-message: "If you use this software in research, please cite it as below."
-title: "Runtime Contracts for Local Agents Over Sensitive User-Owned Data"
+message: "If you use this software or benchmark in research, please cite it as below."
+title: "GovernedAgentBench and the HAI reference runtime (Told or Enforced)"
 abstract: >-
-  A runtime-contract research project studying whether enforceable local
-  software contracts can make smaller local models viable operators for
-  bounded workflows over sensitive user-owned data. HAI is the
-  personal-wellness reference runtime; GovernedAgentBench is the benchmark
-  scaffold.
+  GovernedAgentBench separates the two levers a harness can use to keep an
+  agent within a rule: specifying the rule in the in-context contract, and
+  enforcing it in the runtime. It crosses told-versus-withheld with
+  enforced-versus-off per governance mechanism, scored by a deterministic
+  offline scorer, against HAI, a frozen non-clinical personal-wellness
+  reference runtime. Companion artifact to the preprint "Told or Enforced:
+  When In-Context Contracts Substitute for Runtime Enforcement in Agent
+  Harnesses."
 type: software
 authors:
   - given-names: Dom
@@ -15,27 +18,24 @@ repository-code: "https://github.com/dtcolligan/health_agent_infra"
 url: "https://github.com/dtcolligan/health_agent_infra"
 license: MIT
 keywords:
-  - personal-health
-  - LLM-agents
+  - agent-harness-governance
   - runtime-enforcement
-  - runtime-contracts
-  - agent-evals
+  - in-context-contract
+  - specify-vs-enforce
   - GovernedAgentBench
-  - local-first
+  - agent-evals
   - deterministic-policy
-  - intervals.icu
-  - garmin
-  - claude-code
-version: "0.2.0"
-date-released: "2026-05-07"
+  - LLM-agents
+# The runtime measured in the preprint is this commit, NOT the v0.2.0 PyPI
+# wheel (which does not enforce). Reproduce against the tag below.
+version: "gab-runtime-1.0.1"
+commit: "6c82cd004515c4c036548de729fc174412175820"
+date-released: "2026-07-11"
 # Once a Zenodo DOI is registered, uncomment and fill in:
 # identifiers:
 #   - type: doi
 #     value: "10.5281/zenodo.XXXXXXX"
 #     description: "Concept DOI for all versions"
-#   - type: doi
-#     value: "10.5281/zenodo.YYYYYYY"
-#     description: "DOI for v0.2.0"
 references:
   - type: article
     title: "AgentSpec: Customizable Runtime Enforcement for Agentic LLMs"
@@ -43,15 +43,4 @@ references:
     identifiers:
       - type: other
         value: "arXiv:2503.18666"
-        description: "arXiv preprint"
-  - type: article
-    title: "Personal Health Insight Agent"
-    journal: "Nature Communications"
-    year: 2025
-  - type: article
-    title: "SePA: Search-enhanced Predictive Agent for Personalized Health Coaching"
-    year: 2025
-    identifiers:
-      - type: other
-        value: "arXiv:2509.04752"
         description: "arXiv preprint"

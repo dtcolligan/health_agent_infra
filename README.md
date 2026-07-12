@@ -104,8 +104,12 @@ trajectory JSON and deterministic offline scores.
   See `PAPER.md` "Evidence Status."
 - Model-backed paper claims must preserve the static/live/model-backed
   evidence split.
-- HAI is frozen as a product at v0.2.0 PyPI and serves only as the
-  pinned reference runtime for the benchmark and preprint.
+- HAI is frozen as a product and serves only as the pinned reference
+  runtime for the benchmark and preprint. The v0.2.0 PyPI wheel is a
+  **non-enforcing** snapshot: the dispatch/commit gates landed after it,
+  so the runtime measured in the preprint is pinned by git commit
+  `6c82cd0` (tag `gab-runtime-1.0.1`). Reproduce the paper's runtime by
+  checking out that tag, not by installing the wheel.
 
 ## Read in This Order
 
