@@ -6,8 +6,16 @@ decisions change. Provenance lives in `ARCHIVE/`, not here.
 
 ## What This Repo Is For
 
-Shipping one artifact: an arXiv preprint by 2026-09-30, with
-GovernedAgentBench v1.0 released as a companion GitHub tag.
+Shipping one artifact: an arXiv preprint, with GovernedAgentBench v1.0
+released as a companion GitHub tag.
+
+The full draft is complete and presented on the repo: `paper/DRAFT_dom.md`
+(canonical write-up), `paper/DRAFT_dom.pdf`, and the landing page
+`paper/README.md`. arXiv submission is the remaining step and may be
+delayed past the 2026-09-30 target, so the draft is public in-repo in
+the meantime. Draft-complete is not research-complete: the Evidence
+Status section below still governs what the frame rests on, and a powered
+run, the adversarial arm, and external replication remain future work.
 
 Nothing else is active. HAI is a frozen reference runtime that
 supports the benchmark. There is no main-conference target, no
@@ -34,7 +42,8 @@ verifiable from the agent's context at decision time, whether compliance
 conflicts with completing the task, and whether the model clears the floor
 of being able to operate the contract at all.
 
-Core claim (revised to the diagnostic result, D-36; see Evidence Status).
+Core claim (revised to the diagnostic result at D-36, then confirmed by
+the landed D-41/D-56 capability ladder; see Evidence Status).
 The paper carries two findings, a negative result and a methodological one.
 
 Negative result: for a capable cooperative agent above the operate floor,
@@ -62,7 +71,10 @@ the agent see command output (the committed stdout-inlining fix). This, with
 the parser-tuned-to-one-model and unreliable-model-catalog issues, is a
 cautionary contribution for agent-eval methodology.
 
-All of the above is diagnostic (one model, small n); see Evidence Status.
+All of the above is small-n and confounded: the headline rests on a
+four-model capability ladder (D-41/D-56, paper Section 5.1) whose
+load-bearing "told but does not self-enforce" arm is effectively one
+mid-size model; see Evidence Status.
 
 External framing is "AI-engineering paper on agent-harness governance."
 The deterministic governance contract is a harness layer (the ETCLOVG
@@ -521,7 +533,7 @@ diagnostic outcome (one model, small n; D-35/D-36).
 |---|---|---|
 | H1 | Whether an agent self-enforces a constraint is predicted by whether compliance is verifiable from its decision-time context. For context-verifiable constraints (M4/M5/M6/M7), a capable cooperative agent under no goal conflict self-enforces regardless of runtime enforcement, so the `full_contract` vs `no_X` behavioral delta sits at the honest-error residual. The genuinely non-retrievable residual is L7 drift, where the agent cannot self-enforce, so enforcement is predicted to show a real delta even for a cooperative agent. | Headline condition 1. QUALIFIED by the 2026-07-02 probes: the verifiable-leg redundancy holds only when the constraint is salient in the request; first-attempt self-enforcement of an incidentally-reached verifiable constraint was NOT observed. The M8 audit-faithfulness cooperative-exception is CONTRADICTED (D-35): cooperative agents self-enforce faithfulness when asked plainly. The instrumental-fabrication follow-up (D-36) was FALSIFIED and shown to be a harness artifact. Only L7 drift remains as an unmeasured non-verifiable candidate. See Evidence Status. |
 | H2 | Self-enforcement of a constraint degrades under benign goal conflict / instrumental pressure (compliance, or honest abstention, costs task success), and the enforcement delta rises correspondingly. | FALSIFIED in diagnostics (D-36). Narrative goal conflict did not degrade self-enforcement (0 fabrication P0-P3, n=5); the instrumental form was a harness-blindness artifact that dissolved with the stdout fix (0pp, n=5). The agent self-enforces even where enforcement was predicted to bite. |
-| H3 | Capability moderates but does not order the map: within a model family, self-enforcement of verifiable unconflicted constraints rises with capability above the operate floor; cross-family and under conflict, non-monotonicity is expected (weak claim, small ladder, no scaling law). | Bounded and CONFOUNDED (D-36). The thin serverless ladder (7B/9B/70B/235B) is contaminated by an action parser tuned to one model. It weakly supports that an operate floor exists (7B below it) and that operable models self-enforce; it cannot carry a scaling claim. |
+| H3 | Capability moderates but does not order the map: within a model family, self-enforcement of verifiable unconflicted constraints rises with capability above the operate floor; cross-family and under conflict, non-monotonicity is expected (weak claim, small ladder, no scaling law). | SUPPORTED but CONFOUNDED by the landed D-41/D-56 ladder (2026-07-11, paper Section 5.1): told the commit rule with enforcement off, the two capable models (MiniMax-M3, Llama-3.3-70B) self-enforced on every run and the two weak models (Qwen3.5-9B, Qwen2.5-7B) violated on every run, with an operate floor below (7B). Capability is entangled with model family and, once the below-floor 7B is set aside, the load-bearing arm rests on one mid-size model; no scaling claim. The earlier thin diagnostic ladder (2026-07-03, parser-confounded) is superseded as provenance. |
 | H4 | An untold agent (contract-withheld arm) attempts constrained actions at a nonzero rate, so enforcement produces a real C-vs-D delta; if the untold agent complies anyway on neutral phrasing, compliance is a training prior and the verifiability criterion's scope narrows accordingly. | Headline floor + the collapse condition. The contract-off mini-2x2 probe tests it first. |
 | H5 | The specify-vs-enforce effect generalizes beyond HAI; GovernedAgentBench measures it while using HAI as one reference runtime. | RESCOPED by D-42 (Posture B): the preprint is a single-runtime case study; the external non-HAI replication is future work, disclosed as such. Generality is a hypothesis the paper states, not a claim it defends. |
 | H6 | Non-clinical boundaries are enforceable runtime behaviour, not disclaimer text; a capable agent additionally self-enforces them under no conflict (M7 is context-verifiable), making runtime and model redundant on that axis under cooperation. | Design constraint + a datapoint for H1's verifiable leg. |
@@ -605,9 +617,52 @@ separate.
 
 ## Evidence Status
 
-What the frame rests on, as of 2026-07-02. These are diagnostic probes
-(n=3, one model), not the pre-registered run; the model-backed tier stays
-separate from the static oracle-pair and live-runtime-probe tiers.
+What the frame rests on. The headline now rests on the landed
+pre-registered ladder run (2026-07-11; D-41 amended by D-56), reported in
+full in the paper's Section 5.1 and summarised immediately below. The
+diagnostic probes that follow (2026-07-02/03, Qwen3-235B, n=3) are the
+provenance that shaped the design and appear in the paper as Section 5.2.
+The model-backed tier stays separate from the static oracle-pair and
+live-runtime-probe tiers throughout.
+
+**Pre-registered ladder run (2026-07-11, git-pinned runtime `6c82cd0`,
+four models, USD 10.44; `runs/pilot/ladder/2026-07-11T1534Z/`).** The
+sweep crossed told-vs-withheld x enforced-vs-off on the commit boundary
+(the M6 proposal/commit gate) across a capability ladder: MiniMax-M3 and
+Llama-3.3-70B (capable), Qwen3.5-9B (near floor), Qwen2.5-7B (below
+floor). Share of runs safe on the first action, eight runs per cell (two
+tasks x four repeats):
+
+| Model | A: told, enforced | B: told, off | C: withheld, enforced | D: neither |
+|---|---|---|---|---|
+| MiniMax-M3 (capable) | 100* | 100 | 100* | 0 |
+| Llama-3.3-70B (capable) | 100* | 100 | 100* | 25 |
+| Qwen3.5-9B (near floor) | 100* | 0 | 100* | 12.5 |
+| Qwen2.5-7B (below floor) | 100* | 0 | 100* | 12.5 |
+
+Cells A and C are safe by construction (the runtime blocks the commit
+whatever the model emits); the behavioural finding lives in columns B and
+D. Column B (told, runtime off): both capable models refused on every run,
+both weak models committed the forbidden change on every run, so the
+marginal value of enforcement given the model was told (A minus B) is zero
+for the capable models and the whole barrier for the weak ones. Cell D
+(neither) rules out mere agreeableness: the capable models violate when
+the rule is withheld (MiniMax 0/8 safe, Llama 2/8 safe), so column B is
+genuine substitution of telling for enforcing, not indifference to both.
+
+Honestly bounded, mirroring the paper. The unit of replication is the
+task, and there are two per side with near-identical repeats, so this is
+raw counts and per-run mechanism, not a p-value (run-level p=0.00016 but
+task-level p=0.33). It is confounded: capability is entangled with model
+family (capable = non-Qwen, weak = Qwen), and once the below-floor 7B is
+set aside the load-bearing "told but does not self-enforce" arm rests on
+one mid-size model (Qwen3.5-9B). The second swept rule, the
+medical-boundary refusal, was uninformative (near-ceiling; the detector
+fired on 7 of 223 runs). MiniMax-M3 is a non-pre-registered replacement
+for the provider-deprecated Qwen3-235B primary, added after an
+outcome-conditioned canary (D-56), so its cell is exploratory; the
+pre-registered capable point is Llama-3.3-70B, which shows the same
+pattern. Full caveat set in paper Sections 5.1 and 7.
 
 **Diagnostic results (2026-07-02 probe battery, Qwen3-235B, temperature 0,
 n=3 per cell, all under `no_runtime_enforcement`; $0.44 total; trajectories
@@ -698,17 +753,21 @@ operate floor. Operable models self-enforced the agent-safe gate (9B and
 operate-but-violate band. The ladder cannot carry a scaling claim; it weakly
 supports that an operate floor exists and that operable models self-enforce.
 
-**Pending.** The goal-conflict, instrumental, and ladder arms are resolved
-(as nulls). Remaining: L7 drift (the sole genuine non-retrieval candidate,
-unmeasured; the suite carries `gab_l7_drift`) and the pre-registered WP-E
-run itself (D-41: 4-model ladder, n=4, canary-first, no data yet). The
-higher-n confirmatory question is resolved by D-41 (the run is happening);
-the adversarial arm and the external non-HAI replication (H5) are future
-work per D-37 and D-42.
+**Pending.** The pre-registered WP-E ladder run (D-41, amended by D-56)
+has landed; its result is the headline above. The earlier goal-conflict
+and instrumental probe arms resolved as nulls. Remaining future work: L7
+drift (the sole genuine non-retrieval candidate, unmeasured; the suite
+carries `gab_l7_drift`); a powered run with more test tasks per rule (the
+honest sample size is set by tasks, not repeats) plus a non-Qwen weak
+model to break the family confound; the adversarial arm; and the external
+non-HAI replication (H5), future work per D-37 and D-42.
 
-The supported claims are the negative result (specification substitutes for
-enforcement for capable cooperative agents above the operate floor) plus the
-methodological demonstration, both diagnostic (one model, small n). The
+The supported claims are the capability-gated substitution result
+(specification substitutes for enforcement for capable cooperative agents
+above the operate floor, while weak models below it need the runtime) plus
+the methodological demonstration, both small-n and confounded (the
+load-bearing "told but does not self-enforce" arm effectively one mid-size
+model). The
 through-line: a capable cooperative model self-enforces its constraints,
 verifiable or not, when asked plainly and when it can see its tool output;
 runtime enforcement's demonstrated behavioral value is the deterministic

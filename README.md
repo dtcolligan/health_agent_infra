@@ -9,12 +9,17 @@ GovernedAgentBench separates the two. It measures how much of an agent's
 constraint-respecting behavior comes from being *told* versus being
 *enforced*, mechanism by mechanism, with a deterministic offline scorer.
 
-The repository exists to ship one artifact: the arXiv preprint
+The repository exists to ship one artifact: the preprint
 *Told or Enforced: When In-Context Contracts Substitute for Runtime
-Enforcement in Agent Harnesses* by 2026-09-30, with
-GovernedAgentBench v1.0 released as a companion GitHub tag. HAI is the
-pinned reference runtime used to instantiate the contract; it is the
-instrument, not an active product roadmap.
+Enforcement in Agent Harnesses*, with GovernedAgentBench v1.0 released
+as a companion GitHub tag. HAI is the pinned reference runtime used to
+instantiate the contract; it is the instrument, not an active product
+roadmap.
+
+**The draft is complete and readable now.** arXiv submission is the
+remaining step and may be delayed, so the paper is presented on the repo
+in the meantime: **[read it in `paper/`](paper/)** (start with the
+[landing page](paper/README.md) or the [PDF](paper/DRAFT_dom.pdf)).
 
 [![PyPI](https://img.shields.io/pypi/v/health-agent-infra)](https://pypi.org/project/health-agent-infra/)
 [![Tests](https://img.shields.io/badge/tests-2999_passing-green)](hai/verification/tests/)
@@ -93,15 +98,18 @@ trajectory JSON and deterministic offline scores.
 - Preprint scope, title, mechanism inventory, threat model, hypotheses,
   calendar, and active decisions live in [`PAPER.md`](PAPER.md).
 - GovernedAgentBench has schemas, an offline scorer, harness code,
-  six synthetic fixtures, 28 tasks, seed trajectories, static isolation
-  oracle pairs, targeted live isolation probes for M4-M8, and a
-  deterministic rule baseline.
-- The specify-vs-enforce 2x2 with its three moderators (constraint
-  verifiability, goal-conflict pressure, model capability; D-31/D-32/D-34)
-  is in progress. Diagnostic probes support the verifiable leg in bounded
-  form; the audit exception, the contract-withheld arm, the goal-conflict
-  arm, the capability ladder, and an external replication are pending.
-  See `PAPER.md` "Evidence Status."
+  six synthetic fixtures, a 39-task suite (16-task paid subset), seed
+  trajectories, static isolation oracle pairs, targeted live isolation
+  probes for M4-M8, and a deterministic rule baseline.
+- The specify-vs-enforce 2x2 ran as a four-model capability ladder
+  against the git-pinned runtime, and the headline commit-boundary
+  result landed: told the rule with enforcement off, capable models
+  self-enforce on every run and weak ones need the runtime on every run
+  (paper §5). The goal-conflict and instrumental arms returned nulls; a
+  powered run with more tasks, the adversarial arm, long-horizon drift,
+  and an external non-HAI replication remain future work. See
+  [`paper/`](paper/) for the result and `PAPER.md` "Evidence Status" for
+  the diagnostic-tier provenance.
 - Model-backed paper claims must preserve the static/live/model-backed
   evidence split.
 - HAI is frozen as a product and serves only as the pinned reference
@@ -115,10 +123,10 @@ trajectory JSON and deterministic offline scores.
 
 | Doc | Lines | Why |
 |---|---|---|
-| [`PAPER.md`](PAPER.md) | ~400 | Active research control plane: scope, calendar, decisions, hypotheses, roster, mechanism inventory, and talk track. |
-| [`benchmark/governed_agent_bench/README.md`](benchmark/governed_agent_bench/README.md) | ~100 | Benchmark overview, directory map, measurement-readiness, and current gates. |
-| [`benchmark/governed_agent_bench/BENCHMARK_CARD.md`](benchmark/governed_agent_bench/BENCHMARK_CARD.md) | ~150 | Intended use, non-use, data provenance, runtime modes, scorer, and limitations. |
-| [`AGENTS.md`](AGENTS.md) | ~220 | Operating contract for AI coding tools working in this multi-agent tree. |
+| [`PAPER.md`](PAPER.md) | ~900 | Active research control plane: scope, calendar, decisions, hypotheses, roster, mechanism inventory, and talk track. |
+| [`benchmark/governed_agent_bench/README.md`](benchmark/governed_agent_bench/README.md) | ~150 | Benchmark overview, directory map, measurement-readiness, and current gates. |
+| [`benchmark/governed_agent_bench/BENCHMARK_CARD.md`](benchmark/governed_agent_bench/BENCHMARK_CARD.md) | ~280 | Intended use, non-use, data provenance, runtime modes, scorer, and limitations. |
+| [`AGENTS.md`](AGENTS.md) | ~240 | Operating contract for AI coding tools working in this multi-agent tree. |
 | [`CLAUDE.md`](CLAUDE.md) | ~40 | Claude-Code session-start pointer and common commands. |
 
 Lane-specific docs live under their owner directories. Historical
@@ -134,8 +142,9 @@ pyproject.toml / uv.lock
 
 benchmark/governed_agent_bench/                  # benchmark code, schemas, scorer, harness, tasks, results
 hai/src/ + hai/docs/ + hai/verification/         # frozen HAI reference runtime + operator docs + tests
-paper/DRAFT.md                                   # paper draft scaffold
-paper/prior_art_notes.md                         # citation notes only
+paper/README.md + paper/DRAFT_dom.pdf            # the paper: landing page + full draft
+paper/JOURNEY.md                                 # the making-of essay
+paper/prior_art_notes.md + paper/refs.bib        # citation notes and bibliography
 
 ARCHIVE/                                         # frozen historical provenance, not in cold-start
   framing_v2/                                    # 27 D-FRAME decisions, 3 rounds, 6 batches

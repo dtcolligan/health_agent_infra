@@ -6,10 +6,18 @@ and decisions live in `PAPER.md`. Read `PAPER.md` first.
 
 ## North Star
 
-This repo exists to ship one artifact: the arXiv preprint
+This repo exists to ship one artifact: the preprint
 *Told or Enforced: When In-Context Contracts Substitute for Runtime
-Enforcement in Agent Harnesses* by 2026-09-30, with
-GovernedAgentBench v1.0 released beside it.
+Enforcement in Agent Harnesses*, with GovernedAgentBench v1.0 released
+beside it.
+
+The full draft is complete and its headline result has landed; it is
+presented on the repo at `paper/` (landing page `paper/README.md`,
+full draft `paper/DRAFT_dom.md`). arXiv submission is the remaining step
+and may be delayed, so the draft is public in-repo in the meantime. This
+does not mean the research programme is finished: the result is a small,
+confounded, single-runtime case study, and a powered run, the
+adversarial arm, and external replication remain future work.
 
 The project is not a HAI product roadmap. HAI is the pinned reference
 runtime used to instantiate and test the paper's runtime-contract
