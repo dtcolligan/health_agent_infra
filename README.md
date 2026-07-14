@@ -1,5 +1,9 @@
 # Told or Enforced: When In-Context Contracts Substitute for Runtime Enforcement in Agent Harnesses
 
+### 📄 [Read the paper (PDF)](paper/DRAFT_dom.pdf)
+
+Full draft. Also as the [paper landing page](paper/README.md) (abstract, figures, result) and [Markdown](paper/DRAFT_dom.md).
+
 An agent harness has **two ways to make an agent respect a constraint**:
 specify it in the prompt (an in-context contract), or enforce it in the
 runtime (a guardrail). Real systems do both, and rarely ask when one
