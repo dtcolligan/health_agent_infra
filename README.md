@@ -82,6 +82,11 @@ versus pending.
 | A non-clinical reference runtime used to instantiate concrete mechanisms | Evidence of diagnosis, treatment, prescribing, or clinical quality |
 | A bounded empirical claim with separated evidence tiers | A universal causal claim about all agents or domains |
 
+Because the told-not-enforced cell (told, runtime off) isolates what a model
+does with a rule it was told but that nothing enforces, GovernedAgentBench also
+doubles as a disposition eval for agentic post-training (measuring, not
+training, the self-enforcement a model supplies once told).
+
 ## Evidence Discipline
 
 GovernedAgentBench keeps evidence tiers separate:

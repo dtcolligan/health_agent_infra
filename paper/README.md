@@ -88,7 +88,10 @@ indifference to both.
   rule: a task suite, a deterministic offline scorer (fixed code, no model
   calls, no randomness), the released paid-run transcripts and grades, and a
   git-pinned reference runtime. Released for reproducibility, not claimed as a
-  novel design.
+  novel design. It also serves as a disposition eval for agentic post-training:
+  the told-not-enforced cell (told, runtime off) measures the self-enforcement a
+  model supplies once told, separate from runtime enforcement (we use it to
+  measure, not to train).
 - **Harness blindness** — a methodological caution. A test harness that hides a
   tool's output from the agent can make the agent guess facts it cannot see, and
   a scorer then misreads the guess as fabrication. An apparent fabrication

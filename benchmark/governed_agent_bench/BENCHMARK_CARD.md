@@ -21,6 +21,11 @@ personal-wellness runtime used to instantiate a concrete software
 contract. The benchmark is designed to admit other runtimes in future
 work.
 
+Secondary use: the told-not-enforced cell (specification present, runtime
+off) is a disposition eval for agentic post-training, measuring the
+self-enforcement a model supplies once told, separate from runtime
+enforcement; the benchmark measures this, it does not train.
+
 The benchmark supports two headline contributions:
 
 - a **negative result** — in-context specification substitutes for

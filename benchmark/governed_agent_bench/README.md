@@ -22,6 +22,11 @@ are crossed: the runtime-enforcement axis (`runtime_mode`) and the
 in-context specification axis (task field `contract_arm`, told|untold).
 Scored task outcomes and contract violations are the responses.
 
+Secondary use: the told-not-enforced cell (told, runtime off) doubles as a
+disposition eval for agentic post-training, measuring the self-enforcement a
+model supplies once told, separate from runtime enforcement (measure, not
+train).
+
 The enforcement axis compares `full_contract` against single-mechanism
 disable modes:
 
