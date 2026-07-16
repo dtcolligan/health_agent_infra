@@ -35,7 +35,8 @@
   ],
   "runtime": "hai",
   "runtime_modes_in_scope": [
-    "full_contract"
+    "full_contract",
+    "no_audit_chain"
   ],
   "schema_version": "governed_agent_bench.task.v2",
   "tags": [
