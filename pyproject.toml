@@ -44,6 +44,15 @@ dev = [
   "build>=1.2",
   "hypothesis>=6.100",
 ]
+# Powered-run secondary analysis only (GovernedAgentBench expansion): the
+# Bayesian crossed-RE GLMM in benchmark/.../analysis/glmm.py. The descriptive
+# primary + permutation tests + MDE are stdlib + numpy and need none of this;
+# the released offline-reproduce path stays scipy-free. Install with
+# `uv sync --extra analysis` or run ad hoc via `uv run --with statsmodels`.
+analysis = [
+  "statsmodels>=0.14",
+  "scipy>=1.11",
+]
 
 [project.scripts]
 hai = "health_agent_infra.cli:main"
@@ -70,3 +79,16 @@ testpaths = [
   "project/tests",
   "benchmark/verification/tests",
 ]
+
+[tool.mypy]
+# The canonical `uvx mypy` env carries no third-party stubs. numpy ships its
+# own but is absent from that ephemeral env; pandas needs pandas-stubs; scipy
+# and statsmodels ship none. The powered-run analysis package
+# (benchmark/.../analysis) is the only benchmark code importing them, and glmm
+# imports statsmodels/pandas inside guarded functions (multiple sites). Relax
+# ONLY the missing-import error for these four libraries so the benchmark/hai
+# mypy gates stay green without vendoring stubs; every other check is unchanged.
+
+[[tool.mypy.overrides]]
+module = ["numpy", "numpy.*", "pandas", "pandas.*", "scipy", "scipy.*", "statsmodels", "statsmodels.*"]
+ignore_missing_imports = true

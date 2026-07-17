@@ -65,6 +65,26 @@ FIREWORKS_DEFAULT_CONDITION_ID = "option_b_fallback_qwen25_32b_fireworks"
 FIREWORKS_DEFAULT_MODEL_ID = "accounts/fireworks/models/qwen2p5-32b-instruct"
 SYNTHETIC_DATA_BOUNDARY = "synthetic_governed_agent_bench_fixtures_only"
 
+# Powered-run confound break (roster_v4): the four on-demand base models that
+# form the within-family capability pairs (Qwen2.5 {72B,7B}, Llama3.1 {70B,8B}).
+# All verified deployable single-GPU (worldSize=1, NVIDIA_H100_80GB) 2026-07-17.
+# The adapter accepts these plus the historical default so existing D-O-01
+# fixtures keep working; the set is closed (no arbitrary model ids).
+FIREWORKS_ONDEMAND_MODELS = frozenset({
+    "accounts/fireworks/models/qwen2p5-72b-instruct",
+    "accounts/fireworks/models/qwen2p5-7b-instruct",
+    "accounts/fireworks/models/llama-v3p1-70b-instruct",
+    "accounts/fireworks/models/llama-v3p1-8b-instruct",
+})
+_ALLOWED_FIREWORKS_MODELS = FIREWORKS_ONDEMAND_MODELS | {FIREWORKS_DEFAULT_MODEL_ID}
+# deployment_full_v3 is the held-constant prompt the roster_v3/v4 ladder uses;
+# v1/v2 retained for the D-O-01 fallback fixtures.
+_ALLOWED_FIREWORKS_PROMPTS = (
+    "deployment_full_v1",
+    "deployment_full_v2",
+    "deployment_full_v3",
+)
+
 OUTCOME_EXECUTED = "executed"
 OUTCOME_TIMEOUT = "timeout"
 OUTCOME_INVALID_JSON = "invalid_json"
@@ -674,15 +694,16 @@ def _api_key_from_env(env: Mapping[str, str]) -> str:
 def _ensure_fireworks_condition(condition: dict[str, Any]) -> None:
     if condition.get("provider") != "Fireworks AI":
         raise HarnessError("Fireworks adapter requires provider='Fireworks AI'")
-    if condition.get("model_id") != FIREWORKS_DEFAULT_MODEL_ID:
+    if condition.get("model_id") not in _ALLOWED_FIREWORKS_MODELS:
         raise HarnessError(
-            f"Fireworks adapter is scoped to {FIREWORKS_DEFAULT_MODEL_ID!r}"
+            f"Fireworks adapter model {condition.get('model_id')!r} not in the "
+            f"allowed on-demand set {sorted(_ALLOWED_FIREWORKS_MODELS)}"
         )
     if condition.get("data_boundary") != SYNTHETIC_DATA_BOUNDARY:
         raise HarnessError("Fireworks adapter requires synthetic benchmark data only")
-    if condition.get("prompt_id") not in ("deployment_full_v1", "deployment_full_v2"):
+    if condition.get("prompt_id") not in _ALLOWED_FIREWORKS_PROMPTS:
         raise HarnessError(
-            "Fireworks adapter requires deployment_full_v1 or deployment_full_v2"
+            f"Fireworks adapter requires one of {_ALLOWED_FIREWORKS_PROMPTS}"
         )
 
 
