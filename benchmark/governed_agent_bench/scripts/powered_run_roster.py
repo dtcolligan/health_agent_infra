@@ -8,10 +8,15 @@ need). The four serverless breadth conditions ARE reused from ``model_roster.md`
 via ``roster_condition`` so their vendor-verified decoding is single-sourced.
 
 Two tiers:
-  * ANCHOR (Fireworks on-demand) -- the confound break. Within-family capability
-    pairs: Qwen2.5 {72B, 7B} and Llama3.1 {70B, 8B}. Same family, same provider,
-    same serving mode -> family x capability crossed cleanly. Each is a single
-    NVIDIA_H100_80GB (worldSize=1), brought up and torn down per model.
+  * ANCHOR (Fireworks on-demand) -- the confound break. Four within-family
+    capability pairs across THREE lineages: Qwen2.5 {72B, 7B}, Qwen3 {32B, 8B},
+    Llama3.1 {70B, 8B}, Mistral {Small-24B, 7B}. Same family, provider, and
+    serving mode within each pair -> family x capability crossed cleanly, and no
+    longer collinear with is-Qwen. Each small member is 7-9B (operate-safe: it
+    must produce scoreable actions to VIOLATE). Qwen2.5 and Qwen3 share the Qwen
+    lineage and are correlated, not independent; the paired analysis groups by
+    lineage. Each model is a single NVIDIA_H100_80GB (worldSize=1), brought up
+    and torn down per model.
   * BREADTH (serverless) -- generalization across families. The roster_v3
     conditions: MiniMax-M3 + Llama-3.3-70B (capable), Qwen3.5-9B + Qwen2.5-7B
     (weak).
@@ -46,6 +51,23 @@ _QWEN25_DECODING = {
 _LLAMA31_DECODING = {
     "temperature": 0.6,
     "top_p": 0.9,
+    "max_tokens": 2048,
+    "seed": _SEED_SENTINEL,
+}
+# Qwen3 (non-thinking) uses the same recommended sampling as Qwen2.5. Both pair
+# members share one decoding so capability is not confounded with decoding
+# within the family.
+_QWEN3_DECODING = {
+    "temperature": 0.7,
+    "top_p": 0.8,
+    "top_k": 20,
+    "min_p": 0,
+    "max_tokens": 2048,
+    "seed": _SEED_SENTINEL,
+}
+_MISTRAL_DECODING = {
+    "temperature": 0.7,
+    "top_p": 1.0,
     "max_tokens": 2048,
     "seed": _SEED_SENTINEL,
 }
@@ -198,6 +220,49 @@ ANCHOR_CONDITIONS: tuple[PoweredCondition, ...] = (
         capability_band="weak",
         model_family="llama3.1",
         parameter_count="8.8B (8835567616)",
+        quantization="Fireworks on-demand serving (provider-selected precision)",
+    ),
+    # Powered-run family breadth (2026-07-17): two more within-family pairs on
+    # distinct lineages, so the confound break spans Qwen / Llama / Mistral
+    # rather than resting on one Qwen pair. All four small members clear the
+    # 7-9B operate-safe band (must produce scoreable actions to VIOLATE, not just
+    # fail to operate); each verified state=READY + validateOnly single-H100 at
+    # $0. Qwen2.5 and Qwen3 share the Qwen lineage (correlated, not independent):
+    # the paired analysis groups by lineage so they are not double-counted.
+    _ondemand_condition(
+        condition_id="ondemand_qwen3_32b",
+        base_model="accounts/fireworks/models/qwen3-32b",
+        decoding=_QWEN3_DECODING,
+        capability_band="capable",
+        model_family="qwen3",
+        parameter_count="32.8B (32762123264)",
+        quantization="FP8 (Fireworks on-demand single-GPU serving)",
+    ),
+    _ondemand_condition(
+        condition_id="ondemand_qwen3_8b",
+        base_model="accounts/fireworks/models/qwen3-8b",
+        decoding=_QWEN3_DECODING,
+        capability_band="weak",
+        model_family="qwen3",
+        parameter_count="8.2B (8190735360)",
+        quantization="Fireworks on-demand serving (provider-selected precision)",
+    ),
+    _ondemand_condition(
+        condition_id="ondemand_mistral_24b",
+        base_model="accounts/fireworks/models/mistral-small-24b-instruct-2501",
+        decoding=_MISTRAL_DECODING,
+        capability_band="capable",
+        model_family="mistral",
+        parameter_count="23.6B (23572403200)",
+        quantization="FP8 (Fireworks on-demand single-GPU serving)",
+    ),
+    _ondemand_condition(
+        condition_id="ondemand_mistral_7b",
+        base_model="accounts/fireworks/models/mistral-7b-instruct-v0p2",
+        decoding=_MISTRAL_DECODING,
+        capability_band="weak",
+        model_family="mistral",
+        parameter_count="7.2B (7241732096)",
         quantization="Fireworks on-demand serving (provider-selected precision)",
     ),
 )

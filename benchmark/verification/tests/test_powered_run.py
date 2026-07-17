@@ -87,11 +87,15 @@ def test_roster_v4_forms_within_family_capability_pairs():
     for pc in ANCHOR_CONDITIONS:
         fams.setdefault(pc.model_family, set()).add(pc.capability_band)
     spanning = {f for f, bands in fams.items() if bands == {"capable", "weak"}}
-    # The confound break: >= 2 families each with a capable AND a weak member.
-    assert {"qwen2.5", "llama3.1"}.issubset(spanning)
+    # The confound break: four within-family pairs across three lineages (Qwen
+    # 2.5/3, Llama3.1, Mistral), each with a capable AND a weak member, so
+    # capability is not collinear with any single family.
+    assert {"qwen2.5", "qwen3", "llama3.1", "mistral"}.issubset(spanning)
+    assert len(spanning) == 4  # every anchor family is a complete pair
 
 
 def test_band_family_index_covers_anchor_and_breadth():
     index = band_family_index()
-    assert len(index) == 8  # 4 anchor + 4 breadth
+    assert len(index) == 12  # 8 anchor (4 pairs) + 4 breadth
     assert index["ondemand_qwen25_72b_v1"] == ("capable", "qwen2.5")
+    assert index["ondemand_mistral_7b_v1"] == ("weak", "mistral")
