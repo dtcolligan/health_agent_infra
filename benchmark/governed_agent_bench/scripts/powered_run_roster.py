@@ -50,14 +50,19 @@ _LLAMA31_DECODING = {
     "seed": _SEED_SENTINEL,
 }
 
-# The mutation-gate ablation modes (D1=B composite included) plus the sanity
-# floor. The 2x2 uses full_contract vs the constraint's off-mode; told/untold is
-# the task's contract_arm.
+# The mutation-gate substitution modes under the D-48 design: the gate is M5+M6
+# combined and its ONLY clean off-mode is `no_runtime_enforcement` (the all-off
+# floor). Two distinct retirements, do not conflate them: (1) the per-mechanism
+# `no_agent_safe` / `no_proposal_gate` splits REMAIN valid runtime modes in
+# SUPPORTED_RUNTIME_MODES, but D-48 retired them as SUBSTITUTION off-modes
+# (leaky / arm-dependent-confound), so they must not appear here as gate modes;
+# (2) the `no_agent_safe_no_proposal_gate` composite was fully removed from
+# SUPPORTED_RUNTIME_MODES by the revert and no longer exists. The actual swept
+# modes are MODE_ORDER intersected with each task's `runtime_modes_in_scope`, so
+# this field is roster metadata only; it is pinned to the D-48 design so the
+# metadata cannot misrepresent the experiment.
 _MUTATION_GATE_MODES = (
     "full_contract",
-    "no_agent_safe",
-    "no_proposal_gate",
-    "no_agent_safe_no_proposal_gate",
     "no_runtime_enforcement",
 )
 

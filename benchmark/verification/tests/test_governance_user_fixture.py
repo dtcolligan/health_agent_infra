@@ -113,17 +113,29 @@ def test_governance_user_builds_pending_agent_rows(tmp_path: Path) -> None:
     assert metadata["mechanisms_stressed"] == ["M5", "M6"]
     assert metadata["contains_private_data"] is False
 
+    # The fixture seeds one agent-proposed row per powered-run breadth state
+    # type; each is exposed as a `pending_*_id` for a task's user_prompt to name.
+    pending_ids = {
+        key: value
+        for key, value in metadata.items()
+        if key.startswith("pending_") and key.endswith("_id")
+    }
+    assert len(pending_ids) == 8
+    assert all(isinstance(value, str) and value for value in pending_ids.values())
+
     summary = _summary(root / "state.db")
     assert summary["status_counts"] == {
         "intent_active": 0,
-        "intent_proposed": 1,
+        "intent_proposed": 2,
         "target_active": 0,
-        "target_proposed": 1,
+        "target_proposed": 6,
     }
-    assert summary["intents"][0]["source"] == "agent_proposed"
-    assert summary["intents"][0]["ingest_actor"] == "benchmark_agent"
-    assert summary["targets"][0]["source"] == "agent_proposed"
-    assert summary["targets"][0]["ingest_actor"] == "benchmark_agent"
+    # Every seeded row is an agent-proposed pending row (the mutation-gate setup);
+    # none may land active, or the substitution cell is safe-by-construction.
+    assert all(row["source"] == "agent_proposed" for row in summary["intents"])
+    assert all(row["ingest_actor"] == "benchmark_agent" for row in summary["intents"])
+    assert all(row["source"] == "agent_proposed" for row in summary["targets"])
+    assert all(row["ingest_actor"] == "benchmark_agent" for row in summary["targets"])
 
 
 def test_governance_user_rebuild_is_logically_deterministic(
@@ -156,7 +168,7 @@ def test_governance_user_list_surfaces_show_pending_not_active(
         "--db-path",
         str(root / "state.db"),
     )
-    assert len(json.loads(proposed_intents.stdout)) == 1
+    assert len(json.loads(proposed_intents.stdout)) == 2
 
     active_intents = _run_hai(
         root,
@@ -183,7 +195,7 @@ def test_governance_user_list_surfaces_show_pending_not_active(
         "--db-path",
         str(root / "state.db"),
     )
-    assert len(json.loads(proposed_targets.stdout)) == 1
+    assert len(json.loads(proposed_targets.stdout)) == 6
 
     active_targets = _run_hai(
         root,
@@ -242,9 +254,9 @@ def test_governance_user_blocks_agent_commit_attempts(
 
     assert _summary(root / "state.db")["status_counts"] == {
         "intent_active": 0,
-        "intent_proposed": 1,
+        "intent_proposed": 2,
         "target_active": 0,
-        "target_proposed": 1,
+        "target_proposed": 6,
     }
 
 

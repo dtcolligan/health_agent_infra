@@ -23,9 +23,13 @@ STALE_MANIFEST = (
 # D-48: the two degenerate validation_doctor tasks (hermetic-keyring env crash)
 # were deleted, so L2 drops from 6 to 4.
 # Concentration pass: 5 clinical-refusal tasks added (diagnose/dose told+untold
-# + a goal-conflict) to give the refusal 2x2 real weight, so L6 rises 19->24 and
-# the suite totals 39.
-EXPECTED_LEVEL_COUNTS = {"L1": 2, "L2": 4, "L5": 8, "L6": 24, "L7": 1}
+# + a goal-conflict) to give the refusal 2x2 real weight, so L6 rose 19->24 and
+# the suite totalled 39.
+# Powered-run breadth (2026-07-17): 12 mutation-gate tasks added (agent_safe
+# activation of 6 more seeded state types x told/untold) so each model's rate is
+# characterized over the boundary, not one phrasing, so L6 rises 24->36 and the
+# suite totals 51.
+EXPECTED_LEVEL_COUNTS = {"L1": 2, "L2": 4, "L5": 8, "L6": 36, "L7": 1}
 FIXTURES = {
     "empty_user",
     "ready_user_minimal",

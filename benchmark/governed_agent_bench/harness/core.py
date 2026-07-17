@@ -12,6 +12,7 @@ import copy
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -523,6 +524,12 @@ def _contains_forbidden_token(value: str, forbidden_tokens: tuple[str, ...]) -> 
     return any(token.lower() in lowered for token in forbidden_tokens)
 
 
+# A ``{{pending_*_id}}`` placeholder names a seeded fixture row the task's
+# user_prompt refers to (D-49 reachability). Matched by key so render_prompt can
+# fill any state type's pending id without a per-key code change.
+_PENDING_ID_PLACEHOLDER = re.compile(r"\{\{(pending_[a-z0-9_]*_id)\}\}")
+
+
 def render_prompt(
     task: dict[str, Any],
     manifest_snapshot: dict[str, Any],
@@ -586,17 +593,22 @@ def render_prompt(
         "{{exit_code_taxonomy_json}}": block(manifest.get("exit_codes", {})),
         **_boundary_blocks(task),
     }
-    meta = fixture_metadata or {}
-    pending_id_subs = {
-        "{{pending_target_id}}": str(meta.get("pending_target_id", "")),
-        "{{pending_intent_id}}": str(meta.get("pending_intent_id", "")),
-    }
     # Manifest/boundary blocks only ever appear in the system block; apply them
     # to the combined system+user text so a pending-id placeholder in the
     # user_prompt can also be filled below.
     base = f"{rendered_system}\nUSER:\n{task.get('user_prompt', '')}\n"
     for placeholder, value in substitutions.items():
         base = base.replace(placeholder, value)
+    # Any ``{{pending_*_id}}`` placeholder a task uses is filled from the
+    # fixture-metadata key of the same name (the D-49 reachability fix,
+    # generalized from the original ``pending_target_id`` / ``pending_intent_id``
+    # pair to the powered-run breadth state types). Placeholders are discovered
+    # by scanning the rendered text, so a task naming a new seeded row needs no
+    # change here, and a render with no fixture metadata blanks the placeholder
+    # exactly as the hard-coded two-key form did. The id is an identifier only,
+    # not a withheld safety fact, so it is injected in both arms.
+    meta = fixture_metadata or {}
+    pending_keys = sorted(set(_PENDING_ID_PLACEHOLDER.findall(base)))
     # rendered_prompt carries the instance fixture ids -- the model needs the
     # real seeded-row id to act on it. prompt_template_hash fingerprints the
     # TEMPLATE, so the pending-id placeholders are canonicalized to a stable
@@ -604,10 +616,10 @@ def render_prompt(
     # the hash (and evidence_table.prompt_template_hash) non-deterministic
     # across fixture builds and break offline reproducibility (D-49).
     rendered = base
-    for placeholder, value in pending_id_subs.items():
-        rendered = rendered.replace(placeholder, value)
     hash_form = base
-    for placeholder in pending_id_subs:
+    for key in pending_keys:
+        placeholder = f"{{{{{key}}}}}"
+        rendered = rendered.replace(placeholder, str(meta.get(key, "")))
         hash_form = hash_form.replace(placeholder, "<pending_id>")
     return {
         "prompt_template_id": template_id,

@@ -176,7 +176,7 @@ def test_draft_manifest_omits_lock_block() -> None:
         assert lock_field not in manifest
 
 
-def test_locked_manifest_sources_all_39_embedded_input_hashes_from_sidecar(
+def test_locked_manifest_sources_all_51_embedded_input_hashes_from_sidecar(
     tmp_path: Path,
 ) -> None:
     lock_hashes_path = _write_lock_hashes_sidecar(tmp_path)
@@ -192,11 +192,12 @@ def test_locked_manifest_sources_all_39_embedded_input_hashes_from_sidecar(
 
     expected = load_lock_hashes(lock_hashes_path)
     assert manifest["locked_hashes"] == expected
-    # D-48 + concentration pass: 39 task files + 5 fixed files = 44 embedded
+    # D-48 + concentration pass: 39 task files. Powered-run breadth (2026-07-17):
+    # +12 mutation-gate tasks -> 51 task files + 5 fixed files = 56 embedded
     # input hashes.
-    assert manifest["locked_hashes"]["total_count"] == 44
+    assert manifest["locked_hashes"]["total_count"] == 56
     assert len(manifest["locked_hashes"]["fixed_files"]) == 5
-    assert len(manifest["locked_hashes"]["task_files"]) == 39
+    assert len(manifest["locked_hashes"]["task_files"]) == 51
     assert manifest["lock_date"] == "2026-06-25"
     assert manifest["lock_commit_sha"] == "a" * 40
 
