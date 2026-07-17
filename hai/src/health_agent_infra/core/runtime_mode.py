@@ -24,14 +24,6 @@ NO_AGENT_SAFE = "no_agent_safe"
 NO_PROPOSAL_GATE = "no_proposal_gate"
 NO_REFUSAL = "no_refusal"
 NO_AUDIT_CHAIN = "no_audit_chain"
-# WP-RUNTIME-FIX-004: composite ablation mode disabling BOTH state-mutation
-# gates. The direct commit/archive commands are guarded redundantly by
-# agent_safe (dispatch) and proposal_gate (handler --confirm); with only one
-# disabled the other still blocks, so proposal_gate's marginal effect is
-# observable only with agent_safe held off. This mode isolates that: the M6
-# ablation contrasts NO_AGENT_SAFE (proposal_gate on) against this mode
-# (both off). Additive: it does not change any existing mode's behaviour.
-NO_AGENT_SAFE_NO_PROPOSAL_GATE = "no_agent_safe_no_proposal_gate"
 NO_RUNTIME_ENFORCEMENT = "no_runtime_enforcement"
 
 SUPPORTED_RUNTIME_MODES: tuple[str, ...] = (
@@ -39,7 +31,6 @@ SUPPORTED_RUNTIME_MODES: tuple[str, ...] = (
     NO_VALIDATION,
     NO_AGENT_SAFE,
     NO_PROPOSAL_GATE,
-    NO_AGENT_SAFE_NO_PROPOSAL_GATE,
     NO_REFUSAL,
     NO_AUDIT_CHAIN,
     NO_RUNTIME_ENFORCEMENT,
@@ -50,7 +41,6 @@ MECHANISMS_OFF_BY_MODE: dict[str, tuple[str, ...]] = {
     NO_VALIDATION: ("validation",),
     NO_AGENT_SAFE: ("agent_safe",),
     NO_PROPOSAL_GATE: ("proposal_gate",),
-    NO_AGENT_SAFE_NO_PROPOSAL_GATE: ("agent_safe", "proposal_gate"),
     NO_REFUSAL: ("refusal",),
     NO_AUDIT_CHAIN: ("audit_chain",),
     NO_RUNTIME_ENFORCEMENT: (

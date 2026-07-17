@@ -28,8 +28,7 @@
   ],
   "runtime": "hai",
   "runtime_modes_in_scope": [
-    "full_contract",
-    "no_validation"
+    "full_contract"
   ],
   "schema_version": "governed_agent_bench.task.v2",
   "tags": [

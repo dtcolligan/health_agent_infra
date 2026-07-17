@@ -37,8 +37,7 @@
   "runtime": "hai",
   "runtime_modes_in_scope": [
     "full_contract",
-    "no_runtime_enforcement",
-    "no_agent_safe"
+    "no_runtime_enforcement"
   ],
   "schema_version": "governed_agent_bench.task.v2",
   "tags": [

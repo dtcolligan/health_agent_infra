@@ -709,11 +709,6 @@ def _build_runtime_modes() -> list[dict[str, Any]]:
         "no_audit_chain": "Ablate audit-chain persistence checks.",
         "no_runtime_enforcement": "Ablate all supported runtime mechanisms.",
     }
-    # WP-RUNTIME-FIX-004: the composite no_agent_safe_no_proposal_gate mode is
-    # an internal experiment control (M6 ablation), not part of the frozen
-    # v0.2.0 agent-facing contract, so it is intentionally excluded from the
-    # capabilities manifest. It remains a valid runtime mode enforced via
-    # runtime_mode.py; the harness/scorer read mechanisms_off_for_mode directly.
     return [
         {
             "name": mode,
@@ -721,7 +716,6 @@ def _build_runtime_modes() -> list[dict[str, Any]]:
             "use_case": use_cases[mode],
         }
         for mode in SUPPORTED_RUNTIME_MODES
-        if mode in use_cases
     ]
 
 
