@@ -217,15 +217,18 @@ def wait_until_ready(
     sleeper: Callable[[float], None] = time.sleep,
     clock: Callable[[], float] = time.monotonic,
     transport: Transport = _control_request,
-    max_consecutive_get_errors: int = 3,
+    max_consecutive_get_errors: int = 8,
 ) -> str:
     """Poll until the deployment is READY; return its invocation model string.
 
     Raises if it enters a failed/deleting state or the timeout elapses. A
     transient GET error does NOT abort (which would trigger a delete of a
     still-CREATING deployment and orphan it): up to ``max_consecutive_get_errors``
-    consecutive GET failures are tolerated before giving up. ``sleeper`` / ``clock``
-    are injectable so tests need no real waits.
+    consecutive GET failures are tolerated, with backoff, before giving up.
+    Raised 3->8 (2026-07-18): the full run died on 4 consecutive Fireworks HTTP
+    500s (~40s provider hiccup) polling one deployment; 8 with backoff rides out
+    a ~2-3 min blip. Deadline (timeout) still bounds the total wait.
+    ``sleeper`` / ``clock`` are injectable so tests need no real waits.
     """
 
     deadline = clock() + timeout
@@ -241,7 +244,9 @@ def wait_until_ready(
             get_errors += 1
             if get_errors > max_consecutive_get_errors or clock() >= deadline:
                 raise
-            sleeper(poll_interval)
+            # Backoff during a sustained provider hiccup (capped, and the deadline
+            # still bounds the total wait): 10s, 20s, 30s, ... up to 60s.
+            sleeper(min(poll_interval * get_errors, 60.0))
             continue
         state = str(payload.get("state", "")).upper()
         if state == _READY:

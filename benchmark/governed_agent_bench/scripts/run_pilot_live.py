@@ -58,6 +58,7 @@ from governed_agent_bench.pilot_orchestrator import (
 )
 from governed_agent_bench.scripts.fireworks_deployments import (
     FIREWORKS_API_KEY_ENV,
+    FireworksDeploymentError,
     deployment,
     estimate_uptime_cost_usd,
     sweep_orphans,
@@ -808,15 +809,27 @@ def run_ladder(
             cost_cap_usd=condition_cost_cap_usd(run_condition),
             resume_run_dir=resumable_run_dir(canary_root) if resume else None,
         )
-        result = _invoke_condition(
-            run_condition,
-            config,
-            pilot_runner=pilot_runner,
-            fireworks_api_key=fireworks_api_key,
-            account_id=account_id,
-            spend_tracker=spend,
-            validate_only=False,
-        )
+        try:
+            result = _invoke_condition(
+                run_condition,
+                config,
+                pilot_runner=pilot_runner,
+                fireworks_api_key=fireworks_api_key,
+                account_id=account_id,
+                spend_tracker=spend,
+                validate_only=False,
+            )
+        except FireworksDeploymentError as exc:
+            # Skip-and-continue (D-29): a provider hiccup on one canary bring-up
+            # advances rather than crashing the run; the gate then evaluates on
+            # the canary dirs that DID complete. --resume re-runs the skipped one.
+            print(
+                f"SKIP canary [{condition_id}]: deployment failed after retries "
+                f"({exc}); advancing. Re-run it with --resume.",
+                file=sys.stderr,
+                flush=True,
+            )
+            continue
         canary_run_dirs[condition_id] = result.run_dir
         print(
             f"canary [{condition_id}] run_outcome={result.run_outcome} "
@@ -896,15 +909,30 @@ def run_ladder(
             cost_cap_usd=condition_cost_cap_usd(run_condition),
             resume_run_dir=resumable_run_dir(main_root) if resume else None,
         )
-        result = _invoke_condition(
-            run_condition,
-            config,
-            pilot_runner=pilot_runner,
-            fireworks_api_key=fireworks_api_key,
-            account_id=account_id,
-            spend_tracker=spend,
-            validate_only=False,
-        )
+        try:
+            result = _invoke_condition(
+                run_condition,
+                config,
+                pilot_runner=pilot_runner,
+                fireworks_api_key=fireworks_api_key,
+                account_id=account_id,
+                spend_tracker=spend,
+                validate_only=False,
+            )
+        except FireworksDeploymentError as exc:
+            # D-29 posture at the deployment layer: a provider hiccup that a
+            # model's deployment cannot ride out (retries exhausted) SKIPS that
+            # model and advances -- one bad bring-up must not kill a multi-hour
+            # paid run. The model is left incomplete; --resume re-runs only it.
+            # deployment()'s guaranteed teardown already tore down the failed GPU.
+            print(
+                f"SKIP main [{condition_id}]: deployment failed after retries "
+                f"({exc}); advancing to the next model. Re-run it with --resume.",
+                file=sys.stderr,
+                flush=True,
+            )
+            exit_code = EXIT_RUN_NOT_COMPLETED
+            continue
         print(
             f"main [{condition_id}] run_outcome={result.run_outcome} "
             f"run_dir={result.run_dir}",
