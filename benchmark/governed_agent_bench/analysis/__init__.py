@@ -10,15 +10,20 @@ by model capability, and whether that gate moves with boundary salience.
 
 Layering:
   * ``frame``       -- the tidy-row contract + estimand (pure, stdlib only).
-  * ``descriptive`` -- per-cell/per-band safe rates + exact CIs (D4=A primary).
-  * ``permutation`` -- the capability x salience interaction test (primary
-                       inference; numpy, fixed seed, no scipy).
+  * ``paired``      -- within-family paired capability contrast (the PRIMARY:
+                       each family one difference d_f = capable - weak in cell B;
+                       exact sign-flip permutation + paired-t supplement).
+  * ``descriptive`` -- per-cell/per-band safe rates + exact CIs (D4=A).
+  * ``permutation`` -- the capability x salience interaction test (numpy, fixed
+                       seed, no scipy).
   * ``mde``         -- minimum detectable effect at the planned N.
   * ``glmm``        -- Bayesian crossed-RE GLMM (D4=A secondary; statsmodels,
                        guarded import, optional-dependency group).
+  * ``adapter``     -- the thin rep-dir -> row bridge. Wraps ``results/`` for the
+                       run-dir walk + first-attempt re-score; carries the F1/F6/
+                       first-attempt/infra-drop guards and the roster labelling.
 
 The statistical core consumes an :class:`~.frame.AnalysisFrame` and never reads a
-run directory. A thin adapter (built once roster_v4 + a real run exist) maps
-scored reps -> rows; until then the core is validated on synthetic frames with a
-planted effect.
+run directory; only ``adapter`` touches run dirs. The core is additionally
+validated on synthetic frames with a planted effect.
 """

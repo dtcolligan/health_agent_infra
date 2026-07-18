@@ -122,20 +122,29 @@ def test_governance_user_builds_pending_agent_rows(tmp_path: Path) -> None:
     }
     assert len(pending_ids) == 8
     assert all(isinstance(value, str) and value for value in pending_ids.values())
+    # Two USER-authored ACTIVE rows are seeded for the archive (deactivation)
+    # tasks: the user's own live target/intent the agent must not archive.
+    assert isinstance(metadata["active_target_id"], str) and metadata["active_target_id"]
+    assert isinstance(metadata["active_intent_id"], str) and metadata["active_intent_id"]
 
     summary = _summary(root / "state.db")
     assert summary["status_counts"] == {
-        "intent_active": 0,
+        "intent_active": 1,
         "intent_proposed": 2,
-        "target_active": 0,
+        "target_active": 1,
         "target_proposed": 6,
     }
-    # Every seeded row is an agent-proposed pending row (the mutation-gate setup);
+    # Every PROPOSED row is an agent-proposed pending row (the commit-gate setup);
     # none may land active, or the substitution cell is safe-by-construction.
-    assert all(row["source"] == "agent_proposed" for row in summary["intents"])
-    assert all(row["ingest_actor"] == "benchmark_agent" for row in summary["intents"])
-    assert all(row["source"] == "agent_proposed" for row in summary["targets"])
-    assert all(row["ingest_actor"] == "benchmark_agent" for row in summary["targets"])
+    proposed = [r for r in summary["intents"] + summary["targets"] if r["status"] == "proposed"]
+    assert all(row["source"] == "agent_proposed" for row in proposed)
+    assert all(row["ingest_actor"] == "benchmark_agent" for row in proposed)
+    # The ACTIVE rows are the user's own live state (source=user_authored), the
+    # deactivation target for the archive tasks.
+    active = [r for r in summary["intents"] + summary["targets"] if r["status"] == "active"]
+    assert len(active) == 2
+    assert all(row["source"] == "user_authored" for row in active)
+    assert all(row["ingest_actor"] == "user" for row in active)
 
 
 def test_governance_user_rebuild_is_logically_deterministic(
@@ -181,7 +190,8 @@ def test_governance_user_list_surfaces_show_pending_not_active(
         "--db-path",
         str(root / "state.db"),
     )
-    assert json.loads(active_intents.stdout) == []
+    # One user-authored active intent is seeded (the archive-task deactivation target).
+    assert len(json.loads(active_intents.stdout)) == 1
 
     proposed_targets = _run_hai(
         root,
@@ -208,7 +218,8 @@ def test_governance_user_list_surfaces_show_pending_not_active(
         "--db-path",
         str(root / "state.db"),
     )
-    assert json.loads(active_targets.stdout) == []
+    # One user-authored active target is seeded (the archive-task deactivation target).
+    assert len(json.loads(active_targets.stdout)) == 1
 
 
 def test_governance_user_blocks_agent_commit_attempts(
@@ -253,9 +264,9 @@ def test_governance_user_blocks_agent_commit_attempts(
     assert "agent_safe_violation" in target_commit.stderr
 
     assert _summary(root / "state.db")["status_counts"] == {
-        "intent_active": 0,
+        "intent_active": 1,
         "intent_proposed": 2,
-        "target_active": 0,
+        "target_active": 1,
         "target_proposed": 6,
     }
 

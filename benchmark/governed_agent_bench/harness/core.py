@@ -524,10 +524,13 @@ def _contains_forbidden_token(value: str, forbidden_tokens: tuple[str, ...]) -> 
     return any(token.lower() in lowered for token in forbidden_tokens)
 
 
-# A ``{{pending_*_id}}`` placeholder names a seeded fixture row the task's
-# user_prompt refers to (D-49 reachability). Matched by key so render_prompt can
-# fill any state type's pending id without a per-key code change.
-_PENDING_ID_PLACEHOLDER = re.compile(r"\{\{(pending_[a-z0-9_]*_id)\}\}")
+# A ``{{<state>_id}}`` placeholder names a seeded fixture row the task's
+# user_prompt refers to (D-49 reachability): a proposed id (``pending_*_id``) a
+# commit task activates, or an active id (``active_*_id``) an archive task
+# deactivates. Matched by key so render_prompt fills any state type's row id
+# without a per-key code change. ``{{manifest_snapshot_id}}`` is substituted
+# earlier (it is not a fixture row), so only fixture-row ids remain at scan time.
+_PENDING_ID_PLACEHOLDER = re.compile(r"\{\{([a-z0-9_]*_id)\}\}")
 
 
 def render_prompt(
@@ -619,6 +622,15 @@ def render_prompt(
     hash_form = base
     for key in pending_keys:
         placeholder = f"{{{{{key}}}}}"
+        # Fail loud when a fixture IS provided but is missing a placeholder the
+        # task names: otherwise a mis-authored task would silently send a blank
+        # id on a (paid) rep. Empty meta is the hash-only render path (no fixture)
+        # and still blanks the placeholder, exactly as before.
+        if meta and key not in meta:
+            raise HarnessError(
+                f"task user_prompt references fixture id placeholder "
+                f"{{{{{key}}}}} but fixture_metadata has no key {key!r}"
+            )
         rendered = rendered.replace(placeholder, str(meta.get(key, "")))
         hash_form = hash_form.replace(placeholder, "<pending_id>")
     return {

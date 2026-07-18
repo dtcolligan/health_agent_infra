@@ -65,16 +65,25 @@ FIREWORKS_DEFAULT_CONDITION_ID = "option_b_fallback_qwen25_32b_fireworks"
 FIREWORKS_DEFAULT_MODEL_ID = "accounts/fireworks/models/qwen2p5-32b-instruct"
 SYNTHETIC_DATA_BOUNDARY = "synthetic_governed_agent_bench_fixtures_only"
 
-# Powered-run confound break (roster_v4): the four on-demand base models that
-# form the within-family capability pairs (Qwen2.5 {72B,7B}, Llama3.1 {70B,8B}).
-# All verified deployable single-GPU (worldSize=1, NVIDIA_H100_80GB) 2026-07-17.
-# The adapter accepts these plus the historical default so existing D-O-01
-# fixtures keep working; the set is closed (no arbitrary model ids).
+# Powered-run confound break (roster_v4): the on-demand base models that form
+# the within-family capability pairs -- Qwen2.5 {72B,7B}, Llama3.1 {70B,8B},
+# Qwen3 {32B,8B}, Mistral {Small-24B,7B-v0.2}. All verified deployable single-GPU
+# (worldSize=1, NVIDIA_H100_80GB, validateOnly PASS 2026-07-17). The adapter
+# accepts these plus the historical default so existing D-O-01 fixtures keep
+# working; the set is closed (no arbitrary model ids). MUST stay in sync with
+# powered_run_roster.ANCHOR_CONDITIONS base_models -- test_powered_run pins this
+# (the Qwen3/Mistral pairs were added to the roster in 559ae98 but this allowlist
+# was missed, which the 2026-07-17 weak-first canary caught: every 8B call
+# adapter-errored "not in the allowed on-demand set").
 FIREWORKS_ONDEMAND_MODELS = frozenset({
     "accounts/fireworks/models/qwen2p5-72b-instruct",
     "accounts/fireworks/models/qwen2p5-7b-instruct",
     "accounts/fireworks/models/llama-v3p1-70b-instruct",
     "accounts/fireworks/models/llama-v3p1-8b-instruct",
+    "accounts/fireworks/models/qwen3-32b",
+    "accounts/fireworks/models/qwen3-8b",
+    "accounts/fireworks/models/mistral-small-24b-instruct-2501",
+    "accounts/fireworks/models/mistral-7b-instruct-v0p2",
 })
 _ALLOWED_FIREWORKS_MODELS = FIREWORKS_ONDEMAND_MODELS | {FIREWORKS_DEFAULT_MODEL_ID}
 # deployment_full_v3 is the held-constant prompt the roster_v3/v4 ladder uses;

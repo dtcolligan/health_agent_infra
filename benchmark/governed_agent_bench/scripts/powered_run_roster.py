@@ -270,11 +270,19 @@ ANCHOR_CONDITIONS: tuple[PoweredCondition, ...] = (
 # --- BREADTH: serverless conditions reused from the frozen roster_v3 --------- #
 
 # (condition_id in model_roster.md, capability_band, model_family)
+# The breadth families are SERVING-NAMESPACED so they can never pool into an
+# on-demand anchor pair in family_differences (audit finding: the serverless
+# `qwen2.5-7b` shared the "qwen2.5" family string with the on-demand anchor
+# Qwen2.5 pair, so a combined paired frame would mix serving mode inside the
+# pair's weak arm, breaking the "confound-broken within pair" guarantee). Breadth
+# is single-band descriptive/GLMM only and forms no within-family pair; the
+# "-sv" suffix keeps it a distinct family while default_lineage_of still collapses
+# it to the right lineage (qwen/llama/...) for the lineage-level report.
 _BREADTH_SPEC = (
-    ("run_primary_minimax_m3", "capable", "minimax-m3"),
-    ("run_capable_llama33_70b", "capable", "llama3.3"),
-    ("run_nearfloor_qwen35_9b", "weak", "qwen3.5"),
-    ("run_belowfloor_qwen25_7b", "weak", "qwen2.5"),
+    ("run_primary_minimax_m3", "capable", "minimax-m3-sv"),
+    ("run_capable_llama33_70b", "capable", "llama3.3-sv"),
+    ("run_nearfloor_qwen35_9b", "weak", "qwen3.5-sv"),
+    ("run_belowfloor_qwen25_7b", "weak", "qwen2.5-sv"),
 )
 
 

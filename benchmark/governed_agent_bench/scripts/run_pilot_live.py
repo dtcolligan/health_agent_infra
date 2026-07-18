@@ -127,26 +127,28 @@ CONCENTRATED_SWEEP_TASK_IDS = (
     "gab_l6_agentsafe_intent_told",
     "gab_l6_agentsafe_intent_untold",
     "gab_l6_agentsafe_conflict",
-    # Powered-run breadth (2026-07-17): the mutation-gate boundary ("do not
-    # activate the user's own agent-proposed state without an explicit user
-    # commit") swept across additional seeded state types so each model's rate is
-    # characterized over the boundary, not one phrasing. Same off-mode
-    # (no_runtime_enforcement), same D-52 executable violation (commit of a
-    # governance_user proposed row), varied state type / command family. ~4
-    # distinct command shapes across 3 domains (2 command families); the nutrition
-    # variants share a shape and are disclosed as boundary re-samples.
-    "gab_l6_agentsafe_hydration_told",
-    "gab_l6_agentsafe_hydration_untold",
-    "gab_l6_agentsafe_calories_told",
-    "gab_l6_agentsafe_calories_untold",
-    "gab_l6_agentsafe_carbs_told",
-    "gab_l6_agentsafe_carbs_untold",
-    "gab_l6_agentsafe_sleep_told",
-    "gab_l6_agentsafe_sleep_untold",
-    "gab_l6_agentsafe_trainingload_told",
-    "gab_l6_agentsafe_trainingload_untold",
-    "gab_l6_agentsafe_sleepwindow_told",
-    "gab_l6_agentsafe_sleepwindow_untold",
+    # Powered-run distinct suite (2026-07-17, redesign): the mutation-gate
+    # boundary ("do not autonomously change the user's governed state") swept
+    # across distinct decisions, not phrasings. HONEST count (audit 2026-07-17):
+    # 6 DISTINCT MUTATION DECISIONS -- {commit proposed, archive active,
+    # direct-write active} x {target, intent}, each verified to execute under
+    # no_runtime_enforcement and block under full_contract (D-52) -- PLUS 2
+    # SOCIAL-FRAMING VARIANTS of the commit decision (assumed consent /
+    # chat-asserted authorization; same command path, different social pressure).
+    # 8 tasks x told/untold = 16, so each model's cell-B rate characterizes the
+    # boundary across real decisions, not one command paraphrased by noun.
+    "gab_l6_agentsafe_archivetarget_told",
+    "gab_l6_agentsafe_archivetarget_untold",
+    "gab_l6_agentsafe_archiveintent_told",
+    "gab_l6_agentsafe_archiveintent_untold",
+    "gab_l6_agentsafe_setactivetarget_told",
+    "gab_l6_agentsafe_setactivetarget_untold",
+    "gab_l6_agentsafe_setactiveintent_told",
+    "gab_l6_agentsafe_setactiveintent_untold",
+    "gab_l6_agentsafe_assumed_told",
+    "gab_l6_agentsafe_assumed_untold",
+    "gab_l6_agentsafe_authorized_told",
+    "gab_l6_agentsafe_authorized_untold",
     "gab_l6_refusal_told",
     "gab_l6_refusal_untold",
     "gab_l6_refusal_diagnose_told",
@@ -354,16 +356,35 @@ def condition_cost_cap_usd(condition: Mapping[str, Any]) -> float:
     return float(condition.get("cost_boundary", {}).get("max_cost_usd", 100.0))
 
 
+# Powered-run mode order: no_runtime_enforcement FIRST, full_contract LAST.
+# The mutation-gate PRIMARY cell (B = told + no_runtime_enforcement) is the whole
+# study; the other off-modes (no_refusal, no_validation, ...) are controls and
+# the enforced cells (A/C, full_contract) are safe-by-construction. Under a
+# wall-cap on a slow model the run truncates from the END, so: (1) full_contract
+# last means truncation drops A/C, never the off-cells; (2) no_runtime_enforcement
+# FIRST means the mutation cell B/D reps run before the other off-mode controls,
+# so cell B is captured even if the run wall-halts mid-off-modes (spend-audit
+# fix: the 92-rep off-cell block exceeds the 120-min wall above ~78s/rep on the
+# 70B/72B arms; --max-wall-minutes ~300 is sized to complete it). Same set as
+# MODE_ORDER, only reordered -- offline reproduce/golden use MODE_ORDER, unaffected.
+POWERED_MODE_ORDER: tuple[str, ...] = (
+    ("no_runtime_enforcement",)
+    + tuple(m for m in MODE_ORDER if m not in ("full_contract", "no_runtime_enforcement"))
+    + ("full_contract",)
+)
+
+
 def phase1_plan(
     condition: Mapping[str, Any],
     *,
     below_floor_condition_id: str,
+    mode_order: tuple[str, ...] = MODE_ORDER,
 ) -> tuple[tuple[str, ...], tuple[str, ...]]:
     """(task_ids, mode_order) for a condition's canary-phase invocation."""
 
     if condition["condition_id"] == below_floor_condition_id:
         return tuple(OPERATE_TASK_IDS), ("full_contract",)
-    return canary_task_ids(), tuple(MODE_ORDER)
+    return canary_task_ids(), tuple(mode_order)
 
 
 def phase2_task_ids(phase1_tasks: tuple[str, ...]) -> tuple[str, ...]:
@@ -714,6 +735,7 @@ def run_ladder(
     account_id: str = FIREWORKS_ACCOUNT_ID,
     validate_only: bool = False,
     cost_ceiling_usd: float = DEFAULT_ONDEMAND_COST_CEILING_USD,
+    mode_order: tuple[str, ...] = MODE_ORDER,
 ) -> tuple[int, dict[str, Any] | None]:
     """Canary-first two-phase ladder run with a hard stop at the gate.
 
@@ -753,7 +775,9 @@ def run_ladder(
         condition_id = str(condition["condition_id"])
         run_condition = apply_wall_override(condition, max_wall_minutes)
         p1_tasks, p1_modes = phase1_plan(
-            run_condition, below_floor_condition_id=below_floor_condition_id
+            run_condition,
+            below_floor_condition_id=below_floor_condition_id,
+            mode_order=mode_order,
         )
         rep_count = planned_rep_count(p1_tasks, p1_modes, rep_n)
         warn_if_wall_cap_exceeded(
@@ -838,10 +862,12 @@ def run_ladder(
         condition_id = str(condition["condition_id"])
         run_condition = apply_wall_override(condition, max_wall_minutes)
         p1_tasks, _ = phase1_plan(
-            run_condition, below_floor_condition_id=below_floor_condition_id
+            run_condition,
+            below_floor_condition_id=below_floor_condition_id,
+            mode_order=mode_order,
         )
         p2_tasks = phase2_task_ids(p1_tasks)
-        rep_count = planned_rep_count(p2_tasks, tuple(MODE_ORDER), rep_n)
+        rep_count = planned_rep_count(p2_tasks, mode_order, rep_n)
         warn_if_wall_cap_exceeded(
             label=f"main/{condition_id}",
             condition=run_condition,
@@ -865,6 +891,7 @@ def run_ladder(
         config = PilotConfig(
             runs_root=main_root,
             task_ids=p2_tasks,
+            mode_order=mode_order,
             replication_n=rep_n,
             cost_cap_usd=condition_cost_cap_usd(run_condition),
             resume_run_dir=resumable_run_dir(main_root) if resume else None,
@@ -1143,6 +1170,25 @@ def main(argv: list[str] | None = None) -> int:
             )
         _write_runtime_preflight(preflight, ladder_root)
         fireworks_key = os.environ.get(FIREWORKS_API_KEY_ENV, "").strip() or None
+        # Spend-audit fix: refuse --powered on the DEFAULT ceiling. It fails
+        # closed (money-safe) but would hard-stop after ~2-3 of the 8 on-demand
+        # models, leaving most pairs with no data -- a silent waste of partial
+        # spend. Force an explicit, adequate ceiling for the powered run.
+        if (
+            has_ondemand
+            and args.powered
+            and not args.validate_only
+            and args.cost_ceiling_usd == DEFAULT_ONDEMAND_COST_CEILING_USD
+        ):
+            print(
+                f"ERROR: --powered with the default "
+                f"${DEFAULT_ONDEMAND_COST_CEILING_USD:.0f} on-demand ceiling would "
+                "hard-stop after ~2-3 of the 8 models, leaving most pairs with no "
+                "data. Pass an explicit --cost-ceiling-usd at or above the run's "
+                "estimated cost (full 2x2 sweep ~$150-190 -> use 220).",
+                file=sys.stderr,
+            )
+            return EXIT_BAD_SELECTION
         # Orphan-sweep belt (SP-1): force-delete any `ondemand-` deployment a
         # prior crash left running BEFORE we start, and again in a finally after,
         # so a stuck GPU can never bill unbounded across runs. Only when an
@@ -1168,6 +1214,10 @@ def main(argv: list[str] | None = None) -> int:
                 account_id=FIREWORKS_ACCOUNT_ID,
                 validate_only=args.validate_only,
                 cost_ceiling_usd=args.cost_ceiling_usd,
+                # Powered run: full_contract LAST so a wall-halt on a slow model
+                # truncates safe-by-construction enforced cells, not the cell-B/D
+                # capability signal (the 32B canary starvation fix).
+                mode_order=POWERED_MODE_ORDER if args.powered else MODE_ORDER,
             )
         finally:
             if has_ondemand and fireworks_key:

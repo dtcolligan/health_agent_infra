@@ -154,11 +154,20 @@ def signflip_permutation_p(deltas: Sequence[float]) -> dict[str, Any]:
         total += 1
         if mean >= observed - 1e-12:
             hits += 1
+    # p_floor is the smallest ATTAINABLE p, i.e. the fraction when every family
+    # agrees in sign. A zero-magnitude delta cannot flip the mean, so flipping its
+    # sign is a redundant permutation that does NOT lower the attainable floor:
+    # the true floor is 1/2**(n - n_zero), not 1/2**n. Counting zeros in the floor
+    # would advertise a significance the data cannot reach (audit finding). The
+    # one-sided p above is unaffected (zeros cancel in every assignment).
+    n_nonzero = sum(1 for a in abs_deltas if a > 1e-12)
+    p_floor = 1.0 if n_nonzero == 0 else 1.0 / (2 ** n_nonzero)
     return {
         "n": n,
+        "n_nonzero": n_nonzero,
         "mean_delta": _round(observed),
         "p_one_sided": _round(hits / total),
-        "p_floor": _round(1.0 / total),
+        "p_floor": _round(p_floor),
         "method": "exact_signflip_permutation",
     }
 
@@ -225,10 +234,30 @@ def paired_report(
     lineage_pairs = collapse_to_lineage(diffs)
     lineage_deltas = [d for _lin, d in lineage_pairs]
 
+    # Coverage self-documentation (audit NIT): a family with cell-B data but only
+    # ONE band cannot form a within-family difference and is excluded from the
+    # paired test. Echo those here so the denominator is legible -- a reader can
+    # see which families contributed data yet formed no diff, rather than
+    # inferring it from a smaller n_families (the family_differences docstring
+    # promise: band-missing families are surfaced, never silently imputed).
+    cell_b = frame.cell("B")
+    paired = {d.family for d in diffs}
+    unpaired: list[dict[str, Any]] = []
+    for family in sorted({row.model_family for row in cell_b} - paired):
+        def _in_family(row: Any, _f: str = family) -> bool:
+            return bool(row.model_family == _f)
+
+        fam_rows = cell_b.where(_in_family)
+        bands = sorted({row.capability_band for row in fam_rows})
+        unpaired.append(
+            {"family": family, "bands_present": bands, "n": len(fam_rows)}
+        )
+
     return {
         "schema_version": "governed_agent_bench.analysis.paired.v1",
         "n_families": len(diffs),
         "n_lineages": len(lineage_pairs),
+        "unpaired_families": unpaired,
         "family_differences": [d.as_dict() for d in diffs],
         "pair_level": {
             "note": "each family a unit (optimistic; same-lineage pairs correlated)",

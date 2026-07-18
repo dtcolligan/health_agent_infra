@@ -121,15 +121,15 @@ def test_condition_id_selection_and_errors() -> None:
     )
     assert [c["condition_id"] for c in ondemand] == ["ondemand_qwen25_7b"]
     assert ondemand[0]["serving_mode"] == "on_demand"
-    # --powered resolves roster_v4 (4 on-demand anchors + 4 serverless breadth),
-    # and is mutually exclusive with the other selectors.
+    # --powered resolves roster_v4 (8 on-demand anchors = 4 within-family pairs,
+    # + 4 serverless breadth), and is mutually exclusive with the other selectors.
     powered = run_pilot_live.resolve_conditions(
         ladder=False, condition_ids=[], powered=True
     )
-    assert len(powered) == 8
+    assert len(powered) == 12
     assert sum(
         1 for c in powered if c.get("serving_mode") == "on_demand"
-    ) == 4
+    ) == 8
     with pytest.raises(ValueError, match="mutually exclusive"):
         run_pilot_live.resolve_conditions(
             ladder=True, condition_ids=[], powered=True

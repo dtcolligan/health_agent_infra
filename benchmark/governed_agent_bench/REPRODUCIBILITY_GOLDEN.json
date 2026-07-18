@@ -29,7 +29,7 @@
     {
       "normalize_absolute_paths": true,
       "path": "cell_contrasts/cell_contrasts.json",
-      "sha256": "9f1ebc263e0c614f36a98154bedd3463458289bb17b504638983ea5146202586"
+      "sha256": "b3e621ff073b83db535025e15210601c9ca1e556520be1addaebfba4d4208e4e"
     },
     {
       "normalize_absolute_paths": true,
@@ -39,12 +39,12 @@
     {
       "normalize_absolute_paths": false,
       "path": "evidence_tables/evidence_table.csv",
-      "sha256": "93a21e047e52785c9facb39999ba32511906118432b45d5db2ca0487aff8c03d"
+      "sha256": "e5cc47c65784a4cdebc4f830cf8a369c38a5ce2ed99c39c851dc891031911287"
     },
     {
       "normalize_absolute_paths": true,
       "path": "evidence_tables/evidence_table.json",
-      "sha256": "9646967be3bc08e571ba6fb42ae97b95c818453e7070b1741edfe263f864a343"
+      "sha256": "b493c7a7644fa94ade0708928fd09741ea3e9f1d9b46cae30e3d9edb95f20042"
     },
     {
       "normalize_absolute_paths": true,

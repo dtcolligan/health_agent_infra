@@ -13,6 +13,7 @@ import pytest
 from governed_agent_bench.harness.core import load_task
 from governed_agent_bench.harness.retry import OutageDetector
 from governed_agent_bench.scripts.powered_run import make_fireworks_model_turn_factory
+from governed_agent_bench.harness.fireworks import FIREWORKS_ONDEMAND_MODELS
 from governed_agent_bench.scripts.powered_run_roster import (
     ANCHOR_CONDITIONS,
     anchor_by_id,
@@ -21,6 +22,20 @@ from governed_agent_bench.scripts.powered_run_roster import (
 
 _WIRE = "accounts/dtcolligan7/deployments/ondemand-qwen25-7b"
 _TASK_ID = "gab_l6_agentsafe_told"
+
+
+def test_every_anchor_base_model_is_in_the_adapter_allowlist() -> None:
+    # Regression guard (2026-07-17): the roster was extended to the Qwen3 +
+    # Mistral pairs (559ae98) but harness/fireworks.FIREWORKS_ONDEMAND_MODELS was
+    # not, so every on-demand call to a new model adapter-errored "not in the
+    # allowed on-demand set" (caught by the weak-first canary, ~$1.26). The
+    # allowlist MUST cover every anchor base_model or the paid run fails closed.
+    missing = [
+        pc.base_model
+        for pc in ANCHOR_CONDITIONS
+        if pc.base_model not in FIREWORKS_ONDEMAND_MODELS
+    ]
+    assert missing == [], f"anchor base models absent from adapter allowlist: {missing}"
 
 
 class _FakeTransport:
