@@ -22,16 +22,18 @@ contract. The benchmark is designed to admit other runtimes in future
 work.
 
 Secondary use: the told-not-enforced cell (specification present, runtime
-off) is a disposition eval for agentic post-training, measuring the
-self-enforcement a model supplies once told, separate from runtime
-enforcement; the benchmark measures this, it does not train.
+off) measures the self-enforcement a model supplies once told, separate
+from runtime enforcement, a quantity a post-training evaluation could
+track; the benchmark measures it and does no training.
 
 The benchmark supports two headline contributions:
 
-- a **negative result** — in-context specification substitutes for
-  runtime enforcement for capable, cooperative agents operating above
-  the operate floor; and
-- a **methodological** finding — harness blindness (withholding command
+- a **substitution-measurement result**: telling the rule moves behavior
+  (+24 points pooled with the runtime off) but does not stand in for
+  enforcement, whose marginal value given telling is 41 points pooled and
+  small only for the self-enforcing families, so substitution holds in a
+  narrow corner; capability does not cleanly order it; and
+- a **methodological** finding: harness blindness (withholding command
   stdout) manufactures spurious fabrication findings.
 
 The benchmark is intended for:
@@ -39,7 +41,7 @@ The benchmark is intended for:
 - measuring the per-mechanism specify-vs-enforce 2x2 (told/untold x
   enforcement on/off) under a held-constant prompt template;
 - evaluating whether specific deterministic contract mechanisms are
-  load-bearing for constraint-respecting behavior;
+  necessary for constraint-respecting behavior;
 - evaluating command selection against a manifest;
 - evaluating structured operator actions;
 - evaluating refusal of out-of-contract requests;
