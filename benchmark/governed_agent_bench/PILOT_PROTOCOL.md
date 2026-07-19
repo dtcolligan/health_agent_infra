@@ -1746,8 +1746,14 @@ and a weak model WITHIN the same family.
 The primary is a DESCRIPTIVE confound-break at L=3 (permutation floor 0.125).
 It does not amend the frozen 39-task suite or the §14 lock; it is a
 pre-registered powered addition reported at its pre-committed floor. The
-headline it settles — telling substitutes for enforcing across families — is
-promoted to the paper headline by Dom's 2026-07-19 framing call (D-61).
+headline it settles is the enforcement-given-telling (A-B) contrast. NOTE
+(D-62, 2026-07-19): the initial framing of this result as "telling substitutes
+for enforcing across families" (Dom's D-61 framing call) was corrected by a
+later adversarial audit. The honest reading is that telling MOVES behaviour
+(B-D +24pp pooled) but does not stand in for enforcement (A-B = 41pp pooled,
+small only for the self-enforcing families), so substitution is narrow-corner
+only. This run, its pre-registered design (§23.1), and its data are unchanged;
+only the result label is corrected.
 
 Pre-amendment document SHA-256 (after Amendment 10):
 `7cd28253015bc44704f118c67b26bc34359e4ec560fc7ca6ea0f3b7acd7b3411`
