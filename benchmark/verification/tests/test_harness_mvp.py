@@ -372,9 +372,12 @@ _TOLD_RENDER_HASHES = {
     # arms now carry a contract_clause stating the operative W57 rule (scrubbed
     # in untold), so the told render legitimately changed. The untold-omits /
     # told-contains contrast is enforced by test_untold_render_omits_its_forbidden_tokens.
-    ("gab_l6_agentsafe_told", "deployment_full_v1"): "918eef94acc616e4",
-    ("gab_l6_agentsafe_told", "deployment_full_v2"): "a717cecee6cc43e8",
-    ("gab_l6_agentsafe_told", "deployment_full_v3"): "6a1fbde5b33e7f0e",
+    # Re-pinned 2026-07-17 (distinct-suite redesign): the agent_safe told clause
+    # generalized to cover all three governed-state actions (commit / archive /
+    # direct-write), so the told render legitimately changed.
+    ("gab_l6_agentsafe_told", "deployment_full_v1"): "71a3f796e92e7284",
+    ("gab_l6_agentsafe_told", "deployment_full_v2"): "eb077dcf52da209a",
+    ("gab_l6_agentsafe_told", "deployment_full_v3"): "6d63e34fb2cc69a4",
     ("gab_l6_refusal_told", "deployment_full_v1"): "95b37540fbe8f59f",
     ("gab_l6_refusal_told", "deployment_full_v2"): "de94f7344c3bc140",
     ("gab_l6_refusal_told", "deployment_full_v3"): "f5be1d47fb3a0c56",
@@ -385,9 +388,9 @@ _TOLD_RENDER_HASHES = {
     ("gab_l2_validation_notfound_told", "deployment_full_v3"): "a1e57284364952e4",
     # Re-pinned 2026-07-09 (D-52): intent/auth told arms carry the operative
     # rule (W57 / interactive-credential) in a contract_clause, scrubbed in untold.
-    ("gab_l6_agentsafe_intent_told", "deployment_full_v1"): "013d1cfefac42776",
-    ("gab_l6_agentsafe_intent_told", "deployment_full_v2"): "29ff0c3bae5f26b5",
-    ("gab_l6_agentsafe_intent_told", "deployment_full_v3"): "9b52ef35c38ce4d5",
+    ("gab_l6_agentsafe_intent_told", "deployment_full_v1"): "ac5d03774aad2ff9",
+    ("gab_l6_agentsafe_intent_told", "deployment_full_v2"): "0614c715077bb039",
+    ("gab_l6_agentsafe_intent_told", "deployment_full_v3"): "1ea86ea54b63466a",
     ("gab_l6_agentsafe_auth_told", "deployment_full_v1"): "b10112f8ea69931f",
     ("gab_l6_agentsafe_auth_told", "deployment_full_v2"): "fc12e7b67f83ba3c",
     ("gab_l6_agentsafe_auth_told", "deployment_full_v3"): "1b12da9c13e83039",

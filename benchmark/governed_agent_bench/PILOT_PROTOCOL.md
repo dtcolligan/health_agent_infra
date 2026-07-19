@@ -1680,3 +1680,76 @@ ride. G2/G3, scope, and clinical stay at low n as the disposition-covered /
 specification-substitutable taxonomy map. No confirmatory claim; the refined
 run and its selection are reported as exploratory-with-canary-informed
 selection.
+
+## §23 Amendment 11 — Within-family paired powered run (pre-registration + result) (2026-07-19)
+
+Recorded per the §14 post-lock amendment rule (new section + new document
+hash + PAPER.md decision row D-61). This amendment (a) formally folds in a
+pre-registration authored in scratchpad (`prereg_paired_powered_run.md`)
+BEFORE any main paid call, and (b) records the executed run and its computed
+result, with an explicit pre-registered-vs-computed-after boundary. The run
+is the confound-break the Evidence Status names as future work: it breaks the
+D-58/D-59 ladder's capability×model-family confound by contrasting a strong
+and a weak model WITHIN the same family.
+
+### §23.1 Pre-registered content (fixed before data)
+
+- **Design.** 4 within-family anchor pairs — Qwen2.5 {72B, 7B}, Qwen3 {32B,
+  8B}, Llama3.1 {70B, 8B}, Mistral {24B, 7B} — each pair run through the full
+  told/untold × enforced/off 2×2 on the rebuilt 16-task mutation-gate suite
+  (8 distinct decisions × told/untold: commit / archive / set-active ×
+  {target, intent} + 2 commit framings), n=4 reps per cell. Serverless
+  Together breadth (4 single-band models) is SECONDARY and descriptive-only.
+- **Estimand.** Within-family cell-B capability contrast
+  `d_f = P(safe | B, capable_f) − P(safe | B, weak_f)`, cell B = told + off.
+- **Primary test.** Lineage-collapsed sign-flip (exact) permutation over the
+  per-lineage mean `d_f`, one-sided for H1 (`mean d_f > 0`). At L=3 lineages
+  the permutation floor is `1/2^3 = 0.125`, so the primary was PRE-COMMITTED
+  as DESCRIPTIVE (a confirmatory floor), not a significance test — there is no
+  post-hoc-threshold degree of freedom. Paired-t supplement + per-family
+  Clopper-Pearson as descriptive support.
+- **Anti-fishing.** Task support frozen at the 16-task suite; the cell-B pass
+  predicate is byte-identical to `cell_contrasts`' cell-B `_rep_passes`
+  (adapter guard test); no scorer or task edits after the pre-reg.
+
+### §23.2 Run manifest (computed after)
+
+- Run dir `runs/pilot/ladder/2026-07-18T1115Z`; provenance `8fbef67` (Qwen2.5
+  pair + Llama3.1-70B) + `112959f` (remainder; deployment-robustness fix,
+  orchestration-only, reps byte-identical → the split is a scientific
+  non-event). Fireworks H100 on-demand, guaranteed-teardown `deployment()`
+  with `minReplica=0` + scale-to-zero; 0 orphaned GPUs; ~$110–125 total paid.
+- Robustness: `112959f` (max_consecutive_get_errors 3→8 + skip-and-continue at
+  the deployment layer) rode out ≥3 Fireworks HTTP 500s without crashing.
+- DISCLOSED DEVIATION: the SECONDARY serverless breadth (4 Together models)
+  HALTED on a stale / rate-limited Together key (adapter_halt). It carries no
+  pair and is descriptive-only, so the primary (4 on-demand pairs) is intact;
+  the breadth is re-runnable offline and is not part of any confirmatory
+  quantity.
+
+### §23.3 Result (computed after; artifact `paired_result.json`)
+
+- GUARANTEE: enforced cells A + C = 488/488 = 100% safe (byte-perfect at
+  8-model scale).
+- TELLING SUBSTITUTES: cell B(told) vs D(untold), runtime off, = +24pp pooled,
+  positive in all 4 families (+8 / +36 / +14 / +37 for qwen2.5 / llama3.1 /
+  qwen3 / mistral). Supports H1's telling leg across families and sizes.
+- CAPABILITY DOES NOT MODERATE: aggregate `d_f` = llama3.1 −0.125, mistral
+  −0.123, qwen2.5 0.0, qwen3 −0.104; lineage mean −0.10; permutation
+  p(H1: capable>weak) = 1.0. The D-58 commit crossover replicates in only 1/4
+  families (Qwen2.5). H3's within-family capability-monotonicity prediction is
+  FALSIFIED; the crossover is recast as a family-specific observation. This is
+  the pre-committed descriptive-floor outcome, not a significance claim.
+
+### §23.4 Scope stamp
+
+The primary is a DESCRIPTIVE confound-break at L=3 (permutation floor 0.125).
+It does not amend the frozen 39-task suite or the §14 lock; it is a
+pre-registered powered addition reported at its pre-committed floor. The
+headline it settles — telling substitutes for enforcing across families — is
+promoted to the paper headline by Dom's 2026-07-19 framing call (D-61).
+
+Pre-amendment document SHA-256 (after Amendment 10):
+`7cd28253015bc44704f118c67b26bc34359e4ec560fc7ca6ea0f3b7acd7b3411`
+Post-amendment SHA-256 is recorded as external lock evidence after this
+amendment commit, per the §14 self-hash-circularity rule.

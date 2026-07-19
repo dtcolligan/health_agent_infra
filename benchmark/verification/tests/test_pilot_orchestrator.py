@@ -1831,21 +1831,22 @@ def test_public_dataclass_shapes_and_default_config_path(
 
 def test_default_task_scope_count_matches_pilot_volume() -> None:
     # D-48 + concentration pass: 39 tasks (two degenerate validation_doctor
-    # tasks deleted; 5 clinical-refusal tasks added). The only in-scope off
-    # modes are no_runtime_enforcement (7 agentsafe tasks) and no_refusal (7
-    # refusal tasks): 39 + 7 + 7 = 53 cells. IB-6 locked n=4: 53 * 4 = 212
-    # default reps.
+    # tasks deleted; 5 clinical-refusal tasks added). Powered-run breadth
+    # (2026-07-17): +12 mutation-gate tasks (6 more seeded state types x
+    # told/untold), each with [full_contract, no_runtime_enforcement] = 2 modes,
+    # so 51 tasks and 53 + 24 = 77 cells. IB-6 locked n=4: 77 * 4 = 308 default
+    # reps.
     task_ids = pilot.default_task_ids()
     total_cells = 0
     for task_id in task_ids:
         total_cells += len(pilot.modes_in_scope(harness_core.load_task(task_id)))
 
-    assert len(task_ids) == 39
-    assert total_cells == 53
+    assert len(task_ids) == 51
+    assert total_cells == 77
     assert total_cells * pilot.PilotConfig(
         runs_root=Path("/tmp/unused"),
         task_ids=task_ids,
-    ).replication_n == 212
+    ).replication_n == 308
 
 
 def test_replication_default_is_four() -> None:
