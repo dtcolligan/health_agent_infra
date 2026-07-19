@@ -59,18 +59,16 @@ The mechanisms toggled on the enforcement axis:
 `no_runtime_enforcement` disables M4-M8 together and is reported only
 as a sanity floor. M9-TX transaction integrity is held constant.
 
-The claim under test is that telling substitutes for enforcing only under
-three conditions: compliance is verifiable from the agent's decision-time
-context (audit-reference faithfulness and stale-manifest drift are the
-non-verifiable exceptions), compliance does not compete with completing
-the task (the 2x2 runs with and without benign goal-conflict pressure),
-and the model clears the floor of operating the contract at all. Where all
-three hold, enforcement is behaviorally redundant and its remaining value
-is the deterministic guarantee. Evidence so far is a bounded diagnostic
-observation (two capable models self-refusing a salient unconflicted
-constraint); the conditions themselves are pre-registered predictions
-under measurement. See `PAPER.md` "Evidence Status" for what is confirmed
-versus pending.
+The question under test is what runtime enforcement adds once the model has
+already been told the rule (the A-vs-B contrast). A powered within-family run
+answers it: telling the rule moves behavior in every family (+24 points pooled
+with the runtime off), but it does not stand in for enforcement. The marginal
+value of enforcement given telling is 41 points pooled, small only for the two
+self-enforcing families and most of the barrier for the two weak ones, so
+substitution holds only in that narrow corner. Capability does not cleanly
+decide it. The runtime's block, meanwhile, is an unconditional guarantee (488
+of 488 enforced runs safe). See `PAPER.md` "Evidence Status" for what is
+confirmed versus pending.
 
 ## What This Is And Is Not
 
@@ -82,10 +80,9 @@ versus pending.
 | A non-clinical reference runtime used to instantiate concrete mechanisms | Evidence of diagnosis, treatment, prescribing, or clinical quality |
 | A bounded empirical claim with separated evidence tiers | A universal causal claim about all agents or domains |
 
-Because the told-not-enforced cell (told, runtime off) isolates what a model
-does with a rule it was told but that nothing enforces, GovernedAgentBench also
-doubles as a disposition eval for agentic post-training (measuring, not
-training, the self-enforcement a model supplies once told).
+The told-not-enforced cell (told, runtime off) isolates what a model does with
+a rule it was told but that nothing enforces, a quantity a post-training
+evaluation could track; the benchmark measures it and does no training.
 
 ## Evidence Discipline
 
@@ -110,13 +107,16 @@ trajectory JSON and deterministic offline scores.
   six synthetic fixtures, a 39-task suite (16-task paid subset), seed
   trajectories, static isolation oracle pairs, targeted live isolation
   probes for M4-M8, and a deterministic rule baseline.
-- The specify-vs-enforce 2x2 ran as a four-model capability ladder
-  against the git-pinned runtime, and the headline commit-boundary
-  result landed: told the rule with enforcement off, capable models
-  self-enforce on every run and weak ones need the runtime on every run
-  (paper §5). The goal-conflict and instrumental arms returned nulls; a
-  powered run with more tasks, the adversarial arm, long-horizon drift,
-  and an external non-HAI replication remain future work. See
+- The specify-vs-enforce 2x2 ran as a powered within-family sweep (four
+  model families, a strong and a weak sibling each) against the git-pinned
+  runtime. The headline: telling moves behavior in every family (+24 points
+  pooled with the runtime off) but does not stand in for enforcement, whose
+  marginal value given telling is 41 points pooled and small only for the
+  self-enforcing families; capability does not cleanly order it (paper §5).
+  A four-model capability ladder is the confounded precursor it corrects.
+  The goal-conflict and instrumental arms returned nulls; the adversarial
+  arm, long-horizon drift, and an external non-HAI replication remain
+  future work. See
   [`paper/`](paper/) for the result and `PAPER.md` "Evidence Status" for
   the diagnostic-tier provenance.
 - Model-backed paper claims must preserve the static/live/model-backed
