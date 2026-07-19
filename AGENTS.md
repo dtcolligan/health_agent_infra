@@ -15,9 +15,11 @@ The full draft is complete and its headline result has landed; it is
 presented on the repo at `paper/` (landing page `paper/README.md`,
 full draft `paper/DRAFT_dom.md`). arXiv submission is the remaining step
 and may be delayed, so the draft is public in-repo in the meantime. This
-does not mean the research programme is finished: the result is a small,
-confounded, single-runtime case study, and a powered run, the
-adversarial arm, and external replication remain future work.
+does not mean the research programme is finished: the powered
+within-family run has landed (it broke the ladder's capability-vs-family
+confound and corrected the headline), leaving a single-runtime,
+single-mechanism case study, and the adversarial arm and external
+replication remain future work.
 
 The project is not a HAI product roadmap. HAI is the pinned reference
 runtime used to instantiate and test the paper's runtime-contract

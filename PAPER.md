@@ -14,8 +14,9 @@ The full draft is complete and presented on the repo: `paper/DRAFT_dom.md`
 `paper/README.md`. arXiv submission is the remaining step and may be
 delayed past the 2026-09-30 target, so the draft is public in-repo in
 the meantime. Draft-complete is not research-complete: the Evidence
-Status section below still governs what the frame rests on, and a powered
-run, the adversarial arm, and external replication remain future work.
+Status section below still governs what the frame rests on. The powered
+within-family run has landed (D-61, honestly corrected at D-62); the
+adversarial arm and external replication remain future work.
 
 Nothing else is active. HAI is a frozen reference runtime that
 supports the benchmark. There is no main-conference target, no
@@ -25,8 +26,8 @@ no preprint or benchmark work bleeds into October.
 
 ## Title and Frame
 
-**Told or Enforced: When In-Context Contracts Substitute for Runtime
-Enforcement in Agent Harnesses**
+**Told or Enforced: Measuring When In-Context Contracts Substitute for
+Runtime Enforcement in Agent Harnesses**
 
 Deliverable: arXiv preprint, 8-12 pages NeurIPS or ICML LaTeX format,
 public and citable, not peer-reviewed.
@@ -36,27 +37,40 @@ an agent respect a constraint, stating it in the prompt (an in-context
 contract) or enforcing it in the runtime; this paper measures when the
 first substitutes for the second, via a 2x2 design (contract present or
 withheld crossed with runtime enforcement on or off) applied per mechanism,
-and the answer is not a property of model quality alone but of three
-measurable properties of the constraint's situation: whether compliance is
-verifiable from the agent's context at decision time, whether compliance
-conflicts with completing the task, and whether the model clears the floor
-of being able to operate the contract at all.
+and the powered within-family answer is that telling moves behaviour in
+every model family (cell B beats the untold floor by +24pp pooled) but does
+not stand in for enforcement: what enforcement adds once the agent is told
+(the A−B contrast) is 41pp pooled and drops to a narrow corner only for the
+self-enforcing families, while capability does not cleanly order which
+models close it.
 
-Core claim (revised to the diagnostic result at D-36, then confirmed by
-the landed D-41/D-56 capability ladder; see Evidence Status).
-The paper carries two findings, a negative result and a methodological one.
+Core claim (revised to the diagnostic result at D-36, the landed D-41/D-56
+capability ladder, then the powered within-family run and its honest
+correction at D-61/D-62; see Evidence Status).
+The paper carries two findings, a substitution-measurement result and a
+methodological one.
 
-Negative result: for a capable cooperative agent above the operate floor,
-in-context specification substitutes for runtime enforcement broadly.
-Across the mechanisms probed, the agent self-enforces constraints it is told
-plainly, verifiable and non-verifiable alike, and under benign goal-conflict
-pressure. Runtime enforcement's demonstrated behavioral value is the
-deterministic guarantee plus a narrow set of corners: below the operate
-floor (the agent cannot drive the contract at all), when the agent was never
-told the rule (the untold violation floor), and under adversarial intent
-(untested here). The marginal behavioral contribution of enforcement equals
-the agent's self-enforcement failure rate, and that rate is near zero for a
-capable cooperative agent that is told the rule and can see its tool output.
+Substitution result: telling moves behaviour but does not stand in for
+enforcement. Enforcement's block is an unconditional guarantee (in the
+powered within-family run, 488/488 enforced runs were safe by construction).
+Telling the agent the rule with the runtime off moves behaviour in every
+model family (cell B beats cell D, the untold floor, by +24pp pooled, the
+telling effect B−D). But the substitution question is A−B, what enforcement
+adds once the agent was told; since the enforced cell A is 100% by
+construction, A−B = 100 − B = 41pp POOLED. It is small only for the two
+self-enforcing families (Llama3.1 7pp, Mistral 10pp) and most of the barrier
+for the two weak ones (Qwen2.5 72pp, Qwen3 73pp). Strict substitution,
+enforcement adding nothing once the rule is told, holds only in that narrow
+corner; the small ladder's clean "capable models make enforcement redundant
+(A=B)" does NOT replicate at scale. Capability does not cleanly order
+self-enforcement: it helps or ties on the salient commit gate in all four
+families and can cut against safety on a discoverable side-door, so the
+pooled within-family strong-minus-weak contrast is flat-to-slightly-negative
+(lineage mean −0.10, sign-flip permutation p=1.0, descriptive at three
+lineages). Runtime enforcement stays necessary across the rest of the space:
+below the operate floor (the agent cannot drive the contract at all), when
+the agent was never told the rule (the untold violation floor), and under
+adversarial intent (untested here).
 
 Three moderators were hypothesized to gate substitution (context
 verifiability, goal conflict, operate floor). Diagnostics support only the
@@ -71,10 +85,13 @@ the agent see command output (the committed stdout-inlining fix). This, with
 the parser-tuned-to-one-model and unreliable-model-catalog issues, is a
 cautionary contribution for agent-eval methodology.
 
-All of the above is small-n and confounded: the headline rests on a
-four-model capability ladder (D-41/D-56, paper Section 5.2) whose
-load-bearing "told but does not self-enforce" arm is effectively one
-mid-size model; see Evidence Status.
+All of the above is still small-n: the headline rests on the powered
+within-family run (D-61), which broke the ladder's capability-vs-family
+confound by pairing a strong and a weak sibling within each of four
+families, at n=4 reps with the within-family capability contrast descriptive
+at three lineages (permutation p=1.0). The earlier four-model ladder
+(D-41/D-56, paper Appendix B) is the confounded precursor; see Evidence
+Status.
 
 External framing is "AI-engineering paper on agent-harness governance."
 The deterministic governance contract is a harness layer (the ETCLOVG
@@ -122,18 +139,23 @@ being enforced.
 We hypothesized substitution was conditional, gated by three measurable
 properties: whether compliance is verifiable from the agent's decision-time
 context, whether compliance competes with completing the task, and whether
-the model clears the operate floor. The diagnostics (D-36) did not bear this
-out. The capable cooperative agent self-enforced constraints it was told
-plainly whether or not they were verifiable, and even under benign goal
-conflict as strong as "a pipeline is blocked and the user cannot proceed."
-Only the operate floor survived: below it the agent cannot drive the
-contract, and enforcement prevents malformed action rather than
-disobedience. So the honest answer to "when does telling substitute for
-enforcing" is: for a capable cooperative agent that can see its own tool
-output, nearly always.
+the model clears the operate floor. The diagnostics on one mid-size model
+made it look like telling nearly always sufficed, so we ran the
+confound-break: a powered within-family run pairing a strong and a weak
+sibling in each of four families. It corrected the picture. Enforcement's
+block is an unconditional guarantee (488/488 enforced runs safe by
+construction). Telling moves behaviour in every family (cell B beats the
+untold floor D by +24pp pooled). But what enforcement adds once the agent
+was told, the A−B contrast that is the actual substitution measure, is 41pp
+pooled: small only for the two self-enforcing families (Llama3.1 7pp,
+Mistral 10pp) and most of the barrier for the two weak ones (Qwen2.5 72pp,
+Qwen3 73pp). Capability does not cleanly order which models close it. So the
+honest answer to "when does telling substitute for enforcing" is: only in a
+narrow corner of self-enforcing families; telling moves behaviour, but
+enforcement stays needed.
 
-The result is therefore a negative one, and its most useful companion is
-methodological. Along the way we produced an apparent positive finding, that
+The substitution result is therefore narrow, and its most useful companion
+is methodological. Along the way we produced an apparent positive finding, that
 the agent fabricates an identifier when it is instrumentally needed to
 complete an action, and then discovered it was an artifact: the harness was
 feeding the agent a file path instead of its command's output, so the agent
@@ -231,17 +253,21 @@ Closest published benchmark prior: ST-WebAgentBench (Levy et al.,
 ICLR 2026); in-context policies only, three agent scaffolds (no shared
 backbone disclosed), no enforcement lever.
 
-Novelty is a CONJUNCTION, not any single first: the specify-vs-enforce
+Novelty is a CONJUNCTION, not any single first, and it is the full 2x2
+crossing, not the A−B measurement: the A−B contrast alone (what enforcement
+adds in the told column) is already toggled by a prior (Symbolic
+Guardrails), so the novel move is adding the withheld arm to cross telling
+with enforcement for the same rule. The conjunction is the specify-vs-enforce
 2x2 including the enforced-not-told cell (unclaimed only as a cell inside
 a crossed factorial, per mechanism, first-attempt scored, with a released
 scorer and benchmark; the cell itself is realized by FORGE and the
-Prompts Don't Protect governed proxy, D-38) + per-mechanism isolation + the three-condition
-substitution account (decision-time verifiability, goal conflict, operate
-floor) + the methodological warning that prompt-embedded-policy guardrail
-ablations measure self-enforcement + a deterministic offline scorer + a
-released benchmark that holds the two levers apart. No "first X" claims;
-causal language stays conditional on this controller, task suite, and
-evidence tier.
+Prompts Don't Protect governed proxy, D-38) + per-mechanism isolation + the
+three-moderator analysis (decision-time verifiability, goal conflict,
+operate floor) + the methodological warning that prompt-embedded-policy
+guardrail ablations measure self-enforcement + a deterministic offline
+scorer + a released benchmark that holds the two levers apart. No "first X"
+claims; causal language stays conditional on this controller, task suite,
+and evidence tier.
 
 ## Calendar
 
@@ -271,12 +297,15 @@ Today: read in `date` at session start. Key windows:
 - The specify-vs-enforce 2x2 per mechanism (M4-M8): contract-in-prompt
   {present, withheld} x runtime-enforcement {on, off}, static oracle-pair
   evidence separated from live runtime-probe evidence
-- The negative result: for capable cooperative agents above the operate
-  floor, specification substitutes for enforcement broadly (D-36). The
-  moderators hypothesized to gate this (verifiability, goal conflict, floor)
-  are reported with their diagnostic outcomes: goal-conflict and the M8
-  verifiability exception nulled; only the operate floor is supported
-  (ladder-confounded). No scaling-law claim.
+- The substitution result (D-62): telling moves behaviour in every family
+  (B−D +24pp pooled) but does not stand in for enforcement; what enforcement
+  adds once told (A−B) is 41pp pooled, small only for the two self-enforcing
+  families (7-10pp) and most of the barrier for the weak (72-73pp), so
+  strict substitution holds only in that narrow corner. Capability does not
+  cleanly order self-enforcement. The moderators hypothesized to gate this
+  (verifiability, goal conflict, floor) are reported with their diagnostic
+  outcomes: goal-conflict and the M8 verifiability exception nulled; only
+  the operate floor is supported. No scaling-law claim.
 - The methodological contribution (D-36): agent-eval harnesses that hide
   tool output manufacture spurious fabrication findings, demonstrated by an
   instrumental-fabrication result that dissolves once the harness surfaces
@@ -313,7 +342,7 @@ Today: read in `date` at session start. Key windows:
 | 2 | Background and related work (agent harnesses, runtime guardrails, instruction / in-context rule following, software contracts and capability security; closest neighbors incl. Agent Behavioral Contracts, Life-Harness, ALIGN) | 1 |
 | 3 | The two levers (M4-M8 + M9-TX, the context-verifiability classification, guarantees) | 2-3 |
 | 4 | GovernedAgentBench methodology (tasks, scorer, the specify-vs-enforce 2x2, evidence tiers) | 2 |
-| 5 | Results: the negative result (specification substitutes for enforcement; the goal-conflict and M8 exception nulls; the operate floor; static and live evidence separated) | 1.5-2 |
+| 5 | Results: the substitution result (telling moves behaviour, B−D +24pp pooled, but enforcement stays needed, A−B 41pp pooled with narrow-corner substitution only; capability action-dependent; the goal-conflict and M8 exception nulls; the operate floor; static and live evidence separated) | 1.5-2 |
 | 6 | Methodology cautions as a contribution: harness blindness manufactures spurious fabrication findings (the instrumental result that dissolved with the stdout fix); action-parser fragility; unreliable serverless catalog | 1-1.5 |
 | 7 | The capability ladder and single-runtime scope (operate floor; no scaling law; external replication as future work per D-42) | 0-1 |
 | 8 | Discussion (what runtime enforcement is still for: guarantee, untold floor, adversarial; personal-health-as-domain defense) | 1 |
@@ -436,10 +465,12 @@ in-context specification fails to substitute for runtime enforcement:
 capability failure (the agent cannot verify or correctly apply the rule),
 goal conflict (respecting the rule competes with completing the task), and
 adversarial input (inputs induce the agent to violate a rule it can read).
-Specification substitutes for enforcement only when compliance is
-verifiable from decision-time context, unconflicted with the task goal,
-and the inputs are benign; the runtime is necessary across the rest of
-that space.
+Telling the agent the rule moves behaviour but does not stand in for
+enforcement in general: what enforcement adds once told (A−B) is 41pp
+pooled and drops to a narrow corner (7-10pp) only for the self-enforcing
+families, staying most of the barrier (72-73pp) for the weak ones; the
+runtime is necessary across the rest of that space, and unconditionally as
+the guarantee (488/488 enforced runs safe).
 
 **Capability / cooperative arm.** Fallible-but-cooperative models emit
 invalid commands, hallucinated tool calls, malformed proposals,
@@ -528,7 +559,7 @@ diagnostic outcome (one model, small n; D-35/D-36).
 
 | Constraint situation | Predicted enforcement delta | Diagnostic result |
 |---|---|---|
-| Verifiable, no conflict, capable model | ~0; value is the deterministic guarantee | CONFIRMED (self-enforces when salient) |
+| Verifiable, no conflict, capable model | ~0; value is the deterministic guarantee | CORRECTED by D-62: A−B not ~0 broadly; 41pp pooled, ~0-small (7-10pp) only for the self-enforcing families |
 | Verifiable, goal conflict (H2) | real; grows with pressure | NULL: 0 fabrication P0-P3, n=5 (2026-07-03) |
 | M8 audit refs, instrumental pressure | real where the ref advances an action | FALSIFIED: harness-blindness artifact; 0pp with stdout fix, n=5 (2026-07-03) |
 | M8 audit refs, cooperative + asked plainly | ~0 | CONFIRMED honest (D-35) |
@@ -538,9 +569,9 @@ diagnostic outcome (one model, small n; D-35/D-36).
 
 | ID | Hypothesis | Role |
 |---|---|---|
-| H1 | Whether an agent self-enforces a constraint is predicted by whether compliance is verifiable from its decision-time context. For context-verifiable constraints (M4/M5/M6/M7), a capable cooperative agent under no goal conflict self-enforces regardless of runtime enforcement, so the `full_contract` vs `no_X` behavioral delta sits at the honest-error residual. The genuinely non-retrievable residual is L7 drift, where the agent cannot self-enforce, so enforcement is predicted to show a real delta even for a cooperative agent. | Headline condition 1. QUALIFIED by the 2026-07-02 probes: the verifiable-leg redundancy holds only when the constraint is salient in the request; first-attempt self-enforcement of an incidentally-reached verifiable constraint was NOT observed. The M8 audit-faithfulness cooperative-exception is CONTRADICTED (D-35): cooperative agents self-enforce faithfulness when asked plainly. The instrumental-fabrication follow-up (D-36) was FALSIFIED and shown to be a harness artifact. Only L7 drift remains as an unmeasured non-verifiable candidate. See Evidence Status. **Telling leg SUPPORTED AT SCALE by the D-61 powered run (2026-07-19): cell B(told) > cell D(untold) with runtime off in all 4 families (+8/+36/+14/+37pp, +24pp pooled) — telling substitutes for enforcing across families and sizes, confound-broken; promoted to the confirmed paper headline (Dom framing call 2026-07-19).** |
+| H1 | Whether an agent self-enforces a constraint is predicted by whether compliance is verifiable from its decision-time context. For context-verifiable constraints (M4/M5/M6/M7), a capable cooperative agent under no goal conflict self-enforces regardless of runtime enforcement, so the `full_contract` vs `no_X` behavioral delta sits at the honest-error residual. The genuinely non-retrievable residual is L7 drift, where the agent cannot self-enforce, so enforcement is predicted to show a real delta even for a cooperative agent. | Headline condition 1. QUALIFIED by the 2026-07-02 probes: the verifiable-leg redundancy holds only when the constraint is salient in the request; first-attempt self-enforcement of an incidentally-reached verifiable constraint was NOT observed. The M8 audit-faithfulness cooperative-exception is CONTRADICTED (D-35): cooperative agents self-enforce faithfulness when asked plainly. The instrumental-fabrication follow-up (D-36) was FALSIFIED and shown to be a harness artifact. Only L7 drift remains as an unmeasured non-verifiable candidate. See Evidence Status. **Telling leg, CORRECTED by D-62 (2026-07-19): cell B(told) > cell D(untold) runtime-off in all 4 families (+24pp pooled) confirms telling MOVES behaviour, but NOT that it substitutes for enforcing. Substitution is A−B (enforcement's marginal value given told) = 100 − B = 41pp pooled, small only for the self-enforcing families (7-10pp) and most of the barrier for the weak (72-73pp); strict substitution holds only in that narrow corner. The earlier "telling substitutes across families" reading was an overclaim (D-62).** |
 | H2 | Self-enforcement of a constraint degrades under benign goal conflict / instrumental pressure (compliance, or honest abstention, costs task success), and the enforcement delta rises correspondingly. | FALSIFIED in diagnostics (D-36). Narrative goal conflict did not degrade self-enforcement (0 fabrication P0-P3, n=5); the instrumental form was a harness-blindness artifact that dissolved with the stdout fix (0pp, n=5). The agent self-enforces even where enforcement was predicted to bite. |
-| H3 | Capability moderates but does not order the map: within a model family, self-enforcement of verifiable unconflicted constraints rises with capability above the operate floor; cross-family and under conflict, non-monotonicity is expected (weak claim, small ladder, no scaling law). | SUPPORTED but CONFOUNDED by the landed D-41/D-56 ladder (2026-07-11, paper Section 5.2): told the commit rule with enforcement off, the two capable models (MiniMax-M3, Llama-3.3-70B) self-enforced on every run and the two weak models (Qwen3.5-9B, Qwen2.5-7B) violated on every run, with an operate floor below (7B). Capability is entangled with model family and, once the below-floor 7B is set aside, the load-bearing arm rests on one mid-size model; no scaling claim. The earlier thin diagnostic ladder (2026-07-03, parser-confounded) is superseded as provenance. **Within-family prediction FALSIFIED by the D-61 powered run (2026-07-19): across 4 within-family pairs the cell-B capability contrast is null-to-negative (aggregate d_f: llama3.1 −0.125, mistral −0.123, qwen2.5 0.0, qwen3 −0.104; lineage mean −0.10, permutation p(H1: capable>weak)=1.0), and the D-58 commit crossover replicates in only 1/4 families (Qwen2.5). Capability does not order self-enforcement within a family; where it moves the outcome it REVERSES (competent-violator effect: the capable sibling drives the archive/set-active side-doors the weak one cannot). The D-58 crossover is recast as a family-specific observation, demoted to provenance in the paper.** |
+| H3 | Capability moderates but does not order the map: within a model family, self-enforcement of verifiable unconflicted constraints rises with capability above the operate floor; cross-family and under conflict, non-monotonicity is expected (weak claim, small ladder, no scaling law). | SUPPORTED but CONFOUNDED by the landed D-41/D-56 ladder (2026-07-11, paper Section 5.2): told the commit rule with enforcement off, the two capable models (MiniMax-M3, Llama-3.3-70B) self-enforced on every run and the two weak models (Qwen3.5-9B, Qwen2.5-7B) violated on every run, with an operate floor below (7B). Capability is entangled with model family and, once the below-floor 7B is set aside, the load-bearing arm rests on one mid-size model; no scaling claim. The earlier thin diagnostic ladder (2026-07-03, parser-confounded) is superseded as provenance. **Within-family prediction, CORRECTED by D-62 (2026-07-19): capability does NOT cleanly order self-enforcement, but the D-61 "reverses / competent-violator" reading over-generalised. Honest: capability helps or ties on the commit gate in all 4 families and can cut against safety on a discoverable side-door. The pooled cell-B contrast is flat-to-slightly-negative (lineage mean −0.10, permutation p=1.0, descriptive at L=3), carried by Qwen3's genuine −10; Qwen2.5 nets zero (its commit +100 cancels the side-door losses); Llama3.1/Mistral −12 are ceiling artefacts (weak sibling telling-invariant, cell-D +0/+4). So H3's clean-monotonicity prediction does not hold, but the effect is action-dependent, not a clean reversal.** |
 | H4 | An untold agent (contract-withheld arm) attempts constrained actions at a nonzero rate, so enforcement produces a real C-vs-D delta; if the untold agent complies anyway on neutral phrasing, compliance is a training prior and the verifiability criterion's scope narrows accordingly. | Headline floor + the collapse condition. The contract-off mini-2x2 probe tests it first. |
 | H5 | The specify-vs-enforce effect generalizes beyond HAI; GovernedAgentBench measures it while using HAI as one reference runtime. | RESCOPED by D-42 (Posture B): the preprint is a single-runtime case study; the external non-HAI replication is future work, disclosed as such. Generality is a hypothesis the paper states, not a claim it defends. |
 | H6 | Non-clinical boundaries are enforceable runtime behaviour, not disclaimer text; a capable agent additionally self-enforces them under no conflict (M7 is context-verifiable), making runtime and model redundant on that axis under cooperation. | Design constraint + a datapoint for H1's verifiable leg. |
@@ -624,16 +655,19 @@ separate.
 
 ## Evidence Status
 
-What the frame rests on. The headline now rests on the D-61 powered
+What the frame rests on. The headline rests on the D-61 powered
 within-family run (2026-07-18/19), reported in full in the paper's Section
-5.1 and summarised immediately below: telling substitutes for enforcing
-across four families (+24pp pooled with the runtime off), while the
-within-family capability contrast is null-to-negative. The four-model
-capability ladder that motivated it (2026-07-11; D-41 amended by D-56/D-58)
-is the confounded precursor and appears in the paper as Section 5.2; the
-diagnostic probes that shaped the design (2026-07-02/03, Qwen3-235B, n=3)
-appear as Section 5.3. The model-backed tier stays separate from the static
-oracle-pair and live-runtime-probe tiers throughout.
+5.1 and CORRECTED per D-62: telling MOVES behaviour across four families
+(+24pp pooled with the runtime off) but does not stand in for enforcement,
+whose marginal value given told (A−B = 100 − B) is 41pp pooled and small only
+for the two self-enforcing families; the within-family capability contrast is
+flat-to-slightly-negative and action-dependent, not a clean moderator. The
+four-model ladder that motivated it (2026-07-11; D-41 amended by D-56/D-58)
+is the confounded precursor, compressed in the paper to a Section 5.2
+paragraph with its detail in Appendix B; the diagnostic probes (2026-07-02/03,
+Qwen3-235B, n=3) fold into that paragraph and Appendix B. The model-backed
+tier stays separate from the static oracle-pair and live-runtime-probe tiers
+throughout.
 
 **Pre-registered ladder run (2026-07-11, git-pinned runtime `6c82cd0`,
 four models, USD 10.44; `runs/pilot/ladder/2026-07-11T1534Z/`).** The
@@ -772,24 +806,27 @@ honest sample size is set by tasks, not repeats) plus a non-Qwen weak
 model to break the family confound; the adversarial arm; and the external
 non-HAI replication (H5), future work per D-37 and D-42.
 
-The supported claims, after the D-61 powered within-family run superseded the
-capability-gated reading: (1) TELLING SUBSTITUTES FOR ENFORCING across four
-model families and eight sizes — cell B(told) > cell D(untold) runtime-off,
-+24pp pooled, positive in every family — the confirmed headline; (2) the
-runtime GUARANTEE holds at scale (488/488 enforced runs safe); (3) the
-methodological demonstration (harness blindness). NOT supported: capability
-does NOT order self-enforcement within a family (D-61: aggregate d_f
-null-to-negative, lineage mean −0.10, permutation p(H1)=1.0; the D-58 commit
-crossover replicates in only 1/4 families), so the earlier "capable
-cooperative model self-enforces" through-line is FALSIFIED as a capability
-law and demoted to the confounded precursor (paper Section 5.2). The
-through-line now: in-context specification substitutes for runtime
-enforcement broadly and independent of capability; enforcement's demonstrated
-behavioral value is the deterministic guarantee plus the corners where the
-model does not self-enforce — a withheld rule, a competently-driven side-door
-(where MORE capability cuts against safety), and below the operate floor. The
-goal-conflict and instrumental regimes, hypothesized to make enforcement
-bite, did not (adversarial intent remains untested).
+The supported claims, after D-62 corrected the D-61 framing: (1) the runtime
+GUARANTEE holds at scale (488/488 enforced runs safe); (2) TELLING MOVES
+BEHAVIOUR in every family (cell B(told) > cell D(untold) runtime-off, +24pp
+pooled) but does NOT stand in for enforcement: the marginal value of
+enforcement given told (A−B = 100 − B) is 41pp pooled, small only for the two
+self-enforcing families (7-10pp) and most of the barrier for the weak
+(72-73pp), so strict substitution holds only in that narrow corner and the
+ladder's clean cell-A-equals-cell-B does not replicate; (3) the methodological
+demonstration (harness blindness). NOT supported: the clean "capability
+decides it" reading — capability does not cleanly order self-enforcement (it
+helps or ties on the commit gate and can cut against safety on a discoverable
+side-door; the pooled within-family contrast is flat-to-slightly-negative and
+action-dependent, carried by Qwen3's genuine −10, with Qwen2.5 net-zero and
+Llama/Mistral ceiling artefacts), so both the ladder's "capable self-enforce"
+and D-61's "capability falsified / competent-violator" over-generalisations
+are retired. The through-line now: telling moves behaviour but runtime
+enforcement stays needed, its value the deterministic guarantee plus every
+corner where the model does not self-enforce (a withheld rule, a discoverable
+side-door, a rule below the operate floor). The goal-conflict and instrumental
+regimes, hypothesized to make enforcement bite, did not (adversarial intent
+remains untested).
 
 ## Active Decisions
 
@@ -864,7 +901,8 @@ D1-D28) lives in `ARCHIVE/decisions_log.md`.
 | D-58 | Full-roster ladder sweep executed + Phase-4 robustness audit + per-gate/canary-pooling analysis fix (Dom-approved 2026-07-11). SWEEP: the concentrated ladder (MiniMax-M3 primary + Llama-3.3-70B + Qwen3.5-9B + Qwen2.5-7B; canary-first; runtime pinned `lock-6c82cd0`, preflight PASS wheel=False) ran to completion -- all 8 canary+main runs exit 0, USD 10.44 true paid spend (corrected 2026-07-11: the earlier 20.87 figure double-counted via the per-condition `latest` symlink; 448 unique rep ledgers sum to 10.44), canary gate PASSED (untold_floor +0.50, blind_twin +1.00, below_floor fails-to-operate). HEADLINE (mutation gate agent_safe, % safe; first-attempt == converged byte-identical here): a CAPABILITY-MODERATED SUBSTITUTION CROSSOVER -- capable models self-enforce the W57 user-gate when TOLD (cell B = told+off = 100% safe, so enforcement is redundant given told, A-B=0), weak models do not (B=0%, enforcement load-bearing, A-B=+100). ROBUSTNESS AUDIT (Dom-approved 15-agent workflow: 8 attack vectors -> 3-vote adversarial verify -> synth): 6/7 attacks bounced -- cells reproduce from raw trajectories with zero divergence; the B column is GENUINE model self-enforcement not a CLI/parse artifact, verified per-rep (MiniMax told+off refuses `hai target commit` citing W57; Qwen-7B told+off runs the commit itself with `mechanism_disabled` markers confirming the gate was down); the enforcement identity is sound (off cells truly don't enforce, proven by the reachable D floor); and the parse-confound is PROTECTIVE not damaging (pure-invalid reps score SAFE, so weak-model B=0 is a lower bound, and Llama at 42% malformed-turn yet B=100 via genuine refusals dissociates parse-rate from the B outcome). One attack (ci_method) errored on a StructuredOutput retry cap and did not complete. ONE MATERIAL FINDING confirmed 3/3: the main-only 2x2 mixed task sets (told cells span the target+intent gates, untold cells intent-only). ROOT CAUSE (re-derived, NOT a data gap): `gab_l6_agentsafe_untold` (the target-commit untold-floor carrier) is `canary`-tagged, so for the 3 capable/near-floor models it ran in the CANARY phase and the per-model contrast read only `main/`, excluding it (7B ran it in main). The canary reps are IDENTICALLY scored (scorer version + config hash `59e0ef53...` + runtime lock all match, n=8/mode) and are PRE-REGISTERED evidence (PILOT_PROTOCOL 20.5 untold-floor carrier; the canary gate already passed on their C-vs-D floor movement). FIX (Dom chose Option A, USD 0): report the substitution PER SUB-GATE and POOL the canary untold-floor reps with the main told reps. CORRECTED MATCHED HEADLINE (both gates pooled, n=8/cell, MOVER-D CI): MiniMax S=-100 [-132,-44] (CI excludes 0), Llama S=-75 [-112,-18] (excludes 0); weak-model load-bearing A-B=+100 [+54,+100], Fisher-exact two-sided p=0.00016 -- the independent statistical cross-check that closes the errored ci_method attack (enforcement adds NOTHING for capable models p=1, DECISIVE for weak p=0.00016). PER-GATE REPLICATION: target-commit and intent-commit each show the same B column (100/100/0/0) independently at n=4 -- the crossover is not an artifact of one gate. CODE (analysis-layer, committed lane): `build_cell_contrasts_pooled(run_dirs)` pools reps across phase dirs with per-dir completeness guarding + AND-ed `headline_trustworthy` flags (loads each phase's resolved `latest` to avoid the symlink double-count; single-dir path byte-identical to legacy `build_cell_contrasts`, which now delegates); `ladder_condition_run_dirs(ladder, cond)` resolves canary+main; `write_cell_contrasts_pooled`; all exported. Hermetic regression test pins that main-only leaves cells C/D empty (S undefined) while the pooled path recovers the matched 2x2 and S=-100. VERIFIED: cell_contrasts suite (28, incl. the new pooling test) green, module mypy clean, and the corrected headline reproduced through the committed `write_cell_contrasts_pooled` path on the real sweep; full benchmark suite green. CAVEATS (into the writeup): (a) REFUSAL is UNDERPOWERED, not affirmative "disposition coverage" -- the clinical detector fires in 3.1% of refusal reps, all one task (refusal_untold) + one model (9B), and the two DEDICATED clinical-pressure tasks (diagnose, dose) produce ZERO fires across all models incl. below-floor 7B; soften the framing to near-ceiling/underpowered, note 9B's one discriminating cell shows disposition partially breaking at low capability, and re-check whether the D-55.1 clinical redesign over-narrowed (possible scanner false-negatives on the dedicated tasks). (b) Qwen-7B is THRESHOLD-SENSITIVE (partial unsafe, median unsafe_action_rate 0.5): at any threshold >=0.5 its B flips 0->75, so call it "partial self-enforcement," keep the 0.0 zero-tolerance threshold (correct for an unauthorized-commit gate), and report the graded median alongside the binary rate; the load-bearing cells (capable B=100, 9B A-B=+100) are threshold-invariant. (c) enforcement is LATENT in cell A (capable models self-refuse before dispatch) -- proven by cell C + the preflight probe, not by a per-rep block in A; state this. (d) untold cells rest on n=4 (per-gate) to n=8 (pooled); report the wide CIs honestly. NEXT: Phase 5 writeup against these corrected numbers. | 2026-07-11 |
 | D-59 | Deep paper-improvement pass: honest reframe from a significance claim to a small case study (Dom-approved autonomous run 2026-07-11; Phases 1-6 of the improvement workflow: grounding + literature research -> 7-persona adversarial review panel -> reframe -> gate). The panel verified the core crossover SURVIVES but rated the paper "major revision, workshop-acceptable after an honest reframe" (matches the pre-committed floor), 4 blocking + 14 should-fix, ALL fixable by editing (results locked, no new experiments). BLOCKING fixed: (1) PSEUDO-REPLICATION -- n=8 pooled 2 correlated sub-gate tasks x 4 near-deterministic reps as 8 iid draws, so the rep-level Fisher p=0.00016 is a within-condition figure and the honest task-level p is 0.33. Reframed abstract/S5.1/contributions/conclusion to LEAD with raw per-task counts (capable 8/8 comply, weak 0/8) on a task-level unit + per-rep mechanistic verification; demoted both Fisher p's; the pooled A-B is presented as descriptive (task-level p=0.33), not a rejection. Enforced cells A/C stated safe-by-construction (all 64 enforced reps 0.0), so A-B is one-sided (upper +32pp, failure-to-detect not equivalence; removed "Fisher p=1" and the symmetric CI). (2) UNDISCLOSED PRE-RUN SCORER EDITS -- the harm-only unsafe_action_rate code path was edited 3x in the 30h pre-run (D-54/55/55.1), the last 47 min before; the draft's D-55.1 mentions misdirected to the clinical detector. VERIFIED robust: 0 headline cells used the amended path (all 58 agentsafe violations are the original must_not_call unsafe_mutation), so re-score with the pre-edit scorer is the identity on the 2x2. Disclosed in S4.5 with timeline + re-score-identity + honesty-note-5. (3) MIND THE GAP (arXiv:2602.16943) -- the closest uncited 2026 prior (both headline phenomena, same "governance contract" vocabulary); added+distinguished in S2 (prompt-wording x governance, no told/withheld, no enforced-not-told cell) + S8.1 directional-tension + References. (4) REPRODUCIBILITY -- runs/pilot gitignored (0/8592 tracked), so "we release trajectories/re-scoreable" was false; scoped claims to git-pinned runtime (wheel does not enforce) + archive-alongside + a small released helper (results/exact_tests.py, pure-Python no-scipy, +regression test, reproduces every exact figure); corrected tag distance 6->14 commits (tag predates the enforce-arm fixes). SHOULD-FIX applied: renamed "redundancy measure" -> "marginal value of enforcement given told" (13 sites); imported the one-non-frontier-model concession into the abstract; disclosed the outcome-screened primary (MiniMax non-pre-registered, lean on pre-registered Llama) + canary-reuse + n=8-below-n=12 target + the post-canary cell-D discoverability patch; corrected M5/M6 mechanism identity (block is M5; M6 masked/--confirm-bypassable); task count 36->39, paid subset 16. Every new statistic verified against the data (Clopper-Pearson [63,100]/[0,37], task 0.33, sub-gate 0.029, Bonferroni 0.00062). Phase-6 gate (4 lenses) re-verified numbers + consistency and caught 2 residual self-contradictions I had introduced (commit distance 6-vs-14, suite count 36-vs-39) + 3 material items (dangling Mind-the-GAP reference, a rep-level-significance residual, a cell-count), all fixed before push. FLAGGED FOR DOM (not done autonomously, infra/first-author calls): create/attach the versioned paid-run trajectory archive; retag 6c82cd0 on a durable ref + update CITATION.cff + README wheel caveat; optional writing-polish (break up abstract/intro paragraphs). | 2026-07-11 |
 | D-60 | Secondary framing added (Dom-approved 2026-07-14): the told-not-enforced cell (told, runtime off) doubles as a disposition eval for agentic post-training; GAB positioned as an eval measuring the self-enforcement a model supplies once told, separate from runtime enforcement. Evals emphasis, not RL/reward. Positioning/audience only -- no training method or result is claimed; the locked title, thesis, 2x2, and AI-engineering harness-governance frame (D-26/D-31/D-34) are RETAINED, not reopened. Surfaces: DRAFT_dom (abstract +1 sentence in the First clause, S8 +1 paragraph), landing page, README, PAPER.md Title & Frame note, benchmark card + README. | 2026-07-14 |
-| D-61 | Powered within-family paired run executed — the confound-break named in the Evidence Status as future work (Dom-directed, fired 2026-07-18, completed 2026-07-19). DESIGN: 4 on-demand within-family pairs (Qwen2.5 {72B,7B}, Qwen3 {32B,8B}, Llama3.1 {70B,8B}, Mistral {24B,7B}) on the rebuilt 16-task mutation-gate suite (8 distinct decisions × told/untold: commit/archive/set-active × {target,intent} + 2 commit framings), n=4 reps, full 2×2, Fireworks H100 on-demand (guaranteed-teardown `deployment()`, `minReplica=0` + scale-to-zero, 0 orphans, ~$110–125 total paid). Estimand: within-family cell-B capability contrast d_f = P(safe|B,capable)−P(safe|B,weak), lineage-collapsed sign-flip permutation (DESCRIPTIVE at L=3, floor 0.125) + paired-t supplement. RESULTS (`runs/pilot/ladder/2026-07-18T1115Z/paired_result.json`): (a) GUARANTEE replicates at scale — enforced cells A+C = 488/488 = 100% safe. (b) TELLING SUBSTITUTES, confound-broken — cell B(told) vs D(untold) runtime-off = +24pp pooled, POSITIVE IN ALL 4 FAMILIES (+8/+36/+14/+37 for qwen2.5/llama3.1/qwen3/mistral); supports H1's telling leg across families and sizes and becomes the confirmed headline (Dom framing call 2026-07-19). (c) CAPABILITY DOES NOT MODERATE self-enforcement within families — aggregate d_f null-to-negative (llama3.1 −0.125, mistral −0.123, qwen2.5 0.0, qwen3 −0.104; lineage mean −0.10, permutation p(H1: capable>weak)=1.0); the D-58 commit crossover replicates in ONLY 1/4 families (Qwen2.5 +100pp; Llama & Mistral self-enforce commit at both sizes, Qwen3 violates at both); mechanism = the capable sibling is a more competent violator of the archive/set-active side-doors while the weak one is safe-by-incapability. FALSIFIES H3's within-family capability-monotonicity prediction; the D-58 crossover is recast as a family-specific observation, not a capability law, and demoted to provenance in the paper (D-59 ladder → precursor). Secondary serverless breadth (4 Together single-band models) HALTED on a stale/rate-limited Together key (adapter_halt) — descriptive only, no pair, primary intact, re-runnable offline. Robustness: the pre-run deployment fix (`112959f`: max_consecutive_get_errors 3→8 + skip-and-continue at the deployment layer) rode out ≥3 Fireworks HTTP 500s without crashing the run. Pre-registered as PILOT_PROTOCOL Amendment 11. | 2026-07-19 |
+| D-61 | Powered within-family paired run executed — the confound-break named in the Evidence Status as future work (Dom-directed, fired 2026-07-18, completed 2026-07-19). DESIGN: 4 on-demand within-family pairs (Qwen2.5 {72B,7B}, Qwen3 {32B,8B}, Llama3.1 {70B,8B}, Mistral {24B,7B}) on the rebuilt 16-task mutation-gate suite (8 distinct decisions × told/untold: commit/archive/set-active × {target,intent} + 2 commit framings), n=4 reps, full 2×2, Fireworks H100 on-demand (guaranteed-teardown `deployment()`, `minReplica=0` + scale-to-zero, 0 orphans, ~$110–125 total paid). Estimand: within-family cell-B capability contrast d_f = P(safe|B,capable)−P(safe|B,weak), lineage-collapsed sign-flip permutation (DESCRIPTIVE at L=3, floor 0.125) + paired-t supplement. RESULTS (`runs/pilot/ladder/2026-07-18T1115Z/paired_result.json`): (a) GUARANTEE replicates at scale — enforced cells A+C = 488/488 = 100% safe. (b) TELLING SUBSTITUTES, confound-broken — cell B(told) vs D(untold) runtime-off = +24pp pooled, POSITIVE IN ALL 4 FAMILIES (+8/+36/+14/+37 for qwen2.5/llama3.1/qwen3/mistral); supports H1's telling leg across families and sizes and becomes the confirmed headline (Dom framing call 2026-07-19). (c) CAPABILITY DOES NOT MODERATE self-enforcement within families — aggregate d_f null-to-negative (llama3.1 −0.125, mistral −0.123, qwen2.5 0.0, qwen3 −0.104; lineage mean −0.10, permutation p(H1: capable>weak)=1.0); the D-58 commit crossover replicates in ONLY 1/4 families (Qwen2.5 +100pp; Llama & Mistral self-enforce commit at both sizes, Qwen3 violates at both); mechanism = the capable sibling is a more competent violator of the archive/set-active side-doors while the weak one is safe-by-incapability. FALSIFIES H3's within-family capability-monotonicity prediction; the D-58 crossover is recast as a family-specific observation, not a capability law, and demoted to provenance in the paper (D-59 ladder → precursor). Secondary serverless breadth (4 Together single-band models) HALTED on a stale/rate-limited Together key (adapter_halt) — descriptive only, no pair, primary intact, re-runnable offline. Robustness: the pre-run deployment fix (`112959f`: max_consecutive_get_errors 3→8 + skip-and-continue at the deployment layer) rode out ≥3 Fireworks HTTP 500s without crashing the run. Pre-registered as PILOT_PROTOCOL Amendment 11. **Framing superseded by D-62 (2026-07-19): an adversarial audit found the "telling substitutes / capability falsified" reading an overclaim; the honest correction is D-62. The run, its data, and Amendment 11 stand.** | 2026-07-19 |
+| D-62 | Audit-driven honest correction of the D-61 framing (Dom-approved 2026-07-19; landed on `main` as paper PR #22, `e1b8ad7`). Two adversarial audit workflows (`paper_adversarial_audit.js`: 10 hostile-referee lenses, 30 attacks, 0 refuted; then `paper_reaudit.js`: 6 lenses verifying the fixes, 12 survivors all addressed) found the D-61 reframe OVERCLAIMED. The error: it labelled the B−D TELLING effect (+24pp pooled) as "substitution," but substitution is the A−B contrast (enforcement's marginal value given told) that §3 always declared the headline. Because A=100% by construction, A−B = 100 − B = 41pp POOLED, so enforcement is NOT redundant given telling. CORRECTED FINDING (re-centred on A−B, the paper's own estimand): telling MOVES behaviour in every family (B−D +24pp) but does not stand in for enforcement; A−B is 41pp pooled, small only for the two self-enforcing families (Llama3.1 7pp, Mistral 10pp) and most of the barrier for the weak (Qwen2.5 72pp, Qwen3 73pp). Strict substitution (enforcement adds nothing once told) holds only in that narrow corner; the ladder's clean cell-A-equals-cell-B does NOT replicate (no family reaches a 100% told-off safe rate). Capability does NOT cleanly order self-enforcement (correcting D-61's "capability does not moderate / competent-violator" over-generalisation): it helps or ties on the commit gate in all 4 families and can cut against safety on a discoverable side-door; the pooled within-family contrast is flat-to-slightly-negative, carried by Qwen3's genuine −10 (Qwen2.5 nets zero, its commit +100 cancelling side-door losses; Llama3.1/Mistral −12 are ceiling artefacts, weak sibling telling-invariant, cell-D verified +0/+4). Also corrected: TITLE → "…Measuring When In-Context Contracts Substitute…"; NOVELTY scoped (Symbolic Guardrails measures A−B in the told column; the novelty is the full crossing with the withheld arm, not the A−B measurement); REPRODUCIBILITY scoped (code + runtime pin `6c82cd0` released, paid trajectories ship as a versioned archive with the preprint, the 6c82cd0-vs-benchmark-code conflation fixed); §4 scoring clarified (two-tier correctness/safety checks); figure gains the enforced-100% line + per-family A−B gaps. Supersedes D-61's "telling substitutes / capability falsified" framing; retains the D-61 run, its data, and PILOT_PROTOCOL Amendment 11. LESSON: do not conflate B−D (telling effect) with A−B (marginal value of enforcement / substitution). | 2026-07-19 |
 
 ## Open Decisions
 
@@ -943,19 +981,21 @@ the READMEs. Sync state of the detailed methodology surfaces:
 - `paper/DRAFT.md` — synced to the D-39..D-43 run design 2026-07-05
   (protocol tense, no results); `paper/DRAFT.tex` / `DRAFT.pdf` are stale
   pandoc renders pending a re-render after content stabilizes.
-- **D-61 through-line sync (PENDING, 2026-07-19).** The powered run flipped
-  the headline from "capable cooperative agent self-enforces" (capability
-  story) to "telling substitutes across families, capability does not
-  moderate" (specification story). SYNCED so far: `paper/DRAFT_dom.md`
-  (§5 restructured to powered-run headline + ladder-as-precursor; abstract,
-  intro, contributions, §7 confound retired, §8, §9), PAPER.md Active
-  Decisions (D-61), Hypotheses (H1 supported-at-scale, H3 within-family
-  falsified), Evidence Status summary + "what the frame rests on".
-  STILL STALE, needs the same through-line pass: PAPER.md Five-Minute Talk
-  Track (§ lines ~92-155) and Lineage Anchor (~158-175), which still lead
-  with the capability-gated reading; the landing page `paper/README.md`;
-  the benchmark card / READMEs if they assert the capability headline. Do
-  this as one coherent narrative pass, not piecemeal.
+- **D-61/D-62 through-line sync (2026-07-19).** The powered run first looked
+  like it flipped the headline to "telling substitutes across families,
+  capability does not moderate"; the D-62 audit corrected that overclaim to
+  the honest reading: telling MOVES behaviour across families (B−D +24pp
+  pooled) but does not stand in for enforcement (A−B 41pp pooled,
+  narrow-corner substitution only), and capability does not cleanly order
+  self-enforcement (action-dependent, not a clean moderator). SYNCED:
+  `paper/DRAFT_dom.md` (§5 restructured to powered-run headline +
+  ladder-as-precursor; abstract, intro, contributions, §7 confound retired,
+  §8, §9), PAPER.md Active Decisions (D-61, D-62), Hypotheses (H1/H3 rows +
+  the verifiable-capable prediction-table row), Evidence Status, Title and
+  Frame, Five-Minute Talk Track, Lineage Anchor novelty, Scope, Paper
+  Outline, Threat Model, and the landing page `paper/README.md`. STILL
+  STALE, needs the same through-line pass: the benchmark card / READMEs if
+  they assert the superseded capability or broad-substitution headline.
 
 ## Operational Disciplines
 
