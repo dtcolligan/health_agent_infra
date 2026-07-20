@@ -13,7 +13,7 @@ against full text.
 arXiv submission metadata: primary cs.AI; cross-list cs.LG, cs.CR;
 licence CC BY 4.0.
 Runtime pinned at git 6c82cd0 (tag gab-runtime-1.0.1); the v0.2.0 wheel
-does not enforce. The trajectory archive ships with the preprint, not at that tag.
+does not enforce. Trajectory archive: repo release gab-run-archive-v1.0.
 -->
 
 ## Abstract
@@ -239,7 +239,7 @@ The within-family run above is the confound-break the earlier draft named as fut
 
 ## Appendix A: reproduction
 
-The Section 5.1 headline (Section 5.1) is reproduced by the released analysis code (`analysis/paired.py`) run over the paid trajectories, which ship as a versioned archive with the preprint; the archive includes the resulting `paired_result.json`. The precursor ladder table (Appendix B) reproduces the same way, from the per-gate analysis and the pooling module (`build_cell_contrasts_pooled`); the exact tests come from a small released helper (`exact_tests.py`, pure Python, no dependencies), which returns the run-level (0.00016), task-level (0.33), per-sub-gate (0.029), and family-corrected (0.00062) figures and the Clopper-Pearson intervals ([63, 100] for 8/8, [0, 37] for 0/8). Offline artefacts regenerate with `reproduce_offline.py` (no network, no private data). Two pins matter: the runtime is git 6c82cd0 (tag gab-runtime-1.0.1, not the v0.2.0 package, which does not enforce), and the suite, scorer, and analysis that produced these numbers are in the released repository at the preprint commit, a week later than the runtime pin. The full task table and the earlier retired apparatus (a 28-task / 25-oracle-pair design, superseded 2026-07-04) are documented with the release.
+The Section 5.1 headline is reproduced by the released analysis code (`analysis/paired.py`) run over the paid trajectories, which are released as a versioned archive (repository release `gab-run-archive-v1.0`, with SHA-256 checksums); the archive includes the resulting `paired_result.json`. The precursor ladder table (Appendix B) reproduces the same way, from the per-gate analysis and the pooling module (`build_cell_contrasts_pooled`); the exact tests come from a small released helper (`exact_tests.py`, pure Python, no dependencies), which returns the run-level (0.00016), task-level (0.33), per-sub-gate (0.029), and family-corrected (0.00062) figures and the Clopper-Pearson intervals ([63, 100] for 8/8, [0, 37] for 0/8). Offline artefacts regenerate with `reproduce_offline.py` (no network, no private data). Two pins matter: the runtime is git 6c82cd0 (tag gab-runtime-1.0.1, not the v0.2.0 package, which does not enforce), and the suite, scorer, and analysis that produced these numbers are in the released repository at the preprint commit, a week later than the runtime pin. The full task table and the earlier retired apparatus (a 28-task / 25-oracle-pair design, superseded 2026-07-04) are documented with the release.
 
 ## Appendix B: the confounded precursor ladder
 
