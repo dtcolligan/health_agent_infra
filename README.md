@@ -126,7 +126,10 @@ trajectory JSON and deterministic offline scores.
   **non-enforcing** snapshot: the dispatch/commit gates landed after it,
   so the runtime measured in the preprint is pinned by git commit
   `6c82cd0` (tag `gab-runtime-1.0.1`). Reproduce the paper's runtime by
-  checking out that tag, not by installing the wheel.
+  checking out that tag, not by installing the wheel. The paid-run
+  trajectories and grades are released as
+  [`gab-run-archive-v1.0`](https://github.com/dtcolligan/health_agent_infra/releases/tag/gab-run-archive-v1.0)
+  with SHA-256 checksums.
 
 ## Read in This Order
 

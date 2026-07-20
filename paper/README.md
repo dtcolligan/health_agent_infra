@@ -133,7 +133,10 @@ PYTHONPATH=benchmark uv run python benchmark/governed_agent_bench/reproduce_offl
 The runtime measured in the paper is **not** the v0.2.0 PyPI wheel (which does
 not enforce; the dispatch/commit gates landed after that tag). Reproduce the
 runtime by checking out git `6c82cd0` (tag `gab-runtime-1.0.1`). The paid-run
-trajectories and scores ship as a versioned archive at that tag.
+trajectories and scores are released as a versioned archive:
+[`gab-run-archive-v1.0`](https://github.com/dtcolligan/health_agent_infra/releases/tag/gab-run-archive-v1.0)
+(both runs, per-rep transcripts, grades, and `paired_result.json`, with
+SHA-256 checksums).
 
 ## Cite
 
