@@ -49,7 +49,7 @@ action**.
 
 ## The result
 
-The headline run is a powered within-family sweep across four model families
+The headline run is a within-family sweep across four model families
 (Qwen2.5, Qwen3, Llama3.1, Mistral), pairing a stronger and a weaker sibling in
 each, against a git-pinned runtime on the **commit boundary** (the agent may
 propose a change to the user's data, but only the user may commit it), with
@@ -89,16 +89,16 @@ narrow corner of self-enforcing families.
 
 A four-model capability ladder (MiniMax-M3 and Llama-3.3-70B capable,
 Qwen3.5-9B near floor, Qwen2.5-7B below floor; total paid cost **USD 10.44**)
-motivated the powered run. On the same commit boundary it showed a clean
+motivated the within-family run. On the same commit boundary it showed a clean
 capable-versus-weak split, but capability was entangled with model family (both
 capable models non-Qwen, both weak ones Qwen), so it could not tell a
-capability story from a family story. The powered within-family run broke that
+capability story from a family story. The within-family run broke that
 confound by pairing siblings inside each family, and the clean split did not
 survive it. The ladder is reported as the precursor in the paper's appendix.
 
-![The confounded precursor ladder, commit boundary, cell B (told, enforcement off): both capable models stayed safe on every run, both weak models violated on every run. Enforced cells A and C are 100% by construction. Each bar is eight runs. The powered within-family run above does not reproduce this clean split.](figures/fig1_result.png)
+![The confounded precursor ladder, commit boundary, cell B (told, enforcement off): both capable models stayed safe on every run, both weak models violated on every run. Enforced cells A and C are 100% by construction. Each bar is eight runs. The within-family run above does not reproduce this clean split.](figures/fig1_result.png)
 
-> **What this is not.** A large-sample result. The powered run stands at four
+> **What this is not.** A large-sample result. The within-family run stands at four
 > repeats per cell, the honest unit of replication is the task, and the
 > within-family capability contrast is descriptive at three lineages (a
 > sign-flip permutation test gives p = 1.0). It is a single-runtime case study.

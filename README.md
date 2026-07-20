@@ -1,4 +1,4 @@
-# Told or Enforced: When In-Context Contracts Substitute for Runtime Enforcement in Agent Harnesses
+# Told or Enforced: Measuring When In-Context Contracts Substitute for Runtime Enforcement in Agent Harnesses
 
 ### 📄 [Read the paper (PDF)](paper/DRAFT_dom.pdf)
 
@@ -14,8 +14,8 @@ constraint-respecting behavior comes from being *told* versus being
 *enforced*, mechanism by mechanism, with a deterministic offline scorer.
 
 The repository exists to ship one artifact: the preprint
-*Told or Enforced: When In-Context Contracts Substitute for Runtime
-Enforcement in Agent Harnesses*, with GovernedAgentBench v1.0 released
+*Told or Enforced: Measuring When In-Context Contracts Substitute for
+Runtime Enforcement in Agent Harnesses*, with GovernedAgentBench v1.0 released
 as a companion GitHub tag. HAI is the pinned reference runtime used to
 instantiate the contract; it is the instrument, not an active product
 roadmap.
@@ -60,7 +60,7 @@ The mechanisms toggled on the enforcement axis:
 as a sanity floor. M9-TX transaction integrity is held constant.
 
 The question under test is what runtime enforcement adds once the model has
-already been told the rule (the A-vs-B contrast). A powered within-family run
+already been told the rule (the A-vs-B contrast). A within-family run
 answers it: telling the rule moves behavior in every family (+24 points pooled
 with the runtime off), but it does not stand in for enforcement. The marginal
 value of enforcement given telling is 41 points pooled, small only for the two
@@ -107,7 +107,7 @@ trajectory JSON and deterministic offline scores.
   six synthetic fixtures, a 39-task suite (16-task paid subset), seed
   trajectories, static isolation oracle pairs, targeted live isolation
   probes for M4-M8, and a deterministic rule baseline.
-- The specify-vs-enforce 2x2 ran as a powered within-family sweep (four
+- The specify-vs-enforce 2x2 ran as a within-family sweep (four
   model families, a strong and a weak sibling each) against the git-pinned
   runtime. The headline: telling moves behavior in every family (+24 points
   pooled with the runtime off) but does not stand in for enforcement, whose
