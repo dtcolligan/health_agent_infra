@@ -20,12 +20,12 @@ behaviour?
 
 | | |
 |---|---|
-| **Full paper (PDF)** | [`DRAFT_dom.pdf`](DRAFT_dom.pdf): the canonical written-up version, citations verified |
-| Full paper (Markdown) | [`DRAFT_dom.md`](DRAFT_dom.md) |
+| **Full paper (PDF)** | [`FINAL_PAPER.pdf`](FINAL_PAPER.pdf): the canonical written-up version, citations verified |
+| Full paper (Markdown) | [`FINAL_PAPER.md`](FINAL_PAPER.md) |
 | The making-of essay | [`JOURNEY.md`](JOURNEY.md) ([PDF](JOURNEY.pdf)): seven months of choosing the small true claim over the impressive large one |
 | The instrument | [GovernedAgentBench](../benchmark/governed_agent_bench/): task suite, offline scorer, git-pinned runtime |
 
-<sub>Other files in this folder are drafts, not the paper: `DRAFT.md` / `DRAFT_short.md` is the tighter ~9-page scaffold, `DRAFT_long.md` the extended version with full detail, `refs.bib` the bibliography, `prior_art_notes.md` the citation working notes. Read `DRAFT_dom.*`.</sub>
+<sub>Other files in this folder are drafts, not the paper: `DRAFT.md` / `DRAFT_short.md` is the tighter ~9-page scaffold, `DRAFT_long.md` the extended version with full detail, `refs.bib` the bibliography, `prior_art_notes.md` the citation working notes. Read `FINAL_PAPER.*`.</sub>
 
 ## The design
 

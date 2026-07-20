@@ -1,8 +1,8 @@
 # Told or Enforced: Measuring When In-Context Contracts Substitute for Runtime Enforcement in Agent Harnesses
 
-### 📄 [Read the paper (PDF)](paper/DRAFT_dom.pdf)
+### 📄 [Read the paper (PDF)](paper/FINAL_PAPER.pdf)
 
-Full draft. Also as the [paper landing page](paper/README.md) (abstract, figures, result) and [Markdown](paper/DRAFT_dom.md).
+Full draft. Also as the [paper landing page](paper/README.md) (abstract, figures, result) and [Markdown](paper/FINAL_PAPER.md).
 
 An agent harness has **two ways to make an agent respect a constraint**:
 specify it in the prompt (an in-context contract), or enforce it in the
@@ -23,7 +23,7 @@ roadmap.
 **The draft is complete and readable now.** arXiv submission is the
 remaining step and may be delayed, so the paper is presented on the repo
 in the meantime: **[read it in `paper/`](paper/)** (start with the
-[landing page](paper/README.md) or the [PDF](paper/DRAFT_dom.pdf)).
+[landing page](paper/README.md) or the [PDF](paper/FINAL_PAPER.pdf)).
 
 [![PyPI](https://img.shields.io/pypi/v/health-agent-infra)](https://pypi.org/project/health-agent-infra/)
 [![Tests](https://img.shields.io/badge/tests-2999_passing-green)](hai/verification/tests/)
@@ -154,7 +154,7 @@ pyproject.toml / uv.lock
 
 benchmark/governed_agent_bench/                  # benchmark code, schemas, scorer, harness, tasks, results
 hai/src/ + hai/docs/ + hai/verification/         # frozen HAI reference runtime + operator docs + tests
-paper/README.md + paper/DRAFT_dom.pdf            # the paper: landing page + full draft
+paper/README.md + paper/FINAL_PAPER.pdf            # the paper: landing page + full draft
 paper/JOURNEY.md                                 # the making-of essay
 paper/prior_art_notes.md + paper/refs.bib        # citation notes and bibliography
 
