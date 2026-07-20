@@ -7,13 +7,13 @@ and decisions live in `PAPER.md`. Read `PAPER.md` first.
 ## North Star
 
 This repo exists to ship one artifact: the preprint
-*Told or Enforced: When In-Context Contracts Substitute for Runtime
-Enforcement in Agent Harnesses*, with GovernedAgentBench v1.0 released
+*Told or Enforced: Measuring When In-Context Contracts Substitute for
+Runtime Enforcement in Agent Harnesses*, with GovernedAgentBench v1.0 released
 beside it.
 
 The full draft is complete and its headline result has landed; it is
 presented on the repo at `paper/` (landing page `paper/README.md`,
-full draft `paper/DRAFT_dom.md`). arXiv submission is the remaining step
+full draft `paper/FINAL_PAPER.md`). arXiv submission is the remaining step
 and may be delayed, so the draft is public in-repo in the meantime. This
 does not mean the research programme is finished: the powered
 within-family run has landed (it broke the ladder's capability-vs-family

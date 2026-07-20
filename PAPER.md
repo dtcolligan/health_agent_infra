@@ -9,8 +9,8 @@ decisions change. Provenance lives in `ARCHIVE/`, not here.
 Shipping one artifact: an arXiv preprint, with GovernedAgentBench v1.0
 released as a companion GitHub tag.
 
-The full draft is complete and presented on the repo: `paper/DRAFT_dom.md`
-(canonical write-up), `paper/DRAFT_dom.pdf`, and the landing page
+The full draft is complete and presented on the repo: `paper/FINAL_PAPER.md`
+(canonical write-up), `paper/FINAL_PAPER.pdf`, and the landing page
 `paper/README.md`. arXiv submission is the remaining step and may be
 delayed past the 2026-09-30 target, so the draft is public in-repo in
 the meantime. Draft-complete is not research-complete: the Evidence
@@ -988,7 +988,7 @@ the READMEs. Sync state of the detailed methodology surfaces:
   pooled) but does not stand in for enforcement (A−B 41pp pooled,
   narrow-corner substitution only), and capability does not cleanly order
   self-enforcement (action-dependent, not a clean moderator). SYNCED:
-  `paper/DRAFT_dom.md` (§5 restructured to powered-run headline +
+  `paper/FINAL_PAPER.md` (§5 restructured to powered-run headline +
   ladder-as-precursor; abstract, intro, contributions, §7 confound retired,
   §8, §9), PAPER.md Active Decisions (D-61, D-62), Hypotheses (H1/H3 rows +
   the verifiable-capable prediction-table row), Evidence Status, Title and
