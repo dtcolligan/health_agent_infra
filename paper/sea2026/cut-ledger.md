@@ -186,6 +186,24 @@ itself mandates; L1–L3 are appendix labels, not prose; M1–M3 are
 one-token renumbering forced by the approved moves. Free-standing new
 prose beyond the mandate is three sentences (N9, N10, N11).
 
+**Amendment (2026-07-22, author-approved additions — recorded by the
+careers operator at Dom's direction):** four scope insertions exist in
+`sea2026_main.tex` that the list above did not declare, and the
+"every prose chunk matches the FINAL" claim in report.md is corrected
+accordingly. All four were reviewed and KEPT by Dom on 2026-07-22:
+
+- S1 (abstract, line 67): "With tool exposure fixed and no access to
+  model weights, " prepended to the opening sentence.
+- S2 (§1, line 76): "with tool exposure fixed and no access to model
+  weights, " inserted into the two-levers sentence.
+- S3 (§3, line 100): "With tool exposure fixed, " prepended to the
+  section's opening sentence.
+- S4 (§7, line 265): new sentence "The two levers are also not the
+  whole option space: where feasible, denying the agent the dangerous
+  tool outright dominates both, and this paper studies the residual
+  case where the task legitimately requires the capability, which is
+  what makes violations measurable."
+
 ## Numbers audit (verification step 4)
 
 Method: every numeric token extracted from the compiled preprint PDF's
