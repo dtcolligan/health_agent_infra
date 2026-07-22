@@ -1,0 +1,438 @@
+% =========================================================================
+% SEA 2026 long-track condensation of the FINAL paper.
+% Canonical full paper: paper/FINAL_PAPER.md (2026-07-20 FINAL revision);
+% that file is untouched and remains the source of truth for content.
+% This file is the single shared source for the SEA version; do not
+% compile it directly.  Build:
+%   tectonic sea2026_preprint.tex    (non-anonymous, NeurIPS 'preprint' option)
+%   tectonic sea2026_anonymous.tex   (double-blind workshop submission mode)
+% Provenance comment carried over from the FINAL source:
+%   Dom's fully written-up version. Section 5.1 headline numbers verified
+%   against paired_result.json; ladder numbers (S5.2) against
+%   per_gate_substitution.json (first-action view). All 32 arXiv citations
+%   verified against the arXiv API (author/title/year); the closest six also
+%   against full text.
+%   arXiv submission metadata: primary cs.AI; cross-list cs.LG, cs.CR;
+%   licence CC BY 4.0.
+%   Runtime pinned at git 6c82cd0 (tag gab-runtime-1.0.1); the v0.2.0 wheel
+%   does not enforce. Trajectory archive: repo release gab-run-archive-v1.0.
+% =========================================================================
+\documentclass{article}
+
+\ifdefined\SEAanonymous
+  \usepackage[dblblindworkshop]{neurips_2026}
+  \workshoptitle{Scaling Environments for Agents (SEA)}
+\else
+  \usepackage[preprint]{neurips_2026}
+\fi
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{longtable,array,calc}
+\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+% ---- Anonymization surface: every self-revealing string lives behind a
+% ---- macro defined here, so pointing the anonymous build at an anonymized
+% ---- mirror (e.g. anonymous.4open.science) is a one-line change later.
+\ifdefined\SEAanonymous
+  \newcommand{\gabarchive}{a repository release, name withheld for review, with SHA-256 checksums}
+  \newcommand{\runtimeauthorphrase}{the benchmark's author}
+  \newcommand{\gabrepo}{\url{https://anonymous.4open.science/}}% placeholder; mirror not created yet
+\else
+  \newcommand{\gabarchive}{repository release \texttt{gab-run-archive-v1.0}, with SHA-256 checksums}
+  \newcommand{\runtimeauthorphrase}{its author}
+  \newcommand{\gabrepo}{\url{https://github.com/dtcolligan/health_agent_infra}}% unused in running text; ready if a link is added
+\fi
+
+\title{Told or Enforced: Measuring When In-Context Contracts Substitute for Runtime Enforcement in Agent Harnesses}
+
+\author{%
+  Dom Colligan\\
+  Imperial College London\\
+  \texttt{dominic.colligan25@imperial.ac.uk}%
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+With tool exposure fixed and no access to model weights, an agent can be held to a rule two ways: state it in the prompt and rely on the model (telling), or have the harness block the violation regardless of the model (enforcing). We separate them, the rule told or withheld and the runtime on or off, and ask the question a harness designer faces: given the model was told, does enforcement still change behaviour?
+
+We answer it on a pre-registered, single-runtime, within-family run: a stronger and a weaker sibling in each of four model families. The runtime's block is unconditional: across 488 enforced runs it let nothing through. With the runtime off, telling the rule raised the safe rate in every family (+24 points pooled), so specification moves behaviour in the families we test. But it does not stand in for enforcement: the marginal value of enforcement given telling stays large (41 points pooled), small only for the two self-enforcing families and most of the barrier for the two weak ones, so substitution holds only in that narrow corner. Capability does not cleanly decide it either: within a family it helps or ties on the salient boundary and can cut against safety on a discoverable side-door (clearest in one family), so the contrast is flat to slightly negative. We report these results descriptively, across three model lineages (Qwen2.5 and Qwen3 collapse to one Qwen lineage), not as a significance claim.
+
+Two further contributions. We release GovernedAgentBench: the test scenarios, a deterministic offline grader (fixed code, no AI), the analysis code, and the git-pinned reference runtime, with the paid transcripts and grades shipping as a versioned archive alongside the preprint. And a caution: a harness that hides a tool's output makes the agent guess facts it cannot see, which a grader then misreads as fabrication; in our own pipeline an apparent case of this vanished the moment we showed the agent what its commands actually returned.
+\end{abstract}
+
+\section{Introduction}\label{introduction}
+
+An agent harness is a design surface. Whoever wires up an LLM to tools controls the interaction surrounding it: which tools are exposed, how actions are parsed and dispatched, and what happens when a proposed action would violate a constraint. For any given constraint, with tool exposure fixed and no access to model weights, that engineer holds exactly two levers. The first is in-context specification (telling): state the rule in the agent's prompt as an in-context contract and rely on the model to respect it. The second is runtime enforcement (enforcing): have the harness block the violation deterministically, regardless of what the model decides. Telling is cheap and moves with the prompt; enforcing requires typed command schemas, dispatch gates, and validation code that must be built, tested, and maintained. A harness designer deciding where to spend engineering effort needs to know when the second lever buys behaviour the first does not.
+
+Existing guardrail evaluations rarely isolate it. Some toggle enforcement while the full policy sits in the prompt in both conditions {[}arXiv:2604.15579{]}, so the delta is only measured where the model was already told. Others bundle ``injected and enforced'' into one switch {[}arXiv:2602.22302{]}, or compare an enforced arm against a prompt-only arm {[}arXiv:2603.00822, arXiv:2605.28914{]}, which mixes telling into enforcing. The closest, Mind the GAP {[}arXiv:2602.16943{]}, varies enforcement directly but never crosses the told and enforced forms of the same rule. So the marginal value of enforcement given telling is measured only in that told-column form; no located study crosses it against a withheld arm for the same rule, across all four cells, scored on the model's first action.
+
+This paper runs that crossing. For each rule we build a 2$\times$2 experiment: the rule told or withheld, and the runtime enforcing or off. The quantity we care about is the marginal value of enforcement given the model was told.
+
+We hypothesised that two parameters would decide the marginal contribution of enforcement given in-context specification: model capability and goal conflict. Goal conflict did not carry it, producing no rule-breaking at all (Section 5). Capability looked decisive in an earlier four-model run, but that run confounded capability with model family (both capable models non-Qwen, both weak ones Qwen), so we ran the within-family test it demanded: a strong and a weak sibling in each of four families, across a sixteen-task mutation gate. Two things came out of it. Telling moved behaviour in every family (the safe rate rose 24 points pooled with the runtime off), but it did not stand in for enforcement: given telling, enforcement's marginal value stayed large (41 points pooled) and small only in the two self-enforcing families, so substitution holds in a narrow corner. And capability did not cleanly decide it: within a family it helps or ties on the salient commit boundary but can cut against safety on a discoverable side-door (clearest in one family), so the strong-minus-weak contrast is zero or slightly negative. The runtime's guarantee, meanwhile, held on all 488 enforced runs.
+
+A second, independent finding is methodological. Our own harness first produced a spurious result: it handed the agent a file path instead of a tool's actual output, so the blinded agent guessed identifiers it could not see, and the scorer called that fabrication. Restoring the output dissolved the effect entirely (Section 6). We name the failure mode harness blindness.
+
+\textbf{Contributions.} (1) A cross-family telling effect, and the limits of substitution: told a mutation-gate rule with enforcement off, models self-enforce more than when it is withheld (+24 points pooled across four families), so specification moves behaviour, but it does not stand in for enforcement, whose marginal value given telling stays large (41 points pooled) and is small only in the two self-enforcing families. Strict substitution, enforcement adding nothing once told, holds only in that narrow corner, and capability does not order it: the within-family strong-versus-weak contrast is zero or slightly negative. We evidence it on a pre-registered within-family run and report the within-family contrast descriptively, across three model lineages, not with a significance claim; the runtime's guarantee is untouched, all 488 enforced runs staying safe. (2) The harness-blindness caution, demonstrated by dissolving one such finding. (3) GovernedAgentBench, the instrument that produced the finding above and which we release for reproducibility: a task suite, a deterministic offline scorer, and a git-pinned reference runtime that hold the two levers apart per mechanism. We claim it for its clean, reproducible isolation of telling from enforcing for the same rule, scored on first action, not as a novel design: prior work already measures enforcement in the told column (Symbolic Guardrails) and reaches the withheld-but-enforced cell (FORGE), just not the full crossing of the two for the same rule. The paper claims no scaling law, no injection robustness, and nothing beyond this one runtime.
+
+\section{Background and related work}\label{background-and-related-work}
+
+The harness between a model and its tools is now studied as a design surface, but that line optimises it for capability, not governance (Harness-Bench, NLAH, AHE, Meta-Harness {[}arXiv:2605.27922, 2603.25723, 2604.25850, 2603.28052{]}; ETCLOVG, OpenReview 3hXEPbG0dh). Enforcement frameworks supply mechanisms without measuring what the model would do unaided (AgentSpec, CaMeL, Progent, Harness-MU {[}arXiv:2503.18666, 2503.18813, 2504.11703, 2606.21856{]}), and studies pitting enforcement against text-only governance change behaviour without withholding the rule per condition (ContextCov, Verifier Tax, Mechanical Enforcement, Policy-as-Prompt {[}arXiv:2603.00822, 2603.19328, 2605.14744, 2509.23994{]}; and the structural guards AIRGuard, Prompts Don't Protect, Symbolic Guardrails, TRACE, ST-WebAgentBench {[}arXiv:2605.28914, 2605.18414, 2604.15579, 2606.13174, 2410.06703{]}). The result is not mere instruction-following, because told-only compliance is not free: capable models finish tasks while breaking latent rules, non-monotonically across families (LogiSafetyBench, SABER, Agent-SafetyBench {[}arXiv:2601.08196, 2606.01317, 2412.14470{]}); in-context policy degrades with reasoning complexity (SafePyramid {[}arXiv:2606.29887{]}); and rules obeyed while visible are dropped as context compacts (Governance Decay {[}arXiv:2606.22528{]}). That checkability is what prior work uses to build evaluations (IFEval, RECAST, VerIF {[}arXiv:2311.07911, 2505.19030, 2506.09942{]}), not to predict when an agent complies.
+
+% CUT (SEA step 2): the two cell-by-cell related-work paragraphs moved
+% verbatim to Appendix C; the compressed paragraph below replaces them.
+Two priors sit very close; four more reach part of the crossing. FORGE {[}arXiv:2602.16708{]} runs withheld-but-enforced against told-but-unenforced, the off-diagonal, never instantiating cell A. Mind the GAP {[}arXiv:2602.16943{]} varies enforcement directly, but its told rule and its enforced rule are different objects, and its attempt-rate-on-intent scoring cannot move between arms by construction. Agent Behavioral Contracts {[}arXiv:2602.22302{]} toggles specification and enforcement together, the main diagonal. ABSTAIN {[}arXiv:2606.02965{]} reaches three of four cells, but its enforced arm keeps the prompt, never realising withheld-and-enforced. TeamBench {[}arXiv:2605.07073{]} finds prompt-only and sandbox-enforced role separation indistinguishable on pass rate where the rule is never withheld. PhantomPolicy {[}arXiv:2604.12177{]} supplies the policy-invisible-violation taxonomy we adopt. The full cell-by-cell mapping appears in Appendix C.
+
+Isolated withheld-but-enforced measurements exist: FORGE by design, Prompts Don't Protect structurally, and Mind the GAP through its enforce mode. What no located prior offers is a clean, reproducible isolation of the two levers for the same rule across all four cells, scored on first action, per governance mechanism, with a released deterministic offline scorer. GovernedAgentBench provides that instrument; the paper's claims are the empirical finding above and the harness-blindness caution (Section 6), not the novelty of any single design element.
+
+\section{The two levers}\label{the-two-levers}
+
+With tool exposure fixed, a harness can make an agent respect a rule two ways: state the rule where the model can read it (telling), or make the violation impossible whatever the model emits (enforcing). Deployed systems pull both at once, so their effects are confounded. This paper's whole manipulation is to decouple them, varying telling and enforcing independently for a single rule.
+
+Telling is the in-context contract. It is not just a policy paragraph but everything the model is shown: the list of commands and their argument shapes, a per-command ``safe for the agent to run'' flag, and the prose describing the out-of-scope boundary. It is a harness-level lever, separate from anything baked in during training, which we refer to as model disposition.
+
+Enforcing is what the runtime does regardless of the model. Our reference runtime has five governance checks, each of which can be switched off (individually, or all at once):
+
+{\topsep=4pt\partopsep=0pt
+\begin{center}
+\begin{tabular}{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule
+\begin{minipage}[b]{\linewidth}\raggedright
+Check
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+What it does
+\end{minipage} \\
+\midrule
+schema check & rejects malformed or invented commands before they run \\
+dispatch gate & refuses to run a command not flagged safe for the agent \\
+commit gate & the agent may propose a change to user data, but only the user may commit it \\
+refusal rule & refuses out-of-scope requests, including a zero-tolerance medical boundary \\
+audit check & attaches evidence to recommendations; the scorer later catches fabricated or missing references \\
+\bottomrule
+\end{tabular}
+\end{center}}
+
+A sixth property, transaction integrity, is always on. The commit gate is the one this paper's headline turns on: the runtime refuses an agent-issued commit and leaves the change merely proposed.
+
+\textbf{The 2$\times$2.} Crossing the two levers, for any one rule, gives four cells:
+
+{\topsep=4pt\partopsep=0pt
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+& Enforcing & Off \\
+\midrule
+\textbf{Told} & A: deployment baseline & B: told, not enforced \\
+\textbf{Withheld} & C: withheld, still enforced & D: neither \\
+\bottomrule
+\end{tabular}
+\end{center}}
+
+% CUT (SEA step 1): the full-page 2x2 schematic figure dropped entirely;
+% the text-table above and the paragraph below carry the same content.
+Cell A is how systems ship. Cell B isolates self-enforcement: the model knows the rule and nothing stops it. Cell C isolates pure enforcement: the rule is hidden but the runtime still blocks. Cell D is the floor. Three reads carry the information: B vs.~D is the effect of telling; C vs.~D is the effect of enforcing; and A vs.~B is our headline: what enforcement adds once the model was told. If A and B match, enforcement changed no behaviour on that rule; its value is then the guarantee itself, which is real and unconditional (a blocked action simply cannot happen) even where behaviour does not move.
+
+One scoring convention matters. A blocked action returns an error, and that error is itself the rule, told late, so cell C drifts toward cell B after the model's first contact with a block. We therefore score the telling reads on the model's first action; Section 5.1 reports the multi-turn check.
+
+\section{GovernedAgentBench}\label{governedagentbench}
+
+GovernedAgentBench is the instrument that holds the two levers apart. It toggles telling and enforcing independently, per rule, against one fixed runtime, and scores the result deterministically and offline.
+
+\textbf{The runtime.} The instrument is HAI, a non-clinical personal-wellness agent runtime with a typed command interface, pinned as a frozen snapshot; it is a reference implementation, not the contribution or a product, though \runtimeauthorphrase{} built it in work separate from this paper, which we flag as a same-team caveat. Its no-diagnosis boundary is one of the evaluated rules, not a disclaimer. Two facts matter for reproduction. First, the published v0.2.0 package does not enforce; the dispatch gate landed three days after that version tag, so the measured runtime is pinned by git commit 6c82cd0. Second, before spending anything, a pre-flight check confirmed the runtime actually refuses an agent commit; it passed, so the enforced cells were measured against a runtime verified to enforce, not assumed to.
+
+\textbf{Tasks.} The suite has 39 tasks; the paid run used a concentrated 16-task subset, the rest covered offline. Each task is one labelled cell of a rule's 2$\times$2. For the commit boundary we use two tasks (committing a target and committing an intent), each run four times per cell.
+
+\textbf{The two axes in code.} Enforcing is a runtime setting. Telling is a per-task contract applied at prompt-render time while the runtime is untouched: the withheld prompt strips the rule's facts and prose, and an automatic scan rejects any withheld prompt that still leaks the rule's words. Two caveats attach. First, even withheld, the prompt still lists command names, so the model retains a hint, and B-vs-D and C-vs-D are therefore lower bounds on the effect of telling. Second, a discoverability aid injects the seeded target's identifier into the task prompts of both arms, without which withheld models often fail to find the target at all; it raises the withheld violation rate, and its full provenance, per run, is disclosed in Section 7.
+
+\textbf{Scoring: the commit predicate.} The headline rests on one deterministic check that needs no thresholds and no pattern matching. The scorer is offline with no model calls; it grades one (task, trajectory) pair, where a trajectory is the ordered record of what the agent did (each step a command, an observation of its result, a refusal, a final answer, or a malformed turn). On the commit boundary the whole 2$\times$2 reduces to a single predicate over the agent's first action \emph{a}:
+
+{\topsep=3pt
+\begin{verbatim}
+commit(a) = a is an agent-issued command that activates or deactivates
+            user-authored state (W57, the runtime's user-authorization gate)
+            and whose execution returned OK
+safe(a)   = not commit(a)
+\end{verbatim}}
+
+A proposal or a refusal is safe; an executed activation is the violation. The two boundary choices are deliberate. First action, because a blocked action's error message is itself the rule told late (Section 3), so only the first move reads what the model brought to it. Executed, because an attempt the runtime blocks is visible in the trajectory but is not a violation that happened; the violation is a change that landed. The predicate is a fixed function of the trajectory and the pinned command manifest, with no threshold or model judgement between the trajectory and the label, and a reader can audit it against the released tests in minutes.
+
+\textbf{The rest of the grader.} The wider 39-task suite is graded by the same kind of fixed offline checks, in two groups: task-completion checks (correct commands, valid output formats, a summary consistent with what the agent observed) and safety violations graded zero-tolerance, where a single occurrence fails the run outright (an unauthorised change to user data, a direct database write, an invented command, a wrong refusal in either direction, a fabricated citation, a medical claim). None of this carries weight in the headline, which rests on the commit predicate alone. The detector detail and full metric definitions appear in Appendix A.
+
+\textbf{Reproducibility of the scoring.} The bars and which checks are zero-tolerance are read from one committed configuration file, and each score records that file's SHA-256 hash, so a threshold or policy change not carrying a hash change is a detectable reproducibility break, not a silent re-scoring. The bars are saturated by design: the contract gives no partial credit for one hallucinated command or one unauthorised mutation.
+
+\textbf{A disclosed pre-run scorer edit.} The harm-check code was edited three times in the day before the run, the last 47 minutes before it, each edit in the direction we hoped for. We verified this does not touch the result: every violation in the headline table is caught by the original, older detection path, so re-scoring with the pre-edit scorer is identical on the 2$\times$2 and the finding is invariant to those edits.
+
+\textbf{The pre-registered runs.} Both runs were designed before their data. The within-family run (Section 5.1) was pre-registered in full: the four family pairs, the sixteen-task suite, the within-family cell-B capability contrast as the estimand, and a lineage-collapsed sign-flip permutation as the primary test: pre-committed as descriptive rather than confirmatory, because at three model lineages its exact one-sided floor is 0.125. Two departures. First, a secondary serverless-breadth arm (four single-band models) failed to run on a stale provider key and is dropped; it carries no family pair and no weight on the primary. Second, the run spans two runtime commits, with an orchestration-only robustness fix between them that leaves every model reply byte-identical, so the split is immaterial to scoring.
+
+\section{Results}\label{results}
+
+We report the within-family run (Section 5.1); the four-model ladder that motivated it (Section 5.2) follows as provenance. One structural fact frames everything. Cell A (told, enforced) and cell C (withheld, enforced) are safe on every run by construction: the runtime blocks the mutation whatever the model emits, and across all 488 enforced runs not one violation got through. The enforced cells carry no variance, so the 2$\times$2 reduces to two contrasts in the runtime-off column. Cell B against cell D (told versus withheld) is the effect of telling. Cell A against cell B (enforced versus off, once the model was told) is the question a harness designer actually asks, and the one this paper set out to measure: what does enforcement still add once the model has been told? Because A is 100\% by construction, that contrast is just 100 minus the cell-B safe rate.
+
+\textbf{Remark: the identity is the finding, not a trick.} A sceptic can read A minus B as a re-description: enforced runs are safe by construction, so the number is arithmetic on cell B, and the behavioural content of the study is the runtime-off column plus a software verification. That is precisely the design.
+
+\subsection{The within-family run}\label{the-within-family-run}
+
+The four-model ladder of Section 5.2 entangles capability with model family: its capable models are non-Qwen and its weak models Qwen, so ``weaker models need enforcement'' and ``Qwen models do'' cannot be separated. The within-family run breaks that confound by construction, contrasting a strong and a weak model \emph{within} the same family (Qwen2.5 \{72B, 7B\}, Qwen3 \{32B, 8B\}, Llama3.1 \{70B, 8B\}, Mistral \{24B, 7B\}), across a sixteen-task mutation-gate suite (eight distinct governed decisions, each told and withheld: commit, archive and set-active on a target and on an intent, plus two commit framings), four repeats a cell, run against on-demand H100 deployments for about USD 115. It answers the enforcement-given-telling question directly, and corrects what the ladder suggested. Throughout, rates are rounded to the nearest point and effect columns are computed from the unrounded rates, so an effect may not equal the difference of the rounded columns beside it.
+
+\textbf{The guarantee holds at scale.} Across all eight models both enforced cells scored safe on every one of 488 runs. Those cells were scheduled at 512 (both enforced cells, eight tasks each, eight models, four repeats); 24 trajectories came back incomplete, from length truncation and tool-driving failures concentrated in the weaker models, and are dropped, split evenly across the two enforced cells (12 and 12). Because the enforced cells are safe by construction, a dropped run is an unfinished trajectory, not an enforcement failure. The runtime's block is unconditional and did not miss once at eight-model scale; everything below concerns the two cells where the runtime is off.
+
+\textbf{Telling helps, but does not replace enforcement.} With the runtime off, telling the rule (cell B) beat withholding it (cell D) in every family. But telling did not make enforcement redundant: the marginal value of enforcement given telling, cell A minus cell B, stayed large.
+
+{\topsep=4pt\partopsep=0pt
+\begin{center}
+\begin{tabular}{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}@{}}
+\toprule
+\begin{minipage}[b]{\linewidth}\raggedright
+Family
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+B: told, off
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+D: withheld, off
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+telling (B$-$D)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+enforcement given told (A$-$B)
+\end{minipage} \\
+\midrule
+Qwen2.5 & 28 & 20 & +8 & 72 \\
+Qwen3 & 27 & 12 & +14 & 73 \\
+Llama3.1 & 93 & 57 & +36 & 7 \\
+Mistral & 90 & 53 & +37 & 10 \\
+Pooled & 59 & 35 & +24 & 41 \\
+\bottomrule
+\end{tabular}
+\end{center}}
+
+Telling raises the safe rate 24 points pooled and is positive in every family: specification moves behaviour. But pooled, enforcement still adds 41 points over telling alone, and that residual splits sharply by regime. It is small only for the two self-enforcing families (7 points for Llama3.1, 10 for Mistral) and it is most of the barrier for the two weak ones (72 and 73 points). Substitution in the strict sense, that enforcement adds nothing once the model was told, holds only in that narrow high-self-enforcement corner, and even there it is a 7-to-10-point residual, not the clean zero the ladder showed. No family reaches a 100\% told-off safe rate, so the ladder's cell-A-equals-cell-B result (Section 5.2) does not survive the within-family test (Figure~\ref{fig:powered}).
+
+Intervals are wide at these per-cell sizes, but the pooled contrasts are clear. Per-family 95\% Wilson intervals on cell B run from {[}19, 40{]} (Qwen2.5) to {[}84, 97{]} (Llama3.1), and cell D is similarly wide; pooled, cell B is 59\% {[}53, 65{]} and cell D 35\% {[}29, 41{]}. The telling effect (B minus D) is +24 points, 95\% Newcombe interval {[}16, 33{]}, and the enforcement residual (A minus B) is 41 points, 95\% interval {[}35, 47{]}. The repeat-dependence caveat that keeps the within-family capability contrast descriptive (below) applies to these intervals too, so we read them as indicative rather than exact. Two robustness checks. Scored on the converged multi-turn window instead of the first action, every cell in this run is identical, so no result here depends on the window choice. And 20 runtime-off trajectories (8 in cell B, 12 in cell D) also came back incomplete, concentrated in the same weaker models as the enforced-cell drops; scored pessimistically, with every dropped trajectory counted as a violation, the pooled telling effect is unchanged (+24) and the weak-sibling ceilings in Llama3.1 and Mistral fall to 84\% and 91\%: Mistral's contrast stays negative (about $-$6) while Llama3.1's flips to about +3, the strong sibling marginally safer, which is what a ceiling artefact predicts. We do not adopt that scoring, since an unfinished trajectory is not an executed violation, and report it as a bound.
+
+\begin{figure}
+\centering
+\includegraphics[width=0.72\linewidth]{../figures/fig3_powered.pdf}
+\caption{The within-family run, runtime off in both panels. (a) Telling the rule (cell B) beat withholding it (cell D) in every family, +24 points pooled, but no family reaches the 100\% that would make enforcement redundant; the distance from 100 is enforcement's marginal value given telling (cell A minus cell B), small for Llama3.1 and Mistral and most of the barrier for the Qwen families. (b) Within a family the strong-minus-weak cell-B contrast is flat to slightly negative, so capability does not cleanly order self-enforcement; on the commit boundary specifically the stronger sibling is at least as safe in every family. Bars are the share of runs safe on the first action. The enforced cells A and C were safe on all 488 runs and are not shown; (a) pools both siblings per family, (b) splits them.}\label{fig:powered}
+\end{figure}
+
+\textbf{Capability does not cleanly order self-enforcement.} The ladder read capability as what decides whether telling suffices. Within a family that is not a law. On the commit boundary the ladder actually swept, the stronger sibling is at least as safe in every family (Qwen2.5 8/8 versus 0/8, Qwen3 4/8 versus 2/8, Llama3.1 and Mistral tied at ceiling), so there capability helps if anything. Pooled across the wider mutation gate, though, the within-family strong-minus-weak contrast in cell B runs flat to slightly negative:
+
+{\topsep=4pt\partopsep=0pt
+\begin{center}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Family & strong & weak & contrast \\
+\midrule
+Qwen2.5 & 28 & 28 & 0 \\
+Qwen3 & 22 & 32 & $-$10 \\
+Llama3.1 & 88 & 100 & $-$12 \\
+Mistral & 84 & 97 & $-$12 \\
+\bottomrule
+\end{tabular}
+\end{center}}
+
+The pooled negative is small and mixed. Two families sit at ceiling: in Llama3.1 and Mistral the weak sibling is safe on almost every run whether the rule is told or withheld (Llama3.1 100\% told and 100\% withheld, a telling effect of +0; Mistral 97\% and 92\%, +4), so its safety is nearly invariant to the rule and reads tool competence, not self-enforcement, and their $-$12 contrasts are largely ceiling artefacts. In the two families where both siblings can actually drive the tools, Qwen2.5 and Qwen3, a real mechanism appears: the stronger model is at least as safe on the salient commit boundary (8/8 versus 0/8, 4/8 versus 2/8) yet executes the archive and set-active side-doors the weaker one cannot. It nets zero in Qwen2.5, where the commit gain cancels the side-door loss, and a genuine $-$10 in Qwen3, the one non-artefact net negative. So the honest reading is narrow: capability helps or ties on the salient boundary and can cut against safety on a discoverable side-door, and the pooled contrast mixes that small genuine effect with two ceiling artefacts. As a significance test this settles nothing: at three model lineages the one-sided sign-flip permutation floors at 0.125 and returns p = 1.0, which is only the largest value the statistic can take once the observed mean is not positive, so we read the contrast descriptively.
+
+\subsection{The confounded precursor}\label{the-confounded-precursor}
+
+A four-model ladder is what motivated this run. Told the commit rule with enforcement off, two capable models (MiniMax-M3, Llama-3.3-70B) refused on every run and two weak models (Qwen3.5-9B, Qwen2.5-7B) committed on every run, so capability looked decisive and telling looked like it made enforcement redundant for the capable pair, whose cell B was exactly 100\%. But both capable models were non-Qwen and both weak ones Qwen, confounding capability with model family, and the clean cell-A-equals-cell-B reading rested on that 100\%. The within-family run above breaks the confound and does not reproduce it: no family reaches a 100\% told-off safe rate, so enforcement adds a residual everywhere. The full ladder table, its per-run mechanism, the probe detail, and the ladder's caveats are in Appendix B.
+
+\section{Harness blindness}\label{harness-blindness}
+
+\looseness=-1 Probing prior to the experiment produced and then destroyed an apparent positive result, and the failure mode is general enough to be considered a finding. Early on in this project, the harness did not show the agent its tools' output: where a command's result should have appeared, the agent got a file path instead. When a task then needed an identifier to proceed, the agent guessed.
+
+It was an artefact of the harness. We pre-registered a falsification test and re-ran it after fixing the harness to show the agent its command output. Fabrication dropped to zero against the pre-registered 40-percentage-point falsification bar: once the agent can see the empty lookup, it abstains honestly even when it needed the id to finish.
+
+\looseness=-1 The lesson: an eval harness that hides tool output can cause the agent to guess, and a scorer reads the guess as fabrication. Genuine constraint-driven fabrication does exist under more adversarial setups {[}arXiv:2606.14831{]}; our point is narrower. Before charging an agent with making something up, check that it could see what it is accused of inventing.
+
+\section{Limitations and scope}\label{limitations-and-scope}
+
+\textbf{This is a case study on one runtime.} Every model-backed number comes from one runtime and one prompt template. The within-family run spans eight models in four families across a sixteen-task mutation gate, but they are eight models on a single instrument: whether the effect generalises beyond this runtime is the highest-value follow-up, and until an independent replication exists, nothing here separates a real phenomenon from a quirk of this instrument. The behavioural finding also rests on a single mechanism, the mutation gate: the other rule we swept, the medical boundary, was near-ceiling and uninformative (Appendix B), so whether telling substitutes for enforcing on other mechanisms is untested. The two levers are also not the whole option space: where feasible, denying the agent the dangerous tool outright dominates both, and this paper studies the residual case where the task legitimately requires the capability, which is what makes violations measurable.
+
+\looseness=-1 \textbf{The capability--family confound is broken, at a cost.} The precursor ladder confounded capability with model family (capable = non-Qwen, weak = Qwen); the within-family run (Section 5.1) removes that confound by pairing a strong and a weak sibling inside each of four families, and the ladder's clean capability reading does not survive it: within a family, capability helps or ties on the salient boundary and can cut against safety on a discoverable side-door, so it does not order self-enforcement. What the within-family run cannot yet do is make the within-family null a test rather than a description: it rests on three model lineages, where the sign-flip permutation floor is 0.125, so more families are needed to move from a descriptive null to a rejection. Per-model vendor-recommended sampling still entangles model identity with sampling settings even within a pair, though each within-family 2$\times$2 is computed at fixed settings and holds family constant across the capability contrast. In the two families where the weak sibling sits near ceiling (Llama3.1, Mistral) it is safe by incapability rather than self-enforcement, its safety barely moving when the rule is told (Llama3.1 +0, Mistral +4), so there the contrast reads tool competence, not disposition; it isolates self-enforcement cleanly only where both siblings can drive the runtime.
+
+\textbf{The enforced cells carry no variance.} Cells A and C are 100\% by construction, so A minus B is exact arithmetic on cell B (the Section 5 remark); the guarantee run confirms the block held on all 488 enforced trials, so that share is real, not an artefact of scoring.
+
+\looseness=-1 \textbf{Pre-registration honesty.} Beyond the outcome-screened replacement model and the sub-target sample size (Appendix B), the withheld prompt still leaks command names, and the medical-boundary detector shares ground truth with the runtime. One design choice deserves its own line: the task prompts inject the identifier of the seeded target, a discoverability aid added to the instrument after early smoke runs showed models scoring safe merely because they could not find the target at all. In the within-family run it is a design constant, present in every cell and both arms and part of the suite before that run's canary. Its likely direction is to raise withheld-arm violations and therefore the measured telling effect, since without it cell D reads safer by incapability. It is prompt-side, so it cannot be removed by re-scoring; a no-aid arm is future work. Its reach is bounded by mechanism: the aid changes discovery, not ability, so it can move an outcome only for a model able to execute the mutation once its target is findable. TeamBench's caution applies to us too: our scorer sees whether the specific guarded violation occurs, but an enforcement effect that shifted some finer channel while leaving the tracked violation unchanged would go undetected at this size.
+
+\section{Discussion: what enforcement is still for}\label{discussion-what-enforcement-is-still-for}
+
+\looseness=-1 The result relocates enforcement's value; it does not remove it. Enforcement keeps its unconditional guarantee: a blocked action cannot happen, whatever the model does or is prompted, the property FORGE {[}arXiv:2602.16708{]} establishes formally as verdict correctness (no denied action fires), and that guarantee is untouched by any behavioural number: it held on all 488 enforced runs of the within-family study. Beyond the guarantee, enforcement contributes to the safe outcome via the block wherever a model does not self-enforce: below the operate floor, where the failure is being too weak to drive the tools rather than disobedience; when the rule was never told, the floor cell where the runtime is the only barrier and real deployments accumulate such rules through drift and context compaction {[}arXiv:2606.22528{]}; when a told rule is present but not salient at the moment of action; wherever capability itself enables the violation, as a more capable model can drive a governed side-door to completion a weaker one cannot (clearest in one family); and under adversarial pressure, which we do not test.
+
+Mechanical Enforcement {[}arXiv:2605.14744{]} finds enforcement helping, but in a different domain: it scores decision-rationale quality under regulatory pressure, not tool-action compliance under benign use. Mind the GAP {[}arXiv:2602.16943{]} is better read as convergent than contradictory. Its frontier-model null is therefore consistent with the high-self-enforcement corners of our map, not a universal statement, and our runs locate its boundaries. The full reconciliation appears in Appendix C.
+
+\textbf{A note for evaluation.} Read from the model's side, cell B (told, runtime off) measures the self-enforcement a model supplies once told, a quantity distinct from raw capability and from runtime enforcement; a post-training evaluation could track it before and after an intervention, but we do no training here and claim nothing about it.
+
+\section{Conclusion and future work}\label{conclusion-and-future-work}
+
+\looseness=-1 Told or enforced, the honest answer is that telling helps but does not stand in for enforcing. In a within-family run across four families and eight model sizes, stating a governed mutation rule in context raised the safe rate in every family (+24 points pooled with the runtime off), so specification moves behaviour in the families we test. But given telling, runtime enforcement still added most of the barrier (41 points pooled), and substitution, enforcement adding nothing once the model was told, held only for the most self-enforcing families and even there left a residual. Capability did not cleanly decide it: a confounded four-model ladder had made capability look decisive, but within a family it helps or ties on the salient boundary and can cut against safety on a discoverable side-door, so the pooled contrast is flat to slightly negative. We report these results descriptively, across three model lineages, not as a significance claim, and the ladder's medical-boundary rule was uninformative at this scale. The runtime's value is therefore not that capable models have outgrown it; it is that no model self-enforces everywhere, and enforcement is the only barrier where it does not: a withheld rule, a discoverable side-door, a rule below the model's operate floor. Its guarantee is intact and unconditional.
+
+The takeaway we most want carried is the methodological one: before attributing fabrication to a model, check what the harness let it see.
+
+\looseness=-1 The within-family run above is the confound-break the earlier draft named as future work; four things would still sharpen the result. The permutation rests on three model lineages, where the exact one-sided floor is 0.125, so more families are what would let the descriptive null harden into a test. External replication on a second runtime with its own rules and scorer is what would turn a case study into a phenomenon. Adversarial inputs would locate where substitution ends and injection defence begins. And long-horizon drift (does enforcement catch a rule the model has since forgotten?) is the measurement this design most directly points at.
+
+\section*{References}\label{references}
+\addcontentsline{toc}{section}{References}
+
+\begin{itemize}
+\tightlist
+\item
+  Jeffrey Zhou et al.~Instruction-Following Evaluation for Large Language Models (IFEval). arXiv:2311.07911, 2023.
+\item
+  Ido Levy et al.~ST-WebAgentBench: A Benchmark for Evaluating Safety and Trustworthiness in Web Agents. arXiv:2410.06703, 2024.
+\item
+  Zhexin Zhang et al.~Agent-SafetyBench: Evaluating the Safety of LLM Agents. arXiv:2412.14470, 2024.
+\item
+  Haoyu Wang, Christopher M. Poskitt and Jun Sun. AgentSpec: Customizable Runtime Enforcement for Safe and Reliable LLM Agents. arXiv:2503.18666, 2025.
+\item
+  Edoardo Debenedetti et al.~Defeating Prompt Injections by Design (CaMeL). arXiv:2503.18813, 2025.
+\item
+  Tianneng Shi et al.~Progent: Securing AI Agents with Privilege Control. arXiv:2504.11703, 2025.
+\item
+  Zhengkang Guo et al.~RECAST: Expanding the Boundaries of LLMs' Complex Instruction Following with Multi-Constraint Data. arXiv:2505.19030, 2025.
+\item
+  Hao Peng, Yunjia Qi, Xiaozhi Wang, Bin Xu, Lei Hou and Juanzi Li. VerIF: Verification Engineering for Reinforcement Learning in Instruction Following. arXiv:2506.09942, 2025.
+\item
+  Gauri Kholkar and Ratinder Ahuja. Policy-as-Prompt: Turning AI Governance Rules into Guardrails for AI Agents. arXiv:2509.23994, 2025.
+\item
+  Da Song et al.~Evaluating Implicit Regulatory Compliance in LLM Tool Invocation via Logic-Guided Synthesis (LogiSafetyBench). arXiv:2601.08196, 2026.
+\item
+  Nils Palumbo, Sarthak Choudhary, Jihye Choi, Guy Amir, Prasad Chalasani and Somesh Jha. Formal Policy Enforcement for Real-World Agentic Systems (FORGE). arXiv:2602.16708, 2026.
+\item
+  Arnold Cartagena and Ariane Teixeira. Mind the GAP: Text Safety Does Not Transfer to Tool-Call Safety in LLM Agents. arXiv:2602.16943, 2026.
+\item
+  Varun Pratap Bhardwaj. Agent Behavioral Contracts: Formal Specification and Runtime Enforcement for Reliable Autonomous AI Agents. arXiv:2602.22302, 2026.
+\item
+  Reshabh K Sharma. ContextCov: Deriving and Enforcing Executable Constraints from Agent Instruction Files. arXiv:2603.00822, 2026.
+\item
+  Tanmay Sah, Vishal Srivastava, Dolly Sah and Kayden Jordan. The Verifier Tax: Horizon Dependent Safety Success Tradeoffs in Tool Using LLM Agents. arXiv:2603.19328, 2026.
+\item
+  Linyue Pan, Lexiao Zou, Shuo Guo, Jingchen Ni and Hai-Tao Zheng. Natural-Language Agent Harnesses (NLAH). arXiv:2603.25723, 2026.
+\item
+  Yoonho Lee, Roshen Nair, Qizheng Zhang, Kangwook Lee, Omar Khattab and Chelsea Finn. Meta-Harness: End-to-End Optimization of Model Harnesses. arXiv:2603.28052, 2026.
+\item
+  Jie Wu and Ming Gong. Policy-Invisible Violations in LLM-Based Agents (PhantomPolicy). arXiv:2604.12177, 2026.
+\item
+  Yining Hong, Yining She, Eunsuk Kang, Christopher S. Timperley and Christian K\"astner. Don't Make Models Guess Security and Safety: Symbolic Guardrails for Domain-Specific AI Agents. arXiv:2604.15579, 2026.
+\item
+  Jiahang Lin et al.~Agentic Harness Engineering: Observability-Driven Automatic Evolution of Coding-Agent Harnesses (AHE). arXiv:2604.25850, 2026.
+\item
+  Yubin Kim et al.~TeamBench: Evaluating Agent Coordination under Enforced Role Separation. arXiv:2605.07073, 2026.
+\item
+  Jos\'e Manuel de la Chica Rodr\'iguez and Carlos Mart\'i-Gonz\'alez. Mechanical Enforcement for LLM Governance: Evidence of Governance-Task Decoupling in Financial Decision Systems. arXiv:2605.14744, 2026.
+\item
+  Rohith Uppala. Prompts Don't Protect: Architectural Enforcement via MCP Proxy for LLM Tool Access Control. arXiv:2605.18414, 2026.
+\item
+  Yilun Yao et al.~Harness-Bench: Measuring Harness Effects across Models in Realistic Agent Workflows. arXiv:2605.27922, 2026.
+\item
+  Suliu Qin, Haomin Zhuang, Yujun Zhou, Yufei Han and Xiangliang Zhang. AIRGuard: Guarding Agent Actions with Runtime Authority Control. arXiv:2605.28914, 2026.
+\item
+  Qi Hu et al.~SABER: Benchmarking Operational Safety of LLM Coding Agents in Stateful Project Workspaces. arXiv:2606.01317, 2026.
+\item
+  Victor Ojewale and Suresh Venkatasubramanian. What Benchmarks Don't Measure: The Case for Evaluating Abstention Competence in Autonomous Agents (ABSTAIN). arXiv:2606.02965, 2026.
+\item
+  Yujun Zhou et al.~Getting Better at Working With You: Compiling User Corrections into Runtime Enforcement for Coding Agents (TRACE). arXiv:2606.13174, 2026.
+\item
+  Andoni Rodr\'iguez, Alberto Pozanco and Daniel Borrajo. Is Your Agent Playing Dead? Deployed LLM Agents Exhibit Constraint-Evasive Fabrication and Thanatosis. arXiv:2606.14831, 2026.
+\item
+  Wangxuan Fan, Xiaoyu Nie and Zhongxiang Dai. Harness-MU: A Safe, Governed, and Effective Harness for Multi-User LLM Agents. arXiv:2606.21856, 2026.
+\item
+  Shiyang Chen. Governance Decay: How Context Compaction Silently Erases Safety Constraints in Long-Horizon LLM Agents. arXiv:2606.22528, 2026.
+\item
+  Jiacheng Zhang et al.~SafePyramid: A Hierarchical Benchmark for In-context Policy Guardrailing. arXiv:2606.29887, 2026.
+\item
+  Agent Harness Engineering: A Survey (proposes the ETCLOVG taxonomy; under review at TMLR). OpenReview 3hXEPbG0dh.
+\end{itemize}
+
+\section*{Appendix A: reproduction}\label{appendix-a-reproduction}
+\addcontentsline{toc}{section}{Appendix A: reproduction}
+
+The Section 5.1 headline is reproduced by the released analysis code (\texttt{analysis/paired.py}) run over the paid trajectories, which are released as a versioned archive (\gabarchive); the archive includes the resulting \texttt{paired\_result.json}. The precursor ladder table (Appendix B) reproduces the same way, from the per-gate analysis and the pooling module (\texttt{build\_cell\_contrasts\_pooled}); the exact tests come from a small released helper (\texttt{exact\_tests.py}, pure Python, no dependencies), which returns the run-level (0.00016), task-level (0.33), per-sub-gate (0.029), and family-corrected (0.00062) figures and the Clopper-Pearson intervals ({[}63, 100{]} for 8/8, {[}0, 37{]} for 0/8). Offline artefacts regenerate with \texttt{reproduce\_offline.py} (no network, no private data). Two pins matter: the runtime is git 6c82cd0 (tag gab-runtime-1.0.1, not the v0.2.0 package, which does not enforce), and the suite, scorer, and analysis that produced these numbers are in the released repository at the preprint commit, a week later than the runtime pin. The full task table and the earlier retired apparatus (a 28-task / 25-oracle-pair design, superseded 2026-07-04) are documented with the release.
+
+\textbf{The rest of the grader, continued from Section 4.} The two text detectors (medical claims, citation faithfulness) are pattern matchers and the grader's only complex code; a reader should audit them against the released tests (652 offline tests, 90 on the detectors) rather than take them on faith. Full metric names, definitions, and thresholds ship with the released scorer configuration.
+
+\section*{Appendix B: the confounded precursor ladder}\label{appendix-b-the-confounded-precursor-ladder}
+\addcontentsline{toc}{section}{Appendix B: the confounded precursor ladder}
+
+The four-model ladder of Section 5.2, in full, preserved as provenance: its clean substitution and capability reading is superseded by the within-family run of Section 5.1, which does not reproduce it. It swept four models against the git-pinned runtime, MiniMax-M3 and Llama-3.3-70B (capable), Qwen3.5-9B (near the floor) and Qwen2.5-7B (below it), for a total paid cost of USD 10.44. Scoring the model's first action, the share of runs that stayed safe on the commit boundary was:
+
+{\topsep=4pt\partopsep=0pt
+\begin{center}
+\begin{tabular}{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}@{}}
+\toprule
+\begin{minipage}[b]{\linewidth}\raggedright
+Model
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+A: told, enforced
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+B: told, off
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+C: withheld, enforced
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+D: neither
+\end{minipage} \\
+\midrule
+MiniMax-M3 (capable) & 100* & 100 & 100* & 0 \\
+Llama-3.3-70B (capable) & 100* & 100 & 100* & 25 \\
+Qwen3.5-9B (near floor) & 100* & 0 & 100* & 12.5 \\
+Qwen2.5-7B (below floor) & 100* & 0 & 100* & 12.5 \\
+\bottomrule
+\end{tabular}
+\end{center}}
+
+*Safe by construction; the finding is in columns B and D. Each cell is eight runs (two tasks, four repeats each).
+
+\begin{figure}
+\centering
+\includegraphics[width=\linewidth]{../figures/fig1_result.pdf}
+\caption{Told the commit rule with enforcement off (cell B): both capable models stayed safe on every run, both weak models violated on every run. The withheld floor (cell D) shows telling moves behaviour within a model even for the capable ones. Enforced cells A and C are 100\% by construction. Each bar is eight runs.}\label{fig:ladder}
+\end{figure}
+
+\textbf{Read column B: told the rule, runtime off.} Both capable models stayed safe on all eight runs; both weak models committed the forbidden change on all eight. The marginal value of enforcement given the model was told, cell A minus cell B, is therefore zero for the capable models and the entire barrier for the weak ones. That column is the precursor observation the within-family run of Section 5.1 was built to test and, on the capability reading, does not confirm.
+
+\textbf{Why each model did it, read run by run.} The transcripts show the split directly. In the told-off cell, MiniMax refuses the commit on its own turn and tells the user to run it themselves; Qwen3.5-9B issues the commit command itself, and it executes because the gate is off. The capable model declines an action it is free to take; the weak model takes it.
+
+\textbf{What the uncertainty is, by estimation rather than testing.} With eight runs a cell the exact (Clopper-Pearson) intervals are wide: a cell at 0/8 safe has interval {[}0, 37\%{]}, and a cell at 8/8 has {[}63, 100\%{]}. So the weak models' safe rate is bounded at most 37\%, and the capable models' at least 63\%, but neither is pinned precisely. The capable side's flat cell A minus cell B is a failure to detect an effect at this size, not proof that none exists.
+
+\textbf{Why counts, not a p-value.} A significance test is the wrong instrument here: one arm of every enforced contrast is 100\% safe by construction rather than a random outcome, the four repeats of each task are near-identical rather than independent, and any rejection is confounded with model family and task. Treating the eight runs a side as independent gives p = 0.00016, but counting the two genuinely independent tasks a side gives p = 0.33.
+
+\textbf{This is substitution, not the model simply being agreeable.} With the rule withheld and the runtime off (cell D), the capable models violate too: MiniMax on all eight runs, Llama on six of eight. So telling has a large within-model effect even for a capable model, and its flat A-minus-B is genuine substitution, not indifference to both.
+
+\textbf{Caveats.} The below-floor 7B fails partially rather than totally (graded told-off scores), so at a lenient threshold its column B would read about 75\% rather than 0\%; the decisive cells are threshold-invariant, and the released scorer configuration ships the zero-tolerance threshold used here. The ladder also inherited the discoverability aid of Section 7 mid-development: it was added after the ladder's smoke runs, before its pre-registration and sweep, so for the ladder it was an outcome-informed instrument change, where for the within-family run it is a design constant. Empty output cannot fake the result: Llama produces malformed output on roughly 40\% of runs yet still reaches 100\% in column B through genuine refusals. Most limiting, once the below-floor 7B is set aside and the capability-versus-family confound is held in view, this ladder's ``told but does not self-enforce'' result rests on one mid-size model, Qwen3.5-9B, which is why the within-family run of Section 5.1 was carried out. The medical-boundary rule the ladder also swept is near-ceiling: its detector fires on 7 of 223 runs, all on a single task and model, and the two tasks written to provoke a medical claim elicit none.
+
+\textbf{Two pre-registration disclosures, from Section 4.} The precursor ladder (Section 5.2) carried its own two disclosures: its pre-registered primary model was deprecated by the provider mid-cycle and replaced with MiniMax-M3 only after a canary confirmed the replacement reproduced the effect (an outcome-conditioned choice, so MiniMax-M3 is a non-pre-registered addition and exploratory; the pre-registered capable model is Llama-3.3-70B, which shows the same pattern), and its commit boundary has two test tasks, not the three the sample-size analysis assumed, so its pooled cell is eight runs, below the twelve-run target; the effects are saturated (0/8 vs.~8/8), but the small size is stated.
+
+\textbf{The one-model probes.} Before the ladder, a set of single-model probes (Qwen3-235B, three to five runs a cell) shaped the design. With the runtime off, a told-and-salient model refused three of three while a withheld model committed the violation three of three, establishing that telling and enforcing each move behaviour off the floor. Two ideas we expected to matter did not survive: audit faithfulness proved self-checkable once the model retrieved the evidence, collapsing into capability, and benign pressure to finish the task produced zero fabrication across 40 runs. The one qualifier they raise is salience-sensitivity: the same told model that refused when the rule was foregrounded dispatched the forbidden command three of three when it met the rule only incidentally, on three runs of one off-roster model, so we carry it as a caveat, not a result.
+
+\section*{Appendix C: extended related-work mapping}\label{appendix-c-extended-related-work-mapping}
+\addcontentsline{toc}{section}{Appendix C: extended related-work mapping}
+
+This appendix preserves, verbatim, the full cell-by-cell mapping of the closest priors that Section 2 compresses, and the full Mind the GAP reconciliation that Section 8 compresses.
+
+Two priors sit very close. FORGE {[}arXiv:2602.16708{]}, a runtime policy-enforcement framework with a reference monitor, runs a by-design withheld-but-enforced condition: its instrumented arm strips the natural-language policy from the prompt and relies solely on runtime enforcement, and it compares that arm against a non-instrumented arm that keeps the policy in the prompt and does not enforce. Those arms are our cell C and our cell B, so its whole contrast is the off-diagonal: it drops the telling and adds the enforcing in a single step, measuring the two levers fused rather than the marginal value of enforcement once the model was told, cell A against cell B, which it never instantiates. It also has no neither floor, scores task success after multi-turn corrective recovery rather than on first action, enforces a single holistic policy per deployment rather than a per-mechanism inventory, and reports compliance as a correctness theorem, zero violations by construction, rather than a behavioural rate, so it measures whether enforcement is sound and preserves task success, not whether a told model needed it. Mind the GAP {[}arXiv:2602.16943{]} is the nearest of all: it varies enforcement directly (unmonitored, observe, enforce, where Enforce hard-blocks forbidden tool calls), so it does contain a rule-absent-but-enforcing cell. Three things still separate it from our design. Its told rule (a prose safety suffix) and its enforced rule (per-tool RBAC contracts) are different objects, never the same constraint crossed told-against-enforced; it scores the model's attempt rate on intent across multi-turn jailbreak scenarios, not first-action compliance under benign pressure; and its headline ``no deterrent'' is a power-limited null (p \textgreater{} 0.27), not a clean substitution result. The separation is structural, not incidental: because it scores intent before the block and its Enforce mode is invisible to the model until a call is denied, the attempt rate it reports cannot move between its unmonitored and enforced arms by construction, so its design cannot measure the marginal value of enforcement given telling that we set out to isolate. We take up the apparent tension with enforcement-helps priors in Section 8.
+
+Others reach part of the crossing. Agent Behavioral Contracts {[}arXiv:2602.22302{]} evaluates runtime contracts at scale (1,980 sessions, 7 models) but toggles specification and enforcement together: its central experiment sets a contracted agent, its rules both injected into the prompt and enforced, against an uncontracted agent with neither, ``differ{[}ing{]} only in whether ABC contract rules are injected and enforced'' (its \S7.2). That contrast is our cell A against our cell D, the main diagonal, both levers on against both off, and so the maximal confound. Where FORGE moves along the off-diagonal (cell C against cell B), ABC moves along the main one, so between them the two closest contract-enforcement priors bracket the 2$\times$2 without either isolating a single lever. ABC's component ablation separates contract parts (its own labels: hard constraints, soft constraints, recovery, drift monitoring), not the two levers for one rule, leaving the specification and enforcement of a given constraint fused even there. We adopt PhantomPolicy's {[}arXiv:2604.12177{]} eight-category policy-invisible-violation taxonomy, though its own conditions are a flat, non-crossed set folding telling into enforcement architecture, with no reported enforced-and-told cell. ABSTAIN {[}arXiv:2606.02965{]} reaches the closest cell coverage, three of four cells on our specify-by-enforce mapping for one abstention mechanism, but its enforced (Checkpoint) arm ``receives the same prompt as the Prompt-Only policy'' (Appendix B), realising told-and-enforced rather than withheld-and-enforced, and its unenforced arms are LLM-judged. TeamBench {[}arXiv:2605.07073{]} finds prompt-only and sandbox-enforced role separation statistically indistinguishable on pass rate yet 3.6 times more verifier code-edit attempts in the prompt-only arm: convergent evidence for the substitution shape in a different, multi-agent domain where the rule is never withheld, with a standing caution (Section 7) that aggregate parity can mask sub-metric enforcement value.
+
+\textbf{The Section 8 reconciliation with Mind the GAP, in full.} Across six frontier models it finds runtime enforcement adds no detectable deterrent to what a model attempts, which resembles our result for the self-enforcing families, where enforcement's marginal value given telling is smallest (7 to 10 points, though not the zero a strict reading of its null would imply), reached independently on a different runtime, different models, and adversarial rather than benign pressure. Its Enforce mode hard-blocks as our commit gate does, but its null is on attempt rate scored on intent before the block, a quantity its design cannot move by construction (Section 2), so it reports the null as a flat, frontier-only fact and a power-limited one (p \textgreater{} 0.27). Our runs bound the scope of that null rather than contradict it. Its no-deterrent result holds where the model already self-enforces the told rule; our within-family run finds that region real but regime-specific: high on the commit gate for the self-enforcing families, low wherever the model does not self-enforce (weak models on that gate, any model on a side-door it competently drives, every model once the rule is withheld), and not ordered by capability the way a frontier-only reading would suggest.
+
+\end{document}
