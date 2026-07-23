@@ -1,24 +1,18 @@
 # REALM @ EMNLP 2026 build report
 
-## Headline: page budget NOT met — Dom decision needed
+## Headline: page budget MET
 
-The ACL two-column port ends the main text **6 lines into page 9**
-against the 8-page long-paper limit, in both builds. The sea2026 cut
-list was already fully exhausted by the sea2026 build, so the brief's
-stopping rule applies: nothing further was cut, nothing was
-paraphrased. Two measured close-out options are in
-`reformat-ledger.md` ("Overrun and measured options"):
-
-- **Option A** (delete the §7 TeamBench caution sentence): still 2
-  lines over — insufficient alone.
-- **Option A+B** (also delete the §8 Mechanical Enforcement domain
-  sentence): main text ends at the bottom of page 8 — **budget met
-  exactly**. Neither sentence is protected by the brief's constraint
-  4.5 list, but neither is in the sanctioned cut list either, so the
-  choice is yours. Both were test-compiled; applying A+B is a
-  two-sentence deletion plus one pointer fix in Appendix C.
-
-Everything else about the build is done and verified.
+Main text ends **on page 8** in both builds (conclusion ends in the
+right column; the unnumbered Limitations section follows on the same
+page; references start page 9). The path there: the port initially
+ended 6 lines into page 9 with the sea2026 cut list exhausted, so per
+the brief's stopping rule the overrun went to Dom with two
+test-compiled options; Dom approved Option A+B on 2026-07-23 (delete
+the §7 TeamBench caution sentence and the §8 Mechanical Enforcement
+aside — both related-work nuance, neither protected, neither carrying
+a number or claim-discipline pair, both restorable at camera-ready
+when the 9th content page unlocks). Applied with one forced pointer
+fix in Appendix C (M1 in the ledger).
 
 ## What this is
 
@@ -60,8 +54,8 @@ path.
 
 ## Verification results
 
-- **Page boundary:** FAILS by 6 lines (the headline above). Verified
-  by pypdf column-aware extraction in both builds, not metadata.
+- **Page boundary:** main text ends on page 8 in both builds.
+  Verified by pypdf column-aware extraction, not metadata.
 - **Prose fidelity:** line-level diff of realm vs sea2026 bodies
   leaves only ledgered formatting classes + C1/V6/V9. The seven
   `\looseness`-stripped paragraphs match byte-for-byte; the verbatim
@@ -69,8 +63,10 @@ path.
 - **Numbers audit:** clean — no numeral dropped, none added, all
   immutable-list literals present with attached caveats in both
   builds (mapping in `reformat-ledger.md`).
-- **Checklist audit:** 28/28 verbatim quotes present in BOTH compiled
-  PDFs: must-survive (a)--(f) (identity remark owned, multi-turn
+- **Checklist audit (re-run after A+B):** 29/29 verbatim quotes
+  present in BOTH compiled PDFs (the 28 originals plus the modified
+  Appendix C caution sentence), and both deleted sentences confirmed
+  absent: must-survive (a)--(f) (identity remark owned, multi-turn
   check, pessimistic bound reported-not-adopted, all discoverability-
   aid elements incl. outcome-informed-for-the-ladder in Appendix B,
   "indicative rather than exact", single-mechanism scope), plus
@@ -111,13 +107,13 @@ path.
    option handles the author block; I additionally scrubbed PDF
    metadata in the preamble (applies to both builds; harmless in the
    preprint).
-4. **Test-compiles of options A and A+B** were done in place and
-   reverted; the committed source is the STOP-state build.
+4. **Cut A orphaned Appendix C's "(Section 7)" pointer;** I removed
+   the cross-reference and kept the caution's content in place (M1),
+   rather than deleting the Appendix C sentence or leaving a dangling
+   reference.
 
 ## Open items for Dom
 
-- **The overrun decision** (headline above). Deadline 5 Aug; QA
-  target ~31 Jul.
 - **Anonymized mirror:** `\gabrepo` in the anonymous build is
   `https://anonymous.4open.science/r/PENDING` — a placeholder, but
   currently **unused in running text**, so nothing broken ships
@@ -134,6 +130,7 @@ path.
   paper (USD 115 and USD 10.44); scientific-artifact license is MIT
   (repo) with the runtime git-pinned.
 - **Camera-ready:** gets a 9th content page, so if REALM accepts, the
-  A+B sentences (if cut) can come straight back; the preprint build
-  already compiles for that path (switch `[preprint]` to `[final]`
-  when the time comes).
+  two A+B sentences come straight back (restore them from the ledger
+  quotes and re-add Appendix C's "(Section 7)" pointer); the preprint
+  build already compiles for that path (switch `[preprint]` to
+  `[final]` when the time comes).

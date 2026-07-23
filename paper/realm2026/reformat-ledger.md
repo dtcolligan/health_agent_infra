@@ -14,11 +14,12 @@ end of the conclusion on or before **page 8** at submission.
 References, the unnumbered Limitations section, and appendices are
 free space per the CFP and *ACL policy.
 
-Result: **main text ends 6 lines into page 9** in both builds. The
-sea2026 cut list was already exhausted by the sea2026 build itself, so
-under the brief's stopping rule no further content was removed; the
-overrun is reported to Dom with two measured close-out options (see
-"Overrun and measured options" below). 13 pages total per build.
+Result: **main text ends on page 8** in both builds (conclusion ends
+right column, Limitations follows on the same page, references start
+page 9; 13 pages total). The initial build ended 6 lines into page 9
+with the sea2026 cut list exhausted; per the brief's stopping rule
+that overrun was reported to Dom, who approved the two-sentence
+close-out (Option A+B below) on 2026-07-23.
 
 ## Page-count trajectory (main-text end, anonymous build)
 
@@ -31,7 +32,8 @@ metadata. Page height positions: column top y=770, bottom y=69.
 | Family table* -> in-column table; 2x2 tabcolsep fix; figure* 0.6 | p9, y=473 |
 | In-column tables to \footnotesize; topsep 4pt -> 2pt | p9, y=487 |
 | Results figure figure* -> in-column figure at \linewidth | p9, y=679 |
-| Verbatim re-break; topsep 1pt; table width -1pt (overfull fix) | **p9, y=692 (6 lines into p9)** |
+| Verbatim re-break; topsep 1pt; table width -1pt (overfull fix) | p9, y=692 (6 lines into p9; STOP state, reported) |
+| Option A+B applied (Dom-approved 2026-07-23) | **p8, right column, y=130** |
 
 ## Restorations (brief step 2)
 
@@ -39,38 +41,30 @@ None. The port never had more than half a page free, so the
 reverse-order restoration list (§4 texture, §5.2 precursor detail, §2
 related-work detail) was never triggered.
 
-## Cuts (brief step 3)
+## Cuts (brief step 3; Option A+B, Dom-approved 2026-07-23)
 
-None. All five sea2026 cut-list items were already at their mandated
-end state in the ported source (Figure 1 dropped; §2 compressed; §5.2
-one paragraph; §4 grader/reproducibility at ~2 sentences each; §8 MtG
-at 3 sentences). With the cut list exhausted and the budget unmet, the
-brief's stopping rule applies: no paraphrase-compression, report the
-overrun.
+All five sea2026 cut-list items were already at their mandated end
+state in the ported source (Figure 1 dropped; §2 compressed; §5.2 one
+paragraph; §4 grader/reproducibility at ~2 sentences each; §8 MtG at
+3 sentences). With the cut list exhausted and the budget unmet, the
+brief's stopping rule applied: the 6-line overrun was reported to Dom
+with two test-compiled options, and Dom approved both deletions
+(neither on the protected list; neither carries a number or a
+claim-discipline pair; both can return at camera-ready, which unlocks
+a 9th content page):
 
-## Overrun and measured options (NOT applied; Dom's call)
-
-Both were test-compiled and reverted; the committed source contains
-neither deletion.
-
-- **Option A** — delete the §7 sentence "TeamBench's caution applies
-  to us too: our scorer sees whether the specific guarded violation
-  occurs, but an enforcement effect that shifted some finer channel
-  while leaving the tracked violation unchanged would go undetected at
-  this size." (the sentence the sea2026 report already named
-  least-protected). Measured result: main text ends **2 lines into
-  page 9** — still over. Side effect if taken: Appendix C's pointer
-  "...with a standing caution (Section 7)..." would need a ledgered
-  edit.
-- **Option A+B** — additionally delete the §8 sentence "Mechanical
-  Enforcement [arXiv:2605.14744] finds enforcement helping, but in a
-  different domain: it scores decision-rationale quality under
-  regulatory pressure, not tool-action compliance under benign use."
-  Measured result: main text ends at the **bottom of page 8** — budget
-  met exactly. Side effect: the Mechanical Enforcement citation drops
-  out of running text (its reference-list entry stays; the §8 MtG
-  reconciliation residue then opens at "Mind the GAP ... is better
-  read as convergent than contradictory.").
+- **A (§7, deleted):** "TeamBench's caution applies to us too: our
+  scorer sees whether the specific guarded violation occurs, but an
+  enforcement effect that shifted some finer channel while leaving
+  the tracked violation unchanged would go undetected at this size."
+  (Alone: still 2 lines over.)
+- **B (§8, deleted):** "Mechanical Enforcement [arXiv:2605.14744]
+  finds enforcement helping, but in a different domain: it scores
+  decision-rationale quality under regulatory pressure, not
+  tool-action compliance under benign use." (Its reference-list entry
+  stays; the citation also remains live in §2's running text. §8's
+  MtG residue now opens at "Mind the GAP ... is better read as
+  convergent than contradictory.")
 
 ## Formatting-only changes (no content)
 
@@ -118,10 +112,20 @@ assembled from eleven sentences copied verbatim from §4, §5.1, and §7
   contrast descriptive (Section 5.1) applies to these intervals too,
   so we read them as indicative rather than exact."
 
-Count: 1 new + 2 modified = 3 items against the ~15 budget. No other
+One further modification outside Limitations, forced by cut A:
+
+- **M1 (Appendix C):** the TeamBench sentence's cross-reference
+  " (Section 7)" removed, since the caution it pointed at no longer
+  appears in §7: "...convergent evidence for the substitution shape
+  in a different, multi-agent domain where the rule is never
+  withheld, with a standing caution that aggregate parity can mask
+  sub-metric enforcement value." The caution's content survives
+  intact in this sentence itself.
+
+Count: 1 new + 3 modified = 4 items against the ~15 budget. No other
 prose differs from the sea2026 source (verified mechanically:
 line-level diff of the two bodies leaves only the formatting classes
-listed above plus these three items).
+listed above, the two Dom-approved deletions, and these four items).
 
 ## Anonymization placeholders (anonymous build)
 
