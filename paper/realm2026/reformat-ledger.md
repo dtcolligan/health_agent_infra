@@ -34,6 +34,13 @@ metadata. Page height positions: column top y=770, bottom y=69.
 | Results figure figure* -> in-column figure at \linewidth | p9, y=679 |
 | Verbatim re-break; topsep 1pt; table width -1pt (overfull fix) | p9, y=692 (6 lines into p9; STOP state, reported) |
 | Option A+B applied (Dom-approved 2026-07-23) | **p8, right column, y=130** |
+| Artifact-availability footnote added (Dom-approved 2026-07-27) | **p8, conclusion ends line 749**; Limitations heading pushed to p9 |
+
+The 2026-07-27 footnote consumed the p8 slack that the Limitations
+heading had been sitting in. The conclusion — the page-limited
+boundary — still ends on page 8 at line 749. Limitations now opens
+page 9, which is free space under *ACL policy, so the 8-page content
+budget is still met.
 
 ## Restorations (brief step 2)
 
@@ -112,6 +119,22 @@ assembled from eleven sentences copied verbatim from §4, §5.1, and §7
   contrast descriptive (Section 5.1) applies to these intervals too,
   so we read them as indicative rather than exact."
 
+One further new sentence outside Limitations, added 2026-07-27 (Dom-approved):
+
+- **C2 (new, footnote on the Contributions paragraph):** the paper
+  claims "we release GovernedAgentBench" and refers to "the released
+  repository" throughout, but the submission PDF carried no artifact
+  link and no availability statement — a soft target on a workshop
+  track that explicitly values data and simulation environments. The
+  footnote is build-conditional via the existing `\REALManonymous`
+  toggle, so it states availability without breaking blinding:
+  - anonymous build: "The task suite, deterministic offline grader,
+    analysis code, and git-pinned reference runtime are publicly
+    released; the link is omitted here to preserve double-blind
+    review."
+  - preprint build: same sentence ending "...are publicly released at
+    \gabrepo." (resolves to the real repository URL).
+
 One further modification outside Limitations, forced by cut A:
 
 - **M1 (Appendix C):** the TeamBench sentence's cross-reference
@@ -122,7 +145,7 @@ One further modification outside Limitations, forced by cut A:
   sub-metric enforcement value." The caution's content survives
   intact in this sentence itself.
 
-Count: 1 new + 3 modified = 4 items against the ~15 budget. No other
+Count: 2 new + 3 modified = 5 items against the ~15 budget. No other
 prose differs from the sea2026 source (verified mechanically:
 line-level diff of the two bodies leaves only the formatting classes
 listed above, the two Dom-approved deletions, and these four items).
@@ -130,11 +153,14 @@ listed above, the two Dom-approved deletions, and these four items).
 ## Anonymization placeholders (anonymous build)
 
 - `\gabrepo` = `https://anonymous.4open.science/r/PENDING` —
-  **placeholder; the real anonymized mirror URL must be swapped in
-  before submission if a repo link is added.** The macro is currently
-  UNUSED in running text (inherited sea2026 design), so no link to
-  Dom's GitHub — and no placeholder text — appears in the compiled
-  submission PDF.
+  **placeholder, and still UNUSED in the anonymous build.** As of the
+  2026-07-27 C2 footnote the macro is referenced only in the preprint
+  branch of `\gabavailability`, where it resolves to the real GitHub
+  URL. The anonymous build's footnote states availability in words and
+  emits no URL at all, so neither Dom's GitHub nor the `PENDING`
+  placeholder appears in the compiled submission PDF (verified: zero
+  URLs of any kind in the extracted text). Swapping in a real
+  anonymized mirror is therefore optional, not blocking.
 - `\gabarchive` = "a repository release, name withheld for review,
   with SHA-256 checksums" (sentence-form neutralization, inherited
   from sea2026; appears in Appendix A).

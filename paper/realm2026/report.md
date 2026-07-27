@@ -54,8 +54,12 @@ path.
 
 ## Verification results
 
-- **Page boundary:** main text ends on page 8 in both builds.
-  Verified by pypdf column-aware extraction, not metadata.
+- **Page boundary:** main text ends on page 8 in both builds
+  (conclusion's last line is 749). Verified by pypdf column-aware
+  extraction, not metadata. Re-verified after the 2026-07-27 C2
+  footnote, which pushed the unnumbered Limitations heading from p8
+  to p9; Limitations and references are free space under *ACL policy,
+  so the 8-page content budget is still met.
 - **Prose fidelity:** line-level diff of realm vs sea2026 bodies
   leaves only ledgered formatting classes + C1/V6/V9. The seven
   `\looseness`-stripped paragraphs match byte-for-byte; the verbatim
@@ -114,12 +118,28 @@ path.
 
 ## Open items for Dom
 
-- **Anonymized mirror:** `\gabrepo` in the anonymous build is
-  `https://anonymous.4open.science/r/PENDING` — a placeholder, but
-  currently **unused in running text**, so nothing broken ships
-  either way. If you want an explicit repo link in the submission,
-  create the mirror (needs your GitHub auth in a browser) and swap
-  the macro; if not, no action needed.
+- **Anonymized mirror — resolved 2026-07-27, no longer blocking.** An
+  independent audit found the submission PDF claimed "we release
+  GovernedAgentBench" and referred to "the released repository" ~10
+  times while showing reviewers no link and no availability
+  statement. Dom chose the footnote route over building a mirror: a
+  build-conditional footnote (C2 in the ledger) now states
+  availability in words in the anonymous build and emits the real URL
+  in the preprint build. `\gabrepo` stays a `PENDING` placeholder but
+  is unreferenced in the anonymous build, so no placeholder and no
+  URL ships. Creating a real `anonymous.4open.science` mirror is now
+  an optional upgrade (stronger artifact signal, needs your GitHub
+  auth in a browser), not a prerequisite for submitting.
+- **If OpenReview asks for LaTeX source, do not upload this tree
+  as-is.** The compiled anonymous PDF is clean, but the *source*
+  is not: `realm2026_main.tex` still carries `\author{Dom Colligan
+  ...}` (suppressed at compile time by ACL's `review` option, not
+  removed) and the `\else` branch of the anonymization block holds
+  the real GitHub URL, `gab-run-archive-v1.0`, and "its author". A
+  reviewer reading the source would be de-anonymized immediately.
+  PDF-only submission is the safe path; if source is required, strip
+  the `\else` branch and the author block first.
+
 - **Archival checkbox:** the CFP text describes long papers as
   "(archival)" while listing non-archival as an option at submission;
   confirm the non-archival choice actually exists on the OpenReview
