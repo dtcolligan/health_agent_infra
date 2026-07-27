@@ -1,0 +1,156 @@
+# REALM @ EMNLP 2026 build report
+
+## Headline: page budget MET
+
+Main text ends **on page 8** in both builds (conclusion ends in the
+right column; the unnumbered Limitations section follows on the same
+page; references start page 9). The path there: the port initially
+ended 6 lines into page 9 with the sea2026 cut list exhausted, so per
+the brief's stopping rule the overrun went to Dom with two
+test-compiled options; Dom approved Option A+B on 2026-07-23 (delete
+the §7 TeamBench caution sentence and the §8 Mechanical Enforcement
+aside — both related-work nuance, neither protected, neither carrying
+a number or claim-discipline pair, both restorable at camera-ready
+when the 9th content page unlocks). Applied with one forced pointer
+fix in Appendix C (M1 in the ledger).
+
+## What this is
+
+The REALM (Second Workshop for REsearch on Agent Language Models,
+EMNLP 2026) long-paper version of *Told or Enforced*, ported from the
+approved sea2026 9-page cut (S1--S4 insertions verified present before
+porting). One shared LaTeX source, two builds:
+
+```
+tectonic realm2026_anonymous.tex   # ACL 'review' mode -- THE SUBMISSION ARTIFACT
+tectonic realm2026_preprint.tex    # non-anonymous (ACL 'preprint' mode)
+```
+
+Both compile with zero errors and zero overfull boxes. REALM is
+double-blind, so the anonymous build is the primary deliverable this
+time; the preprint build is kept compiling for the camera-ready/arXiv
+path.
+
+## What changed relative to sea2026
+
+- NeurIPS single-column -> official ACL 2026 two-column style
+  (`acl.sty` diff-verified unmodified; `review` mode supplies the
+  "Anonymous ACL submission" block, line numbers, and page numbers).
+- All prose byte-identical to sea2026 except three ledgered items (C1
+  new, V6/V9 modified), all inside the new ACL-mandatory unnumbered
+  **Limitations** section assembled from existing caveat sentences
+  (in-place originals untouched; the mild duplication is the ACL
+  norm). Limitations sits after the conclusion, before References,
+  and does not count toward the page limit.
+- Formatting only: results figure moved into the column at
+  `\linewidth`; family table from `table*` to an in-column
+  `\footnotesize` table; verbatim block re-broken; `\looseness`
+  requests removed; Appendix B ladder table to `table*`. Full list in
+  `reformat-ledger.md`.
+- No ethics statement (not required; none invented). No
+  acknowledgments and no AI-assistance line in either build (your
+  standing rule; the REALM CFP publishes no disclosure requirement —
+  checked 2026-07-23).
+
+## Verification results
+
+- **Page boundary:** main text ends on page 8 in both builds
+  (conclusion's last line is 749). Verified by pypdf column-aware
+  extraction, not metadata. Re-verified after the 2026-07-27 C2
+  footnote, which pushed the unnumbered Limitations heading from p8
+  to p9; Limitations and references are free space under *ACL policy,
+  so the 8-page content budget is still met.
+- **Prose fidelity:** line-level diff of realm vs sea2026 bodies
+  leaves only ledgered formatting classes + C1/V6/V9. The seven
+  `\looseness`-stripped paragraphs match byte-for-byte; the verbatim
+  block is token-identical.
+- **Numbers audit:** clean — no numeral dropped, none added, all
+  immutable-list literals present with attached caveats in both
+  builds (mapping in `reformat-ledger.md`).
+- **Checklist audit (re-run after A+B):** 29/29 verbatim quotes
+  present in BOTH compiled PDFs (the 28 originals plus the modified
+  Appendix C caution sentence), and both deleted sentences confirmed
+  absent: must-survive (a)--(f) (identity remark owned, multi-turn
+  check, pessimistic bound reported-not-adopted, all discoverability-
+  aid elements incl. outcome-informed-for-the-ladder in Appendix B,
+  "indicative rather than exact", single-mechanism scope), plus
+  harness-blindness finding/falsification/lesson, same-team caveat,
+  scorer-edit disclosure, case-study scope, command-name leak, §8
+  relocation list, told-conditional note for evaluation, and S1--S4.
+- **Dead framings / venue vocabulary:** none present. "reward",
+  "training signal", "RL environment" absent ("training" occurs only
+  inside the FINAL's own "post-training evaluation ... we do no
+  training here" sentence).
+- **Anonymous build:** "Anonymous ACL submission" block; line
+  numbers; no "Colligan", "Imperial", "colligan25", "dtcolligan", or
+  "gab-run-archive" string anywhere in the extracted text; PDF info
+  dictionary carries no author/creator field (scrubbed via
+  hypersetup, checked with pypdf). Same-team caveat reads "the
+  benchmark's author"; archive is "a repository release, name
+  withheld for review".
+- **Cross-references:** no unresolved refs; the in-column results
+  figure is Figure 1, the appendix ladder figure Figure 2, matching
+  the sea2026 numbering, so the one `\ref` in prose renders
+  identically.
+
+## Judgment calls (flagging per the brief)
+
+1. **Results figure is in-column at `\linewidth` (~3.0 in).** This
+   was the single biggest budget lever (a `figure*` band costs double
+   its height) and is why the overrun is 6 lines rather than ~20. The
+   panels are smaller than the sea2026 rendering you already called
+   borderline; if you want it larger, `figure*` at 0.6\textwidth
+   costs ~14 lines — only viable together with content cuts beyond
+   Option A+B.
+2. **Limitations assembly:** I chose the seven caveat classes the
+   brief names and stitched them with one new sentence (C1) and two
+   single-token-scale modifications (V6, V9), plus one extra verbatim
+   §5.1 sentence to keep "these intervals" from dangling. Nothing
+   moved out of the main text.
+3. **`review` vs manual anonymization:** the ACL style's `review`
+   option handles the author block; I additionally scrubbed PDF
+   metadata in the preamble (applies to both builds; harmless in the
+   preprint).
+4. **Cut A orphaned Appendix C's "(Section 7)" pointer;** I removed
+   the cross-reference and kept the caution's content in place (M1),
+   rather than deleting the Appendix C sentence or leaving a dangling
+   reference.
+
+## Open items for Dom
+
+- **Anonymized mirror — resolved 2026-07-27, no longer blocking.** An
+  independent audit found the submission PDF claimed "we release
+  GovernedAgentBench" and referred to "the released repository" ~10
+  times while showing reviewers no link and no availability
+  statement. Dom chose the footnote route over building a mirror: a
+  build-conditional footnote (C2 in the ledger) now states
+  availability in words in the anonymous build and emits the real URL
+  in the preprint build. `\gabrepo` stays a `PENDING` placeholder but
+  is unreferenced in the anonymous build, so no placeholder and no
+  URL ships. Creating a real `anonymous.4open.science` mirror is now
+  an optional upgrade (stronger artifact signal, needs your GitHub
+  auth in a browser), not a prerequisite for submitting.
+- **If OpenReview asks for LaTeX source, do not upload this tree
+  as-is.** The compiled anonymous PDF is clean, but the *source*
+  is not: `realm2026_main.tex` still carries `\author{Dom Colligan
+  ...}` (suppressed at compile time by ACL's `review` option, not
+  removed) and the `\else` branch of the anonymization block holds
+  the real GitHub URL, `gab-run-archive-v1.0`, and "its author". A
+  reviewer reading the source would be de-anonymized immediately.
+  PDF-only submission is the safe path; if source is required, strip
+  the `\else` branch and the author block first.
+
+- **Archival checkbox:** the CFP text describes long papers as
+  "(archival)" while listing non-archival as an option at submission;
+  confirm the non-archival choice actually exists on the OpenReview
+  form for long papers before submitting.
+- **Responsible-NLP-checklist notes** (submission-side, if the form
+  asks): benchmark is self-built and public; no human subjects; no
+  personal data (fixture-only); compute/cost already disclosed in the
+  paper (USD 115 and USD 10.44); scientific-artifact license is MIT
+  (repo) with the runtime git-pinned.
+- **Camera-ready:** gets a 9th content page, so if REALM accepts, the
+  two A+B sentences come straight back (restore them from the ledger
+  quotes and re-add Appendix C's "(Section 7)" pointer); the preprint
+  build already compiles for that path (switch `[preprint]` to
+  `[final]` when the time comes).
