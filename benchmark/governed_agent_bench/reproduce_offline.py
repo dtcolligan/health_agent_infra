@@ -103,6 +103,15 @@ def run_offline_repro(
         "fixture_workspace": _rel(fixture_workspace),
         "output_dir": output_dir.as_posix(),
         "task_ids": task_ids or list(TASK_IDS),
+        # Reported, never hard-coded in prose. TASK_IDS is a directory glob over
+        # tasks/l[1-7]/gab_*.json, so the default inventory grows silently
+        # whenever a task file is added. A literal count written into the docs
+        # goes stale with nothing failing to warn (it did: REPRODUCIBILITY.md
+        # claimed 16 tasks / 72 cells from 2026-07-04 while the suite grew to 39
+        # by the gab-runtime-1.0.1 release and 51 after it). Cite these fields
+        # instead of a number.
+        "task_count": ablation_report["task_count"],
+        "cell_count": ablation_report["run_count"],
         "artifacts": artifacts,
         "row_count": evidence_output["row_count"],
         "figure_count": figures["figure_count"],

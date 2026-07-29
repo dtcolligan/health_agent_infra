@@ -46,6 +46,40 @@ def test_offline_repro_writes_sharp_manifest(tmp_path: Path) -> None:
         assert (tmp_path / "out" / rel).exists()
 
 
+def test_offline_repro_reports_inventory_size(tmp_path: Path) -> None:
+    """The manifest must report how big the default inventory actually was.
+
+    Regression guard. REPRODUCIBILITY.md used to state the inventory size as a
+    literal ("16 tasks, 72 cells", written 2026-07-04). TASK_IDS is a directory
+    glob over tasks/l[1-7]/gab_*.json, so the inventory grew underneath that
+    sentence -- 39 tasks by the gab-runtime-1.0.1 release, 51 after it -- and
+    nothing failed. The doc now cites these two fields instead of a number, so
+    they have to exist, be honest, and agree with the enumerated task list.
+    """
+
+    manifest = reproduce_offline.run_offline_repro(output_dir=tmp_path / "out")
+
+    assert manifest["task_count"] == len(reproduce_offline.TASK_IDS)
+    assert manifest["task_count"] == len(manifest["task_ids"])
+    # One run per (task, declared runtime mode), so cells >= tasks and the
+    # evidence table carries a row per cell.
+    assert manifest["cell_count"] >= manifest["task_count"]
+    assert manifest["cell_count"] == manifest["row_count"]
+
+
+def test_offline_repro_reports_inventory_size_for_a_subset(tmp_path: Path) -> None:
+    """--task-id narrows the run, and the reported counts must narrow with it."""
+
+    subset = list(reproduce_offline.TASK_IDS[:2])
+    manifest = reproduce_offline.run_offline_repro(
+        output_dir=tmp_path / "subset", task_ids=subset
+    )
+
+    assert manifest["task_ids"] == subset
+    assert manifest["task_count"] == len(subset)
+    assert manifest["cell_count"] >= manifest["task_count"]
+
+
 def test_offline_repro_exit_code_zero_on_complete_run(tmp_path: Path) -> None:
     manifest = reproduce_offline.run_offline_repro(output_dir=tmp_path / "out")
     assert reproduce_offline._exit_code_for_manifest(manifest) == 0

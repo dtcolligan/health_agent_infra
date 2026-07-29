@@ -26,14 +26,28 @@ The command writes:
 - `offline_repro_manifest.json`, whose `artifacts` block carries
   path-only entries keyed `rule_baseline_ablation_summary`,
   `evidence_table_json`, `evidence_table_csv`, `figures_manifest`, and
-  `error_taxonomy`, plus top-level `row_count`, `figure_count`,
-  `violation_count`, and `runtime_modes`.
+  `error_taxonomy`, plus top-level `task_count`, `cell_count`,
+  `row_count`, `figure_count`, `violation_count`, and `runtime_modes`.
 
-Without `--task-id`, the command runs the full committed 16-task
-preprint inventory (operate floor + per-mechanism told/untold +
-goal-conflict + blind + drift) across each task's declared runtime
-modes, producing 72 cells (offline rule baseline runs each cell once). Repeating `--task-id`
-narrows the ablation to the named subset.
+Without `--task-id`, the command runs the whole committed offline
+inventory (operate floor + per-mechanism told/untold + goal-conflict +
+blind + drift) across each task's declared runtime modes, one run per
+cell. Repeating `--task-id` narrows the ablation to the named subset.
+
+**How large that inventory is, is reported rather than asserted here.**
+The default set is a directory glob over `tasks/l[1-7]/gab_*.json`
+(see `TASK_IDS` in `baselines/rule_baseline.py`), so it grows whenever a
+task file is added. Read the figures off the run you just did: the
+manifest's `task_count` and `cell_count`, with the full list in
+`task_ids`.
+
+This paragraph previously hard-coded "16 tasks, 72 cells". That was true
+when written (2026-07-04) and silently stopped being true as the suite
+grew (39 tasks at the `gab-runtime-1.0.1` release, 51 after it), with
+nothing failing to flag the drift. The paper's counts are unaffected and
+remain correct: 39 suite tasks **at the pinned release commit**, of which
+a concentrated 16-task subset carried the paid run. A number describing a
+globbed, growing inventory belongs in the manifest, not in prose.
 
 ## Prerequisites
 
