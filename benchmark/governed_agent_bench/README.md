@@ -1,5 +1,15 @@
 # GovernedAgentBench
 
+An agent environment in three separable parts: a **taskset** (tasks with
+checkable outcomes plus a deterministic offline verifier — fixed code, no
+model in the loop), a **harness** (model-agnostic agent loop with
+structured operator actions and hermetic execution), and a **runtime**
+(a governed contract layer whose enforcement mechanisms toggle per cell).
+This is the same taskset / harness / runtime decomposition agentic-RL
+tooling has since converged on (e.g. verifiers v1); the layers here were
+built and measured separately from the start, because separating them is
+what the experiment is.
+
 Benchmark companion to *Told or Enforced: When In-Context Contracts
 Substitute for Runtime Enforcement in Agent Harnesses*.
 Released as v1.0 on a GitHub tag alongside the 2026-09-30 arXiv preprint.
@@ -8,7 +18,12 @@ GovernedAgentBench crosses two levers per mechanism: whether a
 constraint is specified in the in-context contract (told vs untold) and
 whether the runtime enforces it (on vs off), measuring how much
 constraint-respecting behavior comes from being told versus being
-enforced. `PAPER.md` D-31/D-32/D-34 is authoritative for the design.
+enforced. Because the verifier is deterministic and offline, the
+told-with-runtime-off cell also reads directly as a verifiable reward:
+it measures the self-enforcement a model supplies once told, which is
+the quantity an agentic post-training loop would optimise against. This
+release measures it; nothing has been trained against it yet.
+`PAPER.md` D-31/D-32/D-34 is authoritative for the design.
 
 Project-wide scope, calendar, and decisions: [`/PAPER.md`](../../PAPER.md).
 Full benchmark specification: [`SPEC.md`](SPEC.md). Task authoring:
@@ -88,8 +103,8 @@ trajectory JSON and scored offline is not benchmark evidence.
 |---|---|
 | Frozen manifests | 2 snapshots: `manifests/hai_0_2_0.json` (≈ 189 KB, `agent_cli_contract.v2`) + `manifests/agent_cli_contract_v1_drift.json` for L7 |
 | Fixtures | 7 synthetic builders: `empty_user`, `ready_user_minimal`, `read_surface_user`, `governance_user`, `audit_pending_user`, `drift_user`, `adversarial_user` |
-| Tasks | 36 tasks across L1, L2, L5, L6, L7 (L1:2, L2:6, L5:8, L6:19, L7:1); three scenario pairs per mechanism (D-39), each a labelled cell of the per-mechanism told/untold x on/off 2x2 |
-| Cells | 72 task-cells / 288 reps at n=4 (from `runtime_modes_in_scope` x `contract_arm`) |
+| Tasks | Enumerated from `tasks/l[1-7]/gab_*.json`, currently 51 (L1:2, L2:4, L5:8, L6:36, L7:1); 39 at the `gab-runtime-1.0.1` release, which is the count the paper reports. Three scenario pairs per mechanism (D-39), each a labelled cell of the per-mechanism told/untold x on/off 2x2. The suite grows by directory glob, so read live counts off `offline_repro_manifest.json` (`task_count`, `cell_count`) rather than this table |
+| Cells | 77 currently (from `runtime_modes_in_scope` x `contract_arm`); 53 at the release tag |
 | Trajectories | 8 hand-authored seed trajectories (pass/fail pairs) at `trajectories/hand_authored/` for scorer validation |
 | Scorer | Deterministic offline scorer at `scorer/core.py` with schema/determinism tests |
 | Harness | Model-agnostic harness at `harness/` with structured operator actions, runtime-mode toggling, hermetic subprocess execution, `mechanism_disabled` capture |
