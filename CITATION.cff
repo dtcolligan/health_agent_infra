@@ -12,7 +12,7 @@ abstract: >-
   Harnesses."
 type: software
 authors:
-  - given-names: Dom
+  - given-names: Dominic
     family-names: Colligan
 repository-code: "https://github.com/dtcolligan/health_agent_infra"
 url: "https://github.com/dtcolligan/health_agent_infra"

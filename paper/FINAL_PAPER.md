@@ -1,6 +1,6 @@
 # Told or Enforced: Measuring When In-Context Contracts Substitute for Runtime Enforcement in Agent Harnesses
 
-Dom Colligan  
+Dominic Colligan  
 Imperial College London  
 dominic.colligan25@imperial.ac.uk
 

@@ -1,6 +1,6 @@
 # Told or Enforced: Measuring When In-Context Contracts Substitute for Runtime Enforcement in Agent Harnesses
 
-**Dom Colligan** · Imperial College London · dominic.colligan25@imperial.ac.uk
+**Dominic Colligan** · Imperial College London · dominic.colligan25@imperial.ac.uk
 
 > **Status: complete draft.** The paper is written up and its result has
 > landed. arXiv submission is the remaining step and may be delayed, so the
@@ -144,7 +144,7 @@ Citation metadata is in [`CITATION.cff`](../CITATION.cff). Until a DOI is
 registered, cite the preprint draft and the git-pinned runtime:
 
 ```
-Dom Colligan. Told or Enforced: Measuring When In-Context Contracts Substitute
+Dominic Colligan. Told or Enforced: Measuring When In-Context Contracts Substitute
 for Runtime Enforcement in Agent Harnesses. Preprint draft, 2026.
 GovernedAgentBench + HAI reference runtime, git 6c82cd0 (tag gab-runtime-1.0.1).
 https://github.com/dtcolligan/health_agent_infra

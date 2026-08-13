@@ -57,7 +57,7 @@ Already decided, and recorded in the comment block at the top of
 | Cross-list | **cs.LG, cs.CR** |
 | Licence | **CC BY 4.0** |
 | Title | Told or Enforced: Measuring When In-Context Contracts Substitute for Runtime Enforcement in Agent Harnesses |
-| Author | Dom Colligan, Imperial College London |
+| Author | Dominic Colligan, Imperial College London |
 | Abstract | paste the `## Abstract` section of `FINAL_PAPER.md`, unwrapped |
 
 Submit from the arXiv account **`dtcolligan`** (dominic.colligan25@imperial.ac.uk),

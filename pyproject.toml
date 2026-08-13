@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
 authors = [
-  { name = "Dom Colligan" },
+  { name = "Dominic Colligan" },
 ]
 dependencies = [
   "pandas>=2.0",
