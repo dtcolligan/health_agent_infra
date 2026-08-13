@@ -47,3 +47,4 @@ dashboard/dashboard_data.json
 build/
 dist/
 benchmark/governed_agent_bench/scripts/lock_hashes.json
+paper/arxiv/_proof/
