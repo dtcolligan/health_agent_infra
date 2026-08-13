@@ -31,7 +31,7 @@ evaluation.
 | Benchmark code | `benchmark/governed_agent_bench/` |
 | Benchmark tests | `benchmark/verification/tests/` |
 | HAI tests | `hai/verification/tests/` |
-| Paper draft | `paper/DRAFT.md` (LaTeX when writing-stage) |
+| The paper | `paper/FINAL_PAPER.md` (rebuild the PDF with `paper/build.sh`) |
 
 Invariant: **skills never mutate actions; code never improvises
 coaching prose.** Skills consume `classified_state` and `policy_result`
