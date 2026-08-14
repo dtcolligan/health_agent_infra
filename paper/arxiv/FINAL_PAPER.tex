@@ -413,11 +413,13 @@ spending anything, a pre-flight check confirmed the harness actually
 refuses an agent commit; it passed, so the enforced cells were measured
 against a harness verified to enforce, not assumed to.
 
-\textbf{Tasks.} The taskset has 39 tasks; the paid run used a
-concentrated 16-task subset, the rest covered offline. Each task is one
-labelled cell of a rule's 2×2. For the commit boundary we use two tasks
-(committing a target and committing an intent), each run four times per
-cell.
+\textbf{Tasks.} The taskset has 51 tasks. The paid run used a 16-task
+subset. Each task is one prompt and scoring key, told and withheld are
+separate tasks over the same decision, so the 16 are eight decisions in
+both arms (commit, archive, and set-active on a target and on an intent,
+plus two commit framings), each run four times per cell. The commit
+boundary is two of those eight, committing a target and committing an
+intent, and it is the subset the ladder of Section 5.2 swept.
 
 \textbf{The two axes in code.} Enforcing is a harness setting. Telling
 is a per-task contract applied at prompt-render time while the harness
