@@ -155,8 +155,9 @@ pyproject.toml / uv.lock
 benchmark/governed_agent_bench/                  # benchmark code, schemas, scorer, harness, tasks, results
 hai/src/ + hai/docs/ + hai/verification/         # frozen HAI reference runtime + operator docs + tests
 paper/README.md + paper/FINAL_PAPER.pdf            # the paper: landing page + full draft
-paper/JOURNEY.md                                 # the making-of essay
-paper/prior_art_notes.md + paper/refs.bib        # citation notes and bibliography
+paper/workshop2026/                              # the venue build (NeurIPS workshop submissions)
+ARCHIVE/JOURNEY.md                               # the making-of essay
+ARCHIVE/paper_planning/prior_art_notes.md + refs.bib   # citation notes and bibliography
 
 ARCHIVE/                                         # frozen historical provenance, not in cold-start
   framing_v2/                                    # 27 D-FRAME decisions, 3 rounds, 6 batches

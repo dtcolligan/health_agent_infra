@@ -3,9 +3,7 @@
 **Dominic Colligan** · Imperial College London · dominic.colligan25@imperial.ac.uk
 
 > **Status: complete draft.** The paper is written up and its result has
-> landed. arXiv submission is the remaining step and may be delayed, so the
-> draft is presented here in the meantime. This is a public, citable,
-> not-yet-peer-reviewed preprint draft.
+> landed. This is a public, citable, not-yet-peer-reviewed preprint draft.
 
 An agent harness has two ways to make an agent respect a rule: **tell** it
 (state the rule in the prompt and rely on the model) or **enforce** it (have
@@ -22,10 +20,10 @@ behaviour?
 |---|---|
 | **Full paper (PDF)** | [`FINAL_PAPER.pdf`](FINAL_PAPER.pdf): the canonical written-up version, citations verified |
 | Full paper (Markdown) | [`FINAL_PAPER.md`](FINAL_PAPER.md) |
-| The making-of essay | [`JOURNEY.md`](JOURNEY.md) ([PDF](JOURNEY.pdf)): seven months of choosing the small true claim over the impressive large one |
+| The making-of essay | [`JOURNEY.md`](../ARCHIVE/JOURNEY.md) ([PDF](../ARCHIVE/JOURNEY.pdf)): seven months of choosing the small true claim over the impressive large one |
 | The instrument | [GovernedAgentBench](../benchmark/governed_agent_bench/): taskset, offline grader, git-pinned harness |
 
-<sub>Superseded drafts have moved to [`ARCHIVE/paper_drafts/`](../ARCHIVE/paper_drafts/). What else lives here: `refs.bib` the bibliography, `prior_art_notes.md` the citation working notes, `build.sh` to regenerate the PDF, and `realm2026/` + `sea2026/` the venue versions. Read `FINAL_PAPER.*`.</sub>
+<sub>Superseded drafts have moved to [`ARCHIVE/paper_drafts/`](../ARCHIVE/paper_drafts/). What else lives here: [`ARCHIVE/paper_planning/refs.bib`](../ARCHIVE/paper_planning/refs.bib) the bibliography, [`ARCHIVE/paper_planning/prior_art_notes.md`](../ARCHIVE/paper_planning/prior_art_notes.md) the citation working notes, `build.sh` to regenerate the PDF, and [`ARCHIVE/paper_venues/`](../ARCHIVE/paper_venues/) the venue versions. Read `FINAL_PAPER.*`.</sub>
 
 ## The design
 
