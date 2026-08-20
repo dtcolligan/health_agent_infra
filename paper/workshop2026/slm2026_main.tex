@@ -993,4 +993,90 @@ defence begins. And long-horizon drift (does enforcement catch a rule
 the model has since forgotten?) is the measurement this design most
 directly points at.
 
+\section*{NeurIPS Paper Checklist}
+
+\begin{enumerate}
+
+\item {\bf Claims}
+    \item[] Question: Do the main claims made in the abstract and introduction accurately reflect the paper's contributions and scope?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: The abstract and introduction state the substitution finding, the harness-blindness caution, and the released instrument; Section 5 reports them and Section 7 bounds them.
+
+\item {\bf Limitations}
+    \item[] Question: Does the paper discuss the limitations of the work performed by the authors?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: Section 7 is a dedicated limitations section: single harness, single informative mechanism, per-cell sample sizes, prompt leakage, and the discoverability aid (disclosed in full in Appendix C).
+
+\item {\bf Theory assumptions and proofs}
+    \item[] Question: For each theoretical result, does the paper provide the full set of assumptions and a complete (and correct) proof?
+    \item[] Answer: \answerNA{}
+    \item[] Justification: The paper contains no theoretical results.
+
+\item {\bf Experimental result reproducibility}
+    \item[] Question: Does the paper fully disclose all the information needed to reproduce the main experimental results?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: Appendix A gives the pinned harness commit, the released grader and analysis code, the exact-test helper, and the versioned trajectory archive from which every headline number reproduces.
+
+\item {\bf Open access to data and code}
+    \item[] Question: Does the paper provide open access to the data and code, with sufficient instructions to faithfully reproduce the main experimental results?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: The taskset, deterministic grader, analysis code, and paid-run trajectories are released as a versioned archive with checksums (reference withheld for review; Appendix A).
+
+\item {\bf Experimental setting/details}
+    \item[] Question: Does the paper specify all the training and test details necessary to understand the results?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: Sections 4--5 and Appendices A--B give the models, tasks, repeats per cell, deployment setup, and scoring configuration; no training is performed.
+
+\item {\bf Experiment statistical significance}
+    \item[] Question: Does the paper report error bars suitably and correctly defined or other appropriate information about the statistical significance of the experiments?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: Wilson and Newcombe intervals and the pre-registered permutation floor are reported (Appendix C), and the capability contrast is stated descriptively because its exact one-sided floor at three lineages is 0.125.
+
+\item {\bf Experiments compute resources}
+    \item[] Question: For each experiment, does the paper provide sufficient information on the computer resources needed to reproduce the experiments?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: The within-family run used on-demand H100 deployments for about USD 115 (Section 5.1); the precursor ladder's total paid cost is stated in Appendix B.
+
+\item {\bf Code of ethics}
+    \item[] Question: Does the research conducted in the paper conform, in every respect, with the NeurIPS Code of Ethics?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: The work evaluates open-weight models on synthetic governed-data tasks; no human data, no deception, no harmful release.
+
+\item {\bf Broader impacts}
+    \item[] Question: Does the paper discuss both potential positive societal impacts and negative societal impacts of the work performed?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: The paper's purpose is safer harness design: measuring where runtime enforcement is still needed (Section 8). We identify no direct path to negative applications from the released instrument.
+
+\item {\bf Safeguards}
+    \item[] Question: Does the paper describe safeguards that have been put in place for responsible release of data or models that have a high risk for misuse?
+    \item[] Answer: \answerNA{}
+    \item[] Justification: No high-risk models or data are released; the benchmark's tasks operate on synthetic personal-wellness fixtures.
+
+\item {\bf Licenses for existing assets}
+    \item[] Question: Are the creators or original owners of assets (e.g., code, data, models), used in the paper, properly credited and are the license and terms of use explicitly mentioned and properly respected?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: The evaluated open-weight model families are named with exact variants (Section 5) and used under their published licenses; all cited benchmarks and priors carry identifiers in the references.
+
+\item {\bf New assets}
+    \item[] Question: Are new assets introduced in the paper well documented and is the documentation provided alongside the assets?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: GovernedAgentBench is documented in Section 4 and Appendix A and ships with its scoring configuration, tests, and checksummed archive.
+
+\item {\bf Crowdsourcing and research with human subjects}
+    \item[] Question: For crowdsourcing experiments and research with human subjects, does the paper include the full text of instructions given to participants and screenshots, if applicable, as well as details about compensation (if any)?
+    \item[] Answer: \answerNA{}
+    \item[] Justification: No crowdsourcing and no human subjects.
+
+\item {\bf Institutional review board (IRB) approvals or equivalent for research with human subjects}
+    \item[] Question: Does the paper describe potential risks incurred by study participants, whether such risks were disclosed to the subjects, and whether Institutional Review Board (IRB) approvals (or an equivalent approval/review based on the requirements of your country or institution) were obtained?
+    \item[] Answer: \answerNA{}
+    \item[] Justification: No human subjects.
+
+\item {\bf Declaration of LLM usage}
+    \item[] Question: Does the paper describe usage of LLMs if LLMs are an important, original, or non-standard component of the core methods in this research?
+    \item[] Answer: \answerYes{}
+    \item[] Justification: LLMs are the objects of study: eight open-weight models are evaluated as agents (Sections 4--5). The measurement instrument itself is deterministic code with no LLM in the scoring loop, by design. LLM-based tools assisted with engineering and manuscript preparation under author direction and verification; they contributed no scientific claims and are not authors.
+
+\end{enumerate}
+
 \end{document}
